@@ -33,7 +33,7 @@ Operator routes require `X-API-Key: CONTROL_API_TOKEN`; worker lease/finish rout
 3. Queue only the approved run.
 4. The one-shot worker stays disabled unless ENABLE_WORKER_EXECUTION=true; it requires a separate worker token and an explicit WORKER_ALLOWED_WORKFLOWS allowlist.
 5. An expired lease becomes unknown; an operator must inspect the destination and explicitly reconcile before retrying.
-6. The local console is served at /; it is not production identity management and must not be exposed publicly as-is. Only workflows registered in app/workflow_schemas.py can enter the execution queue; research.scan validates symbol, market and timeframe.
+6. The mobile-first console is served at / from app/static/index.html and shows operational KPIs, run history, approval actions, queue state and unknown-outcome reconciliation. It is not production identity management and must not be exposed publicly as-is. Only workflows registered in app/workflow_schemas.py can enter the execution queue; research.scan validates symbol, market and timeframe.
 
 ## n8n adapter
 `ENABLE_N8N_EXECUTION` defaults to false. The adapter is not called by approval or outbox routes. Do not enable production side effects until an isolated worker, worker-specific credentials, downstream outcome reconciliation, and retry/dead-letter policy are implemented. See `docs/`.

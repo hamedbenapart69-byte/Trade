@@ -8,6 +8,8 @@
 - [x] Separate operator and worker API credentials
 - [x] Opt-in one-shot worker with explicit workflow allowlist
 - [x] Mobile-first local control console: create, inspect, approve/reject, queue and reconcile
+- [x] Authenticated operational summary endpoint and dashboard KPIs
+- [x] Execution queue state shown in run history; duplicate queue action hidden
 - [x] SQLite backup helper with integrity verification
 - [x] Automated API/unit tests and container build/health smoke test in CI
 - [x] n8n adapter fails closed and does not retry automatically
@@ -15,7 +17,7 @@
 
 ## Remaining release gates
 1. [x] Add a registered workflow schema boundary and 32 KiB run-input cap.
-2. [ ] Add real local HTTP integration tests for n8n adapter and worker failure paths.
+2. [x] Real local HTTP integration test for n8n adapter and full approved-run → worker → local receiver → persisted completion path.
 3. [x] Automated restore-open drill verifies integrity and application-level reads; [ ] perform a scheduled operational restore drill on the chosen host.
 4. [ ] Add structured logs, metrics, cost/quota tracking and secret-redaction tests.
 5. [ ] Test a real isolated n8n receiver only after its owner authorizes the test endpoint.
