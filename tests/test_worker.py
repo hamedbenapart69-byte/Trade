@@ -5,7 +5,7 @@ from worker import run_once,WorkerConfigurationError
 class WorkerTests(unittest.TestCase):
  def setUp(self):
   self.old={k:os.environ.get(k) for k in ["ENABLE_WORKER_EXECUTION","CONTROL_API_URL","WORKER_API_TOKEN","WORKER_ALLOWED_WORKFLOWS"]}
-  os.environ.update({"ENABLE_WORKER_EXECUTION":"true","CONTROL_API_URL":"http://control.test","WORKER_API_TOKEN":"worker-test-token-long-enough-123456","WORKER_ALLOWED_WORKFLOWS":"sample.review"})
+  os.environ.update({"ENABLE_WORKER_EXECUTION":"true","CONTROL_API_URL":"https://control.test","WORKER_API_TOKEN":"worker-test-token-long-enough-123456","WORKER_ALLOWED_WORKFLOWS":"sample.review"})
  def tearDown(self):
   for k,v in self.old.items():
    if v is None: os.environ.pop(k,None)
