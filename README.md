@@ -2,7 +2,7 @@
 
 Owner-controlled automation platform foundation. This repo contains an approval-gated run ledger, SQLite audit history, a durable execution outbox with transactional leasing, manual reconciliation for uncertain outcomes, backup tooling, and a guarded n8n webhook adapter.
 
-## Implemented
+## Web console\nA mobile-first control console is served at the root URL when the API is running. It keeps the operator token in page memory only, supports run creation, approval/rejection, queueing, audit events and outbox reconciliation. It is intended for local use only; it is not a substitute for production identity/access controls.\n\n## Implemented
 - FastAPI API with health, run creation/list/lookup, audit events, approval/rejection/cancellation.
 - Operational API-key guard; missing token configuration fails closed.
 - Idempotency-key protection and SQLite persistence.

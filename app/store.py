@@ -79,6 +79,16 @@ def get_runs(*,limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
             total=conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
         return {"items":[_row_to_public(row) for row in rows],"total":total,"limit":limit,"offset":offset}
 
+def get_outbox(*,limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
+    with db_connection() as conn:
+        if status:
+            rows=conn.execute("SELECT * FROM execution_outbox WHERE status=? ORDER BY created_at DESC LIMIT ? OFFSET ?",(status,limit,offset)).fetchall()
+            total=conn.execute("SELECT COUNT(*) FROM execution_outbox WHERE status=?",(status,)).fetchone()[0]
+        else:
+            rows=conn.execute("SELECT * FROM execution_outbox ORDER BY created_at DESC LIMIT ? OFFSET ?",(limit,offset)).fetchall()
+            total=conn.execute("SELECT COUNT(*) FROM execution_outbox").fetchone()[0]
+        return {"items":[_outbox_public(row) for row in rows],"total":total,"limit":limit,"offset":offset}
+
 def get_run_events(run_id:str)->list[dict[str,Any]]|None:
     with db_connection() as conn:
         if not conn.execute("SELECT 1 FROM runs WHERE id=?",(run_id,)).fetchone(): return None
