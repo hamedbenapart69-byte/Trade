@@ -1,7 +1,9 @@
 # n8n integration boundary
 
-The `app/integrations/n8n.py` adapter is disabled by default, refuses external plain HTTP, disables redirects, bounds timeout to 1–30 seconds, supports a stable idempotency header and optional shared-token header, truncates response text, and never retries automatically. Tests use an in-memory HTTP mock only.
+The adapter in app/integrations/n8n.py is disabled by default, requires an absolute HTTP(S) URL, rejects non-loopback plain HTTP, disables redirects, bounds timeout to 1–30 seconds, supports a stable idempotency header and optional shared-token header, truncates response text, and never retries automatically.
 
-The API approval route does not dispatch to n8n. There is no durable outbox, worker queue, dead-letter queue, reconciliation, execution-ID persistence, or signed callback receiver. A successful webhook HTTP response does not prove downstream completion; the receiver must enforce idempotency itself.
+The one-shot worker in worker.py is also disabled by default. It requires a distinct worker credential and explicit workflow allowlist. If the delivery result is uncertain, it does not call finish; after lease expiry the item becomes unknown and requires operator reconciliation. A 2xx webhook response proves only that the endpoint accepted the HTTP request, not that downstream work completed. The receiver must enforce idempotency and expose verifiable status for consequential workflows.
 
-Next milestone: explicit queued/dispatching/submitted/succeeded/failed/unknown states; transactional outbox; worker leases; reconciliation of uncertain outcomes; authenticated replay-protected callback or polling; crash/restart, duplicate delivery, stale lease, auth failure, timeout, and downstream failure tests. Keep outbound execution disabled in CI and development.
+No live n8n endpoint has been configured or contacted. Automated tests must use a local test receiver or in-memory transport. Before a real integration is enabled, define per-workflow payload schemas, request size bounds, destination authentication, response semantics, callback/polling verification, and a destination-side duplicate-suppression strategy.
+
+Official licensing and pricing references are recorded in docs/DECISION-REPORT.md; verify the intended n8n use case against its Sustainable Use License before commercializing or exposing customer-configurable workflows.

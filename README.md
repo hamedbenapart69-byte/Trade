@@ -28,13 +28,12 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 Operator routes require `X-API-Key: CONTROL_API_TOKEN`; worker lease/finish routes require a separate `X-API-Key: WORKER_API_TOKEN`. Never reuse one token for both. Keep localhost binding until HTTPS, production identity/access control, secret management, rate limits and monitoring are in place. Run tests with `python -m unittest discover -s tests -v`.
 
 ## Outbox lifecycle
-1. Create a run, then approve it.
-2. `POST /runs/{id}/queue` persists one outbox item for that approved run.
-3. A future worker calls `POST /internal/outbox/lease` and receives a bounded lease plus a one-time lease token.
-4. The worker calls `POST /internal/outbox/{item_id}/finish` with the current token and outcome.
-5. If a lease expires, the item becomes `unknown`. Check the destination first, then call `POST /internal/outbox/{item_id}/reconcile` with `action=retry` or `action=fail`, actor and an explanatory note. This is deliberately not an automatic retry.
-
-These endpoints currently require the same API key. Before deploying a real worker, implement separate worker credentials and least-privilege authorization.
+1. Create a run with an idempotency key.
+2. Approve it through the control API or local console.
+3. Queue only the approved run.
+4. The one-shot worker stays disabled unless ENABLE_WORKER_EXECUTION=true; it requires a separate worker token and an explicit WORKER_ALLOWED_WORKFLOWS allowlist.
+5. An expired lease becomes unknown; an operator must inspect the destination and explicitly reconcile before retrying.
+6. The local console is served at /; it is not production identity management and must not be exposed publicly as-is.
 
 ## n8n adapter
 `ENABLE_N8N_EXECUTION` defaults to false. The adapter is not called by approval or outbox routes. Do not enable production side effects until an isolated worker, worker-specific credentials, downstream outcome reconciliation, and retry/dead-letter policy are implemented. See `docs/`.

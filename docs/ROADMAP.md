@@ -1,22 +1,27 @@
 # Roadmap
 
-## Foundation complete
+## Completed and CI-verified
 - [x] Approval-gated run ledger and audit trail
 - [x] SQLite persistence and idempotent run creation
-- [x] Durable outbox with bounded leases
-- [x] Fail-safe handling of expired leases: `unknown` plus explicit operator reconciliation
-- [x] Backup integrity check and CI tests
-- [x] Guarded, disabled-by-default n8n adapter
+- [x] Durable outbox and bounded leases
+- [x] Expired leases transition to unknown; explicit reconciliation required
+- [x] Separate operator and worker API credentials
+- [x] Opt-in one-shot worker with explicit workflow allowlist
+- [x] Mobile-first local control console: create, inspect, approve/reject, queue and reconcile
+- [x] SQLite backup helper with integrity verification
+- [x] Automated API/unit tests and container build/health smoke test in CI
+- [x] n8n adapter fails closed and does not retry automatically
+- [x] Decision report records official license/pricing references and unresolved assumptions
 
-## Next milestones
-1. Split owner/operator and worker authentication; enforce least privilege.
-2. Build a worker process with explicit workflow allowlist, per-workflow schemas, execution IDs, bounded payloads and safe shutdown.
-3. Add isolated test receiver and integration tests before connecting n8n; no retry after unknown outcome without destination reconciliation.
-4. Add durable dead-letter inspection, metrics, structured logs, and alerting.
-5. Add restore drills and database migration tests.
-6. Build a mobile-first control center only after authentication and authorization are production-grade.
-7. Deploy behind HTTPS with secret management, rate limits, backups, monitoring and rollback; verify access from the user's real network/device.
-8. Add agent/model integrations only behind explicit tool allowlists and approval gates.
+## Remaining release gates
+1. [ ] Add per-workflow JSON schemas and payload-size limits before any external dispatch.
+2. [ ] Add real local HTTP integration tests for n8n adapter and worker failure paths.
+3. [ ] Verify backup restore into a clean database and document the restore drill.
+4. [ ] Add structured logs, metrics, cost/quota tracking and secret-redaction tests.
+5. [ ] Test a real isolated n8n receiver only after its owner authorizes the test endpoint.
+6. [ ] Add production-grade user identity, role-based access, CSRF/origin controls, rate limits and secret management before public hosting.
+7. [ ] Choose hosting based on actual pricing, persistent storage, TLS, backup and connectivity checks; verify from the user's device/network.
+8. [ ] Add model/agent runtime and browser automation only after schemas, budgets, tool allowlists and evaluation tests exist.
 
-## Not production-ready yet
-No real external execution, model, browser, n8n workflow, identity provider, mobile UI, or deployment has been verified. Do not expose the current API publicly.
+## Explicitly not complete
+No public deployment, actual n8n instance/webhook, external model, browser automation, real-device verification, production identity provider, end-to-end real external workflow or restore drill has been verified. Do not expose this API publicly yet.
