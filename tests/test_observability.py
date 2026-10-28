@@ -16,7 +16,7 @@ class ObservabilitySecurityTests(unittest.TestCase):
   self.assertEqual(response.headers["X-Request-ID"],"safe-request-123")
   joined=" ".join(captured.output)
   self.assertIn("http_request",joined)
-  self.assertIn("safe-request-123",joined)
+  self.assertEqual(captured.records[0].request_id,"safe-request-123")
   self.assertNotIn(secret,joined)
   self.assertNotIn("api_key",joined)
  def test_invalid_request_id_is_replaced(self):
