@@ -13,6 +13,12 @@ class BackupTests(unittest.TestCase):
     with patch("sys.argv",["backup_db.py",str(backup)]): self.assertEqual(main(),0)
    with sqlite3.connect(str(backup)) as conn:
     self.assertEqual(conn.execute("PRAGMA integrity_check").fetchone()[0],"ok"); self.assertEqual(conn.execute("SELECT id FROM runs").fetchone()[0],"run-backup"); self.assertEqual(conn.execute("SELECT event_type FROM run_events").fetchone()[0],"created")
+   # Open the backup as a fresh restored database and verify application-level reads.
+   with patch.dict(os.environ,{"CONTROL_DB_PATH":str(backup)}):
+    store.init_db()
+    restored=store.get_runs()
+    self.assertEqual(restored["total"],1)
+    self.assertEqual(restored["items"][0]["id"],"run-backup")
  def test_missing_source(self):
   with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{"CONTROL_DB_PATH":str(Path(tmp)/"missing.db")}): self.assertEqual(main(),2)
 if __name__=="__main__": unittest.main()
