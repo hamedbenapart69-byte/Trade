@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     environment:
       CONTROL_API_TOKEN: ${CONTROL_API_TOKEN:?Set CONTROL_API_TOKEN in your environment}
+      WORKER_API_TOKEN: ${WORKER_API_TOKEN:?Set WORKER_API_TOKEN in your environment}
       CONTROL_DB_PATH: /var/lib/control/control.db
     ports:
       - "127.0.0.1:8000:8000"
