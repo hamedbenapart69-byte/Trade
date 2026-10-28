@@ -23,6 +23,24 @@ class OutboxTests(unittest.TestCase):
  def test_worker_token_cannot_approve_and_operator_token_cannot_lease(self):
   self.assertEqual(self.client.post(f"/runs/{self.run_id}/approve",json={"decided_by":"worker"},headers=self.worker_headers).status_code,401)
   self.assertEqual(self.client.post("/internal/outbox/lease",headers=self.headers).status_code,401)
+ def test_legacy_outbox_schema_migrates_without_losing_rows(self):
+  with store.db_connection() as conn:
+   conn.execute("DROP INDEX IF EXISTS idx_outbox_ready")
+   conn.execute("""CREATE TABLE execution_outbox_legacy(
+    id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id) ON DELETE CASCADE,
+    status TEXT NOT NULL CHECK(status IN ('queued','leased','completed','failed')),
+    attempts INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,available_at TEXT NOT NULL,
+    lease_token TEXT,lease_until TEXT,finished_at TEXT,result_json TEXT NOT NULL DEFAULT '{}')""")
+   conn.execute("""INSERT INTO execution_outbox_legacy(id,run_id,status,attempts,created_at,available_at)
+    VALUES('legacy-item',?,'queued',0,'2026-01-01T00:00:00+00:00','2026-01-01T00:00:00+00:00')""",(self.run_id,))
+   conn.execute("DROP TABLE execution_outbox")
+   conn.execute("ALTER TABLE execution_outbox_legacy RENAME TO execution_outbox")
+  store.init_db()
+  with store.db_connection() as conn:
+   row=conn.execute("SELECT status FROM execution_outbox WHERE id='legacy-item'").fetchone()
+   self.assertEqual(row["status"],"queued")
+   conn.execute("UPDATE execution_outbox SET status='unknown' WHERE id='legacy-item'")
+   self.assertEqual(conn.execute("SELECT status FROM execution_outbox WHERE id='legacy-item'").fetchone()["status"],"unknown")
  def test_lease_duration_bounded(self): self.assertEqual(self.client.post("/internal/outbox/lease?lease_seconds=2",headers=self.worker_headers).status_code,400)
  def test_expired_lease_becomes_unknown_not_auto_retried(self):
   self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
