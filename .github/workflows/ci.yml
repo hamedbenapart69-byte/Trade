@@ -29,7 +29,7 @@ jobs:
           docker run -d --name trade-control-plane-ci -p 127.0.0.1:8000:8000 \
             -e CONTROL_API_TOKEN=ci-control-token-which-is-long-enough-123456 \
             -e WORKER_API_TOKEN=ci-worker-token-which-is-long-enough-123456 \
-            -e CONTROL_DB_PATH=/tmp/control.db trade-control-plane:ci
+            -e CONTROL_DB_PATH=/var/lib/control/control.db trade-control-plane:ci
           trap 'docker logs trade-control-plane-ci || true; docker rm -f trade-control-plane-ci >/dev/null 2>&1 || true' EXIT
           python - <<'PY'
           import time, urllib.request
