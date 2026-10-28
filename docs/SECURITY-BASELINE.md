@@ -1,6 +1,7 @@
 # Security baseline
 
-- Operational routes require a configured API token of at least 24 characters; missing configuration fails closed.
+- Operator routes require `CONTROL_API_TOKEN`; worker lease/finish routes require a distinct `WORKER_API_TOKEN`. Both must be at least 24 characters; missing configuration fails closed.
+- Never reuse the operator token for a worker. The worker credential cannot approve, reject, create, queue, or reconcile runs.
 - Never embed the API token in frontend code or commit it to Git.
 - Bind to localhost for initial development. Do not expose publicly before HTTPS, identity/authZ, rate limits, secret management, and monitoring are implemented.
 - Run inputs are untrusted data and are not executed as code or passed to models/tools by this starter.

@@ -33,9 +33,13 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 async def require_api_key(request: Request, x_api_key: str | None = Header(default=None)) -> None:
-    if request.url.path == "/health": return
-    expected = os.getenv("CONTROL_API_TOKEN", "")
-    if len(expected) < 24: raise HTTPException(status_code=503, detail="operational_api_not_configured")
+    path=request.url.path
+    if path == "/health": return
+    # Worker routes use a separate credential. Reconciliation remains owner/operator-only.
+    is_worker_route = path == "/internal/outbox/lease" or (path.startswith("/internal/outbox/") and path.endswith("/finish"))
+    env_name = "WORKER_API_TOKEN" if is_worker_route else "CONTROL_API_TOKEN"
+    expected = os.getenv(env_name, "")
+    if len(expected) < 24: raise HTTPException(status_code=503, detail=f"{env_name.lower()}_not_configured")
     if not x_api_key or not hmac.compare_digest(x_api_key, expected):
         raise HTTPException(status_code=401, detail="invalid_or_missing_api_key")
 

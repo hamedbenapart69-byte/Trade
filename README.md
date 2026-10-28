@@ -25,7 +25,7 @@ export CONTROL_API_TOKEN='replace-with-a-long-random-secret'
 export CONTROL_DB_PATH='./data/control.db'
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-Operational routes require `X-API-Key`. Keep localhost binding until HTTPS, production identity/access control, secret management, rate limits and monitoring are in place. Run tests with `python -m unittest discover -s tests -v`.
+Operator routes require `X-API-Key: CONTROL_API_TOKEN`; worker lease/finish routes require a separate `X-API-Key: WORKER_API_TOKEN`. Never reuse one token for both. Keep localhost binding until HTTPS, production identity/access control, secret management, rate limits and monitoring are in place. Run tests with `python -m unittest discover -s tests -v`.
 
 ## Outbox lifecycle
 1. Create a run, then approve it.
