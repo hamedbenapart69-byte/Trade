@@ -1,6 +1,6 @@
 """HTTP API for the approval-gated execution ledger and durable outbox."""
 from __future__ import annotations
-import hmac, os, re, uuid
+import hmac, json, os, re, uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -60,6 +60,8 @@ def health() -> dict[str,str]: return {"status":"ok","service":"control-plane","
 def create_run(body:RunCreate,idempotency_key:str|None=Header(default=None,alias="Idempotency-Key"))->dict[str,Any]:
     if not idempotency_key or not re.fullmatch(r"[A-Za-z0-9._:-]{8,200}",idempotency_key):
         raise HTTPException(status_code=400,detail="valid_idempotency_key_required")
+    if len(json.dumps(body.input,ensure_ascii=False,separators=(",",":")).encode("utf-8")) > 32768:
+        raise HTTPException(status_code=413,detail="run_input_too_large_max_32768_bytes")
     try:
         return store.insert_run(run_id=str(uuid.uuid4()),idempotency_key=idempotency_key,workflow=body.workflow,payload=body.input,created_at=now_iso())
     except ValueError as exc:

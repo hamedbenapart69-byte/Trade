@@ -4,7 +4,7 @@
 - Never reuse the operator token for a worker. The worker credential cannot approve, reject, create, queue, or reconcile runs.
 - Never embed the API token in frontend code or commit it to Git.
 - Bind to localhost for initial development. Do not expose publicly before HTTPS, identity/authZ, rate limits, secret management, and monitoring are implemented.
-- Run inputs are untrusted data and are not executed as code or passed to models/tools by this starter.
+- Run inputs are untrusted data, are capped at 32 KiB per request, and are not executed as code or passed to models/tools by this starter.
 - Human approval records a decision only; it does not execute the requested action.
 - Idempotency keys cannot be reused for a different workflow/input pair and are not returned by the API.
 - Database and environment files are ignored by Git.

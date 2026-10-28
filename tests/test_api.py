@@ -23,6 +23,11 @@ class ApiTests(unittest.TestCase):
   c=self.client.post("/runs",json={"workflow":"sample.review","input":{}},headers=self.headers("cancel-run-001")); rid=c.json()["id"]; h={"X-API-Key":os.environ["CONTROL_API_TOKEN"]}; r=self.client.post(f"/runs/{rid}/cancel",json={"decided_by":"owner","note":"stop"},headers=h); self.assertEqual(r.json()["status"],"cancelled"); events=self.client.get(f"/runs/{rid}/events",headers=h); self.assertEqual([x["type"] for x in events.json()["items"]],["created","cancelled"])
  def test_rejects_invalid_payload(self):
   r=self.client.post("/runs",json={"workflow":"x","unexpected":True},headers=self.headers()); self.assertEqual(r.status_code,422)
+ def test_run_input_size_limit(self):
+  oversized={"text":"x"*33000}
+  r=self.client.post("/runs",json={"workflow":"sample.review","input":oversized},headers=self.headers("oversize-0001"))
+  self.assertEqual(r.status_code,413)
+  self.assertEqual(r.json()["detail"],"run_input_too_large_max_32768_bytes")
  def test_idempotency_conflict(self):
   h=self.headers("request-0002"); self.client.post("/runs",json={"workflow":"sample.review","input":{"v":1}},headers=h); r=self.client.post("/runs",json={"workflow":"sample.review","input":{"v":2}},headers=h); self.assertEqual(r.status_code,409)
 if __name__=="__main__": unittest.main()
