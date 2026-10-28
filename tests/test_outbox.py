@@ -20,7 +20,7 @@ class OutboxTests(unittest.TestCase):
   self.assertEqual(queued.status_code,422); self.assertEqual(queued.json()["detail"],"workflow_schema_not_registered")
  def test_cannot_queue_before_approval(self): self.assertEqual(self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).status_code,409)
  def test_queue_idempotent_lease_and_finish(self):
-  self.assertEqual(self.approve().status_code,200); a=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); b=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); self.assertEqual(a.status_code,202); self.assertEqual(a.json()["id"],b.json()["id"])
+  self.assertEqual(self.approve().status_code,200); a=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); b=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); self.assertEqual(a.status_code,202); self.assertEqual(a.json()["id"],b.json()["id"]); self.assertEqual(self.client.get(f"/runs/{self.run_id}",headers=self.headers).json()["outbox_status"],"queued")
   item=self.client.post("/internal/outbox/lease",headers=self.worker_headers).json()["item"]; self.assertEqual(item["status"],"leased"); self.assertEqual(item["workflow"],"sample.review")
   done=self.client.post(f"/internal/outbox/{item['id']}/finish",json={"lease_token":item["lease_token"],"succeeded":True,"result":{"test":"ok"}},headers=self.worker_headers); self.assertEqual(done.status_code,200); self.assertEqual(done.json()["status"],"completed"); self.assertIsNone(self.client.post("/internal/outbox/lease",headers=self.worker_headers).json()["item"])
  def test_stale_token_rejected(self):

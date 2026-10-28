@@ -72,10 +72,10 @@ def insert_run(*,run_id:str,idempotency_key:str,workflow:str,payload:dict[str,An
 def get_runs(*,limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
     with db_connection() as conn:
         if status:
-            rows=conn.execute("SELECT * FROM runs WHERE status=? ORDER BY created_at DESC LIMIT ? OFFSET ?",(status,limit,offset)).fetchall()
+            rows=conn.execute("SELECT runs.*,execution_outbox.status AS outbox_status FROM runs LEFT JOIN execution_outbox ON execution_outbox.run_id=runs.id WHERE runs.status=? ORDER BY runs.created_at DESC LIMIT ? OFFSET ?",(status,limit,offset)).fetchall()
             total=conn.execute("SELECT COUNT(*) FROM runs WHERE status=?",(status,)).fetchone()[0]
         else:
-            rows=conn.execute("SELECT * FROM runs ORDER BY created_at DESC LIMIT ? OFFSET ?",(limit,offset)).fetchall()
+            rows=conn.execute("SELECT runs.*,execution_outbox.status AS outbox_status FROM runs LEFT JOIN execution_outbox ON execution_outbox.run_id=runs.id ORDER BY runs.created_at DESC LIMIT ? OFFSET ?",(limit,offset)).fetchall()
             total=conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
         return {"items":[_row_to_public(row) for row in rows],"total":total,"limit":limit,"offset":offset}
 
@@ -97,7 +97,7 @@ def get_run_events(run_id:str)->list[dict[str,Any]]|None:
 
 def get_run(run_id:str)->dict[str,Any]|None:
     with db_connection() as conn:
-        row=conn.execute("SELECT * FROM runs WHERE id=?",(run_id,)).fetchone()
+        row=conn.execute("SELECT runs.*,execution_outbox.status AS outbox_status FROM runs LEFT JOIN execution_outbox ON execution_outbox.run_id=runs.id WHERE runs.id=?",(run_id,)).fetchone()
         return _row_to_public(row) if row else None
 
 def decide_run(run_id:str,*,decision:str,decided_by:str,note:str|None,decided_at:str)->dict[str,Any]|None:
@@ -180,5 +180,7 @@ def _outbox_public(row:sqlite3.Row,*,include_lease_token:bool=False)->dict[str,A
     return public
 
 def _row_to_public(row:sqlite3.Row)->dict[str,Any]:
-    return {"id":row["id"],"workflow":row["workflow"],"input":json.loads(row["input_json"]),"status":row["status"],
+    public={"id":row["id"],"workflow":row["workflow"],"input":json.loads(row["input_json"]),"status":row["status"],
             "created_at":row["created_at"],"decided_at":row["decided_at"],"decided_by":row["decided_by"],"decision_note":row["decision_note"]}
+    if "outbox_status" in row.keys(): public["outbox_status"]=row["outbox_status"]
+    return public
