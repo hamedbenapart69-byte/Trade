@@ -35,7 +35,7 @@ def now_iso() -> str:
 
 async def require_api_key(request: Request, x_api_key: str | None = Header(default=None)) -> None:
     path=request.url.path
-    if path == "/health": return
+    if path in {"/health","/"}: return
     # Worker routes use a separate credential. Reconciliation remains owner/operator-only.
     is_worker_route = path == "/internal/outbox/lease" or (path.startswith("/internal/outbox/") and path.endswith("/finish"))
     env_name = "WORKER_API_TOKEN" if is_worker_route else "CONTROL_API_TOKEN"
