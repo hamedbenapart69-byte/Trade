@@ -1,6 +1,6 @@
 """HTTP API for the approval-gated execution ledger and durable outbox."""
 from __future__ import annotations
-import hmac, json, os, re, uuid
+import hmac, json, logging, os, re, time, uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -47,6 +47,26 @@ async def require_api_key(request: Request, x_api_key: str | None = Header(defau
         raise HTTPException(status_code=401, detail="invalid_or_missing_api_key")
 
 app = FastAPI(title="AI Orchestration Control Plane", version="0.3.0", dependencies=[Depends(require_api_key)])
+access_log = logging.getLogger("control.access")
+
+@app.middleware("http")
+async def request_observability(request: Request, call_next):
+    # Never log query strings, headers, bodies, credentials, or downstream response content.
+    supplied=request.headers.get("X-Request-ID","")
+    request_id=supplied if re.fullmatch(r"[A-Za-z0-9._:-]{8,80}",supplied) else str(uuid.uuid4())
+    started=time.perf_counter()
+    try:
+        response=await call_next(request)
+        response.headers["X-Request-ID"]=request_id
+        access_log.info("http_request",extra={"request_id":request_id,"method":request.method,
+            "path":request.url.path,"status_code":response.status_code,
+            "duration_ms":round((time.perf_counter()-started)*1000,2)})
+        return response
+    except Exception as exc:
+        access_log.error("http_request_failed",extra={"request_id":request_id,"method":request.method,
+            "path":request.url.path,"error_type":type(exc).__name__,
+            "duration_ms":round((time.perf_counter()-started)*1000,2)})
+        raise
 
 @app.on_event("startup")
 def startup() -> None: store.init_db()

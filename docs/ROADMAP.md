@@ -19,7 +19,7 @@
 1. [x] Add a registered workflow schema boundary and 32 KiB run-input cap.
 2. [x] Real local HTTP integration test for n8n adapter and full approved-run → worker → local receiver → persisted completion path.
 3. [x] Automated restore-open drill verifies integrity and application-level reads; [ ] perform a scheduled operational restore drill on the chosen host.
-4. [ ] Add structured logs, metrics, cost/quota tracking and secret-redaction tests.
+4. [x] Add request-correlated access logs and regression tests for query/header secret redaction; [ ] add metrics and cost/quota tracking.
 5. [ ] Test a real isolated n8n receiver only after its owner authorizes the test endpoint.
 6. [ ] Add production-grade user identity, role-based access, CSRF/origin controls, rate limits and secret management before public hosting.
 7. [ ] Choose hosting based on actual pricing, persistent storage, TLS, backup and connectivity checks; verify from the user's device/network.
