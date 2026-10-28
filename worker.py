@@ -45,7 +45,7 @@ def run_once(*,client:httpx.Client|None=None,deliverer=deliver_approved_payload)
         result=deliverer(run_id=item["run_id"],workflow=item["workflow"],payload=item.get("input",{}),idempotency_key=item["run_id"])
         finish=http.post(f"{base}/internal/outbox/{item_id}/finish",headers=headers,json={
             "lease_token":item["lease_token"],"succeeded":True,
-            "result":{"provider":"n8n","http_status":result.status_code,"response":result.response_text[:1000]}})
+            "result":{"provider":"n8n","http_status":result.status_code}})
         finish.raise_for_status()
         return "completed"
     finally:

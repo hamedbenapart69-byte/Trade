@@ -32,6 +32,7 @@ class WorkerTests(unittest.TestCase):
    return type("Result",(),{"status_code":200,"response_text":"ok"})()
   self.assertEqual(run_once(client=client,deliverer=deliverer),"completed")
   self.assertEqual(len(seen),2); self.assertEqual(seen[1].url.path,"/internal/outbox/out-1/finish")
+  self.assertNotIn("response",seen[1].content.decode())
   client.close()
  def test_unlisted_workflow_never_delivered(self):
   seen=[]

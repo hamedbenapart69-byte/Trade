@@ -10,6 +10,7 @@
 - Database and environment files are ignored by Git.
 - Cancellation applies only to runs awaiting approval; it does not claim an external worker was terminated.
 - Backups use SQLite's backup API and run an integrity check.
+- Worker execution results record provider/status metadata only; raw downstream response bodies are not persisted to reduce accidental secret/data leakage.
 - Expired worker leases transition to `unknown`, never directly back to `queued`: the worker may have performed a side effect before crashing.
 - An operator must verify the destination outcome before explicitly reconciling an `unknown` item with `retry` or `fail`. Retrying without checking can duplicate external actions.
 - Before production, separate worker credentials from owner/operator credentials and implement role-based authorization, a secrets manager, backup/restore tests, access audit, request-size limits, retention policy, monitoring, and security review.
