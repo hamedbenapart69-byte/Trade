@@ -1,0 +1,19 @@
+services:
+  control-plane:
+    build: .
+    restart: unless-stopped
+    environment:
+      CONTROL_API_TOKEN: ${CONTROL_API_TOKEN:?Set CONTROL_API_TOKEN in your environment}
+      CONTROL_DB_PATH: /var/lib/control/control.db
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - control-data:/var/lib/control
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(\u0027http://127.0.0.1:8000/health\u0027, timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+volumes:
+  control-data:

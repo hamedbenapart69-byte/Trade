@@ -1,21 +1,34 @@
 # AI Orchestration Foundation
 
-Portable, security-conscious foundation for a user-controlled AI automation platform.
+Portable, testable starting point for an owner-controlled AI automation platform. This repository intentionally begins with a deterministic execution ledger and approval boundary; it does not pretend that a workflow engine, model provider, browser integration, or production deployment is already connected.
 
-## Status
+## Implemented
+- FastAPI API: health, run creation/list/lookup, audit events, approve/reject/cancel.
+- SQLite run persistence and idempotency protection; audit events.
+- API-key protection for operational routes; missing token configuration fails closed.
+- SQLite backup helper with integrity check.
+- Dockerfile and local-only Compose binding.
+- Optional n8n webhook adapter (not wired to approval routes), with guarded opt-in and mocked tests.
+- GitHub Actions CI workflow.
 
-This repository is selected as the home for the orchestration project. The local foundation includes a FastAPI + SQLite control plane, approval-gated run records, audit events, idempotency handling, backup tooling, and a Docker Compose definition.
+## Not yet implemented or verified
+No durable outbox/worker, retry/dead-letter queue, reconciliation, execution-ID persistence, LangGraph/model integration, Playwright integration, daily-use UI, production identity provider, or deployment. Approval records a decision; it does not execute an action. Outbound effects remain disconnected.
 
-This is not yet a production deployment. Real workflow/model integrations, a persistent worker queue, internet-facing authentication hardening, and deployment verification remain outstanding.
+## Local run
+Python 3.11+ recommended.
 
-## Principles
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export CONTROL_API_TOKEN='replace-with-a-long-random-secret'
+export CONTROL_DB_PATH='./data/control.db'
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-- Explicit approval before external actions
-- No secrets committed to source control
-- Portable architecture and replaceable providers
-- Tests before integrations are enabled
-- No deployment or CI claims without evidence
+Operational routes require `X-API-Key: <CONTROL_API_TOKEN>`. Keep the service on localhost until HTTPS, production identity/access control, secret management, rate limits and monitoring are in place. Run tests with `python -m unittest discover -s tests -v`.
 
-## Security
+## n8n adapter
+`ENABLE_N8N_EXECUTION` defaults to false. For isolated test workflows only, configure `N8N_WEBHOOK_URL`, optional `N8N_WEBHOOK_TOKEN`, and `N8N_TIMEOUT_SECONDS`. The receiver must validate authentication and idempotency. Do not enable production side effects until a durable outbox, explicit execution authorization and outcome reconciliation are implemented.
 
-Do not expose the API publicly without a proper identity layer, TLS termination, secret management, rate limits, and monitoring. Keep external workflow execution disabled until explicitly configured and tested.
+See `docs/` for the decision report, roadmap, security baseline and integration boundary. Never commit real credentials or operational data.
