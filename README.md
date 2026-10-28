@@ -13,7 +13,7 @@ Owner-controlled automation platform foundation. This repo contains an approval-
 - GitHub Actions CI and unit tests.
 
 ## Not yet implemented
-No autonomous worker, production worker-specific credentials, model/LangGraph integration, Playwright integration, mobile control center, production identity provider, or hosted deployment. Approval records a decision; it does not execute an action. External side effects remain disconnected.
+A one-shot opt-in worker is implemented with an explicit workflow allowlist and guarded n8n delivery; no worker runs automatically. No model/LangGraph integration, Playwright integration, mobile control center, production identity provider, or hosted deployment. Approval records a decision; it does not execute an action. External side effects remain disconnected.
 
 ## Local run
 Python 3.11+ recommended.
