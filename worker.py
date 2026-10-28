@@ -6,6 +6,7 @@ left leased so expiry moves it to 'unknown'; it is never blindly retried.
 from __future__ import annotations
 import os
 import sys
+from urllib.parse import urlparse
 import httpx
 from app.integrations.n8n import deliver_approved_payload, IntegrationDisabled, IntegrationConfigurationError, IntegrationDeliveryError
 
@@ -15,6 +16,11 @@ def run_once(*,client:httpx.Client|None=None,deliverer=deliver_approved_payload)
     if os.getenv("ENABLE_WORKER_EXECUTION","false").strip().lower()!="true":
         raise WorkerConfigurationError("worker execution is disabled; set ENABLE_WORKER_EXECUTION=true explicitly")
     base=os.getenv("CONTROL_API_URL","http://127.0.0.1:8000").rstrip("/")
+    parsed=urlparse(base)
+    if parsed.scheme not in {"https","http"} or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise WorkerConfigurationError("CONTROL_API_URL must be an absolute HTTP(S) base URL without embedded credentials/query/fragment")
+    if parsed.scheme=="http" and parsed.hostname not in {"127.0.0.1","localhost","::1"}:
+        raise WorkerConfigurationError("CONTROL_API_URL must use HTTPS outside loopback")
     token=os.getenv("WORKER_API_TOKEN","")
     if len(token)<24: raise WorkerConfigurationError("WORKER_API_TOKEN must be at least 24 characters")
     allowed={x.strip() for x in os.getenv("WORKER_ALLOWED_WORKFLOWS","").split(",") if x.strip()}

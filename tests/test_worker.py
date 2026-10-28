@@ -13,6 +13,9 @@ class WorkerTests(unittest.TestCase):
  def test_disabled_by_default(self):
   os.environ["ENABLE_WORKER_EXECUTION"]="false"
   with self.assertRaises(WorkerConfigurationError): run_once()
+ def test_remote_plain_http_is_rejected_before_sending_worker_token(self):
+  os.environ["CONTROL_API_URL"]="http://control.example"
+  with self.assertRaises(WorkerConfigurationError): run_once()
  def test_idle_queue(self):
   client=httpx.Client(transport=httpx.MockTransport(lambda req:httpx.Response(200,json={"item":None})))
   self.assertEqual(run_once(client=client),"idle"); client.close()
