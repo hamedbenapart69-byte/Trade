@@ -38,11 +38,21 @@ def init_db()->None:
             status TEXT NOT NULL CHECK(status IN ('queued','leased','unknown','completed','failed')),
             attempts INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,available_at TEXT NOT NULL,
             lease_token TEXT,lease_until TEXT,finished_at TEXT,result_json TEXT NOT NULL DEFAULT '{}')""")
-        # Upgrade databases created by the earlier outbox version.
-        columns={r["name"] for r in conn.execute("PRAGMA table_info(execution_outbox)").fetchall()}
-        if "status" in columns:
+        # Upgrade older databases whose CHECK constraint did not permit the unknown state.
+        schema=conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='execution_outbox'").fetchone()[0]
+        if "'unknown'" not in schema:
             conn.execute("DROP INDEX IF EXISTS idx_outbox_ready")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_outbox_ready ON execution_outbox(status,available_at,created_at)")
+            conn.execute("""CREATE TABLE execution_outbox_new(
+                id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id) ON DELETE CASCADE,
+                status TEXT NOT NULL CHECK(status IN ('queued','leased','unknown','completed','failed')),
+                attempts INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,available_at TEXT NOT NULL,
+                lease_token TEXT,lease_until TEXT,finished_at TEXT,result_json TEXT NOT NULL DEFAULT '{}')""")
+            conn.execute("""INSERT INTO execution_outbox_new
+                (id,run_id,status,attempts,created_at,available_at,lease_token,lease_until,finished_at,result_json)
+                SELECT id,run_id,status,attempts,created_at,available_at,lease_token,lease_until,finished_at,result_json
+                FROM execution_outbox""")
+            conn.execute("DROP TABLE execution_outbox")
+            conn.execute("ALTER TABLE execution_outbox_new RENAME TO execution_outbox")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_outbox_ready ON execution_outbox(status,available_at,created_at)")
 
 def insert_run(*,run_id:str,idempotency_key:str,workflow:str,payload:dict[str,Any],created_at:str)->dict[str,Any]:

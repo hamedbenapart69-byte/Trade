@@ -23,15 +23,20 @@ class OutboxTests(unittest.TestCase):
  def test_lease_duration_bounded(self): self.assertEqual(self.client.post("/internal/outbox/lease?lease_seconds=2",headers=self.headers).status_code,400)
  def test_expired_lease_becomes_unknown_not_auto_retried(self):
   self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
-  now=datetime.now(timezone.utc)
-  leased=store.lease_next_outbox(now=(now-timedelta(seconds=30)).isoformat(),lease_until=(now-timedelta(seconds=10)).isoformat())
+  now=datetime.now(timezone.utc)+timedelta(seconds=2)
+  leased=store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=10)).isoformat())
   self.assertEqual(leased["id"],item["id"])
-  self.assertIsNone(store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=30)).isoformat()))
-  self.assertEqual(store._outbox_public(store.connect().execute("SELECT * FROM execution_outbox WHERE id=?",(item["id"],)).fetchone())["status"],"unknown")
+  later=now+timedelta(seconds=20)
+  self.assertIsNone(store.lease_next_outbox(now=later.isoformat(),lease_until=(later+timedelta(seconds=30)).isoformat()))
+  with store.db_connection() as conn:
+   status=conn.execute("SELECT status FROM execution_outbox WHERE id=?",(item["id"],)).fetchone()["status"]
+  self.assertEqual(status,"unknown")
  def test_unknown_requires_explicit_reconciliation_before_retry(self):
   self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
-  now=datetime.now(timezone.utc); store.lease_next_outbox(now=(now-timedelta(seconds=30)).isoformat(),lease_until=(now-timedelta(seconds=10)).isoformat())
-  store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=30)).isoformat())
+  now=datetime.now(timezone.utc)+timedelta(seconds=2)
+  store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=10)).isoformat())
+  later=now+timedelta(seconds=20)
+  store.lease_next_outbox(now=later.isoformat(),lease_until=(later+timedelta(seconds=30)).isoformat())
   bad=self.client.post(f"/internal/outbox/{item['id']}/reconcile",json={"action":"retry","actor":"operator","note":"checked destination"},headers=self.headers)
   self.assertEqual(bad.status_code,200); self.assertEqual(bad.json()["status"],"queued")
   leased=self.client.post("/internal/outbox/lease",headers=self.headers).json()["item"]; self.assertEqual(leased["id"],item["id"])
