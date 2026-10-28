@@ -1,26 +1,24 @@
 # Roadmap
 
 ## Milestone 0 — control-plane foundation
-- [x] Approval-gated run ledger, API token guard, idempotency, audit events
-- [x] Local backup and integrity check
-- [x] CI workflow definition
-- [x] n8n adapter with explicit opt-in, timeout and mocked tests
+- [x] Approval-gated run ledger, API token guard, idempotency and audit events
+- [x] Backup and integrity check
+- [x] n8n adapter with explicit opt-in and mocked tests
+- [x] Durable SQLite outbox with transactional queue insertion, lease expiry recovery, and stale-token protection
 
 ## Milestone 1 — execution reliability
-- [ ] Transactional outbox and durable worker lease
-- [ ] Explicit states: queued, dispatching, submitted, succeeded, failed, unknown, cancel_requested
-- [ ] Persist external execution identifiers and reconcile uncertain outcomes
-- [ ] Test crash/restart, duplicate delivery, stale leases, authentication failure, timeout and callback replay
+- [ ] Separate worker identity/credentials and least-privilege authorization
+- [ ] Backoff schedule, max-attempt policy visibility, dead-letter inspection and operator replay
+- [ ] Worker process, idempotent provider delivery and downstream status reconciliation
+- [ ] Test crash/restart, concurrent lease contention, callback replay, and uncertain timeouts
 
 ## Milestone 2 — agent runtime
 - [ ] Add LangGraph only for stateful reasoning tasks
-- [ ] Structured outputs, per-run budgets, tool allowlist and approval gates
-- [ ] Prompt-injection tests and independent result validation
+- [ ] Structured outputs, per-run budgets, tool allowlist, approval gates and prompt-injection tests
 
 ## Milestone 3 — daily UI and deployment
-- [ ] Responsive mobile control center and real authentication/authorization
-- [ ] Verify hosting availability from user's actual network
-- [ ] Configure secrets, HTTPS, logs, alerts, backups and restore tests
-- [ ] Run end-to-end tests against an explicitly authorized test integration
+- [ ] Responsive mobile control center and real identity/authentication
+- [ ] Verify hosting availability from the user's actual network
+- [ ] HTTPS, secrets, logs, alerts, backups/restore and authorized end-to-end tests
 
-Never mark a milestone complete without a commit, reproducible test evidence, and environment verification where applicable.
+Never mark a milestone complete without a commit, reproducible test evidence and environment verification where applicable.
