@@ -58,6 +58,11 @@ async def request_observability(request: Request, call_next):
     try:
         response=await call_next(request)
         response.headers["X-Request-ID"]=request_id
+        response.headers["X-Content-Type-Options"]="nosniff"
+        response.headers["X-Frame-Options"]="DENY"
+        response.headers["Referrer-Policy"]="no-referrer"
+        response.headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=()"
+        response.headers["Cache-Control"]="no-store"
         access_log.info("http_request",extra={"request_id":request_id,"method":request.method,
             "path":request.url.path,"status_code":response.status_code,
             "duration_ms":round((time.perf_counter()-started)*1000,2)})
