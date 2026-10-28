@@ -15,3 +15,30 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
+      - name: Build container image
+        run: docker build -t trade-control-plane:ci .
+      - name: Container health smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name trade-control-plane-ci -p 127.0.0.1:8000:8000 \
+            -e CONTROL_API_TOKEN=ci-control-token-which-is-long-enough-123456 \
+            -e WORKER_API_TOKEN=ci-worker-token-which-is-long-enough-123456 \
+            -e CONTROL_DB_PATH=/tmp/control.db trade-control-plane:ci
+          trap 'docker logs trade-control-plane-ci || true; docker rm -f trade-control-plane-ci >/dev/null 2>&1 || true' EXIT
+          python - <<'PY'
+          import time, urllib.request
+          last = None
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=2) as r:
+                      assert r.status == 200
+                      assert b'"status":"ok"' in r.read()
+                  print("Container health check passed")
+                  break
+              except Exception as exc:
+                  last = exc
+                  time.sleep(1)
+          else:
+              raise SystemExit(f"Container health check failed: {last}")
+          PY
