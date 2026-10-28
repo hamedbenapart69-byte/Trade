@@ -69,6 +69,10 @@ def create_run(body:RunCreate,idempotency_key:str|None=Header(default=None,alias
         if str(exc)=="idempotency_key_conflict": raise HTTPException(status_code=409,detail="idempotency_key_reused_with_different_request") from exc
         raise
 
+@app.get("/summary")
+def operational_summary()->dict[str,Any]:
+    return store.get_operational_summary()
+
 @app.get("/outbox")
 def list_outbox(limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
     if limit<1 or limit>100 or offset<0: raise HTTPException(status_code=400,detail="invalid_pagination")

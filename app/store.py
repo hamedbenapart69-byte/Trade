@@ -79,6 +79,13 @@ def get_runs(*,limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
             total=conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
         return {"items":[_row_to_public(row) for row in rows],"total":total,"limit":limit,"offset":offset}
 
+def get_operational_summary()->dict[str,Any]:
+    with db_connection() as conn:
+        runs={row["status"]:row["n"] for row in conn.execute("SELECT status,COUNT(*) AS n FROM runs GROUP BY status")}
+        outbox={row["status"]:row["n"] for row in conn.execute("SELECT status,COUNT(*) AS n FROM execution_outbox GROUP BY status")}
+        oldest=conn.execute("SELECT MIN(created_at) FROM execution_outbox WHERE status='queued'").fetchone()[0]
+        return {"runs":runs,"outbox":outbox,"total_runs":sum(runs.values()),"total_outbox":sum(outbox.values()),"oldest_queued_at":oldest}
+
 def get_outbox(*,limit:int=50,offset:int=0,status:str|None=None)->dict[str,Any]:
     with db_connection() as conn:
         if status:

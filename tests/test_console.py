@@ -14,6 +14,10 @@ class ConsoleTests(unittest.TestCase):
  def test_outbox_requires_operator_auth(self):
   self.assertEqual(self.client.get("/outbox").status_code,401)
   self.assertEqual(self.client.get("/outbox",headers=self.headers).status_code,200)
+ def test_summary_is_authenticated_and_reports_empty_state(self):
+  self.assertEqual(self.client.get("/summary").status_code,401)
+  r=self.client.get("/summary",headers=self.headers)
+  self.assertEqual(r.status_code,200); self.assertEqual(r.json()["total_runs"],0); self.assertEqual(r.json()["total_outbox"],0)
  def test_outbox_status_filter_validation(self):
   self.assertEqual(self.client.get("/outbox?status=not-real",headers=self.headers).status_code,400)
 if __name__=="__main__": unittest.main()
