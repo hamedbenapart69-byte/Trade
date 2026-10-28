@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 from app import store
+from app.workflow_schemas import validate_workflow_input
 
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -93,6 +94,11 @@ def cancel_run(run_id:str,body:Decision)->dict[str,Any]: return _decide(run_id,"
 
 @app.post("/runs/{run_id}/queue",status_code=202)
 def queue_approved_run(run_id:str)->dict[str,Any]:
+    run=store.get_run(run_id)
+    if run is None: raise HTTPException(status_code=404,detail="run_not_found")
+    if run["status"]!="approved": raise HTTPException(status_code=409,detail="run_must_be_approved_before_queueing")
+    schema_error=validate_workflow_input(run["workflow"],run["input"])
+    if schema_error: raise HTTPException(status_code=422,detail=schema_error)
     try: result=store.enqueue_approved_run(run_id,created_at=now_iso())
     except ValueError as exc:
         if str(exc)=="run_not_approved": raise HTTPException(status_code=409,detail="run_must_be_approved_before_queueing") from exc

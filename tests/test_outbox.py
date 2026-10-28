@@ -12,6 +12,12 @@ class OutboxTests(unittest.TestCase):
  def tearDown(self):
   self.client.close(); self.tmp.cleanup(); os.environ.pop("CONTROL_DB_PATH",None); os.environ.pop("CONTROL_API_TOKEN",None); os.environ.pop("WORKER_API_TOKEN",None)
  def approve(self): return self.client.post(f"/runs/{self.run_id}/approve",json={"decided_by":"owner"},headers=self.headers)
+ def test_unregistered_workflow_cannot_enter_execution_queue(self):
+  r=self.client.post("/runs",json={"workflow":"unknown.flow","input":{}},headers={**self.headers,"Idempotency-Key":"unknown-flow-0001"})
+  self.assertEqual(r.status_code,201)
+  self.client.post(f"/runs/{r.json()['id']}/approve",json={"decided_by":"owner"},headers=self.headers)
+  queued=self.client.post(f"/runs/{r.json()['id']}/queue",headers=self.headers)
+  self.assertEqual(queued.status_code,422); self.assertEqual(queued.json()["detail"],"workflow_schema_not_registered")
  def test_cannot_queue_before_approval(self): self.assertEqual(self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).status_code,409)
  def test_queue_idempotent_lease_and_finish(self):
   self.assertEqual(self.approve().status_code,200); a=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); b=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers); self.assertEqual(a.status_code,202); self.assertEqual(a.json()["id"],b.json()["id"])

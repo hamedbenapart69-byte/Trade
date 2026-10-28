@@ -14,7 +14,7 @@
 - [x] Decision report records official license/pricing references and unresolved assumptions
 
 ## Remaining release gates
-1. [ ] Add per-workflow JSON schemas and payload-size limits before any external dispatch.
+1. [x] Add a registered workflow schema boundary and 32 KiB run-input cap.
 2. [ ] Add real local HTTP integration tests for n8n adapter and worker failure paths.
 3. [ ] Verify backup restore into a clean database and document the restore drill.
 4. [ ] Add structured logs, metrics, cost/quota tracking and secret-redaction tests.
