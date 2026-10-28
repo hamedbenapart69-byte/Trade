@@ -18,8 +18,11 @@ class OutboxTests(unittest.TestCase):
   item=self.client.post("/internal/outbox/lease",headers=self.worker_headers).json()["item"]; self.assertEqual(item["status"],"leased"); self.assertEqual(item["workflow"],"sample.review")
   done=self.client.post(f"/internal/outbox/{item['id']}/finish",json={"lease_token":item["lease_token"],"succeeded":True,"result":{"test":"ok"}},headers=self.worker_headers); self.assertEqual(done.status_code,200); self.assertEqual(done.json()["status"],"completed"); self.assertIsNone(self.client.post("/internal/outbox/lease",headers=self.worker_headers).json()["item"])
  def test_stale_token_rejected(self):
-  self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json(); self.client.post("/internal/outbox/lease",headers=self.headers)
+  self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json(); self.client.post("/internal/outbox/lease",headers=self.worker_headers)
   r=self.client.post(f"/internal/outbox/{item['id']}/finish",json={"lease_token":"not-the-current-lease-token","succeeded":True,"result":{}},headers=self.worker_headers); self.assertEqual(r.status_code,409)
+ def test_worker_token_cannot_approve_and_operator_token_cannot_lease(self):
+  self.assertEqual(self.client.post(f"/runs/{self.run_id}/approve",json={"decided_by":"worker"},headers=self.worker_headers).status_code,401)
+  self.assertEqual(self.client.post("/internal/outbox/lease",headers=self.headers).status_code,401)
  def test_lease_duration_bounded(self): self.assertEqual(self.client.post("/internal/outbox/lease?lease_seconds=2",headers=self.worker_headers).status_code,400)
  def test_expired_lease_becomes_unknown_not_auto_retried(self):
   self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
