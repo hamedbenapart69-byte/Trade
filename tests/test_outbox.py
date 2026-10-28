@@ -1,4 +1,5 @@
 import os,tempfile,unittest
+from datetime import datetime,timezone,timedelta
 from pathlib import Path
 from fastapi.testclient import TestClient
 from app import store
@@ -20,4 +21,18 @@ class OutboxTests(unittest.TestCase):
   self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json(); self.client.post("/internal/outbox/lease",headers=self.headers)
   r=self.client.post(f"/internal/outbox/{item['id']}/finish",json={"lease_token":"not-the-current-lease-token","succeeded":True,"result":{}},headers=self.headers); self.assertEqual(r.status_code,409)
  def test_lease_duration_bounded(self): self.assertEqual(self.client.post("/internal/outbox/lease?lease_seconds=2",headers=self.headers).status_code,400)
+ def test_expired_lease_becomes_unknown_not_auto_retried(self):
+  self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
+  now=datetime.now(timezone.utc)
+  leased=store.lease_next_outbox(now=(now-timedelta(seconds=30)).isoformat(),lease_until=(now-timedelta(seconds=10)).isoformat())
+  self.assertEqual(leased["id"],item["id"])
+  self.assertIsNone(store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=30)).isoformat()))
+  self.assertEqual(store._outbox_public(store.connect().execute("SELECT * FROM execution_outbox WHERE id=?",(item["id"],)).fetchone())["status"],"unknown")
+ def test_unknown_requires_explicit_reconciliation_before_retry(self):
+  self.approve(); item=self.client.post(f"/runs/{self.run_id}/queue",headers=self.headers).json()
+  now=datetime.now(timezone.utc); store.lease_next_outbox(now=(now-timedelta(seconds=30)).isoformat(),lease_until=(now-timedelta(seconds=10)).isoformat())
+  store.lease_next_outbox(now=now.isoformat(),lease_until=(now+timedelta(seconds=30)).isoformat())
+  bad=self.client.post(f"/internal/outbox/{item['id']}/reconcile",json={"action":"retry","actor":"operator","note":"checked destination"},headers=self.headers)
+  self.assertEqual(bad.status_code,200); self.assertEqual(bad.json()["status"],"queued")
+  leased=self.client.post("/internal/outbox/lease",headers=self.headers).json()["item"]; self.assertEqual(leased["id"],item["id"])
 if __name__=="__main__": unittest.main()

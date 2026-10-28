@@ -23,6 +23,12 @@ class OutboxFinish(BaseModel):
     succeeded: bool
     result: dict[str, Any] = Field(default_factory=dict)
 
+class OutboxReconcile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: str = Field(pattern=r"^(retry|fail)$")
+    actor: str = Field(min_length=1, max_length=120)
+    note: str = Field(min_length=5, max_length=1000)
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -33,7 +39,7 @@ async def require_api_key(request: Request, x_api_key: str | None = Header(defau
     if not x_api_key or not hmac.compare_digest(x_api_key, expected):
         raise HTTPException(status_code=401, detail="invalid_or_missing_api_key")
 
-app = FastAPI(title="AI Orchestration Control Plane", version="0.2.0", dependencies=[Depends(require_api_key)])
+app = FastAPI(title="AI Orchestration Control Plane", version="0.3.0", dependencies=[Depends(require_api_key)])
 
 @app.on_event("startup")
 def startup() -> None: store.init_db()
@@ -88,6 +94,17 @@ def finish_outbox(item_id:str,body:OutboxFinish)->dict[str,Any]:
     try: result=store.finish_outbox(item_id,lease_token=body.lease_token,succeeded=body.succeeded,finished_at=now_iso(),result=body.result)
     except ValueError as exc:
         if str(exc)=="stale_or_invalid_lease": raise HTTPException(status_code=409,detail="stale_or_invalid_lease") from exc
+        raise
+    if result is None: raise HTTPException(status_code=404,detail="outbox_item_not_found")
+    return result
+
+@app.post("/internal/outbox/{item_id}/reconcile")
+def reconcile_outbox(item_id:str,body:OutboxReconcile)->dict[str,Any]:
+    try:
+        result=store.reconcile_outbox(item_id,action=body.action,actor=body.actor,note=body.note,at=now_iso())
+    except ValueError as exc:
+        if str(exc)=="outbox_not_unknown": raise HTTPException(status_code=409,detail="outbox_item_not_unknown") from exc
+        if str(exc)=="invalid_reconciliation_action": raise HTTPException(status_code=400,detail="invalid_reconciliation_action") from exc
         raise
     if result is None: raise HTTPException(status_code=404,detail="outbox_item_not_found")
     return result

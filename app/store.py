@@ -35,9 +35,14 @@ def init_db()->None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_run_events_run ON run_events(run_id,event_id)")
         conn.execute("""CREATE TABLE IF NOT EXISTS execution_outbox(
             id TEXT PRIMARY KEY,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id) ON DELETE CASCADE,
-            status TEXT NOT NULL CHECK(status IN ('queued','leased','completed','failed')),
+            status TEXT NOT NULL CHECK(status IN ('queued','leased','unknown','completed','failed')),
             attempts INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,available_at TEXT NOT NULL,
             lease_token TEXT,lease_until TEXT,finished_at TEXT,result_json TEXT NOT NULL DEFAULT '{}')""")
+        # Upgrade databases created by the earlier outbox version.
+        columns={r["name"] for r in conn.execute("PRAGMA table_info(execution_outbox)").fetchall()}
+        if "status" in columns:
+            conn.execute("DROP INDEX IF EXISTS idx_outbox_ready")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_outbox_ready ON execution_outbox(status,available_at,created_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_outbox_ready ON execution_outbox(status,available_at,created_at)")
 
 def insert_run(*,run_id:str,idempotency_key:str,workflow:str,payload:dict[str,Any],created_at:str)->dict[str,Any]:
@@ -101,15 +106,34 @@ def enqueue_approved_run(run_id:str,*,created_at:str)->dict[str,Any]|None:
 def lease_next_outbox(*,now:str,lease_until:str,max_attempts:int=5)->dict[str,Any]|None:
     with db_connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        conn.execute("UPDATE execution_outbox SET status='failed',lease_token=NULL,lease_until=NULL,finished_at=? WHERE status='leased' AND lease_until<=? AND attempts>=?",(now,now,max_attempts))
-        row=conn.execute("""SELECT * FROM execution_outbox WHERE attempts<? AND
-            ((status='queued' AND available_at<=?) OR (status='leased' AND lease_until<=?))
-            ORDER BY created_at,id LIMIT 1""",(max_attempts,now,now)).fetchone()
+        # A worker may have performed the external side effect and crashed before recording it.
+        # Expired leases are therefore UNKNOWN and require human reconciliation, never auto-retry.
+        expired=conn.execute("SELECT id,run_id FROM execution_outbox WHERE status='leased' AND lease_until<=?",(now,)).fetchall()
+        for row in expired:
+            conn.execute("UPDATE execution_outbox SET status='unknown',lease_token=NULL,lease_until=NULL,finished_at=NULL,result_json=? WHERE id=? AND status='leased'",
+                         (json.dumps({"reason":"lease_expired_outcome_unknown"}),row["id"]))
+            conn.execute("INSERT INTO run_events(run_id,event_type,actor,event_at,details_json) VALUES(?,?,?,?,?)",
+                         (row["run_id"],"outbox_unknown","system",now,json.dumps({"outbox_id":row["id"],"reason":"lease_expired_outcome_unknown"})))
+        row=conn.execute("SELECT * FROM execution_outbox WHERE status='queued' AND available_at<=? AND attempts<? ORDER BY created_at,id LIMIT 1",(now,max_attempts)).fetchone()
         if row is None: conn.commit(); return None
         token=str(uuid.uuid4())
-        conn.execute("UPDATE execution_outbox SET status='leased',attempts=attempts+1,lease_token=?,lease_until=? WHERE id=?",(token,lease_until,row["id"]))
+        conn.execute("UPDATE execution_outbox SET status='leased',attempts=attempts+1,lease_token=?,lease_until=? WHERE id=? AND status='queued'",(token,lease_until,row["id"]))
         leased=conn.execute("SELECT * FROM execution_outbox WHERE id=?",(row["id"],)).fetchone(); conn.commit()
         return _outbox_public(leased,include_lease_token=True)
+
+def reconcile_outbox(item_id:str,*,action:str,actor:str,note:str,at:str)->dict[str,Any]|None:
+    if action not in {"retry","fail"}: raise ValueError("invalid_reconciliation_action")
+    with db_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE"); row=conn.execute("SELECT * FROM execution_outbox WHERE id=?",(item_id,)).fetchone()
+        if row is None: conn.rollback(); return None
+        if row["status"]!="unknown": conn.rollback(); raise ValueError("outbox_not_unknown")
+        status="queued" if action=="retry" else "failed"
+        conn.execute("UPDATE execution_outbox SET status=?,available_at=?,finished_at=?,lease_token=NULL,lease_until=NULL,result_json=? WHERE id=? AND status='unknown'",
+                     (status,at,None if action=="retry" else at,json.dumps({"reconciled_by":actor,"note":note,"action":action},ensure_ascii=False)[:4000],item_id))
+        conn.execute("INSERT INTO run_events(run_id,event_type,actor,event_at,details_json) VALUES(?,?,?,?,?)",
+                     (row["run_id"],f"outbox_reconciled_{action}",actor,at,json.dumps({"outbox_id":item_id,"note":note},ensure_ascii=False)))
+        updated=conn.execute("SELECT * FROM execution_outbox WHERE id=?",(item_id,)).fetchone(); conn.commit()
+        return _outbox_public(updated)
 
 def finish_outbox(item_id:str,*,lease_token:str,succeeded:bool,finished_at:str,result:dict[str,Any]|None=None)->dict[str,Any]|None:
     with db_connection() as conn:

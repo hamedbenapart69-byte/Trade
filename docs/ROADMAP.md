@@ -1,24 +1,22 @@
 # Roadmap
 
-## Milestone 0 — control-plane foundation
-- [x] Approval-gated run ledger, API token guard, idempotency and audit events
-- [x] Backup and integrity check
-- [x] n8n adapter with explicit opt-in and mocked tests
-- [x] Durable SQLite outbox with transactional queue insertion, lease expiry recovery, and stale-token protection
+## Foundation complete
+- [x] Approval-gated run ledger and audit trail
+- [x] SQLite persistence and idempotent run creation
+- [x] Durable outbox with bounded leases
+- [x] Fail-safe handling of expired leases: `unknown` plus explicit operator reconciliation
+- [x] Backup integrity check and CI tests
+- [x] Guarded, disabled-by-default n8n adapter
 
-## Milestone 1 — execution reliability
-- [ ] Separate worker identity/credentials and least-privilege authorization
-- [ ] Backoff schedule, max-attempt policy visibility, dead-letter inspection and operator replay
-- [ ] Worker process, idempotent provider delivery and downstream status reconciliation
-- [ ] Test crash/restart, concurrent lease contention, callback replay, and uncertain timeouts
+## Next milestones
+1. Split owner/operator and worker authentication; enforce least privilege.
+2. Build a worker process with explicit workflow allowlist, per-workflow schemas, execution IDs, bounded payloads and safe shutdown.
+3. Add isolated test receiver and integration tests before connecting n8n; no retry after unknown outcome without destination reconciliation.
+4. Add durable dead-letter inspection, metrics, structured logs, and alerting.
+5. Add restore drills and database migration tests.
+6. Build a mobile-first control center only after authentication and authorization are production-grade.
+7. Deploy behind HTTPS with secret management, rate limits, backups, monitoring and rollback; verify access from the user's real network/device.
+8. Add agent/model integrations only behind explicit tool allowlists and approval gates.
 
-## Milestone 2 — agent runtime
-- [ ] Add LangGraph only for stateful reasoning tasks
-- [ ] Structured outputs, per-run budgets, tool allowlist, approval gates and prompt-injection tests
-
-## Milestone 3 — daily UI and deployment
-- [ ] Responsive mobile control center and real identity/authentication
-- [ ] Verify hosting availability from the user's actual network
-- [ ] HTTPS, secrets, logs, alerts, backups/restore and authorized end-to-end tests
-
-Never mark a milestone complete without a commit, reproducible test evidence and environment verification where applicable.
+## Not production-ready yet
+No real external execution, model, browser, n8n workflow, identity provider, mobile UI, or deployment has been verified. Do not expose the current API publicly.
