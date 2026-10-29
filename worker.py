@@ -10,7 +10,7 @@ from app.integrations.coingecko import fetch_market_snapshot, MarketDataError
 class WorkerConfigurationError(RuntimeError):
     pass
 
-def run_once(*, client: httpx.Client | None = None, deliverer=deliver_approved_payload) -> str:
+def run_once(*, client: httpx.Client | None = None, deliverer=deliver_approved_payload, market_fetcher=fetch_market_snapshot) -> str:
     if os.getenv("ENABLE_WORKER_EXECUTION", "false").strip().lower() != "true":
         raise WorkerConfigurationError("worker execution is disabled; set ENABLE_WORKER_EXECUTION=true explicitly")
     base = os.getenv("CONTROL_API_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -43,7 +43,7 @@ def run_once(*, client: httpx.Client | None = None, deliverer=deliver_approved_p
             finish.raise_for_status()
             return "rejected_workflow"
         if workflow == "market.snapshot":
-            snapshot = fetch_market_snapshot(payload=item.get("input", {}))
+            snapshot = market_fetcher(payload=item.get("input", {}))
             result_data = {
                 "provider": snapshot.provider, "http_status": snapshot.status_code,
                 "coin_id": snapshot.coin_id, "currency": snapshot.currency,
