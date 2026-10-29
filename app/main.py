@@ -1,6 +1,6 @@
 """HTTP API for the approval-gated execution ledger and durable outbox."""
 from __future__ import annotations
-import hmac, json, logging, os, re, time, uuid
+import hmac, json, logging, os, re, time, uuid, threading
 from datetime import datetime, timezone, timedelta
 from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -48,6 +48,8 @@ async def require_api_key(request: Request, x_api_key: str | None = Header(defau
 
 app = FastAPI(title="AI Orchestration Control Plane", version="0.3.0", dependencies=[Depends(require_api_key)])
 access_log = logging.getLogger("control.access")
+_worker_run_lock = threading.Lock()
+_worker_last_started = 0.0
 
 @app.middleware("http")
 async def request_observability(request: Request, call_next):
@@ -82,6 +84,27 @@ def console() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict[str,str]: return {"status":"ok","service":"control-plane","version":app.version}
+
+@app.post("/admin/worker/run-once")
+def admin_worker_run_once() -> dict[str, str]:
+    """Run at most one approved, allowlisted queue item after an operator click."""
+    global _worker_last_started
+    now = time.monotonic()
+    if not _worker_run_lock.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="worker_already_running")
+    try:
+        if now - _worker_last_started < 15:
+            raise HTTPException(status_code=429, detail="worker_cooldown_15_seconds")
+        _worker_last_started = now
+        from worker import run_once, WorkerConfigurationError
+        from app.integrations.coingecko import MarketDataError
+        try:
+            return {"status": run_once()}
+        except (WorkerConfigurationError, MarketDataError) as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+    finally:
+        _worker_run_lock.release()
+
 
 @app.post("/runs",status_code=201)
 def create_run(body:RunCreate,idempotency_key:str|None=Header(default=None,alias="Idempotency-Key"))->dict[str,Any]:
