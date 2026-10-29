@@ -44,6 +44,6 @@ python worker.py
 
 N8N execution separately requires ENABLE_N8N_EXECUTION=true, N8N_WEBHOOK_URL and destination authentication. A timeout leaves the item uncertain; do not retry until the destination outcome is checked.
 
-## Public hosting gate
+## Current hosted preview
 
-Do not expose this service directly. Before hosting, implement production identity and role-based authorization, rate limiting and origin controls, TLS, secret management, persistent storage, external backup storage, monitoring, and a real-device connectivity test. No hosting provider or public deployment has been verified yet.
+Owner-operated preview URL: https://control-plane-v2-production-8d31.up.railway.app/. Railway deployment is online with TLS and a 500 MB persistent volume mounted at /var/lib/control. `/health` returns HTTP 200. The root HTML and health endpoint are public; operational API routes require the operator key, while worker lease/finish routes use a separate worker key. The one-shot worker is enabled with only `market.snapshot` in its allowlist; n8n remains disabled. This is not yet a hardened production release: add identity/role authorization, rate limiting/origin controls, external backup and restore drill, alerting, and real-device verification before storing sensitive data.

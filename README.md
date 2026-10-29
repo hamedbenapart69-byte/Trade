@@ -19,7 +19,7 @@ Owner-controlled automation platform in repository [Trade](https://github.com/ha
 
 CI: [latest workflow runs](https://github.com/hamedbenapart69-byte/Trade/actions). CI runs unit/API tests, builds the Docker image and smoke-tests the container health endpoint. Tests include an approved research run reaching a local HTTP receiver and persisting completion.
 
-No live n8n instance, hosted model, external browser automation, public deployment, identity provider or real-device access has been verified. A local test receiver is not a production third-party integration.
+Deployed preview: https://control-plane-v2-production-8d31.up.railway.app/ (Railway, persistent 500 MB volume, TLS, one replica). Health endpoint and deployment are verified. The live CoinGecko public API endpoint was independently reachable; unit tests use a mocked HTTP client. A full authenticated browser-triggered run through the hosted queue has not yet been verified. No live n8n instance, hosted model, external browser automation, identity provider or real-device mobile access has been verified.
 
 ## Local run
 
@@ -58,7 +58,7 @@ python -m unittest discover -s tests -v
 
 ## Deployment and security
 
-Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume. Do not expose it directly to the public internet. Before production hosting, add production identity/role authorization, rate limiting, request-origin protections, secret management, persistent storage verification, TLS, monitoring and a tested backup/restore procedure. See `docs/SECURITY-BASELINE.md` and `docs/ROADMAP.md`.
+Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume. The current public Railway URL is an owner-operated preview, not a hardened production release. Operational API routes require an API key; the root console and health endpoint are public. Before storing sensitive data or treating this as production, add identity/role authorization, rate limiting and origin protections, external backup/restore verification, alerting, and a real-device access test. The one-shot worker is enabled only for the read-only market.snapshot allowlist; n8n execution remains disabled. See `docs/SECURITY-BASELINE.md` and `docs/ROADMAP.md`.
 
 ## Research and architecture
 
