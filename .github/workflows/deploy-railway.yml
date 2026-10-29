@@ -1,0 +1,70 @@
+name: Deploy Railway after green CI
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy current tested commit to Railway production
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout the exact commit tested by CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check for Railway project token without printing it
+        id: token
+        shell: bash
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [[ -n "${RAILWAY_TOKEN:-}" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Railway token is configured."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "BLOCKED: create a Railway Project Token scoped to the production environment and save it as GitHub Actions secret RAILWAY_TOKEN." >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Railway deployment skipped: required secret RAILWAY_TOKEN is not configured."
+          fi
+
+      - name: Install Railway CLI
+        if: steps.token.outputs.available == 'true'
+        run: npm install --global @railway/cli
+
+      - name: Deploy tested commit to existing Railway service
+        if: steps.token.outputs.available == 'true'
+        shell: bash
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "Source commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          railway up --project 7e596c1a-f402-45fb-be4a-461b0748f865 --environment production --service control-plane-v2 --ci
+
+      - name: Verify production health and CSP
+        if: steps.token.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://control-plane-v2-production-8d31.up.railway.app"
+          STATUS="$(curl --silent --show-error --output /tmp/health.json --write-out '%{http_code}' "$URL/health")"
+          test "$STATUS" = "200"
+          grep -q '"status":"ok"' /tmp/health.json
+          HEADERS="$(curl --silent --show-error --head "$URL/")"
+          printf '%s\n' "$HEADERS" | grep -iq '^content-security-policy:'
+          {
+            echo "Health HTTP status: $STATUS"
+            echo "Health response: $(cat /tmp/health.json)"
+            echo "CSP header: present"
+            echo "Source commit submitted by this workflow: $GITHUB_SHA"
+            echo "IMPORTANT: verify the deployed commit in Railway deployment metadata before marking EV-004 PASS."
+          } >> "$GITHUB_STEP_SUMMARY"
