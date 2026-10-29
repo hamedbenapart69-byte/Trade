@@ -15,5 +15,7 @@ class SecurityHeadersTests(unittest.TestCase):
   self.assertEqual(r.headers['X-Frame-Options'],'DENY')
   self.assertEqual(r.headers['Referrer-Policy'],'no-referrer')
   self.assertEqual(r.headers['Cache-Control'],'no-store')
+  self.assertIn("default-src 'self'",r.headers['Content-Security-Policy'])
+  self.assertIn("object-src 'none'",r.headers['Content-Security-Policy'])
   self.assertIn('camera=()',r.headers['Permissions-Policy'])
 if __name__=='__main__': unittest.main()

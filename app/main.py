@@ -65,6 +65,7 @@ async def request_observability(request: Request, call_next):
         response.headers["Referrer-Policy"]="no-referrer"
         response.headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=()"
         response.headers["Cache-Control"]="no-store"
+        response.headers["Content-Security-Policy"]="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
         access_log.info("http_request",extra={"request_id":request_id,"method":request.method,
             "path":request.url.path,"status_code":response.status_code,
             "duration_ms":round((time.perf_counter()-started)*1000,2)})
