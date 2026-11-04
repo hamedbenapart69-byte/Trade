@@ -42,9 +42,12 @@ class DiscoveredPool:
 
 
 def _number(value: object) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
         return None
-    result = float(value)
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
     return result if math.isfinite(result) and result >= 0 else None
 
 
