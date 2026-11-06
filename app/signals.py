@@ -631,7 +631,7 @@ def get_signal_status():
       "api_key_type":"read-only data-provider credential; not an exchange key",
       "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"standard_scan_estimated_calls":132,
       "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
-      "live_rest_access_verified":False if configured else None,
+      "live_rest_access_verified":False,"last_live_verification":None,
       "note":"A configured key is not proof of live reachability; run the manual V5 Live Validation workflow to verify."}
 @router.post("/signals/scan")
 def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)):
