@@ -1,5 +1,9 @@
 name: V5 Live Validation
 on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * *"
   workflow_dispatch:
 concurrency:
   group: futures-signal-v5-live-${{ github.ref }}
