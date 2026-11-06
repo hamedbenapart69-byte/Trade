@@ -44,7 +44,7 @@ class V5ScoringAndStorageTests(unittest.TestCase):
           "adx":25,"bb_position":"lower_half","obv_aligned":True,"mfi_aligned":True}
         trends={"1d":"BULLISH","4h":"UP","1h":"UP"}
         structure={"classification":"BULLISH","bos":True,"choch":False,"fvg_aligned":True,"order_block_aligned":True,"liquidity_sweep_aligned":False}
-        score,parts=_score("LONG",tech,trends,structure,2,3,1.5,-0.0001,5,True,0,False)
+        score,parts=_score("LONG",tech,trends,structure,2,3,4,1.5,1.1,-0.0001,5,True,0,False)
         self.assertLessEqual(score,100)
         self.assertEqual(parts["smart_money_onchain"],0)
         self.assertEqual(parts["independent_confirmation"],0)
