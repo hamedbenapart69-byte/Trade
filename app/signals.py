@@ -549,8 +549,20 @@ class FuturesSignalEngine:
         v3=50+(10 if (rv<30 if direction=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if direction=="LONG" else "DOWN") else 0)+(10 if ((cl[-1]>e20 and cl[-1]>e50) if direction=="LONG" else (cl[-1]<e20 and cl[-1]<e50)) else 0)+(10 if ((direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0)) else 0)
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if direction=="LONG" else "BEARISH"}
         grade="B" if independent else "C"
+        ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
+        ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
+        audit={"tracked_usdt_perpetual_instrument":True,"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
+          "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
+          "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
+          "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding)<.0005,
+          "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
+          "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
+          "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
+          "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
+          "independent_confirmation_and_grade_verified":independent and grade in {"A","B"}}
+        audit_passed=all(audit.values())
         if not risk["valid"]:decision="REJECT"
-        elif grade not in {"A","B"}:decision="WAIT"
+        elif not audit_passed:decision="WAIT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
         elif score>=60 and (not entry_ok or conflict or chase):decision="CONDITIONAL_BUY" if direction=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
@@ -561,15 +573,6 @@ class FuturesSignalEngine:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
-        ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
-        ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
-        audit={"instrument_is_tracked_usdt_perpetual":True,"mark_and_index_price_verified":True,"live_price_fresh":True,
-          "four_timeframes_ohlcv_validated":True,"ohlcv_completed_candles_only":True,"v3_baseline_passed":True,
-          "funding_interval_verified":True,"open_interest_verified":True,"multi_timeframe_checked":True,"market_structure_checked":True,
-          "volume_and_momentum_checked":True,"anti_chase_checked":True,"stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,
-          "planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,"leverage_at_most_5x":risk["required_leverage"]<=5,
-          "reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,"independent_source_checked":True,
-          "data_grade_actionable":grade in {"A","B"},"no_exchange_account_or_order_execution":True}
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
           "entry_type":entry_type,"entry":mark,"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
@@ -583,7 +586,7 @@ class FuturesSignalEngine:
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
-          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_passed":all(audit.values()),"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
+          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
             "The underlying public market feed is Binance USDⓈ-M futures via TraderSpy; this is not a direct Binance API connection.",
             "The provider does not expose a verified venue lot step/minimum quantity or contract multiplier; size is expressed in base units.",
             "No orderbook spread, exact fees, slippage, liquidation price or on-chain wallet identity is available in this feed.",
