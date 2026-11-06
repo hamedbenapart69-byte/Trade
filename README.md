@@ -64,16 +64,16 @@ Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume.
 
 See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
 
-## Futures Signal Autopilot V5 (read-only branch)
+## Futures Signal Autopilot V5
 
-The branch `feature/futures-signal-autopilot-v5` adds a V5 scanner in `app/signals.py`:
-- `POST /signals/scan` (operator token required; `universe_limit=1..100`, or `extended=true`)
+The V5 scanner is in `app/signals.py`:
+- `POST /signals/scan`
 - `GET /signals/latest`
 - `GET /signals/performance`
 - `POST /signals/evaluate`
 
-Market discovery uses CoinGecko's public API; perpetual price/funding/OI data uses OptimistFi's free no-key Perps Data API; OHLCV comes from GeckoTerminal's free no-key DEX spot API (30 requests/minute). No exchange account, exchange API key or order endpoint is used.
+Discovery uses CoinGecko. Numerical 15m/1h/4h/1d futures OHLCV, prices, derivatives and optional smart-money evidence use TraderSpy's read-only market-data API. The underlying public feed identifies as Binance USDⓈ-M futures, accessed through TraderSpy. There is no direct Binance connection, exchange account, exchange API key, or order execution.
 
-**Important:** the OHLCV is DEX spot data, not futures-contract candles. The engine validates the spot/perps price basis and assigns Data Grade B. It also cannot yet validate a venue's lot step/minimum quantity, so displayed contract quantity is a reference only.
+**Repository runner setup:** the free TraderSpy data-provider plan requires a read-only API key. Add it to GitHub Actions secrets as `TRADERSPY_API_KEY`. This is not an exchange key and cannot place trades. Free-plan limits are 300 API calls/day and 10/minute; a standard 30-asset scan uses about132 calls and takes around 13–15 minutes. The key is not committed to source.
 
-This is an initial scanner, not a completed V5 release. Smart-money wallet identity, liquidations, order blocks/FVG, second OHLCV fallback, fee/slippage modeling, scheduled scans, Iran-network reachability and a verified live scan remain open. See [the V5 implementation boundary](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md). Unit tests are not live-market results.
+The ChatGPT TraderSpy connector was live-tested for BTCUSDT in this session. The GitHub REST runner has not yet completed a live 30-asset scan because its separate API secret is not configured. See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md).
