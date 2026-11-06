@@ -658,14 +658,16 @@ def get_signal_status():
       "note":"A configured key is not proof of live reachability; run the manual V5 Live Validation workflow to verify."}
 @router.post("/signals/scan")
 def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)):
-    e=FuturesSignalEngine()
+    p=PublicMarketData();e=FuturesSignalEngine(provider=p)
     try:
+        prior=evaluate_outcomes_with_provider(p)
         r=e.scan(extended,universe_limit)
         r["status"]="DATA_UNAVAILABLE" if r["screened_assets"]==0 or r["coverage"]["insufficient_data"]==r["screened_assets"] else "SCAN_COMPLETED"
-        r["formatted_output"]=render_output(r);r["persistence"]=save_scan(r)
+        r["prior_outcome_evaluation"]=prior;r["formatted_output"]=render_output(r);save_scan(r)
         return r
     except DataError as ex:raise HTTPException(503,detail={"status":"INSUFFICIENT_DATA","reason":str(ex),"action":"DATA UNAVAILABLE — do not trade today."}) from ex
-    finally:e.close()
+    finally:
+        e.close();p.close()
 
 @router.get("/signals/latest")
 def get_latest():
@@ -676,8 +678,7 @@ def get_latest():
 @router.get("/signals/performance")
 def get_performance():return performance()
 
-@router.post("/signals/evaluate")
-def evaluate_outcomes(provider=None):
+def evaluate_outcomes_with_provider(provider=None):
     init_signal_db();checked=closed=ambiguous=expired=0;own=provider is None;p=provider or PublicMarketData()
     try:
         with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
@@ -719,3 +720,8 @@ def evaluate_outcomes(provider=None):
           "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. If one candle touches stop and target, outcome is UNKNOWN."}
     finally:
         if own:p.close()
+
+@router.post("/signals/evaluate")
+def evaluate_outcomes():
+    return evaluate_outcomes_with_provider()
+
