@@ -5,12 +5,12 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from datetime import datetime, timezone
-from app.signals import FuturesSignalEngine, PublicMarketData, render_output, save_scan, evaluate_outcomes_with_provider
+from app.signals import FuturesSignalEngine, create_provider, render_output, save_scan, evaluate_outcomes_with_provider
 
 def main() -> int:
     out=Path("artifacts/v5_live_scan.json")
     out.parent.mkdir(parents=True,exist_ok=True)
-    provider=PublicMarketData()
+    provider=create_provider()
     engine=FuturesSignalEngine(provider=provider)
     try:
         prior=evaluate_outcomes_with_provider(provider)
