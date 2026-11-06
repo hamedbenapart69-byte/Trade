@@ -623,6 +623,16 @@ class FuturesSignalEngine:
         if self.own:self.p.close()
 
 router=APIRouter(tags=["futures-signals"])
+@router.get("/signals/status")
+def get_signal_status():
+    configured=bool(os.getenv("TRADERSPY_API_KEY"))
+    return {"status":"READY_FOR_PROVIDER_AUTH" if configured else "DATA_UNAVAILABLE",
+      "data_provider":"TraderSpy read-only market-data API","api_key_configured":configured,
+      "api_key_type":"read-only data-provider credential; not an exchange key",
+      "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"standard_scan_estimated_calls":132,
+      "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
+      "live_rest_access_verified":False if configured else None,
+      "note":"A configured key is not proof of live reachability; run the manual V5 Live Validation workflow to verify."}
 @router.post("/signals/scan")
 def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)):
     e=FuturesSignalEngine()
