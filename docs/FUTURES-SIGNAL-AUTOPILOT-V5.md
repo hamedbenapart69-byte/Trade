@@ -16,6 +16,7 @@ This document records the implementation boundary against the uploaded 52-page `
 - Matching to TraderSpy's tracked USDT perpetual symbol universe.
 - Raw numerical futures OHLCV for 15m, 1h, 4h and 1d; completed-candle filtering; timestamp ordering, duplicate, gap, OHLC, finite-value, volume and freshness checks.
 - Deterministic RSI(14), EMA20/50/200, ATR(14), volume ratio, MACD(12,26,9), Bollinger Bands(20,2), StochRSI, ADX, OBV and MFI.
+- A 25-check pre-trade self-audit; actionable decisions require every check to pass.
 - 1D/4H/1H trend checks; five-candle swing pivots, HH/HL and LH/LL structure, BOS/CHoCH, simple FVG/last-opposite-candle order-block and liquidity-sweep observations, clustered swing levels, ATR-percentile volatility regime.
 - V3 mandatory long/short baseline and diagnostic score.
 - V5 score categories with maxima preserved: Core Technical 25, Multi-Timeframe 15, Market Structure 15, Volume/Momentum 10, Derivatives 10, Smart Money 5, Entry/Risk 15, Independent Confirmation 5. The PDF defines category maxima but not every sub-point; the sub-rubric in code is an explicit, test-covered interpretation.
@@ -38,7 +39,7 @@ The following are implementation choices where the PDF defines the category or i
 - Exact spread/order-book depth, maker/taker fees, slippage and venue-specific liquidation price.
 - Full liquidation heatmaps/clusters and on-chain wallet/holder flows.
 - Full institutional order-block/FVG and liquidity-pool mapping beyond the documented candle-based approximations.
-- TraderSpy free REST API key configured in GitHub Actions; without it, the backend correctly returns `INSUFFICIENT_DATA`.
+- TraderSpy free REST API key configured in GitHub Actions; without it, the backend correctly returns `DATA UNAVAILABLE` / `INSUFFICIENT_DATA`. See `docs/SETUP_TRADERSPY_API_KEY.md`.
 - A successful end-to-end 30-asset GitHub live scan using that secret. The connected ChatGPT TraderSpy data connector has been live-tested for BTC only; that is not a 30-asset production validation.
 - Direct REST reachability from Iran and GitHub runner reachability.
 - A verified historical backtest/performance sample. CI fixtures are tests only and must never be presented as live results.
