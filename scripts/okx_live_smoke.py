@@ -1,5 +1,7 @@
 from __future__ import annotations
-import json,time
+import json,time,sys
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from app.signals import FuturesSignalEngine,create_provider,contract_sized_risk
 
 p=create_provider()
