@@ -23,6 +23,14 @@ class V5IndicatorTests(unittest.TestCase):
         bad=cs[:];bad[2]=Candle(120000,100,98,99,100,10,179999)
         with self.assertRaises(CandleError): validate_candles(bad,60000,now=310000,min_count=5)
 
+    def test_nonfinal_out_of_order_and_wrong_close_time_rejected(self):
+        cs=[Candle(i*60000,100,101,99,100,10,(i+1)*60000-1) for i in range(5)]
+        open_last=cs[:-1]+[Candle(cs[-1].open_time,100,101,99,100,10,cs[-1].close_time,False)]
+        with self.assertRaises(CandleError):validate_candles(open_last,60000,now=310000,min_count=5)
+        with self.assertRaises(CandleError):validate_candles(cs[1:]+cs[:1],60000,now=310000,min_count=5)
+        wrong=cs[:];wrong[2]=Candle(120000,100,101,99,100,10,180000)
+        with self.assertRaises(CandleError):validate_candles(wrong,60000,now=310000,min_count=5)
+
 class V5RiskTests(unittest.TestCase):
     def test_four_dollar_risk_and_five_x_cap(self):
         r=risk_calc("LONG",100,98.5)
