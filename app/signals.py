@@ -396,107 +396,212 @@ def render_output(r):
     return "\n".join(out)
 
 class FuturesSignalEngine:
-    def __init__(self,provider=None,clock=None):self.p=provider or PublicMarketData();self.own=provider is None;self.clock=clock or (lambda:int(time.time()*1000))
+    def __init__(self,provider=None,clock=None):
+        self.p=provider or PublicMarketData();self.own=provider is None;self.clock=clock or (lambda:int(time.time()*1000))
     def scan(self,extended=False,limit=30):
-        now=self.clock();coins=self.p.discover();perps=self.p.perps_assets();whales=self.p.whales()
-        asof=_iso_ms(perps.get("asOf"))
-        if not asof or now-asof>900_000 or asof>now+60_000:raise DataError("optimistfi_perps_snapshot_stale")
-        pmap={x.get("base","").upper():x for x in perps["data"] if x.get("assetClass")=="crypto" and x.get("base")}
+        now=self.clock()
+        coins=self.p.discover()
+        tracked=self.p.tracked_symbols()
         counts={}
         for x in coins:counts[x["symbol"]]=counts.get(x["symbol"],0)+1
         eligible=[]
         for x in coins:
-            s=x["symbol"];p=pmap.get(s)
-            if s in STABLES or s in WRAPPED or counts[s]>1 or not x["id"] or not p:continue
-            if not p.get("price") or not p.get("openInterestUsd") or not p.get("volume24hUsd"):continue
-            eligible.append((x,p))
-        cap=100 if extended else max(1,min(limit,100));selected=eligible[:cap];candidates=[]
-        for coin,perp in selected:
+            s=x["symbol"]
+            if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED:continue
+            if any(s.endswith(z) for z in ("UP","DOWN","BULL","BEAR","3L","3S","5L","5S")):continue
+            sym=s+"USDT"
+            if sym not in tracked:continue
+            eligible.append((x,sym))
+        requested=100 if extended else max(1,min(limit,30))
+        cap=min(requested,40 if extended else 30)
+        selected=eligible[:cap]
+        if not selected:raise DataError("no_coin_gecko_assets_match_traderspy_usdt_perpetual_universe")
+        symbols=[s for _,s in selected]
+        prices=self.p.prices(symbols)
+        derivatives=self.p.derivatives(symbols)
+        smart=self.p.smart_money()
+        candidates=[]
+        for coin,symbol in selected:
             try:
-                pool=self.p.pool_for(coin)
-                oi_old=oi_change_1h(perp["base"],asof)
-                candidates.append(self.evaluate(coin,perp,pool,whales,asof,now,oi_old))
+                d=derivatives.get(symbol);p=prices.get(symbol)
+                if not d or not p:raise DataError("missing_live_price_or_derivatives")
+                candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
+                oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
+                result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old)
+                candidates.append(result)
+                save_market_snapshot(symbol,_iso_ms(d.get("updatedAt")),float((d.get("openInterest") or {}).get("valueUsd") or 0))
             except (DataError,CandleError,ValueError,TypeError,KeyError) as e:
-                candidates.append({"symbol":perp["base"]+"-PERP","asset":coin["id"],"decision":"INSUFFICIENT_DATA","direction":None,"data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}"})
-            save_market_snapshot(perp["base"],asof,perp.get("openInterestUsd"))
-        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:(-x["confidence_v5"],-x.get("risk",{}).get("reward_to_risk",0)))[:10]
+                candidates.append({"symbol":symbol,"asset":coin["id"],"decision":"INSUFFICIENT_DATA","direction":None,
+                  "data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}:{str(e)[:120]}"})
+        screened=sum(x["decision"]!="INSUFFICIENT_DATA" for x in candidates)
+        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],
+          key=lambda x:(-x["confidence_v5"],0 if x["data_grade"]=="A" else 1,not x.get("entry_quality",{}).get("entry_ok",False),
+            -x.get("risk",{}).get("reward_to_risk",0),-x.get("v5_score_components",{}).get("multi_timeframe",0),
+            not x.get("independent_confirmation",{}).get("passed",False)))[:10]
         conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
-          "universe_requested":cap,"eligible_assets":len(eligible),"screened_assets":len(selected),"partial_scan":cap>=30 and len(selected)<30,
-          "source_status":{"discovery":"CoinGecko public API","perpetuals":"OptimistFi Perps Data API","ohlcv":"GeckoTerminal DEX spot OHLCV",
+          "universe_requested":requested,"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
+          "partial_scan":screened<30,"extended_partial":bool(extended and len(selected)<min(100,len(eligible))),
+          "api_calls_used":self.p.calls,"api_plan_limit_daily":300,"api_plan_rate_limit_per_minute":10,
+          "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":"TraderSpy read-only futures market-data API",
+            "derivatives":"TraderSpy read-only futures market-data API","smart_money":"TraderSpy top-trader and open-position endpoints",
+            "underlying_market_data":"Binance USDⓈ-M futures public market feed via TraderSpy; no direct Binance connection",
             "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
-          "actionable":actionable,"conditional":conditional,"other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
-          "coverage":{"total_candidates":len(candidates),"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),"rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
-    def evaluate(self,coin,perp,pool,whales,asof,now,oi_old):
-        price=float(perp["price"])
-        if perp.get("priceDispersionBps") is None:raise DataError("missing_cross_venue_price_dispersion")
-        disp=float(perp["priceDispersionBps"])
-        if price<=0 or disp>100:raise DataError("invalid_price_or_cross_venue_dispersion_over_100bps")
-        mins={"15m":210,"1h":210,"4h":210,"1d":100}
-        cs={tf:validate_candles(self.p.candles(pool,tf,260),iv,now,mins[tf]) for tf,iv in INTERVALS.items()}
-        spot=cs["15m"][-1].close;basis=(price/spot-1)*10000
-        if abs(basis)>100:raise DataError("spot_futures_basis_over_100bps")
-        one=cs["1h"];cl=[x.close for x in one];rv=rsi(cl)[-1];e20=ema(cl,20)[-1];e50=ema(cl,50)[-1];a14=atr(one)[-1];vr=volume_ratio(one)
-        if None in (rv,e20,e50,a14,vr):raise DataError("mandatory_indicator_missing")
-        trends={"1d":_trend(cs["1d"],True),"4h":_trend(cs["4h"]),"1h":_trend(one)}
-        hourly=float(perp["fundingRateHourly"]);fund=hourly*8
-        long=rv<35 and vr>1.2 and one[-1].close>e20 and trends["4h"] in {"UP","FLAT"} and abs(fund)<.0005
-        short=rv>65 and vr>1.2 and one[-1].close<e20 and trends["4h"] in {"DOWN","FLAT"} and abs(fund)<.0005
-        if not long and not short:return {"symbol":perp["base"]+"-PERP","asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,"reason":"mandatory_v3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr},"trends":trends}
-        d="LONG" if long else "SHORT"
-        oi_change=((float(perp["openInterestUsd"])/oi_old)-1)*100 if oi_old and oi_old>0 else None
-        venues=perp.get("venues",[])
-        long_oi=sum(float(v.get("openInterestLongUsd") or 0) for v in venues)
-        short_oi=sum(float(v.get("openInterestShortUsd") or 0) for v in venues)
-        ls=long_oi/short_oi if long_oi>0 and short_oi>0 else None
-        required=(4/(1.5*a14/price))/200
-        contract_venues=[v for v in venues if float(v.get("maxLeverage") or 0)>0 and float(v.get("contractMultiplier") or 0)>0]
-        if not contract_venues:raise DataError("missing_verified_venue_multiplier_or_leverage")
-        eligible_venues=[v for v in contract_venues if float(v.get("maxLeverage") or 0)>=required]
-        venue=max(eligible_venues or contract_venues,key=lambda v:float(v.get("openInterestUsd") or 0))
-        mult=float(venue["contractMultiplier"]);venue_lev=float(venue["maxLeverage"])
-        ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) if d=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))
-        bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl)
-        tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":ema(cl,200)[-1],"atr14":a14,"volume_ratio":vr,"close":one[-1].close,
-          "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
-          "bollinger_upper":bu[-1],"stoch_rsi":sr[-1],"macd_aligned":macd_ok,"price_change":(cl[-1]/cl[-2]-1)*100}
-        st=_structure(cs["4h"],d);risk=risk_calc(d,price,a14,mult,venue_lev)
-        e15=ema([x.close for x in cs["15m"]],20)[-1];last=cs["15m"][-1];prev=cs["15m"][-2]
-        entry_ok=e15 is not None and ((d=="LONG" and last.close>e15 and last.close>=prev.close) or (d=="SHORT" and last.close<e15 and last.close<=prev.close))
+          "actionable":actionable,"conditional":conditional,
+          "other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
+          "coverage":{"total_candidates":len(candidates),"screened":screened,"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),
+            "rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
+    def evaluate(self,coin,symbol,candles,deriv,price,smart,now,oi_old):
+        du=_iso_ms(deriv.get("updatedAt"));pu=_iso_ms(price.get("updatedAt"))
+        if not du or not pu or now-du>900_000 or now-pu>900_000 or du>now+60_000 or pu>now+60_000:
+            raise DataError("stale_or_future_dated_live_futures_snapshot")
+        mark=float(deriv.get("markPrice") or 0);index=float(deriv.get("indexPrice") or 0);last_price=float(price.get("price") or 0)
+        if min(mark,index,last_price)<=0:raise DataError("missing_verified_futures_mark_index_or_last_price")
+        if abs(mark/last_price-1)*10000>100:raise DataError("futures_mark_last_trade_basis_over_100bps")
+        cg_price=float(coin.get("current_price") or 0)
+        if cg_price<=0:raise DataError("missing_independent_coingecko_spot_reference")
+        basis=(index/cg_price-1)*10000
+        if abs(basis)>100:raise DataError("futures_index_vs_independent_spot_conflict_over_100bps")
         independent=abs(basis)<=50
-        score,parts=_score(d,tech,trends,st,oi_change,ls,fund,entry_ok,risk["valid"],independent)
-        v3=50+(10 if (rv<30 if d=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if d=="LONG" else "DOWN") else 0)+(10 if ((one[-1].close>e20 and one[-1].close>e50) if d=="LONG" else (one[-1].close<e20 and one[-1].close<e50)) else 0)+(10 if ((d=="LONG" and fund<0) or (d=="SHORT" and fund>0)) else 0)
-        conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if d=="LONG" else "BEARISH"}
+        mins={"15m":210,"1h":210,"4h":210,"1d":200}
+        cs={tf:validate_candles(candles[tf],iv,now,mins[tf]) for tf,iv in INTERVALS.items()}
+        one=cs["1h"];cl=[x.close for x in one];rv=rsi(cl)[-1];e20=ema(cl,20)[-1];e50=ema(cl,50)[-1];e200=ema(cl,200)[-1]
+        a14=atr(one)[-1];vr=volume_ratio(one)
+        if None in (rv,e20,e50,a14,vr):raise DataError("mandatory_1h_indicator_missing")
+        trends={"1d":_trend(cs["1d"],True),"4h":_trend(cs["4h"]),"1h":_trend(one)}
+        funding_obj=deriv.get("funding") or {};funding=float(funding_obj.get("rate")) if funding_obj.get("rate") is not None else None
+        interval_hours=float(funding_obj.get("intervalHours") or 0)
+        oi_obj=deriv.get("openInterest") or {};oi=float(oi_obj.get("valueUsd") or 0)
+        if funding is None or interval_hours<=0 or oi<=0:raise DataError("missing_funding_interval_or_open_interest")
+        if oi_old and oi_old>0:oi1h=(oi/oi_old-1)*100
+        else:oi1h=None
+        oi4h=float(oi_obj["change4hPct"]) if oi_obj.get("change4hPct") is not None else None
+        oi24h=float(oi_obj["change24hPct"]) if oi_obj.get("change24hPct") is not None else None
+        positioning=deriv.get("positioning") or {}
+        ls=float(positioning["globalLongShortRatio"]) if positioning.get("globalLongShortRatio") is not None else None
+        top_ls=float(positioning["topTraderLongShortRatio"]) if positioning.get("topTraderLongShortRatio") is not None else None
+        taker=float(positioning["takerBuySellRatio"]) if positioning.get("takerBuySellRatio") is not None else None
+        if abs(funding)>=.0005:
+            return {"symbol":symbol,"asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,
+              "reason":"V3_funding_threshold_failed","derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours}}
+        ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) or (mh[-1]<0 and mh[-1]<=mh[-2]))
+        bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl);ad=adx(one)[-1];ov=obv(one);mf=mfi(one)[-1]
+        bbpos="lower_band" if cl[-1]<=bl[-1] else "lower_half" if cl[-1]<bm[-1] else "upper_band" if cl[-1]>=bu[-1] else "upper_half"
+        long=rv<35 and vr>1.2 and cl[-1]>e20 and trends["4h"] in {"UP","FLAT"}
+        short=rv>65 and vr>1.2 and cl[-1]<e20 and trends["4h"] in {"DOWN","FLAT"}
+        if not long and not short:
+            return {"symbol":symbol,"asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,
+              "reason":"mandatory_V3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr,"ema20":e20,"ema50":e50},"trends":trends}
+        direction="LONG" if long else "SHORT"
+        price_change=float(oi_obj.get("priceChange24hPct") or 0)
+        tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":e200,"atr14":a14,"volume_ratio":vr,"close":cl[-1],
+          "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
+          "bollinger_upper":bu[-1],"bb_position":bbpos,"stoch_rsi":sr[-1],"adx":ad,"obv":ov[-1],
+          "obv_aligned":(ov[-1]>ov[-10] if direction=="LONG" else ov[-1]<ov[-10]),
+          "mfi":mf,"mfi_aligned":(mf>=50 if direction=="LONG" else mf<=50),
+          "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2])),
+          "price_change":price_change}
+        st=_structure(cs["4h"],direction,a14)
+        atr_stop=mark-1.5*a14 if direction=="LONG" else mark+1.5*a14
+        structural=None
+        if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
+        if direction=="SHORT" and st.get("last_swing_high"):structural=st["last_swing_high"]+.2*a14
+        stop=atr_stop
+        if structural and ((direction=="LONG" and structural<mark) or (direction=="SHORT" and structural>mark)):
+            sp=abs(mark-structural)/mark*100
+            if .5<=sp<=3 and abs(mark-structural)>=1.0*a14:stop=structural
+        risk=risk_calc(direction,mark,stop)
+        # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
+        levels=st.get("liquidity_levels",[])
+        if direction=="LONG":
+            resist=sorted([x["price"] for x in levels if x["type"]=="RESISTANCE" and x["price"]>risk["take_profit"]])
+            risk["take_profit_2"]=min(risk["take_profit_2"],resist[0]) if resist and resist[0]>risk["take_profit"] else None
+            risk["take_profit_3"]=min(risk["take_profit_3"],resist[1]) if len(resist)>1 and resist[1]>(risk["take_profit_2"] or risk["take_profit"]) else None
+        else:
+            supports=sorted([x["price"] for x in levels if x["type"]=="SUPPORT" and x["price"]<risk["take_profit"]],reverse=True)
+            risk["take_profit_2"]=max(risk["take_profit_2"],supports[0]) if supports and supports[0]<risk["take_profit"] else None
+            risk["take_profit_3"]=max(risk["take_profit_3"],supports[1]) if len(supports)>1 and supports[1]<(risk["take_profit_2"] or risk["take_profit"]) else None
+        cs15=cs["15m"];v15=[x.close for x in cs15];e15=ema(v15,20)[-1];atr15=atr(cs15)[-1];last=cs15[-1];prev=cs15[-2]
+        if e15 is None or atr15 is None:raise DataError("missing_15m_entry_indicators")
+        distance_atr=abs(mark-e15)/atr15 if atr15>0 else 999
+        chase=distance_atr>2.0
+        entry_ok=(mark>e15 and last.close>=prev.close) if direction=="LONG" else (mark<e15 and last.close<=prev.close)
+        entry_ok=entry_ok and not chase
+        sweep=st.get("liquidity_sweep_aligned",False)
+        if sweep:entry_type="LIQUIDITY_SWEEP"
+        elif st.get("bos") and abs(mark-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
+        elif abs(mark-e15)<=.5*atr15:entry_type="PULLBACK"
+        else:entry_type="MARKET"
+        entry_points=(2 if entry_type in {"LIQUIDITY_SWEEP","BREAKOUT_RETEST"} else 1 if entry_type=="PULLBACK" else 0)+(2 if not chase else 0)+(1 if entry_ok else 0)
+        smart_points=self._smart_score(symbol,direction,top_ls,smart)
+        score,parts=_score(direction,tech,trends,st,oi4h,oi24h,ls,funding,entry_points,risk["valid"],smart_points,independent)
+        v3=50+(10 if (rv<30 if direction=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if direction=="LONG" else "DOWN") else 0)+(10 if ((cl[-1]>e20 and cl[-1]>e50) if direction=="LONG" else (cl[-1]<e20 and cl[-1]<e50)) else 0)+(10 if ((direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0)) else 0)
+        conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if direction=="LONG" else "BEARISH"}
+        grade="A" if independent and smart_points==5 else "B" if independent else "C"
         if not risk["valid"]:decision="REJECT"
-        elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if d=="LONG" else "SELL_NOW"
-        elif score>=60 and (not entry_ok or conflict):decision="CONDITIONAL_BUY" if d=="LONG" else "CONDITIONAL_SELL"
+        elif grade not in {"A","B"}:decision="WAIT"
+        elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
+        elif score>=60 and (not entry_ok or conflict or chase):decision="CONDITIONAL_BUY" if direction=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
         confirm=None;trigger=None
         if decision.startswith("CONDITIONAL"):
-            if not entry_ok:
-                confirm="15m DEX close above EMA20 and not below prior close" if d=="LONG" else "15m DEX close below EMA20 and not above prior close"
-                trigger=max(e15,prev.close) if d=="LONG" else min(e15,prev.close)
+            if chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
+            elif not entry_ok:
+                confirm="15m close confirms direction relative to EMA20 and prior candle"
+                trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
-        flow=self._whale_flow(whales,perp["base"],d)
-        return {"symbol":perp["base"]+"-PERP","asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":d,
-          "entry_type":"OptimistFi_oi_weighted_perps_mark_price","entry":price,"entry_observed_at_ms":asof,
-          "stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],"stop_pct":risk["stop_pct"],"risk":risk,
-          "data_grade":"B","confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,"structure":st,
-          "derivatives":{"funding_rate_hourly":hourly,"funding_rate_8h_equivalent":fund,"open_interest_usd":perp["openInterestUsd"],
-            "open_interest_change_1h_pct":oi_change,"global_long_short_ratio_if_published":ls,"price_dispersion_bps":disp},
-          "independent_confirmation":{"spot_price_usd":spot,"perps_mark_price_usd":price,"basis_bps":basis,"passed":independent},
-          "large_taker_flow_last_hour":flow,"reference_venue":venue.get("venue"),"contract_multiplier":mult,
-          "pool":{"network":pool["network"],"address":pool["address"],"token_side":pool["token_side"],"reserve_usd":pool["reserve_usd"],"name":pool["pool_name"]},
-          "confirmation_required":confirm,"trigger_level":trigger,
-          "limitations":["Technical OHLCV is DEX spot data, not futures-contract candles; the futures mark price is separately sourced from OptimistFi.","Smart-money wallet identity/on-chain holdings are unavailable; no Smart Money points awarded. Large taker trades are a separate unscored observation.","Contract lot step and minimum quantity are not published by the aggregator; contract quantity is a reference only.","Fees, spread, slippage and liquidation mechanics are excluded.","No account connection, credentials or order execution."]}
+        ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
+        audit={"instrument_is_tracked_usdt_perpetual":True,"mark_and_index_price_verified":True,"live_price_fresh":True,
+          "four_timeframes_ohlcv_validated":True,"ohlcv_completed_candles_only":True,"v3_baseline_passed":True,
+          "funding_interval_verified":True,"open_interest_verified":True,"multi_timeframe_checked":True,"market_structure_checked":True,
+          "volume_and_momentum_checked":True,"anti_chase_checked":True,"stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,
+          "planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,"leverage_at_most_5x":risk["required_leverage"]<=5,
+          "reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,"independent_source_checked":True,
+          "data_grade_actionable":grade in {"A","B"},"no_exchange_account_or_order_execution":True}
+        return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
+          "entry_type":entry_type,"entry":mark,"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
+          "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
+          "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
+          "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
+            "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
+            "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"top_trader_long_short_ratio":top_ls,
+            "taker_buy_sell_ratio":taker,"liquidation_regime":oi_obj.get("regime"),"source":deriv.get("source")},
+          "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
+          "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"open_positions":self._position_evidence(symbol,direction,smart),
+            "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
+            "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
+          "self_audit":audit,"self_audit_passed":all(audit.values()),"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
+            "The underlying public market feed is Binance USDⓈ-M futures via TraderSpy; this is not a direct Binance API connection.",
+            "The provider does not expose a verified venue lot step/minimum quantity or contract multiplier; size is expressed in base units.",
+            "No orderbook spread, exact fees, slippage, liquidation price or on-chain wallet identity is available in this feed.",
+            "TraderSpy AI signal records are used only when a numeric confidence above 60 and a fresh timestamp are present."]}
     @staticmethod
-    def _whale_flow(whales,base,direction):
-        trades=[t for t in whales.get("trades",[]) if t.get("base")==base and t.get("side") in {"buy","sell"} and isinstance(t.get("notionalUsd"),(int,float))]
-        if not trades:return {"available":False,"buy_usd":None,"sell_usd":None,"net_buy_usd":None,"aligned":None,"wallet_identity_available":False}
-        buy=sum(float(t["notionalUsd"]) for t in trades if t["side"]=="buy")
-        sell=sum(float(t["notionalUsd"]) for t in trades if t["side"]=="sell")
-        net=buy-sell
-        return {"available":True,"buy_usd":buy,"sell_usd":sell,"net_buy_usd":net,"aligned":(net>0 if direction=="LONG" else net<0),"wallet_identity_available":False}
+    def _position_evidence(symbol,direction,smart):
+        out=[]
+        for p in smart.get("positions",[]):
+            if str(p.get("symbol","")).upper()!=symbol:continue
+            side=str(p.get("side","")).upper()
+            if side in {"LONG","SHORT"}:out.append({"side":side,"trader_id":p.get("traderId") or p.get("trader_id"),"size_usd":p.get("sizeUsd") or p.get("notionalUsd")})
+        return out
+    @classmethod
+    def _smart_score(cls,symbol,direction,top_ratio,smart):
+        points=3 if top_ratio is not None and ((direction=="LONG" and top_ratio>1.2) or (direction=="SHORT" and top_ratio<.8)) else 0
+        aligned=cls._position_evidence(symbol,direction,smart)
+        traders={str(t.get("traderId") or t.get("trader_id")):float(t.get("smartScore") or t.get("score") or 0) for t in smart.get("traders",[]) if t.get("traderId") or t.get("trader_id")}
+        qualified={x["trader_id"] for x in aligned if x["trader_id"] and traders.get(str(x["trader_id"]),0)>=70 and x["side"]==direction}
+        if len(qualified)>=2:points+=2
+        elif len(qualified)==1:points+=1
+        return min(points,5)
+    @staticmethod
+    def _ai_support(symbol,direction,signals,now):
+        for s in signals:
+            if str(s.get("symbol","")).upper()!=symbol:continue
+            d=str(s.get("direction") or s.get("signal") or "").upper()
+            conf=s.get("confidence")
+            ts=_iso_ms(s.get("createdAt") or s.get("timestamp") or s.get("created_at"))
+            if d in {direction,"BUY" if direction=="LONG" else "SELL"} and isinstance(conf,(int,float)) and conf>60 and ts and 0<=now-ts<=900_000:
+                return {"available":True,"confidence":conf,"direction":direction,"created_at_ms":ts,"supporting_only":True}
+        return {"available":False,"supporting_only":True}
     def close(self):
         if self.own:self.p.close()
 
