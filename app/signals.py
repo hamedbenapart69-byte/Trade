@@ -110,65 +110,81 @@ def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:
       "capital_assumption_usd":capital,"risk_cap_usd":risk_usd,"contract_quantity_note":"Base-unit sizing only; TraderSpy does not expose venue lot step or multiplier."}
 
 class PublicMarketData:
-    def __init__(self,client:httpx.Client|None=None):
-        self.client=client or httpx.Client(timeout=20,follow_redirects=False);self.own=client is None;self.last_gecko=0.0
-    def get(self,base,path,params=None,gecko=False):
-        if gecko:
-            wait=2.05-(time.monotonic()-self.last_gecko)
-            if wait>0:time.sleep(wait)
-            self.last_gecko=time.monotonic()
+    """TraderSpy read-only REST adapter. Requires a free data-provider key, never an exchange key."""
+    BASE="https://api.traderspy.app/v1"
+    MAX_RUN_CALLS=190
+    def __init__(self,client:httpx.Client|None=None,api_key:str|None=None):
+        self.client=client or httpx.Client(timeout=25,follow_redirects=False);self.own=client is None
+        self.api_key=api_key or os.getenv("TRADERSPY_API_KEY")
+        self.last_call=0.0;self.calls=0
+    def _ts_get(self,path,params=None):
+        if not self.api_key:raise DataError("TRADERSPY_API_KEY_NOT_CONFIGURED")
+        if self.calls>=self.MAX_RUN_CALLS:raise DataError("traderspy_run_call_budget_reached")
+        wait=6.1-(time.monotonic()-self.last_call)
+        if wait>0:time.sleep(wait)
+        self.last_call=time.monotonic()
         try:
-            r=self.client.get(base+path,params=params,headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
-            r.raise_for_status();return r.json()
-        except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"provider_error:{base}:{path}:{type(e).__name__}") from e
+            r=self.client.get(self.BASE+path,params=params,headers={"Authorization":"Bearer "+self.api_key,"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
+            if r.status_code==401:raise DataError("traderspy_api_key_invalid_or_unauthorized")
+            if r.status_code==403:raise DataError("traderspy_free_plan_or_ip_restriction")
+            if r.status_code==429:raise DataError("traderspy_rate_or_daily_limit_reached")
+            r.raise_for_status();self.calls+=1;return r.json()
+        except DataError:raise
+        except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"traderspy_provider_error:{path}:{type(e).__name__}") from e
     def discover(self):
-        xs=self.get(CG,"/coins/markets",{"vs_currency":"usd","order":"market_cap_desc","per_page":100,"page":1,"sparkline":"false"})
-        if not isinstance(xs,list):raise DataError("invalid_coingecko_market_list")
-        out=[{"id":str(x.get("id","")),"symbol":str(x.get("symbol","")).upper(),"name":x.get("name"),"volume":float(x.get("total_volume") or 0)}
-             for x in xs if isinstance(x,dict) and x.get("symbol")]
-        return sorted(out,key=lambda x:x["volume"],reverse=True)
-    def perps_assets(self):
-        r=self.get(OPTI,"/api/perps/assets",{"class":"crypto","sort":"volume","limit":1000})
-        if not isinstance(r,dict) or not isinstance(r.get("data"),list):raise DataError("invalid_optimistfi_assets")
-        return r
-    def whales(self):
-        try:return self.get(OPTI,"/api/perps/whales")
-        except DataError:return {"asOf":None,"trades":[]}
-    def pool_for(self,coin):
-        r=self.get(GECKO,"/search/pools",{"query":coin["symbol"],"include":"base_token,quote_token"},gecko=True)
-        included={x.get("id"):x.get("attributes",{}) for x in r.get("included",[]) if x.get("type")=="token"}
-        wrappers={"BTC":{"WBTC":"wrapped-bitcoin"},"ETH":{"WETH":"weth"}}
-        accepted={coin["symbol"]:{coin["id"]}}
-        accepted.update({s:{cgid} for s,cgid in wrappers.get(coin["symbol"],{}).items()})
-        choices=[]
-        for p in r.get("data",[]):
-            rel=p.get("relationships",{});attrs=p.get("attributes",{})
-            bid=(rel.get("base_token",{}).get("data") or {}).get("id");qid=(rel.get("quote_token",{}).get("data") or {}).get("id")
-            bt=included.get(bid,{});qt=included.get(qid,{})
-            side=None;tok=None
-            if bt.get("symbol","").upper() in accepted and bt.get("coingecko_coin_id") in accepted[bt["symbol"].upper()]:side="base";tok=bt
-            elif qt.get("symbol","").upper() in accepted and qt.get("coingecko_coin_id") in accepted[qt["symbol"].upper()]:side="quote";tok=qt
-            if not side:continue
-            reserve=float(attrs.get("reserve_in_usd") or 0)
-            if reserve<100000:continue
-            ident=p.get("id","")
-            if "_" not in ident:continue
-            network,address=ident.split("_",1)
-            choices.append({"network":network,"address":attrs.get("address") or address,"token_side":side,
-                "reserve_usd":reserve,"token_symbol":tok.get("symbol"),"coingecko_coin_id":tok.get("coingecko_coin_id"),
-                "pool_name":attrs.get("name"),"pool_price_usd":float(attrs.get("base_token_price_usd") or 0)})
-        if not choices:raise DataError("no_identity_verified_liquid_dex_pool")
-        return max(choices,key=lambda x:x["reserve_usd"])
-    def candles(self,pool,tf,limit=260):
-        mapping={"15m":("minute",15),"1h":("hour",1),"4h":("hour",4),"1d":("day",1)}
-        frame,agg=mapping[tf]
-        r=self.get(GECKO,f"/networks/{pool['network']}/pools/{pool['address']}/ohlcv/{frame}",
-          {"aggregate":agg,"limit":limit,"currency":"usd","token":pool["token_side"]},gecko=True)
-        raw=r.get("data",{}).get("attributes",{}).get("ohlcv_list",[])
         try:
-            cs=[Candle(int(x[0])*1000,float(x[1]),float(x[2]),float(x[3]),float(x[4]),float(x[5]),int(x[0])*1000+INTERVALS[tf]-1) for x in raw]
-            return sorted(cs,key=lambda x:x.open_time)
-        except (ValueError,TypeError,IndexError) as e:raise DataError("invalid_geckoterminal_ohlcv") from e
+            r=self.client.get(CG+"/coins/markets",params={"vs_currency":"usd","order":"market_cap_desc","per_page":100,"page":1,"sparkline":"false"},
+                headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
+            r.raise_for_status();xs=r.json()
+        except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError("coingecko_discovery_unavailable") from e
+        if not isinstance(xs,list):raise DataError("invalid_coingecko_market_list")
+        out=[]
+        for x in xs:
+            if not isinstance(x,dict) or not x.get("symbol"):continue
+            out.append({"id":str(x.get("id","")),"symbol":str(x.get("symbol","")).upper(),"name":x.get("name"),
+              "volume":float(x.get("total_volume") or 0),"market_cap_rank":x.get("market_cap_rank"),
+              "current_price":float(x.get("current_price") or 0),"market_cap":float(x.get("market_cap") or 0)})
+        return sorted(out,key=lambda x:x["volume"],reverse=True)
+    def tracked_symbols(self):
+        r=self._ts_get("/market/symbols")
+        raw=r.get("symbols",r.get("data",[]))
+        out=set()
+        for x in raw:
+            s=x if isinstance(x,str) else x.get("symbol") if isinstance(x,dict) else None
+            if s:out.add(str(s).upper())
+        return out
+    def candles(self,symbol,tf,limit=220):
+        r=self._ts_get("/market/candles",{"symbol":symbol,"interval":tf,"limit":limit})
+        raw=r.get("candles",[])
+        try:
+            out=[]
+            for x in raw:
+                ot=int(x.get("openTime") or x.get("open_time"))
+                iv=INTERVALS[tf]
+                ct=int(x.get("closeTime") or x.get("close_time") or (ot+iv-1))
+                out.append(Candle(ot,float(x["open"]),float(x["high"]),float(x["low"]),float(x["close"]),
+                    float(x["volume"]),ct,bool(x.get("isFinal",x.get("is_final",True)))))
+            return sorted(out,key=lambda x:x.open_time)
+        except (ValueError,TypeError,KeyError) as e:raise DataError("invalid_traderspy_ohlcv_payload") from e
+    def prices(self,symbols):
+        out={}
+        for i in range(0,len(symbols),20):
+            batch=symbols[i:i+20];r=self._ts_get("/market/prices",{"symbols":",".join(batch)})
+            for x in r.get("data",[]):
+                if x.get("symbol"):out[str(x["symbol"]).upper()]=x
+        return out
+    def derivatives(self,symbols):
+        out={}
+        for i in range(0,len(symbols),5):
+            batch=symbols[i:i+5];r=self._ts_get("/market/derivatives",{"symbols":",".join(batch)})
+            for x in r.get("data",[]):
+                if x.get("symbol"):out[str(x["symbol"]).upper()]=x
+        return out
+    def smart_money(self):
+        traders=self._ts_get("/smart-money/traders",{"source":"all","timeRange":"7D","rankingType":"PNL","sortBy":"SCORE","order":"DESC","limit":100})
+        positions=self._ts_get("/smart-money/positions",{"status":"open","source":"all","limit":100,"offset":0})
+        signals=self._ts_get("/signals",{"limit":100,"importance":"high"})
+        return {"traders":traders.get("data",[]),"positions":positions.get("data",[]),"signals":signals.get("data",[])}
     def close(self):
         if self.own:self.client.close()
 
