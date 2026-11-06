@@ -677,8 +677,8 @@ def get_latest():
 def get_performance():return performance()
 
 @router.post("/signals/evaluate")
-def evaluate_outcomes():
-    init_signal_db();checked=closed=ambiguous=expired=0;p=PublicMarketData()
+def evaluate_outcomes(provider=None):
+    init_signal_db();checked=closed=ambiguous=expired=0;own=provider is None;p=provider or PublicMarketData()
     try:
         with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
         for row in rows:
@@ -717,4 +717,5 @@ def evaluate_outcomes():
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
         return {"checked":checked,"newly_closed":closed,"expired":expired,"ambiguous_same_candle":ambiguous,"performance":performance(),
           "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. If one candle touches stop and target, outcome is UNKNOWN."}
-    finally:p.close()
+    finally:
+        if own:p.close()
