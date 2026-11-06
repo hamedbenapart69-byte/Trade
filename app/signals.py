@@ -645,7 +645,7 @@ router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
-    return {"status":"READY_FOR_PROVIDER_AUTH" if configured else "DATA_UNAVAILABLE",
+    return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only market-data API","api_key_configured":configured,
       "api_key_type":"read-only data-provider credential; not an exchange key",
       "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"app_daily_budget":240,"api_calls_used_today":traderspy_daily_usage(),"api_calls_remaining_app_budget":max(0,240-traderspy_daily_usage()),"standard_scan_estimated_calls":132,
