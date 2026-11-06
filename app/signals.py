@@ -1,26 +1,26 @@
-"""V5 read-only futures signal engine: six deterministic engines, public data only."""
+"""V5 read-only futures signal engine using aggregated perps data and independent DEX OHLCV."""
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from math import floor, sqrt
 import json, time, uuid
-from typing import Any
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 from app import store
 
 CG="https://api.coingecko.com/api/v3"
-BN="https://fapi.binance.com"
+OPTI="https://optimistfi.com"
+GECKO="https://api.geckoterminal.com/api/v2"
 STABLES={"USDT","USDC","DAI","BUSD","TUSD","FDUSD","USDE","USDS","USDD","FRAX","USDP","PYUSD","USTC","LUSD","GUSD","EURC","EURS","USD1","USDJ"}
 WRAPPED={"WBTC","WETH","STETH","WSTETH","CBBTC","BTCB","WBETH","BETH","WBNB","RENBTC","TBTC"}
 INTERVALS={"15m":900_000,"1h":3_600_000,"4h":14_400_000,"1d":86_400_000}
 
-class DataError(RuntimeError): pass
-class CandleError(ValueError): pass
+class DataError(RuntimeError):pass
+class CandleError(ValueError):pass
 
 @dataclass(frozen=True)
 class Candle:
-    open_time:int; open:float; high:float; low:float; close:float; volume:float; close_time:int
+    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int
 
 def ema(v:list[float],n:int)->list[float|None]:
     o=[None]*len(v)
@@ -42,8 +42,7 @@ def rsi(v:list[float],n:int=14)->list[float|None]:
 
 def atr(cs:list[Candle],n:int=14)->list[float|None]:
     tr=[]
-    for i,c in enumerate(cs):
-        tr.append(c.high-c.low if i==0 else max(c.high-c.low,abs(c.high-cs[i-1].close),abs(c.low-cs[i-1].close)))
+    for i,c in enumerate(cs):tr.append(c.high-c.low if i==0 else max(c.high-c.low,abs(c.high-cs[i-1].close),abs(c.low-cs[i-1].close)))
     o=[None]*len(cs)
     if len(tr)<n:return o
     x=sum(tr[:n])/n;o[n-1]=x
@@ -52,13 +51,11 @@ def atr(cs:list[Candle],n:int=14)->list[float|None]:
 
 def macd_parts(v:list[float]):
     a,b=ema(v,12),ema(v,26);line=[x-y if x is not None and y is not None else None for x,y in zip(a,b)]
-    valid=[x for x in line if x is not None];sigv=ema(valid,9);sig=[None]*len(line);j=0
+    valid=[x for x in line if x is not None];sv=ema(valid,9);sig=[None]*len(line);j=0
     for i,x in enumerate(line):
-        if x is not None:sig[i]=sigv[j];j+=1
+        if x is not None:sig[i]=sv[j];j+=1
     hist=[x-y if x is not None and y is not None else None for x,y in zip(line,sig)]
     return line,sig,hist
-
-def macd_hist(v:list[float])->list[float|None]:return macd_parts(v)[2]
 
 def bollinger(v:list[float],n:int=20,k:float=2.0):
     lo=[None]*len(v);mid=[None]*len(v);hi=[None]*len(v)
@@ -93,84 +90,89 @@ def volume_ratio(cs:list[Candle])->float|None:
     avg=sum(x.volume for x in cs[-21:-1])/20
     return cs[-1].volume/avg if avg>0 else None
 
-def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:float|None,min_notional:float|None=None)->dict:
+def risk_calc(direction:str,entry:float,atr14:float,contract_multiplier:float,max_venue_leverage:float)->dict:
     if entry<=0 or atr14<=0:raise DataError("non_positive_entry_or_atr")
     dist=1.5*atr14;stop=entry-dist if direction=="LONG" else entry+dist
     tp=entry+2*dist if direction=="LONG" else entry-2*dist
-    stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);qty=max_notional/entry
-    if step and step>0:qty=floor(qty/step+1e-12)*step
-    if min_qty is not None and qty<min_qty:qty=0
-    notional=qty*entry;lev=max_notional/200;loss=notional*stop_pct/100;rr=abs(tp-entry)/abs(entry-stop)
+    stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);required=max_notional/200
+    qty_base=max_notional/entry;mult=contract_multiplier if contract_multiplier and contract_multiplier>0 else 1
+    qty_contracts=qty_base/mult;loss=max_notional*stop_pct/100;rr=abs(tp-entry)/abs(entry-stop)
     reason=None
-    if qty<=0:reason="quantity_below_contract_minimum"
-    elif not .5<=stop_pct<=3:reason="stop_distance_out_of_range"
-    elif min_notional is not None and notional<min_notional:reason="below_contract_minimum_notional"
-    elif lev>5:reason="required_leverage_exceeds_5x"
+    if not .5<=stop_pct<=3:reason="stop_distance_out_of_range"
+    elif required>5:reason="required_leverage_exceeds_5x"
+    elif max_venue_leverage<required:reason="available_venue_leverage_below_required"
     elif loss>4+1e-9:reason="planned_loss_exceeds_4_usd"
     elif rr<2:reason="reward_to_risk_below_2"
-    return {"entry":entry,"stop_loss":stop,"take_profit":tp,"stop_pct":stop_pct,"notional_usd":notional,
-            "required_leverage":lev,"quantity_base":qty,"planned_loss_usd":loss,"reward_to_risk":rr,"valid":reason is None,"reason":reason}
+    return {"entry":entry,"stop_loss":stop,"take_profit":tp,"stop_pct":stop_pct,"max_notional_usd":max_notional,
+      "notional_usd":max_notional,"required_leverage":required,"quantity_base":qty_base,"quantity_contracts_reference":qty_contracts,
+      "contract_multiplier_reference":mult,"planned_loss_usd":loss,"reward_to_risk":rr,"valid":reason is None,"reason":reason}
 
 class PublicMarketData:
     def __init__(self,client:httpx.Client|None=None):
-        self.client=client or httpx.Client(timeout=12,follow_redirects=False);self.own=client is None
-    def get(self,base,path,params=None):
+        self.client=client or httpx.Client(timeout=20,follow_redirects=False);self.own=client is None;self.last_gecko=0.0
+    def get(self,base,path,params=None,gecko=False):
+        if gecko:
+            wait=2.05-(time.monotonic()-self.last_gecko)
+            if wait>0:time.sleep(wait)
+            self.last_gecko=time.monotonic()
         try:
             r=self.client.get(base+path,params=params,headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
             r.raise_for_status();return r.json()
-        except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"provider_error:{path}:{type(e).__name__}") from e
+        except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"provider_error:{base}:{path}:{type(e).__name__}") from e
     def discover(self):
         xs=self.get(CG,"/coins/markets",{"vs_currency":"usd","order":"market_cap_desc","per_page":100,"page":1,"sparkline":"false"})
         if not isinstance(xs,list):raise DataError("invalid_coingecko_market_list")
-        out=[]
-        for x in xs:
-            if isinstance(x,dict) and x.get("symbol") and isinstance(x.get("total_volume"),(int,float)):
-                out.append({"id":str(x.get("id","")),"symbol":str(x["symbol"]).upper(),"volume":float(x["total_volume"])})
+        out=[{"id":str(x.get("id","")),"symbol":str(x.get("symbol","")).upper(),"name":x.get("name"),"volume":float(x.get("total_volume") or 0)}
+             for x in xs if isinstance(x,dict) and x.get("symbol")]
         return sorted(out,key=lambda x:x["volume"],reverse=True)
-    def contracts(self):
-        x=self.get(BN,"/fapi/v1/exchangeInfo");out={}
-        for s in x.get("symbols",[]):
-            if s.get("contractType")!="PERPETUAL" or s.get("status")!="TRADING" or s.get("quoteAsset")!="USDT":continue
-            f={z.get("filterType"):z for z in s.get("filters",[])};lot=f.get("LOT_SIZE",{});pf=f.get("PRICE_FILTER",{})
-            try:out[s["baseAsset"].upper()]={"symbol":s["symbol"],"base":s["baseAsset"],"quote":s["quoteAsset"],"tick":float(pf["tickSize"]),"step":float(lot["stepSize"]),"min_qty":float(lot["minQty"]),"min_notional":float((f.get("MIN_NOTIONAL") or f.get("NOTIONAL") or {}).get("notional",0) or 0)}
-            except (KeyError,ValueError,TypeError):continue
-        return out
-    def tickers(self):return {x.get("symbol"):x for x in self.get(BN,"/fapi/v1/ticker/24hr") if isinstance(x,dict) and x.get("symbol")}
-    def premium(self):
-        xs=self.get(BN,"/fapi/v1/premiumIndex");xs=xs if isinstance(xs,list) else [xs];out={}
-        for x in xs:
-            try:out[x["symbol"]]={"price":float(x["markPrice"]),"funding":float(x["lastFundingRate"]),"time":int(x["time"]),"next":int(x["nextFundingTime"])}
-            except (KeyError,ValueError,TypeError):continue
-        return out
-    def funding_intervals(self):
-        try:return {x["symbol"]:int(x["fundingIntervalHours"]) for x in self.get(BN,"/fapi/v1/fundingInfo") if x.get("symbol") and x.get("fundingIntervalHours")}
-        except DataError:return {}
-    def candles(self,symbol,tf,limit=260,start=None):
-        p={"symbol":symbol,"interval":tf,"limit":limit}
-        if start is not None:p["startTime"]=start
-        xs=self.get(BN,"/fapi/v1/klines",p)
-        try:return [Candle(int(x[0]),float(x[1]),float(x[2]),float(x[3]),float(x[4]),float(x[5]),int(x[6])) for x in xs]
-        except (ValueError,TypeError,IndexError) as e:raise DataError("invalid_kline_payload") from e
-    def oi(self,symbol):
-        try:x=self.get(BN,"/fapi/v1/openInterest",{"symbol":symbol})
-        except DataError:return None
-        change=None;change_ts=None
+    def perps_assets(self):
+        r=self.get(OPTI,"/api/perps/assets",{"class":"crypto","sort":"volume","limit":1000})
+        if not isinstance(r,dict) or not isinstance(r.get("data"),list):raise DataError("invalid_optimistfi_assets")
+        return r
+    def whales(self):
+        try:return self.get(OPTI,"/api/perps/whales")
+        except DataError:return {"asOf":None,"trades":[]}
+    def pool_for(self,coin):
+        r=self.get(GECKO,"/search/pools",{"query":coin["symbol"],"include":"base_token,quote_token"},gecko=True)
+        included={x.get("id"):x.get("attributes",{}) for x in r.get("included",[]) if x.get("type")=="token"}
+        wrappers={"BTC":{"WBTC":"wrapped-bitcoin"},"ETH":{"WETH":"weth"}}
+        accepted={coin["symbol"]:{coin["id"]}}
+        accepted.update({s:{cgid} for s,cgid in wrappers.get(coin["symbol"],{}).items()})
+        choices=[]
+        for p in r.get("data",[]):
+            rel=p.get("relationships",{});attrs=p.get("attributes",{})
+            bid=(rel.get("base_token",{}).get("data") or {}).get("id");qid=(rel.get("quote_token",{}).get("data") or {}).get("id")
+            bt=included.get(bid,{});qt=included.get(qid,{})
+            side=None;tok=None
+            if bt.get("symbol","").upper() in accepted and bt.get("coingecko_coin_id") in accepted[bt["symbol"].upper()]:side="base";tok=bt
+            elif qt.get("symbol","").upper() in accepted and qt.get("coingecko_coin_id") in accepted[qt["symbol"].upper()]:side="quote";tok=qt
+            if not side:continue
+            reserve=float(attrs.get("reserve_in_usd") or 0)
+            if reserve<100000:continue
+            ident=p.get("id","")
+            if "_" not in ident:continue
+            network,address=ident.split("_",1)
+            choices.append({"network":network,"address":attrs.get("address") or address,"token_side":side,
+                "reserve_usd":reserve,"token_symbol":tok.get("symbol"),"coingecko_coin_id":tok.get("coingecko_coin_id"),
+                "pool_name":attrs.get("name"),"pool_price_usd":float(attrs.get("base_token_price_usd") or 0)})
+        if not choices:raise DataError("no_identity_verified_liquid_dex_pool")
+        return max(choices,key=lambda x:x["reserve_usd"])
+    def candles(self,pool,tf,limit=260):
+        mapping={"15m":("minute",15),"1h":("hour",1),"4h":("hour",4),"1d":("day",1)}
+        frame,agg=mapping[tf]
+        r=self.get(GECKO,f"/networks/{pool['network']}/pools/{pool['address']}/ohlcv/{frame}",
+          {"aggregate":agg,"limit":limit,"currency":"usd","token":pool["token_side"]},gecko=True)
+        raw=r.get("data",{}).get("attributes",{}).get("ohlcv_list",[])
         try:
-            hist=self.get(BN,"/futures/data/openInterestHist",{"symbol":symbol,"period":"1h","limit":3})
-            if isinstance(hist,list) and len(hist)>=2:
-                old,new=hist[-2],hist[-1];dt=int(new["timestamp"])-int(old["timestamp"]);a=float(old["sumOpenInterestValue"])
-                if a and 2_700_000<=dt<=4_500_000:change=(float(new["sumOpenInterestValue"])/a-1)*100;change_ts=int(new["timestamp"])
-        except (DataError,KeyError,ValueError,TypeError):pass
-        try:return {"value":float(x["openInterest"]),"timestamp_ms":int(x["time"]),"change_pct_1h":change,"change_timestamp_ms":change_ts}
-        except (KeyError,ValueError,TypeError):return None
-    def long_short(self,symbol):
-        try:
-            xs=self.get(BN,"/futures/data/globalLongShortAccountRatio",{"symbol":symbol,"period":"1h","limit":2})
-            if not xs:return None
-            x=xs[-1];return {"ratio":float(x["longShortRatio"]),"long_pct":float(x["longAccount"]),"short_pct":float(x["shortAccount"]),"timestamp_ms":int(x["timestamp"])}
-        except (DataError,KeyError,ValueError,TypeError):return None
+            cs=[Candle(int(x[0])*1000,float(x[1]),float(x[2]),float(x[3]),float(x[4]),float(x[5]),int(x[0])*1000+INTERVALS[tf]-1) for x in raw]
+            return sorted(cs,key=lambda x:x.open_time)
+        except (ValueError,TypeError,IndexError) as e:raise DataError("invalid_geckoterminal_ohlcv") from e
     def close(self):
         if self.own:self.client.close()
+
+def _iso_ms(s):
+    try:return int(datetime.fromisoformat(s.replace("Z","+00:00")).timestamp()*1000)
+    except (ValueError,AttributeError):return 0
 
 def _trend(cs,daily=False):
     v=[x.close for x in cs];a=ema(v,20)[-1];b=ema(v,50)[-1]
@@ -190,15 +192,15 @@ def _structure(cs,direction):
     return {"classification":"BULLISH" if hh and hl else "BEARISH" if lh and ll else "MIXED",
             "bos":cs[-1].close>hs[-1] if direction=="LONG" else cs[-1].close<ls[-1]}
 
-def _score(direction,tech,trends,structure,oi,ls,funding,entry_ok,risk_ok):
+def _score(direction,tech,trends,structure,oi,ls,funding,entry_ok,risk_ok,independent_ok):
     p={"core_technical":25,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
        "smart_money_onchain":0,"entry_risk":0,"independent_confirmation":0}
-    desired="UP" if direction=="LONG" else "DOWN";daily="BULLISH" if direction=="LONG" else "BEARISH"
+    daily="BULLISH" if direction=="LONG" else "BEARISH";desired="UP" if direction=="LONG" else "DOWN"
     if trends["1d"]==daily:p["multi_timeframe"]+=7
     if trends["4h"]==desired:p["multi_timeframe"]+=5
     elif trends["4h"]=="FLAT":p["multi_timeframe"]+=2
-    close=tech["close"];e20=tech["ema20"];e50=tech["ema50"]
-    if (close>e20>e50) if direction=="LONG" else (close<e20<e50):p["multi_timeframe"]+=3
+    aligned=(tech["close"]>tech["ema20"]>tech["ema50"]) if direction=="LONG" else (tech["close"]<tech["ema20"]<tech["ema50"])
+    if aligned:p["multi_timeframe"]+=3
     wanted="BULLISH" if direction=="LONG" else "BEARISH"
     if structure["classification"]==wanted:p["market_structure"]+=10
     if structure["bos"]:p["market_structure"]+=5
@@ -206,11 +208,11 @@ def _score(direction,tech,trends,structure,oi,ls,funding,entry_ok,risk_ok):
     if tech["macd_aligned"]:p["volume_momentum"]+=3
     if (tech["rsi"]<30) if direction=="LONG" else (tech["rsi"]>70):p["volume_momentum"]+=3
     if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
-    if oi and oi.get("change_pct_1h") is not None:
-        if oi["change_pct_1h"]>0 and ((direction=="LONG" and tech["price_change"]>0) or (direction=="SHORT" and tech["price_change"]<0)):p["derivatives"]+=4
-    if ls and ((direction=="LONG" and ls["ratio"]<1) or (direction=="SHORT" and ls["ratio"]>1)):p["derivatives"]+=3
+    if oi is not None and ((direction=="LONG" and oi>0 and tech["price_change"]>0) or (direction=="SHORT" and oi>0 and tech["price_change"]<0)):p["derivatives"]+=4
+    if ls is not None and ((direction=="LONG" and ls<1) or (direction=="SHORT" and ls>1)):p["derivatives"]+=3
     if risk_ok:p["entry_risk"]+=10
     if entry_ok:p["entry_risk"]+=5
+    if independent_ok:p["independent_confirmation"]+=5
     return sum(p.values()),p
 
 def init_signal_db():
@@ -220,6 +222,18 @@ def init_signal_db():
           symbol TEXT NOT NULL,direction TEXT NOT NULL,decision TEXT NOT NULL,entry REAL,stop_loss REAL,take_profit REAL,entry_ts_ms INTEGER,
           confidence INTEGER NOT NULL,data_grade TEXT NOT NULL,outcome TEXT NOT NULL DEFAULT 'OPEN',outcome_at TEXT,outcome_price REAL,realized_r REAL,data_json TEXT NOT NULL)""")
         c.execute("CREATE INDEX IF NOT EXISTS idx_signal_records_outcome ON signal_records(outcome,decision)")
+        c.execute("""CREATE TABLE IF NOT EXISTS signal_market_snapshots(base TEXT NOT NULL,observed_at_ms INTEGER NOT NULL,open_interest_usd REAL NOT NULL,PRIMARY KEY(base,observed_at_ms))""")
+
+def oi_change_1h(base,now_ms):
+    init_signal_db()
+    with store.db_connection() as c:
+        r=c.execute("SELECT open_interest_usd FROM signal_market_snapshots WHERE base=? AND observed_at_ms BETWEEN ? AND ? ORDER BY observed_at_ms DESC LIMIT 1",
+          (base,now_ms-75*60_000,now_ms-45*60_000)).fetchone()
+    return r[0] if r else None
+
+def save_market_snapshot(base,asof_ms,oi):
+    if oi is None or oi<=0:return
+    with store.db_connection() as c:c.execute("INSERT OR IGNORE INTO signal_market_snapshots VALUES(?,?,?)",(base,asof_ms,oi))
 
 def save_scan(result):
     init_signal_db();published=result.get("actionable",[])+result.get("conditional",[]);saved=0
@@ -245,26 +259,22 @@ def performance():
     for x in vals:eq+=x;peak=max(peak,eq);dd=max(dd,peak-eq)
     rr=[];returns=[]
     for r in closed:
-        d=json.loads(r["data_json"]);risk=d.get("risk",{})
-        if risk.get("reward_to_risk") is not None:rr.append(float(risk["reward_to_risk"]))
+        d=json.loads(r["data_json"]);z=d.get("risk",{})
+        if z.get("reward_to_risk") is not None:rr.append(float(z["reward_to_risk"]))
         if d.get("stop_pct") is not None:returns.append(float(r["realized_r"])*float(d["stop_pct"]))
     def segment(key_fn):
         groups={}
-        for r in rows:
-            key=key_fn(r)
-            if key is None:continue
-            groups.setdefault(key,[]).append(r)
+        for r in rows:groups.setdefault(key_fn(r),[]).append(r)
         out={}
         for k,rs in groups.items():
             vs=[float(x["realized_r"]) for x in rs if x["outcome"] in {"TP1","STOP_LOSS"} and x["realized_r"] is not None]
             w=[x for x in vs if x>0];l=[x for x in vs if x<0]
             out[str(k)]={"published":len(rs),"closed":len(vs),"win_rate_pct":len(w)/len(vs)*100 if vs else None,
-                         "expectancy_r":sum(vs)/len(vs) if vs else None,"profit_factor":sum(w)/abs(sum(l)) if l else ("undefined_no_losses" if w else None)}
+              "expectancy_r":sum(vs)/len(vs) if vs else None,"profit_factor":sum(w)/abs(sum(l)) if l else ("undefined_no_losses" if w else None)}
         return out
     def conf(r):
-        n=int(r["confidence"])
-        return "<60" if n<60 else "60-69" if n<70 else "70-79" if n<80 else "80-89" if n<90 else "90-100"
-    def timeframe(r):
+        n=int(r["confidence"]);return "<60" if n<60 else "60-69" if n<70 else "70-79" if n<80 else "80-89" if n<90 else "90-100"
+    def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
     return {"mode":"paper_signal_tracking_not_executed_trades","published_actionable":len(rows),"closed_observations":len(closed),
@@ -273,7 +283,7 @@ def performance():
       "loss_rate_pct":len(loss)/len(closed)*100 if closed else None,"average_reward_to_risk":sum(rr)/len(rr) if rr else None,
       "average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
       "expectancy_r":sum(vals)/len(vals) if vals else None,"profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),
-      "max_drawdown_r":dd,"by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(timeframe),
+      "max_drawdown_r":dd,"by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(tf),
       "by_decision":segment(lambda r:r["decision"]),"by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
 
 def render_output(r):
@@ -281,9 +291,9 @@ def render_output(r):
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
     out=[];rows=r.get("actionable",[]);watch=r.get("conditional",[])
     if rows:
-        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |","|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|"]
+        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Qty (base) | Contracts ref. | Leverage | Risk USD | Data Grade | Confidence |","|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|"]
         for x in rows:
-            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['required_leverage'])}x | USD {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
+            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['quantity_base'])} | {fmt(z['quantity_contracts_reference'])} | {fmt(z['required_leverage'])}x | {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
     elif not watch:out.append("No qualifying signals today.")
     if watch:
         if out:out.append("")
@@ -295,72 +305,99 @@ def render_output(r):
 class FuturesSignalEngine:
     def __init__(self,provider=None,clock=None):self.p=provider or PublicMarketData();self.own=provider is None;self.clock=clock or (lambda:int(time.time()*1000))
     def scan(self,extended=False,limit=30):
-        now=self.clock();assets=self.p.discover();contracts=self.p.contracts();tickers=self.p.tickers();prem=self.p.premium();intervals=self.p.funding_intervals()
+        now=self.clock();coins=self.p.discover();perps=self.p.perps_assets();whales=self.p.whales()
+        asof=_iso_ms(perps.get("asOf"))
+        if not asof or now-asof>900_000 or asof>now+60_000:raise DataError("optimistfi_perps_snapshot_stale")
+        pmap={x.get("base","").upper():x for x in perps["data"] if x.get("assetClass")=="crypto" and x.get("base")}
         counts={}
-        for a in assets:counts[a["symbol"]]=counts.get(a["symbol"],0)+1
+        for x in coins:counts[x["symbol"]]=counts.get(x["symbol"],0)+1
         eligible=[]
-        for a in assets:
-            s=a["symbol"]
-            if s in STABLES or s in WRAPPED or counts[s]>1 or not a["id"]:continue
-            c=contracts.get(s)
-            if c and c["symbol"] in tickers and c["symbol"] in prem and float(tickers[c["symbol"]].get("quoteVolume",0) or 0)>0:eligible.append((a,c))
+        for x in coins:
+            s=x["symbol"];p=pmap.get(s)
+            if s in STABLES or s in WRAPPED or counts[s]>1 or not x["id"] or not p:continue
+            if not p.get("price") or not p.get("openInterestUsd") or not p.get("volume24hUsd"):continue
+            eligible.append((x,p))
         cap=100 if extended else max(1,min(limit,100));selected=eligible[:cap];candidates=[]
-        for a,c in selected:
-            try:candidates.append(self.evaluate(a,c,prem[c["symbol"]],intervals.get(c["symbol"],8),now))
+        for coin,perp in selected:
+            try:
+                pool=self.p.pool_for(coin)
+                oi_old=oi_change_1h(perp["base"],asof)
+                candidates.append(self.evaluate(coin,perp,pool,whales,asof,now,oi_old))
             except (DataError,CandleError,ValueError,TypeError,KeyError) as e:
-                candidates.append({"symbol":c["symbol"],"asset":a["id"],"decision":"INSUFFICIENT_DATA","direction":None,"data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}"})
-        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:(-x["confidence_v5"],x.get("data_grade","Z"),-x.get("risk",{}).get("reward_to_risk",0)))[:10]
+                candidates.append({"symbol":perp["base"]+"-PERP","asset":coin["id"],"decision":"INSUFFICIENT_DATA","direction":None,"data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}"})
+            save_market_snapshot(perp["base"],asof,perp.get("openInterestUsd"))
+        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:(-x["confidence_v5"],-x.get("risk",{}).get("reward_to_risk",0)))[:10]
         conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
           "universe_requested":cap,"eligible_assets":len(eligible),"screened_assets":len(selected),"partial_scan":cap>=30 and len(selected)<30,
-          "source_status":{"discovery":"CoinGecko public API","futures":"Binance USD-M public market-data API","account_connection":False,"order_execution":False},
+          "source_status":{"discovery":"CoinGecko public API","perpetuals":"OptimistFi Perps Data API","ohlcv":"GeckoTerminal DEX spot OHLCV",
+            "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
           "actionable":actionable,"conditional":conditional,"other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
           "coverage":{"total_candidates":len(candidates),"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),"rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
-    def evaluate(self,a,c,p,fh,now):
-        sym=c["symbol"];price=p["price"]
-        if price<=0 or now-p["time"]>900_000 or p["time"]>now+60_000:raise DataError("stale_futures_mark_price")
-        cs={tf:validate_candles(self.p.candles(sym,tf,260),iv,now) for tf,iv in INTERVALS.items()}
+    def evaluate(self,coin,perp,pool,whales,asof,now,oi_old):
+        price=float(perp["price"]);disp=float(perp.get("priceDispersionBps") or 0)
+        if price<=0 or disp>100:raise DataError("invalid_price_or_cross_venue_dispersion_over_100bps")
+        mins={"15m":210,"1h":210,"4h":210,"1d":100}
+        cs={tf:validate_candles(self.p.candles(pool,tf,260),iv,now,mins[tf]) for tf,iv in INTERVALS.items()}
+        spot=cs["15m"][-1].close;basis=(price/spot-1)*10000
+        if abs(basis)>100:raise DataError("spot_futures_basis_over_100bps")
         one=cs["1h"];cl=[x.close for x in one];rv=rsi(cl)[-1];e20=ema(cl,20)[-1];e50=ema(cl,50)[-1];a14=atr(one)[-1];vr=volume_ratio(one)
         if None in (rv,e20,e50,a14,vr):raise DataError("mandatory_indicator_missing")
         trends={"1d":_trend(cs["1d"],True),"4h":_trend(cs["4h"]),"1h":_trend(one)}
-        hours=int(fh or 8)
-        if hours<=0:raise DataError("invalid_funding_interval")
-        fund=p["funding"]*8/hours
+        hourly=float(perp["fundingRateHourly"]);fund=hourly*8
         long=rv<35 and vr>1.2 and one[-1].close>e20 and trends["4h"] in {"UP","FLAT"} and abs(fund)<.0005
         short=rv>65 and vr>1.2 and one[-1].close<e20 and trends["4h"] in {"DOWN","FLAT"} and abs(fund)<.0005
-        if not long and not short:return {"symbol":sym,"asset":a["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,"reason":"mandatory_v3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr},"trends":trends}
-        d="LONG" if long else "SHORT";oi=self.p.oi(sym);ls=self.p.long_short(sym)
-        if oi and (now-oi["timestamp_ms"]>900_000 or oi["timestamp_ms"]>now+60_000):oi=None
-        if oi and oi.get("change_timestamp_ms") and (now-oi["change_timestamp_ms"]>4_500_000 or oi["change_timestamp_ms"]>now+60_000):oi["change_pct_1h"]=None
-        if ls and (now-ls["timestamp_ms"]>4_500_000 or ls["timestamp_ms"]>now+60_000):ls=None
+        if not long and not short:return {"symbol":perp["base"]+"-PERP","asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,"reason":"mandatory_v3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr},"trends":trends}
+        d="LONG" if long else "SHORT"
+        oi_change=((float(perp["openInterestUsd"])/oi_old)-1)*100 if oi_old and oi_old>0 else None
+        venues=perp.get("venues",[])
+        long_oi=sum(float(v.get("openInterestLongUsd") or 0) for v in venues)
+        short_oi=sum(float(v.get("openInterestShortUsd") or 0) for v in venues)
+        ls=long_oi/short_oi if long_oi>0 and short_oi>0 else None
+        required=(4/(1.5*a14/price))/200
+        eligible_venues=[v for v in venues if float(v.get("maxLeverage") or 0)>=required and float(v.get("contractMultiplier") or 0)>0]
+        venue=max(eligible_venues,key=lambda v:float(v.get("openInterestUsd") or 0)) if eligible_venues else {}
+        mult=float(venue.get("contractMultiplier") or 1);venue_lev=float(venue.get("maxLeverage") or 0)
         ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) if d=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))
         bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl)
         tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":ema(cl,200)[-1],"atr14":a14,"volume_ratio":vr,"close":one[-1].close,
           "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
           "bollinger_upper":bu[-1],"stoch_rsi":sr[-1],"macd_aligned":macd_ok,"price_change":(cl[-1]/cl[-2]-1)*100}
-        st=_structure(cs["4h"],d);risk=risk_calc(d,price,a14,c["step"],c["min_qty"],c.get("min_notional"))
+        st=_structure(cs["4h"],d);risk=risk_calc(d,price,a14,mult,venue_lev)
         e15=ema([x.close for x in cs["15m"]],20)[-1];last=cs["15m"][-1];prev=cs["15m"][-2]
         entry_ok=e15 is not None and ((d=="LONG" and last.close>e15 and last.close>=prev.close) or (d=="SHORT" and last.close<e15 and last.close<=prev.close))
-        score,parts=_score(d,tech,trends,st,oi,ls,fund,entry_ok,risk["valid"])
+        independent=abs(basis)<=50
+        score,parts=_score(d,tech,trends,st,oi_change,ls,fund,entry_ok,risk["valid"],independent)
         v3=50+(10 if (rv<30 if d=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if d=="LONG" else "DOWN") else 0)+(10 if ((one[-1].close>e20 and one[-1].close>e50) if d=="LONG" else (one[-1].close<e20 and one[-1].close<e50)) else 0)+(10 if ((d=="LONG" and fund<0) or (d=="SHORT" and fund>0)) else 0)
-        grade="B"  # on-chain and independent-confirmation evidence are not connected yet
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if d=="LONG" else "BEARISH"}
         if not risk["valid"]:decision="REJECT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if d=="LONG" else "SELL_NOW"
         elif score>=60 and (not entry_ok or conflict):decision="CONDITIONAL_BUY" if d=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
-        confirm=None;trigger_level=None
+        confirm=None;trigger=None
         if decision.startswith("CONDITIONAL"):
             if not entry_ok:
-                confirm="15m completed close above EMA20 and not below prior close" if d=="LONG" else "15m completed close below EMA20 and not above prior close"
-                trigger_level=max(e15,prev.close) if d=="LONG" else min(e15,prev.close)
+                confirm="15m DEX close above EMA20 and not below prior close" if d=="LONG" else "15m DEX close below EMA20 and not above prior close"
+                trigger=max(e15,prev.close) if d=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
-        return {"symbol":sym,"asset":a["id"],"primary_timeframe":"1h","decision":decision,"direction":d,"entry_type":"verified_futures_mark_price_reference",
-          "entry":price,"entry_observed_at_ms":p["time"],"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],"stop_pct":risk["stop_pct"],
-          "risk":risk,"data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,"structure":st,
-          "derivatives":{"funding_rate_raw":p["funding"],"funding_interval_hours":hours,"funding_normalized_8h":fund,"open_interest":oi,"global_long_short_ratio":ls},
-          "confirmation_required":confirm,"trigger_level":trigger_level,"sources":{"discovery":"CoinGecko","ohlcv":"Binance USD-M public API","futures":"Binance USD-M public API"},
-          "limitations":["Smart-money/on-chain evidence unavailable; zero points.","Independent confirmation unavailable; zero points.","Fees, spread, slippage and liquidation mechanics excluded.","No exchange account connection or order execution."]}
+        flow=self._whale_flow(whales,perp["base"],d)
+        return {"symbol":perp["base"]+"-PERP","asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":d,
+          "entry_type":"OptimistFi_oi_weighted_perps_mark_price","entry":price,"entry_observed_at_ms":asof,
+          "stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],"stop_pct":risk["stop_pct"],"risk":risk,
+          "data_grade":"B","confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,"structure":st,
+          "derivatives":{"funding_rate_hourly":hourly,"funding_rate_8h_equivalent":fund,"open_interest_usd":perp["openInterestUsd"],
+            "open_interest_change_1h_pct":oi_change,"global_long_short_ratio_if_published":ls,"price_dispersion_bps":disp},
+          "independent_confirmation":{"spot_price_usd":spot,"perps_mark_price_usd":price,"basis_bps":basis,"passed":independent},
+          "large_taker_flow_last_hour":flow,"reference_venue":venue.get("venue"),"contract_multiplier":mult,
+          "pool":{"network":pool["network"],"address":pool["address"],"token_side":pool["token_side"],"reserve_usd":pool["reserve_usd"],"name":pool["pool_name"]},
+          "confirmation_required":confirm,"trigger_level":trigger,
+          "limitations":["Technical OHLCV is DEX spot data, not futures-contract candles; the futures mark price is separately sourced from OptimistFi.","Smart-money wallet identity/on-chain holdings are unavailable; no Smart Money points awarded. Large taker trades are a separate unscored observation.","Contract lot step and minimum quantity are not published by the aggregator; contract quantity is a reference only.","Fees, spread, slippage and liquidation mechanics are excluded.","No account connection, credentials or order execution."]}
+    @staticmethod
+    def _whale_flow(whales,base,direction):
+        trades=whales.get("trades",[]);buy=sum(float(t.get("notionalUsd") or 0) for t in trades if t.get("base")==base and t.get("side")=="buy")
+        sell=sum(float(t.get("notionalUsd") or 0) for t in trades if t.get("base")==base and t.get("side")=="sell")
+        net=buy-sell
+        return {"buy_usd":buy,"sell_usd":sell,"net_buy_usd":net,"aligned":(net>0 if direction=="LONG" else net<0),"wallet_identity_available":False}
     def close(self):
         if self.own:self.p.close()
 
@@ -392,8 +429,9 @@ def evaluate_outcomes():
         with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
         for row in rows:
             checked+=1
-            try:cs=validate_candles(p.candles(row["symbol"],"15m",1500,row["entry_ts_ms"]),900_000,int(time.time()*1000),1)
-            except (DataError,CandleError):continue
+            try:
+                d=json.loads(row["data_json"]);pool=d["pool"];cs=validate_candles(p.candles(pool,"15m",1000),900_000,int(time.time()*1000),1)
+            except (DataError,CandleError,KeyError,ValueError):continue
             for c in cs:
                 if c.open_time<int(row["entry_ts_ms"] or 0):continue
                 if row["direction"]=="LONG":sl=c.low<=row["stop_loss"];tp=c.high>=row["take_profit"]
