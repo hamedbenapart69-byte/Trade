@@ -63,3 +63,15 @@ Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume.
 ## Research and architecture
 
 See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
+
+## Futures Signal Autopilot V5 (read-only branch)
+
+The branch `feature/futures-signal-autopilot-v5` adds an initial V5 scanner in `app/signals.py`:
+- `POST /signals/scan` (operator token required; `universe_limit=1..100`, or `extended=true`)
+- `GET /signals/latest`
+- `GET /signals/performance`
+- `POST /signals/evaluate`
+
+The scanner uses CoinGecko public discovery and Binance USD-M public market-data endpoints only. It does not use exchange accounts, API keys, or order endpoints. Its planned risk is capped at $4 and 5x leverage. It stores signals and paper outcomes in the existing SQLite database.
+
+This is an initial scanner implementation, not a completed V5 release. Smart-money/on-chain, liquidation/order-block/FVG modules, independent futures-provider fallback, fee/slippage modeling, scheduled scanning, Iran-network reachability and a real live scan remain unverified or incomplete. See [the V5 implementation boundary](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md). No live signal or performance result is claimed by unit tests.
