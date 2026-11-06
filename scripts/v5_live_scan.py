@@ -5,18 +5,22 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from datetime import datetime, timezone
-from app.signals import FuturesSignalEngine, render_output
+from app.signals import FuturesSignalEngine, PublicMarketData, render_output, save_scan, evaluate_outcomes
 
 def main() -> int:
     out=Path("artifacts/v5_live_scan.json")
     out.parent.mkdir(parents=True,exist_ok=True)
-    engine=FuturesSignalEngine()
+    provider=PublicMarketData()
+    engine=FuturesSignalEngine(provider=provider)
     try:
+        prior=evaluate_outcomes(provider)
         result=engine.scan(extended=False,limit=30)
         result["status"]="DATA_UNAVAILABLE" if result["screened_assets"]==0 or result["coverage"]["insufficient_data"]==result["screened_assets"] else "SCAN_COMPLETED"
+        result["prior_outcome_evaluation"]=prior
         result["formatted_output"]=render_output(result)
         result["validation_context"]={"execution":"GitHub-hosted runner","market_data":"live public HTTP endpoints","fixture_data":False,
           "account_connection":False,"order_execution":False,"generated_at":datetime.now(timezone.utc).isoformat()}
+        save_scan(result)
         out.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
         print(result["formatted_output"])
         print(json.dumps(result["coverage"],ensure_ascii=False))
@@ -31,5 +35,6 @@ def main() -> int:
         return 2
     finally:
         engine.close()
+        provider.close()
 
 if __name__=="__main__":sys.exit(main())
