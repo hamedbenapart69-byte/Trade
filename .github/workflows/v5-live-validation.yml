@@ -12,7 +12,7 @@ permissions:
 jobs:
   live-scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,6 +21,8 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Scan live public futures data
+        env:
+          TRADERSPY_API_KEY: ${{ secrets.TRADERSPY_API_KEY }}
         run: python scripts/v5_live_scan.py
       - name: Upload scan evidence
         if: always()
