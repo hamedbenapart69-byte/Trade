@@ -577,10 +577,13 @@ class FuturesSignalEngine:
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
           "universe_requested":requested,"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
           "partial_scan":screened<30,"extended_partial":bool(extended and len(selected)<min(100,len(eligible))),
-          "api_calls_used":self.p.calls,"api_calls_used_today":traderspy_daily_usage(),"api_app_daily_budget":240,"api_plan_limit_daily":300,"api_plan_rate_limit_per_minute":10,
-          "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":"TraderSpy read-only futures market-data API",
-            "derivatives":"TraderSpy read-only futures market-data API","smart_money":"TraderSpy top-trader and open-position endpoints",
-            "underlying_market_data":"Binance USDⓈ-M futures public market feed via TraderSpy; no direct Binance connection",
+          "api_calls_used":self.p.calls,"api_calls_used_today":traderspy_daily_usage() if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
+          "api_app_daily_budget":240 if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
+          "api_plan_limit_daily":300 if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
+          "api_plan_rate_limit_per_minute":10 if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
+          "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":getattr(self.p,"provider_name","unknown"),
+            "derivatives":getattr(self.p,"provider_name","unknown"),"smart_money":"not supplied by selected market-data adapter",
+            "underlying_market_data":getattr(self.p,"provider_name","unknown"),
             "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
           "actionable":actionable,"conditional":conditional,
           "other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
@@ -747,20 +750,37 @@ class FuturesSignalEngine:
     def close(self):
         if self.own:self.p.close()
 
+def create_provider():
+    """Select the configured public read-only data provider; OKX is the tested default."""
+    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    if selected=="okx":
+        from app.integrations.okx_market import OkxPublicMarketData
+        return OkxPublicMarketData()
+    if selected=="traderspy":
+        return PublicMarketData()
+    raise DataError("unsupported_v5_data_provider")
+
 router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
+    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    if selected=="okx":
+        return {"status":"ENDPOINTS_VERIFIED_FULL_SCAN_PENDING","data_provider":"OKX public read-only linear USDT perpetual API",
+          "api_key_required":False,"exchange_account_connection":False,"exchange_api_key_required":False,
+          "order_execution_enabled":False,"endpoint_probe_verified":True,"full_live_scan_verified":False,
+          "note":"Public OKX instruments, ticker, candles, funding, open-interest, mark/index and long-short endpoints returned HTTP 200 from GitHub Actions. A full 30-asset scan is not yet verified."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
-      "data_provider":"TraderSpy read-only market-data API","api_key_configured":configured,
+      "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
       "api_key_type":"read-only data-provider credential; not an exchange key",
-      "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"app_daily_budget":240,"api_calls_used_today":traderspy_daily_usage(),"api_calls_remaining_app_budget":max(0,240-traderspy_daily_usage()),"standard_scan_estimated_calls":132,
+      "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"app_daily_budget":240,
+      "api_calls_used_today":traderspy_daily_usage(),"api_calls_remaining_app_budget":max(0,240-traderspy_daily_usage()),
       "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
       "live_rest_access_verified":False,"last_live_verification":None,
       "note":"A configured key is not proof of live reachability; run the manual V5 Live Validation workflow to verify."}
 @router.post("/signals/scan")
 def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)):
-    p=PublicMarketData();e=FuturesSignalEngine(provider=p)
+    p=create_provider();e=FuturesSignalEngine(provider=p)
     try:
         prior=evaluate_outcomes_with_provider(p)
         r=e.scan(extended,universe_limit)
