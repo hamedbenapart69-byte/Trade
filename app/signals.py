@@ -765,11 +765,13 @@ router=APIRouter(tags=["futures-signals"])
 def get_signal_status():
     selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
     if selected=="okx":
-        return {"status":"ENDPOINTS_VERIFIED_FULL_SCAN_PENDING","data_provider":"OKX public read-only linear USDT perpetual API",
+        return {"status":"PROVIDER_VALIDATED_LAST_SCAN_NO_SIGNAL","data_provider":"OKX public read-only linear USDT perpetual API",
           "api_key_configured":bool(os.getenv("TRADERSPY_API_KEY")),"api_key_required":False,
           "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
-          "live_rest_access_verified":False,"endpoint_probe_verified":True,"full_live_scan_verified":False,
-          "note":"Public OKX instruments, ticker, candles, funding, open-interest, mark/index and long-short endpoints returned HTTP 200 from GitHub Actions. A full 30-asset scan is not yet verified."}
+          "live_rest_access_verified":True,"endpoint_probe_verified":True,"full_live_scan_verified":True,
+          "last_full_live_scan_utc":"2026-11-06T23:11:02Z","last_full_live_scan_coverage":"30/30",
+          "last_full_live_scan_actionable_signals":0,
+          "note":"GitHub Actions verified live OKX public market endpoints and screened 30/30 assets. No candidate passed the mandatory V3 baseline, so no actionable signal was published. This is not a profitability claim."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
