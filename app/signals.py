@@ -116,7 +116,7 @@ class PublicMarketData:
     MAX_RUN_CALLS=190
     def __init__(self,client:httpx.Client|None=None,api_key:str|None=None):
         self.client=client or httpx.Client(timeout=25,follow_redirects=False);self.own=client is None
-        self.api_key=api_key or os.getenv("TRADERSPY_API_KEY")
+        self.api_key=api_key if api_key is not None else os.getenv("TRADERSPY_API_KEY")
         self.last_call=0.0;self.calls=0
     def _ts_get(self,path,params=None):
         if not self.api_key:raise DataError("TRADERSPY_API_KEY_NOT_CONFIGURED")
