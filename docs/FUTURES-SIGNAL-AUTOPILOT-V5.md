@@ -18,7 +18,7 @@ This document records the implementation boundary against the uploaded 52-page `
 - Deterministic RSI(14), EMA20/50/200, ATR(14), volume ratio, MACD(12,26,9), Bollinger Bands(20,2), StochRSI, ADX, OBV and MFI.
 - A 25-check pre-trade self-audit; actionable decisions require every check to pass.
 - A read-only provider readiness endpoint at `GET /signals/status`; a configured secret is not treated as proof of network reachability.
-- The live workflow restores and saves `data/control.db` using GitHub Actions cache, preserving signal outcomes, OI snapshots and the local API-call budget across regular runs. GitHub documents 10 GB of cache per repository at no additional cost by default; unused cache entries are evicted after seven days, so regular daily runs keep the state warm.
+- The live workflow runs on merge to `main`, daily at 08:00 UTC, or manually; it restores and saves `data/control.db` using GitHub Actions cache, preserving signal outcomes, OI snapshots and the local API-call budget across regular runs. GitHub documents 10 GB of cache per repository at no additional cost by default; unused cache entries are evicted after seven days, so regular daily runs keep the state warm.
 - 1D/4H/1H trend checks; five-candle swing pivots, HH/HL and LH/LL structure, BOS/CHoCH, simple FVG/last-opposite-candle order-block and liquidity-sweep observations, clustered swing levels, ATR-percentile volatility regime.
 - V3 mandatory long/short baseline and diagnostic score.
 - V5 score categories with maxima preserved: Core Technical 25, Multi-Timeframe 15, Market Structure 15, Volume/Momentum 10, Derivatives 10, Smart Money 5, Entry/Risk 15, Independent Confirmation 5. The PDF defines category maxima but not every sub-point; the sub-rubric in code is an explicit, test-covered interpretation.
@@ -42,7 +42,7 @@ The following are implementation choices where the PDF defines the category or i
 - Full liquidation heatmaps/clusters and on-chain wallet/holder flows.
 - Full institutional order-block/FVG and liquidity-pool mapping beyond the documented candle-based approximations.
 - The owner reports adding the TraderSpy free REST API key to GitHub Actions; the value is intentionally not readable to the assistant. Successful use of the secret remains unverified until the live workflow runs. See `docs/SETUP_TRADERSPY_API_KEY.md`.
-- A successful end-to-end 30-asset GitHub live scan using that secret. The connected ChatGPT TraderSpy data connector has been live-tested for BTC only; that is not a 30-asset production validation. The manual `workflow_dispatch` control appears after this workflow is merged into the repository's default branch.
+- A successful end-to-end 30-asset GitHub live scan using that secret. The connected ChatGPT TraderSpy data connector has been live-tested for BTC only; that is not a 30-asset production validation. The workflow runs once on a push to `main` after merge, then daily at 08:00 UTC, and also supports manual `workflow_dispatch`.
 - Direct REST reachability from Iran and GitHub runner reachability.
 - A verified historical backtest/performance sample. CI fixtures are tests only and must never be presented as live results.
 
