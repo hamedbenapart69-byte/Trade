@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 from app import store
 from app.workflow_schemas import validate_workflow_input
+from app.signals import router as signal_router
 
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -47,6 +48,7 @@ async def require_api_key(request: Request, x_api_key: str | None = Header(defau
         raise HTTPException(status_code=401, detail="invalid_or_missing_api_key")
 
 app = FastAPI(title="AI Orchestration Control Plane", version="0.3.0", dependencies=[Depends(require_api_key)])
+app.include_router(signal_router)
 access_log = logging.getLogger("control.access")
 _worker_run_lock = threading.Lock()
 _worker_last_started = 0.0

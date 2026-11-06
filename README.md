@@ -63,3 +63,18 @@ Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume.
 ## Research and architecture
 
 See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
+
+## Futures Signal Autopilot V5
+
+The V5 scanner is in `app/signals.py`:
+- `GET /signals/status`
+- `POST /signals/scan`
+- `GET /signals/latest`
+- `GET /signals/performance`
+- `POST /signals/evaluate`
+
+Discovery uses CoinGecko. Numerical 15m/1h/4h/1d futures OHLCV, prices, derivatives and optional smart-money evidence use TraderSpy's read-only market-data API. The underlying public feed identifies as Binance USDⓈ-M futures, accessed through TraderSpy. Official Binance USDⓈ-M public exchangeInfo is additionally read only for PERPETUAL/TRADING status, asset identity and tick/lot/minimum-notional filters. No Binance account, private endpoint, exchange API key or order execution is used.
+
+**Repository runner setup:** the free TraderSpy data-provider plan requires a read-only API key. Add it to GitHub Actions secrets as `TRADERSPY_API_KEY`. This is not an exchange key and cannot place trades. Free-plan limits are 300 API calls/day and 10/minute; a standard 30-asset scan uses about132 calls and takes around 13–15 minutes. The key is not committed to source.
+
+The ChatGPT TraderSpy connector was live-tested for BTCUSDT in this session. The owner reports adding the GitHub Actions secret; successful secret injection and a live 30-asset scan are still awaiting workflow verification. After merge, the read-only scan runs once on main and daily at 08:00 UTC, with a JSON artifact saved in GitHub Actions. See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [mobile-friendly TraderSpy key setup](docs/SETUP_TRADERSPY_API_KEY.md).
