@@ -1,6 +1,6 @@
 import os, tempfile, unittest
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -123,6 +123,20 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         p.close()
         self.assertEqual(_iso_ms(1793967960281),1793967960281)
         self.assertGreater(_iso_ms("2026-11-06T12:00:00Z"),0)
+
+    def test_status_exposes_only_provider_key_presence_not_secret(self):
+        old=os.environ.get("TRADERSPY_API_KEY")
+        try:
+            os.environ["TRADERSPY_API_KEY"]="tspy_private_test_value"
+            status=get_signal_status()
+            self.assertTrue(status["api_key_configured"])
+            self.assertFalse(status["live_rest_access_verified"])
+            self.assertNotIn("tspy_private_test_value",str(status))
+            self.assertFalse(status["exchange_account_connection"])
+            self.assertFalse(status["order_execution_enabled"])
+        finally:
+            if old is None:os.environ.pop("TRADERSPY_API_KEY",None)
+            else:os.environ["TRADERSPY_API_KEY"]=old
 
     def test_scan_records_persist(self):
         tmp=tempfile.TemporaryDirectory()
