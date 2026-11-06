@@ -1,0 +1,33 @@
+name: V5 OKX Live Market Scan
+on:
+  push:
+    branches: [diagnostics/public-market-endpoint-probe]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v5-okx-live-scan
+  cancel-in-progress: false
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      V5_DATA_PROVIDER: okx
+      CONTROL_DB_PATH: ./data/control.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run live 30-asset V5 scan on OKX public data
+        run: python scripts/v5_live_scan.py
+      - name: Upload live scan evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-okx-live-scan
+          path: artifacts/v5_live_scan.json
+          if-no-files-found: error
+          retention-days: 30
