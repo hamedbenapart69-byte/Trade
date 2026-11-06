@@ -184,7 +184,10 @@ class PublicMarketData:
         traders=self._ts_get("/smart-money/traders",{"source":"all","timeRange":"7D","rankingType":"PNL","sortBy":"SCORE","order":"DESC","limit":100})
         positions=self._ts_get("/smart-money/positions",{"status":"open","source":"all","limit":100,"offset":0})
         signals=self._ts_get("/signals",{"limit":100,"importance":"high"})
-        return {"traders":traders.get("data",[]),"positions":positions.get("data",[]),"signals":signals.get("data",[])}
+        return {"traders":traders.get("data",[]),"positions":positions.get("data",[]),"signals":signals.get("data",[]),
+          "traders_observed_at_ms":_iso_ms(traders.get("updatedAt") or traders.get("timestamp")),
+          "positions_observed_at_ms":_iso_ms(positions.get("updatedAt") or positions.get("timestamp")),
+          "signals_observed_at_ms":_iso_ms(signals.get("updatedAt") or signals.get("timestamp"))}
     def close(self):
         if self.own:self.client.close()
 
@@ -555,6 +558,7 @@ class FuturesSignalEngine:
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
         ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
+        ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
         audit={"instrument_is_tracked_usdt_perpetual":True,"mark_and_index_price_verified":True,"live_price_fresh":True,
           "four_timeframes_ohlcv_validated":True,"ohlcv_completed_candles_only":True,"v3_baseline_passed":True,
           "funding_interval_verified":True,"open_interest_verified":True,"multi_timeframe_checked":True,"market_structure_checked":True,
@@ -571,10 +575,11 @@ class FuturesSignalEngine:
             "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"top_trader_long_short_ratio":top_ls,
             "taker_buy_sell_ratio":taker,"liquidation_regime":oi_obj.get("regime"),"source":deriv.get("source")},
           "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
-          "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"open_positions":self._position_evidence(symbol,direction,smart),
+          "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_traders_observed_at_ms":smart.get("traders_observed_at_ms"),
+            "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
-          "self_audit":audit,"self_audit_passed":all(audit.values()),"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
+          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_passed":all(audit.values()),"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
             "The underlying public market feed is Binance USDⓈ-M futures via TraderSpy; this is not a direct Binance API connection.",
             "The provider does not expose a verified venue lot step/minimum quantity or contract multiplier; size is expressed in base units.",
             "No orderbook spread, exact fees, slippage, liquidation price or on-chain wallet identity is available in this feed.",
