@@ -371,7 +371,7 @@ def latest_scan():
 
 def performance():
     init_signal_db()
-    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW') ORDER BY rowid").fetchall()
+    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
     closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
@@ -397,10 +397,11 @@ def performance():
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
     return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"TraderSpy futures OHLCV; no exchange fills are observed",
-      "published_actionable":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
+      "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
       "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
       "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
-      "unknown_count":sum(r["outcome"]=="UNKNOWN" for r in rows),"open_count":sum(r["outcome"]=="OPEN" for r in rows),
+      "no_valid_entry_count":sum(r["outcome"]=="NO_VALID_ENTRY" for r in rows),"unknown_count":sum(r["outcome"]=="UNKNOWN" for r in rows),
+      "watch_count":sum(r["outcome"]=="WATCH" for r in rows),"open_count":sum(r["outcome"]=="OPEN" for r in rows),
       "win_rate_pct":len(wins)/len(closed)*100 if closed else None,"loss_rate_pct":len(loss)/len(closed)*100 if closed else None,
       "average_reward_to_risk":sum(rr)/len(rr) if rr else None,"average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,
       "average_realized_r":sum(vals)/len(vals) if vals else None,"expectancy_r":sum(vals)/len(vals) if vals else None,
@@ -679,47 +680,94 @@ def get_latest():
 def get_performance():return performance()
 
 def evaluate_outcomes_with_provider(provider=None):
-    init_signal_db();checked=closed=ambiguous=expired=0;own=provider is None;p=provider or PublicMarketData()
+    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or PublicMarketData()
     try:
-        with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
-        candles_cache={}
+        with store.db_connection() as db:
+            rows=db.execute("SELECT * FROM signal_records WHERE outcome IN ('OPEN','WATCH') AND decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')").fetchall()
+        candles_cache={};now=int(time.time()*1000)
         for row in rows:
             checked+=1
+            try:d=json.loads(row["data_json"]);symbol=d["symbol"];expiry=int(d.get("expires_at_ms") or int(row["entry_ts_ms"] or now)+24*60*60_000)
+            except (ValueError,TypeError,KeyError):continue
+            if row["outcome"]=="WATCH":
+                try:
+                    key=(symbol,"15m")
+                    if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,"15m",500),INTERVALS["15m"],now,1)
+                    cs15=candles_cache[key]
+                except (DataError,CandleError,KeyError,ValueError):continue
+                trigger=(d.get("entry_quality") or {}).get("trigger_level")
+                if trigger is None:
+                    if now>expiry:
+                        at=datetime.fromtimestamp(expiry/1000,tz=timezone.utc).isoformat()
+                        with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome='NO_VALID_ENTRY',outcome_at=? WHERE signal_id=? AND outcome='WATCH'",(at,row["signal_id"]))
+                        no_entry+=1
+                    continue
+                trigger_candle=None
+                for candle in cs15:
+                    if candle.open_time<int(row["entry_ts_ms"] or 0):continue
+                    if candle.open_time>expiry:break
+                    if (row["direction"]=="LONG" and candle.close>=float(trigger)) or (row["direction"]=="SHORT" and candle.close<=float(trigger)):
+                        trigger_candle=candle;break
+                if trigger_candle is None:
+                    if now>expiry:
+                        at=datetime.fromtimestamp(expiry/1000,tz=timezone.utc).isoformat()
+                        with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome='NO_VALID_ENTRY',outcome_at=? WHERE signal_id=? AND outcome='WATCH'",(at,row["signal_id"]))
+                        no_entry+=1
+                    continue
+                try:
+                    entry=float(trigger_candle.close);risk=risk_calc(row["direction"],entry,float(row["stop_loss"]))
+                except (DataError,ValueError,TypeError):
+                    risk={"valid":False,"reason":"conditional_entry_invalidates_original_stop_or_risk"}
+                if not risk.get("valid"):
+                    d["conditional_entry_rejected"]=risk.get("reason") or "risk_gate_failed"
+                    at=datetime.fromtimestamp(trigger_candle.close_time/1000,tz=timezone.utc).isoformat()
+                    with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome='NO_VALID_ENTRY',outcome_at=?,data_json=? WHERE signal_id=? AND outcome='WATCH'",(at,json.dumps(d,ensure_ascii=False),row["signal_id"]))
+                    no_entry+=1;continue
+                d["entry"]=entry;d["entry_observed_at_ms"]=trigger_candle.close_time;d["risk"]=risk
+                d["stop_loss"]=risk["stop_loss"];d["take_profit"]=risk["take_profit"];d["take_profit_2"]=risk["take_profit_2"];d["take_profit_3"]=risk["take_profit_3"]
+                d.setdefault("entry_quality",{})["triggered"]=True;d["entry_quality"]["triggered_at_ms"]=trigger_candle.close_time
+                at=datetime.fromtimestamp(trigger_candle.close_time/1000,tz=timezone.utc).isoformat()
+                with store.db_connection() as db:
+                    db.execute("UPDATE signal_records SET outcome='OPEN',entry=?,stop_loss=?,take_profit=?,entry_ts_ms=?,data_json=? WHERE signal_id=? AND outcome='WATCH'",
+                      (entry,risk["stop_loss"],risk["take_profit"],trigger_candle.close_time,json.dumps(d,ensure_ascii=False),row["signal_id"]))
+                triggered+=1
+                continue
             try:
-                d=json.loads(row["data_json"]);symbol=d["symbol"];tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf];key=(symbol,tf)
-                if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,tf,500),iv,int(time.time()*1000),1)
+                tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf];key=(symbol,tf)
+                if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,tf,500),iv,now,1)
                 cs=candles_cache[key]
             except (DataError,CandleError,KeyError,ValueError):continue
-            entry_ts=int(row["entry_ts_ms"] or 0);expiry=int(d.get("expires_at_ms") or entry_ts+24*60*60_000)
-            outcome=None;rr=None;price=None;at=None
+            entry_ts=int(row["entry_ts_ms"] or 0);best=None;best_rr=None;best_price=None;best_at=None;outcome=None;rr=None;price=None;at=None
             for candle in cs:
                 if candle.open_time<entry_ts:continue
                 if candle.open_time>expiry:break
                 if row["direction"]=="LONG":
-                    sl=candle.low<=row["stop_loss"]
-                    t1=candle.high>=row["take_profit"]
-                    t2=candle.high>=float(d.get("take_profit_2") or 1e100)
-                    t3=candle.high>=float(d.get("take_profit_3") or 1e100)
+                    sl=candle.low<=row["stop_loss"];t1=candle.high>=row["take_profit"]
+                    t2=candle.high>=float(d.get("take_profit_2") or 1e100);t3=candle.high>=float(d.get("take_profit_3") or 1e100)
                 else:
-                    sl=candle.high>=row["stop_loss"]
-                    t1=candle.low<=row["take_profit"]
-                    t2=candle.low<=float(d.get("take_profit_2") or -1e100)
-                    t3=candle.low<=float(d.get("take_profit_3") or -1e100)
+                    sl=candle.high>=row["stop_loss"];t1=candle.low<=row["take_profit"]
+                    t2=candle.low<=float(d.get("take_profit_2") or -1e100);t3=candle.low<=float(d.get("take_profit_3") or -1e100)
                 anytp=t1 or t2 or t3
-                if sl and anytp:outcome="UNKNOWN";rr=None;ambiguous+=1
-                elif sl:outcome="STOP_LOSS";rr=-1.0
-                elif t3:outcome="TP3";rr=4.0
-                elif t2:outcome="TP2";rr=3.0
-                elif t1:outcome="TP1";rr=2.0
-                if outcome:
-                    price=candle.close;at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat();break
-            if outcome is None and int(time.time()*1000)>expiry:
-                outcome="EXPIRED";rr=0.0;expired+=1;price=None;at=datetime.fromtimestamp(expiry/1000,tz=timezone.utc).isoformat()
+                if sl and anytp:
+                    if best is None:outcome="UNKNOWN";rr=None;price=candle.close;at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat();ambiguous+=1
+                    else:outcome=best;rr=best_rr;price=best_price;at=best_at
+                    break
+                if sl:
+                    if best is None:outcome="STOP_LOSS";rr=-1.0;price=candle.close;at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat()
+                    else:outcome=best;rr=best_rr;price=best_price;at=best_at
+                    break
+                if t3:best="TP3";best_rr=4.0;best_price=candle.close;best_at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat();outcome=best;rr=best_rr;price=best_price;at=best_at;break
+                if t2:best="TP2";best_rr=3.0;best_price=candle.close;best_at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat()
+                elif t1 and best is None:best="TP1";best_rr=2.0;best_price=candle.close;best_at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat()
+            if outcome is None and now>expiry:
+                if best is not None:outcome=best;rr=best_rr;price=best_price;at=best_at
+                else:outcome="EXPIRED";rr=0.0;price=None;at=datetime.fromtimestamp(expiry/1000,tz=timezone.utc).isoformat();expired+=1
             if outcome:
                 with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome=?,outcome_at=?,outcome_price=?,realized_r=? WHERE signal_id=? AND outcome='OPEN'",(outcome,at,price,rr,row["signal_id"]))
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
-        return {"checked":checked,"newly_closed":closed,"expired":expired,"ambiguous_same_candle":ambiguous,"performance":performance(),
-          "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. If one candle touches stop and target, outcome is UNKNOWN."}
+        return {"checked":checked,"newly_closed":closed,"newly_triggered":triggered,"no_valid_entry":no_entry,"expired":expired,
+          "ambiguous_same_candle":ambiguous,"performance":performance(),
+          "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
     finally:
         if own:p.close()
 
