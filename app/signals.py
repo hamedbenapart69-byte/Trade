@@ -50,12 +50,29 @@ def atr(cs:list[Candle],n:int=14)->list[float|None]:
     for i in range(n,len(tr)):x=(x*(n-1)+tr[i])/n;o[i]=x
     return o
 
-def macd_hist(v:list[float])->list[float|None]:
+def macd_parts(v:list[float]):
     a,b=ema(v,12),ema(v,26);line=[x-y if x is not None and y is not None else None for x,y in zip(a,b)]
     valid=[x for x in line if x is not None];sigv=ema(valid,9);sig=[None]*len(line);j=0
     for i,x in enumerate(line):
         if x is not None:sig[i]=sigv[j];j+=1
-    return [x-y if x is not None and y is not None else None for x,y in zip(line,sig)]
+    hist=[x-y if x is not None and y is not None else None for x,y in zip(line,sig)]
+    return line,sig,hist
+
+def macd_hist(v:list[float])->list[float|None]:return macd_parts(v)[2]
+
+def bollinger(v:list[float],n:int=20,k:float=2.0):
+    lo=[None]*len(v);mid=[None]*len(v);hi=[None]*len(v)
+    for i in range(n-1,len(v)):
+        w=v[i-n+1:i+1];m=sum(w)/n;sd=sqrt(sum((x-m)**2 for x in w)/n)
+        mid[i]=m;hi[i]=m+k*sd;lo[i]=m-k*sd
+    return lo,mid,hi
+
+def stoch_rsi(v:list[float],n:int=14):
+    rv=rsi(v,n);out=[None]*len(rv)
+    for i in range(len(rv)):
+        w=[x for x in rv[max(0,i-n+1):i+1] if x is not None]
+        if len(w)==n and max(w)!=min(w):out[i]=(rv[i]-min(w))/(max(w)-min(w))*100
+    return out
 
 def validate_candles(cs:list[Candle],interval:int,now:int,min_count:int=210)->list[Candle]:
     if len(cs)<min_count:raise CandleError("insufficient_candles")
@@ -76,7 +93,7 @@ def volume_ratio(cs:list[Candle])->float|None:
     avg=sum(x.volume for x in cs[-21:-1])/20
     return cs[-1].volume/avg if avg>0 else None
 
-def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:float|None)->dict:
+def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:float|None,min_notional:float|None=None)->dict:
     dist=1.5*atr14;stop=entry-dist if direction=="LONG" else entry+dist
     tp=entry+2*dist if direction=="LONG" else entry-2*dist
     stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);qty=max_notional/entry
@@ -86,6 +103,7 @@ def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:floa
     reason=None
     if qty<=0:reason="quantity_below_contract_minimum"
     elif not .5<=stop_pct<=3:reason="stop_distance_out_of_range"
+    elif min_notional is not None and notional<min_notional:reason="below_contract_minimum_notional"
     elif lev>5:reason="required_leverage_exceeds_5x"
     elif loss>4+1e-9:reason="planned_loss_exceeds_4_usd"
     elif rr<2:reason="reward_to_risk_below_2"
@@ -113,7 +131,7 @@ class PublicMarketData:
         for s in x.get("symbols",[]):
             if s.get("contractType")!="PERPETUAL" or s.get("status")!="TRADING" or s.get("quoteAsset")!="USDT":continue
             f={z.get("filterType"):z for z in s.get("filters",[])};lot=f.get("LOT_SIZE",{});pf=f.get("PRICE_FILTER",{})
-            try:out[s["baseAsset"].upper()]={"symbol":s["symbol"],"base":s["baseAsset"],"quote":s["quoteAsset"],"tick":float(pf["tickSize"]),"step":float(lot["stepSize"]),"min_qty":float(lot["minQty"])}
+            try:out[s["baseAsset"].upper()]={"symbol":s["symbol"],"base":s["baseAsset"],"quote":s["quoteAsset"],"tick":float(pf["tickSize"]),"step":float(lot["stepSize"]),"min_qty":float(lot["minQty"]),"min_notional":float((f.get("MIN_NOTIONAL") or f.get("NOTIONAL") or {}).get("notional",0) or 0)}
             except (KeyError,ValueError,TypeError):continue
         return out
     def tickers(self):return {x.get("symbol"):x for x in self.get(BN,"/fapi/v1/ticker/24hr") if isinstance(x,dict) and x.get("symbol")}
@@ -140,7 +158,7 @@ class PublicMarketData:
             if isinstance(hist,list) and len(hist)>=2:
                 old,new=hist[-2],hist[-1];dt=int(new["timestamp"])-int(old["timestamp"]);a=float(old["sumOpenInterestValue"])
                 if a and 2_700_000<=dt<=4_500_000:change=(float(new["sumOpenInterestValue"])/a-1)*100
-            return {"value":float(x["openInterest"]),"timestamp_ms":int(x["time"]),"change_pct_1h":change}
+            return {"value":float(x["openInterest"]),"timestamp_ms":int(x["time"]),"change_pct_1h":change,"change_timestamp_ms":int(hist[-1]["timestamp"]) if isinstance(hist,list) and hist else None}
         except (DataError,KeyError,ValueError,TypeError):return None
     def long_short(self,symbol):
         try:
@@ -205,7 +223,7 @@ def save_scan(result):
     with store.db_connection() as c:
         c.execute("INSERT OR REPLACE INTO signal_scans VALUES(?,?,?)",(result["scan_id"],result["scanned_at"],json.dumps(result,ensure_ascii=False)))
         for x in published:
-            c.execute("""INSERT INTO signal_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            c.execute("""INSERT INTO signal_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (str(uuid.uuid4()),result["scan_id"],x["symbol"],x.get("direction") or "UNKNOWN",x["decision"],x.get("entry"),x.get("stop_loss"),x.get("take_profit"),x.get("entry_observed_at_ms"),int(x.get("confidence_v5",0)),x.get("data_grade","FAIL"),"WATCH" if x["decision"].startswith("CONDITIONAL") else "OPEN",None,None,None,json.dumps(x,ensure_ascii=False)))
             saved+=1
     return {"published_records_saved":saved}
@@ -261,7 +279,7 @@ class FuturesSignalEngine:
             try:candidates.append(self.evaluate(a,c,prem[c["symbol"]],intervals.get(c["symbol"],8),now))
             except (DataError,CandleError,ValueError,TypeError,KeyError) as e:
                 candidates.append({"symbol":c["symbol"],"asset":a["id"],"decision":"INSUFFICIENT_DATA","direction":None,"data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}"})
-        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:-x["confidence_v5"])[:10]
+        actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:(-x["confidence_v5"],x.get("data_grade","Z"),-x.get("risk",{}).get("reward_to_risk",0)))[:10]
         conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
           "universe_requested":cap,"eligible_assets":len(eligible),"screened_assets":len(selected),"partial_scan":len(selected)<30,
@@ -283,15 +301,19 @@ class FuturesSignalEngine:
         if not long and not short:return {"symbol":sym,"asset":a["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,"reason":"mandatory_v3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr},"trends":trends}
         d="LONG" if long else "SHORT";oi=self.p.oi(sym);ls=self.p.long_short(sym)
         if oi and (now-oi["timestamp_ms"]>900_000 or oi["timestamp_ms"]>now+60_000):oi=None
+        if oi and oi.get("change_timestamp_ms") and (now-oi["change_timestamp_ms"]>4_500_000 or oi["change_timestamp_ms"]>now+60_000):oi["change_pct_1h"]=None
         if ls and (now-ls["timestamp_ms"]>4_500_000 or ls["timestamp_ms"]>now+60_000):ls=None
-        mh=macd_hist(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) if d=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))
-        tech={"rsi":rv,"ema20":e20,"ema50":e50,"atr14":a14,"volume_ratio":vr,"close":one[-1].close,"macd_aligned":macd_ok,"price_change":(cl[-1]/cl[-2]-1)*100}
-        st=_structure(cs["4h"],d);risk=risk_calc(d,price,a14,c["step"],c["min_qty"])
+        ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) if d=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))
+        bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl)
+        tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":ema(cl,200)[-1],"atr14":a14,"volume_ratio":vr,"close":one[-1].close,
+          "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
+          "bollinger_upper":bu[-1],"stoch_rsi":sr[-1],"macd_aligned":macd_ok,"price_change":(cl[-1]/cl[-2]-1)*100}
+        st=_structure(cs["4h"],d);risk=risk_calc(d,price,a14,c["step"],c["min_qty"],c.get("min_notional"))
         e15=ema([x.close for x in cs["15m"]],20)[-1];last=cs["15m"][-1];prev=cs["15m"][-2]
         entry_ok=e15 is not None and ((d=="LONG" and last.close>e15 and last.close>=prev.close) or (d=="SHORT" and last.close<e15 and last.close<=prev.close))
         score,parts=_score(d,tech,trends,st,oi,ls,fund,entry_ok,risk["valid"])
         v3=50+(10 if (rv<30 if d=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if d=="LONG" else "DOWN") else 0)+(10 if ((one[-1].close>e20 and one[-1].close>e50) if d=="LONG" else (one[-1].close<e20 and one[-1].close<e50)) else 0)+(10 if ((d=="LONG" and fund<0) or (d=="SHORT" and fund>0)) else 0)
-        grade="A" if oi and oi.get("change_pct_1h") is not None and ls else "B"
+        grade="B"  # on-chain and independent-confirmation evidence are not connected yet
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if d=="LONG" else "BEARISH"}
         if not risk["valid"]:decision="REJECT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if d=="LONG" else "SELL_NOW"
@@ -315,7 +337,7 @@ def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)
     e=FuturesSignalEngine()
     try:
         r=e.scan(extended,universe_limit)
-        r["status"]="DATA_UNAVAILABLE" if r["screened_assets"]==0 else "SCAN_COMPLETED"
+        r["status"]="DATA_UNAVAILABLE" if r["screened_assets"]==0 or r["coverage"]["insufficient_data"]==r["screened_assets"] else "SCAN_COMPLETED"
         r["formatted_output"]=render_output(r);r["persistence"]=save_scan(r)
         return r
     except DataError as ex:raise HTTPException(503,detail={"status":"INSUFFICIENT_DATA","reason":str(ex),"action":"DATA UNAVAILABLE — do not trade today."}) from ex
