@@ -1,11 +1,6 @@
 name: V5 Live Data Validation
 on:
-  push:
-    branches:
-      - feature/futures-signal-autopilot-v5
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 permissions:
   contents: read
   actions: write
