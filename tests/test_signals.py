@@ -1,6 +1,6 @@
 import os, tempfile, unittest
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -69,6 +69,65 @@ class FakeTraderSpyProvider:
             out.append(Candle(ot,close-.05,close+.2,close-.2,close,10,ot+iv-1,True))
         return out
     def close(self):pass
+
+class OutcomeProvider:
+    calls=0
+    def __init__(self,now,mode="tp3"):self.now=now;self.mode=mode
+    def candles(self,symbol,tf,limit):
+        iv=INTERVALS[tf];last=(self.now//iv)*iv-iv;first=last-(219*iv);out=[]
+        for i in range(220):
+            ot=first+i*iv;op=100.0;hi=101.0;lo=99.0;cl=100.0
+            if tf=="1h" and self.mode=="tp3":
+                if i==217:hi=103.5;cl=103.2
+                if i==218:hi=105.0;cl=104.0
+                if i==219:hi=107.0;cl=106.0
+            out.append(Candle(ot,op,hi,lo,cl,10,ot+iv-1,True))
+        return out
+    def close(self):pass
+
+class V5OutcomeTests(unittest.TestCase):
+    def test_paper_outcome_progresses_through_tp1_tp2_to_tp3(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=int(time.time()*1000)
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"outcomes.db")
+        try:
+            store.init_db();iv=INTERVALS["1h"];last=(now//iv)*iv-iv;first=last-219*iv;entry_ts=first+217*iv
+            result={"scan_id":"tp-progression","scanned_at":"2026-11-06T00:00:00+00:00",
+              "actionable":[{"symbol":"BTCUSDT","direction":"LONG","decision":"BUY_NOW","entry":100.0,
+                "stop_loss":98.5,"take_profit":103.0,"take_profit_2":104.5,"take_profit_3":106.0,
+                "entry_observed_at_ms":entry_ts,"expires_at_ms":now+24*60*60_000,"confidence_v5":75,
+                "data_grade":"B","primary_timeframe":"1h","stop_pct":1.5,
+                "risk":{"planned_loss_usd":4.0,"reward_to_risk":2.0}}],
+              "conditional":[]}
+            save_scan(result)
+            out=evaluate_outcomes_with_provider(OutcomeProvider(now))
+            with store.db_connection() as db:row=db.execute("SELECT outcome,realized_r FROM signal_records WHERE scan_id='tp-progression'").fetchone()
+            self.assertEqual(row["outcome"],"TP3");self.assertEqual(row["realized_r"],4.0)
+            self.assertEqual(performance()["tp3_count"],1)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
+    def test_conditional_signal_expires_as_no_valid_entry(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=int(time.time()*1000)
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"watch.db")
+        try:
+            store.init_db()
+            result={"scan_id":"no-entry","scanned_at":"2026-11-06T00:00:00+00:00",
+              "actionable":[],"conditional":[{"symbol":"BTCUSDT","direction":"LONG","decision":"CONDITIONAL_BUY",
+                "entry":100.0,"stop_loss":98.5,"take_profit":103.0,"entry_observed_at_ms":now-100_000,
+                "expires_at_ms":now-1,"confidence_v5":65,"data_grade":"B","primary_timeframe":"1h",
+                "entry_quality":{"trigger_level":200.0,"confirmation_required":"15m close above trigger"},
+                "risk":{"planned_loss_usd":4.0,"reward_to_risk":2.0}}]}
+            save_scan(result)
+            out=evaluate_outcomes_with_provider(FakeTraderSpyProvider(now))
+            with store.db_connection() as db:row=db.execute("SELECT outcome FROM signal_records WHERE scan_id='no-entry'").fetchone()
+            self.assertEqual(row["outcome"],"NO_VALID_ENTRY")
+            self.assertEqual(out["no_valid_entry"],1)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
 
 class V5PipelineTests(unittest.TestCase):
     def test_end_to_end_fixture_rejects_non_qualifying_market_without_fake_signal(self):
@@ -167,7 +226,7 @@ class V5ScoringAndStorageTests(unittest.TestCase):
               "conditional":[]}
             saved=save_scan(result)
             self.assertEqual(saved["published_records_saved"],1)
-            self.assertEqual(performance()["published_actionable"],1)
+            self.assertEqual(performance()["published_signals"],1)
         finally:
             if old is None:os.environ.pop("CONTROL_DB_PATH",None)
             else:os.environ["CONTROL_DB_PATH"]=old
