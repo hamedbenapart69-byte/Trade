@@ -1,4 +1,4 @@
-"""V5 read-only futures signal engine using CoinGecko discovery and TraderSpy futures OHLCV."""
+"""V5 read-only futures signal engine using CoinGecko discovery and a selected public futures provider."""
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -106,7 +106,7 @@ def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:
       "stop_pct":stop_pct,"max_notional_usd":max_notional,"notional_usd":max_notional,"required_leverage":required,
       "quantity_base":qty_base,"quantity_contracts_reference":None,"contract_multiplier_reference":None,
       "planned_loss_usd":loss,"reward_to_risk":abs(tp1-entry)/dist,"valid":reason is None,"reason":reason,
-      "capital_assumption_usd":capital,"risk_cap_usd":risk_usd,"contract_quantity_note":"Base-unit sizing only; TraderSpy does not expose venue lot step or multiplier."}
+      "capital_assumption_usd":capital,"risk_cap_usd":risk_usd,"contract_quantity_note":"Base-unit estimate only; apply verified venue contract rules before publication."}
 
 class PublicMarketData:
     """TraderSpy read-only REST adapter. Requires a free data-provider key, never an exchange key."""
@@ -491,7 +491,7 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"TraderSpy futures OHLCV; no exchange fills are observed",
+    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"selected public futures provider OHLCV; no exchange fills are observed",
       "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
       "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
       "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
@@ -714,11 +714,11 @@ class FuturesSignalEngine:
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
-          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,"limitations":["TraderSpy exposes read-only public futures market data; no exchange account or trading credentials are used.",
-            "The underlying public market feed is Binance USDⓈ-M futures via TraderSpy; this is not a direct Binance API connection.",
-            "The provider does not expose a verified venue lot step/minimum quantity or contract multiplier; size is expressed in base units.",
-            "No orderbook spread, exact fees, slippage, liquidation price or on-chain wallet identity is available in this feed.",
-            "TraderSpy AI signal records are used only when a numeric confidence above 60 and a fresh timestamp are present."]}
+          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
+          "limitations":["Selected public futures provider is used read-only; no exchange account or trading credentials are used.",
+            "The selected provider does not currently supply verified orderbook spread, exact fees, slippage, venue liquidation price, or on-chain wallet identity.",
+            "Optional smart-money and top-trader evidence is absent unless the selected provider explicitly returns it.",
+            "Paper outcomes use public OHLCV candles, not exchange fills; simulated observations are not executed-trade performance."]}
     @staticmethod
     def _position_evidence(symbol,direction,smart):
         out=[]
@@ -889,7 +889,7 @@ def evaluate_outcomes_with_provider(provider=None):
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
         return {"checked":checked,"newly_closed":closed,"newly_triggered":triggered,"no_valid_entry":no_entry,"expired":expired,
           "ambiguous_same_candle":ambiguous,"performance":performance(),
-          "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
+          "note":"Paper observations use the selected public futures provider OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
     finally:
         if own:p.close()
 
