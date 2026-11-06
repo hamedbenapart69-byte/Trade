@@ -27,7 +27,7 @@ This document records the implementation boundary against the uploaded 52-page `
 - Smart-money score uses top-trader positioning and matching open positions where present. No wallet identity or on-chain holdings are claimed. TraderSpy AI signals are supporting evidence only when a numeric confidence above 60 and a timestamp within 15 minutes are both present; stale signals are ignored.
 - Independent confirmation compares TraderSpy futures index price with CoinGecko's spot reference. Spot is never used as futures entry, stop or target.
 - Anti-chasing check, market/pullback/breakout-retest/liquidity-sweep entry classification, structural-or-ATR stop, TP1/TP2/TP3 where nearby structure supports them.
-- Risk sizing uses USD 200 capital assumption, USD 4 maximum planned loss and 5x leverage ceiling. It outputs underlying/base-unit quantity; venue lot step, minimum quantity and contract multiplier are not exposed by the selected feed, so no exact exchange contract count is claimed.
+- Risk sizing uses USD 200 capital assumption, USD 4 maximum planned loss and 5x leverage ceiling. It verifies public USDⓈ-M PERPETUAL/TRADING status, asset identity, tick size, lot step, minimum quantity and minimum notional; rounds entry/stop/TP1 to tick increments and floors base-asset quantity to the permitted lot step before rechecking planned loss, leverage and reward-to-risk.
 - BUY_NOW/SELL_NOW actionable output, separate conditional watchlist, top-10 ranking, partial-scan indicator, SQLite persistence and paper outcome tracking on actual futures candles. Same-candle stop/target touches are UNKNOWN.
 - No account connection, exchange credentials, order execution or automated trading.
 
@@ -41,7 +41,7 @@ The following are implementation choices where the PDF defines the category or i
 - Exact spread/order-book depth, maker/taker fees, slippage and venue-specific liquidation price.
 - Full liquidation heatmaps/clusters and on-chain wallet/holder flows.
 - Full institutional order-block/FVG and liquidity-pool mapping beyond the documented candle-based approximations.
-- TraderSpy free REST API key configured in GitHub Actions; without it, the backend correctly returns `DATA UNAVAILABLE` / `INSUFFICIENT_DATA`. See `docs/SETUP_TRADERSPY_API_KEY.md`.
+- The owner reports adding the TraderSpy free REST API key to GitHub Actions; the value is intentionally not readable to the assistant. Successful use of the secret remains unverified until the live workflow runs. See `docs/SETUP_TRADERSPY_API_KEY.md`.
 - A successful end-to-end 30-asset GitHub live scan using that secret. The connected ChatGPT TraderSpy data connector has been live-tested for BTC only; that is not a 30-asset production validation. The manual `workflow_dispatch` control appears after this workflow is merged into the repository's default branch.
 - Direct REST reachability from Iran and GitHub runner reachability.
 - A verified historical backtest/performance sample. CI fixtures are tests only and must never be presented as live results.
