@@ -346,7 +346,7 @@ def latest_scan():
 def performance():
     init_signal_db()
     with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW') ORDER BY rowid").fetchall()
-    closed=[r for r in rows if r["outcome"] in {"TP1","STOP_LOSS"} and r["realized_r"] is not None]
+    closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
     for x in vals:eq+=x;peak=max(peak,eq);dd=max(dd,peak-eq)
@@ -360,7 +360,7 @@ def performance():
         for r in rows:groups.setdefault(key_fn(r),[]).append(r)
         out={}
         for k,rs in groups.items():
-            vs=[float(x["realized_r"]) for x in rs if x["outcome"] in {"TP1","STOP_LOSS"} and x["realized_r"] is not None]
+            vs=[float(x["realized_r"]) for x in rs if x["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and x["realized_r"] is not None]
             w=[x for x in vs if x>0];l=[x for x in vs if x<0]
             out[str(k)]={"published":len(rs),"closed":len(vs),"win_rate_pct":len(w)/len(vs)*100 if vs else None,
               "expectancy_r":sum(vs)/len(vs) if vs else None,"profit_factor":sum(w)/abs(sum(l)) if l else ("undefined_no_losses" if w else None)}
@@ -370,14 +370,17 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","published_actionable":len(rows),"closed_observations":len(closed),
-      "tp1_count":sum(r["outcome"]=="TP1" for r in rows),"stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),
-      "open_count":sum(r["outcome"]=="OPEN" for r in rows),"win_rate_pct":len(wins)/len(closed)*100 if closed else None,
-      "loss_rate_pct":len(loss)/len(closed)*100 if closed else None,"average_reward_to_risk":sum(rr)/len(rr) if rr else None,
-      "average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
-      "expectancy_r":sum(vals)/len(vals) if vals else None,"profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),
-      "max_drawdown_r":dd,"by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(tf),
-      "by_decision":segment(lambda r:r["decision"]),"by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
+    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"TraderSpy futures OHLCV; no exchange fills are observed",
+      "published_actionable":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
+      "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
+      "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
+      "unknown_count":sum(r["outcome"]=="UNKNOWN" for r in rows),"open_count":sum(r["outcome"]=="OPEN" for r in rows),
+      "win_rate_pct":len(wins)/len(closed)*100 if closed else None,"loss_rate_pct":len(loss)/len(closed)*100 if closed else None,
+      "average_reward_to_risk":sum(rr)/len(rr) if rr else None,"average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,
+      "average_realized_r":sum(vals)/len(vals) if vals else None,"expectancy_r":sum(vals)/len(vals) if vals else None,
+      "profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),"max_drawdown_r":dd,
+      "by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(tf),"by_decision":segment(lambda r:r["decision"]),
+      "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
 
 def render_output(r):
     if r.get("status")=="DATA_UNAVAILABLE":return "DATA UNAVAILABLE — do not trade today."
@@ -628,24 +631,43 @@ def get_performance():return performance()
 
 @router.post("/signals/evaluate")
 def evaluate_outcomes():
-    init_signal_db();checked=closed=ambiguous=0;p=PublicMarketData()
+    init_signal_db();checked=closed=ambiguous=expired=0;p=PublicMarketData()
     try:
         with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
         for row in rows:
             checked+=1
             try:
-                d=json.loads(row["data_json"]);pool=d["pool"];cs=validate_candles(p.candles(pool,"15m",1000),900_000,int(time.time()*1000),1)
+                d=json.loads(row["data_json"]);symbol=d["symbol"];tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf]
+                cs=validate_candles(p.candles(symbol,tf,500),iv,int(time.time()*1000),1)
             except (DataError,CandleError,KeyError,ValueError):continue
-            for c in cs:
-                if c.open_time<int(row["entry_ts_ms"] or 0):continue
-                if row["direction"]=="LONG":sl=c.low<=row["stop_loss"];tp=c.high>=row["take_profit"]
-                else:sl=c.high>=row["stop_loss"];tp=c.low<=row["take_profit"]
-                if sl and tp:outcome="UNKNOWN";rr=0;ambiguous+=1
-                elif sl:outcome="STOP_LOSS";rr=-1
-                elif tp:outcome="TP1";rr=abs(row["take_profit"]-row["entry"])/abs(row["entry"]-row["stop_loss"])
-                else:continue
-                with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome=?,outcome_at=?,outcome_price=?,realized_r=? WHERE signal_id=? AND outcome='OPEN'",(outcome,datetime.fromtimestamp(c.close_time/1000,tz=timezone.utc).isoformat(),c.close,rr,row["signal_id"]))
-                if outcome!="UNKNOWN":closed+=1
-                break
-        return {"checked":checked,"newly_closed":closed,"ambiguous_same_candle":ambiguous,"performance":performance(),"note":"Outcomes are spot-DEX proxy observations, not futures-contract fills. Same-candle stop/target touches remain UNKNOWN; no intrabar sequence is assumed."}
+            entry_ts=int(row["entry_ts_ms"] or 0);expiry=int(d.get("expires_at_ms") or entry_ts+24*60*60_000)
+            outcome=None;rr=None;price=None;at=None
+            for candle in cs:
+                if candle.open_time<entry_ts:continue
+                if candle.open_time>expiry:break
+                if row["direction"]=="LONG":
+                    sl=candle.low<=row["stop_loss"]
+                    t1=candle.high>=row["take_profit"]
+                    t2=candle.high>=float(d.get("take_profit_2") or 1e100)
+                    t3=candle.high>=float(d.get("take_profit_3") or 1e100)
+                else:
+                    sl=candle.high>=row["stop_loss"]
+                    t1=candle.low<=row["take_profit"]
+                    t2=candle.low<=float(d.get("take_profit_2") or -1e100)
+                    t3=candle.low<=float(d.get("take_profit_3") or -1e100)
+                anytp=t1 or t2 or t3
+                if sl and anytp:outcome="UNKNOWN";rr=None;ambiguous+=1
+                elif sl:outcome="STOP_LOSS";rr=-1.0
+                elif t3:outcome="TP3";rr=4.0
+                elif t2:outcome="TP2";rr=3.0
+                elif t1:outcome="TP1";rr=2.0
+                if outcome:
+                    price=candle.close;at=datetime.fromtimestamp(candle.close_time/1000,tz=timezone.utc).isoformat();break
+            if outcome is None and int(time.time()*1000)>expiry:
+                outcome="EXPIRED";rr=0.0;expired+=1;price=None;at=datetime.fromtimestamp(expiry/1000,tz=timezone.utc).isoformat()
+            if outcome:
+                with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome=?,outcome_at=?,outcome_price=?,realized_r=? WHERE signal_id=? AND outcome='OPEN'",(outcome,at,price,rr,row["signal_id"]))
+                if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
+        return {"checked":checked,"newly_closed":closed,"expired":expired,"ambiguous_same_candle":ambiguous,"performance":performance(),
+          "note":"Paper observations use actual TraderSpy futures OHLCV, not exchange fills. If one candle touches stop and target, outcome is UNKNOWN."}
     finally:p.close()
