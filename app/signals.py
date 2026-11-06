@@ -358,7 +358,11 @@ def save_scan(result):
             c.execute("""INSERT INTO signal_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (str(uuid.uuid4()),result["scan_id"],x["symbol"],x.get("direction") or "UNKNOWN",x["decision"],x.get("entry"),x.get("stop_loss"),x.get("take_profit"),x.get("entry_observed_at_ms"),int(x.get("confidence_v5",0)),x.get("data_grade","FAIL"),"WATCH" if x["decision"].startswith("CONDITIONAL") else "OPEN",None,None,None,json.dumps(x,ensure_ascii=False)))
             saved+=1
-    return {"published_records_saved":saved}
+    result["persistence"]={"published_records_saved":saved}
+    result["performance"]=performance()
+    with store.db_connection() as c:
+        c.execute("UPDATE signal_scans SET result_json=? WHERE scan_id=?",(json.dumps(result,ensure_ascii=False),result["scan_id"]))
+    return result["persistence"]
 
 def latest_scan():
     init_signal_db()
