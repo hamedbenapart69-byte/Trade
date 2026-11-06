@@ -194,6 +194,50 @@ def _iso_ms(s):
     try:return int(datetime.fromisoformat(str(s).replace("Z","+00:00")).timestamp()*1000)
     except (ValueError,AttributeError,TypeError):return 0
 
+def adx(cs:list[Candle],n:int=14)->list[float|None]:
+    out=[None]*len(cs)
+    if len(cs)<2*n+1:return out
+    tr=[0.0];plus=[0.0];minus=[0.0]
+    for i in range(1,len(cs)):
+        up=cs[i].high-cs[i-1].high;dn=cs[i-1].low-cs[i].low
+        plus.append(up if up>dn and up>0 else 0.0);minus.append(dn if dn>up and dn>0 else 0.0)
+        tr.append(max(cs[i].high-cs[i].low,abs(cs[i].high-cs[i-1].close),abs(cs[i].low-cs[i-1].close)))
+    atr_s=sum(tr[1:n+1]);p_s=sum(plus[1:n+1]);m_s=sum(minus[1:n+1]);dx=[]
+    for i in range(n,len(cs)):
+        if i>n:atr_s=atr_s-atr_s/n+tr[i];p_s=p_s-p_s/n+plus[i];m_s=m_s-m_s/n+minus[i]
+        pdi=100*p_s/atr_s if atr_s else 0;mdi=100*m_s/atr_s if atr_s else 0
+        dx.append(100*abs(pdi-mdi)/(pdi+mdi) if pdi+mdi else 0)
+    if len(dx)<n:return out
+    x=sum(dx[:n])/n;out[2*n-1]=x
+    for j in range(n,len(dx)):x=(x*(n-1)+dx[j])/n;out[n+j]=x
+    return out
+
+def obv(cs:list[Candle])->list[float]:
+    out=[0.0]*len(cs)
+    for i in range(1,len(cs)):
+        out[i]=out[i-1]+(cs[i].volume if cs[i].close>cs[i-1].close else -cs[i].volume if cs[i].close<cs[i-1].close else 0)
+    return out
+
+def mfi(cs:list[Candle],n:int=14)->list[float|None]:
+    out=[None]*len(cs)
+    if len(cs)<=n:return out
+    pos=[];neg=[]
+    for i,c in enumerate(cs):
+        tp=(c.high+c.low+c.close)/3
+        if i==0:pos.append(0.0);neg.append(0.0);continue
+        prev=(cs[i-1].high+cs[i-1].low+cs[i-1].close)/3;flow=tp*c.volume
+        pos.append(flow if tp>prev else 0.0);neg.append(flow if tp<prev else 0.0)
+    for i in range(n,len(cs)):
+        p=sum(pos[i-n+1:i+1]);q=sum(neg[i-n+1:i+1])
+        out[i]=100.0 if q==0 else 100-100/(1+p/q)
+    return out
+
+def volatility_regime(cs:list[Candle],n:int=14)->str:
+    av=atr(cs,n);valid=[x/c.close*100 for x,c in zip(av,cs) if x is not None and c.close>0]
+    if len(valid)<30:return "UNKNOWN"
+    current=valid[-1];rank=sum(x<=current for x in valid[-100:])/len(valid[-100:])
+    return "HIGH" if rank>=.8 else "LOW" if rank<=.2 else "NORMAL"
+
 def _trend(cs,daily=False):
     v=[x.close for x in cs];a=ema(v,20)[-1];b=ema(v,50)[-1]
     if a is None or b is None:return "UNKNOWN"
@@ -201,16 +245,37 @@ def _trend(cs,daily=False):
     if v[-1]<a<b:return "BEARISH" if daily else "DOWN"
     return "NEUTRAL" if daily else "FLAT"
 
-def _structure(cs,direction):
-    hs=[];ls=[]
+def _structure(cs,direction,atr_value=None):
+    hp=[];lp=[]
     for i in range(2,len(cs)-2):
         w=cs[i-2:i+3];c=cs[i]
-        if c.high>max(x.high for j,x in enumerate(w) if j!=2):hs.append(c.high)
-        if c.low<min(x.low for j,x in enumerate(w) if j!=2):ls.append(c.low)
-    if len(hs)<2 or len(ls)<2:return {"classification":"UNKNOWN","bos":False}
-    hh=hs[-1]>hs[-2];hl=ls[-1]>ls[-2];lh=hs[-1]<hs[-2];ll=ls[-1]<ls[-2]
-    return {"classification":"BULLISH" if hh and hl else "BEARISH" if lh and ll else "MIXED",
-            "bos":cs[-1].close>hs[-1] if direction=="LONG" else cs[-1].close<ls[-1]}
+        if c.high>max(x.high for j,x in enumerate(w) if j!=2):hp.append((i,c.high))
+        if c.low<min(x.low for j,x in enumerate(w) if j!=2):lp.append((i,c.low))
+    if len(hp)<2 or len(lp)<2:return {"classification":"UNKNOWN","bos":False,"choch":False,"last_swing_high":None,"last_swing_low":None,
+      "fvg_aligned":False,"order_block_aligned":False,"liquidity_sweep_aligned":False,"liquidity_levels":[]}
+    ph,lh=hp[-1][1],lp[-1][1];hh=ph>hp[-2][1];hl=lh>lp[-2][1];lhh=ph<hp[-2][1];ll=lh<lp[-2][1]
+    cls="BULLISH" if hh and hl else "BEARISH" if lhh and ll else "MIXED"
+    bos=cs[-1].close>ph if direction=="LONG" else cs[-1].close<lh
+    choch=(cls=="BEARISH" and direction=="LONG" and bos) or (cls=="BULLISH" and direction=="SHORT" and bos)
+    sweep_long=cs[-1].low<lh and cs[-1].close>lh
+    sweep_short=cs[-1].high>ph and cs[-1].close<ph
+    fvg_bull=cs[-1].low>cs[-3].high
+    fvg_bear=cs[-1].high<cs[-3].low
+    ob=None
+    if bos:
+        for x in reversed(cs[-12:-1]):
+            if (direction=="LONG" and x.close<x.open) or (direction=="SHORT" and x.close>x.open):
+                ob={"low":x.low,"high":x.high,"type":"BULLISH" if direction=="LONG" else "BEARISH"};break
+    tol=(atr_value or (cs[-1].high-cs[-1].low))*.25
+    levels=[]
+    for idx,val in hp[-12:]:
+        if sum(1 for _,v in hp[-12:] if abs(v-val)<=tol)>=2:levels.append({"type":"RESISTANCE","price":val})
+    for idx,val in lp[-12:]:
+        if sum(1 for _,v in lp[-12:] if abs(v-val)<=tol)>=2:levels.append({"type":"SUPPORT","price":val})
+    return {"classification":cls,"bos":bos,"choch":choch,"last_swing_high":ph,"last_swing_low":lh,
+      "fvg_aligned":fvg_bull if direction=="LONG" else fvg_bear,"fvg_bullish":fvg_bull,"fvg_bearish":fvg_bear,
+      "order_block":ob,"order_block_aligned":bool(ob),"liquidity_sweep_aligned":sweep_long if direction=="LONG" else sweep_short,
+      "liquidity_sweep_bullish":sweep_long,"liquidity_sweep_bearish":sweep_short,"liquidity_levels":levels}
 
 def _score(direction,tech,trends,structure,oi4h,oi24h,ls,funding,entry_points,risk_ok,smart_points,independent_ok):
     p={"core_technical":0,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
