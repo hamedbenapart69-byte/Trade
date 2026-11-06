@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from math import floor, sqrt
-import json, time, uuid
+import json, time, uuid, os
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 from app import store
@@ -20,7 +20,7 @@ class CandleError(ValueError):pass
 
 @dataclass(frozen=True)
 class Candle:
-    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int
+    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int;is_final:bool=True
 
 def ema(v:list[float],n:int)->list[float|None]:
     o=[None]*len(v)
@@ -72,7 +72,8 @@ def stoch_rsi(v:list[float],n:int=14):
     return out
 
 def validate_candles(cs:list[Candle],interval:int,now:int,min_count:int=210)->list[Candle]:
-    if len(cs)<min_count:raise CandleError("insufficient_candles")
+    cs=[c for c in cs if c.is_final]
+    if len(cs)<min_count:raise CandleError("insufficient_completed_candles")
     if cs!=sorted(cs,key=lambda x:x.open_time):raise CandleError("candles_out_of_order")
     seen=set()
     for i,c in enumerate(cs):
@@ -90,22 +91,23 @@ def volume_ratio(cs:list[Candle])->float|None:
     avg=sum(x.volume for x in cs[-21:-1])/20
     return cs[-1].volume/avg if avg>0 else None
 
-def risk_calc(direction:str,entry:float,atr14:float,contract_multiplier:float,max_venue_leverage:float)->dict:
-    if entry<=0 or atr14<=0:raise DataError("non_positive_entry_or_atr")
-    dist=1.5*atr14;stop=entry-dist if direction=="LONG" else entry+dist
-    tp=entry+2*dist if direction=="LONG" else entry-2*dist
-    stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);required=max_notional/200
-    qty_base=max_notional/entry;mult=contract_multiplier if contract_multiplier and contract_multiplier>0 else 1
-    qty_contracts=qty_base/mult;loss=max_notional*stop_pct/100;rr=abs(tp-entry)/abs(entry-stop)
+def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:float=4.0,max_leverage:float=5.0)->dict:
+    if entry<=0 or stop<=0 or (direction=="LONG" and stop>=entry) or (direction=="SHORT" and stop<=entry):
+        raise DataError("invalid_entry_or_stop")
+    dist=abs(entry-stop);stop_pct=dist/entry*100;max_notional=risk_usd/(stop_pct/100);required=max_notional/capital
+    qty_base=max_notional/entry;loss=max_notional*stop_pct/100
+    tp1=entry+2*dist if direction=="LONG" else entry-2*dist
+    tp2=entry+3*dist if direction=="LONG" else entry-3*dist
+    tp3=entry+4*dist if direction=="LONG" else entry-4*dist
     reason=None
     if not .5<=stop_pct<=3:reason="stop_distance_out_of_range"
-    elif required>5:reason="required_leverage_exceeds_5x"
-    elif max_venue_leverage<required:reason="available_venue_leverage_below_required"
-    elif loss>4+1e-9:reason="planned_loss_exceeds_4_usd"
-    elif rr<2:reason="reward_to_risk_below_2"
-    return {"entry":entry,"stop_loss":stop,"take_profit":tp,"stop_pct":stop_pct,"max_notional_usd":max_notional,
-      "notional_usd":max_notional,"required_leverage":required,"quantity_base":qty_base,"quantity_contracts_reference":qty_contracts,
-      "contract_multiplier_reference":mult,"planned_loss_usd":loss,"reward_to_risk":rr,"valid":reason is None,"reason":reason}
+    elif required>max_leverage:reason="required_leverage_exceeds_5x"
+    elif loss>risk_usd+1e-9:reason="planned_loss_exceeds_4_usd"
+    return {"entry":entry,"stop_loss":stop,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
+      "stop_pct":stop_pct,"max_notional_usd":max_notional,"notional_usd":max_notional,"required_leverage":required,
+      "quantity_base":qty_base,"quantity_contracts_reference":None,"contract_multiplier_reference":None,
+      "planned_loss_usd":loss,"reward_to_risk":abs(tp1-entry)/dist,"valid":reason is None,"reason":reason,
+      "capital_assumption_usd":capital,"risk_cap_usd":risk_usd,"contract_quantity_note":"Base-unit sizing only; TraderSpy does not expose venue lot step or multiplier."}
 
 class PublicMarketData:
     def __init__(self,client:httpx.Client|None=None):
@@ -192,26 +194,34 @@ def _structure(cs,direction):
     return {"classification":"BULLISH" if hh and hl else "BEARISH" if lh and ll else "MIXED",
             "bos":cs[-1].close>hs[-1] if direction=="LONG" else cs[-1].close<ls[-1]}
 
-def _score(direction,tech,trends,structure,oi,ls,funding,entry_ok,risk_ok,independent_ok):
-    p={"core_technical":25,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
+def _score(direction,tech,trends,structure,oi4h,oi24h,ls,funding,entry_points,risk_ok,smart_points,independent_ok):
+    p={"core_technical":0,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
        "smart_money_onchain":0,"entry_risk":0,"independent_confirmation":0}
+    aligned=(tech["close"]>tech["ema20"]>tech["ema50"]) if direction=="LONG" else (tech["close"]<tech["ema20"]<tech["ema50"])
+    p["core_technical"]+=8 if aligned else 0
+    if (tech["rsi"]<35 if direction=="LONG" else tech["rsi"]>65):p["core_technical"]+=5
+    if tech["macd_aligned"]:p["core_technical"]+=5
+    if tech.get("adx") is not None and tech["adx"]>=20:p["core_technical"]+=4
+    if tech.get("bb_position") in ({"lower_half","lower_band"} if direction=="LONG" else {"upper_half","upper_band"}):p["core_technical"]+=3
     daily="BULLISH" if direction=="LONG" else "BEARISH";desired="UP" if direction=="LONG" else "DOWN"
     if trends["1d"]==daily:p["multi_timeframe"]+=7
     if trends["4h"]==desired:p["multi_timeframe"]+=5
     elif trends["4h"]=="FLAT":p["multi_timeframe"]+=2
-    aligned=(tech["close"]>tech["ema20"]>tech["ema50"]) if direction=="LONG" else (tech["close"]<tech["ema20"]<tech["ema50"])
-    if aligned:p["multi_timeframe"]+=3
+    if trends["1h"]==desired:p["multi_timeframe"]+=3
     wanted="BULLISH" if direction=="LONG" else "BEARISH"
-    if structure["classification"]==wanted:p["market_structure"]+=10
-    if structure["bos"]:p["market_structure"]+=5
+    if structure["classification"]==wanted:p["market_structure"]+=5
+    if structure.get("bos") or structure.get("choch"):p["market_structure"]+=5
+    if structure.get("fvg_aligned") or structure.get("order_block_aligned") or structure.get("liquidity_sweep_aligned"):p["market_structure"]+=5
     if tech["volume_ratio"]>1.5:p["volume_momentum"]+=4
-    if tech["macd_aligned"]:p["volume_momentum"]+=3
-    if (tech["rsi"]<30) if direction=="LONG" else (tech["rsi"]>70):p["volume_momentum"]+=3
+    if tech.get("obv_aligned"):p["volume_momentum"]+=3
+    if tech.get("mfi_aligned"):p["volume_momentum"]+=3
     if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
-    if oi is not None and ((direction=="LONG" and oi>0 and tech["price_change"]>0) or (direction=="SHORT" and oi>0 and tech["price_change"]<0)):p["derivatives"]+=4
-    if ls is not None and ((direction=="LONG" and ls<1) or (direction=="SHORT" and ls>1)):p["derivatives"]+=3
+    oi_values=[x for x in (oi4h,oi24h) if x is not None]
+    if oi_values and any((x>0 and tech["price_change"]>0) if direction=="LONG" else (x>0 and tech["price_change"]<0) for x in oi_values):p["derivatives"]+=4
+    if ls is not None and ((direction=="LONG" and ls>1.2) or (direction=="SHORT" and ls<0.8)):p["derivatives"]+=3
+    p["smart_money_onchain"]=max(0,min(5,int(smart_points)))
+    p["entry_risk"]+=min(5,max(0,int(entry_points)))
     if risk_ok:p["entry_risk"]+=10
-    if entry_ok:p["entry_risk"]+=5
     if independent_ok:p["independent_confirmation"]+=5
     return sum(p.values()),p
 
