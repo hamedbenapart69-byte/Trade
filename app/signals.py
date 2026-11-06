@@ -114,6 +114,7 @@ class PublicMarketData:
     """TraderSpy read-only REST adapter. Requires a free data-provider key, never an exchange key."""
     BASE="https://api.traderspy.app/v1"
     MAX_RUN_CALLS=190
+    DAILY_APP_BUDGET=240
     def __init__(self,client:httpx.Client|None=None,api_key:str|None=None):
         self.client=client or httpx.Client(timeout=25,follow_redirects=False);self.own=client is None
         self.api_key=api_key if api_key is not None else os.getenv("TRADERSPY_API_KEY")
@@ -121,6 +122,8 @@ class PublicMarketData:
     def _ts_get(self,path,params=None):
         if not self.api_key:raise DataError("TRADERSPY_API_KEY_NOT_CONFIGURED")
         if self.calls>=self.MAX_RUN_CALLS:raise DataError("traderspy_run_call_budget_reached")
+        reserve_traderspy_api_call(self.DAILY_APP_BUDGET)
+        self.calls+=1
         wait=6.1-(time.monotonic()-self.last_call)
         if wait>0:time.sleep(wait)
         self.last_call=time.monotonic()
@@ -129,7 +132,7 @@ class PublicMarketData:
             if r.status_code==401:raise DataError("traderspy_api_key_invalid_or_unauthorized")
             if r.status_code==403:raise DataError("traderspy_free_plan_or_ip_restriction")
             if r.status_code==429:raise DataError("traderspy_rate_or_daily_limit_reached")
-            r.raise_for_status();self.calls+=1;return r.json()
+            r.raise_for_status();return r.json()
         except DataError:raise
         except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"traderspy_provider_error:{path}:{type(e).__name__}") from e
     def discover(self):
@@ -321,6 +324,22 @@ def init_signal_db():
           confidence INTEGER NOT NULL,data_grade TEXT NOT NULL,outcome TEXT NOT NULL DEFAULT 'OPEN',outcome_at TEXT,outcome_price REAL,realized_r REAL,data_json TEXT NOT NULL)""")
         c.execute("CREATE INDEX IF NOT EXISTS idx_signal_records_outcome ON signal_records(outcome,decision)")
         c.execute("""CREATE TABLE IF NOT EXISTS signal_market_snapshots(base TEXT NOT NULL,observed_at_ms INTEGER NOT NULL,open_interest_usd REAL NOT NULL,PRIMARY KEY(base,observed_at_ms))""")
+        c.execute("""CREATE TABLE IF NOT EXISTS traderspy_api_usage(day_utc TEXT PRIMARY KEY,calls INTEGER NOT NULL DEFAULT 0)""")
+
+def traderspy_daily_usage():
+    init_signal_db();day=datetime.now(timezone.utc).date().isoformat()
+    with store.db_connection() as c:
+        r=c.execute("SELECT calls FROM traderspy_api_usage WHERE day_utc=?",(day,)).fetchone()
+    return int(r[0]) if r else 0
+
+def reserve_traderspy_api_call(daily_budget=240):
+    init_signal_db();day=datetime.now(timezone.utc).date().isoformat()
+    with store.db_connection() as c:
+        r=c.execute("SELECT calls FROM traderspy_api_usage WHERE day_utc=?",(day,)).fetchone()
+        used=int(r[0]) if r else 0
+        if used>=daily_budget:raise DataError("traderspy_local_daily_budget_guard_reached")
+        c.execute("INSERT INTO traderspy_api_usage(day_utc,calls) VALUES(?,1) ON CONFLICT(day_utc) DO UPDATE SET calls=calls+1",(day,))
+        return used+1
 
 def oi_change_1h(base,now_ms):
     init_signal_db()
@@ -453,7 +472,7 @@ class FuturesSignalEngine:
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
           "universe_requested":requested,"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
           "partial_scan":screened<30,"extended_partial":bool(extended and len(selected)<min(100,len(eligible))),
-          "api_calls_used":self.p.calls,"api_plan_limit_daily":300,"api_plan_rate_limit_per_minute":10,
+          "api_calls_used":self.p.calls,"api_calls_used_today":traderspy_daily_usage(),"api_app_daily_budget":240,"api_plan_limit_daily":300,"api_plan_rate_limit_per_minute":10,
           "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":"TraderSpy read-only futures market-data API",
             "derivatives":"TraderSpy read-only futures market-data API","smart_money":"TraderSpy top-trader and open-position endpoints",
             "underlying_market_data":"Binance USDⓈ-M futures public market feed via TraderSpy; no direct Binance connection",
@@ -629,7 +648,7 @@ def get_signal_status():
     return {"status":"READY_FOR_PROVIDER_AUTH" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only market-data API","api_key_configured":configured,
       "api_key_type":"read-only data-provider credential; not an exchange key",
-      "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"standard_scan_estimated_calls":132,
+      "free_plan_daily_calls":300,"free_plan_calls_per_minute":10,"app_daily_budget":240,"api_calls_used_today":traderspy_daily_usage(),"api_calls_remaining_app_budget":max(0,240-traderspy_daily_usage()),"standard_scan_estimated_calls":132,
       "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
       "live_rest_access_verified":False,"last_live_verification":None,
       "note":"A configured key is not proof of live reachability; run the manual V5 Live Validation workflow to verify."}
