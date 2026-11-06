@@ -1,6 +1,6 @@
 import os, tempfile, unittest, time
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -46,6 +46,27 @@ class V5RiskTests(unittest.TestCase):
     def test_wide_stop_rejected(self):
         self.assertEqual(risk_calc("SHORT",100,104.5)["reason"],"stop_distance_out_of_range")
 
+    def test_contract_sizing_respects_tick_lot_and_risk_caps(self):
+        contract={"symbol":"BTCUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"BTC",
+          "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":0.1,
+          "step_size":0.001,"min_qty":0.001,"min_notional":5.0}
+        r=contract_sized_risk("LONG",100.04,98.54,contract)
+        self.assertTrue(r["valid"])
+        self.assertEqual(round(r["entry"]*10)%1,0)
+        self.assertAlmostEqual(r["quantity_base"]/0.001,round(r["quantity_base"]/0.001))
+        self.assertLessEqual(r["planned_loss_usd"],4.0)
+        self.assertLessEqual(r["required_leverage"],5.0)
+        self.assertGreaterEqual(r["reward_to_risk"],2.0)
+        self.assertTrue(r["contract_spec_verified"])
+
+    def test_contract_sizing_rejects_below_minimum_quantity(self):
+        contract={"symbol":"DUSTUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"DUST",
+          "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":0.0001,
+          "step_size":1.0,"min_qty":1.0,"min_notional":5.0}
+        r=contract_sized_risk("LONG",1.0,0.99,contract)
+        self.assertFalse(r["valid"])
+        self.assertEqual(r["reason"],"minimum_contract_quantity_not_met")
+
 class FakeTraderSpyProvider:
     calls=0
     def __init__(self,now,stale=False):
@@ -53,6 +74,10 @@ class FakeTraderSpyProvider:
     def discover(self):
         return [{"id":"bitcoin","symbol":"BTC","name":"Bitcoin","volume":1000000,"market_cap_rank":1,"current_price":100.0,"market_cap":10000000}]
     def tracked_symbols(self):return {"BTCUSDT"}
+    def contract_specs(self,symbols):
+        return {"BTCUSDT":{"symbol":"BTCUSDT","pair":"BTCUSDT","contract_type":"PERPETUAL","status":"TRADING",
+          "base_asset":"BTC","quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset",
+          "tick_size":0.01,"step_size":0.001,"min_qty":0.001,"min_notional":5.0}}
     def prices(self,symbols):
         return {"BTCUSDT":{"symbol":"BTCUSDT","price":100.0,"updatedAt":self.now}}
     def derivatives(self,symbols):
