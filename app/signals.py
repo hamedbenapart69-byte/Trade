@@ -277,7 +277,7 @@ def _structure(cs,direction,atr_value=None):
       "order_block":ob,"order_block_aligned":bool(ob),"liquidity_sweep_aligned":sweep_long if direction=="LONG" else sweep_short,
       "liquidity_sweep_bullish":sweep_long,"liquidity_sweep_bearish":sweep_short,"liquidity_levels":levels}
 
-def _score(direction,tech,trends,structure,oi4h,oi24h,ls,funding,entry_points,risk_ok,smart_points,independent_ok):
+def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk_ok,smart_points,independent_ok):
     p={"core_technical":0,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
        "smart_money_onchain":0,"entry_risk":0,"independent_confirmation":0}
     aligned=(tech["close"]>tech["ema20"]>tech["ema50"]) if direction=="LONG" else (tech["close"]<tech["ema20"]<tech["ema50"])
@@ -299,9 +299,10 @@ def _score(direction,tech,trends,structure,oi4h,oi24h,ls,funding,entry_points,ri
     if tech.get("obv_aligned"):p["volume_momentum"]+=3
     if tech.get("mfi_aligned"):p["volume_momentum"]+=3
     if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
-    oi_values=[x for x in (oi4h,oi24h) if x is not None]
+    oi_values=[x for x in (oi1h,oi4h,oi24h) if x is not None]
     if oi_values and any((x>0 and tech["price_change"]>0) if direction=="LONG" else (x>0 and tech["price_change"]<0) for x in oi_values):p["derivatives"]+=4
-    if ls is not None and ((direction=="LONG" and ls>1.2) or (direction=="SHORT" and ls<0.8)):p["derivatives"]+=3
+    if ls is not None and ((direction=="LONG" and ls<0.8) or (direction=="SHORT" and ls>1.2)):p["derivatives"]+=2
+    if taker is not None and ((direction=="LONG" and taker>1.05) or (direction=="SHORT" and taker<0.95)):p["derivatives"]+=1
     p["smart_money_onchain"]=max(0,min(5,int(smart_points)))
     p["entry_risk"]+=min(5,max(0,int(entry_points)))
     if risk_ok:p["entry_risk"]+=10
@@ -537,7 +538,7 @@ class FuturesSignalEngine:
         else:entry_type="MARKET"
         entry_points=(2 if entry_type in {"LIQUIDITY_SWEEP","BREAKOUT_RETEST"} else 1 if entry_type=="PULLBACK" else 0)+(2 if not chase else 0)+(1 if entry_ok else 0)
         smart_points=self._smart_score(symbol,direction,top_ls,smart)
-        score,parts=_score(direction,tech,trends,st,oi4h,oi24h,ls,funding,entry_points,risk["valid"],smart_points,independent)
+        score,parts=_score(direction,tech,trends,st,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk["valid"],smart_points,independent)
         v3=50+(10 if (rv<30 if direction=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if direction=="LONG" else "DOWN") else 0)+(10 if ((cl[-1]>e20 and cl[-1]>e50) if direction=="LONG" else (cl[-1]<e20 and cl[-1]<e50)) else 0)+(10 if ((direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0)) else 0)
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if direction=="LONG" else "BEARISH"}
         grade="A" if independent and smart_points==5 else "B" if independent else "C"
