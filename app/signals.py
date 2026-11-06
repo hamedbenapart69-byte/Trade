@@ -335,7 +335,9 @@ class FuturesSignalEngine:
           "actionable":actionable,"conditional":conditional,"other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
           "coverage":{"total_candidates":len(candidates),"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),"rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
     def evaluate(self,coin,perp,pool,whales,asof,now,oi_old):
-        price=float(perp["price"]);disp=float(perp.get("priceDispersionBps") or 0)
+        price=float(perp["price"])
+        if perp.get("priceDispersionBps") is None:raise DataError("missing_cross_venue_price_dispersion")
+        disp=float(perp["priceDispersionBps"])
         if price<=0 or disp>100:raise DataError("invalid_price_or_cross_venue_dispersion_over_100bps")
         mins={"15m":210,"1h":210,"4h":210,"1d":100}
         cs={tf:validate_candles(self.p.candles(pool,tf,260),iv,now,mins[tf]) for tf,iv in INTERVALS.items()}
@@ -355,9 +357,11 @@ class FuturesSignalEngine:
         short_oi=sum(float(v.get("openInterestShortUsd") or 0) for v in venues)
         ls=long_oi/short_oi if long_oi>0 and short_oi>0 else None
         required=(4/(1.5*a14/price))/200
-        eligible_venues=[v for v in venues if float(v.get("maxLeverage") or 0)>=required and float(v.get("contractMultiplier") or 0)>0]
-        venue=max(eligible_venues,key=lambda v:float(v.get("openInterestUsd") or 0)) if eligible_venues else {}
-        mult=float(venue.get("contractMultiplier") or 1);venue_lev=float(venue.get("maxLeverage") or 0)
+        contract_venues=[v for v in venues if float(v.get("maxLeverage") or 0)>0 and float(v.get("contractMultiplier") or 0)>0]
+        if not contract_venues:raise DataError("missing_verified_venue_multiplier_or_leverage")
+        eligible_venues=[v for v in contract_venues if float(v.get("maxLeverage") or 0)>=required]
+        venue=max(eligible_venues or contract_venues,key=lambda v:float(v.get("openInterestUsd") or 0))
+        mult=float(venue["contractMultiplier"]);venue_lev=float(venue["maxLeverage"])
         ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) if d=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))
         bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl)
         tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":ema(cl,200)[-1],"atr14":a14,"volume_ratio":vr,"close":one[-1].close,
@@ -394,10 +398,12 @@ class FuturesSignalEngine:
           "limitations":["Technical OHLCV is DEX spot data, not futures-contract candles; the futures mark price is separately sourced from OptimistFi.","Smart-money wallet identity/on-chain holdings are unavailable; no Smart Money points awarded. Large taker trades are a separate unscored observation.","Contract lot step and minimum quantity are not published by the aggregator; contract quantity is a reference only.","Fees, spread, slippage and liquidation mechanics are excluded.","No account connection, credentials or order execution."]}
     @staticmethod
     def _whale_flow(whales,base,direction):
-        trades=whales.get("trades",[]);buy=sum(float(t.get("notionalUsd") or 0) for t in trades if t.get("base")==base and t.get("side")=="buy")
-        sell=sum(float(t.get("notionalUsd") or 0) for t in trades if t.get("base")==base and t.get("side")=="sell")
+        trades=[t for t in whales.get("trades",[]) if t.get("base")==base and t.get("side") in {"buy","sell"} and isinstance(t.get("notionalUsd"),(int,float))]
+        if not trades:return {"available":False,"buy_usd":None,"sell_usd":None,"net_buy_usd":None,"aligned":None,"wallet_identity_available":False}
+        buy=sum(float(t["notionalUsd"]) for t in trades if t["side"]=="buy")
+        sell=sum(float(t["notionalUsd"]) for t in trades if t["side"]=="sell")
         net=buy-sell
-        return {"buy_usd":buy,"sell_usd":sell,"net_buy_usd":net,"aligned":(net>0 if direction=="LONG" else net<0),"wallet_identity_available":False}
+        return {"available":True,"buy_usd":buy,"sell_usd":sell,"net_buy_usd":net,"aligned":(net>0 if direction=="LONG" else net<0),"wallet_identity_available":False}
     def close(self):
         if self.own:self.p.close()
 
@@ -443,5 +449,5 @@ def evaluate_outcomes():
                 with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome=?,outcome_at=?,outcome_price=?,realized_r=? WHERE signal_id=? AND outcome='OPEN'",(outcome,datetime.fromtimestamp(c.close_time/1000,tz=timezone.utc).isoformat(),c.close,rr,row["signal_id"]))
                 if outcome!="UNKNOWN":closed+=1
                 break
-        return {"checked":checked,"newly_closed":closed,"ambiguous_same_candle":ambiguous,"performance":performance(),"note":"Same-candle stop/target touches remain UNKNOWN; no intrabar sequence is assumed."}
+        return {"checked":checked,"newly_closed":closed,"ambiguous_same_candle":ambiguous,"performance":performance(),"note":"Outcomes are spot-DEX proxy observations, not futures-contract fills. Same-candle stop/target touches remain UNKNOWN; no intrabar sequence is assumed."}
     finally:p.close()
