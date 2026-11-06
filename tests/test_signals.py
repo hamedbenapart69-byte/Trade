@@ -25,7 +25,7 @@ class V5IndicatorTests(unittest.TestCase):
 
 class V5RiskTests(unittest.TestCase):
     def test_four_dollar_risk_and_five_x_cap(self):
-        r=risk_calc("LONG",100,1,0.001,0.001)
+        r=risk_calc("LONG",100,1,1,5)
         self.assertTrue(r["valid"])
         self.assertAlmostEqual(r["stop_loss"],98.5)
         self.assertAlmostEqual(r["take_profit"],103.0)
@@ -34,15 +34,15 @@ class V5RiskTests(unittest.TestCase):
         self.assertGreaterEqual(r["reward_to_risk"],2.0)
 
     def test_wide_stop_and_minimum_quantity_rejected(self):
-        self.assertEqual(risk_calc("SHORT",100,3,None,None)["reason"],"stop_distance_out_of_range")
-        self.assertEqual(risk_calc("LONG",100000,1000,1,1)["reason"],"quantity_below_contract_minimum")
+        self.assertEqual(risk_calc("SHORT",100,3,1,5)["reason"],"stop_distance_out_of_range")
+        self.assertEqual(risk_calc("LONG",100,1,1,1)["reason"],"available_venue_leverage_below_required")
 
 class V5ScoringAndStorageTests(unittest.TestCase):
     def test_missing_advanced_sources_get_zero_points(self):
         tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1}
         trends={"1d":"BULLISH","4h":"UP"}
         structure={"classification":"BULLISH","bos":True}
-        score,parts=_score("LONG",tech,trends,structure,None,None,-0.0001,True,True)
+        score,parts=_score("LONG",tech,trends,structure,None,None,-0.0001,True,True,True)
         self.assertLessEqual(score,100)
         self.assertEqual(parts["smart_money_onchain"],0)
         self.assertEqual(parts["independent_confirmation"],0)
