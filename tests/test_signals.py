@@ -42,7 +42,7 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1}
         trends={"1d":"BULLISH","4h":"UP"}
         structure={"classification":"BULLISH","bos":True}
-        score,parts=_score("LONG",tech,trends,structure,None,None,-0.0001,True,True,True)
+        score,parts=_score("LONG",tech,trends,structure,None,None,-0.0001,True,True,False)
         self.assertLessEqual(score,100)
         self.assertEqual(parts["smart_money_onchain"],0)
         self.assertEqual(parts["independent_confirmation"],0)
