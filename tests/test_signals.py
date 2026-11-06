@@ -223,9 +223,10 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         self.assertGreater(_iso_ms("2026-11-06T12:00:00Z"),0)
 
     def test_status_exposes_only_provider_key_presence_not_secret(self):
-        old=os.environ.get("TRADERSPY_API_KEY");old_db=os.environ.get("CONTROL_DB_PATH")
+        old=os.environ.get("TRADERSPY_API_KEY");old_db=os.environ.get("CONTROL_DB_PATH");old_provider=os.environ.get("V5_DATA_PROVIDER")
         tmp=tempfile.TemporaryDirectory();os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"status.db")
         try:
+            os.environ["V5_DATA_PROVIDER"]="traderspy"
             os.environ["TRADERSPY_API_KEY"]="tspy_private_test_value"
             status=get_signal_status()
             self.assertTrue(status["api_key_configured"])
@@ -238,6 +239,8 @@ class V5ScoringAndStorageTests(unittest.TestCase):
             else:os.environ["TRADERSPY_API_KEY"]=old
             if old_db is None:os.environ.pop("CONTROL_DB_PATH",None)
             else:os.environ["CONTROL_DB_PATH"]=old_db
+            if old_provider is None:os.environ.pop("V5_DATA_PROVIDER",None)
+            else:os.environ["V5_DATA_PROVIDER"]=old_provider
             tmp.cleanup()
 
     def test_persistent_daily_provider_budget_guard(self):
