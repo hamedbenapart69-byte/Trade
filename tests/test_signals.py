@@ -1,6 +1,6 @@
 import os, tempfile, unittest
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -125,7 +125,8 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         self.assertGreater(_iso_ms("2026-11-06T12:00:00Z"),0)
 
     def test_status_exposes_only_provider_key_presence_not_secret(self):
-        old=os.environ.get("TRADERSPY_API_KEY")
+        old=os.environ.get("TRADERSPY_API_KEY");old_db=os.environ.get("CONTROL_DB_PATH")
+        tmp=tempfile.TemporaryDirectory();os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"status.db")
         try:
             os.environ["TRADERSPY_API_KEY"]="tspy_private_test_value"
             status=get_signal_status()
@@ -137,6 +138,21 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         finally:
             if old is None:os.environ.pop("TRADERSPY_API_KEY",None)
             else:os.environ["TRADERSPY_API_KEY"]=old
+            if old_db is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old_db
+            tmp.cleanup()
+
+    def test_persistent_daily_provider_budget_guard(self):
+        old=os.environ.get("CONTROL_DB_PATH");tmp=tempfile.TemporaryDirectory()
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"budget.db")
+        try:
+            self.assertEqual(reserve_traderspy_api_call(1),1)
+            self.assertEqual(traderspy_daily_usage(),1)
+            with self.assertRaises(DataError):reserve_traderspy_api_call(1)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
 
     def test_scan_records_persist(self):
         tmp=tempfile.TemporaryDirectory()
