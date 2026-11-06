@@ -163,6 +163,20 @@ class V5PipelineTests(unittest.TestCase):
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
 
+class V5FundingNormalizationTests(unittest.TestCase):
+    def test_funding_rate_normalizes_different_intervals_to_8h(self):
+        from app.signals import funding_rate_per_8h
+        self.assertAlmostEqual(funding_rate_per_8h(0.0002, 4), (1.0002)**2-1)
+        self.assertAlmostEqual(funding_rate_per_8h(0.0004, 16), (1.0004)**0.5-1)
+        self.assertAlmostEqual(funding_rate_per_8h(-0.0002, 4), (1.0-0.0002)**2-1)
+
+    def test_funding_normalization_rejects_invalid_interval_or_rate(self):
+        from app.signals import funding_rate_per_8h, DataError
+        for rate, interval in ((0.001, 0), (float("nan"), 8), (float("inf"), 8), (-1.0, 8)):
+            with self.assertRaises(DataError):
+                funding_rate_per_8h(rate, interval)
+
+
 class V5ScoringAndStorageTests(unittest.TestCase):
     def test_missing_advanced_sources_get_zero_points(self):
         tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1,
