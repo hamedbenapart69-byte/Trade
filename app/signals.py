@@ -548,7 +548,7 @@ class FuturesSignalEngine:
         score,parts=_score(direction,tech,trends,st,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk["valid"],smart_points,independent)
         v3=50+(10 if (rv<30 if direction=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if direction=="LONG" else "DOWN") else 0)+(10 if ((cl[-1]>e20 and cl[-1]>e50) if direction=="LONG" else (cl[-1]<e20 and cl[-1]<e50)) else 0)+(10 if ((direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0)) else 0)
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if direction=="LONG" else "BEARISH"}
-        grade="A" if independent and smart_points==5 else "B" if independent else "C"
+        grade="B" if independent else "C"
         if not risk["valid"]:decision="REJECT"
         elif grade not in {"A","B"}:decision="WAIT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
