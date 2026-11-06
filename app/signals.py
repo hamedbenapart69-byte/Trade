@@ -169,6 +169,7 @@ class PublicMarketData:
             if sym not in requested:continue
             if item.get("contractType")!="PERPETUAL" or item.get("status")!="TRADING":continue
             if item.get("quoteAsset")!="USDT" or item.get("marginAsset")!="USDT":continue
+            if str(item.get("pair","")).upper()!=sym or (str(item.get("baseAsset","")).upper()+"USDT")!=sym:continue
             filters={x.get("filterType"):x for x in item.get("filters",[]) if isinstance(x,dict)}
             price_filter=filters.get("PRICE_FILTER",{});lot=filters.get("LOT_SIZE",{})
             notional=filters.get("NOTIONAL") or filters.get("MIN_NOTIONAL") or {}
@@ -533,6 +534,8 @@ class FuturesSignalEngine:
                 d=derivatives.get(symbol);p=prices.get(symbol);contract=contracts.get(symbol)
                 if not d or not p:raise DataError("missing_live_price_or_derivatives")
                 if not contract:raise DataError("missing_verified_perpetual_contract_specs")
+                if contract.get("base_asset")!=str(coin.get("symbol","")).upper() or contract.get("quote_asset")!="USDT" or contract.get("margin_asset")!="USDT":
+                    raise DataError("underlying_quote_or_margin_asset_mismatch")
                 candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
                 oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
                 result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old,contract)
@@ -672,7 +675,7 @@ class FuturesSignalEngine:
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
-          "entry_type":entry_type,"entry":mark,"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
+          "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
