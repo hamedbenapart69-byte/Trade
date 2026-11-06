@@ -429,7 +429,8 @@ class FuturesSignalEngine:
         symbols=[s for _,s in selected]
         prices=self.p.prices(symbols)
         derivatives=self.p.derivatives(symbols)
-        smart=self.p.smart_money()
+        try:smart=self.p.smart_money()
+        except DataError:smart={"traders":[],"positions":[],"signals":[],"traders_observed_at_ms":0,"positions_observed_at_ms":0,"signals_observed_at_ms":0}
         candidates=[]
         for coin,symbol in selected:
             try:
