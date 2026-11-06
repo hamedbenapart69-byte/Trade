@@ -1,6 +1,6 @@
 import os, tempfile, unittest
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -25,28 +25,38 @@ class V5IndicatorTests(unittest.TestCase):
 
 class V5RiskTests(unittest.TestCase):
     def test_four_dollar_risk_and_five_x_cap(self):
-        r=risk_calc("LONG",100,1,1,5)
+        r=risk_calc("LONG",100,98.5)
         self.assertTrue(r["valid"])
         self.assertAlmostEqual(r["stop_loss"],98.5)
         self.assertAlmostEqual(r["take_profit"],103.0)
-        self.assertLessEqual(r["planned_loss_usd"],4.0)
+        self.assertAlmostEqual(r["planned_loss_usd"],4.0)
         self.assertLessEqual(r["required_leverage"],5.0)
         self.assertGreaterEqual(r["reward_to_risk"],2.0)
+        self.assertIsNone(r["quantity_contracts_reference"])
+        self.assertGreater(r["quantity_base"],0)
 
-    def test_wide_stop_and_minimum_quantity_rejected(self):
-        self.assertEqual(risk_calc("SHORT",100,3,1,5)["reason"],"stop_distance_out_of_range")
-        self.assertEqual(risk_calc("LONG",100,1,1,1)["reason"],"available_venue_leverage_below_required")
+    def test_wide_stop_rejected(self):
+        self.assertEqual(risk_calc("SHORT",100,104.5)["reason"],"stop_distance_out_of_range")
 
 class V5ScoringAndStorageTests(unittest.TestCase):
     def test_missing_advanced_sources_get_zero_points(self):
-        tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1}
-        trends={"1d":"BULLISH","4h":"UP"}
-        structure={"classification":"BULLISH","bos":True}
-        score,parts=_score("LONG",tech,trends,structure,None,None,-0.0001,True,True,False)
+        tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1,
+          "adx":25,"bb_position":"lower_half","obv_aligned":True,"mfi_aligned":True}
+        trends={"1d":"BULLISH","4h":"UP","1h":"UP"}
+        structure={"classification":"BULLISH","bos":True,"choch":False,"fvg_aligned":True,"order_block_aligned":True,"liquidity_sweep_aligned":False}
+        score,parts=_score("LONG",tech,trends,structure,2,3,1.5,-0.0001,5,True,0,False)
         self.assertLessEqual(score,100)
         self.assertEqual(parts["smart_money_onchain"],0)
         self.assertEqual(parts["independent_confirmation"],0)
         self.assertEqual(sum(parts.values()),score)
+        self.assertLessEqual(score,100)
+
+    def test_traderspy_key_is_required_and_timestamps_are_normalized(self):
+        p=PublicMarketData(api_key=None)
+        with self.assertRaises(DataError):p._ts_get("/market/symbols")
+        p.close()
+        self.assertEqual(_iso_ms(1793967960281),1793967960281)
+        self.assertGreater(_iso_ms("2026-11-06T12:00:00Z"),0)
 
     def test_scan_records_persist(self):
         tmp=tempfile.TemporaryDirectory()
