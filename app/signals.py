@@ -391,14 +391,16 @@ def render_output(r):
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
     out=[];rows=r.get("actionable",[]);watch=r.get("conditional",[])
     if rows:
-        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Qty (base) | Contracts ref. | Leverage | Risk USD | Data Grade | Confidence |","|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|"]
+        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
+          "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|"]
         for x in rows:
-            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['quantity_base'])} | {fmt(z['quantity_contracts_reference'])} | {fmt(z['required_leverage'])}x | {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
+            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['required_leverage'])}x | {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
     elif not watch:out.append("No qualifying signals today.")
     if watch:
         if out:out.append("")
-        out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |","|---|---|---|---|---:|---:|---|"]
-        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('confirmation_required') or '—'} | {fmt(x.get('trigger_level'))} | {x['confidence_v5']} | {x['data_grade']} |")
+        out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |",
+          "|---|---|---|---|---:|---:|---|"]
+        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('entry_quality',{}).get('confirmation_required') or '—'} | {fmt(x.get('entry_quality',{}).get('trigger_level'))} | {x['confidence_v5']} | {x['data_grade']} |")
     if r.get("partial_scan"):out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
     return "\n".join(out)
 
