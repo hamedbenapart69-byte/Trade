@@ -766,8 +766,9 @@ def get_signal_status():
     selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
     if selected=="okx":
         return {"status":"ENDPOINTS_VERIFIED_FULL_SCAN_PENDING","data_provider":"OKX public read-only linear USDT perpetual API",
-          "api_key_required":False,"exchange_account_connection":False,"exchange_api_key_required":False,
-          "order_execution_enabled":False,"endpoint_probe_verified":True,"full_live_scan_verified":False,
+          "api_key_configured":bool(os.getenv("TRADERSPY_API_KEY")),"api_key_required":False,
+          "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
+          "live_rest_access_verified":False,"endpoint_probe_verified":True,"full_live_scan_verified":False,
           "note":"Public OKX instruments, ticker, candles, funding, open-interest, mark/index and long-short endpoints returned HTTP 200 from GitHub Actions. A full 30-asset scan is not yet verified."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
