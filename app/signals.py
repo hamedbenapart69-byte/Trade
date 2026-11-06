@@ -254,10 +254,11 @@ def funding_rate_per_8h(rate:float,interval_hours:float)->float:
     return (1.0+float(rate))**(8.0/float(interval_hours))-1.0
 
 def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dict:
-    """Apply public tick/lot/min-notional rules to the read-only position-size reference."""
-    from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP, ROUND_FLOOR, ROUND_CEILING
+    """Round venue price/size rules and calculate risk using the verified contract multiplier."""
+    from decimal import Decimal, ROUND_HALF_UP, ROUND_FLOOR, ROUND_CEILING, ROUND_DOWN
     tick=Decimal(str(contract["tick_size"]));step=Decimal(str(contract["step_size"]))
-    if tick<=0 or step<=0:raise DataError("invalid_contract_tick_or_step")
+    minimum=Decimal(str(contract["min_qty"]));multiplier=Decimal(str(contract.get("contract_multiplier") or 1))
+    if min(tick,step,minimum,multiplier)<=0:raise DataError("invalid_contract_tick_step_minimum_or_multiplier")
     def snap(value,mode):
         v=Decimal(str(value));units=(v/tick).to_integral_value(rounding=mode);return float(units*tick)
     en=snap(entry,ROUND_HALF_UP)
@@ -266,24 +267,31 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     def tp_snap(value):
         return snap(value,ROUND_CEILING if direction=="LONG" else ROUND_FLOOR)
     tp1=tp_snap(base["take_profit"]);tp2=tp_snap(base["take_profit_2"]);tp3=tp_snap(base["take_profit_3"])
-    dist=abs(en-st);qty_raw=Decimal(str(base["max_notional_usd"]))/Decimal(str(en))
+    dist=abs(Decimal(str(en))-Decimal(str(st)))
+    unit=str(contract.get("quantity_unit") or "base_asset")
+    unit_notional=Decimal(str(en))*multiplier if unit=="contracts" else Decimal(str(en))
+    qty_raw=Decimal(str(base["max_notional_usd"]))/unit_notional
     qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
-    notional=qty*Decimal(str(en));loss=qty*Decimal(str(dist));required=notional/Decimal("200")
-    rr=abs(tp1-en)/dist if dist else 0
+    base_qty=qty*multiplier if unit=="contracts" else qty
+    notional=base_qty*Decimal(str(en));loss=base_qty*dist
+    required=notional/Decimal("200")
+    rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist if dist else Decimal("0")
     reason=base.get("reason")
-    if reason is None and qty<float(contract["min_qty"]):reason="minimum_contract_quantity_not_met"
-    if reason is None and notional<float(contract["min_notional"]):reason="minimum_contract_notional_not_met"
+    if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
+    min_notional=Decimal(str(contract.get("min_notional") or 0))
+    if reason is None and min_notional>0 and notional<min_notional:reason="minimum_contract_notional_not_met"
     if reason is None and float(loss)>4.0+1e-9:reason="rounded_quantity_exceeds_risk_cap"
     if reason is None and float(required)>5.0+1e-9:reason="rounded_quantity_exceeds_leverage_cap"
-    if reason is None and rr<2.0:reason="tick_rounded_reward_to_risk_below_2"
+    if reason is None and float(rr)<2.0:reason="tick_rounded_reward_to_risk_below_2"
+    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source")}
+    spec.update({"tick_size":float(tick),"step_size":float(step),"min_qty":float(minimum),
+        "min_notional":float(min_notional),"contract_multiplier":float(multiplier)})
     base.update({"entry":en,"stop_loss":st,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
-      "quantity_base":float(qty),"quantity_contracts_reference":None,"contract_multiplier_reference":None,"quantity_unit":"base_asset",
+      "quantity_base":float(base_qty),"quantity_contracts_reference":float(qty) if unit=="contracts" else None,
+      "contract_multiplier_reference":float(multiplier),"quantity_unit":unit,
       "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
-      "reward_to_risk":rr,"valid":reason is None,"reason":reason,"contract_spec_verified":True,
-      "contract_spec":{"symbol":contract["symbol"],"contract_type":contract["contract_type"],"status":contract["status"],
-        "base_asset":contract["base_asset"],"quote_asset":contract["quote_asset"],"margin_asset":contract["margin_asset"],
-        "quantity_unit":contract["quantity_unit"],"tick_size":float(tick),"step_size":float(step),
-        "min_qty":float(contract["min_qty"]),"min_notional":float(contract["min_notional"])}})
+      "reward_to_risk":float(rr),"valid":reason is None,"reason":reason,"contract_spec_verified":True,
+      "contract_spec":spec,"contract_quantity_note":"Quantity rounded using the venue's published lot step and contract multiplier."})
     return base
 
 def adx(cs:list[Candle],n:int=14)->list[float|None]:
