@@ -17,7 +17,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: data/control.db
-          key: futures-signal-db-${{ github.ref_name }}-${{ github.run_id }}
+          key: futures-signal-db-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             futures-signal-db-${{ github.ref_name }}-
       - uses: actions/setup-python@v5
