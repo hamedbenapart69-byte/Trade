@@ -1,6 +1,6 @@
 import os, tempfile, unittest
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -38,6 +38,64 @@ class V5RiskTests(unittest.TestCase):
     def test_wide_stop_rejected(self):
         self.assertEqual(risk_calc("SHORT",100,104.5)["reason"],"stop_distance_out_of_range")
 
+class FakeTraderSpyProvider:
+    calls=0
+    def __init__(self,now,stale=False):
+        self.now=now;self.stale=stale
+    def discover(self):
+        return [{"id":"bitcoin","symbol":"BTC","name":"Bitcoin","volume":1000000,"market_cap_rank":1,"current_price":100.0,"market_cap":10000000}]
+    def tracked_symbols(self):return {"BTCUSDT"}
+    def prices(self,symbols):
+        return {"BTCUSDT":{"symbol":"BTCUSDT","price":100.0,"updatedAt":self.now}}
+    def derivatives(self,symbols):
+        stamp=self.now-20*60_000 if self.stale else self.now
+        return {"BTCUSDT":{"symbol":"BTCUSDT","updatedAt":stamp,"markPrice":100.0,"indexPrice":100.0,
+          "funding":{"rate":0.0001,"intervalHours":8},"openInterest":{"valueUsd":1000000,"change4hPct":1.0,"change24hPct":2.0,"priceChange24hPct":1.0},
+          "positioning":{"globalLongShortRatio":1.0,"topTraderLongShortRatio":1.0,"takerBuySellRatio":1.0},"source":"fixture"}}
+    def smart_money(self):
+        return {"traders":[],"positions":[],"signals":[],"traders_observed_at_ms":self.now,"positions_observed_at_ms":self.now,"signals_observed_at_ms":self.now}
+    def candles(self,symbol,tf,limit):
+        iv=INTERVALS[tf];last=(self.now//iv)*iv-iv;first=last-(219*iv);out=[]
+        for i in range(220):
+            ot=first+i*iv;close=80+i*.1
+            out.append(Candle(ot,close-.05,close+.2,close-.2,close,10,ot+iv-1,True))
+        return out
+    def close(self):pass
+
+class V5PipelineTests(unittest.TestCase):
+    def test_end_to_end_fixture_rejects_non_qualifying_market_without_fake_signal(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=1793967960000
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"pipeline.db")
+        try:
+            store.init_db()
+            engine=FuturesSignalEngine(provider=FakeTraderSpyProvider(now),clock=lambda:now)
+            result=engine.scan(limit=30)
+            self.assertEqual(result["screened_assets"],1)
+            self.assertTrue(result["partial_scan"])
+            self.assertEqual(result["other_candidates"][0]["decision"],"REJECT")
+            self.assertEqual(result["actionable"],[])
+            self.assertFalse(result["source_status"]["account_connection"])
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
+    def test_stale_live_futures_snapshot_becomes_insufficient_data(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=1793967960000
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"stale.db")
+        try:
+            store.init_db()
+            engine=FuturesSignalEngine(provider=FakeTraderSpyProvider(now,stale=True),clock=lambda:now)
+            result=engine.scan(limit=30)
+            self.assertEqual(result["screened_assets"],0)
+            self.assertEqual(result["coverage"]["insufficient_data"],1)
+            self.assertEqual(result["other_candidates"][0]["decision"],"INSUFFICIENT_DATA")
+            self.assertEqual(result["actionable"],[])
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
 class V5ScoringAndStorageTests(unittest.TestCase):
     def test_missing_advanced_sources_get_zero_points(self):
         tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1,
@@ -52,7 +110,7 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         self.assertLessEqual(score,100)
 
     def test_traderspy_key_is_required_and_timestamps_are_normalized(self):
-        p=PublicMarketData(api_key=None)
+        p=PublicMarketData(api_key="")
         with self.assertRaises(DataError):p._ts_get("/market/symbols")
         p.close()
         self.assertEqual(_iso_ms(1793967960281),1793967960281)
