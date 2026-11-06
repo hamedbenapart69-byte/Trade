@@ -73,8 +73,8 @@ The V5 scanner is in `app/signals.py`:
 - `GET /signals/performance`
 - `POST /signals/evaluate`
 
-Discovery uses CoinGecko. Numerical 15m/1h/4h/1d futures OHLCV, prices, derivatives and optional smart-money evidence use TraderSpy's read-only market-data API. The underlying public feed identifies as Binance USDⓈ-M futures, accessed through TraderSpy. There is no direct Binance connection, exchange account, exchange API key, or order execution.
+Discovery uses CoinGecko. Numerical 15m/1h/4h/1d futures OHLCV, prices, derivatives and optional smart-money evidence use TraderSpy's read-only market-data API. The underlying public feed identifies as Binance USDⓈ-M futures, accessed through TraderSpy. Official Binance USDⓈ-M public exchangeInfo is additionally read only for PERPETUAL/TRADING status, asset identity and tick/lot/minimum-notional filters. No Binance account, private endpoint, exchange API key or order execution is used.
 
 **Repository runner setup:** the free TraderSpy data-provider plan requires a read-only API key. Add it to GitHub Actions secrets as `TRADERSPY_API_KEY`. This is not an exchange key and cannot place trades. Free-plan limits are 300 API calls/day and 10/minute; a standard 30-asset scan uses about132 calls and takes around 13–15 minutes. The key is not committed to source.
 
-The ChatGPT TraderSpy connector was live-tested for BTCUSDT in this session. The GitHub REST runner has not yet completed a live 30-asset scan because its separate API secret is not configured. See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [mobile-friendly TraderSpy key setup](docs/SETUP_TRADERSPY_API_KEY.md).
+The ChatGPT TraderSpy connector was live-tested for BTCUSDT in this session. The owner reports adding the GitHub Actions secret; successful secret injection and a live 30-asset scan are still awaiting workflow verification. See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [mobile-friendly TraderSpy key setup](docs/SETUP_TRADERSPY_API_KEY.md).
