@@ -67,6 +67,7 @@ See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Acti
 ## Futures Signal Autopilot V5
 
 The V5 scanner is in `app/signals.py`:
+- `GET /signals/status`
 - `POST /signals/scan`
 - `GET /signals/latest`
 - `GET /signals/performance`
