@@ -155,6 +155,33 @@ class PublicMarketData:
             s=x if isinstance(x,str) else x.get("symbol") if isinstance(x,dict) else None
             if s:out.add(str(s).upper())
         return out
+    def contract_specs(self,symbols):
+        """Read public USDⓈ-M exchange metadata; no account credentials or trading endpoints."""
+        url="https://fapi.binance.com/fapi/v1/exchangeInfo"
+        try:
+            r=self.client.get(url,headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
+            r.raise_for_status();payload=r.json()
+        except (httpx.HTTPError,ValueError,TypeError) as e:
+            raise DataError("public_futures_contract_metadata_unavailable") from e
+        requested={str(x).upper() for x in symbols};out={}
+        for item in payload.get("symbols",[]):
+            sym=str(item.get("symbol","")).upper()
+            if sym not in requested:continue
+            if item.get("contractType")!="PERPETUAL" or item.get("status")!="TRADING":continue
+            if item.get("quoteAsset")!="USDT" or item.get("marginAsset")!="USDT":continue
+            filters={x.get("filterType"):x for x in item.get("filters",[]) if isinstance(x,dict)}
+            price_filter=filters.get("PRICE_FILTER",{});lot=filters.get("LOT_SIZE",{})
+            notional=filters.get("NOTIONAL") or filters.get("MIN_NOTIONAL") or {}
+            try:
+                tick=float(price_filter.get("tickSize") or 0);step=float(lot.get("stepSize") or 0)
+                min_qty=float(lot.get("minQty") or 0);min_notional=float(notional.get("minNotional") or notional.get("notional") or 0)
+            except (TypeError,ValueError):continue
+            if min(tick,step,min_qty,min_notional)<=0:continue
+            out[sym]={"symbol":sym,"pair":item.get("pair"),"contract_type":item.get("contractType"),
+              "status":item.get("status"),"base_asset":item.get("baseAsset"),"quote_asset":item.get("quoteAsset"),
+              "margin_asset":item.get("marginAsset"),"quantity_unit":"base_asset","tick_size":tick,
+              "step_size":step,"min_qty":min_qty,"min_notional":min_notional}
+        return out
     def candles(self,symbol,tf,limit=220):
         r=self._ts_get("/market/candles",{"symbol":symbol,"interval":tf,"limit":limit})
         raw=r.get("candles",[])
@@ -208,6 +235,39 @@ def funding_rate_per_8h(rate:float,interval_hours:float)->float:
     if rate<=-1:
         raise DataError("invalid_funding_rate")
     return (1.0+float(rate))**(8.0/float(interval_hours))-1.0
+
+def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dict:
+    """Apply public tick/lot/min-notional rules to the read-only position-size reference."""
+    from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP, ROUND_FLOOR, ROUND_CEILING
+    tick=Decimal(str(contract["tick_size"]));step=Decimal(str(contract["step_size"]))
+    if tick<=0 or step<=0:raise DataError("invalid_contract_tick_or_step")
+    def snap(value,mode):
+        v=Decimal(str(value));units=(v/tick).to_integral_value(rounding=mode);return float(units*tick)
+    en=snap(entry,ROUND_HALF_UP)
+    st=snap(stop,ROUND_FLOOR if direction=="LONG" else ROUND_CEILING)
+    base=risk_calc(direction,en,st)
+    def tp_snap(value):
+        return snap(value,ROUND_CEILING if direction=="LONG" else ROUND_FLOOR)
+    tp1=tp_snap(base["take_profit"]);tp2=tp_snap(base["take_profit_2"]);tp3=tp_snap(base["take_profit_3"])
+    dist=abs(en-st);qty_raw=Decimal(str(base["max_notional_usd"]))/Decimal(str(en))
+    qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
+    notional=qty*Decimal(str(en));loss=qty*Decimal(str(dist));required=notional/Decimal("200")
+    rr=abs(tp1-en)/dist if dist else 0
+    reason=base.get("reason")
+    if reason is None and qty<float(contract["min_qty"]):reason="minimum_contract_quantity_not_met"
+    if reason is None and notional<float(contract["min_notional"]):reason="minimum_contract_notional_not_met"
+    if reason is None and float(loss)>4.0+1e-9:reason="rounded_quantity_exceeds_risk_cap"
+    if reason is None and float(required)>5.0+1e-9:reason="rounded_quantity_exceeds_leverage_cap"
+    if reason is None and rr<2.0:reason="tick_rounded_reward_to_risk_below_2"
+    base.update({"entry":en,"stop_loss":st,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
+      "quantity_base":float(qty),"quantity_contracts_reference":float(qty),"contract_multiplier_reference":1.0,
+      "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
+      "reward_to_risk":rr,"valid":reason is None,"reason":reason,"contract_spec_verified":True,
+      "contract_spec":{"symbol":contract["symbol"],"contract_type":contract["contract_type"],"status":contract["status"],
+        "base_asset":contract["base_asset"],"quote_asset":contract["quote_asset"],"margin_asset":contract["margin_asset"],
+        "quantity_unit":contract["quantity_unit"],"tick_size":float(tick),"step_size":float(step),
+        "min_qty":float(contract["min_qty"]),"min_notional":float(contract["min_notional"])}})
+    return base
 
 def adx(cs:list[Candle],n:int=14)->list[float|None]:
     out=[None]*len(cs)
@@ -444,6 +504,8 @@ class FuturesSignalEngine:
         now=self.clock()
         coins=self.p.discover()
         tracked=self.p.tracked_symbols()
+        symbols_for_specs=[str(x["symbol"]).upper()+"USDT" for x in coins if str(x.get("symbol","")).upper()+"USDT" in tracked]
+        contracts=self.p.contract_specs(symbols_for_specs)
         counts={}
         for x in coins:counts[x["symbol"]]=counts.get(x["symbol"],0)+1
         eligible=[]
@@ -468,11 +530,12 @@ class FuturesSignalEngine:
         candidates=[]
         for coin,symbol in selected:
             try:
-                d=derivatives.get(symbol);p=prices.get(symbol)
+                d=derivatives.get(symbol);p=prices.get(symbol);contract=contracts.get(symbol)
                 if not d or not p:raise DataError("missing_live_price_or_derivatives")
+                if not contract:raise DataError("missing_verified_perpetual_contract_specs")
                 candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
                 oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
-                result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old)
+                result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old,contract)
                 candidates.append(result)
                 save_market_snapshot(symbol,_iso_ms(d.get("updatedAt")),float((d.get("openInterest") or {}).get("valueUsd") or 0))
             except (DataError,CandleError,ValueError,TypeError,KeyError) as e:
@@ -496,7 +559,7 @@ class FuturesSignalEngine:
           "other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
           "coverage":{"total_candidates":len(candidates),"screened":screened,"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),
             "rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
-    def evaluate(self,coin,symbol,candles,deriv,price,smart,now,oi_old):
+    def evaluate(self,coin,symbol,candles,deriv,price,smart,now,oi_old,contract):
         du=_iso_ms(deriv.get("updatedAt"));pu=_iso_ms(price.get("updatedAt"))
         if not du or not pu or now-du>900_000 or now-pu>900_000 or du>now+60_000 or pu>now+60_000:
             raise DataError("stale_or_future_dated_live_futures_snapshot")
@@ -556,7 +619,7 @@ class FuturesSignalEngine:
         if structural and ((direction=="LONG" and structural<mark) or (direction=="SHORT" and structural>mark)):
             sp=abs(mark-structural)/mark*100
             if .5<=sp<=3 and abs(mark-structural)>=1.0*a14:stop=structural
-        risk=risk_calc(direction,mark,stop)
+        risk=contract_sized_risk(direction,mark,stop,contract)
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
@@ -586,7 +649,7 @@ class FuturesSignalEngine:
         grade="B" if independent else "C"
         ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
         ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
-        audit={"tracked_usdt_perpetual_instrument":True,"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
+        audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
