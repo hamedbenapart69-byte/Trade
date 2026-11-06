@@ -189,8 +189,10 @@ class PublicMarketData:
         if self.own:self.client.close()
 
 def _iso_ms(s):
-    try:return int(datetime.fromisoformat(s.replace("Z","+00:00")).timestamp()*1000)
-    except (ValueError,AttributeError):return 0
+    if isinstance(s,(int,float)):
+        return int(s if s>10_000_000_000 else s*1000)
+    try:return int(datetime.fromisoformat(str(s).replace("Z","+00:00")).timestamp()*1000)
+    except (ValueError,AttributeError,TypeError):return 0
 
 def _trend(cs,daily=False):
     v=[x.close for x in cs];a=ema(v,20)[-1];b=ema(v,50)[-1]
