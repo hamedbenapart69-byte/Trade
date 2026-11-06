@@ -157,15 +157,27 @@ class PublicMarketData:
         return out
     def contract_specs(self,symbols):
         """Read public USDⓈ-M exchange metadata; no account credentials or trading endpoints."""
-        url="https://fapi.binance.com/fapi/v1/exchangeInfo"
-        try:
-            r=self.client.get(url,headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
-            r.raise_for_status();payload=r.json()
-        except (httpx.HTTPError,ValueError,TypeError) as e:
-            # Preserve only safe transport diagnostics; never include request headers or API keys.
-            status=getattr(getattr(e,"response",None),"status_code",None)
-            code=f"http_{status}" if status is not None else type(e).__name__
-            raise DataError(f"public_futures_contract_metadata_unavailable:{code}") from e
+        # Try the documented USDⓈ-M endpoint first, then Binance's numbered
+        # futures hosts as a connectivity fallback. Every payload is schema-checked.
+        hosts=("fapi.binance.com","fapi1.binance.com","fapi2.binance.com","fapi3.binance.com","fapi4.binance.com")
+        failures=[]
+        payload=None
+        for host in hosts:
+            try:
+                r=self.client.get(f"https://{host}/fapi/v1/exchangeInfo",
+                    headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
+                r.raise_for_status()
+                candidate=r.json()
+                if not isinstance(candidate,dict) or not isinstance(candidate.get("symbols"),list):
+                    raise ValueError("invalid_exchange_metadata_schema")
+                payload=candidate
+                break
+            except (httpx.HTTPError,ValueError,TypeError) as e:
+                status=getattr(getattr(e,"response",None),"status_code",None)
+                failures.append(f"{host}:{'http_'+str(status) if status is not None else type(e).__name__}")
+        if payload is None:
+            # Safe diagnostic codes only; never include request headers or API keys.
+            raise DataError("public_futures_contract_metadata_unavailable:"+";".join(failures))
         requested={str(x).upper() for x in symbols};out={}
         for item in payload.get("symbols",[]):
             sym=str(item.get("symbol","")).upper()
