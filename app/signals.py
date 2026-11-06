@@ -1,16 +1,14 @@
-"""V5 read-only futures signal engine using aggregated perps data and independent DEX OHLCV."""
+"""V5 read-only futures signal engine using CoinGecko discovery and TraderSpy futures OHLCV."""
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from math import floor, sqrt
+from math import sqrt
 import json, time, uuid, os
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 from app import store
 
 CG="https://api.coingecko.com/api/v3"
-OPTI="https://optimistfi.com"
-GECKO="https://api.geckoterminal.com/api/v2"
 STABLES={"USDT","USDC","DAI","BUSD","TUSD","FDUSD","USDE","USDS","USDD","FRAX","USDP","PYUSD","USTC","LUSD","GUSD","EURC","EURS","USD1","USDJ"}
 WRAPPED={"WBTC","WETH","STETH","WSTETH","CBBTC","BTCB","WBETH","BETH","WBNB","RENBTC","TBTC"}
 INTERVALS={"15m":900_000,"1h":3_600_000,"4h":14_400_000,"1d":86_400_000}
@@ -436,7 +434,9 @@ class FuturesSignalEngine:
         eligible=[]
         for x in coins:
             s=x["symbol"]
+            name=str(x.get("name") or "").lower()
             if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED:continue
+            if "wrapped" in name or any(k in name for k in ("leveraged","3x long","3x short","5x long","5x short")):continue
             if any(s.endswith(z) for z in ("UP","DOWN","BULL","BEAR","3L","3S","5L","5S")):continue
             sym=s+"USDT"
             if sym not in tracked:continue
