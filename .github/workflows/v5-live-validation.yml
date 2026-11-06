@@ -30,12 +30,7 @@ jobs:
         if: always()
         run: |
           if [ -f data/control.db ]; then
-            python - <<'PY'
-            import sqlite3
-            db = sqlite3.connect("data/control.db")
-            db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-            db.close()
-            PY
+            python -c 'import sqlite3; db=sqlite3.connect("data/control.db"); db.execute("PRAGMA wal_checkpoint(TRUNCATE)"); db.close()'
           fi
       - name: Save persistent signal and API-usage database
         if: always() && hashFiles('data/control.db') != ''
