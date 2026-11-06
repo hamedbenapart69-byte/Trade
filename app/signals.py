@@ -80,6 +80,7 @@ def validate_candles(cs:list[Candle],interval:int,now:int,min_count:int=210)->li
         if c.open_time in seen:raise CandleError("duplicate_timestamp")
         seen.add(c.open_time)
         if any(not (x==x and abs(x)!=float("inf")) for x in (c.open,c.high,c.low,c.close,c.volume)):raise CandleError("non_finite_ohlcv")
+        if c.close_time!=c.open_time+interval-1:raise CandleError("candle_close_time_mismatch")
         if min(c.open,c.high,c.low,c.close)<=0 or c.volume<0 or c.high<max(c.open,c.close,c.low) or c.low>min(c.open,c.close,c.high):raise CandleError("invalid_ohlc")
         if i and c.open_time-cs[i-1].open_time!=interval:raise CandleError("missing_or_irregular_candle")
     done=[c for c in cs if c.close_time<now]
@@ -164,7 +165,7 @@ class PublicMarketData:
                 ct=int(x.get("closeTime") or x.get("close_time") or (ot+iv-1))
                 out.append(Candle(ot,float(x["open"]),float(x["high"]),float(x["low"]),float(x["close"]),
                     float(x["volume"]),ct,bool(x.get("isFinal",x.get("is_final",True)))))
-            return sorted(out,key=lambda x:x.open_time)
+            return out
         except (ValueError,TypeError,KeyError) as e:raise DataError("invalid_traderspy_ohlcv_payload") from e
     def prices(self,symbols):
         out={}
