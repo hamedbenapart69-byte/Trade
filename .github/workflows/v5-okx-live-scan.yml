@@ -1,7 +1,5 @@
 name: V5 OKX Live Market Scan
 on:
-  push:
-    branches: [diagnostics/public-market-endpoint-probe]
   workflow_dispatch:
 permissions:
   contents: read
