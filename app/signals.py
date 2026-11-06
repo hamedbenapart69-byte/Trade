@@ -682,11 +682,13 @@ def evaluate_outcomes_with_provider(provider=None):
     init_signal_db();checked=closed=ambiguous=expired=0;own=provider is None;p=provider or PublicMarketData()
     try:
         with store.db_connection() as db:rows=db.execute("SELECT * FROM signal_records WHERE outcome='OPEN' AND decision IN ('BUY_NOW','SELL_NOW')").fetchall()
+        candles_cache={}
         for row in rows:
             checked+=1
             try:
-                d=json.loads(row["data_json"]);symbol=d["symbol"];tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf]
-                cs=validate_candles(p.candles(symbol,tf,500),iv,int(time.time()*1000),1)
+                d=json.loads(row["data_json"]);symbol=d["symbol"];tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf];key=(symbol,tf)
+                if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,tf,500),iv,int(time.time()*1000),1)
+                cs=candles_cache[key]
             except (DataError,CandleError,KeyError,ValueError):continue
             entry_ts=int(row["entry_ts_ms"] or 0);expiry=int(d.get("expires_at_ms") or entry_ts+24*60*60_000)
             outcome=None;rr=None;price=None;at=None
