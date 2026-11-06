@@ -261,7 +261,7 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     if reason is None and float(required)>5.0+1e-9:reason="rounded_quantity_exceeds_leverage_cap"
     if reason is None and rr<2.0:reason="tick_rounded_reward_to_risk_below_2"
     base.update({"entry":en,"stop_loss":st,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
-      "quantity_base":float(qty),"quantity_contracts_reference":float(qty),"contract_multiplier_reference":1.0,
+      "quantity_base":float(qty),"quantity_contracts_reference":None,"contract_multiplier_reference":None,"quantity_unit":"base_asset",
       "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
       "reward_to_risk":rr,"valid":reason is None,"reason":reason,"contract_spec_verified":True,
       "contract_spec":{"symbol":contract["symbol"],"contract_type":contract["contract_type"],"status":contract["status"],
