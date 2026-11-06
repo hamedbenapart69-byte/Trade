@@ -165,7 +165,8 @@ class PublicMarketData:
         for host in hosts:
             try:
                 r=self.client.get(f"https://{host}/fapi/v1/exchangeInfo",
-                    headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
+                    headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"},
+                    follow_redirects=True)
                 r.raise_for_status()
                 candidate=r.json()
                 if not isinstance(candidate,dict) or not isinstance(candidate.get("symbols"),list):
