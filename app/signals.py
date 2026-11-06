@@ -238,7 +238,7 @@ def latest_scan():
 
 def performance():
     init_signal_db()
-    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW')").fetchall()
+    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW') ORDER BY rowid").fetchall()
     closed=[r for r in rows if r["outcome"] in {"TP1","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
@@ -271,7 +271,7 @@ def performance():
       "tp1_count":sum(r["outcome"]=="TP1" for r in rows),"stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),
       "open_count":sum(r["outcome"]=="OPEN" for r in rows),"win_rate_pct":len(wins)/len(closed)*100 if closed else None,
       "loss_rate_pct":len(loss)/len(closed)*100 if closed else None,"average_reward_to_risk":sum(rr)/len(rr) if rr else None,
-      "average_realized_return_pct":sum(returns)/len(returns) if returns else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
+      "average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
       "expectancy_r":sum(vals)/len(vals) if vals else None,"profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),
       "max_drawdown_r":dd,"by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(timeframe),
       "by_decision":segment(lambda r:r["decision"]),"by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
@@ -288,7 +288,7 @@ def render_output(r):
     if watch:
         if out:out.append("")
         out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |","|---|---|---|---|---:|---:|---|"]
-        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('confirmation_required') or '—'} | {fmt(x.get('entry'))} | {x['confidence_v5']} | {x['data_grade']} |")
+        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('confirmation_required') or '—'} | {fmt(x.get('trigger_level'))} | {x['confidence_v5']} | {x['data_grade']} |")
     if r.get("partial_scan"):out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
     return "\n".join(out)
 
@@ -349,14 +349,17 @@ class FuturesSignalEngine:
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if d=="LONG" else "SELL_NOW"
         elif score>=60 and (not entry_ok or conflict):decision="CONDITIONAL_BUY" if d=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
-        confirm=None
+        confirm=None;trigger_level=None
         if decision.startswith("CONDITIONAL"):
-            confirm=("15m completed close above EMA20 and not below prior close" if d=="LONG" else "15m completed close below EMA20 and not above prior close") if not entry_ok else "daily regime realigns with setup"
+            if not entry_ok:
+                confirm="15m completed close above EMA20 and not below prior close" if d=="LONG" else "15m completed close below EMA20 and not above prior close"
+                trigger_level=max(e15,prev.close) if d=="LONG" else min(e15,prev.close)
+            else:confirm="daily regime realigns with setup"
         return {"symbol":sym,"asset":a["id"],"primary_timeframe":"1h","decision":decision,"direction":d,"entry_type":"verified_futures_mark_price_reference",
           "entry":price,"entry_observed_at_ms":p["time"],"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],"stop_pct":risk["stop_pct"],
           "risk":risk,"data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,"structure":st,
           "derivatives":{"funding_rate_raw":p["funding"],"funding_interval_hours":hours,"funding_normalized_8h":fund,"open_interest":oi,"global_long_short_ratio":ls},
-          "confirmation_required":confirm,"sources":{"discovery":"CoinGecko","ohlcv":"Binance USD-M public API","futures":"Binance USD-M public API"},
+          "confirmation_required":confirm,"trigger_level":trigger_level,"sources":{"discovery":"CoinGecko","ohlcv":"Binance USD-M public API","futures":"Binance USD-M public API"},
           "limitations":["Smart-money/on-chain evidence unavailable; zero points.","Independent confirmation unavailable; zero points.","Fees, spread, slippage and liquidation mechanics excluded.","No exchange account connection or order execution."]}
     def close(self):
         if self.own:self.p.close()
