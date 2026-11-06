@@ -66,12 +66,14 @@ See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Acti
 
 ## Futures Signal Autopilot V5 (read-only branch)
 
-The branch `feature/futures-signal-autopilot-v5` adds an initial V5 scanner in `app/signals.py`:
+The branch `feature/futures-signal-autopilot-v5` adds a V5 scanner in `app/signals.py`:
 - `POST /signals/scan` (operator token required; `universe_limit=1..100`, or `extended=true`)
 - `GET /signals/latest`
 - `GET /signals/performance`
 - `POST /signals/evaluate`
 
-The scanner uses CoinGecko public discovery and Binance USD-M public market-data endpoints only. It does not use exchange accounts, API keys, or order endpoints. Its planned risk is capped at $4 and 5x leverage. It stores signals and paper outcomes in the existing SQLite database.
+Market discovery uses CoinGecko's public API; perpetual price/funding/OI data uses OptimistFi's free no-key Perps Data API; OHLCV comes from GeckoTerminal's free no-key DEX spot API (30 requests/minute). No exchange account, exchange API key or order endpoint is used.
 
-This is an initial scanner implementation, not a completed V5 release. Smart-money/on-chain, liquidation/order-block/FVG modules, independent futures-provider fallback, fee/slippage modeling, scheduled scanning, Iran-network reachability and a real live scan remain unverified or incomplete. See [the V5 implementation boundary](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md). No live signal or performance result is claimed by unit tests.
+**Important:** the OHLCV is DEX spot data, not futures-contract candles. The engine validates the spot/perps price basis and assigns Data Grade B. It also cannot yet validate a venue's lot step/minimum quantity, so displayed contract quantity is a reference only.
+
+This is an initial scanner, not a completed V5 release. Smart-money wallet identity, liquidations, order blocks/FVG, second OHLCV fallback, fee/slippage modeling, scheduled scans, Iran-network reachability and a verified live scan remain open. See [the V5 implementation boundary](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md). Unit tests are not live-market results.
