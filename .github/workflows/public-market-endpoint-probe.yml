@@ -1,0 +1,24 @@
+name: Public Market Endpoint Probe
+on:
+  push:
+    branches: [diagnostics/public-market-endpoint-probe]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Probe public read-only endpoints
+        run: python scripts/public_market_endpoint_probe.py | tee public-market-endpoint-probe.json
+      - name: Upload probe evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-market-endpoint-probe
+          path: public-market-endpoint-probe.json
+          retention-days: 14
