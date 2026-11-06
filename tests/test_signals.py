@@ -18,7 +18,7 @@ class V5IndicatorTests(unittest.TestCase):
     def test_candle_gap_and_bad_ohlc_rejected(self):
         cs=[Candle(i*60000,100,101,99,100,10,(i+1)*60000-1) for i in range(5)]
         validate_candles(cs,60000,now=310000,min_count=5)
-        gap=cs[:2]+[Candle(180000,100,101,99,100,10,239999)]+cs[3:]
+        gap=cs[:2]+[Candle(180000,100,101,99,100,10,239999),Candle(240000,100,101,99,100,10,299999),Candle(300000,100,101,99,100,10,359999)]
         with self.assertRaises(CandleError): validate_candles(gap,60000,now=310000,min_count=5)
         bad=cs[:];bad[2]=Candle(120000,100,98,99,100,10,179999)
         with self.assertRaises(CandleError): validate_candles(bad,60000,now=310000,min_count=5)
@@ -35,7 +35,7 @@ class V5RiskTests(unittest.TestCase):
 
     def test_wide_stop_and_minimum_quantity_rejected(self):
         self.assertEqual(risk_calc("SHORT",100,3,None,None)["reason"],"stop_distance_out_of_range")
-        self.assertEqual(risk_calc("LONG",100000,10,1,1)["reason"],"quantity_below_contract_minimum")
+        self.assertEqual(risk_calc("LONG",100000,1000,1,1)["reason"],"quantity_below_contract_minimum")
 
 class V5ScoringAndStorageTests(unittest.TestCase):
     def test_missing_advanced_sources_get_zero_points(self):
