@@ -62,7 +62,7 @@ class V5RiskTests(unittest.TestCase):
     def test_contract_sizing_rejects_below_minimum_quantity(self):
         contract={"symbol":"DUSTUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"DUST",
           "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":0.0001,
-          "step_size":1.0,"min_qty":1.0,"min_notional":5.0}
+          "step_size":1000.0,"min_qty":1000.0,"min_notional":5.0}
         r=contract_sized_risk("LONG",1.0,0.99,contract)
         self.assertFalse(r["valid"])
         self.assertEqual(r["reason"],"minimum_contract_quantity_not_met")
