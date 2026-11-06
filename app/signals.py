@@ -199,6 +199,16 @@ def _iso_ms(s):
     try:return int(datetime.fromisoformat(str(s).replace("Z","+00:00")).timestamp()*1000)
     except (ValueError,AttributeError,TypeError):return 0
 
+def funding_rate_per_8h(rate:float,interval_hours:float)->float:
+    """Normalize a funding rate to an 8-hour equivalent for comparable filtering."""
+    if not isinstance(rate,(int,float)) or not isinstance(interval_hours,(int,float)):
+        raise DataError("ambiguous_funding_rate_or_interval")
+    if not (rate==rate and abs(rate)!=float("inf")) or not (interval_hours>0 and interval_hours==interval_hours and abs(interval_hours)!=float("inf")):
+        raise DataError("ambiguous_funding_rate_or_interval")
+    if rate<=-1:
+        raise DataError("invalid_funding_rate")
+    return (1.0+float(rate))**(8.0/float(interval_hours))-1.0
+
 def adx(cs:list[Candle],n:int=14)->list[float|None]:
     out=[None]*len(cs)
     if len(cs)<2*n+1:return out
@@ -516,9 +526,10 @@ class FuturesSignalEngine:
         ls=float(positioning["globalLongShortRatio"]) if positioning.get("globalLongShortRatio") is not None else None
         top_ls=float(positioning["topTraderLongShortRatio"]) if positioning.get("topTraderLongShortRatio") is not None else None
         taker=float(positioning["takerBuySellRatio"]) if positioning.get("takerBuySellRatio") is not None else None
-        if abs(funding)>=.0005:
+        funding_8h=funding_rate_per_8h(funding,interval_hours)
+        if abs(funding_8h)>=.0005:
             return {"symbol":symbol,"asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,
-              "reason":"V3_funding_threshold_failed","derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours}}
+              "reason":"V3_funding_threshold_failed","derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,"funding_rate_8h_equivalent":funding_8h}}
         ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) or (mh[-1]<0 and mh[-1]<=mh[-2]))
         bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl);ad=adx(one)[-1];ov=obv(one);mf=mfi(one)[-1]
         bbpos="lower_band" if cl[-1]<=bl[-1] else "lower_half" if cl[-1]<bm[-1] else "upper_band" if cl[-1]>=bu[-1] else "upper_half"
@@ -578,7 +589,7 @@ class FuturesSignalEngine:
         audit={"tracked_usdt_perpetual_instrument":True,"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
-          "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding)<.0005,
+          "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
