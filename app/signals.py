@@ -94,6 +94,7 @@ def volume_ratio(cs:list[Candle])->float|None:
     return cs[-1].volume/avg if avg>0 else None
 
 def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:float|None,min_notional:float|None=None)->dict:
+    if entry<=0 or atr14<=0:raise DataError("non_positive_entry_or_atr")
     dist=1.5*atr14;stop=entry-dist if direction=="LONG" else entry+dist
     tp=entry+2*dist if direction=="LONG" else entry-2*dist
     stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);qty=max_notional/entry
@@ -151,15 +152,17 @@ class PublicMarketData:
         try:return [Candle(int(x[0]),float(x[1]),float(x[2]),float(x[3]),float(x[4]),float(x[5]),int(x[6])) for x in xs]
         except (ValueError,TypeError,IndexError) as e:raise DataError("invalid_kline_payload") from e
     def oi(self,symbol):
+        try:x=self.get(BN,"/fapi/v1/openInterest",{"symbol":symbol})
+        except DataError:return None
+        change=None;change_ts=None
         try:
-            x=self.get(BN,"/fapi/v1/openInterest",{"symbol":symbol})
             hist=self.get(BN,"/futures/data/openInterestHist",{"symbol":symbol,"period":"1h","limit":3})
-            change=None
             if isinstance(hist,list) and len(hist)>=2:
                 old,new=hist[-2],hist[-1];dt=int(new["timestamp"])-int(old["timestamp"]);a=float(old["sumOpenInterestValue"])
-                if a and 2_700_000<=dt<=4_500_000:change=(float(new["sumOpenInterestValue"])/a-1)*100
-            return {"value":float(x["openInterest"]),"timestamp_ms":int(x["time"]),"change_pct_1h":change,"change_timestamp_ms":int(hist[-1]["timestamp"]) if isinstance(hist,list) and hist else None}
-        except (DataError,KeyError,ValueError,TypeError):return None
+                if a and 2_700_000<=dt<=4_500_000:change=(float(new["sumOpenInterestValue"])/a-1)*100;change_ts=int(new["timestamp"])
+        except (DataError,KeyError,ValueError,TypeError):pass
+        try:return {"value":float(x["openInterest"]),"timestamp_ms":int(x["time"]),"change_pct_1h":change,"change_timestamp_ms":change_ts}
+        except (KeyError,ValueError,TypeError):return None
     def long_short(self,symbol):
         try:
             xs=self.get(BN,"/futures/data/globalLongShortAccountRatio",{"symbol":symbol,"period":"1h","limit":2})
@@ -273,7 +276,7 @@ class FuturesSignalEngine:
             s=a["symbol"]
             if s in STABLES or s in WRAPPED or counts[s]>1 or not a["id"]:continue
             c=contracts.get(s)
-            if c and c["symbol"] in tickers and c["symbol"] in prem:eligible.append((a,c))
+            if c and c["symbol"] in tickers and c["symbol"] in prem and float(tickers[c["symbol"]].get("quoteVolume",0) or 0)>0:eligible.append((a,c))
         cap=100 if extended else max(1,min(limit,100));selected=eligible[:cap];candidates=[]
         for a,c in selected:
             try:candidates.append(self.evaluate(a,c,prem[c["symbol"]],intervals.get(c["symbol"],8),now))
