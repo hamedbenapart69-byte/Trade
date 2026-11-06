@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 from app import store
 from app.workflow_schemas import validate_workflow_input
-from app.signals.api import router as signal_router
+from app.signals import router as signal_router
 
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
