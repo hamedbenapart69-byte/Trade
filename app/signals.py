@@ -540,7 +540,7 @@ class FuturesSignalEngine:
         elif abs(mark-e15)<=.5*atr15:entry_type="PULLBACK"
         else:entry_type="MARKET"
         entry_points=(2 if entry_type in {"LIQUIDITY_SWEEP","BREAKOUT_RETEST"} else 1 if entry_type=="PULLBACK" else 0)+(2 if not chase else 0)+(1 if entry_ok else 0)
-        smart_points=self._smart_score(symbol,direction,top_ls,smart)
+        smart_points=self._smart_score(symbol,direction,top_ls,smart,now)
         score,parts=_score(direction,tech,trends,st,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk["valid"],smart_points,independent)
         v3=50+(10 if (rv<30 if direction=="LONG" else rv>70) else 0)+(10 if vr>1.5 else 0)+(10 if trends["4h"]==("UP" if direction=="LONG" else "DOWN") else 0)+(10 if ((cl[-1]>e20 and cl[-1]>e50) if direction=="LONG" else (cl[-1]<e20 and cl[-1]<e50)) else 0)+(10 if ((direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0)) else 0)
         conflict=trends["1d"] not in {"NEUTRAL","BULLISH" if direction=="LONG" else "BEARISH"}
@@ -593,9 +593,10 @@ class FuturesSignalEngine:
             if side in {"LONG","SHORT"}:out.append({"side":side,"trader_id":p.get("traderId") or p.get("trader_id"),"size_usd":p.get("sizeUsd") or p.get("notionalUsd")})
         return out
     @classmethod
-    def _smart_score(cls,symbol,direction,top_ratio,smart):
+    def _smart_score(cls,symbol,direction,top_ratio,smart,now):
         points=3 if top_ratio is not None and ((direction=="LONG" and top_ratio>1.2) or (direction=="SHORT" and top_ratio<.8)) else 0
-        aligned=cls._position_evidence(symbol,direction,smart)
+        observed=smart.get("positions_observed_at_ms")
+        aligned=cls._position_evidence(symbol,direction,smart) if observed and 0<=now-observed<=900_000 else []
         traders={str(t.get("traderId") or t.get("trader_id")):float(t.get("smartScore") or t.get("score") or 0) for t in smart.get("traders",[]) if t.get("traderId") or t.get("trader_id")}
         qualified={x["trader_id"] for x in aligned if x["trader_id"] and traders.get(str(x["trader_id"]),0)>=70 and x["side"]==direction}
         if len(qualified)>=2:points+=2
