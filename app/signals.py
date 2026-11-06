@@ -162,7 +162,10 @@ class PublicMarketData:
             r=self.client.get(url,headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
             r.raise_for_status();payload=r.json()
         except (httpx.HTTPError,ValueError,TypeError) as e:
-            raise DataError("public_futures_contract_metadata_unavailable") from e
+            # Preserve only safe transport diagnostics; never include request headers or API keys.
+            status=getattr(getattr(e,"response",None),"status_code",None)
+            code=f"http_{status}" if status is not None else type(e).__name__
+            raise DataError(f"public_futures_contract_metadata_unavailable:{code}") from e
         requested={str(x).upper() for x in symbols};out={}
         for item in payload.get("symbols",[]):
             sym=str(item.get("symbol","")).upper()
