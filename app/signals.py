@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from math import floor
+from math import floor, sqrt
 import json, time, uuid
 from typing import Any
 import httpx
@@ -100,7 +100,7 @@ def risk_calc(direction:str,entry:float,atr14:float,step:float|None,min_qty:floa
     stop_pct=dist/entry*100;max_notional=4/(stop_pct/100);qty=max_notional/entry
     if step and step>0:qty=floor(qty/step+1e-12)*step
     if min_qty is not None and qty<min_qty:qty=0
-    notional=qty*entry;lev=notional/200;loss=notional*stop_pct/100;rr=abs(tp-entry)/abs(entry-stop)
+    notional=qty*entry;lev=max_notional/200;loss=notional*stop_pct/100;rr=abs(tp-entry)/abs(entry-stop)
     reason=None
     if qty<=0:reason="quantity_below_contract_minimum"
     elif not .5<=stop_pct<=3:reason="stop_distance_out_of_range"
@@ -238,16 +238,43 @@ def latest_scan():
 
 def performance():
     init_signal_db()
-    with store.db_connection() as c:rows=c.execute("SELECT outcome,realized_r FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW')").fetchall()
+    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW')").fetchall()
     closed=[r for r in rows if r["outcome"] in {"TP1","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
     for x in vals:eq+=x;peak=max(peak,eq);dd=max(dd,peak-eq)
+    rr=[];returns=[]
+    for r in closed:
+        d=json.loads(r["data_json"]);risk=d.get("risk",{})
+        if risk.get("reward_to_risk") is not None:rr.append(float(risk["reward_to_risk"]))
+        if d.get("stop_pct") is not None:returns.append(float(r["realized_r"])*float(d["stop_pct"]))
+    def segment(key_fn):
+        groups={}
+        for r in rows:
+            key=key_fn(r)
+            if key is None:continue
+            groups.setdefault(key,[]).append(r)
+        out={}
+        for k,rs in groups.items():
+            vs=[float(x["realized_r"]) for x in rs if x["outcome"] in {"TP1","STOP_LOSS"} and x["realized_r"] is not None]
+            w=[x for x in vs if x>0];l=[x for x in vs if x<0]
+            out[str(k)]={"published":len(rs),"closed":len(vs),"win_rate_pct":len(w)/len(vs)*100 if vs else None,
+                         "expectancy_r":sum(vs)/len(vs) if vs else None,"profit_factor":sum(w)/abs(sum(l)) if l else ("undefined_no_losses" if w else None)}
+        return out
+    def conf(r):
+        n=int(r["confidence"])
+        return "<60" if n<60 else "60-69" if n<70 else "70-79" if n<80 else "80-89" if n<90 else "90-100"
+    def timeframe(r):
+        try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
+        except Exception:return "unknown"
     return {"mode":"paper_signal_tracking_not_executed_trades","published_actionable":len(rows),"closed_observations":len(closed),
       "tp1_count":sum(r["outcome"]=="TP1" for r in rows),"stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),
       "open_count":sum(r["outcome"]=="OPEN" for r in rows),"win_rate_pct":len(wins)/len(closed)*100 if closed else None,
-      "loss_rate_pct":len(loss)/len(closed)*100 if closed else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
-      "expectancy_r":sum(vals)/len(vals) if vals else None,"profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),"max_drawdown_r":dd}
+      "loss_rate_pct":len(loss)/len(closed)*100 if closed else None,"average_reward_to_risk":sum(rr)/len(rr) if rr else None,
+      "average_realized_return_pct":sum(returns)/len(returns) if returns else None,"average_realized_r":sum(vals)/len(vals) if vals else None,
+      "expectancy_r":sum(vals)/len(vals) if vals else None,"profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),
+      "max_drawdown_r":dd,"by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(timeframe),
+      "by_decision":segment(lambda r:r["decision"]),"by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
 
 def render_output(r):
     if r.get("status")=="DATA_UNAVAILABLE":return "DATA UNAVAILABLE — do not trade today."
@@ -262,7 +289,7 @@ def render_output(r):
         if out:out.append("")
         out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |","|---|---|---|---|---:|---:|---|"]
         for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('confirmation_required') or '—'} | {fmt(x.get('entry'))} | {x['confidence_v5']} | {x['data_grade']} |")
-    if r.get("screened_assets",0)<30:out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
+    if r.get("partial_scan"):out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
     return "\n".join(out)
 
 class FuturesSignalEngine:
@@ -285,7 +312,7 @@ class FuturesSignalEngine:
         actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],key=lambda x:(-x["confidence_v5"],x.get("data_grade","Z"),-x.get("risk",{}).get("reward_to_risk",0)))[:10]
         conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
-          "universe_requested":cap,"eligible_assets":len(eligible),"screened_assets":len(selected),"partial_scan":len(selected)<30,
+          "universe_requested":cap,"eligible_assets":len(eligible),"screened_assets":len(selected),"partial_scan":cap>=30 and len(selected)<30,
           "source_status":{"discovery":"CoinGecko public API","futures":"Binance USD-M public market-data API","account_connection":False,"order_execution":False},
           "actionable":actionable,"conditional":conditional,"other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
           "coverage":{"total_candidates":len(candidates),"insufficient_data":sum(x["decision"]=="INSUFFICIENT_DATA" for x in candidates),"rejected":sum(x["decision"]=="REJECT" for x in candidates),"wait":sum(x["decision"]=="WAIT" for x in candidates)}}
@@ -325,7 +352,7 @@ class FuturesSignalEngine:
         confirm=None
         if decision.startswith("CONDITIONAL"):
             confirm=("15m completed close above EMA20 and not below prior close" if d=="LONG" else "15m completed close below EMA20 and not above prior close") if not entry_ok else "daily regime realigns with setup"
-        return {"symbol":sym,"asset":a["id"],"decision":decision,"direction":d,"entry_type":"verified_futures_mark_price_reference",
+        return {"symbol":sym,"asset":a["id"],"primary_timeframe":"1h","decision":decision,"direction":d,"entry_type":"verified_futures_mark_price_reference",
           "entry":price,"entry_observed_at_ms":p["time"],"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],"stop_pct":risk["stop_pct"],
           "risk":risk,"data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,"structure":st,
           "derivatives":{"funding_rate_raw":p["funding"],"funding_interval_hours":hours,"funding_normalized_8h":fund,"open_interest":oi,"global_long_short_ratio":ls},
