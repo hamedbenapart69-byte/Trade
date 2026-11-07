@@ -936,6 +936,8 @@ class FuturesSignalEngine:
         grade="B" if independent else "C"
         ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
         ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
+        positions_observed=smart.get("positions_observed_at_ms")
+        positions_fresh=bool(positions_observed and 0<=now-positions_observed<=900_000)
         is_toobit=getattr(self.p,"provider_name","").startswith("Toobit")
         depth_required=max(500.0,2.0*float(risk.get("notional_usd") or 0))
         audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),
@@ -981,7 +983,7 @@ class FuturesSignalEngine:
             "liquidation_data_status":"not_supplied_by_selected_OKX_adapter","source":deriv.get("source")},
           "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
           "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_traders_observed_at_ms":smart.get("traders_observed_at_ms"),
-            "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
+            "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart) if positions_fresh else [],
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
           "expires_at_ms":pu+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
