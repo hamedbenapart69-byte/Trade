@@ -540,8 +540,8 @@ def _structure(cs,direction,atr_value=None):
     sweep_short=bool(ph is not None and cs[-1].high>ph and cs[-1].close<ph)
     for level in levels:
         price=float(level["price"]);kind=level["type"]
-        if kind.endswith("_LOW") and cs[-1].low<price and cs[-1].close>price:sweep_long=True
-        if kind.endswith("_HIGH") and cs[-1].high>price and cs[-1].close<price:sweep_short=True
+        if kind in {"PREVIOUS_DAY_LOW","PREVIOUS_WEEK_LOW","EQUAL_LOWS","SUPPORT"} and cs[-1].low<price and cs[-1].close>price:sweep_long=True
+        if kind in {"PREVIOUS_DAY_HIGH","PREVIOUS_WEEK_HIGH","EQUAL_HIGHS","RESISTANCE"} and cs[-1].high>price and cs[-1].close<price:sweep_short=True
     return {
         "classification":cls,"bos":bos,"choch":choch,"last_swing_high":ph,"last_swing_low":lh,
         "fvg":fvg,"fvg_bullish":bool(fvg_bull and fvg_bull["status"]!="MITIGATED"),
