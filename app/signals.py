@@ -993,7 +993,7 @@ class FuturesSignalEngine:
             "taker_buy_sell_ratio":taker,"taker_buy_sell_ratio_observed_at_ms":taker_ts,
             "liquidation_data_status":"not_supplied_by_selected_OKX_adapter","source":deriv.get("source")},
           "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
-          "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_traders_observed_at_ms":smart.get("traders_observed_at_ms"),
+          "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_trader_ratio_observed_at_ms":top_ls_ts,"traders_observed_at_ms":smart.get("traders_observed_at_ms"),
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart) if positions_fresh else [],
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
