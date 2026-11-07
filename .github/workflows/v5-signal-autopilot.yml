@@ -75,7 +75,7 @@ jobs:
 
       - name: Run live V5 market scan
         env:
-          V5_DATA_PROVIDER: toobit
+          V5_DATA_PROVIDER: okx
           CONTROL_DB_PATH: ${{ github.workspace }}/data/control.db
         shell: bash
         run: |

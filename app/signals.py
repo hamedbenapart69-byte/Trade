@@ -92,11 +92,10 @@ def volume_ratio(cs:list[Candle])->float|None:
     return cs[-1].volume/avg if avg>0 else None
 
 def v3_directional_baseline(rsi14:float,vol_ratio:float,close:float,ema20:float,ema50:float,trend4h:str)->str|None:
-    """Multi-factor pullback/trend gate; avoid requiring an extreme RSI reading."""
+    """Mandatory V3 baseline from the V5 specification; all directional gates must pass."""
     if any(x is None for x in (rsi14,vol_ratio,close,ema20,ema50)):return None
-    if vol_ratio<=0:return None
-    long=40<=rsi14<=70 and close>ema20 and ema20>=ema50 and trend4h in {"UP","FLAT"}
-    short=30<=rsi14<=60 and close<ema20 and ema20<=ema50 and trend4h in {"DOWN","FLAT"}
+    long=rsi14<35 and vol_ratio>1.2 and close>ema20 and trend4h in {"UP","FLAT"}
+    short=rsi14>65 and vol_ratio>1.2 and close<ema20 and trend4h in {"DOWN","FLAT"}
     if long and not short:return "LONG"
     if short and not long:return "SHORT"
     return None
@@ -803,8 +802,8 @@ class FuturesSignalEngine:
         if self.own:self.p.close()
 
 def create_provider():
-    """Select a read-only public market-data provider; Toobit is the free default."""
-    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
+    """Select a read-only public market-data provider; OKX is the verified free default."""
+    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
     if selected=="toobit":
         from app.integrations.toobit_market import ToobitPublicMarketData
         return ToobitPublicMarketData()
