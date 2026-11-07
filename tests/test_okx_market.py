@@ -15,7 +15,7 @@ class OkxAdapterTests(unittest.TestCase):
             self.assertEqual(request.url.path,"/api/v5/public/instruments")
             return httpx.Response(200,json={"code":"0","data":[{
                 "instId":"BTC-USDT-SWAP","instType":"SWAP","ctType":"linear","state":"live",
-                "settleCcy":"USDT","ctVal":"0.01","ctValCcy":"BTC","tickSz":"0.1","lotSz":"0.01","minSz":"0.01","lever":"125"}]})
+                "settleCcy":"USDT","ctVal":"0.01","ctValCcy":"BTC","tickSz":"0.1","lotSz":"0.01","minSz":"0.01","lever":"125","maxLmtSz":"1000","maxMktSz":"500"}]})
         p=self.make_provider(handler)
         try:
             self.assertEqual(p.tracked_symbols(),{"BTCUSDT"})
@@ -25,6 +25,7 @@ class OkxAdapterTests(unittest.TestCase):
             self.assertEqual(spec["tick_size"],0.1)
             self.assertEqual(spec["step_size"],0.01)
             self.assertEqual(spec["max_leverage"],125.0)
+            self.assertEqual(spec["max_qty"],500.0)
         finally:
             p.close()
 
