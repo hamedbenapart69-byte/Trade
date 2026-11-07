@@ -85,7 +85,7 @@ This section supersedes earlier statements in this document that describe Binanc
 
 ---
 
-## Native Toobit public-feed implementation — 2026-11-07
+## Historical Toobit public-feed experiment (superseded; not the active default) — 2026-11-07
 
 This section supersedes the earlier experimental OKX-default runner notes above.
 
