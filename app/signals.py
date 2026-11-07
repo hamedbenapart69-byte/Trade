@@ -197,8 +197,7 @@ class PublicMarketData:
             out[sym]={"symbol":sym,"pair":item.get("pair"),"contract_type":item.get("contractType"),
               "status":item.get("status"),"base_asset":item.get("baseAsset"),"quote_asset":item.get("quoteAsset"),
               "margin_asset":item.get("marginAsset"),"quantity_unit":"base_asset","tick_size":tick,
-              "step_size":step,"min_qty":min_qty,"min_notional":min_notional}
-        return out
+              "step_size":step,"min_qty":min_qty,"min_notional":min_notional}        return out
     def candles(self,symbol,tf,limit=220):
         r=self._ts_get("/market/candles",{"symbol":symbol,"interval":tf,"limit":limit})
         raw=r.get("candles",[])
@@ -397,8 +396,7 @@ def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entr
     if structure.get("fvg_aligned") or structure.get("order_block_aligned") or structure.get("liquidity_sweep_aligned"):p["market_structure"]+=5
     if tech["volume_ratio"]>1.5:p["volume_momentum"]+=4
     if tech.get("obv_aligned"):p["volume_momentum"]+=3
-    if tech.get("mfi_aligned"):p["volume_momentum"]+=3
-    if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
+    if tech.get("mfi_aligned"):p["volume_momentum"]+=3    if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
     oi_values=[x for x in (oi1h,oi4h,oi24h) if x is not None]
     if oi_values and any((x>0 and tech["price_change"]>0) if direction=="LONG" else (x>0 and tech["price_change"]<0) for x in oi_values):p["derivatives"]+=4
     if ls is not None and ((direction=="LONG" and ls<0.8) or (direction=="SHORT" and ls>1.2)):p["derivatives"]+=2
@@ -597,8 +595,7 @@ class FuturesSignalEngine:
         if min(mark,index,last_price)<=0:raise DataError("missing_verified_futures_mark_index_or_last_price")
         if abs(mark/last_price-1)*10000>100:raise DataError("futures_mark_last_trade_basis_over_100bps")
         cg_price=float(coin.get("current_price") or 0)
-        if cg_price<=0:raise DataError("missing_independent_coingecko_spot_reference")
-        basis=(index/cg_price-1)*10000
+        if cg_price<=0:raise DataError("missing_independent_coingecko_spot_reference")        basis=(index/cg_price-1)*10000
         if abs(basis)>100:raise DataError("futures_index_vs_independent_spot_conflict_over_100bps")
         independent=abs(basis)<=50
         mins={"15m":210,"1h":210,"4h":210,"1d":200}
@@ -764,14 +761,23 @@ router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
     selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    scan=latest_scan()
     if selected=="okx":
-        return {"status":"PROVIDER_VALIDATED_LAST_SCAN_NO_SIGNAL","data_provider":"OKX public read-only linear USDT perpetual API",
-          "api_key_configured":bool(os.getenv("TRADERSPY_API_KEY")),"api_key_required":False,
-          "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
-          "live_rest_access_verified":True,"endpoint_probe_verified":True,"full_live_scan_verified":True,
-          "last_full_live_scan_utc":"2026-11-06T23:11:02Z","last_full_live_scan_coverage":"30/30",
-          "last_full_live_scan_actionable_signals":0,
-          "note":"GitHub Actions verified live OKX public market endpoints and screened 30/30 assets. No candidate passed the mandatory V3 baseline, so no actionable signal was published. This is not a profitability claim."}
+        context=(scan or {}).get("validation_context") or {}
+        source=(scan or {}).get("source_status") or {}
+        live_verified=bool(scan and context.get("fixture_data") is False and source.get("futures_ohlcv"))
+        screened=int((scan or {}).get("screened_assets") or 0)
+        selected_assets=int((scan or {}).get("selected_assets") or 0)
+        return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
+          "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
+          "api_key_required":False,"exchange_account_connection":False,
+          "exchange_api_key_required":False,"order_execution_enabled":False,
+          "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
+          "full_live_scan_verified":bool(scan and screened>0),
+          "last_full_live_scan_utc":(scan or {}).get("scanned_at"),
+          "last_full_live_scan_coverage":f"{screened}/{selected_assets}" if scan else None,
+          "last_full_live_scan_actionable_signals":len((scan or {}).get("actionable") or []),
+          "note":"Status is derived from the latest scan persisted in this service. A previous GitHub Actions probe is not treated as proof of current service connectivity."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
@@ -797,8 +803,7 @@ def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)
 @router.get("/signals/latest")
 def get_latest():
     r=latest_scan()
-    if r is None:raise HTTPException(404,detail="no_scan_recorded")
-    return r
+    if r is None:raise HTTPException(404,detail="no_scan_recorded")    return r
 
 @router.get("/signals/performance")
 def get_performance():return performance()
@@ -898,4 +903,3 @@ def evaluate_outcomes_with_provider(provider=None):
 @router.post("/signals/evaluate")
 def evaluate_outcomes():
     return evaluate_outcomes_with_provider()
-
