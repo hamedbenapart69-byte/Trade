@@ -583,19 +583,29 @@ def performance():
       "by_strategy":segment(rows,lambda r:r["strategy_version"])}
 
 def render_output(r):
-    if r.get("status")=="DATA_UNAVAILABLE":return "No qualifying signals today."
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
-    rows=r.get("actionable",[])[:10]
-    if not rows:return "No qualifying signals today."
-    out=["| Rank | Symbol | Side | Entry | Stop Loss | TP1 | TP2 | TP3 | Leverage (≤5x) | Position Notional (USD) | Planned Risk (USD) | Timeframe | Confidence/Source |",
-      "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|"]
-    for rank,x in enumerate(rows,1):
-        z=x["risk"];spec=z.get("contract_spec") or {}
-        symbol=spec.get("venue_symbol") or x["symbol"]
-        source_name=str(spec.get("source") or "public futures data")
-        source_link="[Toobit API](https://api-docs.toobit.com/api/usdt-m-market-data)" if source_name.startswith("Toobit") else source_name
-        source=" / ".join([str(x.get("data_grade") or "—"),source_link,"isolated sizing assumption","targets calculated"])
-        out.append(f"| {rank} | {symbol} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x.get('take_profit_2'))} | {fmt(x.get('take_profit_3'))} | {fmt(z['required_leverage'])}x | {fmt(z['notional_usd'])} | {fmt(z['planned_loss_usd'])} | {x.get('primary_timeframe') or '1h'} | {source} |")
+    actionable=r.get("actionable",[])[:10]
+    conditional=r.get("conditional",[])
+    if not actionable and not conditional:return "No qualifying signals today."
+    out=[]
+    if actionable:
+        out.extend([
+            "| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|",
+        ])
+        for x in actionable:
+            z=x.get("risk") or {}
+            out.append(f"| {x.get('symbol','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {fmt(x.get('stop_pct'))} | {fmt(z.get('required_leverage'))}x | {fmt(z.get('planned_loss_usd'))} | {x.get('data_grade','—')} | {fmt(x.get('confidence_v5'))} |")
+    if conditional:
+        if out:out.append("")
+        out.extend([
+            "Conditional watchlist",
+            "| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |",
+            "|---|---|---|---|---:|---:|---|",
+        ])
+        for x in conditional:
+            entry=x.get("entry_quality") or {}
+            out.append(f"| {x.get('symbol','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v5'))} | {x.get('data_grade','—')} |")
     return "\n".join(out)
 
 class FuturesSignalEngine:
