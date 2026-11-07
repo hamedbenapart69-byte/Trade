@@ -271,30 +271,39 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     if min(tick,step,minimum,multiplier)<=0:raise DataError("invalid_contract_tick_step_minimum_or_multiplier")
     def snap(value,mode):
         v=Decimal(str(value));units=(v/tick).to_integral_value(rounding=mode);return float(units*tick)
+    raw_entry=Decimal(str(entry));raw_stop=Decimal(str(stop))
+    base=risk_calc(direction,float(raw_entry),float(raw_stop))
     en=snap(entry,ROUND_HALF_UP)
     st=snap(stop,ROUND_FLOOR if direction=="LONG" else ROUND_CEILING)
-    base=risk_calc(direction,en,st)
+    if direction=="LONG" and st>=en or direction=="SHORT" and st<=en:
+        raise DataError("rounded_entry_or_stop_invalid")
     def tp_snap(value):
         return snap(value,ROUND_CEILING if direction=="LONG" else ROUND_FLOOR)
     tp1=tp_snap(base["take_profit"]);tp2=tp_snap(base["take_profit_2"]);tp3=tp_snap(base["take_profit_3"])
+    raw_dist=abs(raw_entry-raw_stop)
     dist=abs(Decimal(str(en))-Decimal(str(st)))
-    if dist<=0:raise DataError("rounded_stop_distance_zero")
-    actual_stop_pct=float(dist/Decimal(str(en))*Decimal("100"))
-    reason=None
-    if not 0.5<=actual_stop_pct<=3.0:reason="rounded_stop_distance_out_of_range"
-    # Recalculate position notional from the tick-rounded entry and stop, not
-    # from the pre-rounded prices. This keeps the planned loss cap truthful.
-    max_notional=min(Decimal("4")/(dist/Decimal(str(en))),Decimal("1000"))
-    base["max_notional_usd"]=float(max_notional)
-    base["stop_pct"]=actual_stop_pct
+    if raw_dist<=0 or dist<=0:raise DataError("rounded_stop_distance_zero")
+    raw_stop_pct=float(raw_dist/raw_entry*Decimal("100"))
+    rounded_stop_pct=float(dist/Decimal(str(en))*Decimal("100"))
+    reason=base.get("reason")
+    if reason is None and not 0.5<=rounded_stop_pct<=3.0:reason="rounded_stop_distance_out_of_range"
+    # Size from unrounded entry/stop values as required by V5. Then cap the
+    # rounded lot quantity again against the actual tick-rounded stop loss.
+    max_notional=Decimal(str(base["max_notional_usd"]))
     unit=str(contract.get("quantity_unit") or "base_asset")
-    unit_notional=Decimal(str(en))*multiplier if unit=="contracts" else Decimal(str(en))
-    qty_raw=max_notional/unit_notional
+    raw_unit_notional=raw_entry*multiplier if unit=="contracts" else raw_entry
+    qty_raw=max_notional/raw_unit_notional
     qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
+    actual_unit_loss=dist*multiplier if unit=="contracts" else dist
+    if actual_unit_loss>0:
+        risk_qty_cap=(Decimal("4")/actual_unit_loss/step).to_integral_value(rounding=ROUND_DOWN)*step
+        qty=min(qty,risk_qty_cap)
     base_qty=qty*multiplier if unit=="contracts" else qty
     notional=base_qty*Decimal(str(en));loss=base_qty*dist
     required=max(Decimal("1"),notional/Decimal("200"))
-    rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist
+    rr=abs(Decimal(str(base["take_profit"]))-raw_entry)/raw_dist
+    base["stop_pct"]=raw_stop_pct
+    base["rounded_stop_pct"]=rounded_stop_pct
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
     maximum=Decimal(str(contract.get("max_qty") or 0))
     if reason is None and maximum>0 and qty>maximum:reason="maximum_contract_quantity_exceeded"
