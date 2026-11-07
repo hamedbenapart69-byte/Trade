@@ -846,7 +846,7 @@ def create_provider(selected_override:str|None=None):
 router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
-    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
+    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
     scan=latest_scan()
     if selected in {"okx","toobit"}:
         context=(scan or {}).get("validation_context") or {}
@@ -933,7 +933,7 @@ def evaluate_outcomes_with_provider(provider=None):
                         source_unavailable+=1
                         continue
                     signal_provider=create_provider(provider_key)
-                    if getattr(signal_provider,"provider_name","")!=source:
+                    if provider_key_for_source(getattr(signal_provider,"provider_name",""))!=provider_key:
                         signal_provider.close()
                         source_unavailable+=1
                         continue
