@@ -2,7 +2,7 @@ import json
 import os, tempfile, unittest, time
 from pathlib import Path
 from datetime import datetime, timezone
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed, _find_fvg, _find_order_block
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -297,6 +297,44 @@ class V5FundingNormalizationTests(unittest.TestCase):
 
 
 class V5ScoringAndStorageTests(unittest.TestCase):
+    def test_fvg_uses_three_candle_zone_and_records_mitigation(self):
+        def candle(i,o,h,l,cl):
+            ts=i*3_600_000
+            return Candle(ts,o,h,l,cl,100,ts+3_599_999,True)
+        candles=[candle(i,100,101,99,100) for i in range(8)]
+        candles.extend([
+            candle(8,100,101,99,100),
+            candle(9,100,103,100,102),
+            candle(10,103,104,102,103),
+            candle(11,103,104,101.5,103),
+        ])
+        zone=_find_fvg(candles,"LONG")
+        self.assertEqual(zone["direction"],"BULLISH")
+        self.assertEqual(zone["lower"],101.0)
+        self.assertEqual(zone["upper"],102.0)
+        self.assertEqual(zone["status"],"PARTIALLY_MITIGATED")
+        candles.append(candle(12,103,104,100.5,101))
+        fully=_find_fvg(candles,"LONG")
+        self.assertEqual(fully["status"],"MITIGATED")
+
+    def test_order_block_requires_displacement_and_records_zone_state(self):
+        def candle(i,o,h,l,cl):
+            ts=i*3_600_000
+            return Candle(ts,o,h,l,cl,100,ts+3_599_999,True)
+        candles=[candle(i,100,101,99,100) for i in range(8)]
+        candles.extend([
+            candle(8,102,103,100,101),
+            candle(9,102,103,102.5,102.8),
+            candle(10,102,106,101.5,106),
+        ])
+        block=_find_order_block(candles,"LONG",True,2.0)
+        self.assertEqual(block["type"],"BULLISH")
+        self.assertEqual(block["lower"],100.0)
+        self.assertEqual(block["upper"],103.0)
+        self.assertEqual(block["status"],"PARTIALLY_MITIGATED")
+        self.assertEqual(block["originating_candle_time_ms"],8*3_600_000)
+        self.assertGreaterEqual(block["displacement_atr"],0.5)
+
     def test_zero_funding_value_does_not_fail_boolean_audit(self):
         self.assertTrue(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":True}))
         self.assertFalse(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":False}))
