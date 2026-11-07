@@ -15,7 +15,7 @@ class OkxAdapterTests(unittest.TestCase):
             self.assertEqual(request.url.path,"/api/v5/public/instruments")
             return httpx.Response(200,json={"code":"0","data":[{
                 "instId":"BTC-USDT-SWAP","instType":"SWAP","ctType":"linear","state":"live",
-                "settleCcy":"USDT","ctVal":"0.01","ctValCcy":"BTC","tickSz":"0.1","lotSz":"0.01","minSz":"0.01"}]})
+                "settleCcy":"USDT","ctVal":"0.01","ctValCcy":"BTC","tickSz":"0.1","lotSz":"0.01","minSz":"0.01","lever":"125"}]})
         p=self.make_provider(handler)
         try:
             self.assertEqual(p.tracked_symbols(),{"BTCUSDT"})
@@ -24,8 +24,18 @@ class OkxAdapterTests(unittest.TestCase):
             self.assertEqual(spec["contract_multiplier"],0.01)
             self.assertEqual(spec["tick_size"],0.1)
             self.assertEqual(spec["step_size"],0.01)
+            self.assertEqual(spec["max_leverage"],125.0)
         finally:
             p.close()
+
+    def test_venue_max_leverage_is_enforced_after_contract_sizing(self):
+        contract={"symbol":"BTCUSDT","contract_type":"PERPETUAL","status":"TRADING",
+            "base_asset":"BTC","quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"contracts",
+            "contract_multiplier":0.01,"tick_size":0.1,"step_size":0.01,"min_qty":0.01,
+            "min_notional":0,"max_leverage":3}
+        result=contract_sized_risk("LONG",100000,99500,contract)
+        self.assertFalse(result["valid"])
+        self.assertEqual(result["reason"],"rounded_quantity_exceeds_venue_or_user_leverage_cap")
 
     def test_okx_candles_are_reversed_and_finality_preserved(self):
         rows=[
