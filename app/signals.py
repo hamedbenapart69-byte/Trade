@@ -442,8 +442,10 @@ def oi_change_1h(base,now_ms):
     return r[0] if r else None
 
 def save_market_snapshot(base,asof_ms,oi):
-    if oi is None or oi<=0:return
-    with store.db_connection() as c:c.execute("INSERT OR IGNORE INTO signal_market_snapshots VALUES(?,?,?)",(base,asof_ms,oi))
+    if oi is None or oi<=0 or not asof_ms:return
+    with store.db_connection() as c:
+        c.execute("INSERT OR IGNORE INTO signal_market_snapshots VALUES(?,?,?)",(base,asof_ms,oi))
+        c.execute("DELETE FROM signal_market_snapshots WHERE observed_at_ms<?",(asof_ms-7*24*60*60_000,))
 
 def save_scan(result):
     init_signal_db();published=result.get("actionable",[])+result.get("conditional",[]);saved=0
@@ -453,6 +455,8 @@ def save_scan(result):
             c.execute("""INSERT INTO signal_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (str(uuid.uuid4()),result["scan_id"],x["symbol"],x.get("direction") or "UNKNOWN",x["decision"],x.get("entry"),x.get("stop_loss"),x.get("take_profit"),x.get("entry_observed_at_ms"),int(x.get("confidence_v5",0)),x.get("data_grade","FAIL"),"WATCH" if x["decision"].startswith("CONDITIONAL") else "OPEN",None,None,None,json.dumps(x,ensure_ascii=False)))
             saved+=1
+        # Keep the latest scan and every scan referenced by a published signal; discard empty scan history.
+        c.execute("DELETE FROM signal_scans WHERE scan_id<>? AND scan_id NOT IN (SELECT DISTINCT scan_id FROM signal_records)",(result["scan_id"],))
     result["persistence"]={"published_records_saved":saved}
     result["performance"]=performance()
     with store.db_connection() as c:
@@ -466,7 +470,13 @@ def latest_scan():
 
 def performance():
     init_signal_db()
-    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
+    with store.db_connection() as c:
+        rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
+        latest=c.execute("SELECT result_json FROM signal_scans ORDER BY scanned_at DESC LIMIT 1").fetchone()
+    provider_name="configured public futures provider"
+    if latest:
+        try:provider_name=(json.loads(latest[0]).get("source_status") or {}).get("futures_ohlcv") or provider_name
+        except (ValueError,TypeError):pass
     closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
@@ -491,7 +501,7 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"selected public futures provider OHLCV; no exchange fills are observed",
+    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":f"{provider_name} OHLCV; no exchange fills are observed",
       "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
       "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
       "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
@@ -544,7 +554,7 @@ class FuturesSignalEngine:
             if sym not in tracked:continue
             eligible.append((x,sym))
         requested=100 if extended else max(1,min(limit,30))
-        cap=min(requested,40 if extended else 30)
+        cap=requested
         selected=eligible[:cap]
         if not selected:raise DataError("no_coin_gecko_assets_match_traderspy_usdt_perpetual_universe")
         symbols=[s for _,s in selected]
@@ -641,15 +651,15 @@ class FuturesSignalEngine:
           "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2])),
           "price_change":price_change}
         st=_structure(cs["4h"],direction,a14)
-        atr_stop=mark-1.5*a14 if direction=="LONG" else mark+1.5*a14
+        atr_stop=last_price-1.5*a14 if direction=="LONG" else last_price+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
         if direction=="SHORT" and st.get("last_swing_high"):structural=st["last_swing_high"]+.2*a14
         stop=atr_stop
-        if structural and ((direction=="LONG" and structural<mark) or (direction=="SHORT" and structural>mark)):
-            sp=abs(mark-structural)/mark*100
-            if .5<=sp<=3 and abs(mark-structural)>=1.0*a14:stop=structural
-        risk=contract_sized_risk(direction,mark,stop,contract)
+        if structural and ((direction=="LONG" and structural<last_price) or (direction=="SHORT" and structural>last_price)):
+            sp=abs(last_price-structural)/last_price*100
+            if .5<=sp<=3 and abs(last_price-structural)>=1.0*a14:stop=structural
+        risk=contract_sized_risk(direction,last_price,stop,contract)
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
@@ -662,14 +672,14 @@ class FuturesSignalEngine:
             risk["take_profit_3"]=max(risk["take_profit_3"],supports[1]) if len(supports)>1 and supports[1]<(risk["take_profit_2"] or risk["take_profit"]) else None
         cs15=cs["15m"];v15=[x.close for x in cs15];e15=ema(v15,20)[-1];atr15=atr(cs15)[-1];last=cs15[-1];prev=cs15[-2]
         if e15 is None or atr15 is None:raise DataError("missing_15m_entry_indicators")
-        distance_atr=abs(mark-e15)/atr15 if atr15>0 else 999
+        distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
         chase=distance_atr>2.0
-        entry_ok=(mark>e15 and last.close>=prev.close) if direction=="LONG" else (mark<e15 and last.close<=prev.close)
+        entry_ok=(last_price>e15 and last.close>=prev.close) if direction=="LONG" else (last_price<e15 and last.close<=prev.close)
         entry_ok=entry_ok and not chase
         sweep=st.get("liquidity_sweep_aligned",False)
         if sweep:entry_type="LIQUIDITY_SWEEP"
-        elif st.get("bos") and abs(mark-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
-        elif abs(mark-e15)<=.5*atr15:entry_type="PULLBACK"
+        elif st.get("bos") and abs(last_price-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
+        elif abs(last_price-e15)<=.5*atr15:entry_type="PULLBACK"
         else:entry_type="MARKET"
         entry_points=(2 if entry_type in {"LIQUIDITY_SWEEP","BREAKOUT_RETEST"} else 1 if entry_type=="PULLBACK" else 0)+(2 if not chase else 0)+(1 if entry_ok else 0)
         smart_points=self._smart_score(symbol,direction,top_ls,smart,now)
@@ -702,7 +712,7 @@ class FuturesSignalEngine:
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
-          "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
+          "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
@@ -714,7 +724,7 @@ class FuturesSignalEngine:
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
-          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
+          "expires_at_ms":pu+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
           "limitations":["Selected public futures provider is used read-only; no exchange account or trading credentials are used.",
             "The selected provider does not currently supply verified orderbook spread, exact fees, slippage, venue liquidation price, or on-chain wallet identity.",
             "Optional smart-money and top-trader evidence is absent unless the selected provider explicitly returns it.",
@@ -764,14 +774,31 @@ router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
     selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    scan=latest_scan()
     if selected=="okx":
-        return {"status":"PROVIDER_VALIDATED_LAST_SCAN_NO_SIGNAL","data_provider":"OKX public read-only linear USDT perpetual API",
-          "api_key_configured":bool(os.getenv("TRADERSPY_API_KEY")),"api_key_required":False,
-          "exchange_account_connection":False,"exchange_api_key_required":False,"order_execution_enabled":False,
-          "live_rest_access_verified":True,"endpoint_probe_verified":True,"full_live_scan_verified":True,
-          "last_full_live_scan_utc":"2026-11-06T23:11:02Z","last_full_live_scan_coverage":"30/30",
-          "last_full_live_scan_actionable_signals":0,
-          "note":"GitHub Actions verified live OKX public market endpoints and screened 30/30 assets. No candidate passed the mandatory V3 baseline, so no actionable signal was published. This is not a profitability claim."}
+        context=(scan or {}).get("validation_context") or {}
+        source=(scan or {}).get("source_status") or {}
+        scanned_ms=_iso_ms((scan or {}).get("scanned_at"))
+        age_ms=int(time.time()*1000)-scanned_ms if scanned_ms else None
+        screened=int((scan or {}).get("screened_assets") or 0)
+        selected_assets=int((scan or {}).get("selected_assets") or 0)
+        completed=bool(scan and scan.get("status")=="SCAN_COMPLETED" and context.get("fixture_data") is False
+          and source.get("futures_ohlcv") and selected_assets>=30 and screened>=30)
+        live_verified=bool(completed and age_ms is not None and 0<=age_ms<=900_000)
+        return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
+          "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
+          "api_key_required":False,"exchange_account_connection":False,
+          "exchange_api_key_required":False,"order_execution_enabled":False,
+          "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
+          "full_live_scan_verified":completed,
+          "last_scan_utc":(scan or {}).get("scanned_at"),
+          "last_full_live_scan_utc":(scan or {}).get("scanned_at") if completed else None,
+          "last_scan_age_minutes":round(age_ms/60000,1) if age_ms is not None and age_ms>=0 else None,
+          "last_full_live_scan_age_minutes":round(age_ms/60000,1) if completed and age_ms is not None and age_ms>=0 else None,
+          "last_scan_coverage":f"{screened}/{selected_assets}" if scan else None,
+          "last_full_live_scan_coverage":f"{screened}/{selected_assets}" if completed else None,
+          "last_full_live_scan_actionable_signals":len((scan or {}).get("actionable") or []) if completed else 0,
+          "note":"A full live scan requires at least 30 successfully screened assets and verified non-fixture data. Live REST freshness is true only while that scan is no older than 15 minutes."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
@@ -891,11 +918,10 @@ def evaluate_outcomes_with_provider(provider=None):
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
         return {"checked":checked,"newly_closed":closed,"newly_triggered":triggered,"no_valid_entry":no_entry,"expired":expired,
           "ambiguous_same_candle":ambiguous,"performance":performance(),
-          "note":"Paper observations use the selected public futures provider OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
+          "note":f"Paper observations use {getattr(p, 'provider_name', 'the selected public futures provider')} OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
     finally:
         if own:p.close()
 
 @router.post("/signals/evaluate")
 def evaluate_outcomes():
     return evaluate_outcomes_with_provider()
-

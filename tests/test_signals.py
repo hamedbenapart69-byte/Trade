@@ -274,4 +274,60 @@ class V5ScoringAndStorageTests(unittest.TestCase):
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
 
+
+class V5ProviderAttributionTests(unittest.TestCase):
+    def test_performance_uses_actual_latest_futures_provider(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"provider.db")
+        try:
+            store.init_db()
+            result={"scan_id":"provider-attribution","scanned_at":"2026-11-07T00:00:00+00:00",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},"actionable":[],"conditional":[]}
+            save_scan(result)
+            report=performance()
+            self.assertIn("OKX public market-data API",report["outcome_source"])
+            self.assertNotIn("TraderSpy",report["outcome_source"])
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
+class WideUniverseProvider:
+    calls=0
+    def __init__(self,now):self.now=now
+    def discover(self):
+        return [{"id":f"asset-{i}","symbol":f"COIN{i}","name":f"Coin {i}","volume":1000000-i,
+          "market_cap_rank":i+1,"current_price":10.0,"market_cap":10000000-i} for i in range(120)]
+    def tracked_symbols(self):return {f"COIN{i}USDT" for i in range(120)}
+    def contract_specs(self,symbols):
+        return {x:{"symbol":x,"contract_type":"PERPETUAL","status":"TRADING","base_asset":x[:-4],
+          "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":0.01,
+          "step_size":0.001,"min_qty":0.001,"min_notional":5.0} for x in symbols}
+    def prices(self,symbols):
+        return {x:{"symbol":x,"price":10.0,"updatedAt":self.now} for x in symbols}
+    def derivatives(self,symbols):
+        return {x:{"symbol":x,"updatedAt":self.now,"openInterest":{"valueUsd":1000000}}
+          for x in symbols}
+    def smart_money(self):return {}
+    def candles(self,symbol,tf,limit):return []
+    def close(self):pass
+
+class V5ExpandedUniverseTests(unittest.TestCase):
+    def test_extended_scan_checks_up_to_one_hundred_eligible_assets(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=int(time.time()*1000)
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"universe.db")
+        try:
+            store.init_db()
+            engine=FuturesSignalEngine(provider=WideUniverseProvider(now),clock=lambda:now)
+            engine.evaluate=lambda coin,symbol,*args:{"symbol":symbol,"decision":"REJECT","confidence_v5":0,"data_grade":"B"}
+            result=engine.scan(extended=True)
+            self.assertEqual(result["eligible_assets"],120)
+            self.assertEqual(result["selected_assets"],100)
+            self.assertEqual(result["screened_assets"],100)
+            self.assertFalse(result["extended_partial"])
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
 if __name__=="__main__":unittest.main()

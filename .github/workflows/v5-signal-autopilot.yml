@@ -1,0 +1,140 @@
+name: V5 Futures Signal Autopilot
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "scripts/**"
+      - "web/**"
+      - "tests/**"
+      - "requirements.txt"
+      - ".github/workflows/v5-signal-autopilot.yml"
+
+concurrency:
+  group: v5-signal-autopilot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scan-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout application source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore persistent paper-trading state
+        id: state
+        uses: actions/cache@v4
+        with:
+          path: data/control.db
+          key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ runner.os }}-v5-state-
+
+      - name: Report state continuity
+        shell: bash
+        run: |
+          mkdir -p data
+          if [ -s data/control.db ]; then
+            echo "V5_STATE_RESTORED=true" >> "$GITHUB_ENV"
+            echo "Persistent paper state restored."
+          else
+            echo "V5_STATE_RESTORED=false" >> "$GITHUB_ENV"
+            echo "No previous cache found; paper tracking starts with an empty state."
+          fi
+
+      - name: Run unit tests before scanning
+        env:
+          CONTROL_API_TOKEN: ci-control-token-which-is-long-enough-123456
+          WORKER_API_TOKEN: ci-worker-token-which-is-long-enough-123456
+          CONTROL_DB_PATH: ${{ runner.temp }}/v5-ci-tests.db
+        run: python -m unittest discover -s tests -v
+
+      - name: Remove isolated test database
+        if: always()
+        env:
+          CONTROL_DB_PATH: ${{ runner.temp }}/v5-ci-tests.db
+        run: rm -f "$CONTROL_DB_PATH" "$CONTROL_DB_PATH-wal" "$CONTROL_DB_PATH-shm"
+
+      - name: Run live V5 market scan
+        env:
+          V5_DATA_PROVIDER: okx
+          CONTROL_DB_PATH: ${{ github.workspace }}/data/control.db
+        shell: bash
+        run: |
+          set +e
+          python scripts/v5_live_scan.py
+          scan_exit=$?
+          set -e
+          if [ "$scan_exit" -ne 0 ] && [ "$scan_exit" -ne 2 ]; then
+            echo "Unexpected scanner exit code: $scan_exit"
+            exit "$scan_exit"
+          fi
+          test -s artifacts/v5_live_scan.json
+
+      - name: Build validated public dashboard files
+        run: |
+          python scripts/prepare_pages.py
+          python -m json.tool site/latest.json > /dev/null
+          test -s site/index.html
+          test -s site/latest.json
+
+      - name: Checkpoint SQLite state before cache save
+        env:
+          CONTROL_DB_PATH: ${{ github.workspace }}/data/control.db
+        run: |
+          python -c 'from app import store; c=store.connect(); c.execute("PRAGMA wal_checkpoint(TRUNCATE)"); c.close()'
+      - name: Upload dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-signal-dashboard
+          path: site/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy-pages:
+    if: github.ref == 'refs/heads/main'
+    needs: scan-and-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download dashboard artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: v5-signal-dashboard
+          path: site
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy dashboard
+        id: deployment
+        uses: actions/deploy-pages@v4
