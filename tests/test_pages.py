@@ -75,5 +75,21 @@ class PagesPayloadTests(unittest.TestCase):
         payload=build_payload(raw)
         self.assertEqual(payload["conditional"],[])
 
+    def test_actionable_publication_is_deduplicated_and_capped_at_ten(self):
+        raw=source()
+        base=raw["actionable"][0]
+        raw["actionable"]=[]
+        for i in range(12):
+            item=json.loads(json.dumps(base))
+            item["symbol"]=f"COIN{i}-USDT-SWAP"
+            item["confidence_v5"]=80-i
+            raw["actionable"].append(item)
+        duplicate=json.loads(json.dumps(raw["actionable"][0]))
+        raw["actionable"].append(duplicate)
+        payload=build_payload(raw)
+        self.assertEqual(len(payload["actionable"]),10)
+        keys={(x["symbol"],x["direction"]) for x in payload["actionable"]}
+        self.assertEqual(len(keys),10)
+
 if __name__=="__main__":
     unittest.main()
