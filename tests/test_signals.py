@@ -340,6 +340,32 @@ class V5ProviderAttributionTests(unittest.TestCase):
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
 
+    def test_performance_does_not_mix_legacy_strategy_signals_into_active_v5(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"strategy-version.db")
+        try:
+            store.init_db()
+            save_scan({"scan_id":"legacy-relaxed-signal","scanned_at":"2026-11-06T00:00:00+00:00",
+              "source_status":{"futures_ohlcv":"Toobit public USDT-M linear perpetual market data"},
+              "actionable":[{"symbol":"BTCUSDT","direction":"SHORT","decision":"SELL_NOW","entry":100.0,
+                "stop_loss":101.5,"take_profit":97.0,"entry_observed_at_ms":1000,"confidence_v5":75,
+                "data_grade":"B","risk":{"planned_loss_usd":4.0}}],"conditional":[]})
+            save_scan({"scan_id":"strict-v5-current","scanned_at":"2026-11-07T00:00:00+00:00",
+              "strategy_version":"V5_STRICT_V3_BASELINE",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},"actionable":[],"conditional":[]})
+            report=performance()
+            self.assertEqual(report["strategy_version"],"V5_STRICT_V3_BASELINE")
+            self.assertEqual(report["published_signals"],0)
+            self.assertEqual(report["historical_published_signals"],1)
+            self.assertEqual(report["legacy_signals"],1)
+            self.assertEqual(report["legacy_open_count"],1)
+            self.assertEqual(report["outcome_source"],"OKX public market-data API OHLCV; no exchange fills are observed")
+            self.assertEqual(report["by_strategy"]["LEGACY_UNVERSIONED"]["published"],1)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
     def test_performance_uses_actual_latest_futures_provider(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"provider.db")

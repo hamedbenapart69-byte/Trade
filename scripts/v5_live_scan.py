@@ -28,6 +28,7 @@ def main() -> int:
         engine = FuturesSignalEngine(provider=provider)
         prior = evaluate_outcomes_with_provider(provider)
         result = engine.scan(extended=True, limit=100)
+        result["strategy_version"] = "V5_STRICT_V3_BASELINE"
         eligible = int(result.get("eligible_assets") or 0)
         selected = int(result.get("selected_assets") or 0)
         result["scan_mode"] = "EXPANDED_TOP_100"

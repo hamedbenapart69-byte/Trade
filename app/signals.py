@@ -499,27 +499,33 @@ def performance():
           LEFT JOIN signal_scans ss ON ss.scan_id=sr.scan_id
           WHERE sr.decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY sr.rowid""").fetchall()
         latest=c.execute("SELECT result_json FROM signal_scans ORDER BY scanned_at DESC LIMIT 1").fetchone()
+    latest_data={}
+    if latest:
+        try:latest_data=json.loads(latest[0])
+        except (ValueError,TypeError):latest_data={}
+    active_strategy=latest_data.get("strategy_version") or "LEGACY_UNVERSIONED"
     rows=[]
     for raw in raw_rows:
         item=dict(raw)
         try:
             scan=json.loads(item.pop("scan_json") or "{}")
             item["provider_name"]=(scan.get("source_status") or {}).get("futures_ohlcv") or "unknown"
+            item["strategy_version"]=scan.get("strategy_version") or "LEGACY_UNVERSIONED"
         except (ValueError,TypeError):
             item["provider_name"]="unknown"
+            item["strategy_version"]="LEGACY_UNVERSIONED"
         rows.append(item)
-    providers=sorted({r["provider_name"] for r in rows if r["provider_name"]!="unknown"})
+    current_rows=[r for r in rows if r["strategy_version"]==active_strategy]
+    providers=sorted({r["provider_name"] for r in current_rows if r["provider_name"]!="unknown"})
+    historical_providers=sorted({r["provider_name"] for r in rows if r["provider_name"]!="unknown"})
     if len(providers)>1:
         outcome_source="Source-matched public futures OHLCV from multiple providers; no exchange fills are observed"
     elif len(providers)==1:
         outcome_source=f"{providers[0]} OHLCV; no exchange fills are observed"
     else:
-        latest_provider=None
-        if latest:
-            try:latest_provider=(json.loads(latest[0]).get("source_status") or {}).get("futures_ohlcv")
-            except (ValueError,TypeError):pass
+        latest_provider=(latest_data.get("source_status") or {}).get("futures_ohlcv")
         outcome_source=f"{latest_provider} OHLCV; no exchange fills are observed" if latest_provider else "No source-attributed signal outcomes; no exchange fills are observed"
-    closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
+    closed=[r for r in current_rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
     for x in vals:eq+=x;peak=max(peak,eq);dd=max(dd,peak-eq)
@@ -528,9 +534,9 @@ def performance():
         d=json.loads(r["data_json"]);z=d.get("risk",{})
         if z.get("reward_to_risk") is not None:rr.append(float(z["reward_to_risk"]))
         if d.get("stop_pct") is not None:returns.append(float(r["realized_r"])*float(d["stop_pct"]))
-    def segment(key_fn):
+    def segment(source_rows,key_fn):
         groups={}
-        for r in rows:groups.setdefault(key_fn(r),[]).append(r)
+        for r in source_rows:groups.setdefault(key_fn(r),[]).append(r)
         out={}
         for k,rs in groups.items():
             vs=[float(x["realized_r"]) for x in rs if x["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and x["realized_r"] is not None]
@@ -543,20 +549,26 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":outcome_source,
-      "outcome_providers":providers,"unattributed_provider_signals":sum(1 for r in rows if r["provider_name"]=="unknown"),
-      "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
-      "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
-      "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
-      "no_valid_entry_count":sum(r["outcome"]=="NO_VALID_ENTRY" for r in rows),"unknown_count":sum(r["outcome"]=="UNKNOWN" for r in rows),
-      "watch_count":sum(r["outcome"]=="WATCH" for r in rows),"open_count":sum(r["outcome"]=="OPEN" for r in rows),
+    legacy_rows=[r for r in rows if r["strategy_version"]!=active_strategy]
+    return {"mode":"paper_signal_tracking_not_executed_trades","strategy_version":active_strategy,
+      "outcome_source":outcome_source,"outcome_providers":providers,"historical_outcome_providers":historical_providers,
+      "unattributed_provider_signals":sum(1 for r in current_rows if r["provider_name"]=="unknown"),
+      "published_signals":len(current_rows),"historical_published_signals":len(rows),"legacy_signals":len(legacy_rows),
+      "legacy_open_count":sum(r["outcome"]=="OPEN" for r in legacy_rows),
+      "legacy_watch_count":sum(r["outcome"]=="WATCH" for r in legacy_rows),
+      "closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in current_rows),
+      "tp2_count":sum(r["outcome"]=="TP2" for r in current_rows),"tp3_count":sum(r["outcome"]=="TP3" for r in current_rows),
+      "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in current_rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in current_rows),
+      "no_valid_entry_count":sum(r["outcome"]=="NO_VALID_ENTRY" for r in current_rows),"unknown_count":sum(r["outcome"]=="UNKNOWN" for r in current_rows),
+      "watch_count":sum(r["outcome"]=="WATCH" for r in current_rows),"open_count":sum(r["outcome"]=="OPEN" for r in current_rows),
       "win_rate_pct":len(wins)/len(closed)*100 if closed else None,"loss_rate_pct":len(loss)/len(closed)*100 if closed else None,
       "average_reward_to_risk":sum(rr)/len(rr) if rr else None,"average_realized_return_pct_of_notional":sum(returns)/len(returns) if returns else None,
       "average_realized_r":sum(vals)/len(vals) if vals else None,"expectancy_r":sum(vals)/len(vals) if vals else None,
       "profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),"max_drawdown_r":dd,
-      "by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(tf),"by_decision":segment(lambda r:r["decision"]),
-      "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf),
-      "by_provider":segment(lambda r:r["provider_name"])}
+      "by_asset":segment(current_rows,lambda r:r["symbol"]),"by_timeframe":segment(current_rows,tf),
+      "by_decision":segment(current_rows,lambda r:r["decision"]),"by_data_grade":segment(current_rows,lambda r:r["data_grade"]),
+      "by_confidence_range":segment(current_rows,conf),"by_provider":segment(rows,lambda r:r["provider_name"]),
+      "by_strategy":segment(rows,lambda r:r["strategy_version"])}
 
 def render_output(r):
     if r.get("status")=="DATA_UNAVAILABLE":return "No qualifying signals today."
