@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 from scripts.prepare_pages import build_payload
+from scripts.v5_live_scan import classify_scan
 
 def source():
     return {
@@ -108,6 +109,18 @@ class PagesPayloadTests(unittest.TestCase):
             f.write(scripts[0])
             f.flush()
             subprocess.run([node,"--check",f.name],check=True,capture_output=True,text=True)
+
+    def test_partial_scan_with_some_valid_assets_is_not_data_unavailable(self):
+        self.assertEqual(classify_scan({
+          "screened_assets":15,
+          "coverage":{"total_candidates":30,"screened":15,"insufficient_data":15}
+        }),"SCAN_COMPLETED")
+
+    def test_all_insufficient_assets_are_data_unavailable(self):
+        self.assertEqual(classify_scan({
+          "screened_assets":0,
+          "coverage":{"total_candidates":30,"screened":0,"insufficient_data":30}
+        }),"DATA_UNAVAILABLE")
 
 if __name__=="__main__":
     unittest.main()
