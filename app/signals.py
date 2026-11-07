@@ -1124,17 +1124,22 @@ def evaluate_outcomes_with_provider(provider=None):
     provider_name=getattr(p,"provider_name","")
     provider_cache={provider_name:p} if provider_name else {}
     try:
+        latest=latest_scan() or {}
+        active_strategy=latest.get("strategy_version") or "LEGACY_UNVERSIONED"
         with store.db_connection() as db:
             rows=db.execute("""SELECT sr.*,ss.result_json AS scan_json FROM signal_records sr
               LEFT JOIN signal_scans ss ON ss.scan_id=sr.scan_id
               WHERE sr.outcome IN ('OPEN','WATCH') AND sr.decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')""").fetchall()
         candles_cache={};now=int(time.time()*1000)
         for row in rows:
-            checked+=1
             try:
                 d=json.loads(row["data_json"]);symbol=d["symbol"]
                 expiry=int(d.get("expires_at_ms") or int(row["entry_ts_ms"] or now)+24*60*60_000)
                 scan=json.loads(row["scan_json"] or "{}")
+                signal_strategy=scan.get("strategy_version") or "LEGACY_UNVERSIONED"
+                if signal_strategy != active_strategy:
+                    continue
+                checked+=1
                 source=(scan.get("source_status") or {}).get("futures_ohlcv")
                 if not source:
                     source=((d.get("risk") or {}).get("contract_spec") or {}).get("source")
