@@ -1002,15 +1002,20 @@ def evaluate_outcomes_with_provider(provider=None):
                         no_entry+=1
                     continue
                 try:
-                    entry=float(trigger_candle.close);risk=risk_calc(row["direction"],entry,float(row["stop_loss"]))
-                except (DataError,ValueError,TypeError):
-                    risk={"valid":False,"reason":"conditional_entry_invalidates_original_stop_or_risk"}
+                    entry=float(trigger_candle.close)
+                    contracts=signal_provider.contract_specs([symbol])
+                    contract=contracts.get(symbol)
+                    if not contract:raise DataError("conditional_contract_spec_unavailable")
+                    risk=contract_sized_risk(row["direction"],entry,float(row["stop_loss"]),contract)
+                except (DataError,ValueError,TypeError,KeyError):
+                    risk={"valid":False,"reason":"conditional_entry_invalidates_original_stop_or_contract_risk"}
                 if not risk.get("valid"):
                     d["conditional_entry_rejected"]=risk.get("reason") or "risk_gate_failed"
                     at=datetime.fromtimestamp(trigger_candle.close_time/1000,tz=timezone.utc).isoformat()
                     with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome='NO_VALID_ENTRY',outcome_at=?,data_json=? WHERE signal_id=? AND outcome='WATCH'",(at,json.dumps(d,ensure_ascii=False),row["signal_id"]))
                     no_entry+=1;continue
                 d["entry"]=entry;d["entry_observed_at_ms"]=trigger_candle.close_time;d["risk"]=risk
+                d["stop_pct"]=risk["stop_pct"]
                 d["stop_loss"]=risk["stop_loss"];d["take_profit"]=risk["take_profit"];d["take_profit_2"]=risk["take_profit_2"];d["take_profit_3"]=risk["take_profit_3"]
                 d.setdefault("entry_quality",{})["triggered"]=True;d["entry_quality"]["triggered_at_ms"]=trigger_candle.close_time
                 at=datetime.fromtimestamp(trigger_candle.close_time/1000,tz=timezone.utc).isoformat()
