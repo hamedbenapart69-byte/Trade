@@ -74,7 +74,7 @@ function render(d){
  $("actionCount").textContent=fmt(action.length);
  $("watchCount").textContent=fmt(watch.length);
  const c=d.coverage||{};
- $("coverage").textContent="پوشش: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
+ $("coverage").textContent="پوشش: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/30":"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
  $("source").textContent="کشف بازار: "+fmt(d.source_status?.discovery)+" | دادهٔ قراردادهای آتی و کندل: "+fmt(d.source_status?.futures_ohlcv);
  if(d.status!=="SCAN_COMPLETED"){
   $("notice").innerHTML='<div class="notice">اسکن قابل اتکایی برای انتشار موجود نیست. تا دریافت دادهٔ معتبر، هیچ سیگنال اجرایی منتشر نمی‌شود. '+esc(d.error||"")+'</div>';
