@@ -41,17 +41,26 @@ class V5UniverseFilterTests(unittest.TestCase):
 
 
 class V5BaselineTests(unittest.TestCase):
-    def test_long_and_short_require_trend_and_ema_confluence_not_extreme_rsi(self):
-        self.assertEqual(v3_directional_baseline(55,1.5,101,100,99,"UP"),"LONG")
-        self.assertEqual(v3_directional_baseline(48,1.4,99,100,101,"DOWN"),"SHORT")
-        self.assertEqual(v3_directional_baseline(52,0.6,101,100,99,"FLAT"),"LONG")
+    def test_long_requires_all_original_v3_baseline_conditions(self):
+        self.assertEqual(v3_directional_baseline(34.9,1.21,101,100,99,"UP"),"LONG")
+        self.assertEqual(v3_directional_baseline(30,1.3,101,100,99,"FLAT"),"LONG")
+        self.assertIsNone(v3_directional_baseline(35,1.3,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(34,1.2,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(34,1.3,100,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(34,1.3,101,100,99,"DOWN"))
 
-    def test_baseline_rejects_extreme_rsi_missing_volume_and_conflicting_trend(self):
-        self.assertIsNone(v3_directional_baseline(75,2.0,101,100,99,"UP"))
-        self.assertIsNone(v3_directional_baseline(25,2.0,99,100,101,"DOWN"))
-        self.assertIsNone(v3_directional_baseline(55,0.0,101,100,99,"UP"))
-        self.assertIsNone(v3_directional_baseline(55,1.5,101,100,99,"DOWN"))
-        self.assertIsNone(v3_directional_baseline(48,1.5,99,100,101,"UP"))
+    def test_short_requires_all_original_v3_baseline_conditions(self):
+        self.assertEqual(v3_directional_baseline(65.1,1.21,99,100,101,"DOWN"),"SHORT")
+        self.assertEqual(v3_directional_baseline(70,1.3,99,100,101,"FLAT"),"SHORT")
+        self.assertIsNone(v3_directional_baseline(65,1.3,99,100,101,"DOWN"))
+        self.assertIsNone(v3_directional_baseline(70,1.2,99,100,101,"DOWN"))
+        self.assertIsNone(v3_directional_baseline(70,1.3,100,100,101,"DOWN"))
+        self.assertIsNone(v3_directional_baseline(70,1.3,99,100,101,"UP"))
+
+    def test_missing_or_invalid_baseline_data_is_rejected(self):
+        self.assertIsNone(v3_directional_baseline(None,1.5,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(30,None,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(30,0,101,100,99,"UP"))
 
 
 class V5RiskTests(unittest.TestCase):
