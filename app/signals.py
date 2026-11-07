@@ -494,12 +494,31 @@ def latest_scan():
 def performance():
     init_signal_db()
     with store.db_connection() as c:
-        rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
+        raw_rows=c.execute("""SELECT sr.symbol,sr.decision,sr.data_grade,sr.confidence,sr.outcome,sr.realized_r,
+          sr.data_json,ss.result_json AS scan_json FROM signal_records sr
+          LEFT JOIN signal_scans ss ON ss.scan_id=sr.scan_id
+          WHERE sr.decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY sr.rowid""").fetchall()
         latest=c.execute("SELECT result_json FROM signal_scans ORDER BY scanned_at DESC LIMIT 1").fetchone()
-    provider_name="configured public futures provider"
-    if latest:
-        try:provider_name=(json.loads(latest[0]).get("source_status") or {}).get("futures_ohlcv") or provider_name
-        except (ValueError,TypeError):pass
+    rows=[]
+    for raw in raw_rows:
+        item=dict(raw)
+        try:
+            scan=json.loads(item.pop("scan_json") or "{}")
+            item["provider_name"]=(scan.get("source_status") or {}).get("futures_ohlcv") or "unknown"
+        except (ValueError,TypeError):
+            item["provider_name"]="unknown"
+        rows.append(item)
+    providers=sorted({r["provider_name"] for r in rows if r["provider_name"]!="unknown"})
+    if len(providers)>1:
+        outcome_source="Source-matched public futures OHLCV from multiple providers; no exchange fills are observed"
+    elif len(providers)==1:
+        outcome_source=f"{providers[0]} OHLCV; no exchange fills are observed"
+    else:
+        latest_provider=None
+        if latest:
+            try:latest_provider=(json.loads(latest[0]).get("source_status") or {}).get("futures_ohlcv")
+            except (ValueError,TypeError):pass
+        outcome_source=f"{latest_provider} OHLCV; no exchange fills are observed" if latest_provider else "No source-attributed signal outcomes; no exchange fills are observed"
     closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
@@ -524,7 +543,8 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":f"{provider_name} OHLCV; no exchange fills are observed",
+    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":outcome_source,
+      "outcome_providers":providers,"unattributed_provider_signals":sum(1 for r in rows if r["provider_name"]=="unknown"),
       "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
       "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
       "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
@@ -535,7 +555,8 @@ def performance():
       "average_realized_r":sum(vals)/len(vals) if vals else None,"expectancy_r":sum(vals)/len(vals) if vals else None,
       "profit_factor":sum(wins)/abs(sum(loss)) if loss else ("undefined_no_losses" if wins else None),"max_drawdown_r":dd,
       "by_asset":segment(lambda r:r["symbol"]),"by_timeframe":segment(tf),"by_decision":segment(lambda r:r["decision"]),
-      "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
+      "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf),
+      "by_provider":segment(lambda r:r["provider_name"])}
 
 def render_output(r):
     if r.get("status")=="DATA_UNAVAILABLE":return "No qualifying signals today."
@@ -801,9 +822,17 @@ class FuturesSignalEngine:
     def close(self):
         if self.own:self.p.close()
 
-def create_provider():
+def provider_key_for_source(source:str|None)->str|None:
+    value=str(source or "").lower()
+    if "okx" in value:return "okx"
+    if "toobit" in value:return "toobit"
+    if "traderspy" in value:return "traderspy"
+    return None
+
+
+def create_provider(selected_override:str|None=None):
     """Select a read-only public market-data provider; OKX is the verified free default."""
-    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    selected=(selected_override or os.getenv("V5_DATA_PROVIDER","okx")).strip().lower()
     if selected=="toobit":
         from app.integrations.toobit_market import ToobitPublicMarketData
         return ToobitPublicMarketData()
@@ -817,7 +846,7 @@ def create_provider():
 router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
-    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
+    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
     scan=latest_scan()
     if selected in {"okx","toobit"}:
         context=(scan or {}).get("validation_context") or {}
@@ -875,19 +904,48 @@ def get_latest():
 def get_performance():return performance()
 
 def evaluate_outcomes_with_provider(provider=None):
-    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or create_provider()
+    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=source_unavailable=0;own=provider is None;p=provider or create_provider()
+    extra_providers=[]
+    provider_name=getattr(p,"provider_name","")
+    provider_cache={provider_name:p} if provider_name else {}
     try:
         with store.db_connection() as db:
-            rows=db.execute("SELECT * FROM signal_records WHERE outcome IN ('OPEN','WATCH') AND decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')").fetchall()
+            rows=db.execute("""SELECT sr.*,ss.result_json AS scan_json FROM signal_records sr
+              LEFT JOIN signal_scans ss ON ss.scan_id=sr.scan_id
+              WHERE sr.outcome IN ('OPEN','WATCH') AND sr.decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')""").fetchall()
         candles_cache={};now=int(time.time()*1000)
         for row in rows:
             checked+=1
-            try:d=json.loads(row["data_json"]);symbol=d["symbol"];expiry=int(d.get("expires_at_ms") or int(row["entry_ts_ms"] or now)+24*60*60_000)
-            except (ValueError,TypeError,KeyError):continue
+            try:
+                d=json.loads(row["data_json"]);symbol=d["symbol"]
+                expiry=int(d.get("expires_at_ms") or int(row["entry_ts_ms"] or now)+24*60*60_000)
+                scan=json.loads(row["scan_json"] or "{}")
+                source=(scan.get("source_status") or {}).get("futures_ohlcv")
+                if not source:
+                    source=((d.get("risk") or {}).get("contract_spec") or {}).get("source")
+                if not source:
+                    source_unavailable+=1
+                    continue
+                signal_provider=provider_cache.get(source)
+                if signal_provider is None:
+                    provider_key=provider_key_for_source(source)
+                    if not provider_key:
+                        source_unavailable+=1
+                        continue
+                    signal_provider=create_provider(provider_key)
+                    if provider_key_for_source(getattr(signal_provider,"provider_name",""))!=provider_key:
+                        signal_provider.close()
+                        source_unavailable+=1
+                        continue
+                    provider_cache[source]=signal_provider
+                    extra_providers.append(signal_provider)
+            except (ValueError,TypeError,KeyError,DataError):
+                source_unavailable+=1
+                continue
             if row["outcome"]=="WATCH":
                 try:
-                    key=(symbol,"15m")
-                    if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,"15m",500),INTERVALS["15m"],now,1)
+                    key=(source,symbol,"15m")
+                    if key not in candles_cache:candles_cache[key]=validate_candles(signal_provider.candles(symbol,"15m",500),INTERVALS["15m"],now,1)
                     cs15=candles_cache[key]
                 except (DataError,CandleError,KeyError,ValueError):continue
                 trigger=(d.get("entry_quality") or {}).get("trigger_level")
@@ -928,8 +986,8 @@ def evaluate_outcomes_with_provider(provider=None):
                 triggered+=1
                 continue
             try:
-                tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf];key=(symbol,tf)
-                if key not in candles_cache:candles_cache[key]=validate_candles(p.candles(symbol,tf,500),iv,now,1)
+                tf=d.get("primary_timeframe","1h");iv=INTERVALS[tf];key=(source,symbol,tf)
+                if key not in candles_cache:candles_cache[key]=validate_candles(signal_provider.candles(symbol,tf,500),iv,now,1)
                 cs=candles_cache[key]
             except (DataError,CandleError,KeyError,ValueError):continue
             entry_ts=int(row["entry_ts_ms"] or 0);best=None;best_rr=None;best_price=None;best_at=None;outcome=None;rr=None;price=None;at=None
@@ -961,9 +1019,11 @@ def evaluate_outcomes_with_provider(provider=None):
                 with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome=?,outcome_at=?,outcome_price=?,realized_r=? WHERE signal_id=? AND outcome='OPEN'",(outcome,at,price,rr,row["signal_id"]))
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
         return {"checked":checked,"newly_closed":closed,"newly_triggered":triggered,"no_valid_entry":no_entry,"expired":expired,
-          "ambiguous_same_candle":ambiguous,"performance":performance(),
-          "note":f"Paper observations use {getattr(p, 'provider_name', 'the selected public futures provider')} OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
+          "source_unavailable":source_unavailable,"ambiguous_same_candle":ambiguous,"performance":performance(),
+          "note":"Paper observations use each signal's originating public futures provider where supported; no exchange fills are observed. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
     finally:
+        for extra in extra_providers:
+            extra.close()
         if own:p.close()
 
 @router.post("/signals/evaluate")
