@@ -494,10 +494,15 @@ def _structure(cs,direction,atr_value=None):
     fvg_aligned=bool(fvg and fvg["status"]!="MITIGATED" and fvg["distance_pct"]<=proximity)
     levels=[]
     if cs:
+        deltas=sorted(b.open_time-a.open_time for a,b in zip(cs,cs[1:]) if b.open_time>a.open_time)
+        bar_ms=deltas[len(deltas)//2] if deltas else 0
+        bars_per_day=(24*60*60*1000/bar_ms) if bar_ms else 0
+        min_day_bars=max(1,int(bars_per_day*.8+.999)) if bars_per_day else 20
+        min_week_bars=max(1,int(bars_per_day*7*.95+.999)) if bars_per_day else 160
         current_day=datetime.fromtimestamp(cs[-1].open_time/1000,tz=timezone.utc).date()
         previous_day=current_day-timedelta(days=1)
         day_bars=[x for x in cs if datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()==previous_day]
-        if len(day_bars)>=20:
+        if len(day_bars)>=min_day_bars:
             levels.extend([
                 {"type":"PREVIOUS_DAY_HIGH","price":max(x.high for x in day_bars)},
                 {"type":"PREVIOUS_DAY_LOW","price":min(x.low for x in day_bars)},
@@ -505,7 +510,7 @@ def _structure(cs,direction,atr_value=None):
         week_start=current_day-timedelta(days=current_day.weekday())
         previous_week_start=week_start-timedelta(days=7)
         week_bars=[x for x in cs if previous_week_start<=datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()<week_start]
-        if len(week_bars)>=160:
+        if len(week_bars)>=min_week_bars:
             levels.extend([
                 {"type":"PREVIOUS_WEEK_HIGH","price":max(x.high for x in week_bars)},
                 {"type":"PREVIOUS_WEEK_LOW","price":min(x.low for x in week_bars)},
