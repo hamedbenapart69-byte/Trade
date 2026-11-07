@@ -91,6 +91,15 @@ class V5RiskTests(unittest.TestCase):
         self.assertGreaterEqual(r["reward_to_risk"],2.0)
         self.assertTrue(r["contract_spec_verified"])
 
+    def test_tick_rounding_cannot_push_stop_outside_allowed_range(self):
+        contract={"symbol":"BTCUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"BTC",
+          "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":1.0,
+          "step_size":0.001,"min_qty":0.001,"min_notional":0.0,"max_leverage":5.0}
+        r=contract_sized_risk("LONG",100.51,97.52,contract)
+        self.assertFalse(r["valid"])
+        self.assertEqual(r["reason"],"rounded_stop_distance_out_of_range")
+        self.assertGreater(r["stop_pct"],3.0)
+
     def test_contract_sizing_rejects_below_minimum_quantity(self):
         contract={"symbol":"DUSTUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"DUST",
           "quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"base_asset","tick_size":0.0001,
