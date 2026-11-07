@@ -769,7 +769,7 @@ class FuturesSignalEngine:
         depth_required=max(500.0,2.0*float(risk.get("notional_usd") or 0))
         audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),
           "venue_quantity_precision_and_minimum_verified":bool(contract and contract.get("tick_size") and contract.get("step_size") and contract.get("min_qty")),
-          "venue_risk_limit_tier_verified":bool(not is_toobit or contract.get("risk_limits") and risk.get("contract_spec",{}).get("venue_max_leverage")),
+          "venue_leverage_limit_verified":bool(contract and risk.get("contract_spec",{}).get("venue_max_leverage") and risk["required_leverage"]<=min(5.0,float(risk["contract_spec"]["venue_max_leverage"]))+1e-9),
           "toobit_quote_volume_gate_passed":bool(not is_toobit or float(price.get("quoteVolume24h") or 0)>=100000),
           "toobit_spread_gate_passed":bool(not is_toobit or float(price.get("spreadBps") or 99999)<=30),
           "toobit_bid_ask_depth_gate_passed":bool(not is_toobit or float(price.get("bidDepthUsd") or 0)>=depth_required and float(price.get("askDepthUsd") or 0)>=depth_required),
