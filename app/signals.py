@@ -11,6 +11,7 @@ from app import store
 CG="https://api.coingecko.com/api/v3"
 STABLES={"USDT","USDC","DAI","BUSD","TUSD","FDUSD","USDE","USDS","USDD","FRAX","USDP","PYUSD","USTC","LUSD","GUSD","EURC","EURS","USD1","USDJ"}
 WRAPPED={"WBTC","WETH","STETH","WSTETH","CBBTC","BTCB","WBETH","BETH","WBNB","RENBTC","TBTC"}
+NON_CRYPTO_BASES={"PAXG","XAUT"}  # gold-backed commodity tokens, not crypto-market exposure
 INTERVALS={"15m":900_000,"1h":3_600_000,"4h":14_400_000,"1d":86_400_000}
 
 class DataError(RuntimeError):pass
@@ -89,6 +90,16 @@ def volume_ratio(cs:list[Candle])->float|None:
     if len(cs)<21:return None
     avg=sum(x.volume for x in cs[-21:-1])/20
     return cs[-1].volume/avg if avg>0 else None
+
+def v3_directional_baseline(rsi14:float,vol_ratio:float,close:float,ema20:float,ema50:float,trend4h:str)->str|None:
+    """Multi-factor pullback/trend gate; avoid requiring an extreme RSI reading."""
+    if any(x is None for x in (rsi14,vol_ratio,close,ema20,ema50)):return None
+    if vol_ratio<=0:return None
+    long=40<=rsi14<=70 and close>ema20 and ema20>=ema50 and trend4h in {"UP","FLAT"}
+    short=30<=rsi14<=60 and close<ema20 and ema20<=ema50 and trend4h in {"DOWN","FLAT"}
+    if long and not short:return "LONG"
+    if short and not long:return "SHORT"
+    return None
 
 def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:float=4.0,max_leverage:float=5.0)->dict:
     if entry<=0 or stop<=0 or (direction=="LONG" and stop>=entry) or (direction=="SHORT" and stop<=entry):
@@ -558,7 +569,7 @@ class FuturesSignalEngine:
         for x in coins:
             s=x["symbol"]
             name=str(x.get("name") or "").lower()
-            if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED:continue
+            if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED or s in NON_CRYPTO_BASES:continue
             if "wrapped" in name or any(k in name for k in ("leveraged","3x long","3x short","5x long","5x short")):continue
             if any(s.endswith(z) for z in ("UP","DOWN","BULL","BEAR","3L","3S","5L","5S")):continue
             sym=s+"USDT"
@@ -652,12 +663,11 @@ class FuturesSignalEngine:
         ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) or (mh[-1]<0 and mh[-1]<=mh[-2]))
         bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl);ad=adx(one)[-1];ov=obv(one);mf=mfi(one)[-1]
         bbpos="lower_band" if cl[-1]<=bl[-1] else "lower_half" if cl[-1]<bm[-1] else "upper_band" if cl[-1]>=bu[-1] else "upper_half"
-        long=rv<35 and vr>1.2 and cl[-1]>e20 and trends["4h"] in {"UP","FLAT"}
-        short=rv>65 and vr>1.2 and cl[-1]<e20 and trends["4h"] in {"DOWN","FLAT"}
-        if not long and not short:
+        baseline_direction=v3_directional_baseline(rv,vr,cl[-1],e20,e50,trends["4h"])
+        if baseline_direction is None:
             return {"symbol":symbol,"asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,
               "reason":"mandatory_V3_baseline_not_satisfied","technical":{"rsi14":rv,"volume_ratio":vr,"ema20":e20,"ema50":e50},"trends":trends}
-        direction="LONG" if long else "SHORT"
+        direction=baseline_direction
         price_change=float(oi_obj.get("priceChange24hPct") or 0)
         tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":e200,"atr14":a14,"volume_ratio":vr,"close":cl[-1],
           "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
