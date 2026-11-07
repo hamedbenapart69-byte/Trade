@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from datetime import datetime, timezone
 from scripts.prepare_pages import build_payload, REQUIRED_AUDIT_CHECKS
 from scripts.v5_live_scan import classify_scan
 
@@ -21,6 +22,7 @@ def source():
         "validation_context":{"fixture_data":False,"account_connection":False,"order_execution":False},
         "actionable":[{
           "symbol":"BTC-USDT-SWAP","decision":"BUY_NOW","direction":"LONG","entry":100.0,"stop_loss":98.5,
+          "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-30_000,
           "take_profit":103.0,"stop_pct":1.5,"confidence_v5":75,"data_grade":"B","self_audit_passed":True,
           "self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},
           "entry_quality":{"entry_ok":True,"chase":False},
@@ -45,6 +47,23 @@ class PagesPayloadTests(unittest.TestCase):
         self.assertEqual(payload["actionable"],[])
         self.assertEqual(payload["publication_gate"]["actionable_candidates_received"],1)
         self.assertEqual(payload["publication_gate"]["actionable_candidates_published"],0)
+
+    def test_stale_entry_observation_is_not_published(self):
+        raw=source()
+        raw["actionable"][0]["entry_observed_at_ms"]=int(datetime.now(timezone.utc).timestamp()*1000)-16*60_000
+        self.assertEqual(build_payload(raw)["actionable"],[])
+        raw=source()
+        raw["actionable"]=[]
+        raw["conditional"]=[{
+          "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-16*60_000,
+          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,
+          "self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
+          "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
+          "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
+            "required_leverage":1.33,"reward_to_risk":2.0}
+        }]
+        self.assertEqual(build_payload(raw)["conditional"],[])
 
     def test_drops_all_signals_when_fixture_or_account_data_is_used(self):
         raw=source()
@@ -83,6 +102,7 @@ class PagesPayloadTests(unittest.TestCase):
         raw["actionable"]=[]
         raw["conditional"]=[{
           "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-30_000,
           "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
           "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
