@@ -10,9 +10,11 @@ from app.signals import FuturesSignalEngine, create_provider, render_output, sav
 def main() -> int:
     out=Path("artifacts/v5_live_scan.json")
     out.parent.mkdir(parents=True,exist_ok=True)
-    provider=create_provider()
-    engine=FuturesSignalEngine(provider=provider)
+    provider=None
+    engine=None
     try:
+        provider=create_provider()
+        engine=FuturesSignalEngine(provider=provider)
         prior=evaluate_outcomes_with_provider(provider)
         result=engine.scan(extended=False,limit=30)
         result["status"]="DATA_UNAVAILABLE" if result["screened_assets"]==0 or result["coverage"]["insufficient_data"]==result["screened_assets"] else "SCAN_COMPLETED"
@@ -34,7 +36,9 @@ def main() -> int:
         print(f"{type(exc).__name__}: {exc}",file=sys.stderr)
         return 2
     finally:
-        engine.close()
-        provider.close()
+        if engine is not None:
+            engine.close()
+        if provider is not None:
+            provider.close()
 
 if __name__=="__main__":sys.exit(main())
