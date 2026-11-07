@@ -782,20 +782,23 @@ def get_signal_status():
         age_ms=int(time.time()*1000)-scanned_ms if scanned_ms else None
         screened=int((scan or {}).get("screened_assets") or 0)
         selected_assets=int((scan or {}).get("selected_assets") or 0)
-        completed=bool(scan and scan.get("status")=="SCAN_COMPLETED" and selected_assets>=30 and screened>=30)
-        live_verified=bool(completed and context.get("fixture_data") is False and source.get("futures_ohlcv")
-          and age_ms is not None and 0<=age_ms<=900_000)
+        completed=bool(scan and scan.get("status")=="SCAN_COMPLETED" and context.get("fixture_data") is False
+          and source.get("futures_ohlcv") and selected_assets>=30 and screened>=30)
+        live_verified=bool(completed and age_ms is not None and 0<=age_ms<=900_000)
         return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
           "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
           "api_key_required":False,"exchange_account_connection":False,
           "exchange_api_key_required":False,"order_execution_enabled":False,
           "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
           "full_live_scan_verified":completed,
-          "last_full_live_scan_utc":(scan or {}).get("scanned_at"),
-          "last_full_live_scan_age_minutes":round(age_ms/60000,1) if age_ms is not None and age_ms>=0 else None,
-          "last_full_live_scan_coverage":f"{screened}/{selected_assets}" if scan else None,
-          "last_full_live_scan_actionable_signals":len((scan or {}).get("actionable") or []),
-          "note":"Live REST freshness is true only for a complete live scan no older than 15 minutes. A historical scan is not proof of current connectivity."}
+          "last_scan_utc":(scan or {}).get("scanned_at"),
+          "last_full_live_scan_utc":(scan or {}).get("scanned_at") if completed else None,
+          "last_scan_age_minutes":round(age_ms/60000,1) if age_ms is not None and age_ms>=0 else None,
+          "last_full_live_scan_age_minutes":round(age_ms/60000,1) if completed and age_ms is not None and age_ms>=0 else None,
+          "last_scan_coverage":f"{screened}/{selected_assets}" if scan else None,
+          "last_full_live_scan_coverage":f"{screened}/{selected_assets}" if completed else None,
+          "last_full_live_scan_actionable_signals":len((scan or {}).get("actionable") or []) if completed else 0,
+          "note":"A full live scan requires at least 30 successfully screened assets and verified non-fixture data. Live REST freshness is true only while that scan is no older than 15 minutes."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
