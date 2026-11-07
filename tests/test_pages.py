@@ -59,5 +59,21 @@ class PagesPayloadTests(unittest.TestCase):
         payload=build_payload(raw)
         self.assertEqual(payload["actionable"],[])
 
+    def test_conditional_requires_measurable_trigger_and_full_risk_checks(self):
+        raw=source()
+        raw["actionable"]=[]
+        raw["conditional"]=[{
+          "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"stop_pct":1.5,
+          "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
+          "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
+            "required_leverage":1.33,"reward_to_risk":2.0}
+        }]
+        payload=build_payload(raw)
+        self.assertEqual(len(payload["conditional"]),1)
+        raw["conditional"][0]["risk"]["planned_loss_usd"]=4.1
+        payload=build_payload(raw)
+        self.assertEqual(payload["conditional"],[])
+
 if __name__=="__main__":
     unittest.main()
