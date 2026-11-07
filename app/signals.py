@@ -948,7 +948,7 @@ class FuturesSignalEngine:
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
-          "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"positioning_timestamp_verified_if_used":True,"multi_timeframe_checked":True,
+          "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"positioning_timestamp_verified_if_used":True,"smart_money_timestamp_verified_if_used":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3 and .5<=risk["rounded_stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
           "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
