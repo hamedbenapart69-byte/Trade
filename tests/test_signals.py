@@ -2,7 +2,7 @@ import json
 import os, tempfile, unittest, time
 from pathlib import Path
 from datetime import datetime, timezone
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -297,6 +297,10 @@ class V5FundingNormalizationTests(unittest.TestCase):
 
 
 class V5ScoringAndStorageTests(unittest.TestCase):
+    def test_zero_funding_value_does_not_fail_boolean_audit(self):
+        self.assertTrue(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":True}))
+        self.assertFalse(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":False}))
+
     def test_missing_advanced_sources_get_zero_points(self):
         tech={"close":101,"ema20":100,"ema50":99,"volume_ratio":2,"macd_aligned":True,"rsi":25,"price_change":1,
           "adx":25,"bb_position":"lower_half","obv_aligned":True,"mfi_aligned":True}
