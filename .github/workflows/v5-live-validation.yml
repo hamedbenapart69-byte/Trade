@@ -2,7 +2,7 @@ name: V5 Live Validation
 on:
   workflow_dispatch:
 concurrency:
-  group: futures-signal-v5-live-${{ github.ref }}
+  group: v5-signal-state
   cancel-in-progress: false
 jobs:
   live:
