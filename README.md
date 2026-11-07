@@ -1,5 +1,8 @@
 # AI Orchestration Foundation
 
+> Scope note: this repository also contains a separate orchestration/control-plane foundation. Futures Signal Autopilot V5 is a standalone read-only workflow using GitHub Actions and GitHub Pages; it does not depend on Railway. The optional Railway deployment workflow is currently skipped because the `RAILWAY_TOKEN` secret is not configured.
+
+
 Owner-controlled automation platform in repository [Trade](https://github.com/hamedbenapart69-byte/Trade). The current release is a tested foundation, not yet a production-hosted autonomous AI platform.
 
 ## Implemented
