@@ -479,7 +479,7 @@ def _structure(cs,direction,atr_value=None):
         current_day=datetime.fromtimestamp(cs[-1].open_time/1000,tz=timezone.utc).date()
         previous_day=current_day-timedelta(days=1)
         day_bars=[x for x in cs if datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()==previous_day]
-        if day_bars:
+        if len(day_bars)>=20:
             levels.extend([
                 {"type":"PREVIOUS_DAY_HIGH","price":max(x.high for x in day_bars)},
                 {"type":"PREVIOUS_DAY_LOW","price":min(x.low for x in day_bars)},
@@ -487,7 +487,7 @@ def _structure(cs,direction,atr_value=None):
         week_start=current_day-timedelta(days=current_day.weekday())
         previous_week_start=week_start-timedelta(days=7)
         week_bars=[x for x in cs if previous_week_start<=datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()<week_start]
-        if week_bars:
+        if len(week_bars)>=160:
             levels.extend([
                 {"type":"PREVIOUS_WEEK_HIGH","price":max(x.high for x in week_bars)},
                 {"type":"PREVIOUS_WEEK_LOW","price":min(x.low for x in week_bars)},
