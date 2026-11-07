@@ -397,7 +397,8 @@ def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entr
     if structure.get("fvg_aligned") or structure.get("order_block_aligned") or structure.get("liquidity_sweep_aligned"):p["market_structure"]+=5
     if tech["volume_ratio"]>1.5:p["volume_momentum"]+=4
     if tech.get("obv_aligned"):p["volume_momentum"]+=3
-    if tech.get("mfi_aligned"):p["volume_momentum"]+=3    if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
+    if tech.get("mfi_aligned"):p["volume_momentum"]+=3
+    if (direction=="LONG" and funding<0) or (direction=="SHORT" and funding>0):p["derivatives"]+=3
     oi_values=[x for x in (oi1h,oi4h,oi24h) if x is not None]
     if oi_values and any((x>0 and tech["price_change"]>0) if direction=="LONG" else (x>0 and tech["price_change"]<0) for x in oi_values):p["derivatives"]+=4
     if ls is not None and ((direction=="LONG" and ls<0.8) or (direction=="SHORT" and ls>1.2)):p["derivatives"]+=2
@@ -596,7 +597,8 @@ class FuturesSignalEngine:
         if min(mark,index,last_price)<=0:raise DataError("missing_verified_futures_mark_index_or_last_price")
         if abs(mark/last_price-1)*10000>100:raise DataError("futures_mark_last_trade_basis_over_100bps")
         cg_price=float(coin.get("current_price") or 0)
-        if cg_price<=0:raise DataError("missing_independent_coingecko_spot_reference")        basis=(index/cg_price-1)*10000
+        if cg_price<=0:raise DataError("missing_independent_coingecko_spot_reference")
+        basis=(index/cg_price-1)*10000
         if abs(basis)>100:raise DataError("futures_index_vs_independent_spot_conflict_over_100bps")
         independent=abs(basis)<=50
         mins={"15m":210,"1h":210,"4h":210,"1d":200}
@@ -804,7 +806,8 @@ def run_scan(extended:bool=Query(False),universe_limit:int=Query(30,ge=1,le=100)
 @router.get("/signals/latest")
 def get_latest():
     r=latest_scan()
-    if r is None:raise HTTPException(404,detail="no_scan_recorded")    return r
+    if r is None:raise HTTPException(404,detail="no_scan_recorded")
+    return r
 
 @router.get("/signals/performance")
 def get_performance():return performance()
