@@ -818,7 +818,7 @@ class FuturesSignalEngine:
             else:confirm="daily regime realigns with setup"
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
           "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
-          "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
+          "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["rounded_stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
             "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
@@ -1024,7 +1024,7 @@ def evaluate_outcomes_with_provider(provider=None):
                     with store.db_connection() as db:db.execute("UPDATE signal_records SET outcome='NO_VALID_ENTRY',outcome_at=?,data_json=? WHERE signal_id=? AND outcome='WATCH'",(at,json.dumps(d,ensure_ascii=False),row["signal_id"]))
                     no_entry+=1;continue
                 d["entry"]=entry;d["entry_observed_at_ms"]=trigger_candle.close_time;d["risk"]=risk
-                d["stop_pct"]=risk["stop_pct"]
+                d["stop_pct"]=risk.get("rounded_stop_pct",risk["stop_pct"])
                 d["stop_loss"]=risk["stop_loss"];d["take_profit"]=risk["take_profit"];d["take_profit_2"]=risk["take_profit_2"];d["take_profit_3"]=risk["take_profit_3"]
                 d.setdefault("entry_quality",{})["triggered"]=True;d["entry_quality"]["triggered_at_ms"]=trigger_candle.close_time
                 at=datetime.fromtimestamp(trigger_candle.close_time/1000,tz=timezone.utc).isoformat()
