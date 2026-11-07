@@ -962,7 +962,7 @@ class FuturesSignalEngine:
           "structure":st,"market_regime":market_regime,"volatility_regime":vol_regime,"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
             "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
             "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"top_trader_long_short_ratio":top_ls,
-            "taker_buy_sell_ratio":taker,"liquidation_regime":oi_obj.get("regime"),"source":deriv.get("source")},
+            "taker_buy_sell_ratio":taker,"liquidation_data_status":"not_supplied_by_selected_OKX_adapter","source":deriv.get("source")},
           "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
           "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_traders_observed_at_ms":smart.get("traders_observed_at_ms"),
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
