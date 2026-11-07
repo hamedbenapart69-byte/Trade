@@ -80,7 +80,7 @@ class ToobitAdapterTests(unittest.TestCase):
             self.assertEqual(spec["min_qty"], 30.0)
             self.assertEqual(spec["step_size"], 1.0)
             self.assertEqual(spec["max_qty"], 500000.0)
-            risk = contract_sized_risk("LONG", 100, 99, spec)
+            risk = contract_sized_risk("LONG", 1, 0.99, spec)
             self.assertTrue(risk["valid"])
             self.assertLessEqual(risk["planned_loss_usd"], 4.0)
             self.assertLessEqual(risk["required_leverage"], 5.0)
