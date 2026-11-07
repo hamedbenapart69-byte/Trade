@@ -1,6 +1,8 @@
+> **Current main-branch release note (2026-11-07):** The active scheduled workflow is `V5 Futures Signal Autopilot` with `V5_DATA_PROVIDER=okx`. The later Toobit and TraderSpy provider sections below are historical experiments and do not describe the active default. The live dashboard is published from the validated `site/` artifact at [GitHub Pages](https://hamedbenapart69-byte.github.io/Trade/). The active path uses CoinGecko public discovery plus OKX public USDT linear perpetual market data, with no exchange account credentials or order execution. The current adapter requires OKX's public instrument maximum-leverage field, enforces the lower of that venue limit and the user's 5x ceiling, and recomputes stop distance / position notional after tick rounding before final quantity validation. The most recent verified live scan may legitimately publish zero signals; no threshold is relaxed to force a trade. Direct account eligibility and API reachability from Iran remain unverified.
+
 # Futures Signal Autopilot V5
 
-This document records the implementation boundary against the uploaded 52-page `Futures_Signal_Autopilot_V5.pdf`. The scanner lives in this repository's `feature/futures-signal-autopilot-v5` branch. It does not access or modify the separate `Trader_me` repository.
+This document records the implementation boundary against the uploaded 52-page `Futures_Signal_Autopilot_V5.pdf`. The scanner is merged into this repository's `main` branch. It does not access or modify the separate `Trader_me` repository.
 
 ## Data sources and access
 
