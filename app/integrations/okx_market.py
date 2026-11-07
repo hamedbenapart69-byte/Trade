@@ -215,10 +215,11 @@ class OkxPublicMarketData:
                     target=oi_ts-hours*3_600_000
                     candidates=[v for ts,v in history if ts<=target]
                     return (oi_usd/candidates[-1]-1)*100 if candidates and candidates[-1]>0 else None
-                ratio=None
+                ratio=None;ratio_ts=0
                 if ratio_rows:
                     row=ratio_rows[0]
-                    ratio=float(row[1]) if isinstance(row,list) and len(row)>1 else None
+                    if isinstance(row,list) and len(row)>1:
+                        ratio=float(row[1]);ratio_ts=self._ms(row[0])
                 ts_values=[self._ms(x) for x in (ticker.get("ts"),funding.get("ts"),oi.get("ts"),mark.get("ts"),index.get("ts"))]
                 observed=min(x for x in ts_values if x>0) if all(x>0 for x in ts_values) else 0
                 last=float(ticker.get("last") or 0);opened=float(ticker.get("open24h") or 0)
@@ -228,8 +229,11 @@ class OkxPublicMarketData:
                     "openInterest":{"contracts":float(oi.get("oi") or 0),"valueUsd":oi_usd,
                     "change4hPct":change_at(4),"change24hPct":change_at(24),
                     "priceChange24hPct":(last/opened-1)*100 if opened>0 else None},
-                    "source":self.provider_name,"positioning":{"globalLongShortRatio":ratio,"topTraderLongShortRatio":None,
-                    "takerBuySellRatio":None,"label":"okx_global_account_ratio" if ratio is not None else "unavailable"}}
+                    "source":self.provider_name,"positioning":{"globalLongShortRatio":ratio,
+                    "globalLongShortRatioObservedAtMs":ratio_ts,"topTraderLongShortRatio":None,
+                    "topTraderLongShortRatioObservedAtMs":0,"takerBuySellRatio":None,
+                    "takerBuySellRatioObservedAtMs":0,
+                    "label":"okx_global_account_ratio" if ratio is not None else "unavailable"}}
             except (DataError,KeyError,TypeError,ValueError,IndexError) as exc:
                 if isinstance(exc,DataError):
                     out[sym]={"symbol":sym,"error":str(exc)}
