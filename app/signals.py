@@ -302,6 +302,8 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
       "contract_multiplier_reference":float(multiplier),"quantity_unit":unit,
       "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
       "reward_to_risk":float(rr),"valid":reason is None,"reason":reason,"contract_spec_verified":True,
+      "margin_mode_assumption":"ISOLATED; select manually in Toobit; scanner does not change margin mode",
+      "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
       "contract_spec":spec,"contract_quantity_note":"Quantity rounded using the venue's published lot step and contract multiplier."})
     return base
 
@@ -537,7 +539,7 @@ def render_output(r):
         symbol=spec.get("venue_symbol") or x["symbol"]
         source_name=str(spec.get("source") or "public futures data")
         source_link="[Toobit API](https://api-docs.toobit.com/api/usdt-m-market-data)" if source_name.startswith("Toobit") else source_name
-        source=" / ".join([str(x.get("data_grade") or "—"),source_link,"targets calculated"])
+        source=" / ".join([str(x.get("data_grade") or "—"),source_link,"isolated sizing assumption","targets calculated"])
         out.append(f"| {rank} | {symbol} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x.get('take_profit_2'))} | {fmt(x.get('take_profit_3'))} | {fmt(z['required_leverage'])}x | {fmt(z['notional_usd'])} | {fmt(z['planned_loss_usd'])} | {x.get('primary_timeframe') or '1h'} | {source} |")
     return "\n".join(out)
 
@@ -724,6 +726,8 @@ class FuturesSignalEngine:
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
+          "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
+          "isolated_margin_is_manual_assumption_only":True,
           "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
           "independent_confirmation_and_grade_verified":independent and grade in {"A","B"}}
         audit_passed=all(audit.values())
