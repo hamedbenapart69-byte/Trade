@@ -514,6 +514,35 @@ class V5ProviderAttributionTests(unittest.TestCase):
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
 
+    def test_outcome_evaluator_skips_legacy_signals_outside_active_strategy(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"legacy-outcomes.db")
+        class NoFetchProvider:
+            provider_name="OKX public market-data API"
+            calls=0
+            def candles(self,*args,**kwargs):
+                self.calls+=1
+                raise AssertionError("legacy outcome must not trigger provider requests")
+            def close(self):pass
+        try:
+            store.init_db()
+            save_scan({"scan_id":"legacy-toobit","scanned_at":"2026-11-06T00:00:00+00:00",
+              "source_status":{"futures_ohlcv":"Toobit public USDT-M linear perpetual market data"},
+              "actionable":[{"symbol":"BTCUSDT","direction":"LONG","decision":"BUY_NOW","entry":100.0,
+                "stop_loss":98.5,"take_profit":103.0,"entry_observed_at_ms":1000,"confidence_v5":75,
+                "data_grade":"B","risk":{"planned_loss_usd":4.0}}],"conditional":[]})
+            save_scan({"scan_id":"active-v5","scanned_at":"2026-11-07T00:00:00+00:00",
+              "strategy_version":"V5_STRICT_V3_BASELINE",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},"actionable":[],"conditional":[]})
+            provider=NoFetchProvider()
+            result=evaluate_outcomes_with_provider(provider)
+            self.assertEqual(result["checked"],0)
+            self.assertEqual(provider.calls,0)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
     def test_performance_uses_actual_latest_futures_provider(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"provider.db")
