@@ -526,21 +526,17 @@ def performance():
       "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
 
 def render_output(r):
-    if r.get("status")=="DATA_UNAVAILABLE":return "DATA UNAVAILABLE — do not trade today."
+    if r.get("status")=="DATA_UNAVAILABLE":return "No qualifying signals today."
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
-    out=[];rows=r.get("actionable",[]);watch=r.get("conditional",[])
-    if rows:
-        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
-          "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|"]
-        for x in rows:
-            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['required_leverage'])}x | {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
-    elif not watch:out.append("No qualifying signals today.")
-    if watch:
-        if out:out.append("")
-        out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |",
-          "|---|---|---|---|---:|---:|---|"]
-        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('entry_quality',{}).get('confirmation_required') or '—'} | {fmt(x.get('entry_quality',{}).get('trigger_level'))} | {x['confidence_v5']} | {x['data_grade']} |")
-    if r.get("partial_scan"):out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
+    rows=r.get("actionable",[])[:10]
+    if not rows:return "No qualifying signals today."
+    out=["| Rank | Symbol | Side | Entry | Stop Loss | TP1 | TP2 | TP3 | Leverage (≤5x) | Position Notional (USD) | Planned Risk (USD) | Timeframe | Confidence/Source |",
+      "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|"]
+    for rank,x in enumerate(rows,1):
+        z=x["risk"];spec=z.get("contract_spec") or {}
+        symbol=spec.get("venue_symbol") or x["symbol"]
+        source=" / ".join([str(x.get("data_grade") or "—"),str(spec.get("source") or "public futures data"),"targets calculated"])
+        out.append(f"| {rank} | {symbol} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x.get('take_profit_2'))} | {fmt(x.get('take_profit_3'))} | {fmt(z['required_leverage'])}x | {fmt(z['notional_usd'])} | {fmt(z['planned_loss_usd'])} | {x.get('primary_timeframe') or '1h'} | {source} |")
     return "\n".join(out)
 
 class FuturesSignalEngine:
