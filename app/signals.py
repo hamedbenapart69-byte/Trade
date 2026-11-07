@@ -274,7 +274,7 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
     base_qty=qty*multiplier if unit=="contracts" else qty
     notional=base_qty*Decimal(str(en));loss=base_qty*dist
-    required=notional/Decimal("200")
+    required=max(Decimal("1"),notional/Decimal("200"))
     rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist if dist else Decimal("0")
     reason=base.get("reason")
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
@@ -707,7 +707,15 @@ class FuturesSignalEngine:
         grade="B" if independent else "C"
         ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
         ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
-        audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
+        is_toobit=getattr(self.p,"provider_name","").startswith("Toobit")
+        depth_required=max(500.0,2.0*float(risk.get("notional_usd") or 0))
+        audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),
+          "venue_quantity_precision_and_minimum_verified":bool(contract and contract.get("tick_size") and contract.get("step_size") and contract.get("min_qty")),
+          "venue_risk_limit_tier_verified":bool(not is_toobit or contract.get("risk_limits") and risk.get("contract_spec",{}).get("venue_max_leverage")),
+          "toobit_quote_volume_gate_passed":bool(not is_toobit or float(price.get("quoteVolume24h") or 0)>=100000),
+          "toobit_spread_gate_passed":bool(not is_toobit or float(price.get("spreadBps") or 99999)<=30),
+          "toobit_bid_ask_depth_gate_passed":bool(not is_toobit or float(price.get("bidDepthUsd") or 0)>=depth_required and float(price.get("askDepthUsd") or 0)>=depth_required),
+          "mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
