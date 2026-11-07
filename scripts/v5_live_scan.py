@@ -31,7 +31,7 @@ def main() -> int:
         result["primary_shortlist_target"]=30
         result["primary_shortlist_selected"]=min(30,int(result.get("selected_assets") or 0))
         result["expanded_discovery_selected"]=max(0,int(result.get("selected_assets") or 0)-30)
-        result["expanded_discovery_target"]=70
+        result["expanded_discovery_target"]=max(0,min(70,int(result.get("eligible_assets") or 0)-30))
         result["status"]=classify_scan(result)
         result["prior_outcome_evaluation"]=prior
         result["formatted_output"]=render_output(result)
