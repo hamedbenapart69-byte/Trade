@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import math
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -108,6 +109,7 @@ def build_payload(raw: dict) -> dict:
         "scan_id": raw.get("scan_id"),
         "scanned_at": raw.get("scanned_at") or raw.get("generated_at") or generated,
         "published_at": generated,
+        "paper_state_restored": os.getenv("V5_STATE_RESTORED", "false").lower() == "true",
         "universe_requested": raw.get("universe_requested"),
         "eligible_assets": raw.get("eligible_assets"),
         "selected_assets": raw.get("selected_assets"),
