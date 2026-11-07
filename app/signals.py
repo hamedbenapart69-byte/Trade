@@ -421,6 +421,10 @@ def _structure(cs,direction,atr_value=None):
       "order_block":ob,"order_block_aligned":bool(ob),"liquidity_sweep_aligned":sweep_long if direction=="LONG" else sweep_short,
       "liquidity_sweep_bullish":sweep_long,"liquidity_sweep_bearish":sweep_short,"liquidity_levels":levels}
 
+def _audit_checks_passed(audit):
+    return all(value is True for value in audit.values() if isinstance(value,bool))
+
+
 def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk_ok,smart_points,independent_ok):
     p={"core_technical":0,"multi_timeframe":0,"market_structure":0,"volume_momentum":0,"derivatives":0,
        "smart_money_onchain":0,"entry_risk":0,"independent_confirmation":0}
@@ -807,7 +811,7 @@ class FuturesSignalEngine:
           "isolated_margin_is_manual_assumption_only":True,
           "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
           "independent_confirmation_and_grade_verified":independent and grade in {"A","B"}}
-        audit_passed=all(value is True for value in audit.values() if isinstance(value,bool))
+        audit_passed=_audit_checks_passed(audit)
         if not risk["valid"]:decision="REJECT"
         elif not audit_passed:decision="WAIT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
