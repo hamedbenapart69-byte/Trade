@@ -1,7 +1,7 @@
 """V5 read-only futures signal engine using CoinGecko discovery and a selected public futures provider."""
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from math import sqrt
 import json, time, uuid, os
 import httpx
@@ -389,37 +389,144 @@ def _trend(cs,daily=False):
     if v[-1]<a<b:return "BEARISH" if daily else "DOWN"
     return "NEUTRAL" if daily else "FLAT"
 
+def _zone_distance_pct(price,lower,upper):
+    if price>upper:return (price-upper)/price*100
+    if price<lower:return (lower-price)/price*100
+    return 0.0
+
+
+def _find_fvg(cs,direction):
+    candidates=[]
+    for i in range(2,len(cs)):
+        first,middle,third=cs[i-2],cs[i-1],cs[i]
+        if first.high<third.low:
+            zone_direction="BULLISH";lower=float(first.high);upper=float(third.low)
+        elif first.low>third.high:
+            zone_direction="BEARISH";lower=float(third.high);upper=float(first.low)
+        else:
+            continue
+        if zone_direction!=direction:continue
+        later=cs[i+1:]
+        if zone_direction=="BULLISH":
+            fully=any(x.low<=lower for x in later)
+            touched=any(x.low<=upper for x in later)
+        else:
+            fully=any(x.high>=upper for x in later)
+            touched=any(x.high>=lower for x in later)
+        status="MITIGATED" if fully else "PARTIALLY_MITIGATED" if touched else "OPEN"
+        price=float(cs[-1].close)
+        candidates.append({
+            "direction":zone_direction,"lower":lower,"upper":upper,
+            "gap_pct":(upper-lower)/max(float(middle.close),1e-12)*100,
+            "origin_candle_time_ms":first.open_time,
+            "middle_candle_time_ms":middle.open_time,
+            "formation_time_ms":third.close_time,
+            "status":status,"mitigated":fully,
+            "distance_pct":_zone_distance_pct(price,lower,upper),
+        })
+    if not candidates:return None
+    active=[x for x in candidates if x["status"]!="MITIGATED"]
+    return (active or candidates)[-1]
+
+
+def _find_order_block(cs,direction,bos,atr_value):
+    if not bos or len(cs)<3 or not atr_value or atr_value<=0:return None
+    impulse=cs[-1]
+    if direction=="LONG" and impulse.close<=impulse.open:return None
+    if direction=="SHORT" and impulse.close>=impulse.open:return None
+    displacement_atr=abs(impulse.close-impulse.open)/atr_value
+    if displacement_atr<0.5:return None
+    start=max(0,len(cs)-12)
+    for idx in range(len(cs)-2,start-1,-1):
+        origin=cs[idx]
+        opposite=(direction=="LONG" and origin.close<origin.open) or (direction=="SHORT" and origin.close>origin.open)
+        if not opposite:continue
+        later=cs[idx+1:-1]
+        if direction=="LONG":
+            fully=any(x.low<=origin.low for x in later)
+            touched=any(x.low<=origin.high for x in later)
+        else:
+            fully=any(x.high>=origin.high for x in later)
+            touched=any(x.high>=origin.low for x in later)
+        status="MITIGATED" if fully else "PARTIALLY_MITIGATED" if touched else "OPEN"
+        return {
+            "type":"BULLISH" if direction=="LONG" else "BEARISH",
+            "lower":float(origin.low),"upper":float(origin.high),
+            "originating_candle_time_ms":origin.open_time,
+            "originating_candle":{"open":origin.open,"high":origin.high,"low":origin.low,"close":origin.close},
+            "displacement_candle_time_ms":impulse.close_time,
+            "displacement_atr":displacement_atr,
+            "status":status,"mitigated":fully,
+            "distance_pct":_zone_distance_pct(float(cs[-1].close),float(origin.low),float(origin.high)),
+        }
+    return None
+
+
 def _structure(cs,direction,atr_value=None):
     hp=[];lp=[]
     for i in range(2,len(cs)-2):
         w=cs[i-2:i+3];c=cs[i]
         if c.high>max(x.high for j,x in enumerate(w) if j!=2):hp.append((i,c.high))
         if c.low<min(x.low for j,x in enumerate(w) if j!=2):lp.append((i,c.low))
-    if len(hp)<2 or len(lp)<2:return {"classification":"UNKNOWN","bos":False,"choch":False,"last_swing_high":None,"last_swing_low":None,
-      "fvg_aligned":False,"order_block_aligned":False,"liquidity_sweep_aligned":False,"liquidity_levels":[]}
-    ph,lh=hp[-1][1],lp[-1][1];hh=ph>hp[-2][1];hl=lh>lp[-2][1];lhh=ph<hp[-2][1];ll=lh<lp[-2][1]
-    cls="BULLISH" if hh and hl else "BEARISH" if lhh and ll else "MIXED"
-    bos=cs[-1].close>ph if direction=="LONG" else cs[-1].close<lh
-    choch=(cls=="BEARISH" and direction=="LONG" and bos) or (cls=="BULLISH" and direction=="SHORT" and bos)
-    sweep_long=cs[-1].low<lh and cs[-1].close>lh
-    sweep_short=cs[-1].high>ph and cs[-1].close<ph
-    fvg_bull=cs[-1].low>cs[-3].high
-    fvg_bear=cs[-1].high<cs[-3].low
-    ob=None
-    if bos:
-        for x in reversed(cs[-12:-1]):
-            if (direction=="LONG" and x.close<x.open) or (direction=="SHORT" and x.close>x.open):
-                ob={"low":x.low,"high":x.high,"type":"BULLISH" if direction=="LONG" else "BEARISH"};break
-    tol=(atr_value or (cs[-1].high-cs[-1].low))*.25
+    fvg_bull=_find_fvg(cs,"LONG");fvg_bear=_find_fvg(cs,"SHORT")
+    fvg=fvg_bull if direction=="LONG" else fvg_bear
+    current_price=float(cs[-1].close) if cs else 0.0
+    atr_pct=(float(atr_value)/current_price*100) if atr_value and current_price>0 else 0.0
+    proximity=max(0.25,1.5*atr_pct)
+    fvg_aligned=bool(fvg and fvg["status"]!="MITIGATED" and fvg["distance_pct"]<=proximity)
     levels=[]
-    for idx,val in hp[-12:]:
-        if sum(1 for _,v in hp[-12:] if abs(v-val)<=tol)>=2:levels.append({"type":"RESISTANCE","price":val})
-    for idx,val in lp[-12:]:
-        if sum(1 for _,v in lp[-12:] if abs(v-val)<=tol)>=2:levels.append({"type":"SUPPORT","price":val})
-    return {"classification":cls,"bos":bos,"choch":choch,"last_swing_high":ph,"last_swing_low":lh,
-      "fvg_aligned":fvg_bull if direction=="LONG" else fvg_bear,"fvg_bullish":fvg_bull,"fvg_bearish":fvg_bear,
-      "order_block":ob,"order_block_aligned":bool(ob),"liquidity_sweep_aligned":sweep_long if direction=="LONG" else sweep_short,
-      "liquidity_sweep_bullish":sweep_long,"liquidity_sweep_bearish":sweep_short,"liquidity_levels":levels}
+    if cs:
+        current_day=datetime.fromtimestamp(cs[-1].open_time/1000,tz=timezone.utc).date()
+        previous_day=current_day-timedelta(days=1)
+        day_bars=[x for x in cs if datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()==previous_day]
+        if day_bars:
+            levels.extend([
+                {"type":"PREVIOUS_DAY_HIGH","price":max(x.high for x in day_bars)},
+                {"type":"PREVIOUS_DAY_LOW","price":min(x.low for x in day_bars)},
+            ])
+        week_start=current_day-timedelta(days=current_day.weekday())
+        previous_week_start=week_start-timedelta(days=7)
+        week_bars=[x for x in cs if previous_week_start<=datetime.fromtimestamp(x.open_time/1000,tz=timezone.utc).date()<week_start]
+        if week_bars:
+            levels.extend([
+                {"type":"PREVIOUS_WEEK_HIGH","price":max(x.high for x in week_bars)},
+                {"type":"PREVIOUS_WEEK_LOW","price":min(x.low for x in week_bars)},
+            ])
+    if len(hp)>=2 and len(lp)>=2:
+        ph,lh=hp[-1][1],lp[-1][1]
+        hh=ph>hp[-2][1];hl=lh>lp[-2][1];lhh=ph<hp[-2][1];ll=lh<lp[-2][1]
+        cls="BULLISH" if hh and hl else "BEARISH" if lhh and ll else "MIXED"
+        bos=cs[-1].close>ph if direction=="LONG" else cs[-1].close<lh
+        choch=(cls=="BEARISH" and direction=="LONG" and bos) or (cls=="BULLISH" and direction=="SHORT" and bos)
+        tol=(atr_value or (cs[-1].high-cs[-1].low))*.25
+        for pivots,kind in ((hp[-12:],"EQUAL_HIGHS"),(lp[-12:],"EQUAL_LOWS")):
+            seen=set()
+            for _,value in pivots:
+                cluster=[v for _,v in pivots if abs(v-value)<=tol]
+                if len(cluster)>=2:
+                    level=round(sum(cluster)/len(cluster),12)
+                    if level not in seen:
+                        levels.append({"type":kind,"price":level,"touches":len(cluster)})
+                        seen.add(level)
+    else:
+        ph=lh=None;cls="UNKNOWN";bos=False;choch=False
+    ob=_find_order_block(cs,direction,bos,atr_value)
+    ob_aligned=bool(ob and ob["status"]!="MITIGATED" and ob["distance_pct"]<=proximity)
+    sweep_long=bool(lh is not None and cs[-1].low<lh and cs[-1].close>lh)
+    sweep_short=bool(ph is not None and cs[-1].high>ph and cs[-1].close<ph)
+    for level in levels:
+        price=float(level["price"]);kind=level["type"]
+        if kind.endswith("_LOW") and cs[-1].low<price and cs[-1].close>price:sweep_long=True
+        if kind.endswith("_HIGH") and cs[-1].high>price and cs[-1].close<price:sweep_short=True
+    return {
+        "classification":cls,"bos":bos,"choch":choch,"last_swing_high":ph,"last_swing_low":lh,
+        "fvg":fvg,"fvg_bullish":bool(fvg_bull and fvg_bull["status"]!="MITIGATED"),
+        "fvg_bearish":bool(fvg_bear and fvg_bear["status"]!="MITIGATED"),
+        "fvg_aligned":fvg_aligned,"order_block":ob,"order_block_aligned":ob_aligned,
+        "liquidity_sweep_aligned":sweep_long if direction=="LONG" else sweep_short,
+        "liquidity_sweep_bullish":sweep_long,"liquidity_sweep_bearish":sweep_short,
+        "liquidity_levels":levels,
+    }
 
 def _audit_checks_passed(audit):
     return all(value is True for value in audit.values() if isinstance(value,bool))
