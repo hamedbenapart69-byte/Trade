@@ -30,7 +30,7 @@ class ToobitAdapterTests(unittest.TestCase):
             ],
         }
 
-    def make_provider(self):
+    def make_provider(self, stale_depth=False):
         def handler(request):
             path = request.url.path
             if path == "/api/v1/exchangeInfo":
@@ -42,7 +42,8 @@ class ToobitAdapterTests(unittest.TestCase):
                 return httpx.Response(200, json=[{"s": "HANA-SWAP-USDT", "b": "0.01374", "bq": "84521",
                     "a": "0.01375", "aq": "207878", "t": self.now}])
             if path == "/quote/v1/depth":
-                return httpx.Response(200, json={"t": self.now, "b": [["0.01374", "100000"], ["0.01373", "100000"]],
+                depth_time = self.now - 16 * 60_000 if stale_depth else self.now
+                return httpx.Response(200, json={"t": depth_time, "b": [["0.01374", "100000"], ["0.01373", "100000"]],
                     "a": [["0.01375", "100000"], ["0.01376", "100000"]]})
             if path == "/quote/v1/markPrice":
                 return httpx.Response(200, json=[{"symbolId": "HANA-SWAP-USDT", "price": "0.01374", "time": self.now}])
@@ -98,6 +99,14 @@ class ToobitAdapterTests(unittest.TestCase):
             self.assertLess(price["spreadBps"], 30)
             self.assertGreater(price["bidDepthUsd"], 500)
             self.assertGreater(price["askDepthUsd"], 500)
+        finally:
+            client.close()
+
+    def test_stale_orderbook_depth_is_rejected(self):
+        provider, client = self.make_provider(stale_depth=True)
+        try:
+            provider.contract_specs(["HANAUSDT"])
+            self.assertNotIn("HANAUSDT", provider.prices(["HANAUSDT"]))
         finally:
             client.close()
 
