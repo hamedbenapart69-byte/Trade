@@ -2,7 +2,7 @@ import json
 import os, tempfile, unittest, time
 from pathlib import Path
 from datetime import datetime, timezone
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed, _find_fvg, _find_order_block
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed, _find_fvg, _find_order_block, classify_market_regime
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -297,6 +297,20 @@ class V5FundingNormalizationTests(unittest.TestCase):
 
 
 class V5ScoringAndStorageTests(unittest.TestCase):
+    def test_market_regime_classifier_covers_v5_regimes(self):
+        def candle(i,o,h,l,cl):
+            ts=i*3_600_000
+            return Candle(ts,o,h,l,cl,100,ts+3_599_999,True)
+        base=[candle(i,100,101,99,100) for i in range(30)]
+        self.assertEqual(classify_market_regime(base,25,"NORMAL","UP",1.0),"TRENDING")
+        self.assertEqual(classify_market_regime(base,15,"NORMAL","FLAT",1.0),"RANGING")
+        self.assertEqual(classify_market_regime(base,25,"HIGH","FLAT",1.0),"HIGH_VOLATILITY")
+        self.assertEqual(classify_market_regime(base,15,"LOW","FLAT",1.0),"LOW_VOLATILITY")
+        breakout=base[:-1]+[candle(29,100,103,100,102)]
+        self.assertEqual(classify_market_regime(breakout,25,"NORMAL","UP",2.0),"BREAKOUT")
+        unstable=base[:-1]+[candle(29,100,110,90,105)]
+        self.assertEqual(classify_market_regime(unstable,25,"HIGH","UP",2.0),"UNSTABLE")
+
     def test_fvg_uses_three_candle_zone_and_records_mitigation(self):
         def candle(i,o,h,l,cl):
             ts=i*3_600_000
