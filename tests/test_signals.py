@@ -309,6 +309,7 @@ class WideUniverseProvider:
         return {x:{"symbol":x,"updatedAt":self.now,"openInterest":{"valueUsd":1000000}}
           for x in symbols}
     def smart_money(self):return {}
+    def candles(self,symbol,tf,limit):return []
     def close(self):pass
 
 class V5ExpandedUniverseTests(unittest.TestCase):
