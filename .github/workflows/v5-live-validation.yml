@@ -1,9 +1,5 @@
 name: V5 Live Validation
 on:
-  push:
-    branches: [main, fix/v5-contract-metadata-access]
-  schedule:
-    - cron: "0 8 * * *"
   workflow_dispatch:
 concurrency:
   group: futures-signal-v5-live-${{ github.ref }}
@@ -13,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      TRADERSPY_API_KEY: ${{ secrets.TRADERSPY_API_KEY }}
+      V5_DATA_PROVIDER: okx
       CONTROL_DB_PATH: ./data/control.db
     steps:
       - uses: actions/checkout@v4
