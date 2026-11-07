@@ -32,3 +32,14 @@ The dashboard payload is intentionally sanitized. It includes only the latest sc
 The repository must be public for the intended no-subscription GitHub Pages and standard public-runner path. In repository Settings -> Pages, select **GitHub Actions** as the build and deployment source. This repository setting is not writable through the connected GitHub source-control permission, so an owner must enable it once. After that, a push to `main` and the scheduled workflow can publish the site.
 
 The project Pages URL is derived from the repository name and is not considered live until the first successful Pages deployment is recorded in Actions.
+
+## Current release hardening — 2026-11-07
+
+- The scheduled production scanner selects `V5_DATA_PROVIDER=okx`. CoinGecko is used for top-100 discovery and independent spot-price comparison; OKX supplies the USDT linear perpetual instruments, live prices, completed OHLCV, funding, mark/index, open interest and global account ratio.
+- The OKX adapter now requires the public instrument `lever` field and carries the venue maximum leverage into the sizing gate. The engine enforces both the user's 5x ceiling and the venue's published maximum.
+- Entry and stop prices are rounded to venue tick increments first. Stop distance and position notional are then recalculated from those rounded prices before quantity rounding, and the final quantity is checked against the $4 planned-loss cap, venue leverage limit, minimum/maximum quantity and RR floor.
+- The dashboard tables follow the V5 column order. Only BUY_NOW / SELL_NOW are in the immediate table; conditional decisions remain separate. Stale entries older than 15 minutes are hidden.
+- Current live access is verified from GitHub-hosted runners. Direct API reachability and futures-account eligibility from Iran are not established by that cloud test; do not treat cloud access as proof of local account eligibility.
+- Smart-money / on-chain evidence is not supplied by the active OKX adapter. Missing evidence receives no invented score. Paper outcomes are OHLCV observations, not exchange fills or real-trade performance.
+- No exchange account, private exchange credential, order endpoint or order execution is used. The dashboard and scan use public/free endpoints and GitHub Pages / public-repository Actions.
+
