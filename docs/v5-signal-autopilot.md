@@ -48,3 +48,4 @@ The project Pages URL is derived from the repository name and is not considered 
 - Four-hour structure uses centered five-candle swing pivots. FVGs use a three-candle gap definition and record zone bounds, formation time, mitigation state and distance. Candidate order blocks use the last opposing candle before a BOS displacement of at least 0.5 ATR, recording origin, displacement, mitigation and distance. Previous-day/week liquidity levels are emitted only when sufficient completed bars exist.
 - OKX does not supply verified liquidation clusters or on-chain wallet evidence in this adapter. Those fields are explicitly marked unavailable; no liquidation or institutional-flow claims are fabricated.
 
+- Funding, open-interest and positioning evidence is source-attributed; global/top-trader and taker ratios contribute only when their own observation timestamps are present and within the configured freshness window. Stale or untimestamped ratios receive no score.
