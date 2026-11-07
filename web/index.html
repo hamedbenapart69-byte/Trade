@@ -65,8 +65,8 @@ function table(rows,watch=false){
  }).join('')+'</tbody></table></div>';
 }
 function render(d){
- const scanned=d.scanned_at?new Date(d.scanned_at).getTime():0,age=scanned?Math.max(0,(Date.now()-scanned)/60000):Infinity;
- const fresh=age<=15&&d.status==="SCAN_COMPLETED"&&d.validation_context?.fixture_data===false;
+ const scanned=d.scanned_at?new Date(d.scanned_at).getTime():0,age=scanned?(Date.now()-scanned)/60000:Infinity;
+ const fresh=age>=0&&age<=15&&d.status==="SCAN_COMPLETED"&&d.validation_context?.fixture_data===false;
  const action=fresh?(d.actionable||[]):[],watch=fresh?(d.conditional||[]):[];
  $("state").textContent=d.status==="DATA_UNAVAILABLE"?"داده در دسترس نیست":d.status==="INSUFFICIENT_DATA"?"داده ناکافی":fresh?"اسکن زنده و تازه":"نتیجهٔ آخرین اسکن";
  $("scanned").textContent=timeFa(d.scanned_at);
