@@ -278,32 +278,44 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
         return snap(value,ROUND_CEILING if direction=="LONG" else ROUND_FLOOR)
     tp1=tp_snap(base["take_profit"]);tp2=tp_snap(base["take_profit_2"]);tp3=tp_snap(base["take_profit_3"])
     dist=abs(Decimal(str(en))-Decimal(str(st)))
+    if dist<=0:raise DataError("rounded_stop_distance_zero")
+    actual_stop_pct=float(dist/Decimal(str(en))*Decimal("100"))
+    reason=None
+    if not 0.5<=actual_stop_pct<=3.0:reason="rounded_stop_distance_out_of_range"
+    # Recalculate position notional from the tick-rounded entry and stop, not
+    # from the pre-rounded prices. This keeps the planned loss cap truthful.
+    max_notional=min(Decimal("4")/(dist/Decimal(str(en))),Decimal("1000"))
+    base["max_notional_usd"]=float(max_notional)
+    base["stop_pct"]=actual_stop_pct
     unit=str(contract.get("quantity_unit") or "base_asset")
     unit_notional=Decimal(str(en))*multiplier if unit=="contracts" else Decimal(str(en))
-    qty_raw=Decimal(str(base["max_notional_usd"]))/unit_notional
+    qty_raw=max_notional/unit_notional
     qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
     base_qty=qty*multiplier if unit=="contracts" else qty
     notional=base_qty*Decimal(str(en));loss=base_qty*dist
     required=max(Decimal("1"),notional/Decimal("200"))
-    rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist if dist else Decimal("0")
-    reason=base.get("reason")
+    rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
     maximum=Decimal(str(contract.get("max_qty") or 0))
     if reason is None and maximum>0 and qty>maximum:reason="maximum_contract_quantity_exceeded"
     min_notional=Decimal(str(contract.get("min_notional") or 0))
     if reason is None and min_notional>0 and notional<min_notional:reason="minimum_contract_notional_not_met"
-    venue_max=5.0
     tiers=contract.get("risk_limits") or []
-    for tier in sorted(tiers,key=lambda x:float(x.get("value") or 0)):
-        if float(tier.get("value") or 0)>=float(notional):
-            venue_max=float(tier.get("max_leverage") or 0);break
+    if tiers:
+        venue_max=0.0
+        for tier in sorted(tiers,key=lambda x:float(x.get("value") or 0)):
+            if float(tier.get("value") or 0)>=float(notional):
+                venue_max=float(tier.get("max_leverage") or 0);break
+        else:
+            venue_max=float(sorted(tiers,key=lambda x:float(x.get("value") or 0))[-1].get("max_leverage") or 0)
     else:
-        if tiers:venue_max=float(sorted(tiers,key=lambda x:float(x.get("value") or 0))[-1].get("max_leverage") or 0)
-    if reason is None and venue_max<=0:reason="venue_leverage_limit_unverified"
+        try:venue_max=float(contract.get("max_leverage") if contract.get("max_leverage") is not None else 5.0)
+        except (TypeError,ValueError):venue_max=0.0
+    if reason is None and (venue_max<=0 or not (venue_max==venue_max and abs(venue_max)!=float("inf"))):reason="venue_leverage_limit_unverified"
     if reason is None and float(required)>min(5.0,venue_max)+1e-9:reason="rounded_quantity_exceeds_venue_or_user_leverage_cap"
     if reason is None and float(loss)>4.0+1e-9:reason="rounded_quantity_exceeds_risk_cap"
     if reason is None and float(rr)<2.0:reason="tick_rounded_reward_to_risk_below_2"
-    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source","min_trade_precision","risk_limits")}
+    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source","min_trade_precision","risk_limits","max_leverage")}
     spec.update({"tick_size":float(tick),"step_size":float(step),"min_qty":float(minimum),
         "max_qty":float(maximum),"min_notional":float(min_notional),"contract_multiplier":float(multiplier),
         "venue_max_leverage":venue_max})
