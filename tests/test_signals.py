@@ -347,13 +347,13 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         def candle(i,o,h,l,cl):
             ts=i*3_600_000
             return Candle(ts,o,h,l,cl,100,ts+3_599_999,True)
-        candles=[candle(i,100,101,99,100) for i in range(8)]
-        candles.extend([
-            candle(8,102,103,100,101),
-            candle(9,102,103,102.5,102.8),
-            candle(10,102,106,101.5,106),
-        ])
-        block=_find_order_block(candles,"LONG",True,2.0)
+        candles=[candle(i,100,101,99,100) for i in range(12)]
+        candles[5]=candle(5,100,102,99,101)
+        candles[8]=candle(8,102,103,100,101)
+        candles[9]=candle(9,102,103,102.5,102.8)
+        candles[10]=candle(10,102,106,101.5,106)
+        candles[11]=candle(11,104,104.5,102.5,103)
+        block=_find_order_block(candles,"LONG",2.0)
         self.assertEqual(block["type"],"BULLISH")
         self.assertEqual(block["lower"],100.0)
         self.assertEqual(block["upper"],103.0)
