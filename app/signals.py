@@ -1000,9 +1000,12 @@ class FuturesSignalEngine:
     @classmethod
     def _smart_score(cls,symbol,direction,top_ratio,smart,now):
         points=3 if top_ratio is not None and ((direction=="LONG" and top_ratio>1.2) or (direction=="SHORT" and top_ratio<.8)) else 0
-        observed=smart.get("positions_observed_at_ms")
-        aligned=cls._position_evidence(symbol,direction,smart) if observed and 0<=now-observed<=900_000 else []
-        traders={str(t.get("traderId") or t.get("trader_id")):float(t.get("smartScore") or t.get("score") or 0) for t in smart.get("traders",[]) if t.get("traderId") or t.get("trader_id")}
+        positions_ts=smart.get("positions_observed_at_ms")
+        traders_ts=smart.get("traders_observed_at_ms")
+        positions_fresh=bool(positions_ts and 0<=now-positions_ts<=900_000)
+        traders_fresh=bool(traders_ts and 0<=now-traders_ts<=900_000)
+        aligned=cls._position_evidence(symbol,direction,smart) if positions_fresh and traders_fresh else []
+        traders={str(t.get("traderId") or t.get("trader_id")):float(t.get("smartScore") or t.get("score") or 0) for t in smart.get("traders",[]) if (t.get("traderId") or t.get("trader_id")) and traders_fresh}
         qualified={x["trader_id"] for x in aligned if x["trader_id"] and traders.get(str(x["trader_id"]),0)>=70 and x["side"]==direction}
         if len(qualified)>=2:points+=2
         elif len(qualified)==1:points+=1
