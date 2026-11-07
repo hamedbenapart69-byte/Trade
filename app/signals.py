@@ -396,6 +396,7 @@ def _zone_distance_pct(price,lower,upper):
 
 
 def _find_fvg(cs,direction):
+    wanted="BULLISH" if direction=="LONG" else "BEARISH" if direction=="SHORT" else direction
     candidates=[]
     for i in range(2,len(cs)):
         first,middle,third=cs[i-2],cs[i-1],cs[i]
@@ -405,7 +406,7 @@ def _find_fvg(cs,direction):
             zone_direction="BEARISH";lower=float(third.high);upper=float(first.low)
         else:
             continue
-        if zone_direction!=direction:continue
+        if zone_direction!=wanted:continue
         later=cs[i+1:]
         if zone_direction=="BULLISH":
             fully=any(x.low<=lower for x in later)
