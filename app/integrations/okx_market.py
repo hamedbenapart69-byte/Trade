@@ -20,16 +20,23 @@ class OkxPublicMarketData:
         self.own = client is None
         self.calls = 0
         self.last_call = 0.0
+        self.last_by_path = {}
         self._instruments = None
         self._tickers = None
         self._indexes = None
         self._contracts = {}
 
     def _get(self, path: str, params: dict | None = None):
-        wait = 0.11 - (time.monotonic() - self.last_call)
+        now = time.monotonic()
+        global_wait = 0.11 - (now - self.last_call)
+        endpoint_interval = 0.41 if path == "/api/v5/rubik/stat/contracts/long-short-account-ratio" else 0.0
+        endpoint_wait = endpoint_interval - (now - self.last_by_path.get(path, 0.0))
+        wait = max(global_wait, endpoint_wait, 0.0)
         if wait > 0:
             time.sleep(wait)
-        self.last_call = time.monotonic()
+        request_time = time.monotonic()
+        self.last_call = request_time
+        self.last_by_path[path] = request_time
         self.calls += 1
         try:
             response = self.client.get(self.BASE + path, params=params or {},
