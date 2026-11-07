@@ -110,8 +110,19 @@ def build_payload(raw: dict) -> dict:
         status = "INSUFFICIENT_DATA"
     raw_actionable = raw.get("actionable") if isinstance(raw.get("actionable"), list) else []
     raw_conditional = raw.get("conditional") if isinstance(raw.get("conditional"), list) else []
-    actionable = [x for x in raw_actionable if isinstance(x, dict) and _valid_actionable(x, source_ok)] if status == "SCAN_COMPLETED" else []
-    conditional = [x for x in raw_conditional if isinstance(x, dict) and _valid_conditional(x, source_ok)] if status == "SCAN_COMPLETED" else []
+    actionable_candidates = [x for x in raw_actionable if isinstance(x, dict) and _valid_actionable(x, source_ok)] if status == "SCAN_COMPLETED" else []
+    conditional_candidates = [x for x in raw_conditional if isinstance(x, dict) and _valid_conditional(x, source_ok)] if status == "SCAN_COMPLETED" else []
+    def dedupe(items):
+        unique = {}
+        for item in items:
+            key = (str(item.get("symbol", "")).upper(), item.get("direction"))
+            if key not in unique:
+                unique[key] = item
+        return list(unique.values())
+    actionable = sorted(dedupe(actionable_candidates),
+        key=lambda x: (-(_num(x.get("confidence_v5")) or 0), 0 if x.get("data_grade") == "A" else 1))[:10]
+    conditional = sorted(dedupe(conditional_candidates),
+        key=lambda x: -(_num(x.get("confidence_v5")) or 0))
     return {
         "schema_version": 1,
         "status": status,
