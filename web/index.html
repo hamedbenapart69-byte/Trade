@@ -88,7 +88,7 @@ function render(d){
  const p=d.performance||{};
  $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b><br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
  const g=d.publication_gate||{};
- $("validation").innerHTML='منبع زنده: <b>'+(g.source_verified?'تأیید شده':'تأیید نشده')+'</b><br>سیگنال فوری منتشرشده: <b>'+fmt(g.actionable_candidates_published)+'</b><br>فرصت شرطی منتشرشده: <b>'+fmt(g.conditional_candidates_published)+'</b><br>دادهٔ ساختگی: خیر<br>اتصال حساب صرافی: خیر | اجرای سفارش: خیر';
+ $("validation").innerHTML='منبع زنده: <b>'+(g.source_verified?'تأیید شده':'تأیید نشده')+'</b><br>سیگنال فوری منتشرشده: <b>'+fmt(g.actionable_candidates_published)+'</b><br>فرصت شرطی منتشرشده: <b>'+fmt(g.conditional_candidates_published)+'</b><br>تداوم سابقهٔ کاغذی: <b>'+(d.paper_state_restored?'بازیابی شد':'از نو آغاز شده / بازیابی نشد')+'</b><br>دادهٔ ساختگی: خیر<br>اتصال حساب صرافی: خیر | اجرای سفارش: خیر';
 }
 async function load(){
  const b=$("refresh");b.disabled=true;
