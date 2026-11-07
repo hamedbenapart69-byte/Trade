@@ -235,6 +235,7 @@ class ToobitPublicMarketData:
         tickers = self._load_tickers()
         books = self._load_book_tickers()
         result = {}
+        server_time = self.server_time()
         for raw in symbols:
             symbol = str(raw).upper()
             venue = self._contract_symbol(self._base_symbol(symbol))
@@ -246,14 +247,19 @@ class ToobitPublicMarketData:
                 last = float(ticker["c"])
                 bid, ask = float(book["b"]), float(book["a"])
                 bid_qty, ask_qty = float(book["bq"]), float(book["aq"])
-                ts = int(ticker.get("t") or book.get("t") or 0)
-                if min(last, bid, ask, bid_qty, ask_qty) <= 0 or not ts or ask < bid:
+                ticker_ts = int(ticker.get("t") or 0)
+                book_ts = int(book.get("t") or 0)
+                if min(last, bid, ask, bid_qty, ask_qty) <= 0 or min(ticker_ts, book_ts) <= 0 or ask < bid:
                     continue
                 mid = (bid + ask) / 2
                 multiplier = float((self._contracts.get(symbol) or {}).get("contract_multiplier") or 1)
                 depth_payload = self._get("/quote/v1/depth", {"symbol": venue, "limit": 20})
                 if not isinstance(depth_payload, dict):
                     raise DataError("toobit_invalid_orderbook")
+                depth_ts = int(depth_payload.get("t") or 0)
+                observed_times = (ticker_ts, book_ts, depth_ts)
+                if any(ts <= 0 or ts > server_time + 60_000 or server_time - ts > 900_000 for ts in observed_times):
+                    continue
                 bid_depth = sum(float(p) * float(q) * multiplier for p, q in depth_payload.get("b", [])
                                 if float(p) >= mid * 0.995)
                 ask_depth = sum(float(p) * float(q) * multiplier for p, q in depth_payload.get("a", [])
@@ -261,7 +267,7 @@ class ToobitPublicMarketData:
                 result[symbol] = {
                     "symbol": symbol,
                     "price": last,
-                    "updatedAt": ts,
+                    "updatedAt": min(observed_times),
                     "high24h": float(ticker.get("h") or 0),
                     "low24h": float(ticker.get("l") or 0),
                     "volume24h": float(ticker.get("v") or 0),
