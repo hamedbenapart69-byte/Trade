@@ -447,19 +447,30 @@ def _find_fvg(cs,direction):
     return (active or candidates)[-1]
 
 
-def _find_order_block(cs,direction,bos,atr_value):
-    if not bos or len(cs)<3 or not atr_value or atr_value<=0:return None
-    impulse=cs[-1]
-    if direction=="LONG" and impulse.close<=impulse.open:return None
-    if direction=="SHORT" and impulse.close>=impulse.open:return None
-    displacement_atr=abs(impulse.close-impulse.open)/atr_value
-    if displacement_atr<0.5:return None
-    start=max(0,len(cs)-12)
-    for idx in range(len(cs)-2,start-1,-1):
-        origin=cs[idx]
-        opposite=(direction=="LONG" and origin.close<origin.open) or (direction=="SHORT" and origin.close>origin.open)
-        if not opposite:continue
-        later=cs[idx+1:-1]
+def _find_order_block(cs,direction,atr_value):
+    if len(cs)<12 or not atr_value or atr_value<=0:return None
+    start=max(10,len(cs)-12)
+    for impulse_idx in range(len(cs)-1,start-1,-1):
+        impulse=cs[impulse_idx]
+        if direction=="LONG" and impulse.close<=impulse.open:continue
+        if direction=="SHORT" and impulse.close>=impulse.open:continue
+        displacement_atr=abs(impulse.close-impulse.open)/atr_value
+        if displacement_atr<0.5:continue
+        prior=cs[:impulse_idx]
+        hp=[];lp=[]
+        for i in range(2,len(prior)-2):
+            window=prior[i-2:i+3];point=prior[i]
+            if point.high>max(x.high for j,x in enumerate(window) if j!=2):hp.append(point.high)
+            if point.low<min(x.low for j,x in enumerate(window) if j!=2):lp.append(point.low)
+        if direction=="LONG" and (not hp or impulse.close<=hp[-1]):continue
+        if direction=="SHORT" and (not lp or impulse.close>=lp[-1]):continue
+        origin=None
+        for candidate in reversed(cs[max(0,impulse_idx-11):impulse_idx]):
+            opposite=(direction=="LONG" and candidate.close<candidate.open) or (direction=="SHORT" and candidate.close>candidate.open)
+            if opposite:
+                origin=candidate;break
+        if origin is None:continue
+        later=cs[impulse_idx+1:]
         if direction=="LONG":
             fully=any(x.low<=origin.low for x in later)
             touched=any(x.low<=origin.high for x in later)
@@ -534,7 +545,7 @@ def _structure(cs,direction,atr_value=None):
                         seen.add(level)
     else:
         ph=lh=None;cls="UNKNOWN";bos=False;choch=False
-    ob=_find_order_block(cs,direction,bos,atr_value)
+    ob=_find_order_block(cs,direction,atr_value)
     ob_aligned=bool(ob and ob["status"]!="MITIGATED" and ob["distance_pct"]<=proximity)
     sweep_long=bool(lh is not None and cs[-1].low<lh and cs[-1].close>lh)
     sweep_short=bool(ph is not None and cs[-1].high>ph and cs[-1].close<ph)
