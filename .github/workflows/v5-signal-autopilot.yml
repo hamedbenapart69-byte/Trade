@@ -109,6 +109,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Upload raw scan audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-scan-audit
+          path: artifacts/v5_live_scan.json
+          if-no-files-found: error
+          retention-days: 3
+
   deploy-pages:
     if: github.ref == 'refs/heads/main'
     needs: scan-and-build
