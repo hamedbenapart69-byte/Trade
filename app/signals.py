@@ -93,7 +93,7 @@ def volume_ratio(cs:list[Candle])->float|None:
 def v3_directional_baseline(rsi14:float,vol_ratio:float,close:float,ema20:float,ema50:float,trend4h:str)->str|None:
     """Multi-factor pullback/trend gate; avoid requiring an extreme RSI reading."""
     if any(x is None for x in (rsi14,vol_ratio,close,ema20,ema50)):return None
-    if vol_ratio<1.2:return None
+    if vol_ratio<=0:return None
     long=40<=rsi14<=70 and close>ema20 and ema20>=ema50 and trend4h in {"UP","FLAT"}
     short=30<=rsi14<=60 and close<ema20 and ema20<=ema50 and trend4h in {"DOWN","FLAT"}
     if long and not short:return "LONG"
