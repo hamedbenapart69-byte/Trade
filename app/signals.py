@@ -798,7 +798,7 @@ class FuturesSignalEngine:
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
-          "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
+          "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3 and .5<=risk["rounded_stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
           "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
           "isolated_margin_is_manual_assumption_only":True,
           "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
