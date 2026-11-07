@@ -517,6 +517,7 @@ def _structure(cs,direction,atr_value=None):
             ])
     if len(hp)>=2 and len(lp)>=2:
         ph,lh=hp[-1][1],lp[-1][1]
+        levels.extend([{"type":"RESISTANCE","price":ph,"source":"LAST_SWING_HIGH"},{"type":"SUPPORT","price":lh,"source":"LAST_SWING_LOW"}])
         hh=ph>hp[-2][1];hl=lh>lp[-2][1];lhh=ph<hp[-2][1];ll=lh<lp[-2][1]
         cls="BULLISH" if hh and hl else "BEARISH" if lhh and ll else "MIXED"
         bos=cs[-1].close>ph if direction=="LONG" else cs[-1].close<lh
@@ -901,11 +902,11 @@ class FuturesSignalEngine:
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
-            resist=sorted([x["price"] for x in levels if x["type"]=="RESISTANCE" and x["price"]>risk["take_profit"]])
+            resist=sorted({x["price"] for x in levels if x["type"] in {"RESISTANCE","EQUAL_HIGHS","PREVIOUS_DAY_HIGH","PREVIOUS_WEEK_HIGH"} and x["price"]>risk["take_profit"]})
             risk["take_profit_2"]=min(risk["take_profit_2"],resist[0]) if resist and resist[0]>risk["take_profit"] else None
             risk["take_profit_3"]=min(risk["take_profit_3"],resist[1]) if len(resist)>1 and resist[1]>(risk["take_profit_2"] or risk["take_profit"]) else None
         else:
-            supports=sorted([x["price"] for x in levels if x["type"]=="SUPPORT" and x["price"]<risk["take_profit"]],reverse=True)
+            supports=sorted({x["price"] for x in levels if x["type"] in {"SUPPORT","EQUAL_LOWS","PREVIOUS_DAY_LOW","PREVIOUS_WEEK_LOW"} and x["price"]<risk["take_profit"]},reverse=True)
             risk["take_profit_2"]=max(risk["take_profit_2"],supports[0]) if supports and supports[0]<risk["take_profit"] else None
             risk["take_profit_3"]=max(risk["take_profit_3"],supports[1]) if len(supports)>1 and supports[1]<(risk["take_profit_2"] or risk["take_profit"]) else None
         cs15=cs["15m"];v15=[x.close for x in cs15];e15=ema(v15,20)[-1];atr15=atr(cs15)[-1];last=cs15[-1];prev=cs15[-2]
