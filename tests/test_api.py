@@ -1,4 +1,5 @@
 import os,tempfile,unittest
+from datetime import datetime,timezone,timedelta
 from pathlib import Path
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -66,5 +67,27 @@ class ApiTests(unittest.TestCase):
   self.assertFalse(body["full_live_scan_verified"])
   self.assertFalse(body["live_rest_access_verified"])
   self.assertIsNone(body["last_full_live_scan_utc"])
+
+
+ def test_signal_status_marks_historical_live_data_as_stale(self):
+  sample={"status":"SCAN_COMPLETED","scanned_at":(datetime.now(timezone.utc)-timedelta(hours=1)).isoformat(),
+   "screened_assets":30,"selected_assets":30,"actionable":[],"validation_context":{"fixture_data":False},
+   "source_status":{"futures_ohlcv":"OKX public market-data API"}}
+  with patch("app.signals.latest_scan",return_value=sample):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  self.assertTrue(r.json()["full_live_scan_verified"])
+  self.assertFalse(r.json()["live_rest_access_verified"])
+  self.assertGreater(r.json()["last_full_live_scan_age_minutes"],15)
+
+ def test_signal_status_accepts_only_fresh_complete_live_scan(self):
+  sample={"status":"SCAN_COMPLETED","scanned_at":datetime.now(timezone.utc).isoformat(),
+   "screened_assets":30,"selected_assets":30,"actionable":[],"validation_context":{"fixture_data":False},
+   "source_status":{"futures_ohlcv":"OKX public market-data API"}}
+  with patch("app.signals.latest_scan",return_value=sample):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  self.assertTrue(r.json()["full_live_scan_verified"])
+  self.assertTrue(r.json()["live_rest_access_verified"])
 
 if __name__=="__main__": unittest.main()
