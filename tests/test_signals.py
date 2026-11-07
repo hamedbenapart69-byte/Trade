@@ -99,7 +99,8 @@ class V5RiskTests(unittest.TestCase):
         r=contract_sized_risk("LONG",100.51,97.52,contract)
         self.assertFalse(r["valid"])
         self.assertEqual(r["reason"],"rounded_stop_distance_out_of_range")
-        self.assertGreater(r["stop_pct"],3.0)
+        self.assertLessEqual(r["stop_pct"],3.0)
+        self.assertGreater(r["rounded_stop_pct"],3.0)
 
     def test_contract_sizing_rejects_below_minimum_quantity(self):
         contract={"symbol":"DUSTUSDT","contract_type":"PERPETUAL","status":"TRADING","base_asset":"DUST",
