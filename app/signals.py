@@ -197,7 +197,8 @@ class PublicMarketData:
             out[sym]={"symbol":sym,"pair":item.get("pair"),"contract_type":item.get("contractType"),
               "status":item.get("status"),"base_asset":item.get("baseAsset"),"quote_asset":item.get("quoteAsset"),
               "margin_asset":item.get("marginAsset"),"quantity_unit":"base_asset","tick_size":tick,
-              "step_size":step,"min_qty":min_qty,"min_notional":min_notional}        return out
+              "step_size":step,"min_qty":min_qty,"min_notional":min_notional}
+        return out
     def candles(self,symbol,tf,limit=220):
         r=self._ts_get("/market/candles",{"symbol":symbol,"interval":tf,"limit":limit})
         raw=r.get("candles",[])
