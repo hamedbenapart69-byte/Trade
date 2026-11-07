@@ -32,15 +32,15 @@ class V5IndicatorTests(unittest.TestCase):
         with self.assertRaises(CandleError):validate_candles(wrong,60000,now=310000,min_count=5)
 
 class V5BaselineTests(unittest.TestCase):
-    def test_long_and_short_require_trend_volume_and_ema_confluence_not_extreme_rsi(self):
+    def test_long_and_short_require_trend_and_ema_confluence_not_extreme_rsi(self):
         self.assertEqual(v3_directional_baseline(55,1.5,101,100,99,"UP"),"LONG")
         self.assertEqual(v3_directional_baseline(48,1.4,99,100,101,"DOWN"),"SHORT")
-        self.assertEqual(v3_directional_baseline(52,1.3,101,100,99,"FLAT"),"LONG")
+        self.assertEqual(v3_directional_baseline(52,0.6,101,100,99,"FLAT"),"LONG")
 
-    def test_baseline_rejects_extreme_rsi_low_volume_and_conflicting_trend(self):
+    def test_baseline_rejects_extreme_rsi_missing_volume_and_conflicting_trend(self):
         self.assertIsNone(v3_directional_baseline(75,2.0,101,100,99,"UP"))
         self.assertIsNone(v3_directional_baseline(25,2.0,99,100,101,"DOWN"))
-        self.assertIsNone(v3_directional_baseline(55,1.0,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(55,0.0,101,100,99,"UP"))
         self.assertIsNone(v3_directional_baseline(55,1.5,101,100,99,"DOWN"))
         self.assertIsNone(v3_directional_baseline(48,1.5,99,100,101,"UP"))
 
