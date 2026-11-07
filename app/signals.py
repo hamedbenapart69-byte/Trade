@@ -651,15 +651,15 @@ class FuturesSignalEngine:
           "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2])),
           "price_change":price_change}
         st=_structure(cs["4h"],direction,a14)
-        atr_stop=mark-1.5*a14 if direction=="LONG" else mark+1.5*a14
+        atr_stop=last_price-1.5*a14 if direction=="LONG" else last_price+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
         if direction=="SHORT" and st.get("last_swing_high"):structural=st["last_swing_high"]+.2*a14
         stop=atr_stop
-        if structural and ((direction=="LONG" and structural<mark) or (direction=="SHORT" and structural>mark)):
-            sp=abs(mark-structural)/mark*100
-            if .5<=sp<=3 and abs(mark-structural)>=1.0*a14:stop=structural
-        risk=contract_sized_risk(direction,mark,stop,contract)
+        if structural and ((direction=="LONG" and structural<last_price) or (direction=="SHORT" and structural>last_price)):
+            sp=abs(last_price-structural)/last_price*100
+            if .5<=sp<=3 and abs(last_price-structural)>=1.0*a14:stop=structural
+        risk=contract_sized_risk(direction,last_price,stop,contract)
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
@@ -672,14 +672,14 @@ class FuturesSignalEngine:
             risk["take_profit_3"]=max(risk["take_profit_3"],supports[1]) if len(supports)>1 and supports[1]<(risk["take_profit_2"] or risk["take_profit"]) else None
         cs15=cs["15m"];v15=[x.close for x in cs15];e15=ema(v15,20)[-1];atr15=atr(cs15)[-1];last=cs15[-1];prev=cs15[-2]
         if e15 is None or atr15 is None:raise DataError("missing_15m_entry_indicators")
-        distance_atr=abs(mark-e15)/atr15 if atr15>0 else 999
+        distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
         chase=distance_atr>2.0
-        entry_ok=(mark>e15 and last.close>=prev.close) if direction=="LONG" else (mark<e15 and last.close<=prev.close)
+        entry_ok=(last_price>e15 and last.close>=prev.close) if direction=="LONG" else (last_price<e15 and last.close<=prev.close)
         entry_ok=entry_ok and not chase
         sweep=st.get("liquidity_sweep_aligned",False)
         if sweep:entry_type="LIQUIDITY_SWEEP"
-        elif st.get("bos") and abs(mark-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
-        elif abs(mark-e15)<=.5*atr15:entry_type="PULLBACK"
+        elif st.get("bos") and abs(last_price-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
+        elif abs(last_price-e15)<=.5*atr15:entry_type="PULLBACK"
         else:entry_type="MARKET"
         entry_points=(2 if entry_type in {"LIQUIDITY_SWEEP","BREAKOUT_RETEST"} else 1 if entry_type=="PULLBACK" else 0)+(2 if not chase else 0)+(1 if entry_ok else 0)
         smart_points=self._smart_score(symbol,direction,top_ls,smart,now)
@@ -712,7 +712,7 @@ class FuturesSignalEngine:
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
-          "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":du,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
+          "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
@@ -724,7 +724,7 @@ class FuturesSignalEngine:
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
             "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
-          "expires_at_ms":du+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
+          "expires_at_ms":pu+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
           "limitations":["Selected public futures provider is used read-only; no exchange account or trading credentials are used.",
             "The selected provider does not currently supply verified orderbook spread, exact fees, slippage, venue liquidation price, or on-chain wallet identity.",
             "Optional smart-money and top-trader evidence is absent unless the selected provider explicitly returns it.",
