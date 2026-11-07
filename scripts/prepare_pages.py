@@ -119,8 +119,14 @@ def build_payload(raw: dict) -> dict:
             if key not in unique:
                 unique[key] = item
         return list(unique.values())
-    actionable = sorted(dedupe(actionable_candidates),
-        key=lambda x: (-(_num(x.get("confidence_v5")) or 0), 0 if x.get("data_grade") == "A" else 1))[:10]
+    def action_rank(item):
+        score = _num(item.get("confidence_v5")) or 0
+        rr = _num((item.get("risk") or {}).get("reward_to_risk")) or 0
+        mtf = _num((item.get("v5_score_components") or {}).get("multi_timeframe")) or 0
+        entry_ok = (item.get("entry_quality") or {}).get("entry_ok") is True
+        independent = (item.get("independent_confirmation") or {}).get("passed") is True
+        return (-score, 0 if item.get("data_grade") == "A" else 1, not entry_ok, -rr, -mtf, not independent)
+    actionable = sorted(dedupe(actionable_candidates), key=action_rank)[:10]
     conditional = sorted(dedupe(conditional_candidates),
         key=lambda x: -(_num(x.get("confidence_v5")) or 0))
     return {
