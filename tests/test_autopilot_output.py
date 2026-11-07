@@ -4,31 +4,26 @@ from app.signals import render_output
 
 
 class AutopilotOutputTests(unittest.TestCase):
-    def test_exact_signal_table_is_rendered_without_conditional_watchlist(self):
+    def test_exact_v5_actionable_and_conditional_tables_are_rendered(self):
         result = {
             "status": "SCAN_COMPLETED",
             "actionable": [{
-                "symbol": "HANAUSDT", "direction": "SHORT", "entry": 0.01374,
-                "stop_loss": 0.014, "take_profit": 0.01322,
-                "take_profit_2": 0.01296, "take_profit_3": None,
-                "primary_timeframe": "1h", "data_grade": "B",
-                "risk": {
-                    "required_leverage": 1.0, "notional_usd": 153.85, "planned_loss_usd": 4.0,
-                    "contract_spec": {
-                        "venue_symbol": "HANA-SWAP-USDT",
-                        "source": "Toobit public exchangeInfo",
-                    },
-                },
+                "symbol": "BTCUSDT", "decision": "BUY_NOW", "direction": "LONG",
+                "entry": 100.0, "stop_loss": 98.5, "take_profit": 103.0,
+                "stop_pct": 1.5, "confidence_v5": 75, "data_grade": "B",
+                "risk": {"required_leverage": 2.0, "planned_loss_usd": 4.0},
             }],
-            "conditional": [{"symbol": "BTCUSDT", "decision": "CONDITIONAL_BUY"}],
+            "conditional": [{
+                "symbol": "ETHUSDT", "decision": "CONDITIONAL_SELL", "direction": "SHORT",
+                "confidence_v5": 65, "data_grade": "B",
+                "entry_quality": {"confirmation_required": "15m close below trigger", "trigger_level": 2500.0},
+            }],
         }
         rendered = render_output(result)
-        self.assertIn("| Rank | Symbol | Side | Entry | Stop Loss | TP1 | TP2 | TP3 |", rendered)
-        self.assertIn("HANA-SWAP-USDT", rendered)
-        self.assertIn("[Toobit API](https://api-docs.toobit.com/api/usdt-m-market-data)", rendered)
-        self.assertIn("| — |", rendered)
-        self.assertNotIn("CONDITIONAL_BUY", rendered)
-        self.assertNotIn("Conditional watchlist", rendered)
+        self.assertIn("| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |", rendered)
+        self.assertIn("| BTCUSDT | BUY_NOW | LONG | 100 | 98.5 | 103 | 1.5 | 2x | 4 | B | 75 |", rendered)
+        self.assertIn("Conditional watchlist", rendered)
+        self.assertIn("| ETHUSDT | CONDITIONAL_SELL | SHORT | 15m close below trigger | 2500 | 65 | B |", rendered)
 
     def test_no_actionable_setup_returns_exact_no_signal_text(self):
         self.assertEqual(render_output({"status": "SCAN_COMPLETED", "actionable": [], "conditional": []}),
