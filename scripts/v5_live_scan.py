@@ -26,12 +26,12 @@ def main() -> int:
         provider=create_provider()
         engine=FuturesSignalEngine(provider=provider)
         prior=evaluate_outcomes_with_provider(provider)
-        result=engine.scan(extended=True,limit=100)
-        result["scan_mode"]="EXPANDED_TOP_100"
+        result=engine.scan(extended=False,limit=30)
+        result["scan_mode"]="TOP_100_DISCOVERY_TOP_30_TOOBIT_VOLUME"
         result["primary_shortlist_target"]=30
-        result["primary_shortlist_selected"]=min(30,int(result.get("selected_assets") or 0))
-        result["expanded_discovery_selected"]=max(0,int(result.get("selected_assets") or 0)-30)
-        result["expanded_discovery_target"]=max(0,min(70,int(result.get("eligible_assets") or 0)-30))
+        result["primary_shortlist_selected"]=int(result.get("selected_assets") or 0)
+        result["expanded_discovery_selected"]=0
+        result["expanded_discovery_target"]=0
         result["status"]=classify_scan(result)
         result["prior_outcome_evaluation"]=prior
         result["formatted_output"]=render_output(result)
