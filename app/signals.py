@@ -18,7 +18,7 @@ class CandleError(ValueError):pass
 
 @dataclass(frozen=True)
 class Candle:
-    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int;is_final:bool=True
+    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int;is_final:bool=True;taker_buy_quote_volume:float|None=None
 
 def ema(v:list[float],n:int)->list[float|None]:
     o=[None]*len(v)
@@ -278,14 +278,25 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist if dist else Decimal("0")
     reason=base.get("reason")
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
+    maximum=Decimal(str(contract.get("max_qty") or 0))
+    if reason is None and maximum>0 and qty>maximum:reason="maximum_contract_quantity_exceeded"
     min_notional=Decimal(str(contract.get("min_notional") or 0))
     if reason is None and min_notional>0 and notional<min_notional:reason="minimum_contract_notional_not_met"
+    venue_max=5.0
+    tiers=contract.get("risk_limits") or []
+    for tier in sorted(tiers,key=lambda x:float(x.get("value") or 0)):
+        if float(tier.get("value") or 0)>=float(notional):
+            venue_max=float(tier.get("max_leverage") or 0);break
+    else:
+        if tiers:venue_max=float(sorted(tiers,key=lambda x:float(x.get("value") or 0))[-1].get("max_leverage") or 0)
+    if reason is None and venue_max<=0:reason="venue_leverage_limit_unverified"
+    if reason is None and float(required)>min(5.0,venue_max)+1e-9:reason="rounded_quantity_exceeds_venue_or_user_leverage_cap"
     if reason is None and float(loss)>4.0+1e-9:reason="rounded_quantity_exceeds_risk_cap"
-    if reason is None and float(required)>5.0+1e-9:reason="rounded_quantity_exceeds_leverage_cap"
     if reason is None and float(rr)<2.0:reason="tick_rounded_reward_to_risk_below_2"
-    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source")}
+    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source","min_trade_precision","risk_limits")}
     spec.update({"tick_size":float(tick),"step_size":float(step),"min_qty":float(minimum),
-        "min_notional":float(min_notional),"contract_multiplier":float(multiplier)})
+        "max_qty":float(maximum),"min_notional":float(min_notional),"contract_multiplier":float(multiplier),
+        "venue_max_leverage":venue_max})
     base.update({"entry":en,"stop_loss":st,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
       "quantity_base":float(base_qty),"quantity_contracts_reference":float(qty) if unit=="contracts" else None,
       "contract_multiplier_reference":float(multiplier),"quantity_unit":unit,
@@ -555,8 +566,10 @@ class FuturesSignalEngine:
             eligible.append((x,sym))
         requested=100 if extended else max(1,min(limit,30))
         cap=requested
+        ranker=getattr(self.p,"rank_symbols_by_volume",None)
+        if callable(ranker):eligible=ranker(eligible)
         selected=eligible[:cap]
-        if not selected:raise DataError("no_coin_gecko_assets_match_traderspy_usdt_perpetual_universe")
+        if not selected:raise DataError("no_coin_gecko_assets_match_public_usdt_perpetual_universe")
         symbols=[s for _,s in selected]
         prices=self.p.prices(symbols)
         derivatives=self.p.derivatives(symbols)
@@ -571,6 +584,9 @@ class FuturesSignalEngine:
                 if contract.get("base_asset")!=str(coin.get("symbol","")).upper() or contract.get("quote_asset")!="USDT" or contract.get("margin_asset")!="USDT":
                     raise DataError("underlying_quote_or_margin_asset_mismatch")
                 candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
+                if candles.get("1h") and candles["1h"][-1].taker_buy_quote_volume is not None:
+                    total=float(candles["1h"][-1].volume);buy=float(candles["1h"][-1].taker_buy_quote_volume)
+                    if 0<buy<total:d.setdefault("positioning",{})["takerBuySellRatio"]=buy/(total-buy)
                 oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
                 result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old,contract)
                 candidates.append(result)
@@ -660,6 +676,12 @@ class FuturesSignalEngine:
             sp=abs(last_price-structural)/last_price*100
             if .5<=sp<=3 and abs(last_price-structural)>=1.0*a14:stop=structural
         risk=contract_sized_risk(direction,last_price,stop,contract)
+        if getattr(self.p,"provider_name","").startswith("Toobit"):
+            if float(price.get("quoteVolume24h") or 0)<100000:raise DataError("toobit_24h_quote_volume_below_100000_usd")
+            if float(price.get("spreadBps") or 99999)>30:raise DataError("toobit_orderbook_spread_above_30_bps")
+            required_depth=max(500.0,2.0*float(risk.get("notional_usd") or 0))
+            if float(price.get("bidDepthUsd") or 0)<required_depth or float(price.get("askDepthUsd") or 0)<required_depth:
+                raise DataError("toobit_orderbook_depth_below_two_times_position_notional_or_500_usd")
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
@@ -761,8 +783,11 @@ class FuturesSignalEngine:
         if self.own:self.p.close()
 
 def create_provider():
-    """Select the configured public read-only data provider; OKX is the tested default."""
-    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    """Select a read-only public market-data provider; Toobit is the free default."""
+    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
+    if selected=="toobit":
+        from app.integrations.toobit_market import ToobitPublicMarketData
+        return ToobitPublicMarketData()
     if selected=="okx":
         from app.integrations.okx_market import OkxPublicMarketData
         return OkxPublicMarketData()
@@ -773,9 +798,9 @@ def create_provider():
 router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
-    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
     scan=latest_scan()
-    if selected=="okx":
+    if selected in {"okx","toobit"}:
         context=(scan or {}).get("validation_context") or {}
         source=(scan or {}).get("source_status") or {}
         scanned_ms=_iso_ms((scan or {}).get("scanned_at"))
@@ -786,7 +811,7 @@ def get_signal_status():
           and source.get("futures_ohlcv") and selected_assets>=30 and screened>=30)
         live_verified=bool(completed and age_ms is not None and 0<=age_ms<=900_000)
         return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
-          "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
+          "data_provider":source.get("futures_ohlcv","Toobit public read-only linear USDT perpetual API" if selected=="toobit" else "OKX public read-only linear USDT perpetual API"),
           "api_key_required":False,"exchange_account_connection":False,
           "exchange_api_key_required":False,"order_execution_enabled":False,
           "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
@@ -831,7 +856,7 @@ def get_latest():
 def get_performance():return performance()
 
 def evaluate_outcomes_with_provider(provider=None):
-    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or PublicMarketData()
+    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or create_provider()
     try:
         with store.db_connection() as db:
             rows=db.execute("SELECT * FROM signal_records WHERE outcome IN ('OPEN','WATCH') AND decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')").fetchall()
