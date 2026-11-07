@@ -799,7 +799,9 @@ class FuturesSignalEngine:
                 candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
                 if candles.get("1h") and candles["1h"][-1].taker_buy_quote_volume is not None:
                     total=float(candles["1h"][-1].volume);buy=float(candles["1h"][-1].taker_buy_quote_volume)
-                    if 0<buy<total:d.setdefault("positioning",{})["takerBuySellRatio"]=buy/(total-buy)
+                    if 0<buy<total:
+                        d.setdefault("positioning",{}).update({"takerBuySellRatio":buy/(total-buy),
+                            "takerBuySellRatioObservedAtMs":candles["1h"][-1].close_time})
                 oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
                 result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old,contract)
                 candidates.append(result)
@@ -855,9 +857,15 @@ class FuturesSignalEngine:
         oi4h=float(oi_obj["change4hPct"]) if oi_obj.get("change4hPct") is not None else None
         oi24h=float(oi_obj["change24hPct"]) if oi_obj.get("change24hPct") is not None else None
         positioning=deriv.get("positioning") or {}
-        ls=float(positioning["globalLongShortRatio"]) if positioning.get("globalLongShortRatio") is not None else None
-        top_ls=float(positioning["topTraderLongShortRatio"]) if positioning.get("topTraderLongShortRatio") is not None else None
-        taker=float(positioning["takerBuySellRatio"]) if positioning.get("takerBuySellRatio") is not None else None
+        ls_ts=_iso_ms(positioning.get("globalLongShortRatioObservedAtMs"))
+        top_ls_ts=_iso_ms(positioning.get("topTraderLongShortRatioObservedAtMs"))
+        taker_ts=_iso_ms(positioning.get("takerBuySellRatioObservedAtMs"))
+        ls_raw=positioning.get("globalLongShortRatio")
+        top_ls_raw=positioning.get("topTraderLongShortRatio")
+        taker_raw=positioning.get("takerBuySellRatio")
+        ls=float(ls_raw) if ls_raw is not None and ls_ts and 0<=now-ls_ts<=2*60*60_000 else None
+        top_ls=float(top_ls_raw) if top_ls_raw is not None and top_ls_ts and 0<=now-top_ls_ts<=2*60*60_000 else None
+        taker=float(taker_raw) if taker_raw is not None and taker_ts and 0<=now-taker_ts<=2*60*60_000 else None
         funding_8h=funding_rate_per_8h(funding,interval_hours)
         if abs(funding_8h)>=.0005:
             return {"symbol":symbol,"asset":coin["id"],"decision":"REJECT","direction":None,"data_grade":"B","confidence_v5":0,"v3_score":None,
@@ -940,7 +948,7 @@ class FuturesSignalEngine:
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
-          "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
+          "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"positioning_timestamp_verified_if_used":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3 and .5<=risk["rounded_stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
           "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
@@ -967,8 +975,10 @@ class FuturesSignalEngine:
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"market_regime":market_regime,"volatility_regime":vol_regime,"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
             "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
-            "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"top_trader_long_short_ratio":top_ls,
-            "taker_buy_sell_ratio":taker,"liquidation_data_status":"not_supplied_by_selected_OKX_adapter","source":deriv.get("source")},
+            "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"global_long_short_ratio_observed_at_ms":ls_ts,
+            "top_trader_long_short_ratio":top_ls,"top_trader_long_short_ratio_observed_at_ms":top_ls_ts,
+            "taker_buy_sell_ratio":taker,"taker_buy_sell_ratio_observed_at_ms":taker_ts,
+            "liquidation_data_status":"not_supplied_by_selected_OKX_adapter","source":deriv.get("source")},
           "independent_confirmation":{"coingecko_spot_price_usd":cg_price,"futures_index_price_usd":index,"basis_bps":basis,"passed":independent},
           "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_traders_observed_at_ms":smart.get("traders_observed_at_ms"),
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart),
