@@ -83,14 +83,17 @@ jobs:
           test -s artifacts/v5_live_scan.json
 
       - name: Build validated public dashboard files
-        env:
-          V5_STATE_RESTORED: ${{ env.V5_STATE_RESTORED }}
         run: |
           python scripts/prepare_pages.py
           python -m json.tool site/latest.json > /dev/null
           test -s site/index.html
           test -s site/latest.json
 
+      - name: Checkpoint SQLite state before cache save
+        env:
+          CONTROL_DB_PATH: ${{ github.workspace }}/data/control.db
+        run: |
+          python -c 'from app import store; c=store.connect(); c.execute("PRAGMA wal_checkpoint(TRUNCATE)"); c.close()'
       - name: Upload dashboard artifact
         uses: actions/upload-artifact@v4
         with:
