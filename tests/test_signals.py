@@ -293,6 +293,7 @@ class V5ProviderAttributionTests(unittest.TestCase):
             tmp.cleanup()
 
 class WideUniverseProvider:
+    calls=0
     def __init__(self,now):self.now=now
     def discover(self):
         return [{"id":f"asset-{i}","symbol":f"COIN{i}","name":f"Coin {i}","volume":1000000-i,
