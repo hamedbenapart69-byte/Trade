@@ -382,6 +382,23 @@ def volatility_regime(cs:list[Candle],n:int=14)->str:
     current=valid[-1];rank=sum(x<=current for x in valid[-100:])/len(valid[-100:])
     return "HIGH" if rank>=.8 else "LOW" if rank<=.2 else "NORMAL"
 
+def classify_market_regime(cs,adx_value,volatility,trend,volume_ratio):
+    if len(cs)<30 or adx_value is None:return "UNKNOWN"
+    current_atr=atr(cs,14)[-1]
+    if current_atr is None or current_atr<=0:return "UNKNOWN"
+    last=cs[-1]
+    if (last.high-last.low)>=3.0*current_atr or abs(last.close-last.open)>=2.5*current_atr:
+        return "UNSTABLE"
+    prior=cs[-21:-1]
+    if len(prior)>=20 and volume_ratio is not None and volume_ratio>=1.5:
+        if last.close>max(x.high for x in prior) or last.close<min(x.low for x in prior):
+            return "BREAKOUT"
+    if volatility=="HIGH":return "HIGH_VOLATILITY"
+    if volatility=="LOW":return "LOW_VOLATILITY"
+    if adx_value>=20 and trend in {"UP","DOWN"}:return "TRENDING"
+    return "RANGING"
+
+
 def _trend(cs,daily=False):
     v=[x.close for x in cs];a=ema(v,20)[-1];b=ema(v,50)[-1]
     if a is None or b is None:return "UNKNOWN"
@@ -841,6 +858,8 @@ class FuturesSignalEngine:
               "reason":"V3_funding_threshold_failed","derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,"funding_rate_8h_equivalent":funding_8h}}
         ml,ms,mh=macd_parts(cl);macd_ok=mh[-1] is not None and mh[-2] is not None and ((mh[-1]>0 and mh[-1]>=mh[-2]) or (mh[-1]<0 and mh[-1]<=mh[-2]))
         bl,bm,bu=bollinger(cl);sr=stoch_rsi(cl);ad=adx(one)[-1];ov=obv(one);mf=mfi(one)[-1]
+        vol_regime=volatility_regime(one)
+        market_regime=classify_market_regime(one,ad,vol_regime,trends["1h"],vr)
         bbpos="lower_band" if cl[-1]<=bl[-1] else "lower_half" if cl[-1]<bm[-1] else "upper_band" if cl[-1]>=bu[-1] else "upper_half"
         baseline_direction=v3_directional_baseline(rv,vr,cl[-1],e20,e50,trends["4h"])
         if baseline_direction is None:
@@ -849,13 +868,16 @@ class FuturesSignalEngine:
         direction=baseline_direction
         price_change=float(oi_obj.get("priceChange24hPct") or 0)
         tech={"rsi":rv,"ema20":e20,"ema50":e50,"ema200":e200,"atr14":a14,"volume_ratio":vr,"close":cl[-1],
+          "market_regime":market_regime,
           "macd":ml[-1],"macd_signal":ms[-1],"macd_histogram":mh[-1],"bollinger_lower":bl[-1],"bollinger_mid":bm[-1],
           "bollinger_upper":bu[-1],"bb_position":bbpos,"stoch_rsi":sr[-1],"adx":ad,"obv":ov[-1],
           "obv_aligned":(ov[-1]>ov[-10] if direction=="LONG" else ov[-1]<ov[-10]),
           "mfi":mf,"mfi_aligned":(mf>=50 if direction=="LONG" else mf<=50),
           "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2])),
           "price_change":price_change}
-        st=_structure(cs["4h"],direction,a14)
+        atr4h=atr(cs["4h"])[-1]
+        if atr4h is None:raise DataError("mandatory_4h_atr_missing")
+        st=_structure(cs["4h"],direction,atr4h)
         atr_stop=last_price-1.5*a14 if direction=="LONG" else last_price+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
@@ -886,7 +908,7 @@ class FuturesSignalEngine:
         distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
         chase=distance_atr>2.0
         entry_ok=(last_price>e15 and last.close>=prev.close) if direction=="LONG" else (last_price<e15 and last.close<=prev.close)
-        entry_ok=entry_ok and not chase
+        entry_ok=entry_ok and not chase and market_regime!="UNSTABLE"
         sweep=st.get("liquidity_sweep_aligned",False)
         if sweep:entry_type="LIQUIDITY_SWEEP"
         elif st.get("bos") and abs(last_price-e15)<=.75*atr15:entry_type="BREAKOUT_RETEST"
@@ -913,7 +935,7 @@ class FuturesSignalEngine:
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
-          "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
+          "market_structure_checked":True,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3 and .5<=risk["rounded_stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
           "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
           "isolated_margin_is_manual_assumption_only":True,
@@ -927,7 +949,8 @@ class FuturesSignalEngine:
         else:decision="WAIT"
         confirm=None;trigger=None
         if decision.startswith("CONDITIONAL"):
-            if chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
+            if market_regime=="UNSTABLE":confirm="wait for 1H volatility to normalize and a completed 15m direction confirmation";trigger=e15
+            elif chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
             elif not entry_ok:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
@@ -936,7 +959,7 @@ class FuturesSignalEngine:
           "entry_type":entry_type,"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["rounded_stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
-          "structure":st,"volatility_regime":volatility_regime(one),"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
+          "structure":st,"market_regime":market_regime,"volatility_regime":vol_regime,"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
             "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
             "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"top_trader_long_short_ratio":top_ls,
             "taker_buy_sell_ratio":taker,"liquidation_regime":oi_obj.get("regime"),"source":deriv.get("source")},
