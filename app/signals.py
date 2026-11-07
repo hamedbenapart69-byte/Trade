@@ -535,7 +535,9 @@ def render_output(r):
     for rank,x in enumerate(rows,1):
         z=x["risk"];spec=z.get("contract_spec") or {}
         symbol=spec.get("venue_symbol") or x["symbol"]
-        source=" / ".join([str(x.get("data_grade") or "—"),str(spec.get("source") or "public futures data"),"targets calculated"])
+        source_name=str(spec.get("source") or "public futures data")
+        source_link="[Toobit API](https://api-docs.toobit.com/api/usdt-m-market-data)" if source_name.startswith("Toobit") else source_name
+        source=" / ".join([str(x.get("data_grade") or "—"),source_link,"targets calculated"])
         out.append(f"| {rank} | {symbol} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x.get('take_profit_2'))} | {fmt(x.get('take_profit_3'))} | {fmt(z['required_leverage'])}x | {fmt(z['notional_usd'])} | {fmt(z['planned_loss_usd'])} | {x.get('primary_timeframe') or '1h'} | {source} |")
     return "\n".join(out)
 
@@ -818,7 +820,7 @@ def get_signal_status():
           "data_provider":source.get("futures_ohlcv","Toobit public read-only linear USDT perpetual API" if selected=="toobit" else "OKX public read-only linear USDT perpetual API"),
           "api_key_required":False,"exchange_account_connection":False,
           "exchange_api_key_required":False,"order_execution_enabled":False,
-          "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
+          "live_rest_access_verified":live_verified,"endpoint_probe_verified":bool(completed),
           "full_live_scan_verified":completed,
           "last_scan_utc":(scan or {}).get("scanned_at"),
           "last_full_live_scan_utc":(scan or {}).get("scanned_at") if completed else None,
