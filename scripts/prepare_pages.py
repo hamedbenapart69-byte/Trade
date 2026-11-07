@@ -12,6 +12,33 @@ SOURCE = ROOT / "artifacts" / "v5_live_scan.json"
 SITE = ROOT / "site"
 ACTIONABLE = {"BUY_NOW", "SELL_NOW"}
 CONDITIONAL = {"CONDITIONAL_BUY", "CONDITIONAL_SELL"}
+REQUIRED_AUDIT_CHECKS = (
+    "contract_identity_type_status_and_specifications_verified",
+    "venue_quantity_precision_and_minimum_verified",
+    "venue_leverage_limit_verified",
+    "toobit_quote_volume_gate_passed",
+    "toobit_spread_gate_passed",
+    "toobit_bid_ask_depth_gate_passed",
+    "mark_price_valid", "index_price_valid", "last_trade_price_valid",
+    "live_price_and_derivatives_timestamps_fresh",
+    "ohlcv_15m_validated", "ohlcv_1h_validated", "ohlcv_4h_validated", "ohlcv_1d_validated",
+    "completed_candles_only", "v3_baseline_passed",
+    "funding_rate_verified", "funding_interval_verified", "funding_threshold_passed",
+    "current_open_interest_verified", "multi_timeframe_checked", "market_structure_checked",
+    "volume_and_momentum_checked", "anti_chase_checked",
+    "stop_distance_0_5_to_3_pct", "planned_loss_at_most_4_usd",
+    "isolated_margin_is_manual_assumption_only", "leverage_at_most_5x",
+    "reward_to_risk_at_least_2", "independent_confirmation_and_grade_verified",
+)
+
+
+def _valid_self_audit(item: dict) -> bool:
+    audit = item.get("self_audit")
+    return bool(
+        item.get("self_audit_passed") is True
+        and isinstance(audit, dict)
+        and all(audit.get(key) is True for key in REQUIRED_AUDIT_CHECKS)
+    )
 
 
 def _safe(value: Any) -> Any:
@@ -55,7 +82,7 @@ def _valid_actionable(item: dict, source_ok: bool) -> bool:
         and rr is not None and rr >= 2.0
         and risk.get("valid") is True
         and risk.get("contract_spec_verified") is True
-        and item.get("self_audit_passed") is True
+        and _valid_self_audit(item)
         and (item.get("entry_quality") or {}).get("entry_ok") is True
         and (item.get("entry_quality") or {}).get("chase") is False
     )
@@ -76,7 +103,7 @@ def _valid_conditional(item: dict, source_ok: bool) -> bool:
         and item.get("direction") in {"LONG", "SHORT"}
         and item.get("data_grade") in {"A", "B"}
         and score is not None and score >= 60
-        and item.get("self_audit_passed") is True
+        and _valid_self_audit(item)
         and isinstance(entry.get("confirmation_required"), str)
         and entry.get("confirmation_required").strip()
         and trigger is not None and trigger > 0
