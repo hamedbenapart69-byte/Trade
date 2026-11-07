@@ -1,5 +1,7 @@
 import os,tempfile,unittest
+from datetime import datetime,timezone,timedelta
 from pathlib import Path
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app.main import app
 from app import store
@@ -30,4 +32,62 @@ class ApiTests(unittest.TestCase):
   self.assertEqual(r.json()["detail"],"run_input_too_large_max_32768_bytes")
  def test_idempotency_conflict(self):
   h=self.headers("request-0002"); self.client.post("/runs",json={"workflow":"sample.review","input":{"v":1}},headers=h); r=self.client.post("/runs",json={"workflow":"sample.review","input":{"v":2}},headers=h); self.assertEqual(r.status_code,409)
+ def test_signal_dashboard_html_is_public_and_rtl(self):
+  r=self.client.get("/signals-ui")
+  self.assertEqual(r.status_code,200)
+  self.assertIn('dir="rtl"',r.text)
+  self.assertIn("FUTURES SIGNAL AUTOPILOT",r.text)
+ def test_signal_dashboard_data_is_public_read_only_and_limited(self):
+  sample={"status":"SCAN_COMPLETED","scanned_at":"2026-11-07T00:00:00+00:00","scan_id":"audit-test",
+   "coverage":{"screened":30,"insufficient_data":0,"rejected":30},"screened_assets":30,
+   "actionable":[{"symbol":"BTCUSDT","decision":"BUY_NOW","direction":"LONG","entry":100.0,"stop_loss":98.5,
+    "take_profit":103.0,"stop_pct":1.5,"risk":{"required_leverage":1.33,"planned_loss_usd":4.0},
+    "data_grade":"B","confidence_v5":75}],"conditional":[],
+   "validation_context":{"execution":"GitHub-hosted runner","fixture_data":False},
+   "limitations":[]}
+  with patch("app.main.latest_scan",return_value=sample), patch("app.main.performance",return_value={"mode":"paper_signal_tracking_not_executed_trades","published_signals":0}):
+   r=self.client.get("/signals/dashboard-data")
+  self.assertEqual(r.status_code,200)
+  body=r.json()
+  self.assertEqual(body["scan_id"],"audit-test")
+  self.assertEqual(body["actionable"][0]["decision"],"BUY_NOW")
+  self.assertNotIn("other_candidates",body)
+  self.assertNotIn("data_json",body)
+  self.assertNotIn("account_credentials",r.text)
+ def test_signal_scan_write_route_still_requires_api_key(self):
+  r=self.client.post("/signals/scan")
+  self.assertEqual(r.status_code,401)
+
+ def test_signal_status_does_not_reuse_stale_historical_scan_claims(self):
+  with patch("app.signals.latest_scan",return_value=None):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  body=r.json()
+  self.assertEqual(body["status"],"NO_SCAN_YET")
+  self.assertFalse(body["full_live_scan_verified"])
+  self.assertFalse(body["live_rest_access_verified"])
+  self.assertIsNone(body["last_full_live_scan_utc"])
+
+
+ def test_signal_status_marks_historical_live_data_as_stale(self):
+  sample={"status":"SCAN_COMPLETED","scanned_at":(datetime.now(timezone.utc)-timedelta(hours=1)).isoformat(),
+   "screened_assets":30,"selected_assets":30,"actionable":[],"validation_context":{"fixture_data":False},
+   "source_status":{"futures_ohlcv":"OKX public market-data API"}}
+  with patch("app.signals.latest_scan",return_value=sample):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  self.assertTrue(r.json()["full_live_scan_verified"])
+  self.assertFalse(r.json()["live_rest_access_verified"])
+  self.assertGreater(r.json()["last_full_live_scan_age_minutes"],15)
+
+ def test_signal_status_accepts_only_fresh_complete_live_scan(self):
+  sample={"status":"SCAN_COMPLETED","scanned_at":datetime.now(timezone.utc).isoformat(),
+   "screened_assets":30,"selected_assets":30,"actionable":[],"validation_context":{"fixture_data":False},
+   "source_status":{"futures_ohlcv":"OKX public market-data API"}}
+  with patch("app.signals.latest_scan",return_value=sample):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  self.assertTrue(r.json()["full_live_scan_verified"])
+  self.assertTrue(r.json()["live_rest_access_verified"])
+
 if __name__=="__main__": unittest.main()

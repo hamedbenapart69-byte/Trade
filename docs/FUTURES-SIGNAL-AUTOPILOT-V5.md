@@ -47,3 +47,36 @@ The following are implementation choices where the PDF defines the category or i
 - A verified historical backtest/performance sample. CI fixtures are tests only and must never be presented as live results.
 
 If mandatory live data is missing, stale, contradictory or unavailable, the asset is `INSUFFICIENT_DATA`; no fabricated values or demo signals are emitted. A successful CI run proves code/test/build checks only, not live market-data access or trading performance.
+
+---
+
+## Current live validation update — 2026-11-06
+
+This section supersedes earlier statements in this document that describe Binance/TraderSpy as the only live runner path.
+
+### Verified public data path
+
+- The current experimental default is **OKX public linear USDT perpetual market data**. No exchange account, exchange API key, or paid data subscription is used.
+- From GitHub-hosted Actions, OKX returned HTTP 200 with valid JSON for instruments, tickers, candles, funding, open interest, mark price, index price, and global long/short account ratio.
+- Binance USDⓈ-M exchange metadata returned HTTP 451 from the same runner. Bybit public linear endpoints returned HTTP 403. These were tested alternatives, not assumptions.
+- CoinGecko public market discovery returned HTTP 200.
+- The OKX adapter keeps instrument identity, candles, price, mark/index, funding, and open interest on the same venue. It does not combine OKX contract rules with Binance candles.
+- OKX BTC-USDT-SWAP metadata was verified as a live linear perpetual: contract value 0.01 BTC, tick size 0.1 USDT, lot step 0.01 contracts, minimum size 0.01 contracts.
+- Contract-aware sizing now converts contract count to base-asset exposure using the published multiplier, rounds to the venue lot step, and rechecks planned loss, leverage, and reward-to-risk.
+
+### Actual test evidence
+
+- One-symbol live BTC smoke test: **passed**. It retrieved 220 candles per timeframe (15m, 1h, 4h, 1d), live price, funding, open interest, mark/index, account ratio, and verified contract-aware risk sizing.
+- Full live market scan: **30 of 30 selected assets screened** from the CoinGecko top-100 discovery universe. Zero candidates had missing mandatory data. All 30 were rejected by the mandatory V3 baseline; no BUY_NOW or SELL_NOW signal was published. The output was: No qualifying signals today. This is a valid no-signal result, not a failed scan and not evidence of profitability.
+- The live scan was read-only and used public endpoints only. No order was placed.
+- The full-scan artifact is retained in GitHub Actions run 42309970270 (artifact: v5-okx-live-scan).
+- The OKX path does not currently supply TraderSpy smart-money records, top-trader positioning, taker ratio, liquidation clusters, or on-chain flows. Missing supplementary evidence receives no score; it is not fabricated.
+- The connected ChatGPT TraderSpy connector remains a separate data access path and is not inherited by GitHub Actions.
+- Direct access from the user's own network in Iran remains unverified. GitHub-hosted runner access is verified for the tested OKX endpoints only.
+
+### Current implementation boundary
+
+- This work is on diagnostics/public-market-endpoint-probe, based on the existing V5 test branch. It has not been merged to main and has not been deployed.
+- The earlier Binance/TraderSpy adapter remains in the code as an explicitly selected legacy provider (V5_DATA_PROVIDER=traderspy); it is not the current default because its Binance contract-metadata dependency fails with HTTP 451 in GitHub Actions.
+- A green CI result validates automated tests/build checks. The one-symbol smoke and 30-asset scan are separate live-data evidence. Neither establishes profitable trading performance.
+- Historical out-of-sample strategy performance, exact execution fees/slippage, full liquidation mapping, and on-chain intelligence remain unverified or incomplete.

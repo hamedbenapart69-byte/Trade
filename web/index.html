@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101923">
+<meta name="description" content="داشبورد خودکار سیگنال‌های معاملات آتی رمزارز، مبتنی بر داده عمومی و اعتبارسنجی‌شده">
+<title>Futures Signal Autopilot V5</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#edf3f8;background:#0b131c;color-scheme:dark;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 88% 0%,#203b4b 0,transparent 42%),#0b131c}
+main{max-width:1240px;margin:auto;padding:22px 14px 48px}.head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{font-size:1.12rem;font-weight:800;letter-spacing:.2px}.version{color:#92b8c8}.sub,.muted{color:#9aabba;font-size:.82rem;line-height:1.9}.sub{margin-top:7px}
+.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.status{border:1px solid #3a5262;border-radius:99px;padding:7px 11px;font-size:.76rem;color:#c2d6e1}
+button,.linkbtn{display:inline-flex;align-items:center;justify-content:center;background:#d8e8ee;color:#12222b;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-size:.82rem;font-weight:700;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}.linkbtn.secondary{background:#1a2b38;color:#d5e4eb;border:1px solid #344b5c}
+.panel{margin-top:15px;padding:16px;background:#121e29;border:1px solid #263847;border-radius:15px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:13px}
+.stat{background:#0e1923;border:1px solid #263847;border-radius:12px;padding:12px;min-width:0}.stat small{display:block;color:#9aabba;font-size:.74rem}.stat strong{display:block;font-size:1.16rem;margin-top:8px;overflow-wrap:anywhere}
+.title{font-weight:800;font-size:.98rem;margin:0 0 12px}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:920px;font-size:.8rem}
+th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #293b49;white-space:nowrap}th{color:#9aabba;font-weight:600}
+.tag{display:inline-block;padding:4px 8px;border:1px solid #3a5260;border-radius:20px;font-size:.7rem}.tag.good{color:#8fe0bd;border-color:#28644f}.tag.warn{color:#ffd28a;border-color:#765b30}.tag.bad{color:#ffaaa4;border-color:#71413f}
+.empty{padding:18px;border:1px dashed #3b4c5a;border-radius:10px;color:#b4c4ce;text-align:center;font-size:.86rem;line-height:1.9}
+.msg{margin-top:11px;color:#c2d4df;font-size:.8rem;line-height:1.9}.foot{font-size:.74rem;color:#8193a2;line-height:1.95}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.notice{padding:12px 14px;border:1px solid #765b30;background:#241e14;border-radius:11px;color:#f0d4a4;font-size:.82rem;line-height:1.9;margin-top:13px}
+@media(max-width:680px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}main{padding:16px 10px 32px}.panel{padding:13px}.brand{font-size:.98rem}.actions{width:100%}.actions button,.actions a{flex:1}}
+</style>
+</head>
+<body><main>
+<header class="head">
+ <div><div class="brand">FUTURES SIGNAL AUTOPILOT <span class="version">V5</span></div>
+ <div class="sub">پایش معاملات آتی رمزارز | دادهٔ عمومی | بدون اتصال حساب صرافی و بدون اجرای سفارش</div></div>
+ <div class="actions"><span id="state" class="status">در حال دریافت آخرین اسکن...</span><button id="refresh">به‌روزرسانی داده</button>
+ <a class="linkbtn secondary" href="https://github.com/hamedbenapart69-byte/Trade/actions/workflows/v5-signal-autopilot.yml" target="_blank" rel="noopener">اجرای اسکن تازه</a></div>
+</header>
+<div id="notice"></div>
+<section class="panel"><h2 class="title">وضعیت آخرین اسکن</h2><div class="stats">
+ <div class="stat"><small>زمان اسکن</small><strong id="scanned">—</strong></div>
+ <div class="stat"><small>دارایی‌های بررسی‌شده</small><strong id="screened">—</strong></div>
+ <div class="stat"><small>سیگنال‌های فوری معتبر</small><strong id="actionCount">—</strong></div>
+ <div class="stat"><small>فرصت‌های شرطی</small><strong id="watchCount">—</strong></div>
+</div><div id="coverage" class="msg">—</div><div id="source" class="msg"></div></section>
+<section class="panel"><h2 class="title">سیگنال‌های ورود فوری</h2><div id="actionable" class="empty">هنوز داده‌ای دریافت نشده است.</div>
+ <p class="foot">فقط BUY_NOW و SELL_NOW با عبور از کنترل‌های انتشار V5 در این بخش قرار می‌گیرند. دادهٔ بیش از ۱۵ دقیقه عمر، سیگنال ورود فوری محسوب نمی‌شود.</p></section>
+<section class="panel"><h2 class="title">فهرست فرصت‌های شرطی</h2><div id="conditional" class="empty">هنوز داده‌ای دریافت نشده است.</div>
+ <p class="foot">این موارد تا تحقق شرط مشخص‌شده، سیگنال ورود فوری نیستند.</p></section>
+<section class="panel split"><div><h2 class="title">عملکرد کاغذی</h2><div id="performance" class="muted">دادهٔ عملکرد موجود نیست.</div></div>
+<div><h2 class="title">اعتبار داده و کنترل انتشار</h2><div id="validation" class="muted">در حال بررسی...</div></div></section>
+<p class="foot">این سامانه فقط تحلیل و مرجع قیمت ارائه می‌کند. ریسک برنامه‌ریزی‌شدهٔ هر موقعیت حداکثر ۴ دلار و اهرم حداکثر ۵ برابر است؛ این اعداد تضمین‌کنندهٔ زیان واقعی نیستند. کارمزد، اسپرد و لغزش در صورت نبود دادهٔ معتبر ممکن است در برآورد لحاظ نشده باشند. عملکرد کاغذی، معاملات واقعی یا فیل صرافی نیست.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=v=>v===null||v===undefined?"—":typeof v==="number"?v.toLocaleString("en-US",{maximumFractionDigits:6}):esc(v);
+const timeFa=v=>v?new Date(v).toLocaleString("fa-IR",{dateStyle:"short",timeStyle:"short"}):"—";
+function table(rows,watch=false){
+ if(!rows?.length)return '<div class="empty">'+(watch?'در آخرین اسکن فرصت شرطی واجد شرایطی ثبت نشده است.':'در آخرین اسکن سیگنال فوری واجد شرایطی پیدا نشد.')+'</div>';
+ const heads=watch?["نماد","جهت","تصمیم","شرط تأیید","سطح فعال‌سازی","درجه داده","امتیاز V5"]:
+ ["نماد","جهت","تصمیم","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک USD","درجه داده","امتیاز V5"];
+ return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>{
+  const z=x.risk||{},e=x.entry_quality||{};
+  const cells=watch?[x.symbol,x.direction,x.decision,e.confirmation_required,e.trigger_level,x.data_grade,x.confidence_v5]:
+  [x.symbol,x.direction,x.decision,x.entry,x.stop_loss,x.take_profit,x.stop_pct,z.required_leverage,z.planned_loss_usd,x.data_grade,x.confidence_v5];
+  return '<tr>'+cells.map((v,i)=>'<td>'+(i===2?'<span class="tag '+(watch?'warn':'good')+'">'+fmt(v)+'</span>':fmt(v))+'</td>').join('')+'</tr>';
+ }).join('')+'</tbody></table></div>';
+}
+function render(d){
+ const scanned=d.scanned_at?new Date(d.scanned_at).getTime():0,age=scanned?(Date.now()-scanned)/60000:Infinity;
+ const fresh=age>=0&&age<=15&&d.status==="SCAN_COMPLETED"&&d.validation_context?.fixture_data===false;
+ const action=fresh?(d.actionable||[]):[],watch=fresh?(d.conditional||[]):[];
+ $("state").textContent=d.status==="DATA_UNAVAILABLE"?"داده در دسترس نیست":d.status==="INSUFFICIENT_DATA"?"داده ناکافی":fresh?"اسکن زنده و تازه":"نتیجهٔ آخرین اسکن";
+ $("scanned").textContent=timeFa(d.scanned_at);
+ $("screened").textContent=fmt(d.screened_assets);
+ $("actionCount").textContent=fmt(action.length);
+ $("watchCount").textContent=fmt(watch.length);
+ const c=d.coverage||{};
+ const expanded=d.scan_mode==="EXPANDED_TOP_100"?" | فهرست اصلی: "+fmt(d.primary_shortlist_selected)+"/30 | گسترش بازار: "+fmt(d.expanded_discovery_selected)+"/"+fmt(d.expanded_discovery_target)+(d.extended_partial||Number(d.screened_assets)<Number(d.selected_assets)?" (پوشش ناقص)":""):"";
+ $("coverage").textContent="پوشش: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+expanded+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/30":"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
+ $("source").textContent="کشف بازار: "+fmt(d.source_status?.discovery)+" | دادهٔ قراردادهای آتی و کندل: "+fmt(d.source_status?.futures_ohlcv)+" | مرجع مستقل: "+fmt(d.source_status?.underlying_market_data);
+ if(d.status!=="SCAN_COMPLETED"){
+  $("notice").innerHTML='<div class="notice">اسکن قابل اتکایی برای انتشار موجود نیست. تا دریافت دادهٔ معتبر، هیچ سیگنال اجرایی منتشر نمی‌شود. '+esc(d.error||"")+'</div>';
+ }else if(!fresh){
+  $("notice").innerHTML='<div class="notice">آخرین اسکن بیش از ۱۵ دقیقه عمر دارد. قیمت‌ها و شرایط ورود را برای معاملهٔ جدید معتبر فرض نکن. برای دریافت دادهٔ تازه از «اجرای اسکن تازه» استفاده کن.</div>';
+ }else{
+  $("notice").innerHTML="";
+ }
+ $("actionable").innerHTML=fresh?table(action):'<div class="empty">در حال حاضر سیگنال تازه و قابل استفاده برای ورود فوری نداریم. دادهٔ اسکن قبلی منقضی شده است.</div>';
+ $("conditional").innerHTML=fresh?table(watch,true):'<div class="empty">فهرست شرطی آخرین اسکن نیز قدیمی است و باید دوباره ارزیابی شود.</div>';
+ const p=d.performance||{};
+ $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b><br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
+ const g=d.publication_gate||{};
+ $("validation").innerHTML='منبع زنده: <b>'+(g.source_verified?'تأیید شده':'تأیید نشده')+'</b><br>سیگنال فوری منتشرشده: <b>'+fmt(g.actionable_candidates_published)+'</b><br>فرصت شرطی منتشرشده: <b>'+fmt(g.conditional_candidates_published)+'</b><br>تداوم سابقهٔ کاغذی: <b>'+(d.paper_state_restored?'بازیابی شد':'از نو آغاز شده / بازیابی نشد')+'</b><br>دادهٔ ساختگی: خیر<br>اتصال حساب صرافی: خیر | اجرای سفارش: خیر';
+}
+async function load(){
+ const b=$("refresh");b.disabled=true;
+ try{
+  const r=await fetch("./latest.json?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const d=await r.json();render(d);
+ }catch(e){
+  $("state").textContent="خطا در دریافت داده";
+  $("notice").innerHTML='<div class="notice">دریافت آخرین نتیجه ناموفق بود: '+esc(e.message)+'</div>';
+ }finally{b.disabled=false}
+}
+$("refresh").addEventListener("click",load);load();setInterval(load,60000);
+</script></body></html>
