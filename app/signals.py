@@ -442,8 +442,10 @@ def oi_change_1h(base,now_ms):
     return r[0] if r else None
 
 def save_market_snapshot(base,asof_ms,oi):
-    if oi is None or oi<=0:return
-    with store.db_connection() as c:c.execute("INSERT OR IGNORE INTO signal_market_snapshots VALUES(?,?,?)",(base,asof_ms,oi))
+    if oi is None or oi<=0 or not asof_ms:return
+    with store.db_connection() as c:
+        c.execute("INSERT OR IGNORE INTO signal_market_snapshots VALUES(?,?,?)",(base,asof_ms,oi))
+        c.execute("DELETE FROM signal_market_snapshots WHERE observed_at_ms<?",(asof_ms-7*24*60*60_000,))
 
 def save_scan(result):
     init_signal_db();published=result.get("actionable",[])+result.get("conditional",[]);saved=0
@@ -453,6 +455,8 @@ def save_scan(result):
             c.execute("""INSERT INTO signal_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
               (str(uuid.uuid4()),result["scan_id"],x["symbol"],x.get("direction") or "UNKNOWN",x["decision"],x.get("entry"),x.get("stop_loss"),x.get("take_profit"),x.get("entry_observed_at_ms"),int(x.get("confidence_v5",0)),x.get("data_grade","FAIL"),"WATCH" if x["decision"].startswith("CONDITIONAL") else "OPEN",None,None,None,json.dumps(x,ensure_ascii=False)))
             saved+=1
+        # Keep the latest scan and every scan referenced by a published signal; discard empty scan history.
+        c.execute("DELETE FROM signal_scans WHERE scan_id<>? AND scan_id NOT IN (SELECT DISTINCT scan_id FROM signal_records)",(result["scan_id"],))
     result["persistence"]={"published_records_saved":saved}
     result["performance"]=performance()
     with store.db_connection() as c:
