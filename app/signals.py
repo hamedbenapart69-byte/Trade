@@ -466,7 +466,13 @@ def latest_scan():
 
 def performance():
     init_signal_db()
-    with store.db_connection() as c:rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
+    with store.db_connection() as c:
+        rows=c.execute("SELECT symbol,decision,data_grade,confidence,outcome,realized_r,data_json FROM signal_records WHERE decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL') ORDER BY rowid").fetchall()
+        latest=c.execute("SELECT result_json FROM signal_scans ORDER BY scanned_at DESC LIMIT 1").fetchone()
+    provider_name="configured public futures provider"
+    if latest:
+        try:provider_name=(json.loads(latest[0]).get("source_status") or {}).get("futures_ohlcv") or provider_name
+        except (ValueError,TypeError):pass
     closed=[r for r in rows if r["outcome"] in {"TP1","TP2","TP3","STOP_LOSS"} and r["realized_r"] is not None]
     vals=[float(r["realized_r"]) for r in closed];wins=[x for x in vals if x>0];loss=[x for x in vals if x<0]
     eq=peak=dd=0
@@ -491,7 +497,7 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
-    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":"selected public futures provider OHLCV; no exchange fills are observed",
+    return {"mode":"paper_signal_tracking_not_executed_trades","outcome_source":f"{provider_name} OHLCV; no exchange fills are observed",
       "published_signals":len(rows),"closed_observations":len(closed),"tp1_count":sum(r["outcome"]=="TP1" for r in rows),
       "tp2_count":sum(r["outcome"]=="TP2" for r in rows),"tp3_count":sum(r["outcome"]=="TP3" for r in rows),
       "stop_loss_count":sum(r["outcome"]=="STOP_LOSS" for r in rows),"expired_count":sum(r["outcome"]=="EXPIRED" for r in rows),
@@ -544,7 +550,7 @@ class FuturesSignalEngine:
             if sym not in tracked:continue
             eligible.append((x,sym))
         requested=100 if extended else max(1,min(limit,30))
-        cap=min(requested,40 if extended else 30)
+        cap=requested
         selected=eligible[:cap]
         if not selected:raise DataError("no_coin_gecko_assets_match_traderspy_usdt_perpetual_universe")
         symbols=[s for _,s in selected]
@@ -768,19 +774,24 @@ def get_signal_status():
     if selected=="okx":
         context=(scan or {}).get("validation_context") or {}
         source=(scan or {}).get("source_status") or {}
-        live_verified=bool(scan and context.get("fixture_data") is False and source.get("futures_ohlcv"))
+        scanned_ms=_iso_ms((scan or {}).get("scanned_at"))
+        age_ms=int(time.time()*1000)-scanned_ms if scanned_ms else None
         screened=int((scan or {}).get("screened_assets") or 0)
         selected_assets=int((scan or {}).get("selected_assets") or 0)
+        completed=bool(scan and scan.get("status")=="SCAN_COMPLETED" and selected_assets>=30 and screened>=30)
+        live_verified=bool(completed and context.get("fixture_data") is False and source.get("futures_ohlcv")
+          and age_ms is not None and 0<=age_ms<=900_000)
         return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
           "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
           "api_key_required":False,"exchange_account_connection":False,
           "exchange_api_key_required":False,"order_execution_enabled":False,
           "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
-          "full_live_scan_verified":bool(scan and screened>0),
+          "full_live_scan_verified":completed,
           "last_full_live_scan_utc":(scan or {}).get("scanned_at"),
+          "last_full_live_scan_age_minutes":round(age_ms/60000,1) if age_ms is not None and age_ms>=0 else None,
           "last_full_live_scan_coverage":f"{screened}/{selected_assets}" if scan else None,
           "last_full_live_scan_actionable_signals":len((scan or {}).get("actionable") or []),
-          "note":"Status is derived from the latest scan persisted in this service. A previous GitHub Actions probe is not treated as proof of current service connectivity."}
+          "note":"Live REST freshness is true only for a complete live scan no older than 15 minutes. A historical scan is not proof of current connectivity."}
     configured=bool(os.getenv("TRADERSPY_API_KEY"))
     return {"status":"KEY_CONFIGURED_UNVERIFIED" if configured else "DATA_UNAVAILABLE",
       "data_provider":"TraderSpy read-only futures market-data API","api_key_configured":configured,
@@ -900,7 +911,7 @@ def evaluate_outcomes_with_provider(provider=None):
                 if outcome not in {"UNKNOWN","EXPIRED"}:closed+=1
         return {"checked":checked,"newly_closed":closed,"newly_triggered":triggered,"no_valid_entry":no_entry,"expired":expired,
           "ambiguous_same_candle":ambiguous,"performance":performance(),
-          "note":"Paper observations use the selected public futures provider OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
+          "note":f"Paper observations use {getattr(p, 'provider_name', 'the selected public futures provider')} OHLCV, not exchange fills. TP milestones are tracked in order; if stop and first target occur in the same candle, outcome is UNKNOWN."}
     finally:
         if own:p.close()
 
