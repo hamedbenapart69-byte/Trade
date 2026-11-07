@@ -18,7 +18,7 @@ class CandleError(ValueError):pass
 
 @dataclass(frozen=True)
 class Candle:
-    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int;is_final:bool=True
+    open_time:int;open:float;high:float;low:float;close:float;volume:float;close_time:int;is_final:bool=True;taker_buy_quote_volume:float|None=None
 
 def ema(v:list[float],n:int)->list[float|None]:
     o=[None]*len(v)
@@ -93,7 +93,7 @@ def volume_ratio(cs:list[Candle])->float|None:
 def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:float=4.0,max_leverage:float=5.0)->dict:
     if entry<=0 or stop<=0 or (direction=="LONG" and stop>=entry) or (direction=="SHORT" and stop<=entry):
         raise DataError("invalid_entry_or_stop")
-    dist=abs(entry-stop);stop_pct=dist/entry*100;max_notional=risk_usd/(stop_pct/100);required=max_notional/capital
+    dist=abs(entry-stop);stop_pct=dist/entry*100;max_notional=min(risk_usd/(stop_pct/100),capital*max_leverage,1000.0);required=max_notional/capital
     qty_base=max_notional/entry;loss=max_notional*stop_pct/100
     tp1=entry+2*dist if direction=="LONG" else entry-2*dist
     tp2=entry+3*dist if direction=="LONG" else entry-3*dist
@@ -274,23 +274,36 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     qty=(qty_raw/step).to_integral_value(rounding=ROUND_DOWN)*step
     base_qty=qty*multiplier if unit=="contracts" else qty
     notional=base_qty*Decimal(str(en));loss=base_qty*dist
-    required=notional/Decimal("200")
+    required=max(Decimal("1"),notional/Decimal("200"))
     rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist if dist else Decimal("0")
     reason=base.get("reason")
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
+    maximum=Decimal(str(contract.get("max_qty") or 0))
+    if reason is None and maximum>0 and qty>maximum:reason="maximum_contract_quantity_exceeded"
     min_notional=Decimal(str(contract.get("min_notional") or 0))
     if reason is None and min_notional>0 and notional<min_notional:reason="minimum_contract_notional_not_met"
+    venue_max=5.0
+    tiers=contract.get("risk_limits") or []
+    for tier in sorted(tiers,key=lambda x:float(x.get("value") or 0)):
+        if float(tier.get("value") or 0)>=float(notional):
+            venue_max=float(tier.get("max_leverage") or 0);break
+    else:
+        if tiers:venue_max=float(sorted(tiers,key=lambda x:float(x.get("value") or 0))[-1].get("max_leverage") or 0)
+    if reason is None and venue_max<=0:reason="venue_leverage_limit_unverified"
+    if reason is None and float(required)>min(5.0,venue_max)+1e-9:reason="rounded_quantity_exceeds_venue_or_user_leverage_cap"
     if reason is None and float(loss)>4.0+1e-9:reason="rounded_quantity_exceeds_risk_cap"
-    if reason is None and float(required)>5.0+1e-9:reason="rounded_quantity_exceeds_leverage_cap"
     if reason is None and float(rr)<2.0:reason="tick_rounded_reward_to_risk_below_2"
-    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source")}
+    spec={k:contract.get(k) for k in ("symbol","venue_symbol","contract_type","status","base_asset","quote_asset","margin_asset","quantity_unit","multiplier_currency","source","min_trade_precision","risk_limits")}
     spec.update({"tick_size":float(tick),"step_size":float(step),"min_qty":float(minimum),
-        "min_notional":float(min_notional),"contract_multiplier":float(multiplier)})
+        "max_qty":float(maximum),"min_notional":float(min_notional),"contract_multiplier":float(multiplier),
+        "venue_max_leverage":venue_max})
     base.update({"entry":en,"stop_loss":st,"take_profit":tp1,"take_profit_2":tp2,"take_profit_3":tp3,
       "quantity_base":float(base_qty),"quantity_contracts_reference":float(qty) if unit=="contracts" else None,
       "contract_multiplier_reference":float(multiplier),"quantity_unit":unit,
       "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
       "reward_to_risk":float(rr),"valid":reason is None,"reason":reason,"contract_spec_verified":True,
+      "margin_mode_assumption":"ISOLATED; select manually in Toobit; scanner does not change margin mode",
+      "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
       "contract_spec":spec,"contract_quantity_note":"Quantity rounded using the venue's published lot step and contract multiplier."})
     return base
 
@@ -515,21 +528,19 @@ def performance():
       "by_data_grade":segment(lambda r:r["data_grade"]),"by_confidence_range":segment(conf)}
 
 def render_output(r):
-    if r.get("status")=="DATA_UNAVAILABLE":return "DATA UNAVAILABLE — do not trade today."
+    if r.get("status")=="DATA_UNAVAILABLE":return "No qualifying signals today."
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
-    out=[];rows=r.get("actionable",[]);watch=r.get("conditional",[])
-    if rows:
-        out += ["| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
-          "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|"]
-        for x in rows:
-            z=x["risk"];out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x['stop_pct'])}% | {fmt(z['required_leverage'])}x | {fmt(z['planned_loss_usd'])} | {x['data_grade']} | {x['confidence_v5']} |")
-    elif not watch:out.append("No qualifying signals today.")
-    if watch:
-        if out:out.append("")
-        out += ["Conditional watchlist","| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |",
-          "|---|---|---|---|---:|---:|---|"]
-        for x in watch:out.append(f"| {x['symbol']} | {x['decision']} | {x['direction']} | {x.get('entry_quality',{}).get('confirmation_required') or '—'} | {fmt(x.get('entry_quality',{}).get('trigger_level'))} | {x['confidence_v5']} | {x['data_grade']} |")
-    if r.get("partial_scan"):out.append(f"Partial scan: {r.get('screened_assets',0)}/30.")
+    rows=r.get("actionable",[])[:10]
+    if not rows:return "No qualifying signals today."
+    out=["| Rank | Symbol | Side | Entry | Stop Loss | TP1 | TP2 | TP3 | Leverage (≤5x) | Position Notional (USD) | Planned Risk (USD) | Timeframe | Confidence/Source |",
+      "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|"]
+    for rank,x in enumerate(rows,1):
+        z=x["risk"];spec=z.get("contract_spec") or {}
+        symbol=spec.get("venue_symbol") or x["symbol"]
+        source_name=str(spec.get("source") or "public futures data")
+        source_link="[Toobit API](https://api-docs.toobit.com/api/usdt-m-market-data)" if source_name.startswith("Toobit") else source_name
+        source=" / ".join([str(x.get("data_grade") or "—"),source_link,"isolated sizing assumption","targets calculated"])
+        out.append(f"| {rank} | {symbol} | {x['direction']} | {fmt(x['entry'])} | {fmt(x['stop_loss'])} | {fmt(x['take_profit'])} | {fmt(x.get('take_profit_2'))} | {fmt(x.get('take_profit_3'))} | {fmt(z['required_leverage'])}x | {fmt(z['notional_usd'])} | {fmt(z['planned_loss_usd'])} | {x.get('primary_timeframe') or '1h'} | {source} |")
     return "\n".join(out)
 
 class FuturesSignalEngine:
@@ -555,8 +566,10 @@ class FuturesSignalEngine:
             eligible.append((x,sym))
         requested=100 if extended else max(1,min(limit,30))
         cap=requested
+        ranker=getattr(self.p,"rank_symbols_by_volume",None)
+        if callable(ranker):eligible=ranker(eligible)
         selected=eligible[:cap]
-        if not selected:raise DataError("no_coin_gecko_assets_match_traderspy_usdt_perpetual_universe")
+        if not selected:raise DataError("no_coin_gecko_assets_match_public_usdt_perpetual_universe")
         symbols=[s for _,s in selected]
         prices=self.p.prices(symbols)
         derivatives=self.p.derivatives(symbols)
@@ -571,6 +584,9 @@ class FuturesSignalEngine:
                 if contract.get("base_asset")!=str(coin.get("symbol","")).upper() or contract.get("quote_asset")!="USDT" or contract.get("margin_asset")!="USDT":
                     raise DataError("underlying_quote_or_margin_asset_mismatch")
                 candles={tf:self.p.candles(symbol,tf,220) for tf in INTERVALS}
+                if candles.get("1h") and candles["1h"][-1].taker_buy_quote_volume is not None:
+                    total=float(candles["1h"][-1].volume);buy=float(candles["1h"][-1].taker_buy_quote_volume)
+                    if 0<buy<total:d.setdefault("positioning",{})["takerBuySellRatio"]=buy/(total-buy)
                 oi_old=oi_change_1h(symbol, _iso_ms(d.get("updatedAt")))
                 result=self.evaluate(coin,symbol,candles,d,p,smart,now,oi_old,contract)
                 candidates.append(result)
@@ -660,6 +676,12 @@ class FuturesSignalEngine:
             sp=abs(last_price-structural)/last_price*100
             if .5<=sp<=3 and abs(last_price-structural)>=1.0*a14:stop=structural
         risk=contract_sized_risk(direction,last_price,stop,contract)
+        if getattr(self.p,"provider_name","").startswith("Toobit"):
+            if float(price.get("quoteVolume24h") or 0)<100000:raise DataError("toobit_24h_quote_volume_below_100000_usd")
+            if float(price.get("spreadBps") or 99999)>30:raise DataError("toobit_orderbook_spread_above_30_bps")
+            required_depth=max(500.0,2.0*float(risk.get("notional_usd") or 0))
+            if float(price.get("bidDepthUsd") or 0)<required_depth or float(price.get("askDepthUsd") or 0)<required_depth:
+                raise DataError("toobit_orderbook_depth_below_two_times_position_notional_or_500_usd")
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
         if direction=="LONG":
@@ -689,13 +711,23 @@ class FuturesSignalEngine:
         grade="B" if independent else "C"
         ai=self._ai_support(symbol,direction,smart.get("signals",[]),now)
         ai["provider_observed_at_ms"]=smart.get("signals_observed_at_ms")
-        audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),"mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
+        is_toobit=getattr(self.p,"provider_name","").startswith("Toobit")
+        depth_required=max(500.0,2.0*float(risk.get("notional_usd") or 0))
+        audit={"contract_identity_type_status_and_specifications_verified":bool(contract and contract.get("contract_type")=="PERPETUAL" and contract.get("status")=="TRADING"),
+          "venue_quantity_precision_and_minimum_verified":bool(contract and contract.get("tick_size") and contract.get("step_size") and contract.get("min_qty")),
+          "venue_risk_limit_tier_verified":bool(not is_toobit or contract.get("risk_limits") and risk.get("contract_spec",{}).get("venue_max_leverage")),
+          "toobit_quote_volume_gate_passed":bool(not is_toobit or float(price.get("quoteVolume24h") or 0)>=100000),
+          "toobit_spread_gate_passed":bool(not is_toobit or float(price.get("spreadBps") or 99999)<=30),
+          "toobit_bid_ask_depth_gate_passed":bool(not is_toobit or float(price.get("bidDepthUsd") or 0)>=depth_required and float(price.get("askDepthUsd") or 0)>=depth_required),
+          "mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":True,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_threshold_passed":abs(funding_8h)<.0005,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
+          "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
+          "isolated_margin_is_manual_assumption_only":True,
           "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
           "independent_confirmation_and_grade_verified":independent and grade in {"A","B"}}
         audit_passed=all(audit.values())
@@ -761,8 +793,11 @@ class FuturesSignalEngine:
         if self.own:self.p.close()
 
 def create_provider():
-    """Select the configured public read-only data provider; OKX is the tested default."""
-    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    """Select a read-only public market-data provider; Toobit is the free default."""
+    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
+    if selected=="toobit":
+        from app.integrations.toobit_market import ToobitPublicMarketData
+        return ToobitPublicMarketData()
     if selected=="okx":
         from app.integrations.okx_market import OkxPublicMarketData
         return OkxPublicMarketData()
@@ -773,9 +808,9 @@ def create_provider():
 router=APIRouter(tags=["futures-signals"])
 @router.get("/signals/status")
 def get_signal_status():
-    selected=os.getenv("V5_DATA_PROVIDER","okx").strip().lower()
+    selected=os.getenv("V5_DATA_PROVIDER","toobit").strip().lower()
     scan=latest_scan()
-    if selected=="okx":
+    if selected in {"okx","toobit"}:
         context=(scan or {}).get("validation_context") or {}
         source=(scan or {}).get("source_status") or {}
         scanned_ms=_iso_ms((scan or {}).get("scanned_at"))
@@ -786,10 +821,10 @@ def get_signal_status():
           and source.get("futures_ohlcv") and selected_assets>=30 and screened>=30)
         live_verified=bool(completed and age_ms is not None and 0<=age_ms<=900_000)
         return {"status":"NO_SCAN_YET" if scan is None else scan.get("status","UNKNOWN"),
-          "data_provider":source.get("futures_ohlcv","OKX public read-only linear USDT perpetual API"),
+          "data_provider":source.get("futures_ohlcv","Toobit public read-only linear USDT perpetual API" if selected=="toobit" else "OKX public read-only linear USDT perpetual API"),
           "api_key_required":False,"exchange_account_connection":False,
           "exchange_api_key_required":False,"order_execution_enabled":False,
-          "live_rest_access_verified":live_verified,"endpoint_probe_verified":False,
+          "live_rest_access_verified":live_verified,"endpoint_probe_verified":bool(completed),
           "full_live_scan_verified":completed,
           "last_scan_utc":(scan or {}).get("scanned_at"),
           "last_full_live_scan_utc":(scan or {}).get("scanned_at") if completed else None,
@@ -831,7 +866,7 @@ def get_latest():
 def get_performance():return performance()
 
 def evaluate_outcomes_with_provider(provider=None):
-    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or PublicMarketData()
+    init_signal_db();checked=closed=ambiguous=expired=no_entry=triggered=0;own=provider is None;p=provider or create_provider()
     try:
         with store.db_connection() as db:
             rows=db.execute("SELECT * FROM signal_records WHERE outcome IN ('OPEN','WATCH') AND decision IN ('BUY_NOW','SELL_NOW','CONDITIONAL_BUY','CONDITIONAL_SELL')").fetchall()

@@ -66,15 +66,12 @@ See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Acti
 
 ## Futures Signal Autopilot V5
 
-The V5 scanner is in `app/signals.py`:
-- `GET /signals/status`
-- `POST /signals/scan`
-- `GET /signals/latest`
-- `GET /signals/performance`
-- `POST /signals/evaluate`
+The scheduled scanner uses CoinGecko's top-100 market-cap universe intersected with Toobit's live USDT-M linear perpetual contracts. It ranks the intersection by Toobit 24-hour quote volume and screens at most 30 contracts per run.
 
-Discovery uses CoinGecko. Numerical 15m/1h/4h/1d futures OHLCV, prices, derivatives and optional smart-money evidence use TraderSpy's read-only market-data API. The underlying public feed identifies as Binance USDⓈ-M futures, accessed through TraderSpy. Official Binance USDⓈ-M public exchangeInfo is additionally read only for PERPETUAL/TRADING status, asset identity and tick/lot/minimum-notional filters. No Binance account, private endpoint, exchange API key or order execution is used.
+The default data path is Toobit's public, read-only market API. It uses public exchange information, contract multipliers, tick/lot/minimum-size rules, venue risk tiers, 15m/1h/4h/1d OHLCV, last/mark/index prices, funding, open interest, global long/short ratio, order-book spread and depth. It does not require an API key, exchange account connection, paid data plan, or trading permission. No order is ever placed, modified, or cancelled.
 
-**Repository runner setup:** the free TraderSpy data-provider plan requires a read-only API key. Add it to GitHub Actions secrets as `TRADERSPY_API_KEY`. This is not an exchange key and cannot place trades. Free-plan limits are 300 API calls/day and 10/minute; a standard 30-asset scan uses about132 calls and takes around 13–15 minutes. The key is not committed to source.
+Risk sizing uses the user's fixed reference: USD 200 capital, USD 4 maximum planned loss before fees, slippage, funding and execution gaps, 5x maximum leverage, and USD 1,000 gross-notional ceiling. The displayed loss is a plan, not a guaranteed cap. Sizing assumes isolated margin; the scanner never changes the user's margin mode, and the user must select isolated manually. Venue quantity precision, minimum size and leverage tier are checked before a row can pass. The scanner rejects contracts with inadequate 24-hour quote volume, excessive spread, or insufficient near-market depth. Targets are calculated from the stop distance and adjusted only when verified structure provides a closer valid level.
 
-The ChatGPT TraderSpy connector was live-tested for BTCUSDT in this session. The owner reports adding the GitHub Actions secret; successful secret injection and a live 30-asset scan are still awaiting workflow verification. After merge, the read-only scan runs once on main and daily at 08:00 UTC, with a JSON artifact saved in GitHub Actions. See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [mobile-friendly TraderSpy key setup](docs/SETUP_TRADERSPY_API_KEY.md).
+The workflow runs every 15 minutes on GitHub Actions and publishes a JSON-backed dashboard artifact; GitHub Pages deployment is automatic when Pages is enabled. The live scanner checks the top 30 Toobit contracts by quote volume, not 100 contracts. It is a signal publisher only. The user reviews and executes manually in Toobit.
+
+The ChatGPT TraderSpy connector remains available for interactive signal discovery and independent supporting evidence; it is not a dependency of the scheduled GitHub runner. Toobit's public endpoints were reached successfully from the connected cloud HTTP runner on 2026-11-07. Toobit's current card-purchase restriction page lists Iran, but explicitly says that restriction applies only to card purchases and does not affect other services. Iran is not explicitly named in the current prohibited-jurisdiction list visible in its Terms of Use; Toobit retains discretion to restrict other jurisdictions. Therefore futures-account eligibility and trading access from Iran still require confirmation with Toobit. Cloud API reachability is not proof of account eligibility. See [Toobit market-data documentation](https://api-docs.toobit.com/api/usdt-m-market-data) and [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md).
