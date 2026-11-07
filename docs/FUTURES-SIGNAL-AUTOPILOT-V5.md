@@ -80,3 +80,21 @@ This section supersedes earlier statements in this document that describe Binanc
 - The earlier Binance/TraderSpy adapter remains in the code as an explicitly selected legacy provider (V5_DATA_PROVIDER=traderspy); it is not the current default because its Binance contract-metadata dependency fails with HTTP 451 in GitHub Actions.
 - A green CI result validates automated tests/build checks. The one-symbol smoke and 30-asset scan are separate live-data evidence. Neither establishes profitable trading performance.
 - Historical out-of-sample strategy performance, exact execution fees/slippage, full liquidation mapping, and on-chain intelligence remain unverified or incomplete.
+
+---
+
+## Native Toobit public-feed implementation — 2026-11-07
+
+This section supersedes the earlier experimental OKX-default runner notes above.
+
+- Discovery: CoinGecko top 100 by market capitalization; intersect with Toobit contracts whose public metadata identifies a live, linear, USDT-margined perpetual.
+- Selection: rank eligible assets by Toobit 24-hour futures quote volume and inspect at most 30.
+- Public endpoints: `/api/v1/exchangeInfo`, `/quote/v1/contract/ticker/24hr`, `/quote/v1/contract/ticker/bookTicker`, `/quote/v1/depth`, `/quote/v1/klines`, `/quote/v1/markPrice`, `/quote/v1/index`, `/api/v1/futures/fundingRate`, `/quote/v1/openInterest`, `/quote/v1/globalLongShortAccountRatio`, and `/api/v1/time`.
+- No API key, exchange account, private endpoint, order permission, or execution route is used.
+- Contract quantity sizing converts the exchangeInfo LOT_SIZE minimum and step from underlying-token units into contract units using the published contract multiplier. The engine verifies tick size, minimum/maximum quantity, minimum notional where non-zero, and the notional-specific venue risk-limit leverage tier.
+- Liquidity gate: 24-hour quote volume at least USD 100,000, top-of-book spread no more than 30 bps, and bid/ask depth within 0.5% of mid each at least max(USD 500, 2 × planned notional). These are explicit conservative engineering thresholds, not exchange guarantees.
+- Taker buy/sell flow is derived from the quote-volume and taker-buy-quote-volume fields of the latest closed 1h candle. Global long/short account ratio is used when its timestamp is within 90 minutes. Top-trader ratios, wallet identity, and smart-money positions are not claimed when Toobit does not publish them.
+- Current OI and funding are retrieved from Toobit's public snapshot endpoints; those endpoints do not expose a per-response observation timestamp. The scanner records retrieval/server time and treats the fields as current endpoint snapshots, not timestamped historical series. 4h/24h OI changes remain unavailable unless independently measured from stored snapshots.
+- The scheduled runner now screens the top 30 Toobit contracts by quote volume every 15 minutes. It does not require the TraderSpy paid/free REST key. The connected ChatGPT TraderSpy tools may still be used interactively as a primary discovery/supporting source.
+- Public Toobit API endpoints returned HTTP 200 from the connected cloud HTTP runner on 2026-11-07, including HANA futures candles, funding, OI, long/short ratio, mark/index price, ticker and order book. This does not verify access from Iran, eligibility to use Toobit from Iran, or that the user's own Toobit account can trade every listed contract.
+- Live GitHub Actions validation and a full 30-contract scan remain required before this provider is considered production-verified. Passing unit tests alone does not prove live coverage or profitability.
