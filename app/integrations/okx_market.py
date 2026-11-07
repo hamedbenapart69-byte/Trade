@@ -112,11 +112,19 @@ class OkxPublicMarketData:
                 continue
             if min(tick,step,minimum,multiplier,max_leverage)<=0 or item.get("ctValCcy")!=base:
                 continue
+            max_sizes=[]
+            for field in ("maxLmtSz","maxMktSz"):
+                try:
+                    value=float(item.get(field) or 0)
+                    if value>0:max_sizes.append(value)
+                except (TypeError,ValueError):
+                    continue
+            max_qty=min(max_sizes) if max_sizes else None
             out[sym]={"symbol":sym,"venue_symbol":item["instId"],"contract_type":"PERPETUAL",
                 "status":"TRADING","base_asset":base,"quote_asset":"USDT","margin_asset":"USDT",
                 "quantity_unit":"contracts","contract_multiplier":multiplier,"multiplier_currency":item["ctValCcy"],
                 "tick_size":tick,"step_size":step,"min_qty":minimum,"min_notional":0.0,
-                "max_leverage":max_leverage,"source":"OKX public instruments API"}
+                "max_qty":max_qty,"max_leverage":max_leverage,"source":"OKX public instruments API"}
             self._contracts[sym]=out[sym]
         return out
 
