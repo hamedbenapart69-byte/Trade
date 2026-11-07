@@ -176,6 +176,37 @@ class V5OutcomeTests(unittest.TestCase):
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
 
+    def test_triggered_conditional_recalculates_venue_contract_risk(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=int(time.time()*1000)
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"conditional-trigger.db")
+        try:
+            store.init_db();iv=INTERVALS["15m"];last=(now//iv)*iv-iv;first=last-219*iv
+            result={"scan_id":"conditional-trigger","scanned_at":datetime.fromtimestamp(now/1000,tz=timezone.utc).isoformat(),
+              "strategy_version":"V5_STRICT_V3_BASELINE",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},
+              "actionable":[],"conditional":[{
+                "symbol":"BTCUSDT","direction":"LONG","decision":"CONDITIONAL_BUY","entry":100.0,
+                "stop_loss":99.0,"take_profit":102.0,"entry_observed_at_ms":first+200*iv,
+                "expires_at_ms":now+24*60*60_000,"confidence_v5":65,"data_grade":"B",
+                "primary_timeframe":"1h","stop_pct":1.0,
+                "entry_quality":{"trigger_level":100.5,"confirmation_required":"15m close above trigger"},
+                "risk":{"valid":True,"planned_loss_usd":4.0,"reward_to_risk":2.0}
+              }]}
+            save_scan(result)
+            provider=ConditionalOutcomeProvider(now)
+            out=evaluate_outcomes_with_provider(provider)
+            with store.db_connection() as db:
+                row=db.execute("SELECT outcome,data_json FROM signal_records WHERE scan_id='conditional-trigger'").fetchone()
+            saved=json.loads(row["data_json"])
+            self.assertEqual(out["newly_triggered"],1)
+            self.assertEqual(row["outcome"],"OPEN")
+            self.assertTrue(saved["risk"]["contract_spec_verified"])
+            self.assertAlmostEqual(saved["stop_pct"],abs(saved["entry"]-saved["stop_loss"])/saved["entry"]*100)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
     def test_conditional_signal_expires_as_no_valid_entry(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=int(time.time()*1000)
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"watch.db")
@@ -196,6 +227,23 @@ class V5OutcomeTests(unittest.TestCase):
             if old is None:os.environ.pop("CONTROL_DB_PATH",None)
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
+
+class ConditionalOutcomeProvider:
+    provider_name="OKX public market-data API"
+    def __init__(self,now):self.now=now
+    def contract_specs(self,symbols):
+        return {"BTCUSDT":{"symbol":"BTCUSDT","venue_symbol":"BTC-USDT-SWAP","contract_type":"PERPETUAL",
+          "status":"TRADING","base_asset":"BTC","quote_asset":"USDT","margin_asset":"USDT",
+          "quantity_unit":"base_asset","tick_size":0.1,"step_size":0.001,"min_qty":0.001,
+          "min_notional":5.0,"max_leverage":5.0,"source":"OKX public instruments API"}}
+    def candles(self,symbol,tf,limit):
+        iv=INTERVALS[tf];last=(self.now//iv)*iv-iv;first=last-(219*iv);out=[]
+        for i in range(220):
+            ot=first+i*iv;close=101.0 if i>=205 else 100.0
+            out.append(Candle(ot,close,close+0.2,close-0.2,close,10,ot+iv-1,True))
+        return out
+    def close(self):pass
+
 
 class V5PipelineTests(unittest.TestCase):
     def test_end_to_end_fixture_rejects_non_qualifying_market_without_fake_signal(self):
