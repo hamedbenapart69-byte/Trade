@@ -93,7 +93,7 @@ def volume_ratio(cs:list[Candle])->float|None:
 def risk_calc(direction:str,entry:float,stop:float,capital:float=200.0,risk_usd:float=4.0,max_leverage:float=5.0)->dict:
     if entry<=0 or stop<=0 or (direction=="LONG" and stop>=entry) or (direction=="SHORT" and stop<=entry):
         raise DataError("invalid_entry_or_stop")
-    dist=abs(entry-stop);stop_pct=dist/entry*100;max_notional=risk_usd/(stop_pct/100);required=max_notional/capital
+    dist=abs(entry-stop);stop_pct=dist/entry*100;max_notional=min(risk_usd/(stop_pct/100),capital*max_leverage,1000.0);required=max_notional/capital
     qty_base=max_notional/entry;loss=max_notional*stop_pct/100
     tp1=entry+2*dist if direction=="LONG" else entry-2*dist
     tp2=entry+3*dist if direction=="LONG" else entry-3*dist
