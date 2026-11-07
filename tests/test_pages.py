@@ -11,9 +11,12 @@ from scripts.v5_live_scan import classify_scan
 def source():
     return {
         "status":"SCAN_COMPLETED","scan_id":"unit-test","scanned_at":"2026-11-07T10:00:00+00:00",
-        "universe_requested":30,"eligible_assets":40,"selected_assets":30,"screened_assets":30,
+        "universe_requested":100,"scan_mode":"EXPANDED_TOP_100","primary_shortlist_target":30,
+        "primary_shortlist_selected":30,"expanded_discovery_target":70,"expanded_discovery_selected":10,
+        "extended_partial":False,"eligible_assets":40,"selected_assets":40,"screened_assets":40,
         "coverage":{"total_candidates":30,"screened":30,"insufficient_data":0,"rejected":30,"wait":0},
         "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":"OKX public market-data API",
+          "underlying_market_data":"CoinGecko public spot price cross-checked against OKX index price",
           "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
         "validation_context":{"fixture_data":False,"account_connection":False,"order_execution":False},
         "actionable":[{
@@ -121,6 +124,13 @@ class PagesPayloadTests(unittest.TestCase):
           "screened_assets":0,
           "coverage":{"total_candidates":30,"screened":0,"insufficient_data":30}
         }),"DATA_UNAVAILABLE")
+
+    def test_payload_exposes_primary_and_expanded_market_coverage(self):
+        payload=build_payload(source())
+        self.assertEqual(payload["scan_mode"],"EXPANDED_TOP_100")
+        self.assertEqual(payload["primary_shortlist_selected"],30)
+        self.assertEqual(payload["expanded_discovery_selected"],10)
+        self.assertIn("CoinGecko public spot",payload["source_status"]["underlying_market_data"])
 
 if __name__=="__main__":
     unittest.main()
