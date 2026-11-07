@@ -1,6 +1,6 @@
 import os, tempfile, unittest, time
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -30,6 +30,15 @@ class V5IndicatorTests(unittest.TestCase):
         with self.assertRaises(CandleError):validate_candles(cs[1:]+cs[:1],60000,now=310000,min_count=5)
         wrong=cs[:];wrong[2]=Candle(120000,100,101,99,100,10,180000)
         with self.assertRaises(CandleError):validate_candles(wrong,60000,now=310000,min_count=5)
+
+class V5UniverseFilterTests(unittest.TestCase):
+    def test_stable_wrapped_and_commodity_backed_assets_are_excluded(self):
+        self.assertIn("USDT",STABLES)
+        self.assertIn("WBTC",WRAPPED)
+        self.assertEqual(NON_CRYPTO_BASES,{"PAXG","XAUT"})
+        self.assertNotIn("BTC",NON_CRYPTO_BASES)
+        self.assertNotIn("ETH",NON_CRYPTO_BASES)
+
 
 class V5BaselineTests(unittest.TestCase):
     def test_long_and_short_require_trend_and_ema_confluence_not_extreme_rsi(self):
