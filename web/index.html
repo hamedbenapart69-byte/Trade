@@ -56,8 +56,8 @@ const fmt=v=>v===null||v===undefined?"—":typeof v==="number"?v.toLocaleString(
 const timeFa=v=>v?new Date(v).toLocaleString("fa-IR",{dateStyle:"short",timeStyle:"short"}):"—";
 function table(rows,watch=false){
  if(!rows?.length)return '<div class="empty">'+(watch?'در آخرین اسکن فرصت شرطی واجد شرایطی ثبت نشده است.':'در آخرین اسکن سیگنال فوری واجد شرایطی پیدا نشد.')+'</div>';
- const heads=watch?["نماد","تصمیم","جهت","شرط تأیید","سطح فعال‌سازی","اطمینان (V5)","درجه داده"]:
- ["نماد","تصمیم","جهت","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک (USD)","درجه داده","اطمینان (V5)"];
+ const heads=watch?["نماد","تصمیم","جهت","شرط تأیید","سطح فعال‌سازی","امتیاز اطمینان (V5)","درجه داده"]:
+ ["نماد","تصمیم","جهت","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک (USD)","درجه داده","امتیاز اطمینان (V5)"];
  return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>{
   const z=x.risk||{},e=x.entry_quality||{};
   const cells=watch?[x.symbol,x.decision,x.direction,e.confirmation_required,e.trigger_level,x.confidence_v5,x.data_grade]:
