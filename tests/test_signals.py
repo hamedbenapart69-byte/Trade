@@ -361,6 +361,15 @@ class V5ScoringAndStorageTests(unittest.TestCase):
         self.assertEqual(block["originating_candle_time_ms"],8*3_600_000)
         self.assertGreaterEqual(block["displacement_atr"],0.5)
 
+    def test_smart_money_points_require_fresh_trader_and_position_snapshots(self):
+        now=1_800_000_000_000
+        smart={"positions":[{"symbol":"BTCUSDT","side":"LONG","traderId":"trader-1"}],
+          "traders":[{"traderId":"trader-1","smartScore":90}],
+          "positions_observed_at_ms":now-60_000,"traders_observed_at_ms":now-60_000}
+        self.assertEqual(FuturesSignalEngine._smart_score("BTCUSDT","LONG",None,smart,now),1)
+        smart["traders_observed_at_ms"]=now-20*60_000
+        self.assertEqual(FuturesSignalEngine._smart_score("BTCUSDT","LONG",None,smart,now),0)
+
     def test_zero_funding_value_does_not_fail_boolean_audit(self):
         self.assertTrue(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":True}))
         self.assertFalse(_audit_checks_passed({"baseline":True,"funding_rate_8h_equivalent":0.0,"risk":False}))
