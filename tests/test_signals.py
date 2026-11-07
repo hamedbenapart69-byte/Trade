@@ -1,6 +1,6 @@
 import os, tempfile, unittest, time
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -101,6 +101,7 @@ class V5RiskTests(unittest.TestCase):
 
 class FakeTraderSpyProvider:
     calls=0
+    provider_name='Fake TraderSpy Provider'
     def __init__(self,now,stale=False):
         self.now=now;self.stale=stale
     def discover(self):
@@ -129,6 +130,7 @@ class FakeTraderSpyProvider:
 
 class OutcomeProvider:
     calls=0
+    provider_name='Test Outcome Provider'
     def __init__(self,now,mode="tp3"):self.now=now;self.mode=mode
     def candles(self,symbol,tf,limit):
         iv=INTERVALS[tf];last=(self.now//iv)*iv-iv;first=last-(219*iv);out=[]
@@ -149,7 +151,7 @@ class V5OutcomeTests(unittest.TestCase):
         try:
             store.init_db();iv=INTERVALS["1h"];last=(now//iv)*iv-iv;first=last-219*iv;entry_ts=first+217*iv
             result={"scan_id":"tp-progression","scanned_at":"2026-11-06T00:00:00+00:00",
-              "actionable":[{"symbol":"BTCUSDT","direction":"LONG","decision":"BUY_NOW","entry":100.0,
+              "source_status":{"futures_ohlcv":"Test Outcome Provider"},"actionable":[{"symbol":"BTCUSDT","direction":"LONG","decision":"BUY_NOW","entry":100.0,
                 "stop_loss":98.5,"take_profit":103.0,"take_profit_2":104.5,"take_profit_3":106.0,
                 "entry_observed_at_ms":entry_ts,"expires_at_ms":now+24*60*60_000,"confidence_v5":75,
                 "data_grade":"B","primary_timeframe":"1h","stop_pct":1.5,
@@ -171,7 +173,7 @@ class V5OutcomeTests(unittest.TestCase):
         try:
             store.init_db()
             result={"scan_id":"no-entry","scanned_at":"2026-11-06T00:00:00+00:00",
-              "actionable":[],"conditional":[{"symbol":"BTCUSDT","direction":"LONG","decision":"CONDITIONAL_BUY",
+              "source_status":{"futures_ohlcv":"Fake TraderSpy Provider"},"actionable":[],"conditional":[{"symbol":"BTCUSDT","direction":"LONG","decision":"CONDITIONAL_BUY",
                 "entry":100.0,"stop_loss":98.5,"take_profit":103.0,"entry_observed_at_ms":now-100_000,
                 "expires_at_ms":now-1,"confidence_v5":65,"data_grade":"B","primary_timeframe":"1h",
                 "entry_quality":{"trigger_level":200.0,"confirmation_required":"15m close above trigger"},
@@ -305,6 +307,14 @@ class V5ScoringAndStorageTests(unittest.TestCase):
             if old is None:os.environ.pop("CONTROL_DB_PATH",None)
             else:os.environ["CONTROL_DB_PATH"]=old
             tmp.cleanup()
+
+
+class V5ProviderSourceRoutingTests(unittest.TestCase):
+    def test_only_known_public_provider_sources_are_routable(self):
+        self.assertEqual(provider_key_for_source("OKX public market-data API"),"okx")
+        self.assertEqual(provider_key_for_source("Toobit public USDT-M linear perpetual market data"),"toobit")
+        self.assertEqual(provider_key_for_source("TraderSpy read-only market-data API"),"traderspy")
+        self.assertIsNone(provider_key_for_source("unknown or missing provider"))
 
 
 class V5ProviderAttributionTests(unittest.TestCase):
