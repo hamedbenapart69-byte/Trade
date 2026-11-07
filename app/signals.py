@@ -593,7 +593,7 @@ class FuturesSignalEngine:
           "api_plan_rate_limit_per_minute":10 if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
           "source_status":{"discovery":"CoinGecko public API","futures_ohlcv":getattr(self.p,"provider_name","unknown"),
             "derivatives":getattr(self.p,"provider_name","unknown"),"smart_money":"not supplied by selected market-data adapter",
-            "underlying_market_data":getattr(self.p,"provider_name","unknown"),
+            "underlying_market_data":"CoinGecko public spot price cross-checked against selected futures index price",
             "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
           "actionable":actionable,"conditional":conditional,
           "other_candidates":[x for x in candidates if x["decision"] not in {"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL"}],
