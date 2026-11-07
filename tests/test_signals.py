@@ -1,6 +1,6 @@
 import os, tempfile, unittest, time
 from pathlib import Path
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -30,6 +30,20 @@ class V5IndicatorTests(unittest.TestCase):
         with self.assertRaises(CandleError):validate_candles(cs[1:]+cs[:1],60000,now=310000,min_count=5)
         wrong=cs[:];wrong[2]=Candle(120000,100,101,99,100,10,180000)
         with self.assertRaises(CandleError):validate_candles(wrong,60000,now=310000,min_count=5)
+
+class V5BaselineTests(unittest.TestCase):
+    def test_long_and_short_require_trend_volume_and_ema_confluence_not_extreme_rsi(self):
+        self.assertEqual(v3_directional_baseline(55,1.5,101,100,99,"UP"),"LONG")
+        self.assertEqual(v3_directional_baseline(48,1.4,99,100,101,"DOWN"),"SHORT")
+        self.assertEqual(v3_directional_baseline(52,1.3,101,100,99,"FLAT"),"LONG")
+
+    def test_baseline_rejects_extreme_rsi_low_volume_and_conflicting_trend(self):
+        self.assertIsNone(v3_directional_baseline(75,2.0,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(25,2.0,99,100,101,"DOWN"))
+        self.assertIsNone(v3_directional_baseline(55,1.0,101,100,99,"UP"))
+        self.assertIsNone(v3_directional_baseline(55,1.5,101,100,99,"DOWN"))
+        self.assertIsNone(v3_directional_baseline(48,1.5,99,100,101,"UP"))
+
 
 class V5RiskTests(unittest.TestCase):
     def test_four_dollar_risk_and_five_x_cap(self):
