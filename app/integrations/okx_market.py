@@ -107,16 +107,16 @@ class OkxPublicMarketData:
                 continue
             try:
                 tick=float(item["tickSz"]);step=float(item["lotSz"]);minimum=float(item["minSz"])
-                multiplier=float(item["ctVal"])
+                multiplier=float(item["ctVal"]);max_leverage=float(item["lever"])
             except (KeyError,TypeError,ValueError):
                 continue
-            if min(tick,step,minimum,multiplier)<=0 or item.get("ctValCcy")!=base:
+            if min(tick,step,minimum,multiplier,max_leverage)<=0 or item.get("ctValCcy")!=base:
                 continue
             out[sym]={"symbol":sym,"venue_symbol":item["instId"],"contract_type":"PERPETUAL",
                 "status":"TRADING","base_asset":base,"quote_asset":"USDT","margin_asset":"USDT",
                 "quantity_unit":"contracts","contract_multiplier":multiplier,"multiplier_currency":item["ctValCcy"],
                 "tick_size":tick,"step_size":step,"min_qty":minimum,"min_notional":0.0,
-                "source":"OKX public instruments API"}
+                "max_leverage":max_leverage,"source":"OKX public instruments API"}
             self._contracts[sym]=out[sym]
         return out
 
