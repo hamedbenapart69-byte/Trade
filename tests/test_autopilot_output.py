@@ -40,9 +40,9 @@ class AutopilotOutputTests(unittest.TestCase):
         self.assertTrue(rendered.startswith("No qualifying signals today."))
         self.assertIn("Conditional watchlist",rendered)
         partial={"status":"SCAN_COMPLETED","actionable":[],"conditional":[],"partial_scan":True,"screened_assets":12}
-        self.assertEqual(render_output(partial),"No qualifying signals today.\\nPartial scan: 12/30.")
+        self.assertEqual(render_output(partial),"No qualifying signals today.\nPartial scan: 12/30.")
         unavailable={"status":"DATA_UNAVAILABLE","actionable":[],"partial_scan":True,"screened_assets":0}
-        self.assertEqual(render_output(unavailable),"DATA UNAVAILABLE — do not trade today.\\nPartial scan: 0/30.")
+        self.assertEqual(render_output(unavailable),"DATA UNAVAILABLE — do not trade today.\nPartial scan: 0/30.")
 
 
 if __name__ == "__main__":
