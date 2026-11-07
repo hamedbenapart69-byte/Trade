@@ -14,6 +14,7 @@ on:
       - "tests/**"
       - "requirements.txt"
       - ".github/workflows/v5-signal-autopilot.yml"
+      - ".github/workflows/static.yml"
 
 concurrency:
   group: v5-signal-state
