@@ -11,6 +11,7 @@ from app import store
 CG="https://api.coingecko.com/api/v3"
 STABLES={"USDT","USDC","DAI","BUSD","TUSD","FDUSD","USDE","USDS","USDD","FRAX","USDP","PYUSD","USTC","LUSD","GUSD","EURC","EURS","USD1","USDJ"}
 WRAPPED={"WBTC","WETH","STETH","WSTETH","CBBTC","BTCB","WBETH","BETH","WBNB","RENBTC","TBTC"}
+NON_CRYPTO_BASES={"PAXG","XAUT"}  # gold-backed commodity tokens, not crypto-market exposure
 INTERVALS={"15m":900_000,"1h":3_600_000,"4h":14_400_000,"1d":86_400_000}
 
 class DataError(RuntimeError):pass
@@ -568,7 +569,7 @@ class FuturesSignalEngine:
         for x in coins:
             s=x["symbol"]
             name=str(x.get("name") or "").lower()
-            if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED:continue
+            if not s or not x["id"] or counts[s]>1 or s in STABLES or s in WRAPPED or s in NON_CRYPTO_BASES:continue
             if "wrapped" in name or any(k in name for k in ("leveraged","3x long","3x short","5x long","5x short")):continue
             if any(s.endswith(z) for z in ("UP","DOWN","BULL","BEAR","3L","3S","5L","5S")):continue
             sym=s+"USDT"
