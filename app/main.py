@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 from app import store
 from app.workflow_schemas import validate_workflow_input
-from app.signals import router as signal_router
+from app.signals import router as signal_router, latest_scan, performance
 
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -38,7 +38,7 @@ def now_iso() -> str:
 
 async def require_api_key(request: Request, x_api_key: str | None = Header(default=None)) -> None:
     path=request.url.path
-    if path in {"/health","/"}: return
+    if path in {"/health","/"} or (request.method == "GET" and path in {"/signals-ui","/signals/dashboard-data"}): return
     # Worker routes use a separate credential. Reconciliation remains owner/operator-only.
     is_worker_route = path == "/internal/outbox/lease" or (path.startswith("/internal/outbox/") and path.endswith("/finish"))
     env_name = "WORKER_API_TOKEN" if is_worker_route else "CONTROL_API_TOKEN"
@@ -84,6 +84,27 @@ def startup() -> None: store.init_db()
 @app.get("/",response_class=HTMLResponse,include_in_schema=False)
 def console() -> FileResponse:
     return FileResponse(Path(__file__).parent / "static" / "index.html")
+
+@app.get("/signals-ui",response_class=HTMLResponse,include_in_schema=False)
+def signals_console() -> FileResponse:
+    return FileResponse(Path(__file__).parent / "static" / "signals.html")
+
+@app.get("/signals/dashboard-data")
+def signals_dashboard_data() -> dict[str,Any]:
+    """Read-only dashboard payload; contains public market signals only, never account data."""
+    result = latest_scan()
+    return {
+        "status": "NO_SCAN_YET" if result is None else result.get("status", "UNKNOWN"),
+        "scanned_at": None if result is None else result.get("scanned_at"),
+        "scan_id": None if result is None else result.get("scan_id"),
+        "coverage": None if result is None else result.get("coverage"),
+        "screened_assets": 0 if result is None else result.get("screened_assets", 0),
+        "actionable": [] if result is None else result.get("actionable", []),
+        "conditional": [] if result is None else result.get("conditional", []),
+        "performance": performance(),
+        "limitations": [] if result is None else result.get("limitations", []),
+        "validation_context": None if result is None else result.get("validation_context"),
+    }
 
 @app.get("/health")
 def health() -> dict[str,str]: return {"status":"ok","service":"control-plane","version":app.version}

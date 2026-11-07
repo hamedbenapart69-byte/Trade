@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101923">
+<title>Futures Signal Autopilot | پنل سیگنال</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#edf3f8;background:#0c141d;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#1c3440 0,transparent 42%),#0c141d;min-height:100vh}main{max-width:1180px;margin:auto;padding:22px 14px 48px}.head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{font-size:1.15rem;font-weight:800}.sub,.muted{color:#9aabba;font-size:.82rem;line-height:1.8}.sub{margin-top:6px}.status{border:1px solid #34495a;border-radius:99px;padding:6px 11px;font-size:.78rem;color:#bdd3df}.panel{margin-top:15px;padding:16px;background:#131f2b;border:1px solid #263746;border-radius:15px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:14px}.stat{background:#0f1a25;border:1px solid #263746;border-radius:12px;padding:12px;min-width:0}.stat small{display:block;color:#9aabba;font-size:.75rem}.stat strong{display:block;font-size:1.2rem;margin-top:8px;overflow-wrap:anywhere}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar button{background:#d5e6ed;color:#12212a;border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer}.toolbar button:disabled{opacity:.5}.tag{display:inline-block;padding:4px 8px;border:1px solid #3a5260;border-radius:20px;font-size:.72rem}.tag.good{color:#8fe0bd;border-color:#28644f}.tag.warn{color:#ffd28a;border-color:#765b30}.title{font-weight:800;font-size:1rem;margin:0 0 12px}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:900px;font-size:.82rem}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #293b49;white-space:nowrap}th{color:#9aabba;font-weight:600}td b{font-weight:800}.empty{padding:18px;border:1px dashed #3b4c5a;border-radius:10px;color:#a9bac7;text-align:center;font-size:.86rem}.msg{margin-top:12px;color:#c2d4df;font-size:.8rem;line-height:1.8}.foot{font-size:.75rem;color:#8193a2;line-height:1.9}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:680px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}main{padding:17px 11px 34px}.panel{padding:13px}.brand{font-size:1rem}}
+</style></head>
+<body><main>
+<header class="head"><div><div class="brand">FUTURES SIGNAL AUTOPILOT <span style="color:#8fb5c4">V5</span></div><div class="sub">پنل روزانهٔ فرصت‌های معاملات آتی | فقط دادهٔ عمومی، بدون اتصال حساب و بدون اجرای سفارش</div></div><div class="toolbar"><span id="state" class="status">در حال دریافت آخرین نتیجه...</span><button id="refresh">به‌روزرسانی</button></div></header>
+<section class="panel"><div class="title">وضعیت آخرین اسکن</div><div class="stats">
+<div class="stat"><small>زمان آخرین اسکن</small><strong id="scanned">—</strong></div><div class="stat"><small>دارایی‌های بررسی‌شده</small><strong id="screened">—</strong></div><div class="stat"><small>سیگنال‌های فوری</small><strong id="actionCount">—</strong></div><div class="stat"><small>فرصت‌های شرطی</small><strong id="watchCount">—</strong></div>
+</div><div id="coverage" class="msg">اطلاعات پوشش بازار پس از دریافت داده نمایش داده می‌شود.</div></section>
+<section class="panel"><div class="title">سیگنال‌های قابل بررسی فوری</div><div id="actionable" class="empty">هنوز داده‌ای دریافت نشده است.</div><p class="foot">فقط BUY_NOW و SELL_NOW در این جدول نمایش داده می‌شوند. وجود سیگنال به معنی تضمین نتیجه نیست.</p></section>
+<section class="panel"><div class="title">فهرست فرصت‌های شرطی</div><div id="conditional" class="empty">هنوز داده‌ای دریافت نشده است.</div><p class="foot">این موارد تا زمان تحقق شرط تأیید، سیگنال ورود فوری نیستند.</p></section>
+<section class="panel split"><div><div class="title">پیگیری کاغذی سیگنال‌ها</div><div id="performance" class="muted">دادهٔ عملکرد موجود نیست.</div></div><div><div class="title">اعتبار داده و محدودیت‌ها</div><div id="validation" class="muted">وضعیت اعتبارسنجی دریافت می‌شود.</div></div></section>
+<p class="foot">این پنل فقط آخرین اسکن ذخیره‌شده را نمایش می‌دهد. اگر اسکن تازه انجام نشده باشد، دادهٔ قدیمی را به‌عنوان دادهٔ زنده معرفی نمی‌کند. عملکرد کاغذی بر اساس کندل‌هاست و معادل معاملات واقعی یا قیمت اجرای صرافی نیست.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=v=>v===null||v===undefined?"—":typeof v==="number"?v.toLocaleString("en-US",{maximumFractionDigits:6}):esc(v);
+function table(rows,watch=false){
+ if(!rows?.length)return '<div class="empty">'+(watch?'در آخرین اسکن فرصت شرطی ثبت نشده است.':'در آخرین اسکن سیگنال فوری واجد شرایطی پیدا نشد.')+'</div>';
+ const heads=watch?["نماد","جهت","تصمیم","شرط تأیید","سطح فعال‌سازی","درجه داده","امتیاز V5"]:["نماد","جهت","تصمیم","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم لازم","ریسک USD","درجه داده","امتیاز V5"];
+ return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>{
+  const cells=watch?[x.symbol,x.direction,x.decision,x.entry_quality?.confirmation_required,x.entry_quality?.trigger_level,x.data_grade,x.confidence_v5]:
+   [x.symbol,x.direction,x.decision,x.entry,x.stop_loss,x.take_profit,x.stop_pct,x.risk?.required_leverage,x.risk?.planned_loss_usd,x.data_grade,x.confidence_v5];
+  return '<tr>'+cells.map((v,i)=>'<td>'+(i===2?'<span class="tag '+(watch?'warn':'good')+'">'+fmt(v)+'</span>':fmt(v))+'</td>').join('')+'</tr>';
+ }).join('')+'</tbody></table></div>';
+}
+async function load(){
+ const b=$("refresh");b.disabled=true;$("state").textContent="در حال دریافت...";
+ try{
+  const res=await fetch("/signals/dashboard-data",{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);
+  const d=await res.json();$("state").textContent=d.status==="SCAN_COMPLETED"?"آخرین اسکن تکمیل شده":d.status==="NO_SCAN_YET"?"هنوز اسکن ذخیره نشده":"نیازمند بررسی داده";
+  $("scanned").textContent=d.scanned_at?new Date(d.scanned_at).toLocaleString("fa-IR"):"—";$("screened").textContent=fmt(d.screened_assets);
+  $("actionCount").textContent=fmt(d.actionable?.length??0);$("watchCount").textContent=fmt(d.conditional?.length??0);
+  $("actionable").innerHTML=table(d.actionable);$("conditional").innerHTML=table(d.conditional,true);
+  const c=d.coverage||{};$("coverage").textContent=d.status==="NO_SCAN_YET"?"هیچ اسکن ذخیره‌شده‌ای در پایگاه داده وجود ندارد.":'پوشش: '+fmt(c.screened??d.screened_assets)+' | دادهٔ ناکافی: '+fmt(c.insufficient_data)+' | ردشده: '+fmt(c.rejected)+' | شناسه اسکن: '+fmt(d.scan_id??"—");
+  const p=d.performance||{};$("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>نرخ برد مشاهده‌شده: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br><span class="foot">حالت: '+fmt(p.mode??"—")+'</span>';
+  $("validation").innerHTML='منبع آخرین اجرا: <b>'+fmt(d.validation_context?.market_data??"ثبت نشده")+'</b><br>محیط اجرا: '+fmt(d.validation_context?.execution??"—")+'<br>دادهٔ ساختگی: '+(d.validation_context?.fixture_data===false?'خیر':'نامشخص')+'<br>اتصال حساب: خیر | اجرای سفارش: خیر';
+ }catch(e){$("state").textContent="خطا در دریافت داده";$("actionable").textContent="دریافت اطلاعات ناموفق بود: "+esc(e.message)}
+ finally{b.disabled=false}
+}
+$("refresh").onclick=load;load();
+</script></body></html>

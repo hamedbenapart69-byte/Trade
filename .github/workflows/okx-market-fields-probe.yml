@@ -1,0 +1,19 @@
+name: OKX Market Fields Probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/okx_endpoint_probe_v3.py | tee okx-market-fields.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: okx-market-fields
+          path: okx-market-fields.json
+          retention-days: 14
