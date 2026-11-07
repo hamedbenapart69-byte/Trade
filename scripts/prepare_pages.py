@@ -63,8 +63,13 @@ def _valid_actionable(item: dict, source_ok: bool) -> bool:
 
 def _valid_conditional(item: dict, source_ok: bool) -> bool:
     entry = item.get("entry_quality") or {}
+    risk = item.get("risk") or {}
     score = _num(item.get("confidence_v5"))
     trigger = _num(entry.get("trigger_level"))
+    stop_pct = _num(item.get("stop_pct"))
+    planned_loss = _num(risk.get("planned_loss_usd"))
+    leverage = _num(risk.get("required_leverage"))
+    rr = _num(risk.get("reward_to_risk"))
     return bool(
         source_ok
         and item.get("decision") in CONDITIONAL
@@ -75,8 +80,12 @@ def _valid_conditional(item: dict, source_ok: bool) -> bool:
         and isinstance(entry.get("confirmation_required"), str)
         and entry.get("confirmation_required").strip()
         and trigger is not None and trigger > 0
-        and (item.get("risk") or {}).get("valid") is True
-        and (item.get("risk") or {}).get("contract_spec_verified") is True
+        and risk.get("valid") is True
+        and risk.get("contract_spec_verified") is True
+        and stop_pct is not None and 0.5 <= stop_pct <= 3.0
+        and planned_loss is not None and 0 < planned_loss <= 4.0 + 1e-9
+        and leverage is not None and 0 < leverage <= 5.0 + 1e-9
+        and rr is not None and rr >= 2.0
     )
 
 
