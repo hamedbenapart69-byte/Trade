@@ -16,7 +16,7 @@ on:
       - ".github/workflows/v5-signal-autopilot.yml"
 
 concurrency:
-  group: v5-signal-autopilot
+  group: v5-signal-state
   cancel-in-progress: false
 
 permissions:
