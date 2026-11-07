@@ -38,6 +38,36 @@ class OkxAdapterTests(unittest.TestCase):
         self.assertFalse(result["valid"])
         self.assertEqual(result["reason"],"rounded_quantity_exceeds_venue_or_user_leverage_cap")
 
+    def test_global_positioning_ratio_carries_its_observation_timestamp(self):
+        now=1_800_000_000_000
+        def handler(request):
+            path=request.url.path
+            if path=="/api/v5/public/funding-rate":
+                data=[{"fundingRate":"0.0001","fundingTime":str(now),"nextFundingTime":str(now+8*3_600_000),"ts":str(now)}]
+            elif path=="/api/v5/public/open-interest":
+                data=[{"oi":"100","oiUsd":"1000000","ts":str(now)}]
+            elif path=="/api/v5/rubik/stat/contracts/open-interest-history":
+                data=[[str(now-24*3_600_000),"90","90","900000"],[str(now-4*3_600_000),"95","95","950000"]]
+            elif path=="/api/v5/rubik/stat/contracts/long-short-account-ratio":
+                data=[[str(now-3_600_000),"1.23"]]
+            elif path=="/api/v5/public/mark-price":
+                data=[{"markPx":"100","ts":str(now)}]
+            elif path=="/api/v5/market/tickers":
+                data=[{"instId":"BTC-USDT-SWAP","last":"100","open24h":"99","ts":str(now)}]
+            elif path=="/api/v5/market/index-tickers":
+                data=[{"idxPx":"100","ts":str(now)}]
+            else:
+                self.fail(f"Unexpected OKX endpoint: {path}")
+            return httpx.Response(200,json={"code":"0","data":data})
+        p=self.make_provider(handler)
+        try:
+            result=p.derivatives(["BTCUSDT"])["BTCUSDT"]
+            self.assertEqual(result["positioning"]["globalLongShortRatio"],1.23)
+            self.assertEqual(result["positioning"]["globalLongShortRatioObservedAtMs"],now-3_600_000)
+            self.assertEqual(result["source"],"OKX public market-data API")
+        finally:
+            p.close()
+
     def test_okx_candles_are_reversed_and_finality_preserved(self):
         rows=[
             ["2000","2","3","1","2.5","10","10","25","1"],
