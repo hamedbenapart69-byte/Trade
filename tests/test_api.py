@@ -57,4 +57,14 @@ class ApiTests(unittest.TestCase):
   r=self.client.post("/signals/scan")
   self.assertEqual(r.status_code,401)
 
+ def test_signal_status_does_not_reuse_stale_historical_scan_claims(self):
+  with patch("app.signals.latest_scan",return_value=None):
+   r=self.client.get("/signals/status",headers={"X-API-Key":os.environ["CONTROL_API_TOKEN"]})
+  self.assertEqual(r.status_code,200)
+  body=r.json()
+  self.assertEqual(body["status"],"NO_SCAN_YET")
+  self.assertFalse(body["full_live_scan_verified"])
+  self.assertFalse(body["live_rest_access_verified"])
+  self.assertIsNone(body["last_full_live_scan_utc"])
+
 if __name__=="__main__": unittest.main()
