@@ -595,8 +595,11 @@ def render_output(r):
     fmt=lambda x:"—" if x is None else format(float(x),".10g")
     actionable=r.get("actionable",[])[:10]
     conditional=r.get("conditional",[])
-    if not actionable and not conditional:return "No qualifying signals today."
-    out=[]
+    if r.get("status")=="DATA_UNAVAILABLE":
+        out=["DATA UNAVAILABLE — do not trade today."]
+        if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/30.")
+        return "\n".join(out)
+    out=[] if actionable else ["No qualifying signals today."]
     if actionable:
         out.extend([
             "| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
@@ -615,6 +618,7 @@ def render_output(r):
         for x in conditional:
             entry=x.get("entry_quality") or {}
             out.append(f"| {x.get('symbol','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v5'))} | {x.get('data_grade','—')} |")
+    if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/30.")
     return "\n".join(out)
 
 class FuturesSignalEngine:
