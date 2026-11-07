@@ -7,6 +7,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from datetime import datetime, timezone
 from app.signals import FuturesSignalEngine, create_provider, render_output, save_scan, evaluate_outcomes_with_provider
 
+def classify_scan(result: dict) -> str:
+    coverage = result.get("coverage") or {}
+    total = int(coverage.get("total_candidates") or 0)
+    insufficient = int(coverage.get("insufficient_data") or 0)
+    screened = int(result.get("screened_assets") or 0)
+    if screened <= 0 or (total > 0 and insufficient >= total):
+        return "DATA_UNAVAILABLE"
+    return "SCAN_COMPLETED"
+
+
 def main() -> int:
     out=Path("artifacts/v5_live_scan.json")
     out.parent.mkdir(parents=True,exist_ok=True)
@@ -17,7 +27,7 @@ def main() -> int:
         engine=FuturesSignalEngine(provider=provider)
         prior=evaluate_outcomes_with_provider(provider)
         result=engine.scan(extended=False,limit=30)
-        result["status"]="DATA_UNAVAILABLE" if result["screened_assets"]==0 or result["coverage"]["insufficient_data"]==result["screened_assets"] else "SCAN_COMPLETED"
+        result["status"]=classify_scan(result)
         result["prior_outcome_evaluation"]=prior
         result["formatted_output"]=render_output(result)
         result["validation_context"]={"execution":"GitHub-hosted runner","market_data":"live public HTTP endpoints","fixture_data":False,
