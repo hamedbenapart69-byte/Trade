@@ -29,7 +29,20 @@ class AutopilotOutputTests(unittest.TestCase):
         self.assertEqual(render_output({"status": "SCAN_COMPLETED", "actionable": [], "conditional": []}),
                          "No qualifying signals today.")
         self.assertEqual(render_output({"status": "DATA_UNAVAILABLE", "actionable": []}),
-                         "No qualifying signals today.")
+                         "DATA UNAVAILABLE — do not trade today.")
+
+    def test_conditional_only_and_partial_scan_messages_follow_v5_contract(self):
+        conditional={"status":"SCAN_COMPLETED","actionable":[],"conditional":[{
+            "symbol":"ETHUSDT","decision":"CONDITIONAL_BUY","direction":"LONG","confidence_v5":65,
+            "data_grade":"B","entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":2500}
+        }]}
+        rendered=render_output(conditional)
+        self.assertTrue(rendered.startswith("No qualifying signals today."))
+        self.assertIn("Conditional watchlist",rendered)
+        partial={"status":"SCAN_COMPLETED","actionable":[],"conditional":[],"partial_scan":True,"screened_assets":12}
+        self.assertEqual(render_output(partial),"No qualifying signals today.\\nPartial scan: 12/30.")
+        unavailable={"status":"DATA_UNAVAILABLE","actionable":[],"partial_scan":True,"screened_assets":0}
+        self.assertEqual(render_output(unavailable),"DATA UNAVAILABLE — do not trade today.\\nPartial scan: 0/30.")
 
 
 if __name__ == "__main__":
