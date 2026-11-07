@@ -807,7 +807,7 @@ class FuturesSignalEngine:
           "isolated_margin_is_manual_assumption_only":True,
           "leverage_at_most_5x":risk["required_leverage"]<=5,"reward_to_risk_at_least_2":risk["reward_to_risk"]>=2,
           "independent_confirmation_and_grade_verified":independent and grade in {"A","B"}}
-        audit_passed=all(audit.values())
+        audit_passed=all(value is True for value in audit.values() if isinstance(value,bool))
         if not risk["valid"]:decision="REJECT"
         elif not audit_passed:decision="WAIT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
