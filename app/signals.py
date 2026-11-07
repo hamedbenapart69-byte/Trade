@@ -301,10 +301,8 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
     base_qty=qty*multiplier if unit=="contracts" else qty
     notional=base_qty*Decimal(str(en));loss=base_qty*dist
     required=max(Decimal("1"),notional/Decimal("200"))
-    # Recompute reward/risk from the actual tick-rounded entry, stop and TP1.
-    # Using the raw 2R target here can falsely pass when rounding moves entry
-    # adversely and stop farther away, even though the executable levels are <2R.
-    rr=abs(Decimal(str(tp1))-Decimal(str(en)))/dist
+    # V5 specifies reward/risk from the unrounded entry, stop and target.
+    rr=abs(Decimal(str(base["take_profit"]))-raw_entry)/raw_dist
     base["stop_pct"]=raw_stop_pct
     base["rounded_stop_pct"]=rounded_stop_pct
     if reason is None and qty<minimum:reason="minimum_contract_quantity_not_met"
