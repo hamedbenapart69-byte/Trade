@@ -64,7 +64,14 @@ jobs:
         env:
           CONTROL_API_TOKEN: ci-control-token-which-is-long-enough-123456
           WORKER_API_TOKEN: ci-worker-token-which-is-long-enough-123456
+          CONTROL_DB_PATH: ${{ runner.temp }}/v5-ci-tests.db
         run: python -m unittest discover -s tests -v
+
+      - name: Remove isolated test database
+        if: always()
+        env:
+          CONTROL_DB_PATH: ${{ runner.temp }}/v5-ci-tests.db
+        run: rm -f "$CONTROL_DB_PATH" "$CONTROL_DB_PATH-wal" "$CONTROL_DB_PATH-shm"
 
       - name: Run live V5 market scan
         env:
