@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from scripts.prepare_pages import build_payload
+from scripts.prepare_pages import build_payload, REQUIRED_AUDIT_CHECKS
 from scripts.v5_live_scan import classify_scan
 
 def source():
@@ -22,6 +22,7 @@ def source():
         "actionable":[{
           "symbol":"BTC-USDT-SWAP","decision":"BUY_NOW","direction":"LONG","entry":100.0,"stop_loss":98.5,
           "take_profit":103.0,"stop_pct":1.5,"confidence_v5":75,"data_grade":"B","self_audit_passed":True,
+          "self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},
           "entry_quality":{"entry_ok":True,"chase":False},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
@@ -63,6 +64,14 @@ class PagesPayloadTests(unittest.TestCase):
         payload=build_payload(raw)
         self.assertEqual(payload["actionable"],[])
 
+    def test_baseline_and_venue_audit_must_be_explicitly_true(self):
+        raw=source()
+        raw["actionable"][0]["self_audit"]["v3_baseline_passed"]=False
+        self.assertEqual(build_payload(raw)["actionable"],[])
+        raw=source()
+        raw["actionable"][0]["self_audit"]["venue_leverage_limit_verified"]=False
+        self.assertEqual(build_payload(raw)["actionable"],[])
+
     def test_non_finite_prices_are_never_published(self):
         raw=source()
         raw["actionable"][0]["entry"]=float("nan")
@@ -74,7 +83,7 @@ class PagesPayloadTests(unittest.TestCase):
         raw["actionable"]=[]
         raw["conditional"]=[{
           "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
-          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"stop_pct":1.5,
+          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
           "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
