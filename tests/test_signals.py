@@ -2,7 +2,7 @@ import json
 import os, tempfile, unittest, time
 from pathlib import Path
 from datetime import datetime, timezone
-from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed, _find_fvg, _find_order_block, classify_market_regime
+from app.signals import Candle, CandleError, ema, rsi, atr, volume_ratio, v3_directional_baseline, provider_key_for_source, STABLES, WRAPPED, NON_CRYPTO_BASES, validate_candles, risk_calc, _score, save_scan, performance, PublicMarketData, DataError, _iso_ms, FuturesSignalEngine, INTERVALS, get_signal_status, reserve_traderspy_api_call, traderspy_daily_usage, evaluate_outcomes_with_provider, contract_sized_risk, _audit_checks_passed, _find_fvg, _find_order_block, classify_market_regime, _structure
 from app import store
 
 class V5IndicatorTests(unittest.TestCase):
@@ -297,6 +297,18 @@ class V5FundingNormalizationTests(unittest.TestCase):
 
 
 class V5ScoringAndStorageTests(unittest.TestCase):
+    def test_prior_day_and_week_levels_use_4h_bar_coverage(self):
+        candles=[]
+        for i in range(220):
+            ts=i*4*3_600_000
+            candles.append(Candle(ts,100,101,99,100,100,ts+4*3_600_000-1,True))
+        structure=_structure(candles,"LONG",2.0)
+        kinds={x["type"] for x in structure["liquidity_levels"]}
+        self.assertIn("PREVIOUS_DAY_HIGH",kinds)
+        self.assertIn("PREVIOUS_DAY_LOW",kinds)
+        self.assertIn("PREVIOUS_WEEK_HIGH",kinds)
+        self.assertIn("PREVIOUS_WEEK_LOW",kinds)
+
     def test_market_regime_classifier_covers_v5_regimes(self):
         def candle(i,o,h,l,cl):
             ts=i*3_600_000
