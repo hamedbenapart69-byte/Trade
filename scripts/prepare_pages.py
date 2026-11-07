@@ -24,7 +24,7 @@ REQUIRED_AUDIT_CHECKS = (
     "ohlcv_15m_validated", "ohlcv_1h_validated", "ohlcv_4h_validated", "ohlcv_1d_validated",
     "completed_candles_only", "v3_baseline_passed",
     "funding_rate_verified", "funding_interval_verified", "funding_threshold_passed",
-    "current_open_interest_verified", "multi_timeframe_checked", "market_structure_checked",
+    "current_open_interest_verified", "multi_timeframe_checked", "market_structure_checked","market_regime_classified",
     "volume_and_momentum_checked", "anti_chase_checked",
     "stop_distance_0_5_to_3_pct", "planned_loss_at_most_4_usd",
     "isolated_margin_is_manual_assumption_only", "leverage_at_most_5x",
