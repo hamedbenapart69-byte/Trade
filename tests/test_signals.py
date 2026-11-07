@@ -318,6 +318,28 @@ class V5ProviderSourceRoutingTests(unittest.TestCase):
 
 
 class V5ProviderAttributionTests(unittest.TestCase):
+    def test_performance_attributes_each_signal_to_its_originating_provider(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"multi-provider.db")
+        try:
+            store.init_db()
+            save_scan({"scan_id":"legacy-toobit-signal","scanned_at":"2026-11-06T00:00:00+00:00",
+              "source_status":{"futures_ohlcv":"Toobit public USDT-M linear perpetual market data"},
+              "actionable":[{"symbol":"BTCUSDT","direction":"LONG","decision":"BUY_NOW","entry":100.0,
+                "stop_loss":98.5,"take_profit":103.0,"entry_observed_at_ms":1000,"confidence_v5":75,
+                "data_grade":"B","risk":{"planned_loss_usd":4.0}}],"conditional":[]})
+            save_scan({"scan_id":"latest-okx-empty","scanned_at":"2026-11-07T00:00:00+00:00",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},"actionable":[],"conditional":[]})
+            report=performance()
+            self.assertIn("Toobit public USDT-M linear perpetual market data",report["outcome_source"])
+            self.assertNotIn("OKX public market-data API",report["outcome_source"])
+            self.assertEqual(report["outcome_providers"],["Toobit public USDT-M linear perpetual market data"])
+            self.assertEqual(report["by_provider"]["Toobit public USDT-M linear perpetual market data"]["published"],1)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
     def test_performance_uses_actual_latest_futures_provider(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"provider.db")
