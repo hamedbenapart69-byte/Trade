@@ -324,7 +324,7 @@ def contract_sized_risk(direction:str,entry:float,stop:float,contract:dict)->dic
       "contract_multiplier_reference":float(multiplier),"quantity_unit":unit,
       "notional_usd":float(notional),"planned_loss_usd":float(loss),"required_leverage":float(required),
       "reward_to_risk":float(rr),"valid":reason is None,"reason":reason,"contract_spec_verified":True,
-      "margin_mode_assumption":"ISOLATED; select manually in Toobit; scanner does not change margin mode",
+      "margin_mode_assumption":"ISOLATED; select manually at the selected venue; scanner does not change margin mode",
       "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
       "contract_spec":spec,"contract_quantity_note":"Quantity rounded using the venue's published lot step and contract multiplier."})
     return base
