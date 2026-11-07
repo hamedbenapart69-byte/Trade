@@ -228,7 +228,7 @@ class OkxPublicMarketData:
                     "openInterest":{"contracts":float(oi.get("oi") or 0),"valueUsd":oi_usd,
                     "change4hPct":change_at(4),"change24hPct":change_at(24),
                     "priceChange24hPct":(last/opened-1)*100 if opened>0 else None},
-                    "positioning":{"globalLongShortRatio":ratio,"topTraderLongShortRatio":None,
+                    "source":self.provider_name,"positioning":{"globalLongShortRatio":ratio,"topTraderLongShortRatio":None,
                     "takerBuySellRatio":None,"label":"okx_global_account_ratio" if ratio is not None else "unavailable"}}
             except (DataError,KeyError,TypeError,ValueError,IndexError) as exc:
                 if isinstance(exc,DataError):
