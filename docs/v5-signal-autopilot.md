@@ -43,3 +43,8 @@ The project Pages URL is derived from the repository name and is not considered 
 - Smart-money / on-chain evidence is not supplied by the active OKX adapter. Missing evidence receives no invented score. Paper outcomes are OHLCV observations, not exchange fills or real-trade performance.
 - No exchange account, private exchange credential, order endpoint or order execution is used. The dashboard and scan use public/free endpoints and GitHub Pages / public-repository Actions.
 
+
+- Market regime is explicitly classified as TRENDING, RANGING, BREAKOUT, HIGH_VOLATILITY, LOW_VOLATILITY or UNSTABLE. An unstable 1H candle blocks immediate-entry publication and requires volatility normalization plus a completed 15m confirmation.
+- Four-hour structure uses centered five-candle swing pivots. FVGs use a three-candle gap definition and record zone bounds, formation time, mitigation state and distance. Candidate order blocks use the last opposing candle before a BOS displacement of at least 0.5 ATR, recording origin, displacement, mitigation and distance. Previous-day/week liquidity levels are emitted only when sufficient completed bars exist.
+- OKX does not supply verified liquidation clusters or on-chain wallet evidence in this adapter. Those fields are explicitly marked unavailable; no liquidation or institutional-flow claims are fabricated.
+
