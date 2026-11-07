@@ -59,7 +59,12 @@ def _num(value: Any) -> float | None:
         return None
 
 
-def _valid_actionable(item: dict, source_ok: bool) -> bool:
+def _fresh_entry_observation(item: dict, now_ms: int) -> bool:
+    observed = _num(item.get("entry_observed_at_ms"))
+    return observed is not None and -60_000 <= now_ms - observed <= 15 * 60_000
+
+
+def _valid_actionable(item: dict, source_ok: bool, now_ms: int) -> bool:
     risk = item.get("risk") or {}
     entry = item.get("entry")
     stop = item.get("stop_loss")
@@ -71,6 +76,7 @@ def _valid_actionable(item: dict, source_ok: bool) -> bool:
     rr = _num(risk.get("reward_to_risk"))
     return bool(
         source_ok
+        and _fresh_entry_observation(item, now_ms)
         and item.get("decision") in ACTIONABLE
         and item.get("direction") in {"LONG", "SHORT"}
         and item.get("data_grade") in {"A", "B"}
@@ -88,7 +94,7 @@ def _valid_actionable(item: dict, source_ok: bool) -> bool:
     )
 
 
-def _valid_conditional(item: dict, source_ok: bool) -> bool:
+def _valid_conditional(item: dict, source_ok: bool, now_ms: int) -> bool:
     entry = item.get("entry_quality") or {}
     risk = item.get("risk") or {}
     score = _num(item.get("confidence_v5"))
@@ -99,6 +105,7 @@ def _valid_conditional(item: dict, source_ok: bool) -> bool:
     rr = _num(risk.get("reward_to_risk"))
     return bool(
         source_ok
+        and _fresh_entry_observation(item, now_ms)
         and item.get("decision") in CONDITIONAL
         and item.get("direction") in {"LONG", "SHORT"}
         and item.get("data_grade") in {"A", "B"}
@@ -118,7 +125,9 @@ def _valid_conditional(item: dict, source_ok: bool) -> bool:
 
 def build_payload(raw: dict) -> dict:
     raw = _safe(raw if isinstance(raw, dict) else {})
-    generated = datetime.now(timezone.utc).isoformat()
+    published_at = datetime.now(timezone.utc)
+    generated = published_at.isoformat()
+    now_ms = int(published_at.timestamp() * 1000)
     context = raw.get("validation_context") or {}
     sources = raw.get("source_status") or {}
     source_ok = bool(
@@ -137,8 +146,8 @@ def build_payload(raw: dict) -> dict:
         status = "INSUFFICIENT_DATA"
     raw_actionable = raw.get("actionable") if isinstance(raw.get("actionable"), list) else []
     raw_conditional = raw.get("conditional") if isinstance(raw.get("conditional"), list) else []
-    actionable_candidates = [x for x in raw_actionable if isinstance(x, dict) and _valid_actionable(x, source_ok)] if status == "SCAN_COMPLETED" else []
-    conditional_candidates = [x for x in raw_conditional if isinstance(x, dict) and _valid_conditional(x, source_ok)] if status == "SCAN_COMPLETED" else []
+    actionable_candidates = [x for x in raw_actionable if isinstance(x, dict) and _valid_actionable(x, source_ok, now_ms)] if status == "SCAN_COMPLETED" else []
+    conditional_candidates = [x for x in raw_conditional if isinstance(x, dict) and _valid_conditional(x, source_ok, now_ms)] if status == "SCAN_COMPLETED" else []
     def dedupe(items):
         unique = {}
         for item in items:
