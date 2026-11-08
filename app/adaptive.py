@@ -42,8 +42,8 @@ def adaptive_setup(
     prior_low = min(x.low for x in prior)
     breakout_long = close > prior_high and volume >= 1.15 and adx >= 18
     breakout_short = close < prior_low and volume >= 1.15 and adx >= 18
-    breakout_retest_long = breakout_long and last15.low <= prior_high + 0.25 * atr15m and last15.close > prior_high
-    breakout_retest_short = breakout_short and last15.high >= prior_low - 0.25 * atr15m and last15.close < prior_low
+    breakout_retest_long = breakout_long and prior_high - 0.5 * atr15m <= last15.low <= prior_high + 0.25 * atr15m and last15.close > prior_high
+    breakout_retest_short = breakout_short and prior_low - 0.25 * atr15m <= last15.high <= prior_low + 0.5 * atr15m and last15.close < prior_low
     breakout_confirmed_long = breakout_long and last15.close > prior_high
     breakout_confirmed_short = breakout_short and last15.close < prior_low
 
