@@ -260,7 +260,7 @@ class ConditionalOutcomeProvider:
 
 
 class V5PipelineTests(unittest.TestCase):
-    def test_end_to_end_fixture_rejects_non_qualifying_market_without_fake_signal(self):
+    def test_end_to_end_fixture_waits_when_no_strategy_pattern_qualifies(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=1793967960000
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"pipeline.db")
         try:
@@ -269,7 +269,7 @@ class V5PipelineTests(unittest.TestCase):
             result=engine.scan(limit=30)
             self.assertEqual(result["screened_assets"],1)
             self.assertTrue(result["partial_scan"])
-            self.assertEqual(result["other_candidates"][0]["decision"],"REJECT")
+            self.assertEqual(result["other_candidates"][0]["decision"],"WAIT")
             self.assertEqual(result["actionable"],[])
             self.assertFalse(result["source_status"]["account_connection"])
         finally:
