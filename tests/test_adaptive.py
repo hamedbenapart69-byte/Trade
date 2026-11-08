@@ -52,6 +52,21 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertEqual(result["direction"],"SHORT")
         self.assertEqual(result["strategy_family"],"TREND_PULLBACK")
 
+    def test_confirmed_breakout_is_not_mislabeled_as_a_retest(self):
+        h1=list(self.h1)
+        h1[-1]=SimpleNamespace(open_time=h1[-1].open_time,open=105.0,high=107.0,low=104.8,
+          close=106.0,volume=180.0,close_time=h1[-1].close_time)
+        m15=bars(40,high=107.0,low=106.1,close=106.5,interval=900_000)
+        tech={**self.tech,"close":106.0,"ema20":105.0,"ema50":104.0,"rsi":62.0,
+          "volume_ratio":1.8,"adx":27.0,"macd_histogram":1.0,"macd_histogram_previous":0.6,
+          "obv_change_10":200.0,"mfi":65.0}
+        result=adaptive_setup(h1,m15,tech,self.trends,"BREAKOUT",
+          self.long,self.short,106.0,0.5,0.0001)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["direction"],"LONG")
+        self.assertEqual(result["strategy_family"],"BREAKOUT_CONFIRMATION")
+        self.assertTrue(result["pattern_confirmed"])
+
     def test_no_pattern_returns_none_instead_of_forced_direction(self):
         tech={**self.tech,"rsi":50.0,"adx":10.0,"volume_ratio":0.4,
           "macd_histogram":0.0,"macd_histogram_previous":0.0,
