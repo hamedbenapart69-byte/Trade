@@ -110,6 +110,28 @@ def get_json(name: str, url: str) -> dict[str, Any]:
                     result["last_open_utc"] = iso_ms(obj[-1][0])
                     result["last_closed_utc"] = iso_ms(obj[-1][6])
                     result["last_close"] = float(obj[-1][4])
+            elif name.startswith("kucoin_futures_klines"):
+                rows = obj.get("data", []) if isinstance(obj, dict) else []
+                result["count"] = len(rows)
+                if rows:
+                    result["first_open_utc"] = iso_ms(rows[0][0])
+                    result["last_open_utc"] = iso_ms(rows[-1][0])
+                    result["first_close"] = float(rows[0][4])
+                    result["last_close"] = float(rows[-1][4])
+            elif name == "kucoin_funding_2y":
+                rows = obj.get("data", []) if isinstance(obj, dict) else []
+                result["count"] = len(rows)
+                if rows:
+                    times = [int(row.get("timepoint", 0)) for row in rows if row.get("timepoint") is not None]
+                    result["oldest_utc"] = iso_ms(min(times)) if times else None
+                    result["newest_utc"] = iso_ms(max(times)) if times else None
+            elif name == "kucoin_open_interest_2y_daily":
+                rows = obj.get("data", []) if isinstance(obj, dict) else []
+                result["count"] = len(rows)
+                if rows:
+                    times = [int(row.get("ts", 0)) for row in rows if row.get("ts") is not None]
+                    result["oldest_utc"] = iso_ms(min(times)) if times else None
+                    result["newest_utc"] = iso_ms(max(times)) if times else None
             else:
                 result["top_level_type"] = type(obj).__name__
         except Exception as exc:
@@ -188,6 +210,14 @@ def main() -> None:
                   "futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-10-01.csv"),
         probe_csv("binance_vision_funding_rate_2026_10_01",
                   "futures/um/daily/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10-01.csv"),
+        get_json("kucoin_futures_klines_2y_start",
+                 "https://api-futures.kucoin.com/api/v1/kline/query?symbol=XBTUSDTM&granularity=60&from=1731024000000&to=1731196800000"),
+        get_json("kucoin_futures_klines_recent",
+                 "https://api-futures.kucoin.com/api/v1/kline/query?symbol=XBTUSDTM&granularity=60&from=1794096000000&to=1794268800000"),
+        get_json("kucoin_funding_2y",
+                 "https://api-futures.kucoin.com/api/v1/contract/funding-rates?symbol=XBTUSDTM&from=1731024000000&to=1794268800000"),
+        get_json("kucoin_open_interest_2y_daily",
+                 "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1731024000000&endAt=1794268800000&pageSize=1000"),
     ]
     by_name = {x["name"]: x for x in results}
     for symbol in ["ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "PEPEUSDT",
