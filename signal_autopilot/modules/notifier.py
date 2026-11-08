@@ -6,7 +6,9 @@ import json
 import logging
 import os
 
-import httpx
+import smtplib
+import ssl
+from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -128,13 +130,16 @@ def notify_tier_a(payload: dict) -> dict:
 
 
 def notify_email(payload: dict) -> dict:
-    """ارسال ایمیل جایگزین فقط وقتی تلگرام نتوانسته سیگنال اقدام‌پذیر را تحویل دهد."""
+    """ایمیل جایگزین از طریق SMTP رایگانِ ارائه‌دهندهٔ ایمیل کاربر."""
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
-    api_key = os.getenv("SENDGRID_KEY", "").strip()
+    host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    port = int(os.getenv("SMTP_PORT", "465"))
+    username = os.getenv("SMTP_USER", "").strip()
+    password = os.getenv("SMTP_PASSWORD", "").strip()
     recipient = os.getenv("ALERT_EMAIL_TO", "").strip()
-    sender = os.getenv("ALERT_EMAIL_FROM", "").strip()
-    if not api_key or not recipient or not sender:
+    sender = (os.getenv("ALERT_EMAIL_FROM") or username).strip()
+    if not all((host, username, password, recipient, sender)):
         return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
 
     candidates = [
@@ -147,26 +152,29 @@ def notify_email(payload: dict) -> dict:
     if not candidates:
         return {"status": "NO_ACTIONABLE_SIGNAL", "sent": 0}
 
-    body = (chr(10) * 2).join(_format_signal(signal, payload) for signal in candidates)
+    message = EmailMessage()
+    message["Subject"] = f"Futures signals: {len(candidates)} actionable setup(s)"
+    message["From"] = sender
+    message["To"] = recipient
+    message.set_content((chr(10) * 2).join(
+        _format_signal(signal, payload) for signal in candidates
+    ))
     try:
-        response = httpx.post(
-            "https://api.sendgrid.com/v3/mail/send",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "personalizations": [{"to": [{"email": recipient}]}],
-                "from": {"email": sender},
-                "subject": f"Futures signals: {len(candidates)} actionable setup(s)",
-                "content": [{"type": "text/plain", "value": body}],
-            },
-            timeout=20.0,
-        )
-        if response.status_code != 202:
-            LOG.error("SendGrid rejected email: HTTP %s", response.status_code)
-            return {"status": "ERROR", "sent": 0, "http_status": response.status_code}
-        LOG.info("SendGrid accepted email notification.")
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=20) as smtp:
+                smtp.login(username, password)
+                smtp.send_message(message)
+        else:
+            with smtplib.SMTP(host, port, timeout=20) as smtp:
+                smtp.ehlo()
+                smtp.starttls(context=ssl.create_default_context())
+                smtp.ehlo()
+                smtp.login(username, password)
+                smtp.send_message(message)
+        LOG.info("SMTP fallback email sent.")
         return {"status": "SENT", "sent": 1}
     except Exception:
-        LOG.exception("SendGrid email delivery failed.")
+        LOG.exception("SMTP fallback email delivery failed.")
         return {"status": "ERROR", "sent": 0}
 
 
