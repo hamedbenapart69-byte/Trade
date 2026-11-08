@@ -1,6 +1,46 @@
 {
-  "market_data":{"primary":"OKX_PUBLIC_CCXT","spot_fallback":"COINGECKO_PUBLIC_API","historical_archive_candidate":"BINANCE_DATA_VISION","symbols":100,"signal_timeframe":"1h"},
-  "engine":{"version":"EMA20_EMA50_FUNDING_PLACEHOLDER","ema_fast":20,"ema_slow":50,"funding_extreme_abs":0.0005},
-  "delivery":{"web_first":true,"telegram_tier":"A","dashboard_url":""},
-  "trading":{"mode":"MANUAL_ONLY","exchange_account_connection":false,"trading_api_keys":false,"order_execution":false}
+  "market_data": {
+    "primary": "OKX_PUBLIC_CCXT",
+    "futures_fallback": ["BYBIT_PUBLIC_CCXT", "BINANCE_USDM_PUBLIC_CCXT", "BITGET_PUBLIC_CCXT", "MEXC_PUBLIC_CCXT", "KUCOIN_FUTURES_PUBLIC_CCXT", "GATEIO_PUBLIC_CCXT", "TOOBIT_PUBLIC_CCXT"],
+    "spot_fallback": null,
+    "universe": {
+      "policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
+      "whitelist_source": "COINGECKO_TOP_200",
+      "whitelist_count": 1000,
+      "require_active": true,
+      "require_swap": true,
+      "require_contract": true,
+      "require_linear": true,
+      "quote": "USDT",
+      "settle": "USDT",
+      "min_listing_age_days": 730,
+      "min_quote_volume_24h_usd": 10000000,
+      "target_symbols": 100,
+      "blacklist_patterns": [
+        "GOOGL", "NVDA", "QQQ", "MSTR", "SPCX", "SKHYNIX", "SKHY",
+        "SNDK", "SOXL", "SOXS", "INTC", "MU", "ANTHROPIC", "CRCL",
+        "KORU", "XAU", "XAG", "SPY", "TSLA", "AAPL", "MSFT",
+        "AMZN", "META", "COIN", "GLD", "SLV", "EUR", "JPY", "GBP"
+      ]
+    },
+    "historical_archive_candidate": "BINANCE_DATA_VISION",
+    "signal_timeframe": "1h"
+  },
+  "engine": {
+    "version": "EMA20_EMA50_FUNDING_PLACEHOLDER",
+    "ema_fast": 20,
+    "ema_slow": 50,
+    "funding_extreme_abs": 0.0005
+  },
+  "delivery": {
+    "web_first": true,
+    "telegram_tier": "A",
+    "dashboard_url": ""
+  },
+  "trading": {
+    "mode": "MANUAL_ONLY",
+    "exchange_account_connection": false,
+    "trading_api_keys": false,
+    "order_execution": false
+  }
 }

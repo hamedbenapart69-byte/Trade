@@ -1,68 +1,145 @@
-"""Conservative EMA/funding placeholder. This is not the V8 engine."""
-from datetime import datetime, timezone
-C10={"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL","WATCHLIST","NO_QUALIFIED_SETUP","MARKET_DATA_DEGRADED"}
-FUNDING_EXTREME=0.0005
+"""Simple EMA20/EMA50 + ATR14 signal MVP. Read-only; manual execution only."""
+from __future__ import annotations
 
-def ema(values,period):
-    if len(values)<period: return []
-    alpha=2.0/(period+1.0); out=[sum(values[:period])/period]
-    for value in values[period:]: out.append(value*alpha+out[-1]*(1.0-alpha))
-    return out
+from datetime import datetime
+from typing import Any
 
-def build_signal(row,generated_at_utc):
-    availability=row.get("availability") or {}; candles=row.get("ohlcv") or []
-    base={"symbol":row.get("symbol"),"status":"MARKET_DATA_DEGRADED","side":None,"tier":"NONE",
-      "entry":None,"stop_loss":None,"take_profit":[],"reason":"Required futures data is missing or insufficient",
-      "lfs":"NOT_CALCULABLE (missing order book)","nss":"NOT_CALCULATED",
-      "hypothesis":"EMA20/EMA50 + funding placeholder only",
-      "falsification":"A completed 1h candle invalidates the EMA cross or funding condition",
-      "confidence":"NOT_CALIBRATED","ev_net":"NOT_CALIBRATED","data_availability":availability,
-      "order_book":"UNAVAILABLE","liquidation":"UNAVAILABLE","basis":"UNAVAILABLE","generated_at_utc":generated_at_utc}
-    if availability.get("ohlcv")!="OK" or availability.get("funding")!="OK" or len(candles)<52:
-        base["reason"]="MARKET_DATA_DEGRADED: OHLCV or funding unavailable/insufficient"; return base
+C10 = {
+    "BUY_NOW", "SELL_NOW", "CONDITIONAL_BUY", "CONDITIONAL_SELL",
+    "WATCHLIST", "NO_QUALIFIED_SETUP", "MARKET_DATA_DEGRADED",
+}
+
+
+def ema(values: list[float], period: int) -> list[float]:
+    """محاسبه EMA با مقداردهی اولیه از میانگین ساده."""
+    if len(values) < period:
+        return []
+    alpha = 2.0 / (period + 1.0)
+    output = [sum(values[:period]) / period]
+    for value in values[period:]:
+        output.append(value * alpha + output[-1] * (1.0 - alpha))
+    return output
+
+
+def atr(candles: list[dict[str, Any]], period: int = 14) -> float | None:
+    """محاسبه ATR ساده از True Range چهارده کندل آخر."""
+    if len(candles) < period + 1:
+        return None
+    true_ranges: list[float] = []
+    for index in range(1, len(candles)):
+        current = candles[index]
+        previous_close = float(candles[index - 1]["close"])
+        high = float(current["high"])
+        low = float(current["low"])
+        true_ranges.append(max(high - low, abs(high - previous_close), abs(low - previous_close)))
+    recent = true_ranges[-period:]
+    return sum(recent) / period if recent else None
+
+
+def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
+    """ساخت سیگنال با شرط فاصله EMA حداقل نیم درصد و حدضرر/اهداف مبتنی بر ATR."""
+    candles = row.get("ohlcv") or []
+    availability = row.get("availability") or {}
+    base: dict[str, Any] = {
+        "symbol": row.get("symbol"),
+        "status": "MARKET_DATA_DEGRADED",
+        "side": None,
+        "entry": None,
+        "stop_loss": None,
+        "take_profit": [],
+        "ema20": None,
+        "ema50": None,
+        "atr14": None,
+        "confidence": "NOT_CALIBRATED",
+        "generated_at_utc": generated_at_utc,
+        "data_availability": availability,
+    }
+    if availability.get("ohlcv") != "OK" or len(candles) < 52:
+        base["reason"] = "OHLCV unavailable or insufficient"
+        return base
+
     try:
-        now=datetime.fromisoformat(generated_at_utc.replace("Z","+00:00")).timestamp()*1000
-        candle_age_hours=(now-int(candles[-1]["timestamp"]))/3_600_000
-        if candle_age_hours>2:
-            base["reason"]="MARKET_DATA_DEGRADED: latest completed 1h candle is "+str(round(candle_age_hours,2))+"h old"; return base
-    except (TypeError,ValueError,KeyError):
-        base["reason"]="MARKET_DATA_DEGRADED: invalid candle timestamp"; return base
-    closes=[float(c["close"]) for c in candles]; fast=ema(closes,20); slow=ema(closes,50)
-    if len(fast)<2 or len(slow)<2: return base
-    fp,fn,sp,sn=fast[-2],fast[-1],slow[-2],slow[-1]
-    funding=float(row["funding_rate"]); bull=fp<=sp and fn>sn; bear=fp>=sp and fn<sn
-    if bull and funding<=-FUNDING_EXTREME:
-        base.update(status="CONDITIONAL_BUY",side="LONG",tier="PLACEHOLDER",reason="EMA20 crossed above EMA50 with strongly negative funding; manual confirmation required")
-    elif bear and funding>=FUNDING_EXTREME:
-        base.update(status="CONDITIONAL_SELL",side="SHORT",tier="PLACEHOLDER",reason="EMA20 crossed below EMA50 with strongly positive funding; manual confirmation required")
-    elif abs(fn-sn)/max(abs(sn),1e-12)<0.0015:
-        base.update(status="WATCHLIST",reason="EMA20 is close to EMA50; no qualified trigger")
-    else: base.update(status="NO_QUALIFIED_SETUP",reason="No qualified EMA/funding placeholder setup")
-    base.update(ema20=round(fn,10),ema50=round(sn,10),funding_rate=funding)
-    return base
+        now_ms = datetime.fromisoformat(generated_at_utc.replace("Z", "+00:00")).timestamp() * 1000
+        candle_age_hours = (now_ms - int(candles[-1]["timestamp"])) / 3_600_000
+        if candle_age_hours < 0 or candle_age_hours > 2:
+            base["reason"] = "Latest completed 1h candle is stale or from the future"
+            return base
 
-def generate_signals(data):
-    generated=data.get("generated_at_utc"); rows=data.get("symbols") or []
-    signals=[build_signal(row,generated) for row in rows]
+        closes = [float(candle["close"]) for candle in candles]
+        fast = ema(closes, 20)
+        slow = ema(closes, 50)
+        atr_value = atr(candles, 14)
+        if not fast or not slow or atr_value is None or atr_value <= 0:
+            base["reason"] = "Insufficient candles to calculate EMA/ATR"
+            return base
+
+        ema20_value = fast[-1]
+        ema50_value = slow[-1]
+        entry = closes[-1]
+        spread = abs(ema20_value - ema50_value) / max(abs(ema50_value), 1e-12)
+        base.update(
+            ema20=round(ema20_value, 10),
+            ema50=round(ema50_value, 10),
+            atr14=round(atr_value, 10),
+            entry=round(entry, 10),
+        )
+
+        if spread <= 0.005:
+            base.update(status="NO_QUALIFIED_SETUP", reason="EMA20/EMA50 distance is not greater than 0.5%")
+            return base
+
+        if ema20_value > ema50_value:
+            side = "BUY"
+            stop = entry - 1.5 * atr_value
+            targets = [entry + 2.0 * atr_value, entry + 4.0 * atr_value]
+            status = "BUY_NOW"
+        else:
+            side = "SELL"
+            stop = entry + 1.5 * atr_value
+            targets = [entry - 2.0 * atr_value, entry - 4.0 * atr_value]
+            status = "SELL_NOW"
+
+        base.update(
+            status=status,
+            side=side,
+            stop_loss=round(stop, 10),
+            take_profit=[round(target, 10) for target in targets],
+            reason=f"EMA20/EMA50 spread {spread:.4%} exceeds 0.5%; ATR14 risk levels",
+        )
+        return base
+    except (KeyError, TypeError, ValueError, ZeroDivisionError) as exc:
+        base["reason"] = "Invalid OHLCV input: " + type(exc).__name__
+        return base
+
+
+def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
+    generated = data.get("generated_at_utc")
+    rows = data.get("symbols") or []
+    signals = [build_signal(row, generated) for row in rows]
     if not signals:
-        signals=[{"symbol":"MARKET","status":"MARKET_DATA_DEGRADED","side":None,"tier":"NONE","entry":None,
-          "stop_loss":None,"take_profit":[],"reason":"No market data returned",
-          "lfs":"NOT_CALCULABLE (missing order book)","nss":"NOT_CALCULATED",
-          "confidence":"NOT_CALIBRATED","ev_net":"NOT_CALIBRATED","order_book":"UNAVAILABLE",
-          "liquidation":"UNAVAILABLE","basis":"UNAVAILABLE","generated_at_utc":generated}]
-    for s in signals:
-        if s.get("status") not in C10: raise ValueError("invalid_C10_status:"+str(s.get("status")))
-    degraded=any(s["status"]=="MARKET_DATA_DEGRADED" for s in signals)
-    return {"schema_version":"1.0","generated_at_utc":generated,"provider":data.get("provider","unknown"),
-      "pipeline_status":"DEGRADED" if degraded or data.get("fallback_used") else "OK",
-      "engine":"EMA20_EMA50_FUNDING_PLACEHOLDER","is_v8":False,"manual_trade_only":True,
-      "fallback_used":bool(data.get("fallback_used")),"primary_error":data.get("primary_error"),
-      "data_availability":{"ohlcv":"OK" if signals and all((s.get("data_availability") or {}).get("ohlcv")=="OK" for s in signals) else "DEGRADED",
-        "funding":"OK" if signals and all((s.get("data_availability") or {}).get("funding")=="OK" for s in signals) else "DEGRADED",
-        "open_interest":"CURRENT_SNAPSHOT_ONLY","open_interest_history_days":30,"open_interest_history_usage":"30D_PARQUET_SEPARATE_NOT_USED_BY_PLACEHOLDER",
-        "order_book":"UNAVAILABLE","liquidation":"UNAVAILABLE","basis":"UNAVAILABLE",
-        "fear_greed":"OK" if data.get("fear_greed") else "UNAVAILABLE"},
-      "fear_greed":data.get("fear_greed"),
-      "quality":{"symbols_requested":data.get("symbols_requested",0),"symbols_processed":data.get("symbols_processed",0),
-        "symbols_degraded":sum(1 for s in signals if s["status"]=="MARKET_DATA_DEGRADED")},
-      "signals":signals}
+        signals = [{
+            "symbol": "MARKET", "status": "MARKET_DATA_DEGRADED", "side": None,
+            "entry": None, "stop_loss": None, "take_profit": [],
+            "reason": "No market data returned", "confidence": "NOT_CALIBRATED",
+            "generated_at_utc": generated,
+        }]
+    for signal in signals:
+        if signal.get("status") not in C10:
+            raise ValueError("invalid_C10_status:" + str(signal.get("status")))
+    trade_signals = [s for s in signals if s["status"] in {"BUY_NOW", "SELL_NOW"}]
+    degraded = any(s["status"] == "MARKET_DATA_DEGRADED" for s in signals)
+    return {
+        "schema_version": "1.1",
+        "generated_at_utc": generated,
+        "engine": "EMA20_EMA50_ATR14_MVP",
+        "manual_trade_only": True,
+        "pipeline_status": "DEGRADED" if degraded else "OK",
+        "today_signal_message": "امروز سیگنال نیست" if not trade_signals else None,
+        "signals": signals,
+        "trade_signals": trade_signals,
+        "quality": {
+            "symbols_processed": len(rows),
+            "trade_signals": len(trade_signals),
+            "symbols_degraded": sum(1 for s in signals if s["status"] == "MARKET_DATA_DEGRADED"),
+        },
+    }
