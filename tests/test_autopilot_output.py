@@ -27,7 +27,7 @@ class AutopilotOutputTests(unittest.TestCase):
 
     def test_no_actionable_setup_returns_exact_no_signal_text(self):
         self.assertEqual(render_output({"status": "SCAN_COMPLETED", "actionable": [], "conditional": []}),
-                         "No qualifying signals today.")
+                         "No actionable or conditional setups today.")
         self.assertEqual(render_output({"status": "DATA_UNAVAILABLE", "actionable": []}),
                          "DATA UNAVAILABLE — do not trade today.")
 
@@ -37,7 +37,7 @@ class AutopilotOutputTests(unittest.TestCase):
             "data_grade":"B","entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":2500}
         }]}
         rendered=render_output(conditional)
-        self.assertTrue(rendered.startswith("No qualifying signals today."))
+        self.assertTrue(rendered.startswith("No immediate entries. 1 conditional setup is waiting for its defined triggers."))
         self.assertIn("Conditional watchlist",rendered)
         partial={"status":"SCAN_COMPLETED","actionable":[],"conditional":[],"partial_scan":True,"screened_assets":12}
         self.assertEqual(render_output(partial),"No qualifying signals today.\nPartial scan: 12/30.")
