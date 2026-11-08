@@ -314,3 +314,13 @@ Sources:
 - [Twilio changelog: changes to SendGrid Free Plan](https://www.twilio.com/en-us/changelog/sendgrid-free-plan)
 
 Signal history idempotency is now keyed by symbol + engine + four-hour UTC bucket, so reruns in the same bucket do not append duplicate snapshots.
+
+
+### Idempotency and asset validation run
+
+Run [42479303959](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42479303959) completed successfully after adding four-hour bucket idempotency and dashboard asset checks:
+- Blocking OKX runner smoke test: PASS.
+- Python compile check, unit suite (including storage idempotency test), and `node --check web/app.js`: PASS.
+- 100 OKX symbols processed; pipeline `OK`; 100 current records.
+- Public dashboard copies `web/data/signals.json` and `web/data/history.csv` match the current generated snapshot; 100 signal records and 300 history rows are present.
+- Generated output commit/push: PASS.
