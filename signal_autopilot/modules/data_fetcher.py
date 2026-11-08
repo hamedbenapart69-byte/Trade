@@ -38,6 +38,8 @@ class MarketDataFetcher:
             keys = ("listTime", "listingTime")
         elif provider == "bybit":
             keys = ("launchTime", "createdTime", "listTime")
+        elif provider == "binance":
+            keys = ("onboardDate", "launchTime", "createdTime")
         for key in keys:
             raw = info.get(key)
             try:
@@ -77,6 +79,9 @@ class MarketDataFetcher:
         elif provider == "bybit":
             exchange = ccxt.bybit({"enableRateLimit": True, "timeout": 25000,
                                    "options": {"defaultType": "swap"}})
+        elif provider == "binance":
+            exchange = ccxt.binanceusdm({"enableRateLimit": True, "timeout": 25000,
+                                         "options": {"defaultType": "future"}})
         else:
             raise ValueError("unsupported_futures_provider")
         self.exchanges.append(exchange)
@@ -219,7 +224,7 @@ class MarketDataFetcher:
         whitelist = self._coingecko_top_symbols()
         errors = {}
         results = {}
-        for provider in ("okx", "bybit"):
+        for provider in ("okx", "bybit", "binance"):
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
                 results[provider] = rows
