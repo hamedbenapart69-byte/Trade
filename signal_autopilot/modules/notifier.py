@@ -133,8 +133,8 @@ def notify_email(payload: dict) -> dict:
     """ایمیل جایگزین از طریق SMTP رایگانِ ارائه‌دهندهٔ ایمیل کاربر."""
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
-    host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
-    port = int(os.getenv("SMTP_PORT", "465"))
+    host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
+    port = int(os.getenv("SMTP_PORT") or "465")
     username = os.getenv("SMTP_USER", "").strip()
     password = os.getenv("SMTP_PASSWORD", "").strip()
     recipient = os.getenv("ALERT_EMAIL_TO", "").strip()
