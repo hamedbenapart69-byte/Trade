@@ -33,16 +33,64 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
     def test_telegram_message_never_invents_calibrated_probability(self):
         from modules.notifier import _format_signal
         message=_format_signal({"symbol":"BTC/USDT:USDT","status":"BUY_NOW","side":"LONG","entry":None,"stop_loss":None,"take_profit":[],"tier":"A","confidence":"NOT_CALIBRATED","lfs":"NOT_CALCULABLE","nss":"NOT_CALCULATED","falsification":"break of support"}, {})
-        self.assertIn("NOT_CALIBRATED",message)
+        self.assertIn("نماد: BTC/USDT:USDT",message)
         self.assertIn("ورود: —",message)
-        self.assertIn("SL: —",message)
-        self.assertIn("LFS=NOT_CALCULABLE",message)
+        self.assertIn("حد ضرر: —",message)
+        self.assertNotIn("NOT_CALIBRATED",message)
 
     def test_telegram_silently_skips_without_credentials(self):
         from modules.notifier import notify_tier_a, send_test_message
         with patch.dict("os.environ",{},clear=True):
             self.assertEqual(notify_tier_a({"signals":[]})["status"],"SKIPPED_NOT_CONFIGURED")
             self.assertEqual(send_test_message()["status"],"SKIPPED_NOT_CONFIGURED")
+
+    def test_actionable_signal_without_tier_is_sent_to_telegram(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+            with patch.dict(os.environ, {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }, clear=True), patch("modules.notifier._send", new=fake_send):
+                result = notify_tier_a({
+                    "pipeline_status": "OK",
+                    "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                    "signals": [{
+                        "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                        "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                    }],
+                })
+            self.assertEqual(result, {"status": "SENT", "sent": 1})
+            self.assertIn("ورود: 100", sent[0])
+
+    def test_daily_no_signal_message_is_sent_once(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+            env = {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }
+            payload = {
+                "pipeline_status": "OK",
+                "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                "signals": [{"symbol": "BTC", "status": "NO_QUALIFIED_SETUP"}],
+            }
+            with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+                first = notify_tier_a(payload)
+                second = notify_tier_a(payload)
+            self.assertEqual(first, {"status": "SENT", "sent": 1})
+            self.assertEqual(second, {"status": "NO_NEW_MESSAGES", "sent": 0})
+            self.assertEqual(sent, ["امروز سیگنال نیست"])
+
 
 if __name__=="__main__":
     unittest.main()

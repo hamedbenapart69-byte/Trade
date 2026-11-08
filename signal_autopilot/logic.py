@@ -1,17 +1,55 @@
-"""Four-hour read-only market scan and placeholder signal publisher."""
+"""Read-only market scan, signal computation and resilient publication."""
+from __future__ import annotations
+
 import json
+from datetime import datetime, timezone
+
 from modules.data_fetcher import MarketDataFetcher
 from modules.signal_engine import generate_signals
 from modules.storage import publish
 from modules.notifier import notify_tier_a
-def main():
-    fetcher=MarketDataFetcher(limit=100)
-    try: raw=fetcher.fetch()
-    finally: fetcher.close()
-    payload=generate_signals(raw); result=publish(payload); notification=notify_tier_a(payload)
-    print(json.dumps({"pipeline_status":payload["pipeline_status"],"provider":payload["provider"],
-      "symbols_processed":payload["quality"]["symbols_processed"],"signals_added_to_history":result["signals_added_to_history"],
-      "telegram":notification},ensure_ascii=False))
-    if payload["pipeline_status"]=="DEGRADED" and payload["provider"]=="none":
-        raise SystemExit("No primary or fallback market data available")
-if __name__=="__main__": main()
+
+
+def main() -> None:
+    fetcher = None
+    try:
+        fetcher = MarketDataFetcher(limit=100)
+        raw = fetcher.fetch()
+    except Exception as exc:
+        # Preserve a fresh, explicit degraded snapshot instead of leaving stale signals online.
+        raw = {
+            "provider": "none",
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "symbols": [],
+            "symbols_processed": 0,
+            "errors": {"market_data": f"{type(exc).__name__}: {str(exc)[:240]}"},
+        }
+    finally:
+        if fetcher is not None:
+            fetcher.close()
+
+    payload = generate_signals(raw)
+    # Defensive contract: the publisher must never crash on optional metadata.
+    payload.setdefault("provider", raw.get("provider", "unknown"))
+    payload.setdefault("quality", {})
+    payload["quality"].setdefault("symbols_processed", len(raw.get("symbols") or []))
+    payload["data_errors"] = raw.get("errors", {})
+    result = publish(payload)
+    notification = notify_tier_a(payload)
+
+    print(json.dumps({
+        "pipeline_status": payload.get("pipeline_status", "DEGRADED"),
+        "provider": payload.get("provider", "unknown"),
+        "symbols_processed": payload["quality"]["symbols_processed"],
+        "signals_added_to_history": result.get("signals_added_to_history", 0),
+        "signals_total": result.get("signals_total", 0),
+        "telegram": notification,
+        "manual_trade_only": True,
+    }, ensure_ascii=False))
+
+    # Data degradation is published as an explicit state; it is not a code failure.
+    # This allows the dashboard to replace stale data with an honest degraded snapshot.
+
+
+if __name__ == "__main__":
+    main()
