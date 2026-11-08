@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from modules.data_fetcher import MarketDataFetcher
 from modules.signal_engine import generate_signals
 from modules.storage import publish
-from modules.notifier import notify_tier_a
+from modules.notifier import notify_tier_a, notify_email
 
 
 def main() -> None:
@@ -36,6 +36,11 @@ def main() -> None:
     payload["data_errors"] = raw.get("errors", {})
     result = publish(payload)
     notification = notify_tier_a(payload)
+    email_notification = (
+        notify_email(payload)
+        if notification.get("status") in ("SKIPPED_NOT_CONFIGURED", "ERROR")
+        else {"status": "SKIPPED_NOT_NEEDED", "sent": 0}
+    )
 
     print(json.dumps({
         "pipeline_status": payload.get("pipeline_status", "DEGRADED"),
@@ -44,6 +49,7 @@ def main() -> None:
         "signals_added_to_history": result.get("signals_added_to_history", 0),
         "signals_total": result.get("signals_total", 0),
         "telegram": notification,
+        "email_fallback": email_notification,
         "manual_trade_only": True,
     }, ensure_ascii=False))
 
