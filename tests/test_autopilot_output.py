@@ -15,7 +15,9 @@ class AutopilotOutputTests(unittest.TestCase):
             }],
             "conditional": [{
                 "symbol": "ETHUSDT", "strategy_family":"TREND_PULLBACK", "decision": "CONDITIONAL_SELL", "direction": "SHORT",
-                "confidence_v6": 65, "confidence_v5": 65, "data_grade": "B", "entry":2500.0,"stop_loss":2600.0,"take_profit":2300.0,\n                "risk":{"required_leverage":3.0,"planned_loss_usd":4.0},\n                "entry_quality": {"confirmation_required": "15m close below trigger", "trigger_level": 2500.0},
+                "confidence_v6": 65, "confidence_v5": 65, "data_grade": "B", "entry":2500.0,"stop_loss":2600.0,"take_profit":2300.0,
+                "risk":{"required_leverage":3.0,"planned_loss_usd":4.0},
+                "entry_quality": {"confirmation_required": "15m close below trigger", "trigger_level": 2500.0},
             }],
         }
         rendered = render_output(result)
