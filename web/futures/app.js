@@ -1,5 +1,5 @@
 "use strict";
-const SIGNALS_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/signals.json";
+const SIGNALS_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals.json";
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
