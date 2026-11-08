@@ -63,7 +63,7 @@ def main() -> None:
                 report["providers"][provider] = {
                     "error": type(exc).__name__, "detail": str(exc)[:200]
                 }
-        report["coingecko_unique_top200_symbols"] = len(whitelist)
+        report["coingecko_unique_whitelist_symbols"] = len(whitelist)
         report["selected_provider"] = selected_provider
         report["selected_count"] = len(selected)
         union_rows = sorted(union_by_symbol.values(), key=lambda row: row[0], reverse=True)
