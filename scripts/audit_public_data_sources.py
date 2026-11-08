@@ -110,12 +110,12 @@ def get_json(name: str, url: str) -> dict[str, Any]:
     return {"name": name, **result}
 
 
-def archive_kline(name: str, market: str, month: str) -> dict[str, Any]:
+def archive_kline(name: str, market: str, month: str, symbol: str = "BTCUSDT") -> dict[str, Any]:
     base = "https://data.binance.vision/data"
     if market == "spot":
-        path = f"spot/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-{month}.zip"
+        path = f"spot/monthly/klines/{symbol}/1h/{symbol}-1h-{month}.zip"
     else:
-        path = f"futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-{month}.zip"
+        path = f"futures/um/monthly/klines/{symbol}/1h/{symbol}-1h-{month}.zip"
     result = request(f"{base}/{path}", max_bytes=5_000_000)
     body = result.pop("body", None)
     out: dict[str, Any] = {"name": name, **result, "archive_path": path}
@@ -166,6 +166,7 @@ def main() -> None:
         get_json("binance_open_interest_daily",
                  "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=30"),
         get_json("binance_depth", "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=100"),
+        get_json("okx_orderbook", "https://www.okx.com/api/v5/market/books?instId=BTC-USDT-SWAP&sz=50"),
         get_json("bybit_funding",
                  "https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTCUSDT&limit=200"),
         get_json("bybit_open_interest",
@@ -174,27 +175,34 @@ def main() -> None:
                  "https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=1h&limit=2"),
         archive_kline("binance_vision_spot_1h_2026_10", "spot", "2026-10"),
         archive_kline("binance_vision_um_futures_1h_2026_10", "futures_um", "2026-10"),
+        archive_kline("binance_vision_spot_1h_2024_11", "spot", "2024-11"),
+        archive_kline("binance_vision_um_futures_1h_2024_11", "futures_um", "2024-11"),
         probe_csv("binance_vision_metrics_2026_10_01",
                   "futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-10-01.csv"),
         probe_csv("binance_vision_funding_rate_2026_10_01",
                   "futures/um/daily/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10-01.csv"),
     ]
     by_name = {x["name"]: x for x in results}
-    spot = by_name.get("binance_vision_spot_1h_2026_10", {})
-    fut = by_name.get("binance_vision_um_futures_1h_2026_10", {})
-    spot_closes = spot.get("close_by_open_time", {})
-    futures_closes = fut.get("close_by_open_time", {})
-    common_times = sorted(set(spot_closes) & set(futures_closes))
-    if common_times:
-        matched_time = common_times[-1]
-        spot_close = float(spot_closes[matched_time])
-        futures_close = float(futures_closes[matched_time])
-        basis = (futures_close - spot_close) / spot_close
-        results.append({"name": "binance_vision_basis_sample", "matched_open_time_utc": matched_time,
-                        "spot_close": spot_close, "futures_close": futures_close,
-                        "basis_fraction": basis, "basis_percent": basis * 100,
-                        "spot_month": "2026-10", "futures_month": "2026-10",
-                        "note": "Spot and futures closes matched by identical 1h candle open timestamp."})
+    for symbol in ["ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "PEPEUSDT",
+                   "NEARUSDT", "WLDUSDT", "BCHUSDT", "UNIUSDT", "AAVEUSDT"]:
+        results.append(archive_kline(f"binance_vision_spot_{symbol}_2026_10", "spot", "2026-10", symbol))
+        results.append(archive_kline(f"binance_vision_futures_{symbol}_2026_10", "futures_um", "2026-10", symbol))
+    for symbol in ["BTCUSDT", "ETHUSDT", "SOLUSDT"]:
+        spot = by_name.get("binance_vision_spot_1h_2026_10" if symbol == "BTCUSDT" else f"binance_vision_spot_{symbol}_2026_10", {})
+        fut = by_name.get("binance_vision_um_futures_1h_2026_10" if symbol == "BTCUSDT" else f"binance_vision_futures_{symbol}_2026_10", {})
+        spot_closes = spot.get("close_by_open_time", {})
+        futures_closes = fut.get("close_by_open_time", {})
+        common_times = sorted(set(spot_closes) & set(futures_closes))
+        if common_times:
+            matched_time = common_times[-1]
+            spot_close = float(spot_closes[matched_time])
+            futures_close = float(futures_closes[matched_time])
+            basis = (futures_close - spot_close) / spot_close
+            results.append({"name": f"binance_vision_basis_{symbol}", "matched_open_time_utc": matched_time,
+                            "spot_close": spot_close, "futures_close": futures_close,
+                            "basis_fraction": basis, "basis_percent": basis * 100,
+                            "spot_month": "2026-10", "futures_month": "2026-10",
+                            "note": "Spot and futures closes matched by identical 1h candle open timestamp."})
     for item in results:
         item.pop("close_by_open_time", None)
     report = {"audit_version": 1, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
