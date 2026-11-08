@@ -145,7 +145,7 @@ class PublicMarketData:
         except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError(f"traderspy_provider_error:{path}:{type(e).__name__}") from e
     def discover(self):
         try:
-            r=self.client.get(CG+"/coins/markets",params={"vs_currency":"usd","order":"market_cap_desc","per_page":100,"page":1,"sparkline":"false"},
+            r=self.client.get(CG+"/coins/markets",params={"vs_currency":"usd","order":"market_cap_desc","per_page":250,"page":1,"sparkline":"false"},
                 headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
             r.raise_for_status();xs=r.json()
         except (httpx.HTTPError,ValueError,TypeError) as e:raise DataError("coingecko_discovery_unavailable") from e
