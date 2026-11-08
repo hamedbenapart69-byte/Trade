@@ -33,7 +33,15 @@ class MarketDataFetcher:
     @staticmethod
     def _listing_time_ms(market: dict, provider: str) -> int | None:
         info = market.get("info") or {}
-        keys = ("listTime", "listingTime", "onboardDate", "launchTime", "createdTime")
+        parsed_created = market.get("created")
+        try:
+            parsed_created = int(parsed_created) if parsed_created is not None else None
+        except (TypeError, ValueError):
+            parsed_created = None
+        if parsed_created and parsed_created > 0:
+            return parsed_created
+        keys = ("listTime", "listingTime", "onboardDate", "launchTime", "createdTime",
+                "createTime", "firstOpenDate", "createdAt")
         if provider == "okx":
             keys = ("listTime", "listingTime")
         elif provider == "bybit":
@@ -41,7 +49,7 @@ class MarketDataFetcher:
         elif provider == "binance":
             keys = ("onboardDate", "launchTime", "createdTime")
         elif provider in ("bitget", "mexc"):
-            keys = ("launchTime", "listTime", "createdTime")
+            keys = ("launchTime", "listTime", "createdTime", "createTime", "createdAt")
         elif provider == "kucoinfutures":
             keys = ("firstOpenDate", "launchTime", "createdAt")
         for key in keys:
