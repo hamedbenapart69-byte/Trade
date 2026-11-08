@@ -564,6 +564,19 @@ def _structure(cs,direction,atr_value=None):
         "liquidity_levels":levels,
     }
 
+def _conditional_trigger_hit(direction,candle,trigger,mode="close_direction"):
+    level=float(trigger)
+    if mode=="retest_rejection":
+        if direction=="LONG":
+            return candle.low<=level and candle.close>=level
+        return candle.high>=level and candle.close<=level
+    if mode=="close_above":
+        return candle.close>=level
+    if mode=="close_below":
+        return candle.close<=level
+    return candle.close>=level if direction=="LONG" else candle.close<=level
+
+
 def _audit_checks_passed(audit):
     family=audit.get("strategy_family")
     return all(value is True for key,value in audit.items()
@@ -1026,7 +1039,7 @@ class FuturesSignalEngine:
           "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_trader_ratio_observed_at_ms":top_ls_ts,"traders_observed_at_ms":smart.get("traders_observed_at_ms"),
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart) if positions_fresh else [],
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
-            "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger},
+            "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger,"trigger_mode":(adaptive or {}).get("trigger_mode","close_direction")},
           "expires_at_ms":pu+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
           "limitations":["Selected public futures provider is used read-only; no exchange account or trading credentials are used.",
             "The selected provider does not currently supply verified orderbook spread, exact fees, slippage, venue liquidation price, or on-chain wallet identity.",
@@ -1208,7 +1221,7 @@ def evaluate_outcomes_with_provider(provider=None):
                 for candle in cs15:
                     if candle.open_time<int(row["entry_ts_ms"] or 0):continue
                     if candle.open_time>expiry:break
-                    if (row["direction"]=="LONG" and candle.close>=float(trigger)) or (row["direction"]=="SHORT" and candle.close<=float(trigger)):
+                    if _conditional_trigger_hit(row["direction"],candle,trigger,(d.get("entry_quality") or {}).get("trigger_mode","close_direction")):
                         trigger_candle=candle;break
                 if trigger_candle is None:
                     if now>expiry:
