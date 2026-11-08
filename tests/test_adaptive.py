@@ -1,6 +1,7 @@
 import unittest
 from types import SimpleNamespace
 from app.adaptive import adaptive_setup
+from app.signals import _conditional_trigger_hit
 
 
 def bars(count, high=105.0, low=95.0, close=100.0, interval=3_600_000):
@@ -66,6 +67,16 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertEqual(result["direction"],"LONG")
         self.assertEqual(result["strategy_family"],"BREAKOUT_CONFIRMATION")
         self.assertTrue(result["pattern_confirmed"])
+
+    def test_conditional_short_retest_requires_wick_to_level_and_close_back_below(self):
+        self.assertTrue(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=99.8,close=100.1),100.0,"retest_rejection"))
+        self.assertFalse(_conditional_trigger_hit("SHORT",SimpleNamespace(high=99.9,low=99.1,close=99.4),100.0,"retest_rejection"))
+        self.assertFalse(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=100.1,close=100.4),100.0,"retest_rejection"))
+
+    def test_conditional_long_retest_requires_wick_to_level_and_close_back_above(self):
+        self.assertTrue(_conditional_trigger_hit("LONG",SimpleNamespace(high=101.2,low=99.8,close=100.1),100.0,"retest_rejection"))
+        self.assertFalse(_conditional_trigger_hit("LONG",SimpleNamespace(high=99.9,low=99.1,close=99.4),100.0,"retest_rejection"))
+        self.assertFalse(_conditional_trigger_hit("LONG",SimpleNamespace(high=101.2,low=100.1,close=100.4),100.0,"retest_rejection"))
 
     def test_no_pattern_returns_none_instead_of_forced_direction(self):
         tech={**self.tech,"rsi":50.0,"adx":10.0,"volume_ratio":0.4,
