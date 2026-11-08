@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.1",
-  "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+  "schema_version": "1.2",
+  "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
   "provider": "kucoinfutures",
   "engine": "EMA20_EMA50_ATR14_MVP",
   "manual_trade_only": true,
-  "pipeline_status": "OK",
-  "today_signal_message": null,
+  "pipeline_status": "DEGRADED",
+  "today_signal_message": "پوشش اسکن ناقص است: 26 از 100 نماد",
   "signals": [
     {
       "symbol": "ZEC/USDT:USDT",
@@ -21,7 +21,7 @@
       "ema50": 1279.4096560969,
       "atr14": 15.6064285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -40,7 +40,7 @@
       "ema50": 75876.4559396625,
       "atr14": 154.2642857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -59,7 +59,7 @@
       "ema50": 4.9577e-06,
       "atr14": 6.9e-08,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -78,7 +78,7 @@
       "ema50": 89.6026309395,
       "atr14": 0.4937142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -100,7 +100,7 @@
       "ema50": 254.1083632366,
       "atr14": 2.02,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -122,7 +122,7 @@
       "ema50": 0.1582310814,
       "atr14": 0.0018357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -141,7 +141,7 @@
       "ema50": 2236.5701068421,
       "atr14": 6.8914285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -160,7 +160,7 @@
       "ema50": 130.452224943,
       "atr14": 1.1335714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -182,7 +182,7 @@
       "ema50": 0.7876685331,
       "atr14": 0.0067857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -201,7 +201,7 @@
       "ema50": 223.2366961345,
       "atr14": 1.74,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -220,26 +220,7 @@
       "ema50": 3.6980266632,
       "atr14": 0.0419285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
-    },
-    {
-      "symbol": "UNI/USDT:USDT",
-      "status": "NO_QUALIFIED_SETUP",
-      "side": null,
-      "entry": 7.026,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": 7.0315769629,
-      "ema50": 7.0173092072,
-      "atr14": 0.0507142857,
-      "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -261,13 +242,32 @@
       "ema50": 0.9025843826,
       "atr14": 0.0059214286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
       "reason": "EMA20/EMA50 spread 0.9757% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "UNI/USDT:USDT",
+      "status": "NO_QUALIFIED_SETUP",
+      "side": null,
+      "entry": 7.026,
+      "stop_loss": null,
+      "take_profit": [],
+      "ema20": 7.0315769629,
+      "ema50": 7.0173092072,
+      "atr14": 0.0507142857,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "XRP/USDT:USDT",
@@ -283,7 +283,7 @@
       "ema50": 1.1696161644,
       "atr14": 0.006345,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -305,7 +305,7 @@
       "ema50": 608.7038703799,
       "atr14": 2.6978571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -327,7 +327,7 @@
       "ema50": 0.5972030404,
       "atr14": 0.0040428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -346,7 +346,7 @@
       "ema50": 0.3196447141,
       "atr14": 0.0005114286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -368,7 +368,7 @@
       "ema50": 0.4298117648,
       "atr14": 0.0039357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -390,7 +390,7 @@
       "ema50": 0.8561486031,
       "atr14": 0.0062071429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -412,7 +412,7 @@
       "ema50": 46.8309230072,
       "atr14": 0.5464285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -431,7 +431,7 @@
       "ema50": 695.7281263166,
       "atr14": 2.145,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -450,7 +450,7 @@
       "ema50": 0.2623493245,
       "atr14": 0.0020071429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -472,7 +472,7 @@
       "ema50": 0.3650327655,
       "atr14": 0.0027857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -494,7 +494,7 @@
       "ema50": 0.1819485928,
       "atr14": 0.0011092857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -516,7 +516,7 @@
       "ema50": 8.1939399936,
       "atr14": 0.0937142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -538,7 +538,7 @@
       "ema50": 0.1677639014,
       "atr14": 0.0014492857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -562,7 +562,7 @@
       "ema50": 1279.4096560969,
       "atr14": 15.6064285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -584,7 +584,7 @@
       "ema50": 254.1083632366,
       "atr14": 2.02,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -606,7 +606,7 @@
       "ema50": 0.1582310814,
       "atr14": 0.0018357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -628,7 +628,7 @@
       "ema50": 0.7876685331,
       "atr14": 0.0067857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -650,7 +650,7 @@
       "ema50": 0.9025843826,
       "atr14": 0.0059214286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -672,7 +672,7 @@
       "ema50": 1.1696161644,
       "atr14": 0.006345,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -694,7 +694,7 @@
       "ema50": 608.7038703799,
       "atr14": 2.6978571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -716,7 +716,7 @@
       "ema50": 0.5972030404,
       "atr14": 0.0040428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -738,7 +738,7 @@
       "ema50": 0.4298117648,
       "atr14": 0.0039357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -760,7 +760,7 @@
       "ema50": 0.8561486031,
       "atr14": 0.0062071429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -782,7 +782,7 @@
       "ema50": 46.8309230072,
       "atr14": 0.5464285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -804,7 +804,7 @@
       "ema50": 0.3650327655,
       "atr14": 0.0027857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -826,7 +826,7 @@
       "ema50": 0.1819485928,
       "atr14": 0.0011092857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -848,7 +848,7 @@
       "ema50": 8.1939399936,
       "atr14": 0.0937142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -870,7 +870,7 @@
       "ema50": 0.1677639014,
       "atr14": 0.0014492857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T19:28:21.389235+00:00",
+      "generated_at_utc": "2026-11-08T19:55:36.490243+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -880,7 +880,11 @@
     }
   ],
   "quality": {
+    "symbols_requested": 100,
     "symbols_processed": 26,
+    "symbols_unscanned": 74,
+    "coverage_pct": 26.0,
+    "coverage_status": "PARTIAL",
     "trade_signals": 15,
     "symbols_degraded": 0
   },
