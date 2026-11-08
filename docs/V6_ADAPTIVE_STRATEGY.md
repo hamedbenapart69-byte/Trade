@@ -15,7 +15,7 @@ V6 is a separate adaptive strategy layer built alongside the strict V3/V5 baseli
 ## Strategy families
 
 1. `V3_STRICT_BASELINE`: original strict RSI/volume/EMA/4H/funding rules remain intact as a distinct legacy strategy.
-2. `TREND_PULLBACK`: aligned 1D/4H regime, aligned 1H EMA structure, directional momentum, and a pullback within 1.25 ATR of 1H EMA20. The 15m candle is used for entry confirmation.
+2. `TREND_PULLBACK`: aligned 1D/4H/1H regime, directional EMA20/EMA50 stack, and a pullback within 1.75 ATR of 1H EMA20. If RSI is stretched, the setup remains conditional until RSI resets into its operating band and a completed 15m candle retests 1H EMA20 and closes back in the trend direction.
 3. `BREAKOUT_CONFIRMATION`: completed 1H close beyond the previous 20-bar range with volume ratio at least 1.15 and ADX at least 18; a completed 15m close beyond the breakout level is required for immediate-entry eligibility.
 4. `BREAKOUT_RETEST`: the breakout conditions plus a 15m retest/rejection around the broken level.
 5. `LIQUIDITY_SWEEP_REVERSAL`: a structurally detected 4H liquidity sweep with a completed 15m directional reversal.
@@ -29,7 +29,7 @@ A market that passes data validation but has no qualifying pattern is `WAIT`, no
 - `confidence_v6` is a deterministic ranking score from 0–100, not a probability of winning.
 - The old `confidence_v5` field remains as a compatibility alias during migration.
 - Immediate signals require score at least 70, data grade A/B, completed-candle confirmation, no unresolved daily conflict, verified contract and prices, and all risk gates.
-- Conditional signals require score at least 60 and publish a measurable trigger/confirmation rule.
+- Conditional signals require score at least 60 and publish a measurable trigger/confirmation rule. Trend pullbacks use a retest-and-rejection trigger (wick touches the 1H EMA20 zone, then the 15m close returns in the trend direction); other families use explicit close-above/close-below triggers.
 - The strict V3 baseline keeps its original funding ceiling of 0.05% per 8-hour equivalent. Adaptive families may continue through moderate funding with a score penalty, but funding at or above 0.15% per 8-hour equivalent is a hard safety rejection.
 - Risk remains capped at $4 planned loss, 5x leverage maximum, 0.5%–3.0% stop distance, and at least 2.0 reward-to-risk. Actual losses can exceed planned loss due to slippage, gaps, fees, and funding.
 
