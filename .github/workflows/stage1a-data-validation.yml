@@ -3,12 +3,6 @@ name: Stage 1a Binance Vision Data Validation
 on:
   push:
     branches: [stage1a-binance-vision-data-foundation]
-    paths:
-      - "signal_autopilot/config.json"
-      - "signal_autopilot/modules/stage1a_data_provider.py"
-      - "signal_autopilot/scripts/run_stage1a_provider_probe.py"
-      - "signal_autopilot/tests/test_stage1a_provider.py"
-      - ".github/workflows/stage1a-data-validation.yml"
   workflow_dispatch:
 
 permissions:
