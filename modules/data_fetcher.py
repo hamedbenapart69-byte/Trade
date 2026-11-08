@@ -43,8 +43,12 @@ class MarketDataFetcher:
                     except (TypeError,ValueError): qv=0
                 candidates.append((float(qv or 0),symbol,ticker))
             candidates.sort(reverse=True,key=lambda x:x[0])
+            selected=candidates[:self.limit]
+            btc=next((item for item in candidates if item[1]=="BTC/USDT:USDT"),None)
+            if btc and all(item[1] != btc[1] for item in selected):
+                selected=[btc]+selected[:max(self.limit-1,0)]
             output=[]
-            for qv,symbol,ticker in candidates[:self.limit]:
+            for qv,symbol,ticker in selected:
                 row={"symbol":symbol,"last":ticker.get("last"),"quote_volume_24h":qv,
                     "ticker_timestamp_utc":self._utc_ms(ticker.get("timestamp")),"ohlcv":None,
                     "funding_rate":None,"funding_timestamp_utc":None,"open_interest":None,
