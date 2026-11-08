@@ -164,7 +164,7 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
             "symbols_processed": processed,
             "symbols_unscanned": unscanned,
             "coverage_pct": coverage_pct,
-            "coverage_status": "COMPLETE" if not coverage_degraded else "PARTIAL",
+            "coverage_status": ("UNAVAILABLE" if requested == 0 else ("PARTIAL" if coverage_degraded else "COMPLETE")),
             "trade_signals": len(trade_signals),
             "symbols_degraded": sum(1 for s in signals if s["status"] == "MARKET_DATA_DEGRADED"),
         },
