@@ -756,7 +756,7 @@ def render_output(r):
         ])
         for x in actionable:
             z=x.get("risk") or {}
-            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {fmt(x.get('stop_pct'))} | {fmt(z.get('required_leverage'))}x | {fmt(z.get('planned_loss_usd'))} | {x.get('data_grade','—')} | {fmt(x.get('confidence_v5'))} |")
+            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {fmt(x.get('stop_pct'))} | {fmt(z.get('required_leverage'))}x | {fmt(z.get('planned_loss_usd'))} | {x.get('data_grade','—')} | {fmt(x.get('confidence_v6',x.get('confidence_v5')))} |")
     if conditional:
         if out:out.append("")
         out.extend([
@@ -766,7 +766,7 @@ def render_output(r):
         ])
         for x in conditional:
             entry=x.get("entry_quality") or {}
-            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v5'))} | {x.get('data_grade','—')} |")
+            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v6',x.get('confidence_v5')))} | {x.get('data_grade','—')} |")
     if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/{int(r.get('universe_requested') or 30)}.")
     return "\n".join(out)
 
@@ -825,10 +825,10 @@ class FuturesSignalEngine:
                   "data_grade":"FAIL","confidence_v5":0,"v3_score":None,"reason":f"mandatory_data_error:{type(e).__name__}:{str(e)[:120]}"})
         screened=sum(x["decision"]!="INSUFFICIENT_DATA" for x in candidates)
         actionable=sorted([x for x in candidates if x["decision"] in {"BUY_NOW","SELL_NOW"}],
-          key=lambda x:(-x["confidence_v5"],0 if x["data_grade"]=="A" else 1,not x.get("entry_quality",{}).get("entry_ok",False),
+          key=lambda x:(-x.get("confidence_v6",x["confidence_v5"]),0 if x["data_grade"]=="A" else 1,not x.get("entry_quality",{}).get("entry_ok",False),
             -x.get("risk",{}).get("reward_to_risk",0),-x.get("v5_score_components",{}).get("multi_timeframe",0),
             not x.get("independent_confirmation",{}).get("passed",False)))[:10]
-        conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
+        conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x.get("confidence_v6",x["confidence_v5"]))
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
           "universe_requested":requested,"discovered_assets":len(coins),"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
           "partial_scan":screened<30,"extended_partial":bool(extended and len(selected)<min(100,len(eligible))),
@@ -1015,7 +1015,7 @@ class FuturesSignalEngine:
         return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
           "entry_type":entry_type,"strategy_family":strategy_family,"strategy_score":None if not adaptive else adaptive.get("strategy_score"),"strategy_evidence":[] if not adaptive else adaptive.get("strategy_evidence",[]),"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["rounded_stop_pct"],"risk":risk,
-          "data_grade":grade,"confidence_v5":score,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
+          "data_grade":grade,"confidence_v6":score,"confidence_v5":score,"v6_score_components":parts,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
           "structure":st,"market_regime":market_regime,"volatility_regime":vol_regime,"derivatives":{"funding_rate":funding,"funding_interval_hours":interval_hours,
             "open_interest_usd":oi,"open_interest_change_1h_pct":oi1h,"open_interest_change_4h_pct":oi4h,"open_interest_change_24h_pct":oi24h,
             "price_change_24h_pct":price_change,"global_long_short_ratio":ls,"global_long_short_ratio_observed_at_ms":ls_ts,
