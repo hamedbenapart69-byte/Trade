@@ -121,19 +121,22 @@ class Stage1Collector:
         ]
         results = []
         for name, path, params in checks:
+            required = name != "open_interest_history"
             try:
                 response = self.http.get(base + path, params=params)
                 response.raise_for_status()
                 payload = response.json()
                 rows = payload.get("data") if isinstance(payload,dict) else None
-                passed = isinstance(rows,list) and payload.get("code") == "0" and bool(rows)
-                results.append({"dataset":name,"passed":passed,"http_status":response.status_code,
-                                "row_count":len(rows or [])})
+                passed = isinstance(rows,list) and payload.get("code") == "0" and (bool(rows) or not required)
+                results.append({"dataset":name,"required":required,"passed":passed,
+                                "http_status":response.status_code,"row_count":len(rows or [])})
             except Exception as exc:
-                results.append({"dataset":name,"passed":False,"error":type(exc).__name__,
-                                "detail":str(exc)[:160]})
-        return {"provider":"OKX public REST","passed":sum(x["passed"] for x in results),
-                "total":len(results),"checks":results}
+                results.append({"dataset":name,"required":required,"passed":False,
+                                "error":type(exc).__name__,"detail":str(exc)[:160]})
+        required_rows = [x for x in results if x["required"]]
+        return {"provider":"OKX public REST","passed":all(x["passed"] for x in required_rows),
+                "required_passed":sum(x["passed"] for x in required_rows),
+                "required_total":len(required_rows),"checks":results}
 
     def probe_bybit(self) -> dict:
         url = "https://api.bybit.com/v5/market/time"
@@ -223,7 +226,7 @@ class Stage1Collector:
             if last_ts < cursor:
                 raise RuntimeError(f"funding_pagination_stalled:{symbol}")
             cursor = last_ts + 1
-            if len(batch) < 2:
+            if len(batch) < funding_limit:
                 break
         return [collected[k] for k in sorted(collected)]
 
@@ -388,7 +391,8 @@ class Stage1Collector:
             },
             "fear_greed":{"rows":len(fng),"first_timestamp_utc":self._utc(fng[0]["timestamp"]) if fng else None,
                           "last_timestamp_utc":self._utc(fng[-1]["timestamp"]) if fng else None,"error":fng_error},
-            "binance_probe":probe,"bybit_probe":bybit_probe,"symbols":reports,
+            "primary_provider":self.provider,"primary_provider_probe":probe,
+            "bybit_probe":bybit_probe,"symbols":reports,
             "limitations":{
                 "open_interest":f"{self.provider_name} historical open-interest coverage is limited to the latest 30 days in this Stage 1 collector; not a 2-year series.",
                 "fear_greed":"Daily series, not hourly. No synthetic interpolation is performed.",
