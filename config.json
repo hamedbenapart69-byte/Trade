@@ -1,0 +1,21 @@
+{
+  "provider": "okx",
+  "fallback_provider": "coingecko_spot_only",
+  "market_type": "linear_usdt_perpetual",
+  "symbols_target": 100,
+  "timeframe": "1h",
+  "ohlcv_limit": 70,
+  "funding_extreme_threshold": 0.0005,
+  "engine": "EMA20_EMA50_FUNDING_PLACEHOLDER",
+  "cron_utc": "0 */4 * * *",
+  "manual_trade_only": true,
+  "exchange_credentials_required": false,
+  "telegram": {
+    "enabled_when_secrets_present": true,
+    "send_only_tier_a": true,
+    "token_env": "TELEGRAM_BOT_TOKEN",
+    "chat_id_env": "TELEGRAM_CHAT_ID"
+  },
+  "unavailable_data": ["order_book", "liquidation", "basis"],
+  "open_interest_history_days": 30
+}
