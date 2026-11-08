@@ -112,14 +112,17 @@ class Stage1Collector:
         self.exchange.load_markets()
         tickers = self.exchange.fetch_tickers()
         candidates = []
-        for symbol, market in self.exchange.markets.items():
+        btc_unified = None
+        for unified_symbol, market in self.exchange.markets.items():
+            if market.get("id") == "BTCUSDT":
+                btc_unified = unified_symbol
             if not market.get("active") or not market.get("swap") or not market.get("linear"):
                 continue
             if market.get("quote") != "USDT" or market.get("settle") != "USDT":
                 continue
             if not market.get("contract"):
                 continue
-            ticker = tickers.get(symbol) or {}
+            ticker = tickers.get(unified_symbol) or {}
             quote_volume = ticker.get("quoteVolume")
             if quote_volume is None:
                 info = ticker.get("info") or {}
@@ -129,11 +132,11 @@ class Stage1Collector:
             except (TypeError, ValueError):
                 volume = 0
             if volume > 0:
-                candidates.append((volume, market["symbol"].replace("/", "").replace(":USDT","")))
+                candidates.append((volume, unified_symbol))
         candidates.sort(reverse=True)
         selected = [symbol for _,symbol in candidates[:target_count]]
-        if "BTCUSDT" not in selected:
-            selected = ["BTCUSDT"] + selected[:max(target_count-1,0)]
+        if btc_unified and btc_unified not in selected:
+            selected = [btc_unified] + selected[:max(target_count-1,0)]
         return list(dict.fromkeys(selected))
 
     def fetch_ohlcv(self, symbol: str, since_ms: int, until_ms: int, timeframe: str = "1h") -> list[dict]:
@@ -161,6 +164,7 @@ class Stage1Collector:
     def fetch_funding(self, symbol: str, since_ms: int, until_ms: int) -> list[dict]:
         cursor = since_ms
         collected = {}
+        market_id = self.exchange.market(symbol)["id"]
         while cursor < until_ms:
             batch = self.exchange.fetch_funding_rate_history(symbol, since=cursor, limit=1000)
             if not batch:
@@ -169,7 +173,7 @@ class Stage1Collector:
                 ts = int(item.get("timestamp") or 0)
                 if since_ms <= ts < until_ms:
                     collected[ts] = {
-                        "timestamp":ts,"symbol":symbol,
+                        "timestamp":ts,"symbol":market_id,
                         "funding_rate":float(item.get("fundingRate") or 0),
                         "mark_price":float(item.get("markPrice") or 0) if item.get("markPrice") else None,
                     }
@@ -184,12 +188,13 @@ class Stage1Collector:
     def fetch_open_interest_history(self, symbol: str, since_ms: int, until_ms: int) -> list[dict]:
         # Binance USD-M openInterestHist exposes only the latest month.
         start = max(since_ms, until_ms - 30*MS_DAY)
+        market_id = self.exchange.market(symbol)["id"]
         rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
-                                     {"symbol":symbol,"period":"1h","limit":500,
+                                     {"symbol":market_id,"period":"1h","limit":500,
                                       "startTime":start,"endTime":until_ms})
         out=[]
         for item in rows or []:
-            out.append({"timestamp":int(item["timestamp"]),"symbol":symbol,
+            out.append({"timestamp":int(item["timestamp"]),"symbol":market_id,
                         "open_interest":float(item["sumOpenInterest"]),
                         "open_interest_value_usd":float(item["sumOpenInterestValue"])})
         return sorted(out,key=lambda x:x["timestamp"])
@@ -224,13 +229,14 @@ class Stage1Collector:
         expected_ohlcv_rows = max(1, (now_ms-since_ms)//MS_HOUR)
         for symbol in symbols:
             try:
+                market_id = self.exchange.market(symbol)["id"]
                 ohlcv = self.fetch_ohlcv(symbol,since_ms,now_ms,"1h")
                 funding = self.fetch_funding(symbol,since_ms,now_ms)
                 oi = self.fetch_open_interest_history(symbol,since_ms,now_ms)
-                safe = symbol.replace("/","_")
+                safe = market_id.replace("/","_")
                 gaps = gap_report(ohlcv)
                 gaps["coverage_of_requested_window_pct"] = round(100*len(ohlcv)/expected_ohlcv_rows, 3)
-                reports[symbol] = {
+                reports[market_id] = {
                     "ohlcv":gaps,
                     "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
                                "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None},
@@ -243,7 +249,7 @@ class Stage1Collector:
                     },
                 }
             except Exception as exc:
-                reports[symbol]={"error":type(exc).__name__,"detail":str(exc)[:240]}
+                reports[self.exchange.market(symbol)["id"] if symbol in self.exchange.markets else symbol]={"error":type(exc).__name__,"detail":str(exc)[:240]}
         fng=[]
         fng_error=None
         try:
