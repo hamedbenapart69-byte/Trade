@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+  "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
   "provider": "okx",
   "pipeline_status": "OK",
   "engine": "EMA20_EMA50_FUNDING_PLACEHOLDER",
@@ -23,7 +23,7 @@
     "value": "28",
     "value_classification": "Fear",
     "timestamp": "1794096000",
-    "time_until_update": "42405"
+    "time_until_update": "42255"
   },
   "quality": {
     "symbols_requested": 100,
@@ -54,10 +54,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 75848.943441855,
       "ema50": 75869.0977849255,
-      "funding_rate": 5.853469355e-06
+      "funding_rate": 5.9131146844e-06
     },
     {
       "symbol": "ETH/USDT:USDT",
@@ -82,10 +82,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 2236.7481170518,
       "ema50": 2237.4122208123,
-      "funding_rate": 1.73759301103e-05
+      "funding_rate": 1.72912630279e-05
     },
     {
       "symbol": "ZEC/USDT:USDT",
@@ -110,10 +110,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1266.9769380985,
       "ema50": 1278.265158225,
-      "funding_rate": -0.0001059691022866
+      "funding_rate": -0.0001153498622268
     },
     {
       "symbol": "SOL/USDT:USDT",
@@ -138,7 +138,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 89.3805337176,
       "ema50": 89.6243361648,
       "funding_rate": 0.0001
@@ -166,10 +166,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0055122651,
       "ema50": 0.0049489081,
-      "funding_rate": 0.0003378149686724
+      "funding_rate": 0.0003351159273613
     },
     {
       "symbol": "SNDK/USDT:USDT",
@@ -194,7 +194,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 835.568971546,
       "ema50": 840.2093120873,
       "funding_rate": 0.0
@@ -222,10 +222,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.1632405206,
       "ema50": 1.1752332973,
-      "funding_rate": 2.62981086531e-05
+      "funding_rate": 2.66346222995e-05
     },
     {
       "symbol": "ONE/USDT:USDT",
@@ -250,10 +250,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0020056641,
       "ema50": 0.0017990084,
-      "funding_rate": -0.0030236014905433
+      "funding_rate": -0.0030003027062949
     },
     {
       "symbol": "PEPE/USDT:USDT",
@@ -278,7 +278,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 4.8977e-06,
       "ema50": 4.9098e-06,
       "funding_rate": 0.0001
@@ -306,10 +306,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 46.0564702087,
       "ema50": 45.8730454863,
-      "funding_rate": 0.0005207083723049
+      "funding_rate": 0.0005141877415186
     },
     {
       "symbol": "PUMP/USDT:USDT",
@@ -334,10 +334,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0036920732,
       "ema50": 0.0037892621,
-      "funding_rate": 5.16635262253e-05
+      "funding_rate": 5.01574302665e-05
     },
     {
       "symbol": "HYPE/USDT:USDT",
@@ -362,10 +362,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 77.4377802063,
       "ema50": 77.7576478202,
-      "funding_rate": -6.97309017725e-05
+      "funding_rate": -7.14279600587e-05
     },
     {
       "symbol": "DOGE/USDT:USDT",
@@ -390,7 +390,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0713096569,
       "ema50": 0.0716609101,
       "funding_rate": 0.0001
@@ -418,10 +418,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 3.698668329,
       "ema50": 3.7034630837,
-      "funding_rate": -9.42151208148e-05
+      "funding_rate": -9.32936556574e-05
     },
     {
       "symbol": "UNI/USDT:USDT",
@@ -446,10 +446,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 7.070757055,
       "ema50": 7.0268129058,
-      "funding_rate": -3.14280780799e-05
+      "funding_rate": -3.05668126167e-05
     },
     {
       "symbol": "LIT/USDT:USDT",
@@ -474,10 +474,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 3.2749055643,
       "ema50": 3.3232451228,
-      "funding_rate": -4.03472560161e-05
+      "funding_rate": -3.77816030175e-05
     },
     {
       "symbol": "TRUMP/USDT:USDT",
@@ -502,10 +502,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.1779032674,
       "ema50": 1.1884119847,
-      "funding_rate": -0.0001197032775675
+      "funding_rate": -0.0001208987577474
     },
     {
       "symbol": "BCH/USDT:USDT",
@@ -530,10 +530,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 249.3207147582,
       "ema50": 256.8624687914,
-      "funding_rate": -0.0001397417848095
+      "funding_rate": -0.0001411445562585
     },
     {
       "symbol": "WLD/USDT:USDT",
@@ -558,10 +558,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.3313663061,
       "ema50": 0.3359974617,
-      "funding_rate": 6.17262143009e-05
+      "funding_rate": 5.92459845592e-05
     },
     {
       "symbol": "CAP/USDT:USDT",
@@ -586,10 +586,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1011826067,
       "ema50": 0.1023239391,
-      "funding_rate": 0.0001524712782862
+      "funding_rate": 0.0001574178344208
     },
     {
       "symbol": "ACT/USDT:USDT",
@@ -614,7 +614,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0112554069,
       "ema50": 0.0107539888,
       "funding_rate": 5e-05
@@ -642,10 +642,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1560273856,
       "ema50": 0.1592236657,
-      "funding_rate": 1.67917771883e-05
+      "funding_rate": 1.47616287053e-05
     },
     {
       "symbol": "XAU/USDT:USDT",
@@ -670,7 +670,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 4074.9645337258,
       "ema50": 4077.4119965347,
       "funding_rate": 0.0
@@ -698,10 +698,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1685409443,
       "ema50": 0.1668473516,
-      "funding_rate": -9.81238512955e-05
+      "funding_rate": -9.85854876128e-05
     },
     {
       "symbol": "CL/USDT:USDT",
@@ -726,7 +726,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 90.4543840009,
       "ema50": 90.4637752232,
       "funding_rate": 0.0
@@ -754,10 +754,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 130.7452926361,
       "ema50": 130.5835933533,
-      "funding_rate": -4.91966257931e-05
+      "funding_rate": -4.94413127003e-05
     },
     {
       "symbol": "MU/USDT:USDT",
@@ -782,7 +782,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 693.6441022728,
       "ema50": 692.3506538163,
       "funding_rate": 0.0
@@ -810,7 +810,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.31332096,
       "ema50": 0.3003310322,
       "funding_rate": 5e-05
@@ -838,10 +838,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.8535476475,
       "ema50": 0.8571283348,
-      "funding_rate": -2.08216682584e-05
+      "funding_rate": -2.12683775668e-05
     },
     {
       "symbol": "FIL/USDT:USDT",
@@ -866,10 +866,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.7828726846,
       "ema50": 0.7928480095,
-      "funding_rate": 8.98521513539e-05
+      "funding_rate": 8.84821787726e-05
     },
     {
       "symbol": "SKHYNIX/USDT:USDT",
@@ -894,7 +894,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 873.6332925799,
       "ema50": 870.1268953101,
       "funding_rate": 0.0
@@ -922,7 +922,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 10.7788836887,
       "ema50": 10.7971201041,
       "funding_rate": 0.0001
@@ -950,10 +950,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0090505659,
       "ema50": 0.0091875492,
-      "funding_rate": -0.0004594304132323
+      "funding_rate": -0.0004402418575747
     },
     {
       "symbol": "BNB/USDT:USDT",
@@ -978,10 +978,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 696.7386483996,
       "ema50": 695.306887052,
-      "funding_rate": 3.57001761635e-05
+      "funding_rate": 3.61468353542e-05
     },
     {
       "symbol": "PONS/USDT:USDT",
@@ -1006,7 +1006,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1735245857,
       "ema50": 0.1808542343,
       "funding_rate": 5e-05
@@ -1034,10 +1034,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1265907057,
       "ema50": 0.1263844343,
-      "funding_rate": -9.594573536e-06
+      "funding_rate": -1.32177488431e-05
     },
     {
       "symbol": "BTW/USDT:USDT",
@@ -1062,10 +1062,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.1941452698,
       "ema50": 1.1824029182,
-      "funding_rate": -0.000168725379378
+      "funding_rate": -0.000149778959343
     },
     {
       "symbol": "INJ/USDT:USDT",
@@ -1090,10 +1090,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 8.1820482581,
       "ema50": 8.2029010607,
-      "funding_rate": 5.6289573889e-06
+      "funding_rate": 7.1015314338e-06
     },
     {
       "symbol": "DGAI/USDT:USDT",
@@ -1118,7 +1118,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.7611602088,
       "ema50": 0.7604021182,
       "funding_rate": 5e-05
@@ -1146,7 +1146,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 102.3562841491,
       "ema50": 103.4803393308,
       "funding_rate": 5e-05
@@ -1174,7 +1174,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0001353205,
       "ema50": 0.0001326302,
       "funding_rate": 5e-05
@@ -1202,10 +1202,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1807558078,
       "ema50": 0.1822044396,
-      "funding_rate": -8.0543740596e-06
+      "funding_rate": -9.3676081502e-06
     },
     {
       "symbol": "XPL/USDT:USDT",
@@ -1230,10 +1230,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.056496824,
       "ema50": 0.0571329168,
-      "funding_rate": -4.76951211273e-05
+      "funding_rate": -5.30438593868e-05
     },
     {
       "symbol": "STRK/USDT:USDT",
@@ -1258,7 +1258,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0398328258,
       "ema50": 0.0401728906,
       "funding_rate": 5e-05
@@ -1286,10 +1286,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 71.0244188085,
       "ema50": 71.6469477239,
-      "funding_rate": -0.0003675714687614
+      "funding_rate": -0.0003595158111901
     },
     {
       "symbol": "ONDO/USDT:USDT",
@@ -1314,10 +1314,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.3617655746,
       "ema50": 0.365744253,
-      "funding_rate": 0.0001
+      "funding_rate": 9.94003625686e-05
     },
     {
       "symbol": "SPCX/USDT:USDT",
@@ -1342,7 +1342,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 135.0942638117,
       "ema50": 133.1421515343,
       "funding_rate": 0.0
@@ -1370,38 +1370,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 3.2634957912,
       "ema50": 3.3094518176,
       "funding_rate": 0.0
-    },
-    {
-      "symbol": "LTC/USDT:USDT",
-      "status": "NO_QUALIFIED_SETUP",
-      "side": null,
-      "tier": "NONE",
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "reason": "No qualified EMA/funding placeholder setup",
-      "lfs": "NOT_CALCULABLE (missing order book)",
-      "nss": "NOT_CALCULATED",
-      "hypothesis": "EMA20/EMA50 + funding placeholder only",
-      "falsification": "A completed 1h candle invalidates the EMA cross or funding condition",
-      "confidence": "NOT_CALIBRATED",
-      "ev_net": "NOT_CALIBRATED",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "order_book": "UNAVAILABLE",
-      "liquidation": "UNAVAILABLE",
-      "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
-      "ema20": 52.0565041111,
-      "ema50": 52.2042107975,
-      "funding_rate": 3.0073979428e-06
     },
     {
       "symbol": "PIEVERSE/USDT:USDT",
@@ -1426,10 +1398,38 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.4194314497,
       "ema50": 1.392560978,
       "funding_rate": 5e-05
+    },
+    {
+      "symbol": "LTC/USDT:USDT",
+      "status": "NO_QUALIFIED_SETUP",
+      "side": null,
+      "tier": "NONE",
+      "entry": null,
+      "stop_loss": null,
+      "take_profit": [],
+      "reason": "No qualified EMA/funding placeholder setup",
+      "lfs": "NOT_CALCULABLE (missing order book)",
+      "nss": "NOT_CALCULATED",
+      "hypothesis": "EMA20/EMA50 + funding placeholder only",
+      "falsification": "A completed 1h candle invalidates the EMA cross or funding condition",
+      "confidence": "NOT_CALIBRATED",
+      "ev_net": "NOT_CALIBRATED",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "order_book": "UNAVAILABLE",
+      "liquidation": "UNAVAILABLE",
+      "basis": "UNAVAILABLE",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
+      "ema20": 52.0565041111,
+      "ema50": 52.2042107975,
+      "funding_rate": 2.5432300772e-06
     },
     {
       "symbol": "APR/USDT:USDT",
@@ -1454,10 +1454,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0411502304,
       "ema50": 0.0417319665,
-      "funding_rate": 0.0005054143356018
+      "funding_rate": 0.0004999509592755
     },
     {
       "symbol": "AVAX/USDT:USDT",
@@ -1482,10 +1482,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 8.1957642794,
       "ema50": 8.243072504,
-      "funding_rate": 3.87343238271e-05
+      "funding_rate": 3.93548847812e-05
     },
     {
       "symbol": "USELESS/USDT:USDT",
@@ -1510,10 +1510,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1322122835,
       "ema50": 0.1320744303,
-      "funding_rate": 0.0002131654602598
+      "funding_rate": 0.0002109757685758
     },
     {
       "symbol": "BEAT/USDT:USDT",
@@ -1538,10 +1538,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1025869077,
       "ema50": 0.1040534929,
-      "funding_rate": 0.0003074838512165
+      "funding_rate": 0.0003022512704351
     },
     {
       "symbol": "ANTHROPIC/USDT:USDT",
@@ -1566,7 +1566,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 140.1310377078,
       "ema50": 141.3887111985,
       "funding_rate": 0.0
@@ -1594,10 +1594,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 222.7347844246,
       "ema50": 222.4773098645,
-      "funding_rate": -2.39111055425e-05
+      "funding_rate": -2.51589197917e-05
     },
     {
       "symbol": "MEGA/USDT:USDT",
@@ -1622,10 +1622,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0501441386,
       "ema50": 0.0490367429,
-      "funding_rate": 7.4489990645e-06
+      "funding_rate": 3.6242803761e-06
     },
     {
       "symbol": "DOT/USDT:USDT",
@@ -1650,10 +1650,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.8971955572,
       "ema50": 0.904800472,
-      "funding_rate": -0.0002543480162494
+      "funding_rate": -0.0002536011402388
     },
     {
       "symbol": "PENGU/USDT:USDT",
@@ -1678,10 +1678,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.006377949,
       "ema50": 0.0064533845,
-      "funding_rate": -6.6856335316e-05
+      "funding_rate": -6.95485518305e-05
     },
     {
       "symbol": "STX/USDT:USDT",
@@ -1706,10 +1706,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.3390046212,
       "ema50": 0.3398772654,
-      "funding_rate": 7.39041560947e-05
+      "funding_rate": 6.45106532121e-05
     },
     {
       "symbol": "KORU/USDT:USDT",
@@ -1734,7 +1734,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 7.0286473812,
       "ema50": 7.0193770901,
       "funding_rate": 0.0
@@ -1762,10 +1762,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0015794973,
       "ema50": 0.0015438106,
-      "funding_rate": -0.0009363383876738
+      "funding_rate": -0.0009570789963795
     },
     {
       "symbol": "SKHY/USDT:USDT",
@@ -1790,7 +1790,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 129.0352198012,
       "ema50": 128.5273015699,
       "funding_rate": 0.0
@@ -1818,7 +1818,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 187.6981451313,
       "ema50": 187.4035376924,
       "funding_rate": 0.0
@@ -1846,10 +1846,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0462701743,
       "ema50": 0.0462977378,
-      "funding_rate": 1.613260734e-05
+      "funding_rate": 1.64248353992e-05
     },
     {
       "symbol": "TIA/USDT:USDT",
@@ -1874,10 +1874,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.4330969532,
       "ema50": 0.4323350411,
-      "funding_rate": -4.0631194931e-06
+      "funding_rate": -3.077762737e-07
     },
     {
       "symbol": "QQQ/USDT:USDT",
@@ -1902,7 +1902,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 657.1891575934,
       "ema50": 657.0139358206,
       "funding_rate": 0.0
@@ -1930,7 +1930,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.2090518021,
       "ema50": 0.2208921662,
       "funding_rate": 5e-05
@@ -1958,7 +1958,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 128.2255957488,
       "ema50": 128.4892160069,
       "funding_rate": 0.0
@@ -1986,7 +1986,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 47.0205669851,
       "ema50": 46.6124043492,
       "funding_rate": 5e-05
@@ -2014,10 +2014,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1508676721,
       "ema50": 0.1520732556,
-      "funding_rate": -3.16034301979e-05
+      "funding_rate": -3.02749407967e-05
     },
     {
       "symbol": "VVV/USDT:USDT",
@@ -2042,7 +2042,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 20.5250221741,
       "ema50": 20.6577941135,
       "funding_rate": 5e-05
@@ -2070,10 +2070,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0120048993,
       "ema50": 0.0124512499,
-      "funding_rate": -0.0019325362163042
+      "funding_rate": -0.0019217428080581
     },
     {
       "symbol": "ZRO/USDT:USDT",
@@ -2098,10 +2098,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.6183279144,
       "ema50": 1.6225389404,
-      "funding_rate": -1.05950816139e-05
+      "funding_rate": -1.51320079177e-05
     },
     {
       "symbol": "GRAM/USDT:USDT",
@@ -2126,10 +2126,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.0678108723,
       "ema50": 1.0812276103,
-      "funding_rate": -6.8850005265e-05
+      "funding_rate": -7.01623915632e-05
     },
     {
       "symbol": "AERO/USDT:USDT",
@@ -2154,10 +2154,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.6076491422,
       "ema50": 0.6067582925,
-      "funding_rate": -0.0002915160714669
+      "funding_rate": -0.0002908283159656
     },
     {
       "symbol": "INTC/USDT:USDT",
@@ -2182,7 +2182,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 56.2888366543,
       "ema50": 55.8193265255,
       "funding_rate": 0.0
@@ -2210,10 +2210,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0549095782,
       "ema50": 0.0531437674,
-      "funding_rate": -0.0033503384365181
+      "funding_rate": -0.0033051241432961
     },
     {
       "symbol": "TRX/USDT:USDT",
@@ -2238,10 +2238,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.320120545,
       "ema50": 0.3193794336,
-      "funding_rate": -5.62796194465e-05
+      "funding_rate": -5.58248619025e-05
     },
     {
       "symbol": "EDGE/USDT:USDT",
@@ -2266,7 +2266,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.3286603285,
       "ema50": 0.3222201185,
       "funding_rate": 5e-05
@@ -2294,7 +2294,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 97.4937732322,
       "ema50": 97.6846585344,
       "funding_rate": 0.0
@@ -2322,7 +2322,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 4.4775e-06,
       "ema50": 4.5071e-06,
       "funding_rate": 0.0001
@@ -2350,10 +2350,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1019025463,
       "ema50": 0.1028699701,
-      "funding_rate": -5.63708583e-07
+      "funding_rate": -6.8292192547e-06
     },
     {
       "symbol": "ETHFI/USDT:USDT",
@@ -2378,10 +2378,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.5911856016,
       "ema50": 0.5823942903,
-      "funding_rate": -3.20538565346e-05
+      "funding_rate": -3.15362153814e-05
     },
     {
       "symbol": "ASTER/USDT:USDT",
@@ -2406,7 +2406,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.6799528371,
       "ema50": 0.6822083472,
       "funding_rate": 5e-05
@@ -2434,7 +2434,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0868597498,
       "ema50": 0.0895892867,
       "funding_rate": 5e-05
@@ -2462,7 +2462,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.2643968902,
       "ema50": 0.262891469,
       "funding_rate": 0.0001
@@ -2490,10 +2490,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 1.7879516071,
       "ema50": 1.772621834,
-      "funding_rate": 4.96285887637e-05
+      "funding_rate": 5.54509348666e-05
     },
     {
       "symbol": "APT/USDT:USDT",
@@ -2518,38 +2518,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.5952718965,
       "ema50": 0.5985614319,
-      "funding_rate": -9.19479213558e-05
-    },
-    {
-      "symbol": "GOOGL/USDT:USDT",
-      "status": "WATCHLIST",
-      "side": null,
-      "tier": "NONE",
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "reason": "EMA20 is close to EMA50; no qualified trigger",
-      "lfs": "NOT_CALCULABLE (missing order book)",
-      "nss": "NOT_CALCULATED",
-      "hypothesis": "EMA20/EMA50 + funding placeholder only",
-      "falsification": "A completed 1h candle invalidates the EMA cross or funding condition",
-      "confidence": "NOT_CALIBRATED",
-      "ev_net": "NOT_CALIBRATED",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "order_book": "UNAVAILABLE",
-      "liquidation": "UNAVAILABLE",
-      "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
-      "ema20": 285.1403541637,
-      "ema50": 284.972029521,
-      "funding_rate": 0.0
+      "funding_rate": -9.59749816136e-05
     },
     {
       "symbol": "MAGIC/USDT:USDT",
@@ -2574,10 +2546,38 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0851238977,
       "ema50": 0.0858101785,
-      "funding_rate": -3.17931408218e-05
+      "funding_rate": -4.71128367427e-05
+    },
+    {
+      "symbol": "GOOGL/USDT:USDT",
+      "status": "WATCHLIST",
+      "side": null,
+      "tier": "NONE",
+      "entry": null,
+      "stop_loss": null,
+      "take_profit": [],
+      "reason": "EMA20 is close to EMA50; no qualified trigger",
+      "lfs": "NOT_CALCULABLE (missing order book)",
+      "nss": "NOT_CALCULATED",
+      "hypothesis": "EMA20/EMA50 + funding placeholder only",
+      "falsification": "A completed 1h candle invalidates the EMA cross or funding condition",
+      "confidence": "NOT_CALIBRATED",
+      "ev_net": "NOT_CALIBRATED",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "order_book": "UNAVAILABLE",
+      "liquidation": "UNAVAILABLE",
+      "basis": "UNAVAILABLE",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
+      "ema20": 285.1403541637,
+      "ema50": 284.972029521,
+      "funding_rate": 0.0
     },
     {
       "symbol": "UP/USDT:USDT",
@@ -2602,7 +2602,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1089187924,
       "ema50": 0.1072508097,
       "funding_rate": 5e-05
@@ -2630,10 +2630,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0676687144,
       "ema50": 0.0684532156,
-      "funding_rate": -0.0001940540696203
+      "funding_rate": -0.0002007970806628
     },
     {
       "symbol": "DOOD/USDT:USDT",
@@ -2658,7 +2658,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0017155754,
       "ema50": 0.0017214329,
       "funding_rate": 5e-05
@@ -2686,7 +2686,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0471723735,
       "ema50": 0.0473859319,
       "funding_rate": 5e-05
@@ -2714,7 +2714,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.5038883424,
       "ema50": 0.5022382144,
       "funding_rate": 5e-05
@@ -2742,7 +2742,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0188528761,
       "ema50": 0.0190311285,
       "funding_rate": 5e-05
@@ -2770,7 +2770,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.073435271,
       "ema50": 0.074227005,
       "funding_rate": 5e-05
@@ -2798,7 +2798,7 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.1278973644,
       "ema50": 0.1279541616,
       "funding_rate": 5e-05
@@ -2826,10 +2826,10 @@
       "order_book": "UNAVAILABLE",
       "liquidation": "UNAVAILABLE",
       "basis": "UNAVAILABLE",
-      "generated_at_utc": "2026-11-08T12:13:16.019697+00:00",
+      "generated_at_utc": "2026-11-08T12:15:45.542711+00:00",
       "ema20": 0.0400253356,
       "ema50": 0.0396900733,
-      "funding_rate": -1.78030624754e-05
+      "funding_rate": -1.72821853854e-05
     }
   ]
 }
