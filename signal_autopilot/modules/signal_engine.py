@@ -53,6 +53,12 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "confidence": "NOT_CALIBRATED",
         "generated_at_utc": generated_at_utc,
         "data_availability": availability,
+        "ticker_timestamp_utc": row.get("ticker_timestamp_utc"),
+        "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+        "timeframe": "1H",
+        "hypothesis": None,
+        "falsification": None,
+        "chart_candles": [],
     }
     if availability.get("ohlcv") != "OK" or len(candles) < 52:
         base["reason"] = "OHLCV unavailable or insufficient"
@@ -65,6 +71,22 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             base["reason"] = "Latest completed 1h candle is stale or from the future"
             return base
 
+        # ورود باید از قیمت لحظه‌ای قرارداد فیوچرز و زمان‌دار باشد، نه close قدیمی کندل.
+        ticker_time = row.get("ticker_timestamp_utc")
+        ticker_price = row.get("last")
+        if ticker_time is None or ticker_price is None:
+            base["reason"] = "Fresh futures ticker price/timestamp unavailable"
+            return base
+        ticker_ms = datetime.fromisoformat(str(ticker_time).replace("Z", "+00:00")).timestamp() * 1000
+        ticker_age_ms = now_ms - ticker_ms
+        if ticker_age_ms < 0 or ticker_age_ms > 15 * 60 * 1000:
+            base["reason"] = "Futures ticker is stale or timestamp is from the future"
+            return base
+        entry = float(ticker_price)
+        if entry <= 0:
+            base["reason"] = "Invalid futures ticker price"
+            return base
+
         closes = [float(candle["close"]) for candle in candles]
         fast = ema(closes, 20)
         slow = ema(closes, 50)
@@ -75,7 +97,6 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
 
         ema20_value = fast[-1]
         ema50_value = slow[-1]
-        entry = closes[-1]
         spread = abs(ema20_value - ema50_value) / max(abs(ema50_value), 1e-12)
         base.update(
             ema20=round(ema20_value, 10),
@@ -104,7 +125,10 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             side=side,
             stop_loss=round(stop, 10),
             take_profit=[round(target, 10) for target in targets],
-            reason=f"EMA20/EMA50 spread {spread:.4%} exceeds 0.5%; ATR14 risk levels",
+            reason=f"EMA20 {"بالاتر" if side == "BUY" else "پایین‌تر"} از EMA50 است و فاصله آن‌ها {spread:.4%} است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
+            hypothesis=f"ادامه حرکت در جهت روند 1H؛ EMA20 {'بالای' if side == 'BUY' else 'پایین'} EMA50 و فاصله نسبی {spread:.4%} است.",
+            falsification=f"بسته‌شدن کندل 1H {"پایین‌تر" if side == "BUY" else "بالاتر"} از EMA50 یا فعال‌شدن حدضرر {round(stop, 10)} فرضیه را باطل می‌کند.",
+            chart_candles=candles[-70:],
         )
         return base
     except (KeyError, TypeError, ValueError, ZeroDivisionError) as exc:

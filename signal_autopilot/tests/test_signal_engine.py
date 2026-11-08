@@ -26,6 +26,8 @@ class EmaAtrSignalTests(unittest.TestCase):
             "symbol": "BTC/USDT:USDT",
             "availability": {"ohlcv": "OK"},
             "ohlcv": candles,
+            "last": candles[-1]["close"],
+            "ticker_timestamp_utc": "2026-11-08T15:29:00+00:00",
         }
 
     def test_long_signal_has_entry_stop_and_two_targets(self):
@@ -47,6 +49,15 @@ class EmaAtrSignalTests(unittest.TestCase):
     def test_flat_market_has_no_qualified_setup(self):
         result = build_signal(self.make_row("flat"), "2026-11-08T19:00:00+03:30")
         self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+
+
+    def test_missing_live_futures_ticker_is_degraded(self):
+        row = self.make_row("up")
+        row.pop("last")
+        row.pop("ticker_timestamp_utc")
+        result = build_signal(row, "2026-11-08T19:00:00+03:30")
+        self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
+        self.assertIsNone(result["entry"])
 
     def test_missing_ohlcv_degrades_without_requiring_funding(self):
         row = {"symbol": "BTC/USDT:USDT", "availability": {"ohlcv": "UNAVAILABLE"}, "ohlcv": []}

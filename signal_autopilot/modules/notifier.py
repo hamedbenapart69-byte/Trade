@@ -8,11 +8,14 @@ import os
 
 import smtplib
 import ssl
+from io import BytesIO
 from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from telegram import Bot
+
+from modules.chart_renderer import render_signal_chart
 
 LOG = logging.getLogger("signal_autopilot.telegram")
 
@@ -27,6 +30,25 @@ async def _send(token: str, chat_id: str, messages: list[str]) -> None:
     async with Bot(token=token) as bot:
         for message in messages:
             await bot.send_message(chat_id=chat_id, text=message, disable_web_page_preview=True)
+
+
+async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]]) -> tuple[int, int]:
+    """هر سیگنال را با چارت همان نماد و کپشن تحلیلی ارسال می‌کند."""
+    sent = 0
+    chart_failures = 0
+    async with Bot(token=token) as bot:
+        for signal, caption in signals:
+            try:
+                chart = render_signal_chart(signal)
+                await bot.send_photo(chat_id=chat_id, photo=BytesIO(chart), caption=caption[:1024])
+            except Exception:
+                chart_failures += 1
+                LOG.exception("Chart image delivery failed for %s; sending text fallback.", signal.get("symbol"))
+                await bot.send_message(chat_id=chat_id,
+                    text=(caption + "\n\n⚠️ تصویر چارت ساخته/ارسال نشد؛ سطوح و تحلیل بالا معتبرِ متنی هستند.")[:4096],
+                    disable_web_page_preview=True)
+            sent += 1
+    return sent, chart_failures
 
 
 def _parse_time(value):
@@ -49,13 +71,18 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"حد ضرر: {signal.get('stop_loss') if signal.get('stop_loss') is not None else '—'}",
         f"تارگت ۱: {tp1}",
         f"تارگت ۲: {tp2}",
+        f"نوع تحلیل: EMA Trend Continuation | تایم‌فریم: {signal.get('timeframe', '1H')}",
+        f"دلیل: {signal.get('reason', '—')}",
+        f"فرضیه: {signal.get('hypothesis', '—')}",
+        f"ابطال تحلیل: {signal.get('falsification', '—')}",
+        "اطمینان: هنوز کالیبراسیون آماری انجام نشده است",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
         dashboard,
     ])
 
 
 def notify_tier_a(payload: dict) -> dict:
-    """نام قدیمی تابع حفظ شده؛ همه سیگنال‌های معتبر خرید/فروش ارسال می‌شوند."""
+    """نام قدیمی تابع حفظ شده؛ هر سیگنال با تصویر چارت و تحلیل ارسال می‌شود."""
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
     token, chat_id = _credentials()
@@ -87,14 +114,15 @@ def notify_tier_a(payload: dict) -> dict:
         key: value for key, value in sent_state.items()
         if _parse_time(value) and now - _parse_time(value) < timedelta(hours=48)
     }
-    pending: list[tuple[str, str]] = []
+    pending: list[tuple[str, dict, str]] = []
 
     for signal in candidates:
-        key = "|".join(str(signal.get(k, "")) for k in (
-            "symbol", "status", "side", "entry", "stop_loss", "take_profit"
+        key = "|".join(str(value or "") for value in (
+            signal.get("symbol"), signal.get("status"), signal.get("analysis_type"),
+            signal.get("timeframe"), payload.get("generated_at_utc")
         ))
         if key not in sent_state:
-            pending.append((key, _format_signal(signal, payload)))
+            pending.append((key, signal, _format_signal(signal, payload)))
 
     if not candidates:
         generated = payload.get("generated_at_utc") or now.isoformat()
@@ -106,48 +134,51 @@ def notify_tier_a(payload: dict) -> dict:
             message = "امروز سیگنال نیست"
             key = f"DAILY_NO_SIGNAL|{day}"
         if key not in sent_state:
-            pending.append((key, message))
+            try:
+                asyncio.run(_send(token, chat_id, [message]))
+                sent_state[key] = now.isoformat()
+                state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
+                                      encoding="utf-8")
+                return {"status": "SENT", "sent": 1}
+            except Exception:
+                LOG.exception("Telegram no-signal status delivery failed.")
+                return {"status": "ERROR", "sent": 0}
+        return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     if not pending:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
-    # سیگنال‌های تازه در یک پیام/چند بخشِ زیر سقف تلگرام تجمیع می‌شوند.
-    header = ""
-    quality = payload.get("quality") or {}
-    requested = quality.get("symbols_requested")
-    processed = quality.get("symbols_processed")
-    if requested:
-        header = f"📊 {len(candidates)} سیگنال اقدام‌پذیر | پوشش اسکن: {processed}/{requested} نماد"
-    chunks: list[str] = []
-    current = header
-    for _, message in pending:
-        candidate = (current + "\n\n" if current else "") + message
-        if current and len(candidate) > 3800:
-            chunks.append(current)
-            current = message
-        else:
-            current = candidate
-    if current:
-        chunks.append(current)
-
-    sent = 0
     try:
-        asyncio.run(_send(token, chat_id, chunks))
-        for key, _ in pending:
+        chart_items = [(signal, caption) for _, signal, caption in pending if signal.get("chart_candles")]
+        text_items = [caption for _, signal, caption in pending if not signal.get("chart_candles")]
+        sent = 0
+        chart_failures = 0
+        if chart_items:
+            sent, chart_failures = asyncio.run(_send_signal_photos(token, chat_id, chart_items))
+        if text_items:
+            quality = payload.get("quality") or {}
+            requested = quality.get("symbols_requested")
+            processed = quality.get("symbols_processed")
+            header = (f"📊 {len(candidates)} سیگنال اقدام‌پذیر | پوشش اسکن: {processed}/{requested} نماد"
+                      if requested else "")
+            message = "\n\n".join(([header] if header else []) + text_items)
+            asyncio.run(_send(token, chat_id, [message[:4096]]))
+            sent += 1
+        for key, _, _ in pending:
             sent_state[key] = now.isoformat()
-        state_path.write_text(
-            json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        sent = len(chunks)
-        LOG.info("Telegram delivery succeeded: %d message(s) for %d item(s).", sent, len(pending))
-        return {"status": "SENT", "sent": sent}
+        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
+                              encoding="utf-8")
+        LOG.info("Telegram delivery succeeded: %d message(s), %d chart fallback(s).", sent, chart_failures)
+        if not chart_items:
+            return {"status": "SENT", "sent": sent}
+        return {"status": "SENT_WITH_CHARTS" if chart_failures == 0 and not text_items else "SENT_TEXT_FALLBACK",
+                "sent": sent}
     except Exception as exc:
         if "chat not found" in str(exc).lower():
             LOG.error("Telegram chat not found. Open the bot in Telegram, send /start, and verify TELEGRAM_CHAT_ID.")
-            return {"status": "CHAT_NOT_FOUND", "sent": sent}
-        LOG.exception("Telegram delivery failed.")
-        return {"status": "ERROR", "sent": sent}
+            return {"status": "CHAT_NOT_FOUND", "sent": 0}
+        LOG.exception("Telegram chart delivery failed.")
+        return {"status": "ERROR", "sent": 0}
 
 
 

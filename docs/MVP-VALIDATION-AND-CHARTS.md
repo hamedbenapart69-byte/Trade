@@ -1,0 +1,79 @@
+# MVP validation and signal-chart delivery
+
+## Current state
+
+The live engine remains the existing EMA20/EMA50 + ATR14 MVP. It is not a proven profitable strategy. The current signal output must retain \`NOT_CALIBRATED\` until out-of-sample probability calibration exists.
+
+## Telegram delivery change
+
+Every actionable signal now carries its own last 70 completed 1H candles. The notifier renders a real candlestick PNG from those candles, overlays EMA20/EMA50, and draws Entry, Stop Loss, TP1 and TP2. The caption includes analysis type, timeframe, reason, hypothesis, falsification condition, all price levels, and the dashboard link. If chart rendering fails, the notifier sends the full text analysis instead and reports the fallback in logs.
+
+The chart is an explanatory rendering of the exact candle payload used by the signal engine. It is not a separately generated or guessed chart.
+
+## First research stage: baseline validation
+
+The new walk-forward harness evaluates the current EMA20/EMA50 + ATR14 rule on the isolated two-year OKX 1H OHLCV archive:
+
+- Train window: 6 months
+- Test window: 2 months
+- Step: 1 month
+- Signal decision: completed candle close
+- Entry: next candle open
+- Stop: 1.5 × ATR14
+- TP1: 2 × ATR14, 50% exit
+- TP2: 4 × ATR14, remaining 50% exit
+- Same-candle stop/target ambiguity: stop is assumed first
+- Fees: 0.04% each side
+- Slippage: 0.02% each side, explicitly a PROXY assumption
+
+### Known blockers
+
+The archived Stage 1 report documents two-year 1H OHLCV but only about 94 days of historical funding, about 30 days of OI, and no historical order-book or liquidation series. Therefore the full two-year net result cannot be called fully cost-adjusted. Funding is labelled UNAVAILABLE in the baseline trades. DSR, PBO, calibration, portfolio concurrency/correlation constraints, and the required baseline comparisons are not yet implemented in this first harness.
+
+The report is research evidence only. It cannot pass a profitability gate or promote the MVP to the live engine.
+
+## Promotion policy
+
+No candidate is promoted unless all required OOS gates pass, data and execution costs are adequately covered, the sample size is sufficient, and paper/shadow evidence confirms live-like behavior. A profitable backtest alone is not proof of future profitability.
+
+## Next stages
+
+1. Run and inspect baseline OOS evidence; diagnose failure using D1-D6.
+2. Build a distinct v2 only after a measured v1 failure.
+3. Add the LRT/NMT dual engine with explicit PROXY/UNAVAILABLE handling for missing order-flow data.
+4. Add Plan B, Plan C, and Plan H as independent paths with separate gates and reports.
+5. Add calibration, EV, risk/consensus gates, and a 30-60 day paper/shadow period.
+6. Keep manual trading only. No exchange account keys or order execution.
+
+
+## First baseline evidence (GitHub Actions run 42520083908)
+
+The first reproducible run completed successfully as a computation, but the strategy result **FAILED** the profitability screen:
+
+| Metric | OOS result |
+|---|---:|
+| Symbols | 100 / 100 |
+| Trades | 53,043 |
+| Win rate | 42.51% |
+| Profit factor | 0.9042 |
+| Expectancy | -0.0579R / trade |
+| Trade-sequence drawdown proxy | 100.0% |
+
+The backtest now checks signals on the production four-hour scan cadence, uses a six-month warm-up/train period, two-month test windows, and one-month steps. Entry is modeled at the next 1H open after the signal candle. The 100 symbol files were read successfully.
+
+Additional diagnostics:
+- 37,734 trades (71.14%) exited at a stop or same-bar stop ambiguity; 14,251 (26.87%) reached TP2.
+- 88 of 100 symbols had PF below 1.0; none reached PF 1.2.
+- Monthly PF was unstable, ranging from 0.538 to 1.301; only one monthly bucket reached 1.2.
+- Long PF was 0.867 and short PF was 0.939. The failure is not isolated to one direction.
+
+### SLRP baseline verdict
+
+- v1: **FAIL** — PF 0.9042 is below Gate_C 1.2 and expectancy is negative.
+- Diagnosis evidence: the current EMA spread-only condition produces too many stop exits and does not separate profitable continuation regimes.
+- D2 is the leading hypothesis (the premise that EMA ordering plus a 0.5% spread is enough to identify continuation). D5 regime sensitivity is also indicated by the monthly PF dispersion, but the current report does not establish causality.
+- No v2 is promoted or deployed. A v2 research candidate must change the entry assumption, add explicit structure/regime confirmation, and be tested against the required baselines before any live promotion.
+
+### Interpretation limits
+
+The 100% drawdown figure is a sequential trade-equity proxy across symbols, not a concurrency-aware portfolio drawdown. It must not be used as the official portfolio MaxDD gate. Funding is still unavailable for most of the two-year window, slippage is PROXY, and DSR/PBO plus EMA-cross/RSI/Buy-and-Hold baseline comparisons remain outstanding. Therefore this run is a valid negative screening result, not a complete Gate_C verdict.
