@@ -38,7 +38,7 @@ class AutopilotOutputTests(unittest.TestCase):
             "data_grade":"B","entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":2500}
         }]}
         rendered=render_output(conditional)
-        self.assertTrue(rendered.startswith("No immediate entries. 1 conditional setup is waiting for its defined triggers."))
+        self.assertTrue(rendered.startswith("No immediate entries. 1 conditional setup is waiting for its defined trigger."))
         self.assertIn("Conditional watchlist",rendered)
         partial={"status":"SCAN_COMPLETED","actionable":[],"conditional":[],"partial_scan":True,"screened_assets":12}
         self.assertEqual(render_output(partial),"No actionable or conditional setups today.\nPartial scan: 12/30.")
