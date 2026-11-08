@@ -35,8 +35,8 @@ def _format_signal(signal: dict, payload: dict) -> str:
         "",
         f"نماد: {signal.get('symbol', '—')}",
         f"جهت: {signal.get('side') or signal.get('direction') or '—'}",
-        f"ورود: {signal.get('entry', '—')}",
-        f"SL: {signal.get('stop_loss', '—')}",
+        f"ورود: {entry}",
+        f"SL: {stop}",
         f"TP1: {tp1}",
         f"TP2: {tp2}",
         f"احتمال کالیبره: {probability}",
@@ -44,7 +44,7 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"ابطال: {signal.get('falsification') or signal.get('invalidation') or 'در دادهٔ اسکن ثبت نشده'}",
         f"توضیح: {signal.get('hypothesis') or signal.get('reason') or '—'}",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
-        f"برای جزئیات: {os.getenv('DASHBOARD_URL', 'آدرس داشبورد پس از Deploy ثبت می‌شود')}",
+        f"برای جزئیات: {dashboard}",
         "معامله فقط با تصمیم و مسئولیت کاربر انجام می‌شود.",
     ])
 
