@@ -564,6 +564,12 @@ def _structure(cs,direction,atr_value=None):
         "liquidity_levels":levels,
     }
 
+def _planned_entry_price(last_price,adaptive):
+    if adaptive and not adaptive.get("pattern_confirmed") and adaptive.get("trigger_level") is not None:
+        return float(adaptive["trigger_level"])
+    return float(last_price)
+
+
 def _conditional_trigger_hit(direction,candle,trigger,mode="close_direction"):
     level=float(trigger)
     if mode=="retest_rejection":
@@ -947,15 +953,16 @@ class FuturesSignalEngine:
           "mfi_aligned":(mf>=50 if direction=="LONG" else mf<=50),
           "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))}
         st=st_long if direction=="LONG" else st_short
-        atr_stop=last_price-1.5*a14 if direction=="LONG" else last_price+1.5*a14
+        planned_entry=_planned_entry_price(last_price,adaptive)
+        atr_stop=planned_entry-1.5*a14 if direction=="LONG" else planned_entry+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
         if direction=="SHORT" and st.get("last_swing_high"):structural=st["last_swing_high"]+.2*a14
         stop=atr_stop
-        if structural and ((direction=="LONG" and structural<last_price) or (direction=="SHORT" and structural>last_price)):
-            sp=abs(last_price-structural)/last_price*100
-            if .5<=sp<=3 and abs(last_price-structural)>=1.0*a14:stop=structural
-        risk=contract_sized_risk(direction,last_price,stop,contract)
+        if structural and ((direction=="LONG" and structural<planned_entry) or (direction=="SHORT" and structural>planned_entry)):
+            sp=abs(planned_entry-structural)/planned_entry*100
+            if .5<=sp<=3 and abs(planned_entry-structural)>=1.0*a14:stop=structural
+        risk=contract_sized_risk(direction,planned_entry,stop,contract)
         if getattr(self.p,"provider_name","").startswith("Toobit"):
             if float(price.get("quoteVolume24h") or 0)<100000:raise DataError("toobit_24h_quote_volume_below_100000_usd")
             if float(price.get("spreadBps") or 99999)>30:raise DataError("toobit_orderbook_spread_above_30_bps")
