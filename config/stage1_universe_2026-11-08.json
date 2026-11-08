@@ -1,0 +1,508 @@
+{
+  "generated_at_utc": "2026-11-08T09:43:56.154Z",
+  "source": "Binance USD-M exchangeInfo + 24hr ticker via connected public-data integration",
+  "selection_rule": "TRADING USDT-margined PERPETUAL; onboarded at least 2 years before snapshot; top 100 by 24h quoteVolume; BTCUSDT forced into universe if not already selected",
+  "count": 100,
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "onboard_date_utc": "2019-09-08T17:55:00.000Z",
+      "quote_volume_24h_usdt": 2178116065.73
+    },
+    {
+      "symbol": "ETHUSDT",
+      "onboard_date_utc": "2019-11-27T07:45:00.000Z",
+      "quote_volume_24h_usdt": 1764008686.21
+    },
+    {
+      "symbol": "ZECUSDT",
+      "onboard_date_utc": "2020-02-05T08:00:00.000Z",
+      "quote_volume_24h_usdt": 1258521397.09
+    },
+    {
+      "symbol": "ONEUSDT",
+      "onboard_date_utc": "2021-03-17T07:00:00.000Z",
+      "quote_volume_24h_usdt": 549181423.1530733
+    },
+    {
+      "symbol": "SOLUSDT",
+      "onboard_date_utc": "2020-09-14T07:00:00.000Z",
+      "quote_volume_24h_usdt": 483789833.1283
+    },
+    {
+      "symbol": "XRPUSDT",
+      "onboard_date_utc": "2020-01-06T08:20:00.000Z",
+      "quote_volume_24h_usdt": 313478299.9227
+    },
+    {
+      "symbol": "NEARUSDT",
+      "onboard_date_utc": "2020-10-15T08:00:00.000Z",
+      "quote_volume_24h_usdt": 186863193.553
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "onboard_date_utc": "2023-05-05T00:00:00.000Z",
+      "quote_volume_24h_usdt": 159986372.8223308
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "onboard_date_utc": "2020-07-10T09:00:00.000Z",
+      "quote_volume_24h_usdt": 123482948.13444
+    },
+    {
+      "symbol": "BNBUSDT",
+      "onboard_date_utc": "2020-02-10T08:00:00.000Z",
+      "quote_volume_24h_usdt": 120474665.188
+    },
+    {
+      "symbol": "ENAUSDT",
+      "onboard_date_utc": "2024-04-02T12:30:00.000Z",
+      "quote_volume_24h_usdt": 114684965.05303
+    },
+    {
+      "symbol": "UNIUSDT",
+      "onboard_date_utc": "2020-09-18T07:00:00.000Z",
+      "quote_volume_24h_usdt": 99705320.796
+    },
+    {
+      "symbol": "BCHUSDT",
+      "onboard_date_utc": "2019-12-19T08:55:00.000Z",
+      "quote_volume_24h_usdt": 82435461.6
+    },
+    {
+      "symbol": "SUIUSDT",
+      "onboard_date_utc": "2023-05-03T00:00:00.000Z",
+      "quote_volume_24h_usdt": 61484963.72631
+    },
+    {
+      "symbol": "WLDUSDT",
+      "onboard_date_utc": "2023-07-24T12:00:00.000Z",
+      "quote_volume_24h_usdt": 61138325.6011
+    },
+    {
+      "symbol": "CYBERUSDT",
+      "onboard_date_utc": "2023-08-21T12:00:00.000Z",
+      "quote_volume_24h_usdt": 61011939.65418
+    },
+    {
+      "symbol": "LINKUSDT",
+      "onboard_date_utc": "2020-01-17T08:00:00.000Z",
+      "quote_volume_24h_usdt": 58389426.02
+    },
+    {
+      "symbol": "INJUSDT",
+      "onboard_date_utc": "2022-08-16T07:00:00.000Z",
+      "quote_volume_24h_usdt": 47680377.3596
+    },
+    {
+      "symbol": "ADAUSDT",
+      "onboard_date_utc": "2020-01-31T08:00:00.000Z",
+      "quote_volume_24h_usdt": 46139916.6445
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "onboard_date_utc": "2020-10-16T07:00:00.000Z",
+      "quote_volume_24h_usdt": 43879665.037
+    },
+    {
+      "symbol": "ARBUSDT",
+      "onboard_date_utc": "2023-03-23T07:00:00.000Z",
+      "quote_volume_24h_usdt": 42384751.871417
+    },
+    {
+      "symbol": "FILUSDT",
+      "onboard_date_utc": "2020-10-16T06:00:00.000Z",
+      "quote_volume_24h_usdt": 36622120.79392
+    },
+    {
+      "symbol": "XMRUSDT",
+      "onboard_date_utc": "2020-02-03T08:00:00.000Z",
+      "quote_volume_24h_usdt": 33269762.55
+    },
+    {
+      "symbol": "QNTUSDT",
+      "onboard_date_utc": "2022-10-18T07:00:00.000Z",
+      "quote_volume_24h_usdt": 31983142.259
+    },
+    {
+      "symbol": "TAOUSDT",
+      "onboard_date_utc": "2024-04-11T14:30:00.000Z",
+      "quote_volume_24h_usdt": 30904610.28
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "onboard_date_utc": "2020-09-23T07:00:00.000Z",
+      "quote_volume_24h_usdt": 30019556.36
+    },
+    {
+      "symbol": "LTCUSDT",
+      "onboard_date_utc": "2020-01-09T08:05:00.000Z",
+      "quote_volume_24h_usdt": 26178683.44
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "onboard_date_utc": "2024-01-20T13:00:00.000Z",
+      "quote_volume_24h_usdt": 23090165.23381
+    },
+    {
+      "symbol": "TIAUSDT",
+      "onboard_date_utc": "2023-10-31T16:30:00.000Z",
+      "quote_volume_24h_usdt": 22445001.8108
+    },
+    {
+      "symbol": "XLMUSDT",
+      "onboard_date_utc": "2020-01-20T08:00:00.000Z",
+      "quote_volume_24h_usdt": 20838656.28855
+    },
+    {
+      "symbol": "HMSTRUSDT",
+      "onboard_date_utc": "2024-09-26T12:30:00.000Z",
+      "quote_volume_24h_usdt": 20810944.1180438
+    },
+    {
+      "symbol": "LSKUSDT",
+      "onboard_date_utc": "2024-01-25T14:15:00.000Z",
+      "quote_volume_24h_usdt": 20186288.94119
+    },
+    {
+      "symbol": "DOTUSDT",
+      "onboard_date_utc": "2020-08-22T07:00:00.000Z",
+      "quote_volume_24h_usdt": 19700162.33732
+    },
+    {
+      "symbol": "TRXUSDT",
+      "onboard_date_utc": "2020-01-15T08:05:00.000Z",
+      "quote_volume_24h_usdt": 18458272.46732
+    },
+    {
+      "symbol": "APTUSDT",
+      "onboard_date_utc": "2022-10-18T07:00:00.000Z",
+      "quote_volume_24h_usdt": 18406914.29085
+    },
+    {
+      "symbol": "STRKUSDT",
+      "onboard_date_utc": "2024-02-20T17:00:00.000Z",
+      "quote_volume_24h_usdt": 16020467.601066
+    },
+    {
+      "symbol": "GTCUSDT",
+      "onboard_date_utc": "2021-03-15T07:00:00.000Z",
+      "quote_volume_24h_usdt": 15521436.071985
+    },
+    {
+      "symbol": "HBARUSDT",
+      "onboard_date_utc": "2021-03-17T07:00:00.000Z",
+      "quote_volume_24h_usdt": 14864019.06762
+    },
+    {
+      "symbol": "DASHUSDT",
+      "onboard_date_utc": "2020-02-04T08:05:00.000Z",
+      "quote_volume_24h_usdt": 14743096.58
+    },
+    {
+      "symbol": "BEAMXUSDT",
+      "onboard_date_utc": "2023-11-17T13:30:00.000Z",
+      "quote_volume_24h_usdt": 13986845.342701
+    },
+    {
+      "symbol": "ETHFIUSDT",
+      "onboard_date_utc": "2024-03-18T15:30:00.000Z",
+      "quote_volume_24h_usdt": 13540624.68707
+    },
+    {
+      "symbol": "ZROUSDT",
+      "onboard_date_utc": "2024-06-20T14:30:00.000Z",
+      "quote_volume_24h_usdt": 13514949.7761
+    },
+    {
+      "symbol": "STXUSDT",
+      "onboard_date_utc": "2023-02-20T07:00:00.000Z",
+      "quote_volume_24h_usdt": 12734172.553
+    },
+    {
+      "symbol": "RSRUSDT",
+      "onboard_date_utc": "2020-10-19T07:05:00.000Z",
+      "quote_volume_24h_usdt": 11841939.968815
+    },
+    {
+      "symbol": "1000SHIBUSDT",
+      "onboard_date_utc": "2021-05-10T07:00:00.000Z",
+      "quote_volume_24h_usdt": 11602387.136637
+    },
+    {
+      "symbol": "FETUSDT",
+      "onboard_date_utc": "2023-01-15T07:00:00.000Z",
+      "quote_volume_24h_usdt": 10665254.4611
+    },
+    {
+      "symbol": "OPUSDT",
+      "onboard_date_utc": "2022-06-01T07:00:00.000Z",
+      "quote_volume_24h_usdt": 10216120.281336
+    },
+    {
+      "symbol": "CRVUSDT",
+      "onboard_date_utc": "2020-09-01T07:00:00.000Z",
+      "quote_volume_24h_usdt": 9454011.78146
+    },
+    {
+      "symbol": "ATOMUSDT",
+      "onboard_date_utc": "2020-02-07T12:10:00.000Z",
+      "quote_volume_24h_usdt": 8417280.533
+    },
+    {
+      "symbol": "HOTUSDT",
+      "onboard_date_utc": "2021-03-30T07:00:00.000Z",
+      "quote_volume_24h_usdt": 8317768.1066424
+    },
+    {
+      "symbol": "ICPUSDT",
+      "onboard_date_utc": "2021-07-30T07:00:00.000Z",
+      "quote_volume_24h_usdt": 7754139.435
+    },
+    {
+      "symbol": "ETCUSDT",
+      "onboard_date_utc": "2020-01-16T08:00:00.000Z",
+      "quote_volume_24h_usdt": 7403317.946
+    },
+    {
+      "symbol": "ALGOUSDT",
+      "onboard_date_utc": "2020-06-16T09:00:00.000Z",
+      "quote_volume_24h_usdt": 6728275.178992
+    },
+    {
+      "symbol": "COTIUSDT",
+      "onboard_date_utc": "2021-03-09T07:00:00.000Z",
+      "quote_volume_24h_usdt": 6580463.882504
+    },
+    {
+      "symbol": "SANDUSDT",
+      "onboard_date_utc": "2021-01-18T07:00:00.000Z",
+      "quote_volume_24h_usdt": 6005479.33443
+    },
+    {
+      "symbol": "RENDERUSDT",
+      "onboard_date_utc": "2024-07-26T10:00:00.000Z",
+      "quote_volume_24h_usdt": 5777197.8873
+    },
+    {
+      "symbol": "POLUSDT",
+      "onboard_date_utc": "2024-09-13T12:15:00.000Z",
+      "quote_volume_24h_usdt": 5545510.33563
+    },
+    {
+      "symbol": "1000BONKUSDT",
+      "onboard_date_utc": "2023-11-22T14:00:00.000Z",
+      "quote_volume_24h_usdt": 5457837.263009
+    },
+    {
+      "symbol": "BATUSDT",
+      "onboard_date_utc": "2020-02-13T08:05:00.000Z",
+      "quote_volume_24h_usdt": 5418679.323478
+    },
+    {
+      "symbol": "RUNEUSDT",
+      "onboard_date_utc": "2020-09-04T07:10:00.000Z",
+      "quote_volume_24h_usdt": 5363603.1512
+    },
+    {
+      "symbol": "XTZUSDT",
+      "onboard_date_utc": "2020-02-06T08:00:00.000Z",
+      "quote_volume_24h_usdt": 5348554.93967
+    },
+    {
+      "symbol": "MAGICUSDT",
+      "onboard_date_utc": "2023-01-23T07:00:00.000Z",
+      "quote_volume_24h_usdt": 4764015.003908
+    },
+    {
+      "symbol": "WIFUSDT",
+      "onboard_date_utc": "2024-01-18T14:15:00.000Z",
+      "quote_volume_24h_usdt": 4755680.55422
+    },
+    {
+      "symbol": "SEIUSDT",
+      "onboard_date_utc": "2023-08-17T02:30:00.000Z",
+      "quote_volume_24h_usdt": 4734931.45571
+    },
+    {
+      "symbol": "PENDLEUSDT",
+      "onboard_date_utc": "2023-07-28T02:30:00.000Z",
+      "quote_volume_24h_usdt": 4638718.8423
+    },
+    {
+      "symbol": "LDOUSDT",
+      "onboard_date_utc": "2022-09-21T07:00:00.000Z",
+      "quote_volume_24h_usdt": 4563670.2466
+    },
+    {
+      "symbol": "PIXELUSDT",
+      "onboard_date_utc": "2024-02-19T15:00:00.000Z",
+      "quote_volume_24h_usdt": 4535137.991938
+    },
+    {
+      "symbol": "PYTHUSDT",
+      "onboard_date_utc": "2023-11-22T14:30:00.000Z",
+      "quote_volume_24h_usdt": 4424053.57918
+    },
+    {
+      "symbol": "EIGENUSDT",
+      "onboard_date_utc": "2024-10-01T06:00:00.000Z",
+      "quote_volume_24h_usdt": 4402217.46937
+    },
+    {
+      "symbol": "JUPUSDT",
+      "onboard_date_utc": "2024-01-31T18:30:00.000Z",
+      "quote_volume_24h_usdt": 4375616.4218
+    },
+    {
+      "symbol": "USDCUSDT",
+      "onboard_date_utc": "2023-03-12T00:00:00.000Z",
+      "quote_volume_24h_usdt": 4267526.503547
+    },
+    {
+      "symbol": "JTOUSDT",
+      "onboard_date_utc": "2023-12-08T10:00:00.000Z",
+      "quote_volume_24h_usdt": 4054728.5252
+    },
+    {
+      "symbol": "WUSDT",
+      "onboard_date_utc": "2024-04-03T15:30:00.000Z",
+      "quote_volume_24h_usdt": 4018851.802639
+    },
+    {
+      "symbol": "BOMEUSDT",
+      "onboard_date_utc": "2024-03-16T12:30:00.000Z",
+      "quote_volume_24h_usdt": 3788686.2468459
+    },
+    {
+      "symbol": "MOVRUSDT",
+      "onboard_date_utc": "2023-12-26T12:30:00.000Z",
+      "quote_volume_24h_usdt": 3772617.833918
+    },
+    {
+      "symbol": "GALAUSDT",
+      "onboard_date_utc": "2021-09-17T07:00:00.000Z",
+      "quote_volume_24h_usdt": 3672910.710074
+    },
+    {
+      "symbol": "REZUSDT",
+      "onboard_date_utc": "2024-04-30T14:00:00.000Z",
+      "quote_volume_24h_usdt": 3591721.296842
+    },
+    {
+      "symbol": "ZKUSDT",
+      "onboard_date_utc": "2024-06-17T11:00:00.000Z",
+      "quote_volume_24h_usdt": 3384240.22754
+    },
+    {
+      "symbol": "DOGSUSDT",
+      "onboard_date_utc": "2024-08-26T12:30:00.000Z",
+      "quote_volume_24h_usdt": 3346806.10322188
+    },
+    {
+      "symbol": "RLCUSDT",
+      "onboard_date_utc": "2020-07-31T07:00:00.000Z",
+      "quote_volume_24h_usdt": 3315585.7994
+    },
+    {
+      "symbol": "ARUSDT",
+      "onboard_date_utc": "2021-09-28T07:00:00.000Z",
+      "quote_volume_24h_usdt": 3283686.434
+    },
+    {
+      "symbol": "ZILUSDT",
+      "onboard_date_utc": "2020-06-18T09:00:00.000Z",
+      "quote_volume_24h_usdt": 3225694.248571
+    },
+    {
+      "symbol": "ZENUSDT",
+      "onboard_date_utc": "2020-11-24T07:00:00.000Z",
+      "quote_volume_24h_usdt": 3025567.196
+    },
+    {
+      "symbol": "1000CATUSDT",
+      "onboard_date_utc": "2024-10-21T12:30:00.000Z",
+      "quote_volume_24h_usdt": 2715257.484238
+    },
+    {
+      "symbol": "WOOUSDT",
+      "onboard_date_utc": "2022-04-07T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2664182.79539
+    },
+    {
+      "symbol": "VETUSDT",
+      "onboard_date_utc": "2020-02-14T08:00:00.000Z",
+      "quote_volume_24h_usdt": 2612422.139191
+    },
+    {
+      "symbol": "ORDIUSDT",
+      "onboard_date_utc": "2023-11-07T12:30:00.000Z",
+      "quote_volume_24h_usdt": 2608373.6599
+    },
+    {
+      "symbol": "API3USDT",
+      "onboard_date_utc": "2022-02-21T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2591745.8037
+    },
+    {
+      "symbol": "IOTAUSDT",
+      "onboard_date_utc": "2020-02-12T08:00:00.000Z",
+      "quote_volume_24h_usdt": 2585278.376274
+    },
+    {
+      "symbol": "AXSUSDT",
+      "onboard_date_utc": "2020-11-20T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2543984.4576
+    },
+    {
+      "symbol": "COMPUSDT",
+      "onboard_date_utc": "2020-06-30T09:00:00.000Z",
+      "quote_volume_24h_usdt": 2537114.53
+    },
+    {
+      "symbol": "CELOUSDT",
+      "onboard_date_utc": "2021-09-26T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2510882.35318
+    },
+    {
+      "symbol": "1INCHUSDT",
+      "onboard_date_utc": "2020-12-25T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2447571.32356
+    },
+    {
+      "symbol": "APEUSDT",
+      "onboard_date_utc": "2022-03-17T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2375401.6452
+    },
+    {
+      "symbol": "ENSUSDT",
+      "onboard_date_utc": "2021-11-29T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2364977.185
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "onboard_date_utc": "2020-09-14T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2307563.989
+    },
+    {
+      "symbol": "KAVAUSDT",
+      "onboard_date_utc": "2020-07-28T07:05:00.000Z",
+      "quote_volume_24h_usdt": 2300585.206666
+    },
+    {
+      "symbol": "CAKEUSDT",
+      "onboard_date_utc": "2023-11-02T12:45:00.000Z",
+      "quote_volume_24h_usdt": 2275325.8268
+    },
+    {
+      "symbol": "CHZUSDT",
+      "onboard_date_utc": "2021-01-21T07:00:00.000Z",
+      "quote_volume_24h_usdt": 2230523.79904
+    },
+    {
+      "symbol": "BLURUSDT",
+      "onboard_date_utc": "2023-04-27T00:00:00.000Z",
+      "quote_volume_24h_usdt": 2224596.108671
+    }
+  ]
+}
