@@ -44,3 +44,36 @@ No candidate is promoted unless all required OOS gates pass, data and execution 
 4. Add Plan B, Plan C, and Plan H as independent paths with separate gates and reports.
 5. Add calibration, EV, risk/consensus gates, and a 30-60 day paper/shadow period.
 6. Keep manual trading only. No exchange account keys or order execution.
+
+
+## First baseline evidence (GitHub Actions run 42520083908)
+
+The first reproducible run completed successfully as a computation, but the strategy result **FAILED** the profitability screen:
+
+| Metric | OOS result |
+|---|---:|
+| Symbols | 100 / 100 |
+| Trades | 53,043 |
+| Win rate | 42.51% |
+| Profit factor | 0.9042 |
+| Expectancy | -0.0579R / trade |
+| Trade-sequence drawdown proxy | 100.0% |
+
+The backtest now checks signals on the production four-hour scan cadence, uses a six-month warm-up/train period, two-month test windows, and one-month steps. Entry is modeled at the next 1H open after the signal candle. The 100 symbol files were read successfully.
+
+Additional diagnostics:
+- 37,734 trades (71.14%) exited at a stop or same-bar stop ambiguity; 14,251 (26.87%) reached TP2.
+- 88 of 100 symbols had PF below 1.0; none reached PF 1.2.
+- Monthly PF was unstable, ranging from 0.538 to 1.301; only one monthly bucket reached 1.2.
+- Long PF was 0.867 and short PF was 0.939. The failure is not isolated to one direction.
+
+### SLRP baseline verdict
+
+- v1: **FAIL** — PF 0.9042 is below Gate_C 1.2 and expectancy is negative.
+- Diagnosis evidence: the current EMA spread-only condition produces too many stop exits and does not separate profitable continuation regimes.
+- D2 is the leading hypothesis (the premise that EMA ordering plus a 0.5% spread is enough to identify continuation). D5 regime sensitivity is also indicated by the monthly PF dispersion, but the current report does not establish causality.
+- No v2 is promoted or deployed. A v2 research candidate must change the entry assumption, add explicit structure/regime confirmation, and be tested against the required baselines before any live promotion.
+
+### Interpretation limits
+
+The 100% drawdown figure is a sequential trade-equity proxy across symbols, not a concurrency-aware portfolio drawdown. It must not be used as the official portfolio MaxDD gate. Funding is still unavailable for most of the two-year window, slippage is PROXY, and DSR/PBO plus EMA-cross/RSI/Buy-and-Hold baseline comparisons remain outstanding. Therefore this run is a valid negative screening result, not a complete Gate_C verdict.
