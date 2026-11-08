@@ -48,8 +48,8 @@ jobs:
         working-directory: signal_autopilot
         run: >-
           python scripts/download_stage1a_extended_history.py
-          --start-date 2024-11-09
-          --end-date 2026-11-09
+          --start-date 2024-11-08
+          --end-date 2026-11-08
           --output-dir ../market-data/datasets/stage1a_extended/ohlcv_1h
           --report data/stage1a_extension_report.json
 
