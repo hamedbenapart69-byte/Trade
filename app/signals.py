@@ -564,7 +564,9 @@ def _structure(cs,direction,atr_value=None):
         "liquidity_levels":levels,
     }
 
-def _planned_entry_price(last_price,adaptive):
+def _planned_entry_price(last_price,adaptive,fallback_trigger=None):
+    if fallback_trigger is not None:
+        return float(fallback_trigger)
     if adaptive and not adaptive.get("pattern_confirmed") and adaptive.get("trigger_level") is not None:
         return float(adaptive["trigger_level"])
     return float(last_price)
@@ -953,7 +955,9 @@ class FuturesSignalEngine:
           "mfi_aligned":(mf>=50 if direction=="LONG" else mf<=50),
           "macd_aligned":((mh[-1]>0 and mh[-1]>=mh[-2]) if direction=="LONG" else (mh[-1]<0 and mh[-1]<=mh[-2]))}
         st=st_long if direction=="LONG" else st_short
-        planned_entry=_planned_entry_price(last_price,adaptive)
+        distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
+        chase=distance_atr>2.0
+        planned_entry=_planned_entry_price(last_price,adaptive,e15 if chase else None)
         atr_stop=planned_entry-1.5*a14 if direction=="LONG" else planned_entry+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
@@ -980,8 +984,6 @@ class FuturesSignalEngine:
             risk["take_profit_2"]=max(risk["take_profit_2"],supports[0]) if supports and supports[0]<risk["take_profit"] else None
             risk["take_profit_3"]=max(risk["take_profit_3"],supports[1]) if len(supports)>1 and supports[1]<(risk["take_profit_2"] or risk["take_profit"]) else None
         last=cs15[-1];prev=cs15[-2]
-        distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
-        chase=distance_atr>2.0
         entry_ok=(last_price>e15 and last.close>=prev.close) if direction=="LONG" else (last_price<e15 and last.close<=prev.close)
         entry_ok=entry_ok and not chase and market_regime!="UNSTABLE"
         sweep=st.get("liquidity_sweep_aligned",False)
