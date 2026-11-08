@@ -75,7 +75,7 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"دلیل: {signal.get('reason', '—')}",
         f"فرضیه: {signal.get('hypothesis', '—')}",
         f"ابطال تحلیل: {signal.get('falsification', '—')}",
-        "اطمینان: NOT_CALIBRATED (هنوز اثبات آماری نشده)",
+        "اطمینان: هنوز کالیبراسیون آماری انجام نشده است",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
         dashboard,
     ])
@@ -149,16 +149,29 @@ def notify_tier_a(payload: dict) -> dict:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     try:
-        sent, chart_failures = asyncio.run(_send_signal_photos(
-            token, chat_id, [(signal, caption) for _, signal, caption in pending]
-        ))
+        chart_items = [(signal, caption) for _, signal, caption in pending if signal.get("chart_candles")]
+        text_items = [caption for _, signal, caption in pending if not signal.get("chart_candles")]
+        sent = 0
+        chart_failures = 0
+        if chart_items:
+            sent, chart_failures = asyncio.run(_send_signal_photos(token, chat_id, chart_items))
+        if text_items:
+            quality = payload.get("quality") or {}
+            requested = quality.get("symbols_requested")
+            processed = quality.get("symbols_processed")
+            header = (f"📊 {len(candidates)} سیگنال اقدام‌پذیر | پوشش اسکن: {processed}/{requested} نماد"
+                      if requested else "")
+            message = "\n\n".join(([header] if header else []) + text_items)
+            asyncio.run(_send(token, chat_id, [message[:4096]]))
+            sent += 1
         for key, _, _ in pending:
             sent_state[key] = now.isoformat()
         state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                               encoding="utf-8")
-        LOG.info("Telegram signal delivery succeeded: %d item(s), %d chart fallback(s).",
-                 sent, chart_failures)
-        return {"status": "SENT_WITH_CHARTS" if chart_failures == 0 else "SENT_TEXT_FALLBACK",
+        LOG.info("Telegram delivery succeeded: %d message(s), %d chart fallback(s).", sent, chart_failures)
+        if not chart_items:
+            return {"status": "SENT", "sent": sent}
+        return {"status": "SENT_WITH_CHARTS" if chart_failures == 0 and not text_items else "SENT_TEXT_FALLBACK",
                 "sent": sent}
     except Exception as exc:
         if "chat not found" in str(exc).lower():
