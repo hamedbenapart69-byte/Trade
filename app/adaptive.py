@@ -36,8 +36,8 @@ def adaptive_setup(
     last15, prev15 = candles_15m[-1], candles_15m[-2]
     confirm_long = last15.close > prev15.close and last15.close >= ema20_15m
     confirm_short = last15.close < prev15.close and last15.close <= ema20_15m
-    retest_confirm_long = last15.low <= ema20 + 0.25 * atr15m and last15.close >= ema20_15m
-    retest_confirm_short = last15.high >= ema20 - 0.25 * atr15m and last15.close <= ema20_15m
+    retest_confirm_long = ema20 - 0.5 * atr15m <= last15.low <= ema20 + 0.25 * atr15m and last15.close >= ema20_15m
+    retest_confirm_short = ema20 - 0.25 * atr15m <= last15.high <= ema20 + 0.5 * atr15m and last15.close <= ema20_15m
     distance_ema_atr = abs(close - ema20) / max(float(tech.get("atr14") or 0), 1e-12)
     prior = candles_1h[-21:-1]
     prior_high = max(x.high for x in prior)
