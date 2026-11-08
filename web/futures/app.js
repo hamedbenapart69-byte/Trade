@@ -20,7 +20,9 @@ async function loadSignals() {
       Array.isArray(signal.take_profit) && signal.take_profit.length >= 2
     );
     if (!signals.length) {
-      output.innerHTML = '<p class="empty">امروز سیگنال نیست</p>';
+      const message = payload.today_signal_message ||
+        (payload.pipeline_status === "DEGRADED" ? "دادهٔ کافی برای ارزیابی بازار در دسترس نیست" : "امروز سیگنال نیست");
+      output.innerHTML = '<p class="empty">' + esc(message) + '</p>';
       return;
     }
     output.innerHTML = '<div class="table-wrap"><table><thead><tr>' +

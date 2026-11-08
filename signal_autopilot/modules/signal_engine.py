@@ -135,7 +135,7 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
         "engine": "EMA20_EMA50_ATR14_MVP",
         "manual_trade_only": True,
         "pipeline_status": "DEGRADED" if degraded else "OK",
-        "today_signal_message": "امروز سیگنال نیست" if not trade_signals else None,
+        "today_signal_message": (None if trade_signals else ("دادهٔ کافی برای ارزیابی بازار در دسترس نیست" if degraded else "امروز سیگنال نیست")),
         "signals": signals,
         "trade_signals": trade_signals,
         "quality": {

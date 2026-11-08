@@ -168,6 +168,13 @@ class CryptoUniverseTests(unittest.TestCase):
         market["info"] = {"firstOpenDate": str(now - 900 * 86_400_000)}
         self.assertEqual(MarketDataFetcher._listing_time_ms(market, "kucoinfutures"), now - 900 * 86_400_000)
 
+    def test_completed_ohlcv_is_sorted_oldest_to_newest(self):
+        now = 1_800_000_000_000
+        old = [now - 3 * 3_600_000, 10, 11, 9, 10, 100]
+        recent = [now - 2 * 3_600_000, 10, 11, 9, 10, 100]
+        still_open = [now - 30 * 60_000, 10, 11, 9, 10, 100]
+        result = MarketDataFetcher._completed_ohlcv([recent, still_open, old], now)
+        self.assertEqual([c[0] for c in result], [old[0], recent[0]])
 
 if __name__ == "__main__":
     unittest.main()

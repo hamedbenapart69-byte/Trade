@@ -224,6 +224,15 @@ class MarketDataFetcher:
         }
         return accepted[:self.limit]
 
+    @staticmethod
+    def _completed_ohlcv(candles, now_ms: int):
+        """مرتب‌سازی کندل‌ها و حذف کندل یک‌ساعتهٔ هنوز بسته‌نشده."""
+        ordered = sorted(
+            (c for c in candles if c[0] is not None),
+            key=lambda candle: int(candle[0]),
+        )
+        return [c for c in ordered if int(c[0]) + 3_600_000 <= now_ms]
+
     def _fetch_from_provider(self, provider: str, whitelist: set[str]):
         exchange = self._new_exchange(provider)
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
@@ -240,7 +249,7 @@ class MarketDataFetcher:
             }
             try:
                 candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=70)
-                completed = [c for c in candles if c[0] is not None and int(c[0]) + 3_600_000 <= now_ms]
+                completed = self._completed_ohlcv(candles, now_ms)
                 row["ohlcv"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
                     "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
