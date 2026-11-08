@@ -29,9 +29,10 @@ def adaptive_setup(
     rsi = float(tech["rsi"])
     volume = float(tech["volume_ratio"])
     adx = float(tech.get("adx") or 0)
-    macd_up = bool(tech.get("macd_aligned"))
-    obv_up = bool(tech.get("obv_aligned"))
-    mfi_up = bool(tech.get("mfi_aligned"))
+    macd_now = tech.get("macd_histogram")
+    macd_prev = tech.get("macd_histogram_previous")
+    obv_delta = float(tech.get("obv_change_10") or 0)
+    mfi_value = float(tech.get("mfi") or 50)
     last15, prev15 = candles_15m[-1], candles_15m[-2]
     confirm_long = last15.close > prev15.close and last15.close >= ema20_15m
     confirm_short = last15.close < prev15.close and last15.close <= ema20_15m
@@ -50,8 +51,8 @@ def adaptive_setup(
         opposite4h = trends.get("4h") == ("DOWN" if direction == "LONG" else "UP")
         opposite1d = trends.get("1d") == ("BEARISH" if direction == "LONG" else "BULLISH")
         ema_aligned = close > ema20 > ema50 if direction == "LONG" else close < ema20 < ema50
-        momentum_aligned = macd_up if direction == "LONG" else macd_up
-        flow_aligned = obv_up and mfi_up
+        momentum_aligned = (macd_now is not None and macd_prev is not None and macd_now > 0 and macd_now >= macd_prev) if direction == "LONG" else (macd_now is not None and macd_prev is not None and macd_now < 0 and macd_now <= macd_prev)
+        flow_aligned = (obv_delta > 0 and mfi_value >= 50) if direction == "LONG" else (obv_delta < 0 and mfi_value <= 50)
         rsi_ok = 38 <= rsi <= 68 if direction == "LONG" else 32 <= rsi <= 62
         pullback = distance_ema_atr <= 1.25 and rsi_ok and aligned4h and not opposite1d
         breakout = breakout_long if direction == "LONG" else breakout_short
