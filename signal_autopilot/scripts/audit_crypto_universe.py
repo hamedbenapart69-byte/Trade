@@ -34,7 +34,7 @@ def main() -> None:
         selected_exchange = None
         selected = []
         union_by_symbol = {}
-        providers = ["okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"]
+        providers = ["okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures", "gateio", "toobit"]
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
             report["providers"]["okx"] = {"simulated_blocked": True, "reason": "DEBUG_BLOCK_OKX_FORCED"}
             providers.remove("okx")
