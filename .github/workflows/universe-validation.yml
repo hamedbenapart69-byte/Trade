@@ -34,11 +34,17 @@ jobs:
       - name: Run live public-market universe audit
         working-directory: signal_autopilot
         run: python scripts/audit_crypto_universe.py
+      - name: Simulate OKX outage and verify fallback chain
+        continue-on-error: true
+        working-directory: signal_autopilot
+        env:
+          DEBUG_BLOCK_OKX: "1"
+        run: python scripts/audit_crypto_universe.py
       - name: Upload universe audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: crypto-usdt-perpetual-universe-audit
-          path: signal_autopilot/data/universe_audit.json
+          path: signal_autopilot/data/universe_audit*.json
           if-no-files-found: warn
           retention-days: 30
