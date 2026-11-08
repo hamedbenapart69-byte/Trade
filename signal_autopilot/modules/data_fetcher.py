@@ -197,7 +197,7 @@ class MarketDataFetcher:
         self.universe_diagnostics[provider] = {
             "markets_total": len(markets), "eligible_before_limit": len(accepted),
             "selected": min(len(accepted), self.limit), "minimum_listing_age_days": min_age_ms // 86_400_000,
-            "minimum_quote_volume_24h_usd": min_volume, "whitelist_source": "CoinGecko top 500",
+            "minimum_quote_volume_24h_usd": min_volume, "whitelist_source": "CoinGecko top 1000",
             "rejected": rejected,
         }
         return accepted[:self.limit]
