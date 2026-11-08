@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: stage1a-extended-history
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate-and-fetch:
@@ -32,6 +32,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Install Parquet writer
+        run: python -m pip install --disable-pip-version-check pyarrow
 
       - name: Run Stage 1a extended unit tests
         working-directory: signal_autopilot
@@ -74,7 +77,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new dataset files to commit"
           else
-            git commit -m "Add validated two-year 1H futures OHLCV"
+            git commit -m "Add validated two-year 1H futures OHLCV Parquet"
             git push origin HEAD:market-data
           fi
 
