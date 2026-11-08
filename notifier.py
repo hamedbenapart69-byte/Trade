@@ -36,13 +36,13 @@ def main():
             key="|".join(str(item.get(k,"")) for k in ("symbol","decision","direction","entry","stop_loss"))
             if key not in sent: messages.append(_message(item,url));sent[key]=now.isoformat()
         if not messages:
-            state.write_text(json.dumps(sent,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+            state.write_text(json.dumps(sent,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
             LOG.info("Telegram: no new actionable signals to send.")
             return 0
     try:
         asyncio.run(_send(token,chat,messages))
         if not a.test:
-            state.write_text(json.dumps(sent,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+            state.write_text(json.dumps(sent,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
         LOG.info("Telegram delivery succeeded (%d message(s)).",len(messages))
         return 0
     except Exception:
