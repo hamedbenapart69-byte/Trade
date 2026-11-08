@@ -291,3 +291,15 @@ The repository default branch is `main`; this work is on `stage-1-data-layer-v1`
 - Telegram delivery requires the owner to add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as repository Actions secrets. No token is present in this environment; no test notification is claimed.
 - The current placeholder intentionally emits no Tier-A classification and never emits BUY_NOW/SELL_NOW. Telegram Tier-A notifications will remain silent until a later validated engine assigns Tier A.
 - Two successful scheduled runs cannot be claimed until the workflow is active on the default branch.
+
+
+### Latest hard-gate workflow result
+
+Run [42479108791](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42479108791) completed with overall `success`:
+- The OKX `fetch_ticker("BTC/USDT:USDT")` smoke test passed as a blocking step (no `continue-on-error`).
+- Unit tests passed.
+- Compute processed 100 OKX perpetual symbols and returned `pipeline_status=OK`.
+- `signals.json` contains 100 records: 15 WATCHLIST and 85 NO_QUALIFIED_SETUP; no BUY/SELL status was manufactured.
+- `history.csv` now contains 200 rows (100 from each of two successful branch pipeline runs).
+- Commit/push of `data/signals.json`, `data/history.csv`, and the public `web/data/` copies succeeded after replacing the conflict-prone rebase with fetch/reset/stage of generated outputs.
+- Telegram remains `SKIPPED_NOT_CONFIGURED`; no token or chat ID was available.
