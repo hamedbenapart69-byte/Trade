@@ -55,7 +55,7 @@ def notify_tier_a(payload: dict):
         return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
     candidates = [s for s in payload.get("signals", [])
                   if s.get("tier") == "A" and s.get("status") in ("BUY_NOW", "SELL_NOW")]
-    state_path = Path(os.getenv("TELEGRAM_STATE_PATH", "signal_autopilot/data/telegram_sent.json"))
+    state_path = Path(os.getenv("TELEGRAM_STATE_PATH", str(Path(__file__).resolve().parents[1] / "data" / "telegram_sent.json")))
     state_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         sent_state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
