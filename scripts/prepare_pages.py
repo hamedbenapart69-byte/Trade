@@ -173,7 +173,7 @@ def build_payload(raw: dict) -> dict:
         return (-score, 0 if item.get("data_grade") == "A" else 1, not entry_ok, -rr, -mtf, not independent)
     actionable = sorted(dedupe(actionable_candidates), key=action_rank)[:10]
     conditional = sorted(dedupe(conditional_candidates),
-        key=lambda x: -(_num(x.get("confidence_v5")) or 0))
+        key=lambda x: -(_num(x.get("confidence_v6", x.get("confidence_v5"))) or 0))
     return {
         "schema_version": 1,
         "status": status,
