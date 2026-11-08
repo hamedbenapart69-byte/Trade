@@ -7,7 +7,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,7 +71,7 @@ def main() -> None:
                 "error": type(exc).__name__, "detail": str(exc)[:240]
             }
 
-    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    now = datetime.now(timezone.utc)\n    month = (datetime(now.year, now.month, 1, tzinfo=timezone.utc) - timedelta(days=1)).strftime("%Y-%m")
     for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT"):
         for kind, suffix in (
             ("klines_1h", f"klines/{symbol}/1h/{symbol}-1h-{month}.zip"),
