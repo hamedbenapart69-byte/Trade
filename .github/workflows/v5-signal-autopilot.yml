@@ -33,6 +33,7 @@ permissions:
 
 jobs:
   scan-and-build:
+    if: github.event_name != 'workflow_dispatch' || inputs.test_telegram != true
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -141,17 +142,12 @@ jobs:
             echo "No changes in public signal payload."
           fi
 
-      - name: Send Telegram notification
+      - name: Send Telegram signal notifications
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://your-project.pages.dev' }}
-        run: |
-          if [ "${{ inputs.test_telegram }}" = "true" ]; then
-            python notifier.py --test
-          else
-            python notifier.py
-          fi
+        run: python notifier.py
 
       - name: Checkpoint SQLite state before cache save
         env:
@@ -173,6 +169,25 @@ jobs:
           path: artifacts/v5_live_scan.json
           if-no-files-found: error
           retention-days: 3
+
+  telegram-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_telegram == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout application source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Send Telegram test message
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://your-project.pages.dev' }}
+        run: python notifier.py --test
 
   deploy-pages:
     if: github.ref == 'refs/heads/main'
