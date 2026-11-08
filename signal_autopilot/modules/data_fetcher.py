@@ -62,7 +62,13 @@ class MarketDataFetcher:
         rows = response.json()
         if not isinstance(rows, list) or len(rows) < 50:
             raise RuntimeError("coingecko_top200_whitelist_incomplete")
-        return {str(row.get("symbol", "")).upper() for row in rows if row.get("symbol")}
+        counts = {}
+        for row in rows:
+            symbol = str(row.get("symbol", "")).upper()
+            if symbol:
+                counts[symbol] = counts.get(symbol, 0) + 1
+        # Ambiguous CoinGecko tickers are excluded to reduce symbol-collision risk.
+        return {symbol for symbol, count in counts.items() if count == 1}
 
     def _new_exchange(self, provider: str):
         if provider == "okx":
