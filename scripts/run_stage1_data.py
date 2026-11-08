@@ -24,7 +24,7 @@ def main():
     collector=Stage1Collector(data_dir=args.data_dir)
     try:
         if args.probe_only:
-            result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit(),"fear_greed":collector.probe_fear_greed()}
+            result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit(),"fear_greed":collector.probe_fear_greed(),"data_vision":collector.probe_data_vision()}
             out=Path(args.data_dir)
             out.mkdir(parents=True,exist_ok=True)
             (out/"endpoint_probe.json").write_text(
