@@ -124,7 +124,7 @@ jobs:
           if remote_json.returncode==0 and local_json.exists():
               old=json.loads(remote_json.stdout); new=json.loads(local_json.read_text(encoding="utf-8"))
               if (old.get("generated_at_utc") or "") > (new.get("generated_at_utc") or ""):
-                  local_json.write_text(json.dumps(old,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+                  local_json.write_text(json.dumps(old,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
           web=Path("web/futures/data")
           web.mkdir(parents=True,exist_ok=True)
           web.joinpath("signals.json").write_text(local_json.read_text(encoding="utf-8"),encoding="utf-8")
