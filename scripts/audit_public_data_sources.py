@@ -24,7 +24,9 @@ def iso_ms(value: Any) -> str | None:
     try:
         raw = str(value).strip()
         if raw.isdigit():
-            return datetime.fromtimestamp(int(raw) / 1000, tz=timezone.utc).isoformat()
+            numeric = int(raw)
+            divisor = 1_000_000 if len(raw) >= 16 else (1_000 if len(raw) >= 13 else 1)
+            return datetime.fromtimestamp(numeric / divisor, tz=timezone.utc).isoformat()
         parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=timezone.utc)
