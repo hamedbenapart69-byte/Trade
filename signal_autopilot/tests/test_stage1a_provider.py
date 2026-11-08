@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import Mock
 
 from modules.stage1a_data_provider import Stage1ADataProvider
+from modules.signal_engine import generate_signals
 
 
 class Stage1AProviderTests(unittest.TestCase):
@@ -62,6 +63,14 @@ class Stage1AProviderTests(unittest.TestCase):
         self.assertIn("provider_selected", report)
         self.assertIn("coverage_per_symbol", report)
         self.assertEqual(report["stage1a_status"], "FAIL")
+
+    def test_missing_provider_metadata_is_normalized_without_keyerror(self):
+        payload = generate_signals({
+            "generated_at_utc": "2026-11-09T00:00:00+00:00",
+            "symbols": [{"symbol": "BTC/USDT:USDT", "ohlcv": [], "availability": {}}],
+        })
+        self.assertEqual(payload["provider"], "unknown")
+        self.assertEqual(payload["signals"][0]["provider"], "unknown")
 
     def test_kucoin_proxy_is_counted_separately(self):
         provider = Stage1ADataProvider(self.config, client=Mock())
