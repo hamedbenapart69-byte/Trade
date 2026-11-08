@@ -122,6 +122,7 @@ def _valid_conditional(item: dict, source_ok: bool, now_ms: int) -> bool:
         and _valid_self_audit(item)
         and isinstance(entry.get("confirmation_required"), str)
         and entry.get("confirmation_required").strip()
+        and entry.get("trigger_mode", "close_direction") in {"close_direction", "close_above", "close_below", "retest_rejection"}
         and trigger is not None and trigger > 0
         and risk.get("valid") is True
         and risk.get("contract_spec_verified") is True
