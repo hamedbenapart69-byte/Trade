@@ -588,7 +588,7 @@ def _conditional_trigger_hit(direction,candle,trigger,mode="close_direction"):
 def _audit_checks_passed(audit):
     family=audit.get("strategy_family")
     return all(value is True for key,value in audit.items()
-      if isinstance(value,bool) and not (key=="v3_baseline_passed" and family!="V3_STRICT_BASELINE"))
+      if isinstance(value,bool) and not (key in {"v3_baseline_passed","v3_funding_threshold_passed"} and family!="V3_STRICT_BASELINE"))
 
 
 def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk_ok,smart_points,independent_ok):
@@ -780,8 +780,8 @@ def render_output(r):
     if actionable:
         out=[]
     elif conditional:
-        count=len(conditional);noun="setup" if count==1 else "setups";verb="is" if count==1 else "are"
-        out=[f"No immediate entries. {count} conditional {noun} {verb} waiting for their defined triggers."]
+        count=len(conditional);noun="setup" if count==1 else "setups";verb="is" if count==1 else "are";poss="its" if count==1 else "their";trigger_word="trigger" if count==1 else "triggers"
+        out=[f"No immediate entries. {count} conditional {noun} {verb} waiting for {poss} defined {trigger_word}."]
     else:
         out=["No actionable or conditional setups today."]
     if actionable:
