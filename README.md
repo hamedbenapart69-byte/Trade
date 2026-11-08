@@ -1,6 +1,6 @@
 # AI Orchestration Foundation
 
-> Scope note: this repository also contains a separate orchestration/control-plane foundation. Futures Signal Autopilot V5 is a standalone read-only workflow using GitHub Actions and GitHub Pages; it does not depend on Railway. The optional Railway deployment workflow is currently skipped because the `RAILWAY_TOKEN` secret is not configured.
+> Scope note: this repository also contains a separate orchestration/control-plane foundation. The approved Trader_me signal product is permanently Telegram-only. All web dashboards, including legacy GitHub Pages and Cloudflare Pages surfaces, are archived and unmaintained; no web dashboard deployment is in scope. The legacy V5 workflow is not the approved signal engine.
 
 
 Owner-controlled automation platform in repository [Trade](https://github.com/hamedbenapart69-byte/Trade). The current release is a tested foundation, not yet a production-hosted autonomous AI platform.
@@ -67,13 +67,13 @@ Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume.
 
 See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
 
-## Futures Signal Autopilot V5 (legacy / manual diagnostics)
+## Legacy Futures Signal Autopilot V5 (ARCHIVED / UNMAINTAINED)
 
 V5 is retained as a legacy manual-diagnostics workflow; it is not the currently scheduled Futures Signals Pipeline. Its documented CoinGecko + OKX architecture describes the V5 implementation, not necessarily the provider selected by the active pipeline. The latest successful scheduled Futures Signals Pipeline run (2026-11-08, run [42520941228](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42520941228), commit `64f8d8fc`) reported `provider=kucoinfutures` and `pipeline_status=DEGRADED`. That same run's separate OKX BTC ticker smoke test passed. The runtime provider-selection reason remains under audit.
 
 - Market discovery: CoinGecko top 100 by market cap, intersected with OKX live linear USDT perpetual contracts; candidates are ranked by CoinGecko 24-hour volume. The extended scan selects up to 100 eligible assets (30 primary shortlist plus up to 70 expanded discovery assets).
 - Futures data: OKX public read-only instruments, ticker, completed OHLCV (15m/1h/4h/1d), funding, mark/index, open interest and global account ratio. No exchange account, private API credential, order endpoint or execution route is used.
-- Legacy V5 dashboard: [Futures Signal Autopilot V5](https://hamedbenapart69-byte.github.io/Trade/). The V5 workflow's GitHub Pages deployment job is currently disabled with `if: false`; whether this URL is still serving a previously deployed build and how fresh it is are unverified. The separate Cloudflare Pages URL `https://trade-3vn.pages.dev/` is not configured or referenced by the inspected repository workflows; its deployment source and freshness are unverified.
+- Legacy web dashboard: ARCHIVED / UNMAINTAINED. The GitHub Pages deployment job remains disabled (`if: false`). The Cloudflare Pages URL `https://trade-3vn.pages.dev/` is outside the approved product scope; its current availability and freshness are not guaranteed.
 - V5 workflow: manual dispatch only at [V5 Futures Signal Autopilot](https://github.com/hamedbenapart69-byte/Trade/actions/workflows/v5-signal-autopilot.yml); it has no cron. The active scheduled workflow is [Futures Signals Pipeline](https://github.com/hamedbenapart69-byte/Trade/actions/workflows/futures-signals.yml), whose current YAML cron is `7 */4 * * *` (every four hours at minute 7 UTC). The latest successful scheduled run is [42520941228](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42520941228).
 - Immediate decisions: BUY_NOW / SELL_NOW only. Conditional decisions are shown separately. WAIT, REJECT and INSUFFICIENT_DATA never appear as executable entries. Zero qualifying signals is a valid output; thresholds are not lowered to fill the table.
 - Risk policy: USD 200 reference capital, maximum planned loss USD 4 before fees/slippage/funding/execution gaps, leverage no greater than 5x or the venue's published maximum (whichever is lower), stop distance 0.5%-3%, and reward/risk at least 2. Position sizing and reward/risk start from unrounded V5 prices; tick/lot rounding is then applied and the actual rounded stop distance, planned loss, leverage and quantity constraints are revalidated.
@@ -82,3 +82,13 @@ V5 is retained as a legacy manual-diagnostics workflow; it is not the currently 
 - Active OKX adapter does not supply smart-money or on-chain wallet evidence. Missing evidence is not fabricated and receives no points.
 
 See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [operational runbook](docs/v5-signal-autopilot.md).
+
+
+## Approved signal product contract (v2.5)
+
+- Delivery: Telegram only, permanently unless the user explicitly changes the decision.
+- Required signal structure: nine sections (header, chart image, concise Persian rationale, Ichimoku status, trade levels, calibration/coverage, costs/EV, conditional risk flags, footer).
+- Analysis target: LFS/NSS + Ichimoku M10 + engine-specific triggers; Ichimoku is a filter for LRT and confirmation for NMT, never a standalone signal generator.
+- Tier A requires per-symbol coverage, calibration, positive net EV, walk-forward evidence, and all risk gates. Aggregate universe scan coverage is tracked separately as system health.
+- System state is typed: `HEALTHY`, `DATA_DEGRADED`, `BUG_STATE`, `VALIDATION_FAILED`. `BUG_STATE` blocks all signal publication.
+- The current EMA20/EMA50 + ATR14 code is legacy MVP and must not be represented as the completed v2.5 analytical engine.
