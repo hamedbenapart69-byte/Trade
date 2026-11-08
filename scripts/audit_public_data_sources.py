@@ -22,15 +22,15 @@ TIMEOUT = 20
 
 def iso_ms(value: Any) -> str | None:
     try:
-        return datetime.fromtimestamp(int(value) / 1000, tz=timezone.utc).isoformat()
-    except (TypeError, ValueError, OSError):
-        try:
-            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-            if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-            return parsed.astimezone(timezone.utc).isoformat()
-        except (TypeError, ValueError, OSError):
-            return None
+        raw = str(value).strip()
+        if raw.isdigit():
+            return datetime.fromtimestamp(int(raw) / 1000, tz=timezone.utc).isoformat()
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat()
+    except (TypeError, ValueError, OSError, OverflowError):
+        return None
 
 
 def request(url: str, method: str = "GET", max_bytes: int = 8_000_000) -> dict[str, Any]:
@@ -132,11 +132,27 @@ def archive_kline(name: str, market: str, month: str) -> dict[str, Any]:
                 ts = iso_ms(row[0])
                 if ts:
                     closes[ts] = float(row[4])
-            out.update({"archive_rows": len(parsed), "first_open_utc": iso_ms(parsed[0][0]),
-                        "last_open_utc": iso_ms(parsed[-1][0]), "last_close": float(parsed[-1][4]),
-                        "close_by_open_time": closes})
+            out.update({"archive_rows": len(parsed), "first_open_raw": parsed[0][0],
+                        "last_open_raw": parsed[-1][0], "first_open_utc": iso_ms(parsed[0][0]),
+                        "last_open_utc": iso_ms(parsed[-1][0]), "matched_timestamp_count": len(closes),
+                        "last_close": float(parsed[-1][4]), "close_by_open_time": closes})
     except Exception as exc:
         out["archive_parse_error"] = f"{type(exc).__name__}: {str(exc)[:180]}"
+    return out
+
+
+def probe_csv(name: str, path: str) -> dict[str, Any]:
+    result = request(f"https://data.binance.vision/data/{path}", max_bytes=2_000_000)
+    body = result.pop("body", None)
+    out: dict[str, Any] = {"name": name, "archive_path": path, **result}
+    if body is not None:
+        try:
+            rows = list(csv.reader(io.StringIO(body.decode("utf-8"))))
+            out["row_count"] = len(rows)
+            out["header_or_first_row"] = rows[0] if rows else None
+            out["sample_row"] = rows[1] if len(rows) > 1 else None
+        except Exception as exc:
+            out["parse_error"] = f"{type(exc).__name__}: {str(exc)[:180]}"
     return out
 
 
@@ -156,6 +172,10 @@ def main() -> None:
                  "https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=1h&limit=2"),
         archive_kline("binance_vision_spot_1h_2026_10", "spot", "2026-10"),
         archive_kline("binance_vision_um_futures_1h_2026_10", "futures_um", "2026-10"),
+        probe_csv("binance_vision_metrics_2026_10_01",
+                  "futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-10-01.csv"),
+        probe_csv("binance_vision_funding_rate_2026_10_01",
+                  "futures/um/daily/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10-01.csv"),
     ]
     by_name = {x["name"]: x for x in results}
     spot = by_name.get("binance_vision_spot_1h_2026_10", {})
