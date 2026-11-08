@@ -81,7 +81,7 @@ function render(d){
  $("watchCount").textContent=fmt(watch.length);
  const c=d.coverage||{};
  const expanded=d.scan_mode==="EXPANDED_TOP_100"?" | فهرست اصلی: "+fmt(d.primary_shortlist_selected)+"/30 | گسترش بازار: "+fmt(d.expanded_discovery_selected)+"/"+fmt(d.expanded_discovery_target)+(d.extended_partial||Number(d.screened_assets)<Number(d.selected_assets)?" (پوشش ناقص)":""):"";
- $("coverage").textContent="پوشش: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+expanded+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/30":"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
+ $("coverage").textContent="کشف اولیه: "+fmt(d.discovered_assets)+" دارایی | قراردادهای واجد شرایط: "+fmt(d.eligible_assets)+" | بررسی‌شده: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+expanded+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/"+fmt(d.universe_requested||30):"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
  $("source").textContent="کشف بازار: "+fmt(d.source_status?.discovery)+" | دادهٔ قراردادهای آتی و کندل: "+fmt(d.source_status?.futures_ohlcv)+" | مرجع مستقل: "+fmt(d.source_status?.underlying_market_data);
  if(d.status!=="SCAN_COMPLETED"){
   $("notice").innerHTML='<div class="notice">اسکن قابل اتکایی برای انتشار موجود نیست. تا دریافت دادهٔ معتبر، هیچ سیگنال اجرایی منتشر نمی‌شود. '+esc(d.error||"")+'</div>';
