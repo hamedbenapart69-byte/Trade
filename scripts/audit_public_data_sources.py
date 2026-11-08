@@ -118,16 +118,20 @@ def get_json(name: str, url: str) -> dict[str, Any]:
                     result["last_open_utc"] = iso_ms(rows[-1][0])
                     result["first_close"] = float(rows[0][4])
                     result["last_close"] = float(rows[-1][4])
-            elif name == "kucoin_funding_2y":
+            elif name.startswith("kucoin_funding"):
                 rows = obj.get("data", []) if isinstance(obj, dict) else []
-                result["count"] = len(rows)
+                result.update({"code": obj.get("code") if isinstance(obj, dict) else None,
+                               "message": obj.get("msg") if isinstance(obj, dict) else None,
+                               "count": len(rows)})
                 if rows:
                     times = [int(row.get("timepoint", 0)) for row in rows if row.get("timepoint") is not None]
                     result["oldest_utc"] = iso_ms(min(times)) if times else None
                     result["newest_utc"] = iso_ms(max(times)) if times else None
-            elif name == "kucoin_open_interest_2y_daily":
+            elif name.startswith("kucoin_open_interest"):
                 rows = obj.get("data", []) if isinstance(obj, dict) else []
-                result["count"] = len(rows)
+                result.update({"code": obj.get("code") if isinstance(obj, dict) else None,
+                               "message": obj.get("msg") if isinstance(obj, dict) else None,
+                               "count": len(rows)})
                 if rows:
                     times = [int(row.get("ts", 0)) for row in rows if row.get("ts") is not None]
                     result["oldest_utc"] = iso_ms(min(times)) if times else None
@@ -216,8 +220,12 @@ def main() -> None:
                  "https://api-futures.kucoin.com/api/v1/kline/query?symbol=XBTUSDTM&granularity=60&from=1794096000000&to=1794268800000"),
         get_json("kucoin_funding_2y",
                  "https://api-futures.kucoin.com/api/v1/contract/funding-rates?symbol=XBTUSDTM&from=1731024000000&to=1794268800000"),
+        get_json("kucoin_funding_2y_old_week",
+                 "https://api-futures.kucoin.com/api/v1/contract/funding-rates?symbol=XBTUSDTM&from=1731024000000&to=1731628800000"),
         get_json("kucoin_open_interest_2y_daily",
                  "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1731024000000&endAt=1794268800000&pageSize=1000"),
+        get_json("kucoin_open_interest_recent_70d",
+                 "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1788134400000&endAt=1794268800000&pageSize=1000"),
     ]
     by_name = {x["name"]: x for x in results}
     for symbol in ["ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "PEPEUSDT",
