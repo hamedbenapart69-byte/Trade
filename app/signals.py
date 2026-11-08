@@ -1020,7 +1020,7 @@ class FuturesSignalEngine:
             elif adaptive and adaptive.get("confirmation_required"):
                 confirm=adaptive["confirmation_required"];trigger=adaptive.get("trigger_level")
             elif adaptive and score<70:
-                confirm="next completed 1H candle must preserve the selected setup structure and maintain volume ratio above 1.0";trigger=e20
+                confirm="next completed 1H candle must preserve the selected setup structure and maintain volume ratio above 1.0";trigger=adaptive.get("trigger_level") or e20
             elif not entry_ok:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
