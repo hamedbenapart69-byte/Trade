@@ -51,6 +51,15 @@ class EmaAtrSignalTests(unittest.TestCase):
         self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
 
 
+
+    def test_fetch_time_proxy_is_allowed_but_explicitly_labeled(self):
+        row = self.make_row("up")
+        row["ticker_timestamp_source"] = "FETCH_TIME_PROXY"
+        result = build_signal(row, "2026-11-08T19:00:00+03:30")
+        self.assertEqual(result["status"], "BUY_NOW")
+        self.assertEqual(result["entry_price_quality"], "PROXY_FETCH_TIME")
+        self.assertIn("PROXY", result["reason"])
+
     def test_missing_live_futures_ticker_is_degraded(self):
         row = self.make_row("up")
         row.pop("last")
