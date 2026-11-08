@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import gzip
 import io
 import json
 import time
@@ -43,15 +42,8 @@ def month_starts(start: date, end_exclusive: date) -> list[date]:
     return result
 
 
-def date_range(start: date, end_exclusive: date):
-    current = start
-    while current < end_exclusive:
-        yield current
-        current += timedelta(days=1)
-
-
 def fetch_zip(url: str, timeout: int = 60, retries: int = 4) -> bytes:
-    """دریافت ZIP با backoff برای 429/5xx و timeout."""
+    """دریافت ZIP با backoff و ثبت قابل‌تفکیک خطاهای HTTP/timeout."""
     last_error = "UNKNOWN"
     for attempt in range(retries):
         request = urllib.request.Request(url, headers={"User-Agent": "Trade-Stage1A-Extended/1.0"})
@@ -74,6 +66,18 @@ def fetch_zip(url: str, timeout: int = 60, retries: int = 4) -> bytes:
     raise ArchiveDownloadError(f"RETRIES_EXHAUSTED_{last_error}")
 
 
+def error_category(reason: str) -> str:
+    if "429" in reason:
+        return "RATE_LIMIT_429"
+    if "TIMEOUT" in reason:
+        return "TIMEOUT"
+    if "404" in reason:
+        return "MISSING_ARCHIVE_404"
+    if any(code in reason for code in ("500", "502", "503", "504")):
+        return "SERVER_ERROR"
+    return "OTHER"
+
+
 def parse_zip_rows(payload: bytes, start_ms: int, end_ms: int) -> list[list[str]]:
     rows_out: list[list[str]] = []
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
@@ -92,7 +96,7 @@ def parse_zip_rows(payload: bytes, start_ms: int, end_ms: int) -> list[list[str]
 
 
 def archive_urls(symbol: str, start: date, end_exclusive: date):
-    """ماه‌های کامل/مرزی از monthly و بخش ماه جاری از daily دریافت می‌شود."""
+    """ماه‌ها از monthly و روزهای بخش ناقص ماه پایانی از daily دریافت می‌شوند."""
     for month in month_starts(start, end_exclusive):
         name = f"{symbol}-1h-{month:%Y-%m}.zip"
         yield f"{BASE_URL}/data/futures/um/monthly/klines/{symbol}/1h/{name}", "monthly"
@@ -102,6 +106,26 @@ def archive_urls(symbol: str, start: date, end_exclusive: date):
             name = f"{symbol}-1h-{day:%Y-%m-%d}.zip"
             yield f"{BASE_URL}/data/futures/um/daily/klines/{symbol}/1h/{name}", "daily"
             day += timedelta(days=1)
+
+
+def write_parquet(rows: dict[int, list[str]], timestamps: list[int], path: Path) -> None:
+    """ذخیره Parquet فشرده و typed؛ فرمت استاندارد دیتاست پروژه."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    records = []
+    for ts in timestamps:
+        row = rows[ts]
+        records.append({
+            "open_time": int(row[0]), "open": float(row[1]), "high": float(row[2]),
+            "low": float(row[3]), "close": float(row[4]), "volume": float(row[5]),
+            "close_time": int(row[6]), "quote_asset_volume": float(row[7]),
+            "number_of_trades": int(float(row[8])),
+            "taker_buy_base_volume": float(row[9]),
+            "taker_buy_quote_volume": float(row[10]), "ignore": float(row[11]),
+        })
+    table = pa.Table.from_pylist(records)
+    pq.write_table(table, path, compression="zstd", version="2.6")
 
 
 def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, report_path: Path) -> dict[str, Any]:
@@ -128,7 +152,7 @@ def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, 
                     collected[int(row[0])] = row
             except ArchiveDownloadError as exc:
                 reason = str(exc)
-                request_errors[reason.split("_")[0]] += 1
+                request_errors[error_category(reason)] += 1
                 errors.append(f"{archive_type}:{url.rsplit('/', 1)[-1]}:{reason}")
             time.sleep(0.10)
 
@@ -146,11 +170,8 @@ def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, 
         results.append(row_result)
 
         if complete:
-            file_path = output_dir / f"{symbol}_1h_{start.isoformat()}_{end_exclusive.isoformat()}.csv.gz"
-            with gzip.open(file_path, "wt", encoding="utf-8", newline="") as handle:
-                writer = csv.writer(handle)
-                writer.writerow(COLUMNS)
-                writer.writerows(collected[ts] for ts in timestamps)
+            file_path = output_dir / f"{symbol}_1h_{start.isoformat()}_{end_exclusive.isoformat()}.parquet"
+            write_parquet(collected, timestamps, file_path)
             row_result["file"] = str(file_path)
 
         print(f"[{symbol_index}/{len(symbols)}] {symbol}: {row_result['status']} {len(timestamps)}/{expected_rows} rows", flush=True)
@@ -159,6 +180,7 @@ def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, 
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "source": "BINANCE_VISION_USDM_MONTHLY_PLUS_DAILY",
+        "storage_format": "PARQUET_ZSTD",
         "start_utc": start_dt.isoformat(), "end_exclusive_utc": end_dt.isoformat(),
         "expected_rows_per_symbol": expected_rows, "symbols_requested": len(symbols),
         "symbols_full_history": full_count, "minimum_full_history_symbols": 40,
@@ -173,9 +195,9 @@ def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--symbols-file", default="data/stage1a_qualifying_symbols.json")
-    parser.add_argument("--start-date", default="2024-11-09")
-    parser.add_argument("--end-date", default="2026-11-09", help="exclusive UTC date")
-    parser.add_argument("--output-dir", default="../market-data/ohlcv_1h")
+    parser.add_argument("--start-date", default="2024-11-08")
+    parser.add_argument("--end-date", default="2026-11-08", help="exclusive UTC date")
+    parser.add_argument("--output-dir", default="../market-data/datasets/stage1a_extended/ohlcv_1h")
     parser.add_argument("--report", default="data/stage1a_extension_report.json")
     args = parser.parse_args()
 
