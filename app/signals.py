@@ -910,6 +910,7 @@ class FuturesSignalEngine:
         if baseline_direction:
             direction=baseline_direction
             strategy_family="V3_STRICT_BASELINE"
+            adaptive=None
         elif adaptive:
             direction=adaptive["direction"]
             strategy_family=adaptive["strategy_family"]
@@ -997,7 +998,7 @@ class FuturesSignalEngine:
         if not risk["valid"]:decision="REJECT"
         elif not audit_passed:decision="WAIT"
         elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
-        elif score>=60 and (not entry_ok or conflict or chase):decision="CONDITIONAL_BUY" if direction=="LONG" else "CONDITIONAL_SELL"
+        elif score>=60:decision="CONDITIONAL_BUY" if direction=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
         confirm=None;trigger=None
         if decision.startswith("CONDITIONAL"):
