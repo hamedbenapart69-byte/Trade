@@ -33,10 +33,10 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
     def test_telegram_message_never_invents_calibrated_probability(self):
         from modules.notifier import _format_signal
         message=_format_signal({"symbol":"BTC/USDT:USDT","status":"BUY_NOW","side":"LONG","entry":None,"stop_loss":None,"take_profit":[],"tier":"A","confidence":"NOT_CALIBRATED","lfs":"NOT_CALCULABLE","nss":"NOT_CALCULATED","falsification":"break of support"}, {})
-        self.assertIn("NOT_CALIBRATED",message)
+        self.assertIn("نماد: BTC/USDT:USDT",message)
         self.assertIn("ورود: —",message)
-        self.assertIn("SL: —",message)
-        self.assertIn("LFS=NOT_CALCULABLE",message)
+        self.assertIn("حد ضرر: —",message)
+        self.assertNotIn("NOT_CALIBRATED",message)
 
     def test_telegram_silently_skips_without_credentials(self):
         from modules.notifier import notify_tier_a, send_test_message
