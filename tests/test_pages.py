@@ -167,7 +167,8 @@ class PagesPayloadTests(unittest.TestCase):
 
     def test_payload_exposes_primary_and_expanded_market_coverage(self):
         payload=build_payload(source())
-        self.assertEqual(payload["scan_mode"],"EXPANDED_TOP_100")\n        self.assertEqual(payload["discovered_assets"],250)
+        self.assertEqual(payload["scan_mode"],"EXPANDED_TOP_100")
+        self.assertEqual(payload["discovered_assets"],250)
         self.assertEqual(payload["primary_shortlist_selected"],30)
         self.assertEqual(payload["expanded_discovery_selected"],10)
         self.assertIn("CoinGecko public spot",payload["source_status"]["underlying_market_data"])
