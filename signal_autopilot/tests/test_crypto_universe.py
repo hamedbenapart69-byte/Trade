@@ -94,6 +94,27 @@ class CryptoUniverseTests(unittest.TestCase):
         market["info"] = {"onboardDate": str(now - 900 * 86_400_000)}
         self.assertEqual(MarketDataFetcher._listing_time_ms(market, "binance"), now - 900 * 86_400_000)
 
+
+    def test_fallback_continues_after_bybit_block_and_selects_binance(self):
+        self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
+        okx_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(20)]
+        binance_rows = [(20_000_000, f"ETH{i}/USDT:USDT", {}) for i in range(60)]
+
+        def fake_provider(provider, whitelist):
+            if provider == "okx":
+                return okx_rows
+            if provider == "bybit":
+                raise RuntimeError("403 blocked")
+            if provider == "binance":
+                return binance_rows
+            self.fail(f"unexpected provider call after qualifying Binance fallback: {provider}")
+
+        self.fetcher._fetch_from_provider = fake_provider
+        result = self.fetcher.fetch()
+        self.assertEqual(result["provider"], "binance")
+        self.assertEqual(result["symbols_processed"], 60)
+        self.assertTrue(result["fallback_used"])
+
     def test_kucoin_first_open_date_is_supported(self):
         now = 1_800_000_000_000
         market = self.market("BTC", 0)
