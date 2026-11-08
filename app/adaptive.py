@@ -145,14 +145,33 @@ def adaptive_setup(
             family = None
 
         if family and score >= 52:
+            if pullback and not rsi_ok:
+                confirmation = "wait for RSI to recover into the directional band, then a completed 15m retest/rejection of 1H EMA20"
+            elif pullback and not ema15_confirm:
+                confirmation = "wait for price to retest 1H EMA20, then a completed 15m rejection in the trend direction"
+            elif breakout and not breakout_confirmed:
+                confirmation = "wait for a completed 15m close beyond the 20-bar breakout level"
+            elif not (ema15_confirm or (sweep and sweep_confirm) or breakout_confirmed):
+                confirmation = "wait for a completed 15m candle to confirm the direction at/through EMA20"
+            else:
+                confirmation = None
+            pattern_confirmed = bool(
+                (pullback and rsi_ok and ema15_confirm)
+                or (sweep and sweep_confirm)
+                or breakout_confirmed
+                or (range_reversal and ema15_confirm)
+            )
+            trigger_level = prior_high if direction == "LONG" and breakout else prior_low if direction == "SHORT" and breakout else ema20 if pullback else ema20_15m
+            trigger_mode = "retest_rejection" if pullback or breakout_retest else "close_direction"
             candidates.append({
                 "direction": direction,
                 "strategy_family": family,
                 "strategy_score": score,
                 "strategy_evidence": evidence,
-                "pattern_confirmed": bool(ema15_confirm or (sweep and sweep_confirm) or breakout),
-                "confirmation_required": None if (ema15_confirm or breakout) else "wait for a completed 15m candle to confirm the direction at/through EMA20",
-                "trigger_level": float(ema20_15m),
+                "pattern_confirmed": pattern_confirmed,
+                "confirmation_required": confirmation,
+                "trigger_level": float(trigger_level),
+                "trigger_mode": trigger_mode,
             })
 
     if not candidates:
