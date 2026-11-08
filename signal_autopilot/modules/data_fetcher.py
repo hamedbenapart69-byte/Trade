@@ -54,6 +54,10 @@ class MarketDataFetcher:
                     "openTime", "limitOpenTime")
         elif provider == "kucoinfutures":
             keys = ("firstOpenDate", "launchTime", "createdAt")
+        elif provider == "gateio":
+            keys = ("create_time", "createTime", "first_list_time", "launchTime")
+        elif provider == "toobit":
+            keys = ("launchTime", "onboardDate", "createTime", "createdAt")
         for key in keys:
             raw = info.get(key)
             try:
@@ -61,8 +65,8 @@ class MarketDataFetcher:
             except (TypeError, ValueError):
                 continue
             if value > 0:
-                # Exchange metadata timestamps are milliseconds for supported perpetual instruments.
-                return value
+                # Normalize exchange metadata timestamps: some venues publish seconds, others milliseconds.
+                return value * 1000 if value < 1_000_000_000_000 else value
         return None
 
     def _coingecko_top_symbols(self) -> set[str]:
@@ -111,6 +115,12 @@ class MarketDataFetcher:
                                   "options": {"defaultType": "swap"}})
         elif provider == "kucoinfutures":
             exchange = ccxt.kucoinfutures({"enableRateLimit": True, "timeout": 25000})
+        elif provider == "gateio":
+            exchange = ccxt.gateio({"enableRateLimit": True, "timeout": 25000,
+                                    "options": {"defaultType": "swap"}})
+        elif provider == "toobit":
+            exchange = ccxt.toobit({"enableRateLimit": True, "timeout": 25000,
+                                    "options": {"defaultType": "swap"}})
         else:
             raise ValueError("unsupported_futures_provider")
         self.exchanges.append(exchange)
