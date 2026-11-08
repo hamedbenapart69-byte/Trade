@@ -57,3 +57,56 @@ class WalkForwardExecutionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TelegramChartTransportTests(unittest.TestCase):
+    def test_notifier_sends_rendered_png_as_photo(self):
+        import asyncio
+        from unittest.mock import patch
+        from modules.notifier import _send_signal_photos
+
+        calls = {"photos": [], "messages": []}
+
+        class FakeBot:
+            def __init__(self, token):
+                self.token = token
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+            async def send_photo(self, **kwargs):
+                calls["photos"].append(kwargs)
+            async def send_message(self, **kwargs):
+                calls["messages"].append(kwargs)
+
+        signal = {"symbol": "BTC", "chart_candles": [{"timestamp": 1}]}
+        with patch("modules.notifier.Bot", FakeBot), \
+             patch("modules.notifier.render_signal_chart", return_value=b"fake-png"):
+            sent, failures = asyncio.run(_send_signal_photos("token", "chat", [(signal, "تحلیل و سطوح")]))
+        self.assertEqual((sent, failures), (1, 0))
+        self.assertEqual(calls["photos"][0]["photo"].read(), b"fake-png")
+        self.assertEqual(calls["photos"][0]["caption"], "تحلیل و سطوح")
+        self.assertEqual(calls["messages"], [])
+
+    def test_chart_render_failure_falls_back_to_text(self):
+        import asyncio
+        from unittest.mock import patch
+        from modules.notifier import _send_signal_photos
+
+        calls = {"messages": []}
+
+        class FakeBot:
+            def __init__(self, token): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, exc_type, exc, tb): return False
+            async def send_photo(self, **kwargs): raise AssertionError("photo must not be sent")
+            async def send_message(self, **kwargs): calls["messages"].append(kwargs)
+
+        with patch("modules.notifier.Bot", FakeBot), \
+             patch("modules.notifier.render_signal_chart", side_effect=ValueError("bad chart")):
+            sent, failures = asyncio.run(_send_signal_photos(
+                "token", "chat", [({"symbol": "ETH"}, "دلیل و سطوح")]
+            ))
+        self.assertEqual((sent, failures), (1, 1))
+        self.assertIn("دلیل و سطوح", calls["messages"][0]["text"])
+        self.assertIn("تصویر چارت", calls["messages"][0]["text"])
