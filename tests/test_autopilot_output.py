@@ -15,15 +15,14 @@ class AutopilotOutputTests(unittest.TestCase):
             }],
             "conditional": [{
                 "symbol": "ETHUSDT", "strategy_family":"TREND_PULLBACK", "decision": "CONDITIONAL_SELL", "direction": "SHORT",
-                "confidence_v5": 65, "data_grade": "B",
-                "entry_quality": {"confirmation_required": "15m close below trigger", "trigger_level": 2500.0},
+                "confidence_v6": 65, "confidence_v5": 65, "data_grade": "B", "entry":2500.0,"stop_loss":2600.0,"take_profit":2300.0,\n                "risk":{"required_leverage":3.0,"planned_loss_usd":4.0},\n                "entry_quality": {"confirmation_required": "15m close below trigger", "trigger_level": 2500.0},
             }],
         }
         rendered = render_output(result)
         self.assertIn("| Symbol | Strategy | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | V6 Score |", rendered)
         self.assertIn("| BTCUSDT | V3_STRICT_BASELINE | BUY_NOW | LONG | 100 | 98.5 | 103 | 1.5 | 2x | 4 | B | 75 |", rendered)
         self.assertIn("Conditional watchlist", rendered)
-        self.assertIn("| ETHUSDT | TREND_PULLBACK | CONDITIONAL_SELL | SHORT | 15m close below trigger | 2500 | 65 | B |", rendered)
+        self.assertIn("| ETHUSDT | TREND_PULLBACK | CONDITIONAL_SELL | SHORT | 2500 | 2600 | 2300 | 15m close below trigger | 2500 | 3x | 4 | 65 | B |", rendered)
 
     def test_no_actionable_setup_returns_exact_no_signal_text(self):
         self.assertEqual(render_output({"status": "SCAN_COMPLETED", "actionable": [], "conditional": []}),
