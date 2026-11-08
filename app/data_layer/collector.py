@@ -98,6 +98,33 @@ class Stage1Collector:
                 "passed":sum(x["passed"] for x in results),"total":len(results),"checks":results,
                 "scope_note":"This probe reports the IP/network of the machine running it; a GitHub-hosted run does not prove reachability from an Iranian residential/mobile IP."}
 
+    def probe_okx(self) -> dict:
+        base = "https://www.okx.com"
+        checks = [
+            ("instruments", "/api/v5/public/instruments", {"instType":"SWAP"}),
+            ("tickers", "/api/v5/market/tickers", {"instType":"SWAP"}),
+            ("candles", "/api/v5/market/candles", {"instId":"BTC-USDT-SWAP","bar":"1H","limit":"2"}),
+            ("funding", "/api/v5/public/funding-rate", {"instId":"BTC-USDT-SWAP"}),
+            ("open_interest", "/api/v5/public/open-interest", {"instType":"SWAP","instId":"BTC-USDT-SWAP"}),
+            ("open_interest_history", "/api/v5/rubik/stat/contracts/open-interest-history",
+             {"instId":"BTC-USDT-SWAP","period":"1H"}),
+        ]
+        results = []
+        for name, path, params in checks:
+            try:
+                response = self.http.get(base + path, params=params)
+                response.raise_for_status()
+                payload = response.json()
+                rows = payload.get("data") if isinstance(payload,dict) else None
+                passed = isinstance(rows,list) and payload.get("code") == "0" and bool(rows)
+                results.append({"dataset":name,"passed":passed,"http_status":response.status_code,
+                                "row_count":len(rows or [])})
+            except Exception as exc:
+                results.append({"dataset":name,"passed":False,"error":type(exc).__name__,
+                                "detail":str(exc)[:160]})
+        return {"provider":"OKX public REST","passed":sum(x["passed"] for x in results),
+                "total":len(results),"checks":results}
+
     def probe_bybit(self) -> dict:
         url = "https://api.bybit.com/v5/market/time"
         try:
