@@ -40,6 +40,10 @@ class MarketDataFetcher:
             keys = ("launchTime", "createdTime", "listTime")
         elif provider == "binance":
             keys = ("onboardDate", "launchTime", "createdTime")
+        elif provider in ("bitget", "mexc"):
+            keys = ("launchTime", "listTime", "createdTime")
+        elif provider == "kucoinfutures":
+            keys = ("firstOpenDate", "launchTime", "createdAt")
         for key in keys:
             raw = info.get(key)
             try:
@@ -82,6 +86,14 @@ class MarketDataFetcher:
         elif provider == "binance":
             exchange = ccxt.binanceusdm({"enableRateLimit": True, "timeout": 25000,
                                          "options": {"defaultType": "future"}})
+        elif provider == "bitget":
+            exchange = ccxt.bitget({"enableRateLimit": True, "timeout": 25000,
+                                    "options": {"defaultType": "swap"}})
+        elif provider == "mexc":
+            exchange = ccxt.mexc({"enableRateLimit": True, "timeout": 25000,
+                                  "options": {"defaultType": "swap"}})
+        elif provider == "kucoinfutures":
+            exchange = ccxt.kucoinfutures({"enableRateLimit": True, "timeout": 25000})
         else:
             raise ValueError("unsupported_futures_provider")
         self.exchanges.append(exchange)
@@ -224,7 +236,7 @@ class MarketDataFetcher:
         whitelist = self._coingecko_top_symbols()
         errors = {}
         results = {}
-        for provider in ("okx", "bybit", "binance"):
+        for provider in ("okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"):
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
                 results[provider] = rows
