@@ -1,0 +1,36 @@
+name: Stage 1 Historical Data Collection
+on:
+  push:
+    branches: [stage1-webfirst-v2-clean]
+    paths:
+      - "signal_autopilot/RUN_FULL_HISTORY.txt"
+permissions:
+  contents: read
+jobs:
+  historical-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: signal_autopilot/requirements.txt
+      - name: Install collector dependencies
+        working-directory: signal_autopilot
+        run: pip install -r requirements.txt
+      - name: Probe OKX, Binance Vision and Fear & Greed from runner
+        working-directory: signal_autopilot
+        run: python scripts/run_stage1_data.py --provider okx --probe-only --symbols 100 --years 2
+      - name: Collect 100-symbol two-year OHLCV, funding and 30-day OI
+        working-directory: signal_autopilot
+        run: python scripts/run_stage1_data.py --provider okx --symbols 100 --years 2
+      - name: Upload Parquet and quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-historical-parquet
+          path: signal_autopilot/data/stage1/
+          if-no-files-found: warn
+          retention-days: 30
