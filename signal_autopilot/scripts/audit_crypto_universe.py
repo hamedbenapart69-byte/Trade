@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,7 +25,11 @@ def main() -> None:
         selected_exchange = None
         selected = []
         union_by_symbol = {}
-        for provider in ("okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"):
+        providers = ["okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"]
+        if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
+            report["providers"]["okx"] = {"simulated_blocked": True, "reason": "DEBUG_BLOCK_OKX_FORCED"}
+            providers.remove("okx")
+        for provider in providers:
             try:
                 exchange = fetcher._new_exchange(provider)
                 rows = fetcher._eligible_markets(
