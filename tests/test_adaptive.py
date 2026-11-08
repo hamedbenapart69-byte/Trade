@@ -53,6 +53,21 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertEqual(result["direction"],"SHORT")
         self.assertEqual(result["strategy_family"],"TREND_PULLBACK")
 
+    def test_oversold_aligned_short_stays_conditional_until_reset_and_retest(self):
+        tech={**self.tech,"close":97.0,"ema20":98.0,"ema50":99.0,"rsi":30.0,
+          "macd_histogram":-0.8,"macd_histogram_previous":-0.5,
+          "obv_change_10":-120.0,"mfi":40.0,"atr14":0.7}
+        result=adaptive_setup(self.h1,self.m15,tech,
+          {"1d":"BEARISH","4h":"DOWN","1h":"DOWN"},"TRENDING",
+          self.long,self.short,98.0,0.5,0.0001)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["direction"],"SHORT")
+        self.assertEqual(result["strategy_family"],"TREND_PULLBACK")
+        self.assertFalse(result["pattern_confirmed"])
+        self.assertEqual(result["trigger_mode"],"retest_rejection")
+        self.assertIn("RSI to recover",result["confirmation_required"])
+        self.assertEqual(result["trigger_level"],98.0)
+
     def test_confirmed_breakout_is_not_mislabeled_as_a_retest(self):
         h1=list(self.h1)
         h1[-1]=SimpleNamespace(open_time=h1[-1].open_time,open=105.0,high=107.0,low=104.8,
