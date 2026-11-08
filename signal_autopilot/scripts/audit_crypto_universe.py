@@ -53,13 +53,13 @@ def main() -> None:
         report["policy_checks"] = {
             "all_quote_usdt_linear_swaps": bool(selected_provider) and all(
                 selected_exchange.market(symbol).get("swap")
-                and fetcher.exchanges[-1].market(symbol).get("linear")
-                and fetcher.exchanges[-1].market(symbol).get("quote") == "USDT"
-                and fetcher.exchanges[-1].market(symbol).get("settle") == "USDT"
+                and selected_exchange.market(symbol).get("linear")
+                and selected_exchange.market(symbol).get("quote") == "USDT"
+                and selected_exchange.market(symbol).get("settle") == "USDT"
                 for _, symbol, _ in selected
             ),
             "all_coin_gecko_whitelisted": all(
-                fetcher.exchanges[-1].market(symbol).get("base", "").upper() in whitelist
+                selected_exchange.market(symbol).get("base", "").upper() in whitelist
                 for _, symbol, _ in selected
             ),
             "all_over_10m_usd_volume": all(volume >= 10_000_000 for volume, _, _ in selected),
