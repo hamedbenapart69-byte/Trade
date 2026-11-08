@@ -5,6 +5,8 @@ import asyncio
 import json
 import logging
 import os
+
+import httpx
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -122,6 +124,50 @@ def notify_tier_a(payload: dict) -> dict:
     except Exception:
         LOG.exception("Telegram delivery failed.")
         return {"status": "ERROR", "sent": sent}
+
+
+
+def notify_email(payload: dict) -> dict:
+    """ارسال ایمیل جایگزین فقط وقتی تلگرام نتوانسته سیگنال اقدام‌پذیر را تحویل دهد."""
+    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
+        return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
+    api_key = os.getenv("SENDGRID_KEY", "").strip()
+    recipient = os.getenv("ALERT_EMAIL_TO", "").strip()
+    sender = os.getenv("ALERT_EMAIL_FROM", "").strip()
+    if not api_key or not recipient or not sender:
+        return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
+
+    candidates = [
+        signal for signal in payload.get("signals", [])
+        if signal.get("status") in ("BUY_NOW", "SELL_NOW")
+        and signal.get("entry") is not None
+        and signal.get("stop_loss") is not None
+        and len(signal.get("take_profit") or []) >= 2
+    ]
+    if not candidates:
+        return {"status": "NO_ACTIONABLE_SIGNAL", "sent": 0}
+
+    body = "\\n\\n".join(_format_signal(signal, payload) for signal in candidates)
+    try:
+        response = httpx.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "personalizations": [{"to": [{"email": recipient}]}],
+                "from": {"email": sender},
+                "subject": f"Futures signals: {len(candidates)} actionable setup(s)",
+                "content": [{"type": "text/plain", "value": body}],
+            },
+            timeout=20.0,
+        )
+        if response.status_code != 202:
+            LOG.error("SendGrid rejected email: HTTP %s", response.status_code)
+            return {"status": "ERROR", "sent": 0, "http_status": response.status_code}
+        LOG.info("SendGrid accepted email notification.")
+        return {"status": "SENT", "sent": 1}
+    except Exception:
+        LOG.exception("SendGrid email delivery failed.")
+        return {"status": "ERROR", "sent": 0}
 
 
 def send_test_message() -> dict:
