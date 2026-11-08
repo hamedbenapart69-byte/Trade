@@ -114,6 +114,8 @@ jobs:
           assert Path("web/futures/data/history.csv").exists()
           print("END-TO-END PAYLOAD PASS:",len(p["signals"]))
           PY
+      - name: Validate static dashboard JavaScript
+        run: node --check web/futures/app.js
       - name: Publish data to isolated signals branch
         shell: bash
         run: |
