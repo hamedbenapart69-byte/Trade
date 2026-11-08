@@ -388,6 +388,7 @@ class Stage1Collector:
                 safe = market_id.replace("/","_")
                 gaps = gap_report(ohlcv)
                 gaps["coverage_of_requested_window_pct"] = round(100*len(ohlcv)/expected_ohlcv_rows, 3)
+                provider_dir = "okx_swap" if self.provider == "okx" else "binance_usdm"
                 reports[market_id] = {
                     "ohlcv":gaps,
                     "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
@@ -397,9 +398,9 @@ class Stage1Collector:
                     "open_interest":{"rows":len(oi),"coverage_days":round((oi[-1]["timestamp"]-oi[0]["timestamp"])/MS_DAY,2) if len(oi)>1 else 0,
                                      "label":"OKX_PUBLIC_HISTORY_WINDOW_30D" if self.provider == "okx" else "BINANCE_PUBLIC_HISTORY_LIMIT_30D"},
                     "files":{
-                        "ohlcv":self._write_parquet(f"binance_usdm/ohlcv_1h/{safe}.parquet",ohlcv),
-                        "funding":self._write_parquet(f"binance_usdm/funding/{safe}.parquet",funding),
-                        "open_interest":self._write_parquet(f"binance_usdm/open_interest_1h/{safe}.parquet",oi),
+                        "ohlcv":self._write_parquet(f"{provider_dir}/ohlcv_1h/{safe}.parquet",ohlcv),
+                        "funding":self._write_parquet(f"{provider_dir}/funding/{safe}.parquet",funding),
+                        "open_interest":self._write_parquet(f"{provider_dir}/open_interest_1h/{safe}.parquet",oi),
                     },
                 }
             except Exception as exc:
