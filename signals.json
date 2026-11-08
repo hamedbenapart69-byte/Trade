@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+  "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
   "provider": "kucoinfutures",
   "engine": "EMA20_EMA50_ATR14_MVP",
   "manual_trade_only": true,
@@ -21,7 +21,7 @@
       "ema50": 1279.714005661,
       "atr14": 14.5057142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -40,7 +40,7 @@
       "ema50": 4.94e-06,
       "atr14": 6.11e-08,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -59,7 +59,7 @@
       "ema50": 75890.4866681843,
       "atr14": 128.5214285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -78,7 +78,7 @@
       "ema50": 89.6355840184,
       "atr14": 0.4132142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -100,7 +100,7 @@
       "ema50": 255.1896747201,
       "atr14": 1.8071428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -122,7 +122,7 @@
       "ema50": 0.1586878096,
       "atr14": 0.0018321429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -141,7 +141,7 @@
       "ema50": 2237.3530016037,
       "atr14": 5.6007142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -160,7 +160,7 @@
       "ema50": 130.5503416818,
       "atr14": 1.1042857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -182,7 +182,7 @@
       "ema50": 0.7901085299,
       "atr14": 0.0054714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -201,7 +201,7 @@
       "ema50": 223.0423375827,
       "atr14": 1.4521428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -220,7 +220,7 @@
       "ema50": 7.0211109856,
       "atr14": 0.0553571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -239,35 +239,13 @@
       "ema50": 3.7062559147,
       "atr14": 0.0345,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
       "reason": "EMA20/EMA50 distance is not greater than 0.5%"
-    },
-    {
-      "symbol": "XMR/USDT:USDT",
-      "status": "SELL_NOW",
-      "side": "SELL",
-      "entry": 608.2,
-      "stop_loss": 613.5410714286,
-      "take_profit": [
-        601.0785714286,
-        593.9571428571
-      ],
-      "ema20": 603.7783141146,
-      "ema50": 608.5095912087,
-      "atr14": 3.5607142857,
-      "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "reason": "EMA20/EMA50 spread 0.7775% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "DOT/USDT:USDT",
@@ -283,13 +261,35 @@
       "ema50": 0.9043062756,
       "atr14": 0.0048285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
       "reason": "EMA20/EMA50 spread 0.9196% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "XMR/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 608.2,
+      "stop_loss": 613.5410714286,
+      "take_profit": [
+        601.0785714286,
+        593.9571428571
+      ],
+      "ema20": 603.7783141146,
+      "ema50": 608.5095912087,
+      "atr14": 3.5607142857,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.7775% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "XRP/USDT:USDT",
@@ -305,7 +305,7 @@
       "ema50": 1.1722108807,
       "atr14": 0.0058657143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -324,7 +324,7 @@
       "ema50": 0.3195887153,
       "atr14": 0.0004978571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -343,7 +343,7 @@
       "ema50": 0.4308660594,
       "atr14": 0.0037642857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -365,7 +365,7 @@
       "ema50": 0.5983791327,
       "atr14": 0.0034142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -387,7 +387,7 @@
       "ema50": 46.7138511558,
       "atr14": 0.4842857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -406,7 +406,7 @@
       "ema50": 0.856905801,
       "atr14": 0.0051357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -425,7 +425,7 @@
       "ema50": 0.2627079415,
       "atr14": 0.0020785714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -447,7 +447,7 @@
       "ema50": 0.3656008399,
       "atr14": 0.0025928571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -466,7 +466,7 @@
       "ema50": 695.551204285,
       "atr14": 1.86,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -488,7 +488,7 @@
       "ema50": 8.2045895446,
       "atr14": 0.0866428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -510,7 +510,7 @@
       "ema50": 0.167541525,
       "atr14": 0.0016378571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -532,7 +532,7 @@
       "ema50": 0.1821485575,
       "atr14": 0.0009628571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -556,7 +556,7 @@
       "ema50": 1279.714005661,
       "atr14": 14.5057142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -578,7 +578,7 @@
       "ema50": 255.1896747201,
       "atr14": 1.8071428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -600,7 +600,7 @@
       "ema50": 0.1586878096,
       "atr14": 0.0018321429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -622,35 +622,13 @@
       "ema50": 0.7901085299,
       "atr14": 0.0054714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
       "reason": "EMA20/EMA50 spread 1.5552% exceeds 0.5%; ATR14 risk levels"
-    },
-    {
-      "symbol": "XMR/USDT:USDT",
-      "status": "SELL_NOW",
-      "side": "SELL",
-      "entry": 608.2,
-      "stop_loss": 613.5410714286,
-      "take_profit": [
-        601.0785714286,
-        593.9571428571
-      ],
-      "ema20": 603.7783141146,
-      "ema50": 608.5095912087,
-      "atr14": 3.5607142857,
-      "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "reason": "EMA20/EMA50 spread 0.7775% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "DOT/USDT:USDT",
@@ -666,13 +644,35 @@
       "ema50": 0.9043062756,
       "atr14": 0.0048285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
       "reason": "EMA20/EMA50 spread 0.9196% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "XMR/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 608.2,
+      "stop_loss": 613.5410714286,
+      "take_profit": [
+        601.0785714286,
+        593.9571428571
+      ],
+      "ema20": 603.7783141146,
+      "ema50": 608.5095912087,
+      "atr14": 3.5607142857,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.7775% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "XRP/USDT:USDT",
@@ -688,7 +688,7 @@
       "ema50": 1.1722108807,
       "atr14": 0.0058657143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -710,7 +710,7 @@
       "ema50": 0.5983791327,
       "atr14": 0.0034142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -732,7 +732,7 @@
       "ema50": 46.7138511558,
       "atr14": 0.4842857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -754,7 +754,7 @@
       "ema50": 0.3656008399,
       "atr14": 0.0025928571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -776,7 +776,7 @@
       "ema50": 8.2045895446,
       "atr14": 0.0866428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -798,7 +798,7 @@
       "ema50": 0.167541525,
       "atr14": 0.0016378571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
@@ -820,7 +820,7 @@
       "ema50": 0.1821485575,
       "atr14": 0.0009628571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T16:38:39.817076+00:00",
+      "generated_at_utc": "2026-11-08T16:50:03.895508+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
