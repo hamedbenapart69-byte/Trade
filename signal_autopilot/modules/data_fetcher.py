@@ -176,30 +176,12 @@ class MarketDataFetcher:
             if base not in whitelist:
                 rejected["not_crypto_whitelist"] += 1
                 continue
-            listing_ms = self._listing_time_ms(market, provider)
-            if listing_ms is None:
-                rejected["listing_time_missing"] += 1
-                # Missing listing metadata is not an automatic exclusion if the exchange
-                # can prove a daily candle existed at least 730 days ago.
-                try:
-                    cutoff_ms = now_ms - min_age_ms
-                    history = exchange.fetch_ohlcv(symbol, timeframe="1d", since=cutoff_ms, limit=1)
-                    if not history or int(history[0][0]) > cutoff_ms + 7 * 86_400_000:
-                        rejected["history_too_short"] += 1
-                        continue
-                    rejected["history_verified"] += 1
-                except Exception:
-                    rejected["history_too_short"] += 1
-                    continue
-            elif listing_ms > now_ms - min_age_ms:
-                rejected["too_new"] += 1
-                continue
             ticker = tickers.get(symbol) or {}
             qv = ticker.get("quoteVolume")
             if qv is None:
-                info = ticker.get("info") or {}
-                raw_base_volume = info.get("volCcy24h") or ticker.get("baseVolume")
-                last_price = ticker.get("last") or info.get("last")
+                ticker_info = ticker.get("info") or {}
+                raw_base_volume = ticker_info.get("volCcy24h") or ticker.get("baseVolume")
+                last_price = ticker.get("last") or ticker_info.get("last")
                 try:
                     qv = float(raw_base_volume) * float(last_price)
                 except (TypeError, ValueError):
@@ -213,6 +195,24 @@ class MarketDataFetcher:
                 continue
             if not (volume > 0):
                 rejected["invalid_volume"] += 1
+                continue
+            listing_ms = self._listing_time_ms(market, provider)
+            if listing_ms is None:
+                rejected["listing_time_missing"] += 1
+                # Missing listing metadata is verified against historical daily OHLCV,
+                # but only after the asset has passed the liquidity threshold.
+                try:
+                    cutoff_ms = now_ms - min_age_ms
+                    history = exchange.fetch_ohlcv(symbol, timeframe="1d", since=cutoff_ms, limit=1)
+                    if not history or int(history[0][0]) > cutoff_ms + 7 * 86_400_000:
+                        rejected["history_too_short"] += 1
+                        continue
+                    rejected["history_verified"] += 1
+                except Exception:
+                    rejected["history_too_short"] += 1
+                    continue
+            elif listing_ms > now_ms - min_age_ms:
+                rejected["too_new"] += 1
                 continue
             accepted.append((volume, symbol, ticker))
         accepted.sort(key=lambda item: item[0], reverse=True)
