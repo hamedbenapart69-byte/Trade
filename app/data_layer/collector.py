@@ -35,7 +35,7 @@ class Stage1Collector:
         if exchange is not None:
             self.exchange = exchange
         elif self.provider == "okx":
-            self.exchange = ccxt.okx({"enableRateLimit": True, "timeout": 20000})
+            self.exchange = ccxt.okx({"enableRateLimit": True, "timeout": 20000, "options": {"defaultType": "swap"}})
         else:
             self.exchange = ccxt.binanceusdm({
                 "enableRateLimit": True,
