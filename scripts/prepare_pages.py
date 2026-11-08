@@ -79,7 +79,7 @@ def _valid_actionable(item: dict, source_ok: bool, now_ms: int) -> bool:
     stop = item.get("stop_loss")
     target = item.get("take_profit")
     stop_pct = _num(item.get("stop_pct"))
-    confidence = _num(item.get("confidence_v5"))
+    confidence = _num(item.get("confidence_v6", item.get("confidence_v5")))
     planned_loss = _num(risk.get("planned_loss_usd"))
     leverage = _num(risk.get("required_leverage"))
     rr = _num(risk.get("reward_to_risk"))
@@ -106,7 +106,7 @@ def _valid_actionable(item: dict, source_ok: bool, now_ms: int) -> bool:
 def _valid_conditional(item: dict, source_ok: bool, now_ms: int) -> bool:
     entry = item.get("entry_quality") or {}
     risk = item.get("risk") or {}
-    score = _num(item.get("confidence_v5"))
+    score = _num(item.get("confidence_v6", item.get("confidence_v5")))
     trigger = _num(entry.get("trigger_level"))
     stop_pct = _num(item.get("stop_pct"))
     planned_loss = _num(risk.get("planned_loss_usd"))
@@ -165,7 +165,7 @@ def build_payload(raw: dict) -> dict:
                 unique[key] = item
         return list(unique.values())
     def action_rank(item):
-        score = _num(item.get("confidence_v5")) or 0
+        score = _num(item.get("confidence_v6", item.get("confidence_v5"))) or 0
         rr = _num((item.get("risk") or {}).get("reward_to_risk")) or 0
         mtf = _num((item.get("v5_score_components") or {}).get("multi_timeframe")) or 0
         entry_ok = (item.get("entry_quality") or {}).get("entry_ok") is True
