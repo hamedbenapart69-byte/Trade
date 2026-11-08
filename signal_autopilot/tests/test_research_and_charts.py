@@ -38,7 +38,7 @@ class WalkForwardExecutionTests(unittest.TestCase):
         for i in range(120):
             close = 100.0 + i * 0.5
             rows.append({
-                "timestamp": 1_700_000_000_000 + i * 3_600_000,
+                "timestamp": 1_699_995_600_000 + i * 3_600_000,
                 "open": close - 0.1,
                 "high": close + 0.4,
                 "low": close - 0.4,
