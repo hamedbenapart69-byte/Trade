@@ -26,17 +26,27 @@ DEFAULT_BASE = "https://fapi.binance.com"
 
 class Stage1Collector:
     def __init__(self, data_dir: str | Path = "data/stage1", exchange=None,
-                 http_client: httpx.Client | None = None, sleep: Callable = time.sleep):
+                 http_client: httpx.Client | None = None, sleep: Callable = time.sleep,
+                 provider: str = "binance"):
         self.data_dir = Path(data_dir)
-        self.exchange = exchange or ccxt.binanceusdm({
-            "enableRateLimit": True,
-            "timeout": 20000,
-            "options": {"defaultType": "future"},
-        })
+        self.provider = provider.lower()
+        if self.provider not in ("binance", "okx"):
+            raise ValueError("unsupported_stage1_provider")
+        if exchange is not None:
+            self.exchange = exchange
+        elif self.provider == "okx":
+            self.exchange = ccxt.okx({"enableRateLimit": True, "timeout": 20000})
+        else:
+            self.exchange = ccxt.binanceusdm({
+                "enableRateLimit": True,
+                "timeout": 20000,
+                "options": {"defaultType": "future"},
+            })
         self.http = http_client or httpx.Client(timeout=20.0, follow_redirects=True)
         self._owns_http = http_client is None
         self.sleep = sleep
         self.base_url = os.getenv("BINANCE_FAPI_BASE_URL", DEFAULT_BASE).rstrip("/")
+        self.provider_name = "OKX public market-data API" if self.provider == "okx" else "Binance USD-M public market-data API"
 
     def close(self):
         try:
@@ -144,7 +154,7 @@ class Stage1Collector:
         candidates = []
         btc_unified = None
         for unified_symbol, market in self.exchange.markets.items():
-            if market.get("id") == "BTCUSDT":
+            if market.get("base") == "BTC" and market.get("quote") == "USDT" and market.get("settle") == "USDT" and market.get("swap"):
                 btc_unified = unified_symbol
             if not market.get("active") or not market.get("swap") or not market.get("linear"):
                 continue
@@ -174,7 +184,8 @@ class Stage1Collector:
         cursor = since_ms
         collected = []
         while cursor < until_ms:
-            batch = self.exchange.fetch_ohlcv(symbol, timeframe=timeframe, since=cursor, limit=1500)
+            batch = self.exchange.fetch_ohlcv(symbol, timeframe=timeframe, since=cursor,
+                                               limit=300 if self.provider == "okx" else 1500)
             if not batch:
                 break
             for item in batch:
@@ -195,8 +206,9 @@ class Stage1Collector:
         cursor = since_ms
         collected = {}
         market_id = self.exchange.market(symbol)["id"]
+        funding_limit = 100 if self.provider == "okx" else 1000
         while cursor < until_ms:
-            batch = self.exchange.fetch_funding_rate_history(symbol, since=cursor, limit=1000)
+            batch = self.exchange.fetch_funding_rate_history(symbol, since=cursor, limit=funding_limit)
             if not batch:
                 break
             for item in batch:
@@ -216,27 +228,40 @@ class Stage1Collector:
         return [collected[k] for k in sorted(collected)]
 
     def fetch_open_interest_history(self, symbol: str, since_ms: int, until_ms: int) -> list[dict]:
-        # Binance USD-M openInterestHist exposes only the latest month, max 500 rows per request.
         cursor = max(since_ms, until_ms - 30*MS_DAY)
         market_id = self.exchange.market(symbol)["id"]
         collected = {}
         while cursor < until_ms:
-            rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
-                                         {"symbol":market_id,"period":"1h","limit":500,
-                                          "startTime":cursor,"endTime":until_ms})
-            if not rows:
+            if self.provider == "okx":
+                rows = self.exchange.fetch_open_interest_history(symbol, timeframe="1h",
+                                                                  since=cursor, limit=100)
+                normalized = []
+                for item in rows or []:
+                    ts = int(item.get("timestamp") or 0)
+                    amount = item.get("openInterestAmount", item.get("openInterest"))
+                    value = item.get("openInterestValue")
+                    if ts and amount is not None:
+                        normalized.append({"timestamp":ts,"symbol":market_id,
+                                           "open_interest":float(amount),
+                                           "open_interest_value_usd":float(value) if value is not None else None})
+            else:
+                rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
+                                             {"symbol":market_id,"period":"1h","limit":500,
+                                              "startTime":cursor,"endTime":until_ms})
+                normalized = [{"timestamp":int(item["timestamp"]),"symbol":market_id,
+                               "open_interest":float(item["sumOpenInterest"]),
+                               "open_interest_value_usd":float(item["sumOpenInterestValue"])}
+                              for item in (rows or [])]
+            if not normalized:
                 break
-            for item in rows:
-                ts = int(item["timestamp"])
-                if cursor <= ts <= until_ms:
-                    collected[ts] = {"timestamp":ts,"symbol":market_id,
-                                     "open_interest":float(item["sumOpenInterest"]),
-                                     "open_interest_value_usd":float(item["sumOpenInterestValue"])}
-            last_ts = max(int(item["timestamp"]) for item in rows)
+            for item in normalized:
+                if cursor <= item["timestamp"] <= until_ms:
+                    collected[item["timestamp"]] = item
+            last_ts = max(item["timestamp"] for item in normalized)
             if last_ts < cursor:
                 raise RuntimeError(f"open_interest_pagination_stalled:{symbol}")
-            cursor = last_ts + 1
-            if len(rows) < 2:
+            cursor = last_ts + (MS_HOUR if self.provider == "okx" else 1)
+            if len(normalized) < (100 if self.provider == "okx" else 2):
                 break
         return [collected[k] for k in sorted(collected)]
 
@@ -308,10 +333,10 @@ class Stage1Collector:
     def run(self, target_count: int = 100, years: int = 2, now_ms: int | None = None) -> dict:
         now_ms = int(now_ms or time.time()*1000)
         since_ms = now_ms - int(years*365.25*MS_DAY)
-        probe = self.probe_binance()
+        probe = self.probe_okx() if self.provider == "okx" else self.probe_binance()
         bybit_probe = self.probe_bybit()
         if not probe["passed"]:
-            raise RuntimeError("binance_probe_failed; see probe report")
+            raise RuntimeError(f"{self.provider}_probe_failed; see probe report")
         symbols = self.discover_symbols(target_count)
         reports = {}
         expected_ohlcv_rows = max(1, (now_ms-since_ms)//MS_HOUR)
@@ -329,7 +354,7 @@ class Stage1Collector:
                     "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
                                "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None},
                     "open_interest":{"rows":len(oi),"coverage_days":round((oi[-1]["timestamp"]-oi[0]["timestamp"])/MS_DAY,2) if len(oi)>1 else 0,
-                                     "label":"BINANCE_PUBLIC_HISTORY_LIMIT_30D"},
+                                     "label":"OKX_PUBLIC_HISTORY_WINDOW_30D" if self.provider == "okx" else "BINANCE_PUBLIC_HISTORY_LIMIT_30D"},
                     "files":{
                         "ohlcv":self._write_parquet(f"binance_usdm/ohlcv_1h/{safe}.parquet",ohlcv),
                         "funding":self._write_parquet(f"binance_usdm/funding/{safe}.parquet",funding),
@@ -350,7 +375,8 @@ class Stage1Collector:
         actual_total = sum(v["ohlcv"]["rows"] for v in good)
         missing_total = sum(max(expected_ohlcv_rows-v["ohlcv"]["rows"],0) for v in good)
         report={
-            "stage":1,"version":"v1_ccxt_parquet","generated_at_utc":datetime.now(timezone.utc).isoformat(),
+            "stage":1,"version":f"v1_ccxt_parquet_{self.provider}","provider":self.provider_name,
+            "generated_at_utc":datetime.now(timezone.utc).isoformat(),
             "requested_symbols":target_count,"active_symbols":len(symbols),"successful_symbols":len(good),
             "failed_symbols":len(reports)-len(good),"history_target_years":years,
             "ohlcv_coverage":{
@@ -364,7 +390,7 @@ class Stage1Collector:
                           "last_timestamp_utc":self._utc(fng[-1]["timestamp"]) if fng else None,"error":fng_error},
             "binance_probe":probe,"bybit_probe":bybit_probe,"symbols":reports,
             "limitations":{
-                "open_interest":"Binance USD-M historical open-interest statistics are limited to the latest 1 month; not a 2-year series.",
+                "open_interest":f"{self.provider_name} historical open-interest coverage is limited to the latest 30 days in this Stage 1 collector; not a 2-year series.",
                 "fear_greed":"Daily series, not hourly. No synthetic interpolation is performed.",
                 "order_book":"No historical order-book snapshots stored in Stage 1.",
                 "liquidations":"No verified historical liquidation feed stored in Stage 1.",
