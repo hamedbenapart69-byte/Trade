@@ -5,15 +5,15 @@ on:
   workflow_dispatch:
     inputs:
       symbols:
-        description: "Number of active USDT perpetual symbols (BTC included)"
+        description: "Number of active USDT perpetual symbols"
         required: true
         default: "100"
       years:
-        description: "OHLCV and funding history years"
+        description: "Historical coverage years"
         required: true
         default: "2"
       probe_only:
-        description: "Only test endpoint reachability; do not download history"
+        description: "Only test endpoints; do not download historical data"
         required: true
         type: boolean
         default: true
@@ -31,14 +31,16 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Probe and collect
+      - name: Probe or collect
         env:
           PYTHONUNBUFFERED: "1"
         run: |
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.probe_only }}" = "true" ]; then
-            python scripts/run_stage1_data.py --probe-only
+          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.event.head_commit.message }}" == *"[RUN_STAGE1_FULL]"* ]]; then
+            python scripts/run_stage1_data.py --provider okx --symbols 100 --years 2
+          elif [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.probe_only }}" = "true" ]; then
+            python scripts/run_stage1_data.py --provider okx --probe-only
           else
-            python scripts/run_stage1_data.py --symbols "${{ inputs.symbols }}" --years "${{ inputs.years }}"
+            python scripts/run_stage1_data.py --provider okx --symbols "${{ inputs.symbols }}" --years "${{ inputs.years }}"
           fi
       - name: Upload Stage 1 evidence
         if: always()
