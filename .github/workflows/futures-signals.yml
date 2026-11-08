@@ -93,49 +93,51 @@ jobs:
           assert Path("web/futures/data/history.csv").exists()
           print("END-TO-END PAYLOAD PASS:",len(p["signals"]))
           PY
-      - name: Merge latest history and commit dashboard data
+      - name: Commit dashboard data with concurrent-run reconciliation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$GITHUB_REF_NAME"
-          if git cat-file -e "origin/$GITHUB_REF_NAME:signal_autopilot/data/history.csv" 2>/dev/null; then
-            git show "origin/$GITHUB_REF_NAME:signal_autopilot/data/history.csv" > /tmp/remote-history.csv
-            python - <<'PY'
-          import csv, json, subprocess
-          from pathlib import Path
-          local=Path("signal_autopilot/data/history.csv")
-          remote=Path("/tmp/remote-history.csv")
-          def read_rows(path):
-              with path.open(newline="",encoding="utf-8") as f:
-                  return list(csv.DictReader(f))
-          remote_rows=read_rows(remote)
-          local_rows=read_rows(local) if local.exists() else []
-          fields=list(remote_rows[0].keys()) if remote_rows else (list(local_rows[0].keys()) if local_rows else [])
-          merged=[]; seen=set()
-          for row in remote_rows+local_rows:
-              key=row.get("idempotency_key")
-              if key and key not in seen:
-                  merged.append(row); seen.add(key)
-          if fields:
-              with local.open("w",newline="",encoding="utf-8") as f:
-                  writer=csv.DictWriter(f,fieldnames=fields); writer.writeheader(); writer.writerows(merged)
-          remote_json=subprocess.run(["git","show",f"origin/{__import__('os').environ['GITHUB_REF_NAME']}:signal_autopilot/data/signals.json"],capture_output=True,text=True)
-          local_json=Path("signal_autopilot/data/signals.json")
-          if remote_json.returncode==0 and local_json.exists():
-              old=json.loads(remote_json.stdout); new=json.loads(local_json.read_text(encoding="utf-8"))
-              if (old.get("generated_at_utc") or "") > (new.get("generated_at_utc") or ""):
-                  local_json.write_text(json.dumps(old,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-          web=Path("web/futures/data")
-          web.mkdir(parents=True,exist_ok=True)
-          web.joinpath("signals.json").write_text(local_json.read_text(encoding="utf-8"),encoding="utf-8")
-          web.joinpath("history.csv").write_text(local.read_text(encoding="utf-8"),encoding="utf-8")
-          PY
-          fi
           git add -f signal_autopilot/data/signals.json signal_autopilot/data/history.csv web/futures/data/signals.json web/futures/data/history.csv
           if ! git diff --cached --quiet; then
             git commit -m "chore: publish futures dashboard data [skip ci]"
-            git pull --rebase origin "$GITHUB_REF_NAME"
-            git push
+            git pull --rebase -X theirs origin "$GITHUB_REF_NAME"
+            git fetch origin "$GITHUB_REF_NAME"
+            python - <<'PY'
+          import csv, json, os, subprocess
+          from pathlib import Path
+          branch=os.environ["GITHUB_REF_NAME"]
+          local_history=Path("signal_autopilot/data/history.csv")
+          def git_show(path):
+              return subprocess.run(["git","show",f"origin/{branch}:{path}"],capture_output=True,text=True)
+          remote_hist=git_show("signal_autopilot/data/history.csv")
+          if remote_hist.returncode==0 and local_history.exists():
+              import io
+              remote_rows=list(csv.DictReader(io.StringIO(remote_hist.stdout)))
+              local_rows=list(csv.DictReader(local_history.open(newline="",encoding="utf-8")))
+              fields=list(remote_rows[0].keys()) if remote_rows else (list(local_rows[0].keys()) if local_rows else [])
+              merged=[]; seen=set()
+              for row in remote_rows+local_rows:
+                  key=row.get("idempotency_key")
+                  if key and key not in seen:
+                      merged.append(row); seen.add(key)
+              if fields:
+                  with local_history.open("w",newline="",encoding="utf-8") as stream:
+                      writer=csv.DictWriter(stream,fieldnames=fields)
+                      writer.writeheader(); writer.writerows(merged)
+          remote_json=git_show("signal_autopilot/data/signals.json")
+          local_json=Path("signal_autopilot/data/signals.json")
+          if remote_json.returncode==0 and local_json.exists():
+              old=json.loads(remote_json.stdout)
+              new=json.loads(local_json.read_text(encoding="utf-8"))
+              if (old.get("generated_at_utc") or "") > (new.get("generated_at_utc") or ""):
+                  local_json.write_text(json.dumps(old,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+          web=Path("web/futures/data"); web.mkdir(parents=True,exist_ok=True)
+          web.joinpath("signals.json").write_text(local_json.read_text(encoding="utf-8"),encoding="utf-8")
+          web.joinpath("history.csv").write_text(local_history.read_text(encoding="utf-8"),encoding="utf-8")
+          PY
+            git add -f signal_autopilot/data/signals.json signal_autopilot/data/history.csv web/futures/data/signals.json web/futures/data/history.csv
+            git commit --amend --no-edit
+            git push origin "HEAD:$GITHUB_REF_NAME"
           else
             echo "No dashboard data changes"
           fi
