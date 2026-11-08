@@ -796,12 +796,12 @@ def render_output(r):
         if out:out.append("")
         out.extend([
             "Conditional watchlist",
-            "| Symbol | Strategy | Decision | Direction | Confirmation Required | Trigger Level | V6 Score | Data Grade |",
-            "|---|---|---|---|---|---:|---:|---|",
+            "| Symbol | Strategy | Decision | Direction | Planned Entry | Stop-Loss | TP1 | Trigger Condition | Trigger Level | Leverage | Risk $ | V6 Score | Data Grade |",
+            "|---|---|---|---|---:|---:|---:|---|---:|---:|---:|---:|---|",
         ])
         for x in conditional:
-            entry=x.get("entry_quality") or {}
-            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v6',x.get('confidence_v5')))} | {x.get('data_grade','—')} |")
+            entry=x.get("entry_quality") or {};risk=x.get("risk") or {}
+            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(risk.get('required_leverage'))}x | {fmt(risk.get('planned_loss_usd'))} | {fmt(x.get('confidence_v6',x.get('confidence_v5')))} | {x.get('data_grade','—')} |")
     if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/{int(r.get('universe_requested') or 30)}.")
     return "\n".join(out)
 
