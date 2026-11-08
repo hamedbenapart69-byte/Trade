@@ -1,530 +1,831 @@
 {
   "schema_version": "1.1",
-  "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+  "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
   "provider": "kucoinfutures",
   "engine": "EMA20_EMA50_ATR14_MVP",
   "manual_trade_only": true,
-  "pipeline_status": "DEGRADED",
-  "today_signal_message": "امروز سیگنال نیست",
+  "pipeline_status": "OK",
+  "today_signal_message": null,
   "signals": [
     {
       "symbol": "ZEC/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 1271.33,
+      "stop_loss": 1293.6746428571,
+      "take_profit": [
+        1241.5371428571,
+        1211.7442857143
+      ],
+      "ema20": 1266.7875637531,
+      "ema50": 1278.9261263949,
+      "atr14": 14.8964285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.9491% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "BTC/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 76006.6,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 75880.0707321827,
+      "ema50": 75883.8214252075,
+      "atr14": 127.0714285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "PEPE/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 5.0902e-06,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 4.9355e-06,
+      "ema50": 4.9323e-06,
+      "atr14": 5.76e-08,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "SOL/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 89.538,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 89.3969317505,
+      "ema50": 89.6210121942,
+      "atr14": 0.4232857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "ETH/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 2240.13,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 2237.1606141939,
+      "ema50": 2237.2222208714,
+      "atr14": 5.5785714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "BCH/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 245.73,
+      "stop_loss": 248.52,
+      "take_profit": [
+        242.01,
+        238.29
+      ],
+      "ema20": 248.2114223449,
+      "ema50": 255.5036253731,
+      "atr14": 1.86,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 2.8541% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "ENA/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.15506,
+      "stop_loss": 0.1579207143,
+      "take_profit": [
+        0.1512457143,
+        0.1474314286
+      ],
+      "ema20": 0.1555085082,
+      "ema50": 0.158817218,
+      "atr14": 0.0019071429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 2.0833% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "AAVE/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 129.08,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 130.3820732719,
+      "ema50": 130.5533260318,
+      "atr14": 1.1464285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "FIL/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.7684,
+      "stop_loss": 0.7767464286,
+      "take_profit": [
+        0.7572714286,
+        0.7461428571
+      ],
+      "ema20": 0.7788020452,
+      "ema50": 0.7906857787,
+      "atr14": 0.0055642857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 1.5030% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "TAO/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 226.21,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 223.3440103663,
+      "ema50": 222.8712778786,
+      "atr14": 1.4492857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "UNI/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 6.983,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 7.0479010588,
+      "ema50": 7.0212227032,
+      "atr14": 0.0575,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "NEAR/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 3.716,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 3.7000421877,
+      "ema50": 3.7054414604,
+      "atr14": 0.0347142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "XMR/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 606.44,
+      "stop_loss": 611.8957142857,
+      "take_profit": [
+        599.1657142857,
+        591.8914285714
+      ],
+      "ema20": 603.309978838,
+      "ema50": 608.3992972224,
+      "atr14": 3.6371428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.8365% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "XRP/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 1.15992,
+      "stop_loss": 1.1682825,
+      "take_profit": [
+        1.14877,
+        1.13762
+      ],
+      "ema20": 1.1626812861,
+      "ema50": 1.1730542963,
+      "atr14": 0.005575,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.8843% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "DOT/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.8894,
+      "stop_loss": 0.89705,
+      "take_profit": [
+        0.8792,
+        0.869
+      ],
+      "ema20": 0.8965069659,
+      "ema50": 0.9045875633,
+      "atr14": 0.0051,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.8933% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "TIA/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 0.4209,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 0.4299152671,
+      "ema50": 0.4311938258,
+      "atr14": 0.0037357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "TRX/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 0.32051,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 0.3202286934,
+      "ema50": 0.3195481943,
+      "atr14": 0.0004957143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "APT/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.5909,
+      "stop_loss": 0.5960857143,
+      "take_profit": [
+        0.5839857143,
+        0.5770714286
+      ],
+      "ema20": 0.5945836635,
+      "ema50": 0.5985272575,
+      "atr14": 0.0034571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.6589% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "DASH/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 46.74,
+      "stop_loss": 46.0757142857,
+      "take_profit": [
+        47.6257142857,
+        48.5114285714
+      ],
+      "ema20": 46.9055134707,
+      "ema50": 46.6504713825,
+      "atr14": 0.4428571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.5467% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "CRV/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 0.2591,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 0.2635371498,
+      "ema50": 0.2628381573,
+      "atr14": 0.0019642857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "SUI/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 0.8518,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 0.8529882979,
+      "ema50": 0.8569063902,
+      "atr14": 0.0051714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "ONDO/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.3617,
+      "stop_loss": 0.3656642857,
+      "take_profit": [
+        0.3564142857,
+        0.3511285714
+      ],
+      "ema20": 0.3618958138,
+      "ema50": 0.365645706,
+      "atr14": 0.0026428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 1.0256% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "ARB/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 0.16995,
+      "stop_loss": 0.1674546429,
+      "take_profit": [
+        0.1732771429,
+        0.1766042857
+      ],
+      "ema20": 0.1688057402,
+      "ema50": 0.1673783585,
+      "atr14": 0.0016635714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.8528% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "ADA/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
-      "side": null,
-      "entry": null,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.18054,
+      "stop_loss": 0.1820592857,
+      "take_profit": [
+        0.1785142857,
+        0.1764885714
+      ],
+      "ema20": 0.1806352361,
+      "ema50": 0.182152238,
+      "atr14": 0.0010128571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 spread 0.8328% exceeds 0.5%; ATR14 risk levels"
     },
     {
       "symbol": "INJ/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 8.096,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 8.1647619067,
+      "ema50": 8.204293289,
+      "atr14": 0.0903571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "LINK/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 10.734,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 10.7687704964,
+      "ema50": 10.7943151422,
+      "atr14": 0.0507857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     },
     {
       "symbol": "BNB/USDT:USDT",
-      "status": "MARKET_DATA_DEGRADED",
+      "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": null,
+      "entry": 697.06,
       "stop_loss": null,
       "take_profit": [],
-      "ema20": null,
-      "ema50": null,
-      "atr14": null,
+      "ema20": 696.8050055831,
+      "ema50": 695.4366794144,
+      "atr14": 1.8414285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-08T15:00:04.491387+00:00",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "reason": "Latest completed 1h candle is stale or from the future"
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%"
     }
   ],
-  "trade_signals": [],
+  "trade_signals": [
+    {
+      "symbol": "ZEC/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 1271.33,
+      "stop_loss": 1293.6746428571,
+      "take_profit": [
+        1241.5371428571,
+        1211.7442857143
+      ],
+      "ema20": 1266.7875637531,
+      "ema50": 1278.9261263949,
+      "atr14": 14.8964285714,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.9491% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "BCH/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 245.73,
+      "stop_loss": 248.52,
+      "take_profit": [
+        242.01,
+        238.29
+      ],
+      "ema20": 248.2114223449,
+      "ema50": 255.5036253731,
+      "atr14": 1.86,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 2.8541% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "ENA/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.15506,
+      "stop_loss": 0.1579207143,
+      "take_profit": [
+        0.1512457143,
+        0.1474314286
+      ],
+      "ema20": 0.1555085082,
+      "ema50": 0.158817218,
+      "atr14": 0.0019071429,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 2.0833% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "FIL/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.7684,
+      "stop_loss": 0.7767464286,
+      "take_profit": [
+        0.7572714286,
+        0.7461428571
+      ],
+      "ema20": 0.7788020452,
+      "ema50": 0.7906857787,
+      "atr14": 0.0055642857,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 1.5030% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "XMR/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 606.44,
+      "stop_loss": 611.8957142857,
+      "take_profit": [
+        599.1657142857,
+        591.8914285714
+      ],
+      "ema20": 603.309978838,
+      "ema50": 608.3992972224,
+      "atr14": 3.6371428571,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.8365% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "XRP/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 1.15992,
+      "stop_loss": 1.1682825,
+      "take_profit": [
+        1.14877,
+        1.13762
+      ],
+      "ema20": 1.1626812861,
+      "ema50": 1.1730542963,
+      "atr14": 0.005575,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.8843% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "DOT/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.8894,
+      "stop_loss": 0.89705,
+      "take_profit": [
+        0.8792,
+        0.869
+      ],
+      "ema20": 0.8965069659,
+      "ema50": 0.9045875633,
+      "atr14": 0.0051,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.8933% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "APT/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.5909,
+      "stop_loss": 0.5960857143,
+      "take_profit": [
+        0.5839857143,
+        0.5770714286
+      ],
+      "ema20": 0.5945836635,
+      "ema50": 0.5985272575,
+      "atr14": 0.0034571429,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.6589% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "DASH/USDT:USDT",
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 46.74,
+      "stop_loss": 46.0757142857,
+      "take_profit": [
+        47.6257142857,
+        48.5114285714
+      ],
+      "ema20": 46.9055134707,
+      "ema50": 46.6504713825,
+      "atr14": 0.4428571429,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.5467% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "ONDO/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.3617,
+      "stop_loss": 0.3656642857,
+      "take_profit": [
+        0.3564142857,
+        0.3511285714
+      ],
+      "ema20": 0.3618958138,
+      "ema50": 0.365645706,
+      "atr14": 0.0026428571,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 1.0256% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "ARB/USDT:USDT",
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 0.16995,
+      "stop_loss": 0.1674546429,
+      "take_profit": [
+        0.1732771429,
+        0.1766042857
+      ],
+      "ema20": 0.1688057402,
+      "ema50": 0.1673783585,
+      "atr14": 0.0016635714,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.8528% exceeds 0.5%; ATR14 risk levels"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "status": "SELL_NOW",
+      "side": "SELL",
+      "entry": 0.18054,
+      "stop_loss": 0.1820592857,
+      "take_profit": [
+        0.1785142857,
+        0.1764885714
+      ],
+      "ema20": 0.1806352361,
+      "ema50": 0.182152238,
+      "atr14": 0.0010128571,
+      "confidence": "NOT_CALIBRATED",
+      "generated_at_utc": "2026-11-08T15:01:53.630679+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "reason": "EMA20/EMA50 spread 0.8328% exceeds 0.5%; ATR14 risk levels"
+    }
+  ],
   "quality": {
     "symbols_processed": 27,
-    "trade_signals": 0,
-    "symbols_degraded": 27
+    "trade_signals": 12,
+    "symbols_degraded": 0
   }
 }
