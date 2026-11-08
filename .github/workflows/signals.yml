@@ -42,8 +42,11 @@ jobs:
           python -c 'import ccxt; ex = ccxt.okx(); ticker = ex.fetch_ticker("BTC/USDT:USDT"); print("OKX PASS: BTCUSDT =", ticker["last"]); assert ticker["last"] is not None'
       - name: Install project dependencies
         run: pip install -r requirements.txt
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
+      - name: Validate Python and dashboard assets
+        run: |
+          python -m compileall -q logic.py modules
+          python -m unittest discover -s tests -v
+          node --check web/app.js
       - name: Fetch data, compute signals and publish JSON/CSV
         env:
           PYTHONUNBUFFERED: "1"
