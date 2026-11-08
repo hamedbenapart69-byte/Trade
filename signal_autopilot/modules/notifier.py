@@ -147,7 +147,7 @@ def notify_email(payload: dict) -> dict:
     if not candidates:
         return {"status": "NO_ACTIONABLE_SIGNAL", "sent": 0}
 
-    body = "\\n\\n".join(_format_signal(signal, payload) for signal in candidates)
+    body = (chr(10) * 2).join(_format_signal(signal, payload) for signal in candidates)
     try:
         response = httpx.post(
             "https://api.sendgrid.com/v3/mail/send",
