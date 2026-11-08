@@ -49,7 +49,7 @@ The dashboard is static and read-only. It never asks for an exchange login or tr
 
 | Dataset | Primary | Fallback | Current verified state / rule |
 |---|---|---|---|
-| Perpetual OHLCV 1h | OKX public swap API via CCXT | Binance Data Vision archive, conditional | Full-run evidence: 100/100 symbols, 1,753,200 rows, 2-year target, reported 0 missing intervals |
+| Perpetual OHLCV 1h | OKX public swap API via CCXT | Binance Data Vision archive, historical-research-only pending terms review | Full-run evidence: 100/100 symbols, 1,753,200 rows, 2-year target, reported 0 missing intervals |
 | Funding history | OKX public funding history | Binance Data Vision funding archive, conditional | BTC sample in full run covered 93.67 days only (12.822% of 2-year window); current criterion FAIL |
 | Open Interest | OKX public OI history | None accepted yet | Approximately 30 days; label `HISTORICAL_OI_30D`; never imply 2-year OI |
 | Fear & Greed | Alternative.me | None needed for Stage 1 | Daily series; no hourly interpolation |
@@ -65,7 +65,7 @@ The dashboard is static and read-only. It never asks for an exchange login or tr
 - LFS component based on OI decline over a 90-day high cannot be calculated from 30-day OI. Mark it `PROXY` only if a separately documented proxy is validated; otherwise mark `NOT_CALCULABLE`.
 - LFS must not receive a default score such as 0.5 when required inputs are missing. Example: `LFS: NOT_CALCULABLE (missing historical order-book data)`.
 - NSS 24-hour OI growth can be computed from the available 30-day OI series if its timestamps and coverage pass validation.
-- Funding coverage is independently measured. Current OKX result is not enough for the 95% historical criterion.
+- Funding coverage is independently measured. Current OKX result is not enough for the 95% historical criterion. A GitHub Actions probe verified three Data Vision sample archives with matching SHA-256 checksums (OHLCV, funding, daily metrics); however, the current Binance Vision terms limit permitted use to non-commercial categories including personal historical backtesting and expressly prohibit certain live/commercial signal uses. Do not feed those archives into live signals or redistribute them unless the applicable license is confirmed to allow it.
 - Never use a spot-market fallback as if it were perpetual futures data.
 
 ## 4. L2 placeholder signal engine
@@ -124,9 +124,9 @@ Dashboard requirements:
 
 ## 7. Schedule and automation
 
-Workflow path: `.github/workflows/signals.yml`
+Workflow path: `.github/workflows/futures-signals.yml`
 
-- Schedule: `0 */4 * * *` (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC).
+- Schedule: `7 */4 * * *` (00:07, 04:07, 08:07, 12:07, 16:07, 20:07 UTC).
 - Manual run: `workflow_dispatch`.
 - First network step must run the exact CCXT OKX probe:
   `ccxt.okx().fetch_ticker('BTC/USDT:USDT')`.
@@ -200,7 +200,7 @@ From Actions run `42468815714` (completed successfully on GitHub-hosted runner):
 - Fear & Greed returned 3,199 daily rows.
 - This run used the OKX collector probe, not the exact requested CCXT `fetch_ticker` probe.
 - The Actions runner is not the user's Iranian network. No claim about user's ISP reachability is made.
-- No Cloudflare Pages account has been linked; no live Pages URL verified. The static dashboard source exists in `web/` and reads same-origin `web/futures/data/signals.json` / `history.csv`.
+- No Cloudflare Pages account has been linked; no live Pages URL verified. The clean branch places the static app under `web/futures/` so it does not overwrite the existing `web/` control-panel UI on `main`. The static dashboard source exists in `web/` and reads same-origin `web/futures/data/signals.json` / `history.csv`.
 - Telegram test-message function and workflow dispatch option exist, but no token/chat ID was supplied; no real Telegram notification has been sent.
 
 ## 12. Stage roadmap while preserving all three layers
