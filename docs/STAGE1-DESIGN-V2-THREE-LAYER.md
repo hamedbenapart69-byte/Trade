@@ -158,6 +158,10 @@ Workflow path: `.github/workflows/futures-signals.yml`
 
 A Cloudflare account authorization cannot be fabricated or completed without the owner's Cloudflare/GitHub consent. The repo can be made deploy-ready, but the final account linking and Iran-network test require the owner.
 
+### Visibility and privacy warning
+
+The GitHub repository `hamedbenapart69-byte/Trade` is currently **public**. The scheduled workflow commits `signals.json` and `history.csv` to the repository, and the Pages site is public by default. Therefore, anyone may be able to read the generated signals and history. Cloudflare Access in front of the Pages URL alone would not hide files already committed to the public repository. Do not put personal account details, exchange credentials, or private portfolio information in these outputs. Repository visibility will not be changed without the owner's explicit approval.
+
 ## 10. End-to-end acceptance criteria (revised Stage 1)
 
 ### L1 Data
