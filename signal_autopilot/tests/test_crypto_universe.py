@@ -155,6 +155,13 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertEqual(result["symbols_processed"], 60)
         self.assertTrue(result["fallback_used"])
 
+
+    def test_gateio_seconds_listing_timestamp_is_normalized(self):
+        seconds = 1_600_000_000
+        market = self.market("BTC", 0)
+        market["info"] = {"create_time": str(seconds)}
+        self.assertEqual(MarketDataFetcher._listing_time_ms(market, "gateio"), seconds * 1000)
+
     def test_kucoin_first_open_date_is_supported(self):
         now = 1_800_000_000_000
         market = self.market("BTC", 0)
