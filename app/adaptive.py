@@ -42,6 +42,10 @@ def adaptive_setup(
     prior_low = min(x.low for x in prior)
     breakout_long = close > prior_high and volume >= 1.15 and adx >= 18
     breakout_short = close < prior_low and volume >= 1.15 and adx >= 18
+    breakout_retest_long = breakout_long and last15.low <= prior_high + 0.25 * atr15m and last15.close > prior_high
+    breakout_retest_short = breakout_short and last15.high >= prior_low - 0.25 * atr15m and last15.close < prior_low
+    breakout_confirmed_long = breakout_long and last15.close > prior_high
+    breakout_confirmed_short = breakout_short and last15.close < prior_low
 
     candidates = []
     for direction in ("LONG", "SHORT"):
@@ -56,6 +60,8 @@ def adaptive_setup(
         rsi_ok = 38 <= rsi <= 68 if direction == "LONG" else 32 <= rsi <= 62
         pullback = distance_ema_atr <= 1.25 and rsi_ok and aligned4h and not opposite1d and ema_aligned
         breakout = breakout_long if direction == "LONG" else breakout_short
+        breakout_retest = breakout_retest_long if direction == "LONG" else breakout_retest_short
+        breakout_confirmed = breakout_confirmed_long if direction == "LONG" else breakout_confirmed_short
         structure = structure_long if direction == "LONG" else structure_short
         sweep = bool(structure.get("liquidity_sweep_aligned"))
         sweep_confirm = confirm_long if direction == "LONG" else confirm_short
@@ -123,8 +129,10 @@ def adaptive_setup(
 
         if sweep and sweep_confirm:
             family = "LIQUIDITY_SWEEP_REVERSAL"
-        elif breakout:
+        elif breakout_retest:
             family = "BREAKOUT_RETEST"
+        elif breakout:
+            family = "BREAKOUT_CONFIRMATION"
         elif range_reversal:
             family = "RANGE_MEAN_REVERSION"
         elif pullback and ema15_confirm:
