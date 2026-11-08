@@ -86,6 +86,7 @@ class AdaptiveSetupTests(unittest.TestCase):
     def test_unconfirmed_adaptive_setup_sizes_risk_from_planned_trigger_entry(self):
         adaptive={"pattern_confirmed":False,"trigger_level":98.0}
         self.assertEqual(_planned_entry_price(97.0,adaptive),98.0)
+        self.assertEqual(_planned_entry_price(97.0,adaptive,99.0),99.0)
         adaptive["pattern_confirmed"]=True
         self.assertEqual(_planned_entry_price(97.0,adaptive),97.0)
         self.assertEqual(_planned_entry_price(97.0,None),97.0)
