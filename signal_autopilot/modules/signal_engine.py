@@ -115,6 +115,11 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
 def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
     generated = data.get("generated_at_utc")
     rows = data.get("symbols") or []
+    requested = max(int(data.get("symbols_requested") or len(rows)), len(rows))
+    processed = len(rows)
+    coverage_pct = round((processed / requested) * 100.0, 2) if requested else 0.0
+    unscanned = max(requested - processed, 0)
+
     signals = [build_signal(row, generated) for row in rows]
     if not signals:
         signals = [{
@@ -126,20 +131,40 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
     for signal in signals:
         if signal.get("status") not in C10:
             raise ValueError("invalid_C10_status:" + str(signal.get("status")))
+
     trade_signals = [s for s in signals if s["status"] in {"BUY_NOW", "SELL_NOW"}]
-    degraded = any(s["status"] == "MARKET_DATA_DEGRADED" for s in signals)
+    symbol_data_degraded = any(s["status"] == "MARKET_DATA_DEGRADED" for s in signals)
+    coverage_degraded = unscanned > 0
+    degraded = symbol_data_degraded or coverage_degraded
+
+    if coverage_degraded:
+        coverage_message = f"پوشش اسکن ناقص است: {processed} از {requested} نماد"
+    else:
+        coverage_message = None
+
+    if trade_signals:
+        today_message = coverage_message
+    elif degraded:
+        today_message = coverage_message or "دادهٔ کافی برای ارزیابی بازار در دسترس نیست"
+    else:
+        today_message = "امروز سیگنال نیست"
+
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "generated_at_utc": generated,
         "provider": data.get("provider", "unknown"),
         "engine": "EMA20_EMA50_ATR14_MVP",
         "manual_trade_only": True,
         "pipeline_status": "DEGRADED" if degraded else "OK",
-        "today_signal_message": (None if trade_signals else ("دادهٔ کافی برای ارزیابی بازار در دسترس نیست" if degraded else "امروز سیگنال نیست")),
+        "today_signal_message": today_message,
         "signals": signals,
         "trade_signals": trade_signals,
         "quality": {
-            "symbols_processed": len(rows),
+            "symbols_requested": requested,
+            "symbols_processed": processed,
+            "symbols_unscanned": unscanned,
+            "coverage_pct": coverage_pct,
+            "coverage_status": "COMPLETE" if not coverage_degraded else "PARTIAL",
             "trade_signals": len(trade_signals),
             "symbols_degraded": sum(1 for s in signals if s["status"] == "MARKET_DATA_DEGRADED"),
         },
