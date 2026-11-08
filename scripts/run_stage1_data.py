@@ -26,7 +26,7 @@ def main():
     collector=Stage1Collector(data_dir=args.data_dir,provider=args.provider)
     try:
         if args.probe_only:
-            result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit(),"okx":collector.probe_okx(),"fear_greed":collector.probe_fear_greed()}
+            result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit(),"okx":collector.probe_okx(),"fear_greed":collector.probe_fear_greed(),"data_vision":collector.probe_data_vision()}
             if args.provider == "okx":
                 try:
                     cutoff = int(time.time()*1000) - int(args.years*365.25*MS_DAY)
