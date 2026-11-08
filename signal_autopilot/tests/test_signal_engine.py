@@ -62,6 +62,17 @@ class EmaAtrSignalTests(unittest.TestCase):
         self.assertTrue(all(item["status"] in C10 for item in payload["signals"]))
         self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
         self.assertEqual(payload["provider"], "unknown")
+        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
+
+    def test_degraded_market_is_not_mislabeled_as_no_signal(self):
+        payload = generate_signals({
+            "provider": "none",
+            "generated_at_utc": "2026-11-08T19:00:00+03:30",
+            "symbols": [],
+        })
+        self.assertEqual(payload["pipeline_status"], "DEGRADED")
+        self.assertEqual(payload["provider"], "none")
+        self.assertEqual(payload["today_signal_message"], "دادهٔ کافی برای ارزیابی بازار در دسترس نیست")
 
 
 if __name__ == "__main__":
