@@ -212,25 +212,36 @@ class MarketDataFetcher:
         # CoinGecko is used only to establish crypto-asset membership, never as spot-price fallback.
         whitelist = self._coingecko_top_symbols()
         errors = {}
+        results = {}
         for provider in ("okx", "bybit"):
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
-                if rows:
-                    return {
-                        "provider": provider, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-                        "symbols_requested": self.limit, "symbols_processed": len(rows), "symbols": rows,
-                        "fallback_used": provider != "okx", "primary_error": errors.get("okx"),
-                        "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
-                        "universe_diagnostics": self.universe_diagnostics,
-                        "coingecko_whitelist_count": len(whitelist),
-                    }
-                errors[provider] = "no_market_passed_universe_filters"
+                results[provider] = rows
+                if provider == "okx" and len(rows) >= 50:
+                    chosen = provider
+                    break
+                if provider == "bybit":
+                    chosen = max(results, key=lambda key: len(results[key]))
+                    break
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
+        else:
+            chosen = max(results, key=lambda key: len(results[key])) if results else None
+        rows = results.get(chosen, []) if chosen else []
+        if not rows:
+            return {
+                "provider": "none", "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "symbols_requested": self.limit, "symbols_processed": 0, "symbols": [],
+                "fallback_used": True, "errors": errors or {"universe": "no_crypto_usdt_perpetual_passed_filters"},
+                "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
+                "universe_diagnostics": self.universe_diagnostics,
+            }
         return {
-            "provider": "none", "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-            "symbols_requested": self.limit, "symbols_processed": 0, "symbols": [],
-            "fallback_used": True, "errors": errors,
+            "provider": chosen, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "symbols_requested": self.limit, "symbols_processed": len(rows), "symbols": rows,
+            "fallback_used": chosen != "okx", "primary_error": errors.get("okx"),
             "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
             "universe_diagnostics": self.universe_diagnostics,
+            "coingecko_whitelist_count": len(whitelist),
+            "universe_under_50": len(rows) < 50,
         }
