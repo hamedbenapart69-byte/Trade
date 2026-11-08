@@ -777,7 +777,13 @@ def render_output(r):
         out=["DATA UNAVAILABLE — do not trade today."]
         if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/{int(r.get('universe_requested') or 30)}.")
         return "\n".join(out)
-    out=[] if actionable else ([f"No immediate entries. {len(conditional)} conditional setups are waiting for their defined triggers."] if conditional else ["No actionable or conditional setups today."])
+    if actionable:
+        out=[]
+    elif conditional:
+        count=len(conditional);noun="setup" if count==1 else "setups";verb="is" if count==1 else "are"
+        out=[f"No immediate entries. {count} conditional {noun} {verb} waiting for their defined triggers."]
+    else:
+        out=["No actionable or conditional setups today."]
     if actionable:
         out.extend([
             "| Symbol | Strategy | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | V6 Score |",
