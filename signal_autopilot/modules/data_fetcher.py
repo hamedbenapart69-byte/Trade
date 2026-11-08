@@ -66,17 +66,24 @@ class MarketDataFetcher:
 
     def _coingecko_top_symbols(self) -> set[str]:
         """Fail closed: whitelist comes only from CoinGecko's top-200 crypto assets."""
-        response = httpx.get(
-            "https://api.coingecko.com/api/v3/coins/markets",
-            params={"vs_currency": "usd", "order": "market_cap_desc",
-                    "per_page": int(self.universe.get("whitelist_count", 200)), "page": 1,
-                    "sparkline": "false"},
-            timeout=20,
-        )
-        response.raise_for_status()
-        rows = response.json()
-        if not isinstance(rows, list) or len(rows) < 50:
-            raise RuntimeError("coingecko_top200_whitelist_incomplete")
+        requested = max(50, int(self.universe.get("whitelist_count", 500)))
+        per_page = 250  # CoinGecko public API page size cap.
+        rows = []
+        for page in range(1, (requested + per_page - 1) // per_page + 1):
+            response = httpx.get(
+                "https://api.coingecko.com/api/v3/coins/markets",
+                params={"vs_currency": "usd", "order": "market_cap_desc",
+                        "per_page": per_page, "page": page, "sparkline": "false"},
+                timeout=20,
+            )
+            response.raise_for_status()
+            page_rows = response.json()
+            if not isinstance(page_rows, list) or not page_rows:
+                break
+            rows.extend(page_rows)
+        if len(rows) < min(requested, 100):
+            raise RuntimeError("coingecko_crypto_whitelist_incomplete")
+        rows = rows[:requested]
         counts = {}
         for row in rows:
             symbol = str(row.get("symbol", "")).upper()
@@ -190,7 +197,7 @@ class MarketDataFetcher:
         self.universe_diagnostics[provider] = {
             "markets_total": len(markets), "eligible_before_limit": len(accepted),
             "selected": min(len(accepted), self.limit), "minimum_listing_age_days": min_age_ms // 86_400_000,
-            "minimum_quote_volume_24h_usd": min_volume, "whitelist_source": "CoinGecko top 200",
+            "minimum_quote_volume_24h_usd": min_volume, "whitelist_source": "CoinGecko top 500",
             "rejected": rejected,
         }
         return accepted[:self.limit]
