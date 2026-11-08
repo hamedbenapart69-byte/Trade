@@ -169,6 +169,22 @@ def run(symbols: list[str], start: date, end_exclusive: date, output_dir: Path, 
         }
         results.append(row_result)
 
+        # چک‌پوینت بعد از هر نماد؛ در Timeout یا لغو Job شواهد از دست نمی‌رود.
+        checkpoint = {
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "source": "BINANCE_VISION_USDM_MONTHLY_PLUS_DAILY",
+            "storage_format": "PARQUET_ZSTD",
+            "start_utc": start_dt.isoformat(), "end_exclusive_utc": end_dt.isoformat(),
+            "expected_rows_per_symbol": expected_rows, "symbols_requested": len(symbols),
+            "symbols_processed": len(results),
+            "symbols_full_history": sum(item["status"] == "FULL_HISTORY" for item in results),
+            "minimum_full_history_symbols": 40,
+            "stage1a_extended_status": "RUNNING",
+            "request_error_counts": dict(request_errors), "symbols": results,
+        }
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(checkpoint, ensure_ascii=False, indent=2), encoding="utf-8")
+
         if complete:
             file_path = output_dir / f"{symbol}_1h_{start.isoformat()}_{end_exclusive.isoformat()}.parquet"
             write_parquet(collected, timestamps, file_path)
