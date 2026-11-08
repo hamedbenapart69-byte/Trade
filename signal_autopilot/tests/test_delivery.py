@@ -30,6 +30,14 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             with (out/"history.csv").open(newline="",encoding="utf-8") as f: rows=list(csv.DictReader(f))
             self.assertEqual({r["idempotency_key"] for r in rows},{"old","new"})
 
+    def test_telegram_message_never_invents_calibrated_probability(self):
+        from modules.notifier import _format_signal
+        message=_format_signal({"symbol":"BTC/USDT:USDT","status":"BUY_NOW","side":"LONG","entry":None,"stop_loss":None,"take_profit":[],"tier":"A","confidence":"NOT_CALIBRATED","lfs":"NOT_CALCULABLE","nss":"NOT_CALCULATED","falsification":"break of support"}, {})
+        self.assertIn("NOT_CALIBRATED",message)
+        self.assertIn("ورود: —",message)
+        self.assertIn("SL: —",message)
+        self.assertIn("LFS=NOT_CALCULABLE",message)
+
     def test_telegram_silently_skips_without_credentials(self):
         from modules.notifier import notify_tier_a, send_test_message
         with patch.dict("os.environ",{},clear=True):
