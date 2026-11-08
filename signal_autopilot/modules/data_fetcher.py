@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -273,7 +274,11 @@ class MarketDataFetcher:
         whitelist = self._coingecko_top_symbols()
         errors = {}
         results = {}
-        for provider in ("okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"):
+        providers = ["okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"]
+        if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
+            errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
+            providers.remove("okx")
+        for provider in providers:
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
                 results[provider] = rows
