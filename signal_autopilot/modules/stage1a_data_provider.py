@@ -152,23 +152,19 @@ class Stage1ADataProvider:
         return mapped
 
     def _kucoin_proxy_funding(self, base: str) -> dict[str, Any]:
+        """دریافت Funding از KuCoin Futures؛ همیشه با برچسب PROXY."""
+        symbol = base + "USDTM"
         try:
-            import ccxt
-            exchange = ccxt.kucoinfutures({"enableRateLimit": True, "timeout": 15000})
-            try:
-                markets = exchange.load_markets()
-                match = next((s for s, m in markets.items()
-                              if m.get("swap") and m.get("quote") == "USDT"
-                              and str(m.get("base", "")).upper() == base), None)
-                if not match:
-                    return {"status": "UNAVAILABLE", "rate": None, "provider": "KUCOIN_FUTURES"}
-                row = exchange.fetch_funding_rate(match)
-                rate = row.get("fundingRate")
-                if rate is None:
-                    return {"status": "UNAVAILABLE", "rate": None, "provider": "KUCOIN_FUTURES"}
-                return {"status": "PROXY", "rate": float(rate), "provider": "KUCOIN_FUTURES"}
-            finally:
-                exchange.close()
+            response = self.client.get(
+                f"https://api-futures.kucoin.com/api/v1/contracts/{symbol}", timeout=15
+            )
+            response.raise_for_status()
+            body = response.json()
+            data = body.get("data") or {}
+            rate = data.get("fundingFeeRate")
+            if rate is None:
+                return {"status": "UNAVAILABLE", "rate": None, "provider": "KUCOIN_FUTURES"}
+            return {"status": "PROXY", "rate": float(rate), "provider": "KUCOIN_FUTURES"}
         except Exception as exc:
             return {"status": "UNAVAILABLE", "rate": None, "provider": "KUCOIN_FUTURES",
                     "error": type(exc).__name__}
