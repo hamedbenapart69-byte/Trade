@@ -20,8 +20,9 @@ def main():
     parser.add_argument("--symbols",type=int,default=100)
     parser.add_argument("--years",type=int,default=2)
     parser.add_argument("--data-dir",default="data/stage1")
+    parser.add_argument("--provider",choices=["binance","okx"],default="okx")
     args=parser.parse_args()
-    collector=Stage1Collector(data_dir=args.data_dir)
+    collector=Stage1Collector(data_dir=args.data_dir,provider=args.provider)
     try:
         if args.probe_only:
             result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit(),"okx":collector.probe_okx(),"fear_greed":collector.probe_fear_greed()}
