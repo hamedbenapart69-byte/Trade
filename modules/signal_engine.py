@@ -59,7 +59,7 @@ def generate_signals(data):
       "fallback_used":bool(data.get("fallback_used")),"primary_error":data.get("primary_error"),
       "data_availability":{"ohlcv":"OK" if signals and all((s.get("data_availability") or {}).get("ohlcv")=="OK" for s in signals) else "DEGRADED",
         "funding":"OK" if signals and all((s.get("data_availability") or {}).get("funding")=="OK" for s in signals) else "DEGRADED",
-        "open_interest":"PARTIAL_OR_UNAVAILABLE","open_interest_history_days":30,
+        "open_interest":"CURRENT_SNAPSHOT_ONLY","open_interest_history_days":30,"open_interest_history_usage":"30D_PARQUET_SEPARATE_NOT_USED_BY_PLACEHOLDER",
         "order_book":"UNAVAILABLE","liquidation":"UNAVAILABLE","basis":"UNAVAILABLE",
         "fear_greed":"OK" if data.get("fear_greed") else "UNAVAILABLE"},
       "fear_greed":data.get("fear_greed"),
