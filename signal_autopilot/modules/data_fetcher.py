@@ -243,6 +243,9 @@ class MarketDataFetcher:
                 if provider == "okx" and len(rows) >= 50:
                     chosen = provider
                     break
+                if provider != "okx" and len(rows) >= 50:
+                    chosen = provider
+                    break
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
         else:
