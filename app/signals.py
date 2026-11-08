@@ -830,7 +830,7 @@ class FuturesSignalEngine:
             not x.get("independent_confirmation",{}).get("passed",False)))[:10]
         conditional=sorted([x for x in candidates if x["decision"] in {"CONDITIONAL_BUY","CONDITIONAL_SELL"}],key=lambda x:-x["confidence_v5"])
         return {"scan_id":datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"),"scanned_at":datetime.now(timezone.utc).isoformat(),
-          "universe_requested":requested,"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
+          "universe_requested":requested,"discovered_assets":len(coins),"eligible_assets":len(eligible),"selected_assets":len(selected),"screened_assets":screened,
           "partial_scan":screened<30,"extended_partial":bool(extended and len(selected)<min(100,len(eligible))),
           "api_calls_used":self.p.calls,"api_calls_used_today":traderspy_daily_usage() if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
           "api_app_daily_budget":240 if getattr(self.p,"provider_name","")=="TraderSpy read-only market-data API" else None,
