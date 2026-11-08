@@ -1,4 +1,5 @@
 """Conservative EMA/funding placeholder. This is not the V8 engine."""
+from datetime import datetime, timezone
 C10={"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL","WATCHLIST","NO_QUALIFIED_SETUP","MARKET_DATA_DEGRADED"}
 FUNDING_EXTREME=0.0005
 
@@ -19,6 +20,13 @@ def build_signal(row,generated_at_utc):
       "order_book":"UNAVAILABLE","liquidation":"UNAVAILABLE","basis":"UNAVAILABLE","generated_at_utc":generated_at_utc}
     if availability.get("ohlcv")!="OK" or availability.get("funding")!="OK" or len(candles)<52:
         base["reason"]="MARKET_DATA_DEGRADED: OHLCV or funding unavailable/insufficient"; return base
+    try:
+        now=datetime.fromisoformat(generated_at_utc.replace("Z","+00:00")).timestamp()*1000
+        candle_age_hours=(now-int(candles[-1]["timestamp"]))/3_600_000
+        if candle_age_hours>2:
+            base["reason"]="MARKET_DATA_DEGRADED: latest completed 1h candle is "+str(round(candle_age_hours,2))+"h old"; return base
+    except (TypeError,ValueError,KeyError):
+        base["reason"]="MARKET_DATA_DEGRADED: invalid candle timestamp"; return base
     closes=[float(c["close"]) for c in candles]; fast=ema(closes,20); slow=ema(closes,50)
     if len(fast)<2 or len(slow)<2: return base
     fp,fn,sp,sn=fast[-2],fast[-1],slow[-2],slow[-1]
