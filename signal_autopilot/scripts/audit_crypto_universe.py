@@ -51,7 +51,7 @@ def main() -> None:
                             key: (btc_market.get("info") or {}).get(key)
                             for key in ("listTime", "listingTime", "onboardDate", "launchTime",
                                         "createdTime", "createTime", "firstOpenDate", "createdAt",
-                                        "openTime", "limitOpenTime", "isRwa")
+                                        "openTime", "limitOpenTime", "create_time", "first_list_time", "isRwa")
                             if (btc_market.get("info") or {}).get(key) is not None
                         },
                     },
