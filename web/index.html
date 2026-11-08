@@ -21,7 +21,7 @@ button:disabled{opacity:.5;cursor:wait}.linkbtn.secondary{background:#1a2b38;col
 th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #293b49;white-space:nowrap}th{color:#9aabba;font-weight:600}
 .tag{display:inline-block;padding:4px 8px;border:1px solid #3a5260;border-radius:20px;font-size:.7rem}.tag.good{color:#8fe0bd;border-color:#28644f}.tag.warn{color:#ffd28a;border-color:#765b30}.tag.bad{color:#ffaaa4;border-color:#71413f}
 .empty{padding:18px;border:1px dashed #3b4c5a;border-radius:10px;color:#b4c4ce;text-align:center;font-size:.86rem;line-height:1.9}
-.msg{margin-top:11px;color:#c2d4df;font-size:.8rem;line-height:1.9}.foot{font-size:.74rem;color:#8193a2;line-height:1.95}
+.msg{margin-top:11px;color:#c2d4df;font-size:.8rem;line-height:1.9}.family-table{overflow-x:auto;margin-top:10px}.family-table table{width:100%;border-collapse:collapse;font-size:12px}.family-table th,.family-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.foot{font-size:.74rem;color:#8193a2;line-height:1.95}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.notice{padding:12px 14px;border:1px solid #765b30;background:#241e14;border-radius:11px;color:#f0d4a4;font-size:.82rem;line-height:1.9;margin-top:13px}
 @media(max-width:680px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}main{padding:16px 10px 32px}.panel{padding:13px}.brand{font-size:.98rem}.actions{width:100%}.actions button,.actions a{flex:1}}
 </style>
@@ -93,7 +93,9 @@ function render(d){
  $("actionable").innerHTML=fresh?table(action):'<div class="empty">در حال حاضر سیگنال تازه و قابل استفاده برای ورود فوری نداریم. دادهٔ اسکن قبلی منقضی شده است.</div>';
  $("conditional").innerHTML=fresh?table(watch,true):'<div class="empty">فهرست شرطی آخرین اسکن نیز قدیمی است و باید دوباره ارزیابی شود.</div>';
  const p=d.performance||{};
- $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b><br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
+ const familyRows=Object.entries(p.by_strategy_family||{}).map(([name,v])=>'<tr><td>'+esc(name)+'</td><td>'+fmt(v.published)+'</td><td>'+fmt(v.closed)+'</td><td>'+fmt(v.win_rate_pct)+(v.win_rate_pct==null?'':'%')+'</td><td>'+fmt(v.expectancy_r)+'</td></tr>').join('');
+ const familyTable=familyRows?'<div class="family-table"><table><thead><tr><th>خانواده استراتژی</th><th>منتشرشده</th><th>بسته‌شده</th><th>نرخ برد</th><th>امید (R)</th></tr></thead><tbody>'+familyRows+'</tbody></table></div>':'<div class="foot">هنوز نمونه بسته‌شده‌ای برای مقایسه خانواده‌های استراتژی وجود ندارد.</div>';
+ $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b>'+familyTable+'<br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
  const g=d.publication_gate||{};
  $("validation").innerHTML='منبع زنده: <b>'+(g.source_verified?'تأیید شده':'تأیید نشده')+'</b><br>سیگنال فوری منتشرشده: <b>'+fmt(g.actionable_candidates_published)+'</b><br>فرصت شرطی منتشرشده: <b>'+fmt(g.conditional_candidates_published)+'</b><br>تداوم سابقهٔ کاغذی: <b>'+(d.paper_state_restored?'بازیابی شد':'از نو آغاز شده / بازیابی نشد')+'</b><br>دادهٔ ساختگی: خیر<br>اتصال حساب صرافی: خیر | اجرای سفارش: خیر';
 }
