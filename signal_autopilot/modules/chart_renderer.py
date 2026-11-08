@@ -35,7 +35,7 @@ def render_signal_chart(signal: dict[str, Any]) -> bytes:
         ax.vlines(x[i], low, h, color=candle_color, linewidth=1.0, zorder=2)
         body_low = min(o, close)
         body_height = max(abs(close - o), max(abs(close), 1.0) * 0.00005)
-        width = 0.00062
+        width = 0.03
         ax.add_patch(Rectangle((mdates.date2num(x[i]) - width / 2, body_low),
                                width, body_height, facecolor=candle_color,
                                edgecolor=candle_color, linewidth=0.5, zorder=3))
