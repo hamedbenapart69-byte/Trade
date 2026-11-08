@@ -60,7 +60,7 @@ function table(rows,watch=false){
  ["نماد","استراتژی","تصمیم","جهت","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک (USD)","درجه داده","امتیاز V6"];
  return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>{
   const z=x.risk||{},e=x.entry_quality||{};
-  const cells=watch?[x.symbol,x.strategy_family,x.decision,x.direction,e.confirmation_required,e.trigger_level,x.confidence_v5,x.data_grade]:
+  const cells=watch?[x.symbol,x.strategy_family,x.decision,x.direction,e.confirmation_required,e.trigger_level,(x.confidence_v6??x.confidence_v5),x.data_grade]:
   [x.symbol,x.strategy_family,x.decision,x.direction,x.entry,x.stop_loss,x.take_profit,x.stop_pct,z.required_leverage,z.planned_loss_usd,x.data_grade,x.confidence_v5];
   return '<tr>'+cells.map((v,i)=>'<td>'+(i===2?'<span class="tag '+(watch?'warn':'good')+'">'+fmt(v)+'</span>':fmt(v))+'</td>').join('')+'</tr>';
  }).join('')+'</tbody></table></div>';
