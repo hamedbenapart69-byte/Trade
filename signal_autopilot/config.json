@@ -6,7 +6,7 @@
     "universe": {
       "policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
       "whitelist_source": "COINGECKO_TOP_200",
-      "whitelist_count": 200,
+      "whitelist_count": 500,
       "require_active": true,
       "require_swap": true,
       "require_contract": true,
