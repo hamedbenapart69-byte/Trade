@@ -221,7 +221,7 @@ class Stage1Collector:
         for name, url in checks.items():
             try:
                 response = self.http.get(url, headers={"Range":"bytes=0-512"})
-                passed = response.status_code == 200 and bool(response.text.strip())
+                passed = response.status_code in (200, 206) and bool(response.text.strip())
                 results.append({"dataset":name,"passed":passed,"http_status":response.status_code,
                                 "sample":response.text[:160] if passed else None})
             except Exception as exc:
