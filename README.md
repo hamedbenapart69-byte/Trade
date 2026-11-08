@@ -63,3 +63,15 @@ Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume.
 ## Research and architecture
 
 See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
+
+
+## Futures Signal Autopilot — Stage 1
+
+- Three-layer design: [Stage 1 Design V2](docs/STAGE1_DESIGN_V2.md)
+- Cloudflare Pages setup: [10-step deployment guide](docs/CLOUDFLARE_PAGES_DEPLOY.md)
+- Four-hour signal workflow: `.github/workflows/signals.yml`
+- Read-only placeholder compute: `logic.py`
+- Static Persian dashboard: `web/`
+- No exchange account keys or order execution. Telegram is optional and configured only through GitHub Actions secrets.
+
+Local dashboard preview: `docker compose up`, then open `http://localhost:8080`.
