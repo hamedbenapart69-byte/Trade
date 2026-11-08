@@ -126,8 +126,8 @@ class MarketDataFetcher:
         rejected = {"inactive": 0, "not_swap": 0, "not_linear": 0, "wrong_quote": 0,
                     "wrong_settle": 0, "not_contract": 0, "not_crypto_whitelist": 0,
                     "blacklisted": 0, "rwa_or_noncrypto_classification": 0,
-                    "listing_time_missing": 0, "too_new": 0,
-                    "volume_below_10m": 0, "invalid_volume": 0}
+                    "listing_time_missing": 0, "history_too_short": 0, "history_verified": 0,
+                    "too_new": 0, "volume_below_10m": 0, "invalid_volume": 0}
         accepted = []
         for symbol, market in markets.items():
             if not market.get("active"):
@@ -168,8 +168,19 @@ class MarketDataFetcher:
             listing_ms = self._listing_time_ms(market, provider)
             if listing_ms is None:
                 rejected["listing_time_missing"] += 1
-                continue
-            if listing_ms > now_ms - min_age_ms:
+                # Missing listing metadata is not an automatic exclusion if the exchange
+                # can prove a daily candle existed at least 730 days ago.
+                try:
+                    cutoff_ms = now_ms - min_age_ms
+                    history = exchange.fetch_ohlcv(symbol, timeframe="1d", since=cutoff_ms, limit=1)
+                    if not history or int(history[0][0]) > cutoff_ms + 7 * 86_400_000:
+                        rejected["history_too_short"] += 1
+                        continue
+                    rejected["history_verified"] += 1
+                except Exception:
+                    rejected["history_too_short"] += 1
+                    continue
+            elif listing_ms > now_ms - min_age_ms:
                 rejected["too_new"] += 1
                 continue
             ticker = tickers.get(symbol) or {}
