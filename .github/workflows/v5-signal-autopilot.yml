@@ -19,6 +19,8 @@ on:
       - "web/**"
       - "tests/**"
       - "requirements.txt"
+      - "notifier.py"
+      - "TELEGRAM_SETUP.md"
       - ".github/workflows/v5-signal-autopilot.yml"
       - ".github/workflows/static.yml"
 
@@ -112,14 +114,14 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin signals
+          git fetch origin +refs/heads/signals:refs/remotes/origin/signals
           git worktree add /tmp/signals-public refs/remotes/origin/signals
           python scripts/publish_signals.py --source site/latest.json --output-dir /tmp/signals-public
           git -C /tmp/signals-public add signals.json history.csv
           if ! git -C /tmp/signals-public diff --cached --quiet; then
             git -C /tmp/signals-public commit -m "data: publish latest V5 scan"
             for attempt in 1 2 3; do
-              git -C /tmp/signals-public fetch origin signals
+              git -C /tmp/signals-public fetch origin +refs/heads/signals:refs/remotes/origin/signals
               if ! git -C /tmp/signals-public rebase refs/remotes/origin/signals; then
                 git -C /tmp/signals-public rebase --abort || true
                 echo "Rebase conflict while publishing signals (attempt $attempt)."
