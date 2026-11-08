@@ -52,6 +52,8 @@ def _format_signal(signal: dict, payload: dict) -> str:
 
 def notify_tier_a(payload: dict) -> dict:
     """نام قدیمی تابع حفظ شده؛ همه سیگنال‌های معتبر خرید/فروش ارسال می‌شوند."""
+    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
+        return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
     token, chat_id = _credentials()
     if not token or not chat_id:
         LOG.info("Telegram skipped: TELEGRAM_TOKEN or TELEGRAM_CHAT_ID is not configured.")
