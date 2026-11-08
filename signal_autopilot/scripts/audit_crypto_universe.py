@@ -30,9 +30,20 @@ def main() -> None:
                     exchange, provider, whitelist,
                     int(datetime.now(timezone.utc).timestamp() * 1000),
                 )
+                btc_market = exchange.markets.get("BTC/USDT:USDT") or {}
                 report["providers"][provider] = {
                     "eligible_count": len(rows),
                     "diagnostics": fetcher.universe_diagnostics.get(provider, {}),
+                    "btc_listing_metadata": {
+                        "created": btc_market.get("created"),
+                        "info_keys": sorted((btc_market.get("info") or {}).keys()),
+                        "candidate_time_fields": {
+                            key: (btc_market.get("info") or {}).get(key)
+                            for key in ("listTime", "listingTime", "onboardDate", "launchTime",
+                                        "createdTime", "createTime", "firstOpenDate", "createdAt")
+                            if (btc_market.get("info") or {}).get(key) is not None
+                        },
+                    },
                 }
                 if provider == "okx" and len(rows) >= 50:
                     selected_provider, selected_exchange, selected = provider, exchange, rows
