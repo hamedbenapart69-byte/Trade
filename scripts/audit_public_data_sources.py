@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""Read-only GitHub Actions runner audit for public crypto market-data endpoints.
+
+No credentials, exchange accounts, trading endpoints, or order execution are used.
+"""
+from __future__ import annotations
+
+import csv
+import io
+import json
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import zipfile
+from datetime import datetime, timezone
+from typing import Any
+
+UA = "Trade-Data-Audit/1.0 (+read-only public market data)"
+TIMEOUT = 20
+
+
+def iso_ms(value: Any) -> str | None:
+    try:
+        return datetime.fromtimestamp(int(value) / 1000, tz=timezone.utc).isoformat()
+    except (TypeError, ValueError, OSError):
+        return None
+
+
+def request(url: str, method: str = "GET", max_bytes: int = 8_000_000) -> dict[str, Any]:
+    req = urllib.request.Request(url, method=method, headers={"User-Agent": UA, "Accept": "application/json,*/*"})
+    started = time.monotonic()
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+            body = response.read(max_bytes + 1)
+            return {
+                "http_status": response.status,
+                "elapsed_ms": round((time.monotonic() - started) * 1000),
+                "headers": {k: v for k, v in response.headers.items()
+                            if k.lower() in {"x-mbx-used-weight", "x-mbx-used-weight-1m",
+                                             "x-bapi-limit", "x-bapi-limit-status",
+                                             "x-bapi-limit-reset-timestamp", "content-length",
+                                             "last-modified", "date"}},
+                "body": body if len(body) <= max_bytes else None,
+                "body_truncated": len(body) > max_bytes,
+            }
+    except urllib.error.HTTPError as exc:
+        try:
+            detail = exc.read(500).decode("utf-8", "replace")
+        except Exception:
+            detail = ""
+        return {"http_status": exc.code, "elapsed_ms": round((time.monotonic() - started) * 1000),
+                "error": "HTTPError", "detail": detail}
+    except Exception as exc:
+        return {"http_status": None, "elapsed_ms": round((time.monotonic() - started) * 1000),
+                "error": type(exc).__name__, "detail": str(exc)[:300]}
+
+
+def get_json(name: str, url: str) -> dict[str, Any]:
+    result = request(url)
+    body = result.pop("body", None)
+    if body is not None:
+        try:
+            obj = json.loads(body.decode("utf-8"))
+            result["json_valid"] = True
+            if name == "binance_funding_earliest":
+                result["count"] = len(obj) if isinstance(obj, list) else None
+                if isinstance(obj, list) and obj:
+                    result["first_record_utc"] = iso_ms(obj[0].get("fundingTime"))
+                    result["last_record_utc"] = iso_ms(obj[-1].get("fundingTime"))
+                    result["first_record"] = obj[0]
+            elif name == "binance_open_interest_daily":
+                result["count"] = len(obj) if isinstance(obj, list) else None
+                if isinstance(obj, list) and obj:
+                    result["first_record_utc"] = iso_ms(obj[0].get("timestamp"))
+                    result["last_record_utc"] = iso_ms(obj[-1].get("timestamp"))
+            elif name == "bybit_funding":
+                rows = obj.get("result", {}).get("list", [])
+                result.update({"retCode": obj.get("retCode"), "count": len(rows),
+                               "newest_utc": iso_ms(rows[0].get("fundingRateTimestamp")) if rows else None,
+                               "oldest_utc": iso_ms(rows[-1].get("fundingRateTimestamp")) if rows else None})
+            elif name == "bybit_open_interest":
+                rows = obj.get("result", {}).get("list", [])
+                result.update({"retCode": obj.get("retCode"), "count": len(rows),
+                               "newest_utc": iso_ms(rows[0].get("timestamp")) if rows else None,
+                               "oldest_utc": iso_ms(rows[-1].get("timestamp")) if rows else None})
+            elif name == "binance_depth":
+                result.update({"lastUpdateId": obj.get("lastUpdateId"),
+                               "bid_levels": len(obj.get("bids", [])),
+                               "ask_levels": len(obj.get("asks", []))})
+            elif name in {"binance_spot_kline", "binance_futures_kline"}:
+                result["count"] = len(obj) if isinstance(obj, list) else None
+                if isinstance(obj, list) and obj:
+                    result["first_open_utc"] = iso_ms(obj[0][0])
+                    result["last_open_utc"] = iso_ms(obj[-1][0])
+                    result["last_closed_utc"] = iso_ms(obj[-1][6])
+                    result["last_close"] = float(obj[-1][4])
+            else:
+                result["top_level_type"] = type(obj).__name__
+        except Exception as exc:
+            result.update({"json_valid": False, "parse_error": str(exc)[:200]})
+    return {"name": name, **result}
+
+
+def archive_kline(name: str, market: str, month: str) -> dict[str, Any]:
+    base = "https://data.binance.vision/data"
+    if market == "spot":
+        path = f"spot/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-{month}.zip"
+    else:
+        path = f"futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-{month}.zip"
+    result = request(f"{base}/{path}", max_bytes=5_000_000)
+    body = result.pop("body", None)
+    out: dict[str, Any] = {"name": name, **result, "archive_path": path}
+    if body is None:
+        return out
+    try:
+        with zipfile.ZipFile(io.BytesIO(body)) as archive:
+            csv_name = next(n for n in archive.namelist() if n.endswith(".csv"))
+            rows = list(csv.reader(io.TextIOWrapper(archive.open(csv_name), encoding="utf-8")))
+        if rows and rows[0] and not rows[0][0].isdigit():
+            rows = rows[1:]
+        parsed = [row for row in rows if len(row) >= 5]
+        if parsed:
+            last = parsed[-1]
+            out.update({"archive_rows": len(parsed), "first_open_utc": iso_ms(parsed[0][0]),
+                        "last_open_utc": iso_ms(last[0]), "last_close": float(last[4])})
+    except Exception as exc:
+        out["archive_parse_error"] = f"{type(exc).__name__}: {str(exc)[:180]}"
+    return out
+
+
+def main() -> None:
+    q = urllib.parse.urlencode({"symbol": "BTCUSDT", "startTime": 0, "limit": 1000})
+    results = [
+        get_json("binance_funding_earliest", f"https://fapi.binance.com/fapi/v1/fundingRate?{q}"),
+        get_json("binance_open_interest_daily",
+                 "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=30"),
+        get_json("binance_depth", "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=100"),
+        get_json("bybit_funding",
+                 "https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTCUSDT&limit=200"),
+        get_json("bybit_open_interest",
+                 "https://api.bybit.com/v5/market/open-interest?category=linear&symbol=BTCUSDT&intervalTime=1d&limit=200"),
+        get_json("bybit_long_short_ratio",
+                 "https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=1h&limit=2"),
+        archive_kline("binance_vision_spot_1h_2026_10", "spot", "2026-10"),
+        archive_kline("binance_vision_um_futures_1h_2026_10", "futures_um", "2026-10"),
+    ]
+    by_name = {x["name"]: x for x in results}
+    spot = by_name.get("binance_vision_spot_1h_2026_10", {})
+    fut = by_name.get("binance_vision_um_futures_1h_2026_10", {})
+    if spot.get("last_close") and fut.get("last_close"):
+        basis = (float(fut["last_close"]) - float(spot["last_close"])) / float(spot["last_close"])
+        results.append({"name": "binance_vision_basis_sample", "basis_fraction": basis,
+                        "basis_percent": basis * 100,
+                        "spot_month": "2026-10", "futures_month": "2026-10",
+                        "note": "Last row of each monthly archive; timestamps must be matched before using this as a synchronized basis observation."})
+    report = {"audit_version": 1, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "runner": "GitHub Actions ubuntu-latest", "credentials_used": False,
+              "scope": "public read-only endpoints and Binance Vision archive HEAD/GET",
+              "results": results}
+    print(json.dumps(report, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
