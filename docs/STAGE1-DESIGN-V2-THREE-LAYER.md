@@ -162,7 +162,7 @@ A Cloudflare account authorization cannot be fabricated or completed without the
 
 ### Visibility and privacy warning
 
-The GitHub repository `hamedbenapart69-byte/Trade` is currently **public**. The scheduled workflow commits `signals.json` and `history.csv` to the repository, and the Pages site is public by default. Therefore, anyone may be able to read the generated signals and history. Cloudflare Access in front of the Pages URL alone would not hide files already committed to the public repository. Do not put personal account details, exchange credentials, or private portfolio information in these outputs. Repository visibility will not be changed without the owner's explicit approval.
+The GitHub repository `hamedbenapart69-byte/Trade` is currently **public**. The scheduled workflow commits only `signals.json` and `history.csv` to the public data-only `signals` branch; the application code remains on the release branch. The Pages site is public by default. Therefore, anyone may be able to read the generated signals and history. Cloudflare Access in front of the Pages URL alone would not hide files already committed to the public repository. Do not put personal account details, exchange credentials, or private portfolio information in these outputs. Repository visibility will not be changed without the owner's explicit approval.
 
 ## 10. End-to-end acceptance criteria (revised Stage 1)
 
@@ -207,7 +207,7 @@ From Actions run `42468815714` (completed successfully on GitHub-hosted runner):
 - Fear & Greed returned 3,199 daily rows.
 - This run used the OKX collector probe, not the exact requested CCXT `fetch_ticker` probe.
 - The Actions runner is not the user's Iranian network. No claim about user's ISP reachability is made.
-- No Cloudflare Pages account has been linked; no live Pages URL verified. The clean branch places the static app under `web/futures/` so it does not overwrite the existing `web/` control-panel UI on `main`. The static dashboard source exists in `web/` and reads same-origin `web/futures/data/signals.json` / `history.csv`.
+- No Cloudflare Pages account has been linked; no live Pages URL verified. The clean branch places the static app under `web/futures/` so it does not overwrite the existing `web/` control-panel UI on `main`. The static dashboard lives in `web/futures/` and reads `signals.json` / `history.csv` from the separate data-only `signals` branch via GitHub raw URLs.
 - Telegram test-message function and workflow dispatch option exist, but no token/chat ID was supplied; no real Telegram notification has been sent.
 
 ## 12. Stage roadmap while preserving all three layers
