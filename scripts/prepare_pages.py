@@ -40,7 +40,7 @@ def _valid_self_audit(item: dict) -> bool:
     baseline_ok = (
         family == "V3_STRICT_BASELINE" and audit.get("v3_baseline_passed") is True and audit.get("v3_funding_threshold_passed") is True
     ) or (
-        family in {"TREND_PULLBACK", "BREAKOUT_RETEST", "LIQUIDITY_SWEEP_REVERSAL", "RANGE_MEAN_REVERSION"}
+        family in {"TREND_PULLBACK", "BREAKOUT_RETEST", "BREAKOUT_CONFIRMATION", "LIQUIDITY_SWEEP_REVERSAL", "RANGE_MEAN_REVERSION"}
         and audit.get("v3_baseline_passed") is False
     )
     return bool(
