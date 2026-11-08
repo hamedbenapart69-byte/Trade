@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: stage1a-data-validation-v2
+  group: stage1a-data-validation-v3
   cancel-in-progress: false
 
 jobs:
