@@ -53,6 +53,11 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "confidence": "NOT_CALIBRATED",
         "generated_at_utc": generated_at_utc,
         "data_availability": availability,
+        "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+        "timeframe": "1H",
+        "hypothesis": None,
+        "falsification": None,
+        "chart_candles": [],
     }
     if availability.get("ohlcv") != "OK" or len(candles) < 52:
         base["reason"] = "OHLCV unavailable or insufficient"
@@ -104,7 +109,10 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             side=side,
             stop_loss=round(stop, 10),
             take_profit=[round(target, 10) for target in targets],
-            reason=f"EMA20/EMA50 spread {spread:.4%} exceeds 0.5%; ATR14 risk levels",
+            reason=f"EMA20 بالاتر از EMA50 است و فاصله آن‌ها {spread:.4%} است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
+            hypothesis=f"ادامه حرکت در جهت روند 1H؛ EMA20 {'بالای' if side == 'BUY' else 'پایین'} EMA50 و فاصله نسبی {spread:.4%} است.",
+            falsification=f"بسته‌شدن کندل 1H در سمت مخالف EMA50 یا فعال‌شدن حدضرر {round(stop, 10)} فرضیه را باطل می‌کند.",
+            chart_candles=candles[-70:],
         )
         return base
     except (KeyError, TypeError, ValueError, ZeroDivisionError) as exc:
