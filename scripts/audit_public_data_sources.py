@@ -224,6 +224,8 @@ def main() -> None:
                  "https://api-futures.kucoin.com/api/v1/contract/funding-rates?symbol=XBTUSDTM&from=1731024000000&to=1731628800000"),
         get_json("kucoin_open_interest_2y_daily",
                  "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1731024000000&endAt=1794268800000&pageSize=100"),
+        get_json("kucoin_open_interest_2y_old_week",
+                 "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1731024000000&endAt=1731628800000&pageSize=100"),
         get_json("kucoin_open_interest_recent_70d",
                  "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1day&startAt=1788134400000&endAt=1794268800000&pageSize=100"),
     ]
