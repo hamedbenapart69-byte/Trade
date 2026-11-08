@@ -36,6 +36,8 @@ def adaptive_setup(
     last15, prev15 = candles_15m[-1], candles_15m[-2]
     confirm_long = last15.close > prev15.close and last15.close >= ema20_15m
     confirm_short = last15.close < prev15.close and last15.close <= ema20_15m
+    retest_confirm_long = last15.low <= ema20 + 0.25 * atr15m and last15.close >= ema20_15m
+    retest_confirm_short = last15.high >= ema20 - 0.25 * atr15m and last15.close <= ema20_15m
     distance_ema_atr = abs(close - ema20) / max(float(tech.get("atr14") or 0), 1e-12)
     prior = candles_1h[-21:-1]
     prior_high = max(x.high for x in prior)
@@ -54,11 +56,11 @@ def adaptive_setup(
         aligned1h = trends.get("1h") == ("UP" if direction == "LONG" else "DOWN")
         opposite4h = trends.get("4h") == ("DOWN" if direction == "LONG" else "UP")
         opposite1d = trends.get("1d") == ("BEARISH" if direction == "LONG" else "BULLISH")
-        ema_aligned = close > ema20 > ema50 if direction == "LONG" else close < ema20 < ema50
+        ema_aligned = (ema20 > ema50 and close > ema50) if direction == "LONG" else (ema20 < ema50 and close < ema50)
         momentum_aligned = (macd_now is not None and macd_prev is not None and macd_now > 0 and macd_now >= macd_prev) if direction == "LONG" else (macd_now is not None and macd_prev is not None and macd_now < 0 and macd_now <= macd_prev)
         flow_aligned = (obv_delta > 0 and mfi_value >= 50) if direction == "LONG" else (obv_delta < 0 and mfi_value <= 50)
         rsi_ok = 38 <= rsi <= 68 if direction == "LONG" else 32 <= rsi <= 62
-        pullback = distance_ema_atr <= 1.25 and rsi_ok and aligned4h and not opposite1d and ema_aligned
+        pullback = distance_ema_atr <= 1.75 and aligned4h and aligned1d and aligned1h and ema_aligned
         breakout = breakout_long if direction == "LONG" else breakout_short
         breakout_retest = breakout_retest_long if direction == "LONG" else breakout_retest_short
         breakout_confirmed = breakout_confirmed_long if direction == "LONG" else breakout_confirmed_short
@@ -71,9 +73,9 @@ def adaptive_setup(
                  or (direction == "SHORT" and rsi >= 62 and tech.get("bb_position") in {"upper_band", "upper_half"}))
         )
         if direction == "LONG":
-            ema15_confirm = confirm_long
+            ema15_confirm = retest_confirm_long if pullback else confirm_long
         else:
-            ema15_confirm = confirm_short
+            ema15_confirm = retest_confirm_short if pullback else confirm_short
 
         score = 0
         evidence = []
@@ -89,6 +91,8 @@ def adaptive_setup(
             score += 7; evidence.append("MACD momentum aligned")
         if rsi_ok:
             score += 5; evidence.append("RSI in directional operating band")
+        elif pullback:
+            score -= 6; evidence.append("momentum stretched; wait for RSI reset before entry")
         if adx >= 18:
             score += 6; evidence.append("trend strength confirmed")
         if adx >= 25:
@@ -135,8 +139,6 @@ def adaptive_setup(
             family = "BREAKOUT_CONFIRMATION"
         elif range_reversal:
             family = "RANGE_MEAN_REVERSION"
-        elif pullback and ema15_confirm:
-            family = "TREND_PULLBACK"
         elif pullback:
             family = "TREND_PULLBACK"
         else:
