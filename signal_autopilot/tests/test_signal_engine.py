@@ -61,6 +61,7 @@ class EmaAtrSignalTests(unittest.TestCase):
         })
         self.assertTrue(all(item["status"] in C10 for item in payload["signals"]))
         self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
+        self.assertEqual(payload["provider"], "unknown")
 
 
 if __name__ == "__main__":

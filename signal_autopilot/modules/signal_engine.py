@@ -131,6 +131,7 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": "1.1",
         "generated_at_utc": generated,
+        "provider": data.get("provider", "unknown"),
         "engine": "EMA20_EMA50_ATR14_MVP",
         "manual_trade_only": True,
         "pipeline_status": "DEGRADED" if degraded else "OK",
