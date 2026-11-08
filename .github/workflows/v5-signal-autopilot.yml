@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
+    inputs:
+      test_telegram:
+        description: Send a Telegram test message instead of signal notifications
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -25,6 +31,8 @@ permissions:
 
 jobs:
   scan-and-build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -44,7 +52,7 @@ jobs:
         id: state
         uses: actions/cache@v4
         with:
-          path: data/control.db
+          path: data/
           key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ runner.os }}-v5-state-
@@ -96,6 +104,52 @@ jobs:
           python -m json.tool site/latest.json > /dev/null
           test -s site/index.html
           test -s site/latest.json
+
+      - name: Publish isolated signals branch
+        env:
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://your-project.pages.dev' }}
+        shell: bash
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin signals
+          git worktree add /tmp/signals-public refs/remotes/origin/signals
+          python scripts/publish_signals.py --source site/latest.json --output-dir /tmp/signals-public
+          git -C /tmp/signals-public add signals.json history.csv
+          if ! git -C /tmp/signals-public diff --cached --quiet; then
+            git -C /tmp/signals-public commit -m "data: publish latest V5 scan"
+            for attempt in 1 2 3; do
+              git -C /tmp/signals-public fetch origin signals
+              if ! git -C /tmp/signals-public rebase refs/remotes/origin/signals; then
+                git -C /tmp/signals-public rebase --abort || true
+                echo "Rebase conflict while publishing signals (attempt $attempt)."
+                sleep $((attempt * 2))
+                continue
+              fi
+              if git -C /tmp/signals-public push origin HEAD:refs/heads/signals; then
+                echo "Signals branch updated successfully."
+                exit 0
+              fi
+              echo "Push retry $attempt/3."
+              sleep $((attempt * 2))
+            done
+            echo "Unable to publish signals branch after 3 attempts."
+            exit 1
+          else
+            echo "No changes in public signal payload."
+          fi
+
+      - name: Send Telegram notification
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL || 'https://your-project.pages.dev' }}
+        run: |
+          if [ "${{ inputs.test_telegram }}" = "true" ]; then
+            python notifier.py --test
+          else
+            python notifier.py
+          fi
 
       - name: Checkpoint SQLite state before cache save
         env:
