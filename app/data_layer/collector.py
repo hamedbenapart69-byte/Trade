@@ -156,15 +156,30 @@ class Stage1Collector:
         tickers = self.exchange.fetch_tickers()
         candidates = []
         btc_unified = None
+        diagnostics = {"markets_total":len(self.exchange.markets),"active":0,"swap":0,"linear":0,
+                       "quote_usdt":0,"settle_usdt":0,"contract":0,"listing_timestamp_present":0,
+                       "old_enough":0,"positive_volume":0}
         for unified_symbol, market in self.exchange.markets.items():
             if market.get("base") == "BTC" and market.get("quote") == "USDT" and market.get("settle") == "USDT" and market.get("swap"):
                 btc_unified = unified_symbol
-            if not market.get("active") or not market.get("swap") or not market.get("linear"):
+            if not market.get("active"):
                 continue
-            if market.get("quote") != "USDT" or market.get("settle") != "USDT":
+            diagnostics["active"] += 1
+            if not market.get("swap"):
                 continue
+            diagnostics["swap"] += 1
+            if not market.get("linear"):
+                continue
+            diagnostics["linear"] += 1
+            if market.get("quote") != "USDT":
+                continue
+            diagnostics["quote_usdt"] += 1
+            if market.get("settle") != "USDT":
+                continue
+            diagnostics["settle_usdt"] += 1
             if not market.get("contract"):
                 continue
+            diagnostics["contract"] += 1
             if min_listing_ms is not None:
                 info = market.get("info") or {}
                 listing_raw = info.get("listTime") if self.provider == "okx" else info.get("onboardDate")
@@ -172,8 +187,11 @@ class Stage1Collector:
                     listing_ms = int(listing_raw or 0)
                 except (TypeError, ValueError):
                     listing_ms = 0
+                if listing_ms > 0:
+                    diagnostics["listing_timestamp_present"] += 1
                 if listing_ms <= 0 or listing_ms > min_listing_ms:
                     continue
+                diagnostics["old_enough"] += 1
             ticker = tickers.get(unified_symbol) or {}
             quote_volume = ticker.get("quoteVolume")
             if quote_volume is None:
@@ -184,7 +202,9 @@ class Stage1Collector:
             except (TypeError, ValueError):
                 volume = 0
             if volume > 0:
+                diagnostics["positive_volume"] += 1
                 candidates.append((volume, unified_symbol))
+        self.universe_diagnostics = diagnostics
         candidates.sort(reverse=True)
         selected = [symbol for _,symbol in candidates[:target_count]]
         if btc_unified and btc_unified not in selected:
