@@ -65,7 +65,7 @@ class MarketDataFetcher:
         return None
 
     def _coingecko_top_symbols(self) -> set[str]:
-        """Fail closed: whitelist comes only from CoinGecko's top-200 crypto assets."""
+        """Fail closed: whitelist comes only from CoinGecko's configured top-ranked crypto assets."""
         requested = max(50, int(self.universe.get("whitelist_count", 500)))
         per_page = 250  # CoinGecko public API page size cap.
         rows = []
