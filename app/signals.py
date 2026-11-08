@@ -975,6 +975,18 @@ class FuturesSignalEngine:
                 raise DataError("toobit_orderbook_depth_below_two_times_position_notional_or_500_usd")
         # Add higher targets only when a verified swing/liquidity level leaves room beyond TP1.
         levels=st.get("liquidity_levels",[])
+        structure_room_passed=True
+        structure_block=None
+        if strategy_family!="V3_STRICT_BASELINE":
+            target_distance=abs(risk["take_profit"]-risk["entry"])
+            if direction=="LONG":
+                blockers=sorted({float(x["price"]) for x in levels if x["type"] in {"RESISTANCE","EQUAL_HIGHS","PREVIOUS_DAY_HIGH","PREVIOUS_WEEK_HIGH"} and float(x["price"])>risk["entry"]})
+                if blockers and blockers[0]-risk["entry"] < target_distance*1.05:
+                    structure_room_passed=False;structure_block="verified_resistance_before_minimum_2R"
+            else:
+                blockers=sorted({float(x["price"]) for x in levels if x["type"] in {"SUPPORT","EQUAL_LOWS","PREVIOUS_DAY_LOW","PREVIOUS_WEEK_LOW"} and float(x["price"])<risk["entry"]},reverse=True)
+                if blockers and risk["entry"]-blockers[0] < target_distance*1.05:
+                    structure_room_passed=False;structure_block="verified_support_before_minimum_2R"
         if direction=="LONG":
             resist=sorted({x["price"] for x in levels if x["type"] in {"RESISTANCE","EQUAL_HIGHS","PREVIOUS_DAY_HIGH","PREVIOUS_WEEK_HIGH"} and x["price"]>risk["take_profit"]})
             risk["take_profit_2"]=min(risk["take_profit_2"],resist[0]) if resist and resist[0]>risk["take_profit"] else None
@@ -1018,7 +1030,7 @@ class FuturesSignalEngine:
           "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":bool(baseline_direction),"v3_funding_threshold_passed":abs(funding_8h)<.0005,"strategy_family":strategy_family,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_safety_limit_passed":abs(funding_8h)<.0015,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"positioning_timestamp_verified_if_used":True,"smart_money_timestamp_verified_if_used":True,"multi_timeframe_checked":True,
-          "market_structure_checked":True,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
+          "market_structure_checked":True,"minimum_2R_room_before_nearest_structure":structure_room_passed,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
           "stop_distance_0_5_to_3_pct":.5<=risk["stop_pct"]<=3 and .5<=risk["rounded_stop_pct"]<=3,"planned_loss_at_most_4_usd":risk["planned_loss_usd"]<=4+1e-9,
           "planned_loss_excludes_fees_slippage_funding_and_execution_gaps":True,
           "isolated_margin_is_manual_assumption_only":True,
@@ -1056,7 +1068,7 @@ class FuturesSignalEngine:
           "smart_money":{"score_points":smart_points,"top_trader_ratio":top_ls,"top_trader_ratio_observed_at_ms":top_ls_ts,"traders_observed_at_ms":smart.get("traders_observed_at_ms"),
             "positions_observed_at_ms":smart.get("positions_observed_at_ms"),"open_positions":self._position_evidence(symbol,direction,smart) if positions_fresh else [],
             "ai_signal_support":ai},"entry_quality":{"entry_ok":entry_ok,"chase":chase,"distance_from_15m_ema20_atr":distance_atr,
-            "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger,"trigger_mode":(adaptive or {}).get("trigger_mode","close_direction")},
+            "entry_points":entry_points,"confirmation_required":confirm,"trigger_level":trigger,"trigger_mode":(adaptive or {}).get("trigger_mode","close_direction"),"structural_room_passed":structure_room_passed,"structural_block":structure_block},
           "expires_at_ms":pu+24*60*60_000,"self_audit":audit,"self_audit_count":len(audit),"self_audit_passed":audit_passed,
           "limitations":["Selected public futures provider is used read-only; no exchange account or trading credentials are used.",
             "The selected provider does not currently supply verified orderbook spread, exact fees, slippage, venue liquidation price, or on-chain wallet identity.",
