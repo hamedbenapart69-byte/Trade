@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
+import io
+import zipfile
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -212,21 +215,33 @@ class Stage1Collector:
 
     def probe_data_vision(self) -> dict:
         base = "https://data.binance.vision/data/futures/um"
-        checks = {
-            "btc_1h_klines_checksum": f"{base}/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip.CHECKSUM",
-            "btc_funding_checksum": f"{base}/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10.zip.CHECKSUM",
-            "btc_daily_metrics_checksum": f"{base}/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-11-07.zip.CHECKSUM",
+        samples = {
+            "btc_1h_klines": f"{base}/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip",
+            "btc_funding": f"{base}/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10.zip",
+            "btc_daily_metrics": f"{base}/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-11-07.zip",
         }
         results = []
-        for name, url in checks.items():
+        for name, url in samples.items():
             try:
-                response = self.http.get(url, headers={"Range":"bytes=0-512"})
-                passed = response.status_code in (200, 206) and bool(response.text.strip())
-                results.append({"dataset":name,"passed":passed,"http_status":response.status_code,
-                                "sample":response.text[:160] if passed else None})
+                checksum_response = self.http.get(url + ".CHECKSUM")
+                checksum_response.raise_for_status()
+                expected = checksum_response.text.strip().split()[0]
+                response = self.http.get(url)
+                response.raise_for_status()
+                payload = response.content
+                actual = hashlib.sha256(payload).hexdigest()
+                with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                    csv_name = next((x for x in archive.namelist() if x.lower().endswith(".csv")), None)
+                    if not csv_name:
+                        raise ValueError("archive_missing_csv")
+                    with archive.open(csv_name) as stream:
+                        first_lines = [line.decode("utf-8", "replace").strip() for _,line in zip(range(3),stream)]
+                results.append({"dataset":name,"passed":actual==expected,"http_status":response.status_code,
+                                "bytes":len(payload),"checksum_match":actual==expected,
+                                "csv_file":csv_name,"first_rows":first_lines})
             except Exception as exc:
                 results.append({"dataset":name,"passed":False,"error":type(exc).__name__,
-                                "detail":str(exc)[:160]})
+                                "detail":str(exc)[:180]})
         return {"provider":"Binance Data Vision public archive",
                 "passed":sum(x["passed"] for x in results),"total":len(results),"checks":results}
 
