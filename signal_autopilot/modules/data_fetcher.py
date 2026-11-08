@@ -41,7 +41,7 @@ class MarketDataFetcher:
         if parsed_created and parsed_created > 0:
             return parsed_created
         keys = ("listTime", "listingTime", "onboardDate", "launchTime", "createdTime",
-                "createTime", "firstOpenDate", "createdAt")
+                "createTime", "firstOpenDate", "createdAt", "openTime", "limitOpenTime")
         if provider == "okx":
             keys = ("listTime", "listingTime")
         elif provider == "bybit":
@@ -49,7 +49,8 @@ class MarketDataFetcher:
         elif provider == "binance":
             keys = ("onboardDate", "launchTime", "createdTime")
         elif provider in ("bitget", "mexc"):
-            keys = ("launchTime", "listTime", "createdTime", "createTime", "createdAt")
+            keys = ("launchTime", "listTime", "createdTime", "createTime", "createdAt",
+                    "openTime", "limitOpenTime")
         elif provider == "kucoinfutures":
             keys = ("firstOpenDate", "launchTime", "createdAt")
         for key in keys:
@@ -117,7 +118,8 @@ class MarketDataFetcher:
         tickers = exchange.fetch_tickers()
         rejected = {"inactive": 0, "not_swap": 0, "not_linear": 0, "wrong_quote": 0,
                     "wrong_settle": 0, "not_contract": 0, "not_crypto_whitelist": 0,
-                    "blacklisted": 0, "listing_time_missing": 0, "too_new": 0,
+                    "blacklisted": 0, "rwa_or_noncrypto_classification": 0,
+                    "listing_time_missing": 0, "too_new": 0,
                     "volume_below_10m": 0, "invalid_volume": 0}
         accepted = []
         for symbol, market in markets.items():
@@ -141,6 +143,15 @@ class MarketDataFetcher:
                 continue
             base = str(market.get("base") or "").upper()
             market_id = str(market.get("id") or "").upper()
+            info = market.get("info") or {}
+            is_rwa = str(info.get("isRwa", "")).strip().lower() in ("1", "true", "yes")
+            classification = " ".join(str(info.get(key, "")) for key in
+                                       ("category", "instCategory", "symbolType", "type", "underlying")).lower()
+            noncrypto_class = any(word in classification for word in
+                                  ("stock", "equity", "index", "etf", "forex", "fiat", "commodity", "rwa"))
+            if is_rwa or noncrypto_class:
+                rejected["rwa_or_noncrypto_classification"] += 1
+                continue
             if base in blacklist or market_id in blacklist:
                 rejected["blacklisted"] += 1
                 continue
