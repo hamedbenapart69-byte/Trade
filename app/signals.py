@@ -758,7 +758,7 @@ def performance():
       "by_decision":segment(current_rows,lambda r:r["decision"]),"by_data_grade":segment(current_rows,lambda r:r["data_grade"]),
       "by_confidence_range":segment(current_rows,conf),"by_provider":segment(rows,lambda r:r["provider_name"]),
       "by_strategy_family":segment(current_rows,family),"by_market_regime":segment(current_rows,regime),
-      "by_direction":segment(current_rows,lambda r:r["direction"]),
+      "by_direction":segment(current_rows,lambda r:r.get("direction","unknown")),
       "by_strategy":segment(rows,lambda r:r["strategy_version"])}
 
 def render_output(r):
