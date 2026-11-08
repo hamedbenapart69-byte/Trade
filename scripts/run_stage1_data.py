@@ -32,7 +32,7 @@ def main():
         else:
             result=collector.run(target_count=args.symbols,years=args.years)
         print(json.dumps(result,indent=2,ensure_ascii=False))
-        if args.probe_only and not result["binance"]["passed"]:
+        if args.probe_only and (not result["binance"]["passed"] or not result["fear_greed"]["passed"]):
             raise SystemExit(2)
         if not args.probe_only and (result["failed_symbols"] or result["fear_greed"]["error"]):
             raise SystemExit(3)
