@@ -128,7 +128,6 @@ Latest expanded probe:
 - Run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/42523754302
 - Commit: b625499ec59b34057e6f9f9e97269c68da37eb57
 - Job logs contain raw HTTP status, response detail, record counts, and date ranges.
-
 Observed results:
 
 | Source / endpoint | GitHub Runner result | Evidence-based conclusion |
@@ -245,3 +244,82 @@ The audit workflow/script live on the audit evidence branch and are not part of 
 - R2 bucket / Cloudflare Cron inventory: UNVERIFIED.
 - Stage 1: BLOCKED by R28 until Cloudflare account-level ZC-4 items are answered.
 - src/engines/: NOT STARTED; requires explicit user approval after the prerequisite documents and gates.
+
+---
+
+# v2.5 Architecture Addendum (2026-11-09)
+
+This addendum supersedes any conflicting v2.3 statements above about dashboard delivery, Cloudflare Pages/Workers/Cron dependencies, provider fallback complexity, and the Stage 1 Cloudflare/R2 gate.
+
+## A. Permanent delivery decision: Telegram-only
+
+- Product delivery channel: the user's existing private Telegram destination, permanently Telegram-only for v2.5 and later versions unless the user explicitly changes this decision.
+- Web dashboard is OUT OF SCOPE and UNMAINTAINED. The legacy dashboard at https://trade-3vn.pages.dev/ is archived; its present availability/freshness is not guaranteed.
+- The legacy GitHub Pages deployment job in v5-signal-autopilot.yml was already guarded by if: false in the inspected main branch. Keep it disabled; do not restore or replace it.
+- No Cloudflare Pages deployment, Cloudflare Worker proxy, or Cloudflare Cron Trigger is required by the approved architecture.
+- Telegram Bot API success means API_ACKNOWLEDGED, not proof that the user saw the notification.
+- Remove dashboard-only URLs and dashboard publication steps from the active signal-delivery path in the implementation phase. Preserve historical artifacts only as archived evidence.
+
+## B. Source policy: v2.4 ZC-1 locked
+
+- Primary historical source: Binance Vision archives, for the specific archive datasets and date ranges that have actually been probed successfully.
+- Binance public Futures REST/FAPI from the audited GitHub-hosted runner: UNAVAILABLE for tested endpoints returning HTTP 451. Do not label it REAL or use it as a dependable live feed from that runner.
+- Binance Vision historical archive success does not establish a live, real-time ticker/order-book source. Live freshness must be separately sourced and timestamp-validated.
+- One fallback maximum. KuCoin may receive one bounded feasibility test only; do not build a multi-provider fallback chain or invest in proxy infrastructure.
+- The existing main-branch implementation still contains a multi-provider selector (OKX, Bybit, Binance, Bitget, MEXC, KuCoin Futures) and CoinGecko discovery. This is a legacy implementation fact, not the approved v2.5 target architecture. Do not claim the implementation has already been simplified.
+- No exchange account, private exchange API key, order execution, or user-side exchange connection is in scope.
+
+## C. Exact diagnosis of the 74 unscanned symbols
+
+Evidence:
+- Run #54: https://github.com/hamedbenapart69-byte/Trade/actions/runs/42520941228
+- Job log: https://github.com/hamedbenapart69-byte/Trade/actions/runs/42520941228/job/128854266168
+- Source: signal_autopilot/modules/data_fetcher.py on audited main commit 64f8d8fcafc1300987bd9345b3551abbdd151c83.
+
+Confirmed:
+- Requested=100, processed=26, unscanned=74; aggregate runtime scan coverage=26%.
+- The provider selector's eligible-market filter requires active linear USDT perpetual contracts, crypto whitelist membership (CoinGecko top-ranked whitelist), minimum listing age 730 days, and minimum 24h quote volume USD 10,000,000. Missing listing metadata triggers a historical daily-OHLCV age check.
+- The selector records per-provider rejection counters in self.universe_diagnostics, but the inspected pipeline summary does not print/persist those diagnostics in the published signal payload or the cited final log excerpt.
+- Therefore the exact count of the 74 attributable to each filter, API pagination/market-list limitation, or provider response is NOT YET PROVEN. It would be inaccurate to state that rate limiting caused the shortfall.
+- Required repair: persist and emit per-provider markets_total, eligible_before_limit, selected, and each rejected counter; add candidate-count and exception telemetry. Then determine whether the 74 are filter exclusions, provider-data omissions, or a true fetch/rate-limit failure.
+- Do not relax age, volume, quote, settlement, whitelist, or crypto-only controls merely to reach 100. Any universe reduction must be evidence-based and explicit.
+
+## D. DEGRADED and Coverage policy
+
+- Keep separate metrics: aggregate scan coverage (symbols processed / symbols requested) for system health; per-symbol data/component coverage for an individual signal's eligibility.
+- Do not multiply aggregate scan coverage by per-symbol coverage. They measure different things.
+- Tier decisions use only the target symbol's required component coverage, freshness, calibration, EV, and risk gates. Aggregate scan coverage informs system health and admin alerts.
+- A symbol with complete local evidence may be eligible for its own tier even when the full universe scan is partial, but it must not conceal the aggregate DATA_DEGRADED state.
+- Coverage values must be derived from actual required/available components, never copied from the legacy MVP's OHLCV/Funding/OI flags and relabeled as LFS/NSS coverage.
+
+## E. SystemState contract
+
+The required enum values are:
+- HEALTHY = "healthy"
+- DATA_DEGRADED = "data_degraded"
+- BUG_STATE = "bug_state"
+- VALIDATION_FAILED = "val_failed"
+
+Required behavior:
+- HEALTHY: normal eligibility, subject to every signal gate.
+- DATA_DEGRADED: publish only if the individual symbol remains eligible; lower/deny tier according to missing required data; attach a visible data-quality warning.
+- BUG_STATE: halt all signal publication; enter shadow mode; send a separate operational alert only if an explicitly configured admin destination exists. Never silently route it to the user's signal feed.
+- VALIDATION_FAILED: block Tier A; Tier B/C only if their independent validation and risk gates pass.
+- Every signal payload must carry system_state. The implementation must use a typed enum and tests, not free-form strings.
+- Precedence for simultaneous conditions: BUG_STATE > VALIDATION_FAILED > DATA_DEGRADED > HEALTHY. A software bug must never be downgraded to a data warning.
+
+## F. Dashboard and zero-cost gate corrections
+
+- Cloudflare Pages, Workers, and Cron are removed from active scope. Prior Cloudflare account inventory questions are no longer blockers.
+- R2 is conditional only: consider it if measured forward-collection storage exceeds 500 MB or Git storage becomes operationally unsuitable. No R2 bucket is required at project start.
+- GitHub Actions remains the scheduler. Retain only the workflows needed for tests, data collection, analysis, and Telegram delivery.
+- The old R28 gate requiring Cloudflare Cron/R2 account inventory is superseded for this product scope.
+
+## G. Implementation truth and release boundary
+
+- The inspected main-branch signal engine is still EMA20/EMA50 + ATR14 MVP, not LFS/NSS, not Ichimoku, and not a calibrated Tier A/B system.
+- The inspected data fetcher still contains a multi-provider fallback chain.
+- The inspected notifier already sends signal photos through Telegram, but the current chart implementation and captions do not yet prove the v2.5 nine-section contract or full Ichimoku overlay.
+- Consequently, v2.5 is an approved target specification, not a claim of completed implementation.
+- No Tier A label may be emitted until LFS/NSS, Ichimoku, per-symbol coverage, calibration, EV, walk-forward validation, and risk gates are implemented and evidenced.
+
