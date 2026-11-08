@@ -1,28 +1,14 @@
 # راه‌اندازی اعلان تلگرام
 
-این سامانه فقط پیام اطلاع‌رسانی می‌فرستد و هیچ سفارش معاملاتی ثبت نمی‌کند.
-
-## پنج گام راه‌اندازی
-
-1. در تلگرام حساب خودت، ربات رسمی **@BotFather** را باز کن و دستور `/newbot` را بفرست.
-2. نام نمایشی و یک username یکتا که به `bot` ختم شود انتخاب کن.
-3. توکن صادرشده را خصوصی نگه دار. آن را در چت، کد یا فایل مخزن قرار نده.
-4. برای دریافت Chat ID شخصی، از یک ابزار معتبر دریافت شناسه تلگرام استفاده کن یا از رباتی که خودت به آن اعتماد داری کمک بگیر. برای شروع گفتگو با ربات ساخته‌شده، صفحه همان ربات را باز کن و `Start` را بزن.
-5. در GitHub به مخزن `hamedbenapart69-byte/Trade` برو: **Settings → Secrets and variables → Actions → New repository secret** و این دو Secret را بساز:
-   - `TELEGRAM_TOKEN`: توکن BotFather
-   - `TELEGRAM_CHAT_ID`: شناسه گفتگوی مقصد
+1. در تلگرام @BotFather را باز کن و /newbot بفرست.
+2. نام نمایشی و username یکتا که به bot ختم شود انتخاب کن.
+3. Token را خصوصی نگه دار و در چت یا مخزن قرار نده.
+4. برای Chat ID از ابزار معتبر دریافت شناسه استفاده کن و گفت‌وگو با ربات ساخته‌شده را با Start آغاز کن.
+5. در مخزن GitHub به Settings → Secrets and variables → Actions → New repository secret برو و دو Secret بساز:
+   - TELEGRAM_TOKEN
+   - TELEGRAM_CHAT_ID
 
 ## تست
+در Actions گردش‌کار Futures Signals Pipeline را باز کن، شاخه stage-1-data-layer-v1 را انتخاب کن، test_telegram=true را تنظیم و اجرا کن. پیام «تست اتصال ربات سیگنال» باید دریافت شود.
 
-1. به تب **Actions** برو.
-2. گردش‌کار **Futures Signals Pipeline** را باز کن.
-3. **Run workflow** را بزن و گزینه `test_telegram` را روی `true` قرار بده.
-4. اجرای workflow را باز کن و مرحله **Optional Telegram test message** را بررسی کن.
-5. پیام «تست اتصال ربات سیگنال» باید در تلگرام دریافت شود.
-
-## رفتار امن
-
-- اگر هرکدام از دو Secret تنظیم نشده باشد، اعلان عادی بدون crash با وضعیت `SKIPPED_NOT_CONFIGURED` رد می‌شود.
-- خطای واقعی Telegram API در log ثبت می‌شود و اجرای workflow را ناموفق می‌کند تا خطا پنهان نماند.
-- توکن را هرگز برای ChatGPT یا در پیام عمومی ارسال نکن.
-- اعلان سیگنال فقط برای وضعیت‌های `BUY_NOW` یا `SELL_NOW` با `tier: A` فرستاده می‌شود. موتور فعلی هنوز احتمال کالیبره‌شده تولید نمی‌کند؛ در این حالت مقدار `NOT_CALIBRATED` نمایش داده می‌شود.
+اگر یکی از Secretها موجود نباشد، notifier با وضعیت SKIPPED_NOT_CONFIGURED بدون crash رد می‌شود. خطای واقعی API در log ثبت می‌شود. موتور فعلی Tier A/BUY_NOW/SELL_NOW تولید نمی‌کند؛ اعلان تست مستقل از اعلان سیگنال است.

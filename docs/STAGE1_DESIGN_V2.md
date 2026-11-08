@@ -324,3 +324,30 @@ Run [42479303959](https://github.com/hamedbenapart69-byte/Trade/actions/runs/424
 - 100 OKX symbols processed; pipeline `OK`; 100 current records.
 - Public dashboard copies `web/data/signals.json` and `web/data/history.csv` match the current generated snapshot; 100 signal records and 300 history rows are present.
 - Generated output commit/push: PASS.
+
+
+## 17. Access verification and responsibility split (2026-11-08)
+
+| Area | Confirmed capability in this session | Boundary |
+|---|---|---|
+| GitHub repository | Read files; create blobs, trees, commits; create/update branches; create PRs; merge PRs | A real commit was pushed to stage-1-data-layer-v1. |
+| GitHub Actions | Read run/job summaries and logs; rerun failed jobs where permitted | No workflow-dispatch action was exposed in the connected toolset. Push-triggered workflows are usable. |
+| GitHub Actions Secrets | No supported secret-management action exposed | Owner must add secrets in Settings. Do not paste tokens into chat. |
+| Branch protection | No supported management action exposed | Owner must inspect settings in GitHub UI. |
+| Cloudflare Pages | No direct Pages project/account/deploy connector exposed | Cannot create project or claim a live URL in this session. |
+| Telegram bot creation | Not available | Owner creates bot with @BotFather. |
+| Telegram sending | Code path exists, but no credentials available | Real delivery remains untested. |
+| Iran network reachability | Not verifiable from hosted runner | Owner must test from their Iranian ISP/mobile network. |
+
+### Responsibility split
+ChatGPT handles code, config, workflow, tests, docs, commits, CI log review and code-level fixes. Repository owner creates the bot, adds TELEGRAM_TOKEN and TELEGRAM_CHAT_ID as Actions secrets, authorizes Cloudflare Pages, deploys, and tests the URL from Iran. Never send tokens in chat.
+
+### First isolated publisher run: failure evidence
+- Commit fb2d2a1 introduced the initial isolated-branch publisher and Telegram notifier; 541166e added the dependency and guide.
+- Run [42481216071](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42481216071) FAILED at branch switching because logic.py had modified tracked generated files: data/signals.json, data/history.csv, and web/data/*.
+- The same run passed OKX ticker connectivity, Python compilation, all 83 unit tests, JavaScript syntax validation and compute for 100 symbols. Telegram was skipped because secrets were empty.
+- CI and the pre-existing Stage 1 workflow for commit 541166e passed: [CI](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42481225022), [Stage 1](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42481225024).
+- Publisher fix: copy outputs to /tmp, reset generated working-tree changes, switch to signals, then commit/push. This fix is not accepted until new runs pass.
+
+### Acceptance
+Stage 1 remains NOT PASS until two consecutive publisher runs pass, Pages URL is live and verified, signals are visible, a real Telegram test is received after secrets are added, and the owner verifies access from Iran. GitHub cron becomes autonomous only after the workflow is merged to default branch main.
