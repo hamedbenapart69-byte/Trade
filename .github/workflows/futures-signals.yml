@@ -28,7 +28,28 @@ concurrency:
   group: futures-signals-single
   cancel-in-progress: false
 jobs:
+  telegram-test:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_telegram == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: signal_autopilot/requirements.txt
+      - name: Install Telegram dependencies
+        working-directory: signal_autopilot
+        run: pip install -r requirements.txt
+      - name: Send Telegram test message
+        working-directory: signal_autopilot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -c 'from modules.notifier import send_test_message; print(send_test_message())'
+
   signals:
+    if: github.event_name != 'workflow_dispatch' || inputs.test_telegram != true
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -41,6 +62,13 @@ jobs:
       - name: Install signal pipeline dependencies
         working-directory: signal_autopilot
         run: pip install -r requirements.txt
+      - name: Restore Telegram deduplication state
+        uses: actions/cache@v4
+        with:
+          path: signal_autopilot/data/telegram_sent.json
+          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-telegram-sent-
       - name: Test OKX CCXT ticker from GitHub Actions runner
         continue-on-error: true
         working-directory: signal_autopilot
@@ -68,18 +96,11 @@ jobs:
         working-directory: signal_autopilot
         env:
           PYTHONUNBUFFERED: "1"
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SIGNAL_SYMBOL_LIMIT: "100"
         run: python logic.py
-      - name: Optional Telegram test
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_telegram == true }}
-        working-directory: signal_autopilot
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -c 'from modules.notifier import send_test_message; print(send_test_message())'
       - name: Validate JSON, CSV and C10
         run: |
           python - <<'PY'
@@ -93,53 +114,39 @@ jobs:
           assert Path("web/futures/data/history.csv").exists()
           print("END-TO-END PAYLOAD PASS:",len(p["signals"]))
           PY
-      - name: Commit dashboard data with concurrent-run reconciliation
+      - name: Publish data to isolated signals branch
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f signal_autopilot/data/signals.json signal_autopilot/data/history.csv web/futures/data/signals.json web/futures/data/history.csv
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: publish futures dashboard data [skip ci]"
-            git pull --rebase -X theirs origin "$GITHUB_REF_NAME"
-            git fetch origin "$GITHUB_REF_NAME"
-            python - <<'PY'
-          import csv, json, os, subprocess
-          from pathlib import Path
-          branch=os.environ["GITHUB_REF_NAME"]
-          local_history=Path("signal_autopilot/data/history.csv")
-          def git_show(path):
-              return subprocess.run(["git","show",f"origin/{branch}:{path}"],capture_output=True,text=True)
-          remote_hist=git_show("signal_autopilot/data/history.csv")
-          if remote_hist.returncode==0 and local_history.exists():
-              import io
-              remote_rows=list(csv.DictReader(io.StringIO(remote_hist.stdout)))
-              local_rows=list(csv.DictReader(local_history.open(newline="",encoding="utf-8")))
-              fields=list(remote_rows[0].keys()) if remote_rows else (list(local_rows[0].keys()) if local_rows else [])
-              merged=[]; seen=set()
-              for row in remote_rows+local_rows:
-                  key=row.get("idempotency_key")
-                  if key and key not in seen:
-                      merged.append(row); seen.add(key)
-              if fields:
-                  with local_history.open("w",newline="",encoding="utf-8") as stream:
-                      writer=csv.DictWriter(stream,fieldnames=fields)
-                      writer.writeheader(); writer.writerows(merged)
-          remote_json=git_show("signal_autopilot/data/signals.json")
-          local_json=Path("signal_autopilot/data/signals.json")
-          if remote_json.returncode==0 and local_json.exists():
-              old=json.loads(remote_json.stdout)
-              new=json.loads(local_json.read_text(encoding="utf-8"))
-              if (old.get("generated_at_utc") or "") > (new.get("generated_at_utc") or ""):
-                  local_json.write_text(json.dumps(old,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-          web=Path("web/futures/data"); web.mkdir(parents=True,exist_ok=True)
-          web.joinpath("signals.json").write_text(local_json.read_text(encoding="utf-8"),encoding="utf-8")
-          web.joinpath("history.csv").write_text(local_history.read_text(encoding="utf-8"),encoding="utf-8")
-          PY
-            git add -f signal_autopilot/data/signals.json signal_autopilot/data/history.csv web/futures/data/signals.json web/futures/data/history.csv
-            git commit --amend --no-edit
-            git push origin "HEAD:$GITHUB_REF_NAME"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin +refs/heads/signals:refs/remotes/origin/signals
+          git worktree add /tmp/signals-public refs/remotes/origin/signals
+          python signal_autopilot/scripts/publish_signals_branch.py \
+            --source-json signal_autopilot/data/signals.json \
+            --source-csv signal_autopilot/data/history.csv \
+            --output-dir /tmp/signals-public
+          git -C /tmp/signals-public add signals.json history.csv
+          if ! git -C /tmp/signals-public diff --cached --quiet; then
+            git -C /tmp/signals-public commit -m "data: publish futures signals snapshot"
+            for attempt in 1 2 3; do
+              git -C /tmp/signals-public fetch origin +refs/heads/signals:refs/remotes/origin/signals
+              if ! git -C /tmp/signals-public rebase refs/remotes/origin/signals; then
+                git -C /tmp/signals-public rebase --abort || true
+                echo "Signals branch rebase conflict (attempt $attempt)."
+                sleep $((attempt * 2))
+                continue
+              fi
+              if git -C /tmp/signals-public push origin HEAD:refs/heads/signals; then
+                echo "Signals branch updated."
+                exit 0
+              fi
+              echo "Signals branch push retry $attempt/3."
+              sleep $((attempt * 2))
+            done
+            echo "Signals branch push failed after 3 attempts."
+            exit 1
           else
-            echo "No dashboard data changes"
+            echo "No public data changes."
           fi
       - name: Upload evidence
         if: always()
