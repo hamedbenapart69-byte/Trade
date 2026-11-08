@@ -34,6 +34,7 @@ class Stage1ADataProvider:
         self.blacklist = {str(x).upper() for x in (md.get("universe") or {}).get("blacklist_patterns", [])}
         self.errors: dict[str, str] = {}
         self.provider_counts = {"BINANCE_VISION": 0, "COINGECKO": 0, "KUCOIN_PROXY": 0}
+        self._cg_funding_cache: dict[str, float] | None = None
 
     def close(self) -> None:
         if self._owns_client:
@@ -180,11 +181,13 @@ class Stage1ADataProvider:
         except Exception as exc:
             reason = "ERROR_" + type(exc).__name__
         if cg_map is None:
-            try:
-                cg_map = self._coingecko_funding_map()
-            except Exception as exc:
-                self.errors["coingecko_funding"] = type(exc).__name__ + ":" + str(exc)[:160]
-                cg_map = {}
+            if self._cg_funding_cache is None:
+                try:
+                    self._cg_funding_cache = self._coingecko_funding_map()
+                except Exception as exc:
+                    self.errors["coingecko_funding"] = type(exc).__name__ + ":" + str(exc)[:160]
+                    self._cg_funding_cache = {}
+            cg_map = self._cg_funding_cache
         if symbol in cg_map:
             self.provider_counts["COINGECKO"] += 1
             return {"status": "PROXY", "rate": cg_map[symbol], "provider": "COINGECKO",
@@ -222,11 +225,6 @@ class Stage1ADataProvider:
                     continue
                 agg = self._probe_aggtrades(symbol)
                 funding = self._funding(symbol, cg_funding)
-                if funding.get("provider") == "COINGECKO" and cg_funding is None:
-                    try:
-                        cg_funding = self._coingecko_funding_map()
-                    except Exception:
-                        cg_funding = {}
                 self.provider_counts["BINANCE_VISION"] += 1
                 coverage.append({
                     "symbol": symbol, "status": "QUALIFYING",
