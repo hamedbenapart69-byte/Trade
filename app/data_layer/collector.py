@@ -186,18 +186,29 @@ class Stage1Collector:
         return [collected[k] for k in sorted(collected)]
 
     def fetch_open_interest_history(self, symbol: str, since_ms: int, until_ms: int) -> list[dict]:
-        # Binance USD-M openInterestHist exposes only the latest month.
-        start = max(since_ms, until_ms - 30*MS_DAY)
+        # Binance USD-M openInterestHist exposes only the latest month, max 500 rows per request.
+        cursor = max(since_ms, until_ms - 30*MS_DAY)
         market_id = self.exchange.market(symbol)["id"]
-        rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
-                                     {"symbol":market_id,"period":"1h","limit":500,
-                                      "startTime":start,"endTime":until_ms})
-        out=[]
-        for item in rows or []:
-            out.append({"timestamp":int(item["timestamp"]),"symbol":market_id,
-                        "open_interest":float(item["sumOpenInterest"]),
-                        "open_interest_value_usd":float(item["sumOpenInterestValue"])})
-        return sorted(out,key=lambda x:x["timestamp"])
+        collected = {}
+        while cursor < until_ms:
+            rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
+                                         {"symbol":market_id,"period":"1h","limit":500,
+                                          "startTime":cursor,"endTime":until_ms})
+            if not rows:
+                break
+            for item in rows:
+                ts = int(item["timestamp"])
+                if cursor <= ts <= until_ms:
+                    collected[ts] = {"timestamp":ts,"symbol":market_id,
+                                     "open_interest":float(item["sumOpenInterest"]),
+                                     "open_interest_value_usd":float(item["sumOpenInterestValue"])}
+            last_ts = max(int(item["timestamp"]) for item in rows)
+            if last_ts < cursor:
+                raise RuntimeError(f"open_interest_pagination_stalled:{symbol}")
+            cursor = last_ts + 1
+            if len(rows) < 2:
+                break
+        return [collected[k] for k in sorted(collected)]
 
     def probe_fear_greed(self) -> dict:
         try:
