@@ -1,20 +1,8 @@
 name: V5 Futures Signal Autopilot
 
 on:
-  schedule:
-    - cron: "7,22,37,52 * * * *"
+  # Legacy V5 runner is retained for manual diagnostics only.
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "app/**"
-      - "scripts/**"
-      - "web/**"
-      - "tests/**"
-      - "requirements.txt"
-      - ".github/workflows/v5-signal-autopilot.yml"
-      - ".github/workflows/static.yml"
 
 concurrency:
   group: v5-signal-state
@@ -119,7 +107,7 @@ jobs:
           retention-days: 3
 
   deploy-pages:
-    if: github.ref == 'refs/heads/main'
+    if: false
     needs: scan-and-build
     runs-on: ubuntu-latest
     permissions:
