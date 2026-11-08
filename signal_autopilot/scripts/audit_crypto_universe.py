@@ -23,7 +23,7 @@ def main() -> None:
         selected_provider = None
         selected_exchange = None
         selected = []
-        for provider in ("okx", "bybit"):
+        for provider in ("okx", "bybit", "binance"):
             try:
                 exchange = fetcher._new_exchange(provider)
                 rows = fetcher._eligible_markets(
