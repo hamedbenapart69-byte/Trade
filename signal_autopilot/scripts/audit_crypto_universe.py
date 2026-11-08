@@ -23,6 +23,7 @@ def main() -> None:
         selected_provider = None
         selected_exchange = None
         selected = []
+        union_by_symbol = {}
         for provider in ("okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"):
             try:
                 exchange = fetcher._new_exchange(provider)
@@ -31,6 +32,10 @@ def main() -> None:
                     int(datetime.now(timezone.utc).timestamp() * 1000),
                 )
                 btc_market = exchange.markets.get("BTC/USDT:USDT") or {}
+                for row in rows:
+                    prior = union_by_symbol.get(row[1])
+                    if prior is None or row[0] > prior[0]:
+                        union_by_symbol[row[1]] = row
                 report["providers"][provider] = {
                     "eligible_count": len(rows),
                     "diagnostics": fetcher.universe_diagnostics.get(provider, {}),
@@ -40,7 +45,8 @@ def main() -> None:
                         "candidate_time_fields": {
                             key: (btc_market.get("info") or {}).get(key)
                             for key in ("listTime", "listingTime", "onboardDate", "launchTime",
-                                        "createdTime", "createTime", "firstOpenDate", "createdAt")
+                                        "createdTime", "createTime", "firstOpenDate", "createdAt",
+                                        "openTime", "limitOpenTime", "isRwa")
                             if (btc_market.get("info") or {}).get(key) is not None
                         },
                     },
@@ -60,6 +66,12 @@ def main() -> None:
         report["coingecko_unique_top200_symbols"] = len(whitelist)
         report["selected_provider"] = selected_provider
         report["selected_count"] = len(selected)
+        union_rows = sorted(union_by_symbol.values(), key=lambda row: row[0], reverse=True)
+        report["unique_cross_exchange_union_count"] = len(union_rows)
+        report["unique_cross_exchange_union_first_10"] = [
+            {"symbol": symbol, "quote_volume_24h_usd": round(volume, 2)}
+            for volume, symbol, _ in union_rows[:10]
+        ]
         report["first_10"] = [
             {"symbol": symbol, "quote_volume_24h_usd": round(volume, 2)}
             for volume, symbol, _ in selected[:10]
@@ -83,6 +95,7 @@ def main() -> None:
                 for _, symbol, _ in selected
             ),
             "count_at_least_50": len(selected) >= 50,
+            "cross_exchange_union_at_least_50": len(union_rows) >= 50,
         }
         report["pass"] = all(report["policy_checks"].values())
         out = Path("data/universe_audit.json")
