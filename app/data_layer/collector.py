@@ -210,6 +210,26 @@ class Stage1Collector:
                 break
         return [collected[k] for k in sorted(collected)]
 
+    def probe_data_vision(self) -> dict:
+        base = "https://data.binance.vision/data/futures/um"
+        checks = {
+            "btc_1h_klines_checksum": f"{base}/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10.zip.CHECKSUM",
+            "btc_funding_checksum": f"{base}/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10.zip.CHECKSUM",
+            "btc_daily_metrics_checksum": f"{base}/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-11-07.zip.CHECKSUM",
+        }
+        results = []
+        for name, url in checks.items():
+            try:
+                response = self.http.get(url, headers={"Range":"bytes=0-512"})
+                passed = response.status_code == 200 and bool(response.text.strip())
+                results.append({"dataset":name,"passed":passed,"http_status":response.status_code,
+                                "sample":response.text[:160] if passed else None})
+            except Exception as exc:
+                results.append({"dataset":name,"passed":False,"error":type(exc).__name__,
+                                "detail":str(exc)[:160]})
+        return {"provider":"Binance Data Vision public archive",
+                "passed":sum(x["passed"] for x in results),"total":len(results),"checks":results}
+
     def probe_fear_greed(self) -> dict:
         try:
             response = self.http.get("https://api.alternative.me/fng/",
