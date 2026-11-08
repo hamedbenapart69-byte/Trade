@@ -129,5 +129,56 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
         self.assertIn(chr(10), message)
         self.assertNotIn(chr(92) + "n", message)
 
+    def test_multiple_actionable_signals_are_aggregated_into_one_message(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+            payload = {
+                "pipeline_status": "DEGRADED",
+                "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                "quality": {"symbols_requested": 100, "symbols_processed": 26},
+                "signals": [
+                    {"symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                     "entry": 100, "stop_loss": 95, "take_profit": [110, 120]},
+                    {"symbol": "ETH/USDT:USDT", "status": "SELL_NOW", "side": "SELL",
+                     "entry": 200, "stop_loss": 210, "take_profit": [180, 160]},
+                ],
+            }
+            with patch.dict(os.environ, {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }, clear=True), patch("modules.notifier._send", new=fake_send):
+                result = notify_tier_a(payload)
+            self.assertEqual(result, {"status": "SENT", "sent": 1})
+            self.assertEqual(len(sent), 1)
+            self.assertIn("BTC/USDT:USDT", sent[0])
+            self.assertIn("ETH/USDT:USDT", sent[0])
+            self.assertIn("26/100", sent[0])
+
+    def test_chat_not_found_returns_actionable_status(self):
+        import os
+        from modules.notifier import notify_tier_a
+        async def fail_send(token, chat_id, messages):
+            raise RuntimeError("Chat not found")
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(os.environ, {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }, clear=True), patch("modules.notifier._send", new=fail_send):
+                result = notify_tier_a({
+                    "pipeline_status": "OK",
+                    "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                    "signals": [{
+                        "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                        "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                    }],
+                })
+        self.assertEqual(result, {"status": "CHAT_NOT_FOUND", "sent": 0})
+
 if __name__=="__main__":
     unittest.main()

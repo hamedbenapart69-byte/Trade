@@ -111,19 +111,41 @@ def notify_tier_a(payload: dict) -> dict:
     if not pending:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
+    # سیگنال‌های تازه در یک پیام/چند بخشِ زیر سقف تلگرام تجمیع می‌شوند.
+    header = ""
+    quality = payload.get("quality") or {}
+    requested = quality.get("symbols_requested")
+    processed = quality.get("symbols_processed")
+    if requested:
+        header = f"📊 {len(candidates)} سیگنال اقدام‌پذیر | پوشش اسکن: {processed}/{requested} نماد"
+    chunks: list[str] = []
+    current = header
+    for _, message in pending:
+        candidate = (current + "\n\n" if current else "") + message
+        if current and len(candidate) > 3800:
+            chunks.append(current)
+            current = message
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+
     sent = 0
     try:
-        for key, message in pending:
-            asyncio.run(_send(token, chat_id, [message]))
+        asyncio.run(_send(token, chat_id, chunks))
+        for key, _ in pending:
             sent_state[key] = now.isoformat()
-            sent += 1
         state_path.write_text(
             json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        LOG.info("Telegram delivery succeeded: %d message(s).", sent)
+        sent = len(chunks)
+        LOG.info("Telegram delivery succeeded: %d message(s) for %d item(s).", sent, len(pending))
         return {"status": "SENT", "sent": sent}
-    except Exception:
+    except Exception as exc:
+        if "chat not found" in str(exc).lower():
+            LOG.error("Telegram chat not found. Open the bot in Telegram, send /start, and verify TELEGRAM_CHAT_ID.")
+            return {"status": "CHAT_NOT_FOUND", "sent": sent}
         LOG.exception("Telegram delivery failed.")
         return {"status": "ERROR", "sent": sent}
 
@@ -191,6 +213,9 @@ def send_test_message() -> dict:
         ]))
         LOG.info("Telegram test message delivered successfully.")
         return {"status": "TEST_SENT", "sent": 1}
-    except Exception:
+    except Exception as exc:
+        if "chat not found" in str(exc).lower():
+            LOG.error("Telegram chat not found. Open the bot in Telegram and send /start; verify TELEGRAM_CHAT_ID.")
+            return {"status": "CHAT_NOT_FOUND", "sent": 0}
         LOG.exception("Telegram test delivery failed.")
         return {"status": "ERROR", "sent": 0}

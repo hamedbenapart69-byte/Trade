@@ -75,5 +75,20 @@ class EmaAtrSignalTests(unittest.TestCase):
         self.assertEqual(payload["today_signal_message"], "دادهٔ کافی برای ارزیابی بازار در دسترس نیست")
 
 
+    def test_partial_universe_is_marked_degraded(self):
+        payload = generate_signals({
+            "provider": "kucoinfutures",
+            "generated_at_utc": "2026-11-08T19:00:00+03:30",
+            "symbols_requested": 100,
+            "symbols": [self.make_row("flat")],
+        })
+        self.assertEqual(payload["pipeline_status"], "DEGRADED")
+        self.assertEqual(payload["quality"]["symbols_requested"], 100)
+        self.assertEqual(payload["quality"]["symbols_processed"], 1)
+        self.assertEqual(payload["quality"]["symbols_unscanned"], 99)
+        self.assertEqual(payload["quality"]["coverage_pct"], 1.0)
+        self.assertEqual(payload["quality"]["coverage_status"], "PARTIAL")
+        self.assertIn("1 از 100", payload["today_signal_message"])
+
 if __name__ == "__main__":
     unittest.main()

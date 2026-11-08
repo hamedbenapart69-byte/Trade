@@ -25,7 +25,10 @@ async function loadSignals() {
       output.innerHTML = '<p class="empty">' + esc(message) + '</p>';
       return;
     }
-    output.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+    const coverageWarning = payload.pipeline_status === "DEGRADED" && payload.today_signal_message
+      ? '<p class="empty">' + esc(payload.today_signal_message) + '</p>'
+      : "";
+    output.innerHTML = coverageWarning + '<div class="table-wrap"><table><thead><tr>' +
       "<th>نماد</th><th>جهت</th><th>Entry</th><th>Stop Loss</th><th>TP1</th><th>TP2</th>" +
       "</tr></thead><tbody>" + signals.map((signal) =>
         "<tr><td dir=\"ltr\">" + esc(signal.symbol) + "</td>" +

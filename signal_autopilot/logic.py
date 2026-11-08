@@ -38,7 +38,7 @@ def main() -> None:
     notification = notify_tier_a(payload)
     email_notification = (
         notify_email(payload)
-        if notification.get("status") in ("SKIPPED_NOT_CONFIGURED", "ERROR")
+        if notification.get("status") in ("SKIPPED_NOT_CONFIGURED", "ERROR", "CHAT_NOT_FOUND")
         else {"status": "SKIPPED_NOT_NEEDED", "sent": 0}
     )
 

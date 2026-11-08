@@ -113,6 +113,12 @@ jobs:
           p=json.loads(Path("signal_autopilot/data/signals.json").read_text(encoding="utf-8"))
           allowed={"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL","WATCHLIST","NO_QUALIFIED_SETUP","MARKET_DATA_DEGRADED"}
           assert p.get("signals") and all(s.get("status") in allowed for s in p["signals"])
+          quality = p.get("quality") or {}
+          requested = int(quality.get("symbols_requested", quality.get("symbols_processed", 0)))
+          processed = int(quality.get("symbols_processed", 0))
+          assert processed <= requested
+          if p.get("pipeline_status") == "OK":
+              assert processed == requested, "partial universe must be labeled DEGRADED"
           assert Path("signal_autopilot/data/history.csv").exists()
           assert Path("web/futures/data/signals.json").exists()
           assert Path("web/futures/data/history.csv").exists()
