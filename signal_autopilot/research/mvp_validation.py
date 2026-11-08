@@ -18,6 +18,7 @@ SLIPPAGE_PER_SIDE = 0.0002
 TRAIN_HOURS = 6 * 30 * 24
 TEST_HOURS = 2 * 30 * 24
 STEP_HOURS = 30 * 24
+SIGNAL_SCAN_INTERVAL_HOURS = 4
 
 
 def ema(values: list[float], period: int) -> list[float]:
@@ -97,6 +98,11 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 
     while i < len(rows) - 1:
         candle = rows[i]
         if position is None:
+            # هم‌تراز با Cron واقعی: هر ۴ ساعت پس از بسته‌شدن کندل 1H.
+            completed_hour = int(candle["timestamp"]) // 3_600_000 + 1
+            if completed_hour % SIGNAL_SCAN_INTERVAL_HOURS != 0:
+                i += 1
+                continue
             f = fast_by_index.get(i)
             s = slow_by_index.get(i)
             a = atrs[i]
@@ -241,6 +247,7 @@ def run_validation(data_dir: Path) -> dict[str, Any]:
         "timeframe": "1H",
         "walk_forward": {
             "train_months": 6, "test_months": 2, "step_months": 1,
+            "signal_scan_interval_hours": SIGNAL_SCAN_INTERVAL_HOURS,
             "oos_only_metrics": True,
         },
         "costs": {
