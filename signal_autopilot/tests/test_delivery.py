@@ -92,5 +92,37 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             self.assertEqual(sent, ["امروز سیگنال نیست"])
 
 
+
+    def test_email_fallback_sends_only_with_configured_sender_and_recipient(self):
+        import os
+        from modules.notifier import notify_email
+        payload = {
+            "generated_at_utc": "2026-11-08T12:00:00+00:00",
+            "signals": [{
+                "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+            }],
+        }
+        class FakeResponse:
+            status_code = 202
+        with patch.dict(os.environ, {
+            "SENDGRID_KEY": "test-key",
+            "ALERT_EMAIL_TO": "to@example.test",
+            "ALERT_EMAIL_FROM": "from@example.test",
+        }, clear=True), patch("modules.notifier.httpx.post", return_value=FakeResponse()) as post:
+            result = notify_email(payload)
+        self.assertEqual(result, {"status": "SENT", "sent": 1})
+        self.assertEqual(post.call_args.kwargs["json"]["personalizations"][0]["to"][0]["email"], "to@example.test")
+        self.assertIn("\\nجهت:", post.call_args.kwargs["json"]["content"][0]["value"])
+
+    def test_signal_message_uses_real_newline_characters(self):
+        from modules.notifier import _format_signal
+        message = _format_signal({
+            "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "entry": 100,
+            "stop_loss": 95, "take_profit": [110, 120],
+        }, {})
+        self.assertIn("\\n", message)
+        self.assertNotIn("\\\\n", message)
+
 if __name__=="__main__":
     unittest.main()
