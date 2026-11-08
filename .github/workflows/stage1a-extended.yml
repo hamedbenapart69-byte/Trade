@@ -1,0 +1,98 @@
+name: Stage 1a Extended - Two Year History and Funding Unit
+
+on:
+  push:
+    branches: [stage1a-extended]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage1a-extended-history
+  cancel-in-progress: false
+
+jobs:
+  validate-and-fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout implementation
+        uses: actions/checkout@v4
+        with:
+          ref: stage1a-extended
+
+      - name: Checkout persistent market-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: market-data
+          path: market-data
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Stage 1a extended unit tests
+        working-directory: signal_autopilot
+        run: python -m unittest tests.test_stage1a_extended -v
+
+      - name: Verify CoinGecko funding unit against Bybit BTCUSDT
+        id: funding
+        continue-on-error: true
+        working-directory: signal_autopilot
+        run: python scripts/verify_funding_unit.py
+
+      - name: Download and validate two years of 1H OHLCV
+        id: history
+        working-directory: signal_autopilot
+        run: >-
+          python scripts/download_stage1a_extended_history.py
+          --start-date 2024-11-09
+          --end-date 2026-11-09
+          --output-dir ../market-data/datasets/stage1a_extended/ohlcv_1h
+          --report data/stage1a_extension_report.json
+
+      - name: Upload Stage 1a extended evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1a-extended-evidence
+          path: |
+            signal_autopilot/data/stage1a_extension_report.json
+            signal_autopilot/data/funding_unit_verification.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commit complete historical datasets to market-data branch
+        if: steps.history.outcome == 'success'
+        working-directory: market-data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datasets/stage1a_extended/ohlcv_1h
+          if git diff --cached --quiet; then
+            echo "No new dataset files to commit"
+          else
+            git commit -m "Add validated two-year 1H futures OHLCV"
+            git push origin HEAD:market-data
+          fi
+
+      - name: Final Stage 1a extended gate
+        if: steps.history.outcome == 'success'
+        working-directory: signal_autopilot
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          history = json.loads(Path("data/stage1a_extension_report.json").read_text())
+          funding_path = Path("data/funding_unit_verification.json")
+          funding = json.loads(funding_path.read_text()) if funding_path.exists() else {"status": "UNVERIFIED"}
+          print("Full-history symbols:", history.get("symbols_full_history"))
+          print("Funding unit status:", funding.get("status"))
+          if history.get("stage1a_extended_status") != "PASS":
+              raise SystemExit("FAIL: fewer than 40 symbols have continuous two-year hourly history")
+          if funding.get("status") != "VERIFIED":
+              raise SystemExit("HOLD: funding unit is unverified; funding must remain NOT_USED_BECAUSE_UNVERIFIED")
+          print("PASS: Stage 1a extended gates satisfied")
+          PY
