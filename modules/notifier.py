@@ -15,3 +15,15 @@ def notify_tier_a(payload):
             if not json.loads(response.read().decode()).get("ok"): raise RuntimeError("telegram_api_rejected_message")
             sent+=1
     return {"status":"SENT" if sent else "NO_NEW_TIER_A","sent":sent}
+
+def send_test_message():
+    token=os.getenv("TELEGRAM_BOT_TOKEN"); chat=os.getenv("TELEGRAM_CHAT_ID")
+    if not token or not chat:
+        return {"status":"SKIPPED_NOT_CONFIGURED","sent":0}
+    url=f"https://api.telegram.org/bot{token}/sendMessage"
+    msg="Futures Signal Autopilot: Telegram test successful. This system is read-only; all trades remain manual."
+    req=urllib.request.Request(url,data=urllib.parse.urlencode({"chat_id":chat,"text":msg}).encode(),method="POST")
+    with urllib.request.urlopen(req,timeout=20) as response:
+        result=json.loads(response.read().decode())
+        if not result.get("ok"): raise RuntimeError("telegram_api_rejected_test_message")
+    return {"status":"TEST_SENT","sent":1}
