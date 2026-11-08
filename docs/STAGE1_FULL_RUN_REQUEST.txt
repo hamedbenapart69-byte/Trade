@@ -1,0 +1,1 @@
+One-time Stage 1 full historical collection trigger. This file is only a workflow trigger; no runtime configuration is stored here.
