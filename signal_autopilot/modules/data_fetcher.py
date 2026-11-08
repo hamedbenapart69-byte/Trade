@@ -239,9 +239,23 @@ class MarketDataFetcher:
         candidates = self._eligible_markets(exchange, provider, whitelist, now_ms)
         output = []
         for qv, symbol, ticker in candidates:
+            ticker_timestamp = ticker.get("timestamp")
+            ticker_timestamp_source = "EXCHANGE"
+            if ticker_timestamp is None and ticker.get("datetime"):
+                try:
+                    ticker_timestamp = int(datetime.fromisoformat(
+                        str(ticker["datetime"]).replace("Z", "+00:00")
+                    ).timestamp() * 1000)
+                except (TypeError, ValueError):
+                    ticker_timestamp = None
+            if ticker_timestamp is None:
+                # KuCoin Futures may omit exchange ticker timestamps; receipt time is an explicit PROXY.
+                ticker_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
+                ticker_timestamp_source = "FETCH_TIME_PROXY"
             row = {
                 "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
-                "ticker_timestamp_utc": self._utc_ms(ticker.get("timestamp")), "ohlcv": None,
+                "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
+                "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
                 "funding_rate": None, "funding_timestamp_utc": None, "funding_interval_hours": None,
                 "open_interest": None, "open_interest_timestamp_utc": None,
                 "availability": {"ohlcv": "UNAVAILABLE", "funding": "UNAVAILABLE",
