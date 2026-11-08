@@ -18,6 +18,7 @@ def main() -> None:
     try:
         whitelist = fetcher._coingecko_top_symbols()
         selected_provider = None
+        selected_exchange = None
         selected = []
         for provider in ("okx", "bybit"):
             try:
@@ -31,13 +32,13 @@ def main() -> None:
                     "diagnostics": fetcher.universe_diagnostics.get(provider, {}),
                 }
                 if provider == "okx" and len(rows) >= 50:
-                    selected_provider, selected = provider, rows
+                    selected_provider, selected_exchange, selected = provider, exchange, rows
                     break
                 if provider == "bybit":
                     if len(rows) >= len(selected):
-                        selected_provider, selected = provider, rows
+                        selected_provider, selected_exchange, selected = provider, exchange, rows
                 elif len(rows) > len(selected):
-                    selected_provider, selected = provider, rows
+                    selected_provider, selected_exchange, selected = provider, exchange, rows
             except Exception as exc:
                 report["providers"][provider] = {
                     "error": type(exc).__name__, "detail": str(exc)[:200]
@@ -51,7 +52,7 @@ def main() -> None:
         ]
         report["policy_checks"] = {
             "all_quote_usdt_linear_swaps": bool(selected_provider) and all(
-                fetcher.exchanges[-1].market(symbol).get("swap")
+                selected_exchange.market(symbol).get("swap")
                 and fetcher.exchanges[-1].market(symbol).get("linear")
                 and fetcher.exchanges[-1].market(symbol).get("quote") == "USDT"
                 and fetcher.exchanges[-1].market(symbol).get("settle") == "USDT"
@@ -62,6 +63,11 @@ def main() -> None:
                 for _, symbol, _ in selected
             ),
             "all_over_10m_usd_volume": all(volume >= 10_000_000 for volume, _, _ in selected),
+            "all_listed_at_least_730_days": all(
+                (fetcher._listing_time_ms(selected_exchange.market(symbol), selected_provider) or 0)
+                <= int(datetime.now(timezone.utc).timestamp() * 1000) - 730 * 86_400_000
+                for _, symbol, _ in selected
+            ),
             "count_at_least_50": len(selected) >= 50,
         }
         report["pass"] = all(report["policy_checks"].values())
