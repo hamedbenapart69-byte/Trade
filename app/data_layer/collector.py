@@ -199,6 +199,21 @@ class Stage1Collector:
                         "open_interest_value_usd":float(item["sumOpenInterestValue"])})
         return sorted(out,key=lambda x:x["timestamp"])
 
+    def probe_fear_greed(self) -> dict:
+        try:
+            response = self.http.get("https://api.alternative.me/fng/",
+                                     params={"limit":1,"format":"json"})
+            response.raise_for_status()
+            payload = response.json()
+            rows = payload.get("data") if isinstance(payload,dict) else None
+            value = int(rows[0]["value"]) if isinstance(rows,list) and rows else None
+            return {"provider":"Alternative.me Fear & Greed","passed":value is not None and 0 <= value <= 100,
+                    "http_status":response.status_code,"sample_count":len(rows or []),
+                    "latest_value":value}
+        except Exception as exc:
+            return {"provider":"Alternative.me Fear & Greed","passed":False,
+                    "error":type(exc).__name__,"detail":str(exc)[:160]}
+
     def fetch_fear_greed(self) -> list[dict]:
         response = self.http.get("https://api.alternative.me/fng/",
                                  params={"limit":0,"format":"json"})
