@@ -1,0 +1,38 @@
+name: Stage 0d.0a Provider Discovery
+on:
+  push:
+    branches:
+      - diagnostics/provider-discovery-v1
+    paths:
+      - "signal_autopilot/scripts/provider_discovery_stage_0d_0a.py"
+      - ".github/workflows/provider-discovery-stage-0d-0a.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: signal_autopilot/requirements.txt
+      - name: Install data dependencies
+        working-directory: signal_autopilot
+        run: pip install -r requirements.txt
+      - name: Run read-only provider inventory
+        working-directory: signal_autopilot
+        run: python scripts/provider_discovery_stage_0d_0a.py | tee provider-discovery-console.json
+      - name: Upload provider discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-0d-0a-provider-discovery
+          path: |
+            signal_autopilot/provider-discovery-report.json
+            signal_autopilot/provider-discovery-console.json
+          if-no-files-found: warn
+          retention-days: 14
