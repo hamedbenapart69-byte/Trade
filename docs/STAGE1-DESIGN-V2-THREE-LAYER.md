@@ -35,10 +35,11 @@ GitHub Actions (UTC cron every 4h / manual dispatch)
   |        -> signal_autopilot/data/signals.json + history.csv
   |
   +--> L3 DELIVERY
-  |      commit/push generated public, non-secret artifacts
-  |        -> Cloudflare Pages Git integration auto-build
-  |        -> web/futures dashboard reads same-origin /data/signals.json
-  |      signal_autopilot/modules/notifier.py -> Telegram Bot API (Tier-A only)
+  |      publish only signals.json + history.csv to data-only `signals` branch
+  |        -> retry-safe fetch/rebase/push; code branch never receives scan-data commits
+  |        -> Cloudflare Pages serves static `web/futures/`
+  |        -> dashboard fetches public raw files from `signals` branch
+  |      signal_autopilot/modules/notifier.py -> python-telegram-bot v20+ (Tier-A only)
   |
   +--> evidence artifacts + run summary + health/status fields
 ```
@@ -119,8 +120,8 @@ Dashboard requirements:
 4. Explicit labels for placeholder engine and unavailable datasets.
 5. History view backed by `signal_autopilot/data/history.csv`.
 6. Mobile-first responsive RTL-capable layout.
-7. Same-origin fetch from `/data/signals.json` and `/data/history.csv` to avoid CORS dependency on GitHub raw.
-8. If JSON is missing or stale, show a visible error/degraded state, never a fake sample trade.
+7. Fetch the current snapshot and history from the public `signals` branch; the data branch contains only `signals.json` and `history.csv`.
+8. If JSON is missing or unreadable, show the Persian message «داده در دسترس نیست، لطفاً بعداً امتحان کنید»; never show a fake sample trade.
 
 ## 7. Schedule and automation
 
@@ -131,15 +132,16 @@ Workflow path: `.github/workflows/futures-signals.yml`; engine entry point: `sig
 - First network step must run the exact CCXT OKX probe:
   `ccxt.okx().fetch_ticker('BTC/USDT:USDT')`.
 - Then fetch/validate data, generate signals, append history idempotently, send notifications if configured, and commit only generated artifacts.
-- The workflow must not run on its own generated commit, preventing recursive runs.
+- The workflow publishes scan data to the isolated `signals` branch. The workflow push filter excludes that branch, preventing recursive scans.
+- Data publishing uses a separate worktree, fetch/rebase, and bounded push retries; the code branch is not modified by generated signal snapshots.
 - GitHub Actions scheduled runs can be delayed or disabled by GitHub inactivity/quota policies; monitor actual run timestamps and free-tier usage.
 
 ## 8. Telegram notification
 
-- `modules/notifier.py` sends only newly created Tier-A signals; it records a stable notification key to avoid duplicate alerts.
-- Message includes symbol, status/side, timeframe, generated UTC time, engine version, data quality, hypothesis, invalidation, and dashboard URL.
+- `modules/notifier.py` uses `python-telegram-bot` v20+ and sends only Tier-A BUY/SELL signals; it records stable notification keys in a GitHub Actions cache to avoid duplicate alerts.
+- Message includes symbol, side, entry/SL/targets when present, calibration state, LFS/NSS, invalidation, UTC timestamp, and dashboard URL. Missing values remain explicitly unavailable; no probability is inferred from the placeholder score.
 - Bot token and chat ID are GitHub Actions secrets only; never commit them or put them in `config.json`.
-- A real test requires the user to create a bot with @BotFather and add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as repository Actions secrets. Until supplied, notification state is `NOT_CONFIGURED`, not PASS.
+- Add `TELEGRAM_TOKEN` and `TELEGRAM_CHAT_ID` as repository Actions secrets. The separate `test_telegram` dispatch sends a test without running the market scan. Until a real message is received, notification is `NOT_CONFIGURED`, not PASS.
 - Setup: (1) open Telegram and message `@BotFather`; (2) run `/newbot` and save the returned token privately; (3) open the new bot and press Start; (4) obtain the private chat ID using Telegram's official Bot API `getUpdates` after sending the bot a message; (5) in GitHub repository Settings -> Secrets and variables -> Actions, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; (6) open Actions -> Futures Signals Pipeline -> Run workflow, select `test_telegram`, and verify the test message arrives. Never paste the bot token into this chat or commit it.
 - Email is not a guaranteed zero-cost fallback in Stage 1. SendGrid's current documentation says new accounts receive a 60-day trial with up to 100 emails/day, after which sending stops unless a paid plan is selected. Existing legacy free accounts may differ. Therefore SendGrid is not treated as a permanent free dependency; only add it if the owner's own account has a verified continuing free entitlement.
 
@@ -149,9 +151,9 @@ Workflow path: `.github/workflows/futures-signals.yml`; engine entry point: `sig
 2. Select Create application, then Pages.
 3. Choose Connect to Git.
 4. Authorize the GitHub account and select `hamedbenapart69-byte/Trade`.
-5. Select branch `stage1-webfirst-v2-clean` for preview, or the approved release branch later.
-6. Set the project root directory to `web/futures`.
-7. Leave the build command empty and set the build output directory to `.`. The pipeline writes `signals.json` and `history.csv` into `web/futures/data/` and commits both files, so the static site serves them same-origin.
+5. Select branch `main` after the Stage 1 PR is merged. Do not select the `signals` branch for the site.
+6. Leave the project root directory at `/`.
+7. Set Framework preset to `None`, leave the build command empty, and set the build output directory to `web/futures`. The static site fetches live data from the separate public `signals` branch.
 8. Save and deploy; Cloudflare assigns a `.pages.dev` hostname.
 9. Open the hostname from the user's actual target network and verify `/data/signals.json` loads.
 10. Confirm Git integration auto-deploys after a new workflow commit.
