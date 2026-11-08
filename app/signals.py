@@ -1054,7 +1054,7 @@ class FuturesSignalEngine:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
             else:confirm="daily regime realigns with setup"
-        return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,
+        return {"symbol":symbol,"asset":coin["id"],"primary_timeframe":"1h","decision":decision,"direction":direction,"reason":structure_block,
           "entry_type":entry_type,"strategy_family":strategy_family,"strategy_score":None if not adaptive else adaptive.get("strategy_score"),"strategy_evidence":[] if not adaptive else adaptive.get("strategy_evidence",[]),"entry":risk["entry"],"entry_observed_at_ms":pu,"stop_loss":risk["stop_loss"],"take_profit":risk["take_profit"],
           "take_profit_2":risk["take_profit_2"],"take_profit_3":risk["take_profit_3"],"stop_pct":risk["rounded_stop_pct"],"risk":risk,
           "data_grade":grade,"confidence_v6":score,"confidence_v5":score,"v6_score_components":parts,"v5_score_components":parts,"v3_score":v3,"technical":tech,"trends":trends,
