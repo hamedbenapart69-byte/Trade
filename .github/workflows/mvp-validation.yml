@@ -1,0 +1,45 @@
+name: MVP Walk-Forward Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "signal_autopilot/research/**"
+      - "signal_autopilot/scripts/run_mvp_validation.py"
+      - "signal_autopilot/modules/signal_engine.py"
+      - "signal_autopilot/requirements.txt"
+      - ".github/workflows/mvp-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  walk-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: signal_autopilot/requirements.txt
+      - name: Install research dependencies
+        run: pip install -r signal_autopilot/requirements.txt
+      - name: Fetch isolated historical archive
+        run: |
+          git fetch origin market-data:refs/remotes/origin/market-data
+          git checkout refs/remotes/origin/market-data -- parquet/okx_swap/ohlcv_1h
+          test "$(find parquet/okx_swap/ohlcv_1h -name '*.parquet' | wc -l)" -ge 50
+      - name: Run 6m train / 2m test / 1m step validation
+        run: |
+          python signal_autopilot/scripts/run_mvp_validation.py \
+            --data-dir parquet/okx_swap/ohlcv_1h \
+            --output artifacts/mvp-validation.json
+      - name: Upload reproducible validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mvp-walk-forward-report
+          path: artifacts/mvp-validation.json
+          retention-days: 30
