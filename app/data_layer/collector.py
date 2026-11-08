@@ -200,6 +200,7 @@ class Stage1Collector:
                                                limit=300 if self.provider == "okx" else 1500)
             if not batch:
                 break
+            batch = sorted(batch, key=lambda item: int(item[0]))
             for item in batch:
                 ts = int(item[0])
                 if since_ms <= ts < until_ms:
@@ -364,7 +365,9 @@ class Stage1Collector:
                 reports[market_id] = {
                     "ohlcv":gaps,
                     "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
-                               "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None},
+                           "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None,
+                           "coverage_days":round((funding[-1]["timestamp"]-funding[0]["timestamp"])/MS_DAY,2) if len(funding)>1 else 0,
+                           "coverage_of_requested_window_pct":round(100*((funding[-1]["timestamp"]-funding[0]["timestamp"])/max(now_ms-since_ms,1)),3) if len(funding)>1 else 0},
                     "open_interest":{"rows":len(oi),"coverage_days":round((oi[-1]["timestamp"]-oi[0]["timestamp"])/MS_DAY,2) if len(oi)>1 else 0,
                                      "label":"OKX_PUBLIC_HISTORY_WINDOW_30D" if self.provider == "okx" else "BINANCE_PUBLIC_HISTORY_LIMIT_30D"},
                     "files":{
@@ -385,7 +388,7 @@ class Stage1Collector:
         good=[v for v in reports.values() if "error" not in v]
         expected_total = expected_ohlcv_rows * max(len(symbols),1)
         actual_total = sum(v["ohlcv"]["rows"] for v in good)
-        missing_total = sum(max(expected_ohlcv_rows-v["ohlcv"]["rows"],0) for v in good)
+        missing_total = max(expected_total-actual_total,0)
         report={
             "stage":1,"version":f"v1_ccxt_parquet_{self.provider}","provider":self.provider_name,
             "generated_at_utc":datetime.now(timezone.utc).isoformat(),
