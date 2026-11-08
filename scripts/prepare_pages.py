@@ -22,8 +22,8 @@ REQUIRED_AUDIT_CHECKS = (
     "mark_price_valid", "index_price_valid", "last_trade_price_valid",
     "live_price_and_derivatives_timestamps_fresh",
     "ohlcv_15m_validated", "ohlcv_1h_validated", "ohlcv_4h_validated", "ohlcv_1d_validated",
-    "completed_candles_only", "v3_baseline_passed",
-    "funding_rate_verified", "funding_interval_verified", "funding_threshold_passed",
+    "completed_candles_only",
+    "funding_rate_verified", "funding_interval_verified", "funding_safety_limit_passed",
     "current_open_interest_verified","positioning_timestamp_verified_if_used","smart_money_timestamp_verified_if_used", "multi_timeframe_checked", "market_structure_checked","market_regime_classified",
     "volume_and_momentum_checked", "anti_chase_checked",
     "stop_distance_0_5_to_3_pct", "planned_loss_at_most_4_usd",
@@ -34,9 +34,18 @@ REQUIRED_AUDIT_CHECKS = (
 
 def _valid_self_audit(item: dict) -> bool:
     audit = item.get("self_audit")
+    if not isinstance(audit, dict):
+        return False
+    family = item.get("strategy_family") or audit.get("strategy_family")
+    baseline_ok = (
+        family == "V3_STRICT_BASELINE" and audit.get("v3_baseline_passed") is True
+    ) or (
+        family in {"TREND_PULLBACK", "BREAKOUT_RETEST", "LIQUIDITY_SWEEP_REVERSAL", "RANGE_MEAN_REVERSION"}
+        and audit.get("v3_baseline_passed") is False
+    )
     return bool(
         item.get("self_audit_passed") is True
-        and isinstance(audit, dict)
+        and baseline_ok
         and all(audit.get(key) is True for key in REQUIRED_AUDIT_CHECKS)
     )
 
