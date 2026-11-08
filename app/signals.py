@@ -751,22 +751,22 @@ def render_output(r):
     out=[] if actionable else ["No qualifying signals today."]
     if actionable:
         out.extend([
-            "| Symbol | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | Confidence |",
-            "|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|",
+            "| Symbol | Strategy | Decision | Direction | Entry | Stop-Loss | Take-Profit | Stop % | Leverage | Risk $ | Data Grade | V6 Score |",
+            "|---|---|---|---|---:|---:|---:|---:|---:|---:|---|---:|",
         ])
         for x in actionable:
             z=x.get("risk") or {}
-            out.append(f"| {x.get('symbol','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {fmt(x.get('stop_pct'))} | {fmt(z.get('required_leverage'))}x | {fmt(z.get('planned_loss_usd'))} | {x.get('data_grade','—')} | {fmt(x.get('confidence_v5'))} |")
+            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {fmt(x.get('entry'))} | {fmt(x.get('stop_loss'))} | {fmt(x.get('take_profit'))} | {fmt(x.get('stop_pct'))} | {fmt(z.get('required_leverage'))}x | {fmt(z.get('planned_loss_usd'))} | {x.get('data_grade','—')} | {fmt(x.get('confidence_v5'))} |")
     if conditional:
         if out:out.append("")
         out.extend([
             "Conditional watchlist",
-            "| Symbol | Decision | Direction | Confirmation Required | Trigger Level | Confidence | Data Grade |",
-            "|---|---|---|---|---:|---:|---|",
+            "| Symbol | Strategy | Decision | Direction | Confirmation Required | Trigger Level | V6 Score | Data Grade |",
+            "|---|---|---|---|---|---:|---:|---|",
         ])
         for x in conditional:
             entry=x.get("entry_quality") or {}
-            out.append(f"| {x.get('symbol','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v5'))} | {x.get('data_grade','—')} |")
+            out.append(f"| {x.get('symbol','—')} | {x.get('strategy_family','—')} | {x.get('decision','—')} | {x.get('direction','—')} | {entry.get('confirmation_required') or '—'} | {fmt(entry.get('trigger_level'))} | {fmt(x.get('confidence_v5'))} | {x.get('data_grade','—')} |")
     if r.get("partial_scan"):out.append(f"Partial scan: {int(r.get('screened_assets') or 0)}/30.")
     return "\n".join(out)
 
