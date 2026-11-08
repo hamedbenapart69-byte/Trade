@@ -963,7 +963,7 @@ class FuturesSignalEngine:
         st=st_long if direction=="LONG" else st_short
         distance_atr=abs(last_price-e15)/atr15 if atr15>0 else 999
         chase=distance_atr>2.0
-        planned_entry=_planned_entry_price(last_price,adaptive,e15 if chase else None)
+        planned_entry=_planned_entry_price(last_price,adaptive,e15 if chase and not (adaptive and adaptive.get("confirmation_required")) else None)
         atr_stop=planned_entry-1.5*a14 if direction=="LONG" else planned_entry+1.5*a14
         structural=None
         if direction=="LONG" and st.get("last_swing_low"):structural=st["last_swing_low"]-.2*a14
@@ -1051,9 +1051,9 @@ class FuturesSignalEngine:
         confirm=None;trigger=None
         if decision.startswith("CONDITIONAL"):
             if market_regime=="UNSTABLE":confirm="wait for 1H volatility to normalize and a completed 15m direction confirmation";trigger=e15
-            elif chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
             elif adaptive and adaptive.get("confirmation_required"):
                 confirm=adaptive["confirmation_required"];trigger=adaptive.get("trigger_level")
+            elif chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
             elif adaptive and score<70:
                 confirm="next completed 1H candle must preserve the selected setup structure and maintain volume ratio above 1.0";trigger=adaptive.get("trigger_level") or e20
             elif not entry_ok:
