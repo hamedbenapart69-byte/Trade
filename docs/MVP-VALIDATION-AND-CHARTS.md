@@ -77,3 +77,22 @@ Additional diagnostics:
 ### Interpretation limits
 
 The 100% drawdown figure is a sequential trade-equity proxy across symbols, not a concurrency-aware portfolio drawdown. It must not be used as the official portfolio MaxDD gate. Funding is still unavailable for most of the two-year window, slippage is PROXY, and DSR/PBO plus EMA-cross/RSI/Buy-and-Hold baseline comparisons remain outstanding. Therefore this run is a valid negative screening result, not a complete Gate_C verdict.
+
+
+## SLRP — MVP baseline stage contract
+
+**Objective:** determine whether the existing EMA20/EMA50 + ATR14 engine has positive OOS expectancy after realistic execution costs, before changing its assumptions or promoting it.
+
+**Acceptance criteria:** PF ≥ 1.20, portfolio-aware OOS MaxDD ≤ 25%, PBO < 0.50, positive net expectancy, sufficient trade count, and cost coverage including funding. The present report is not a PASS because PF and expectancy failed and several required statistics/costs remain unavailable.
+
+### Versions
+
+- **v1 — state-only EMA continuation:** EMA20/EMA50 relative spread > 0.5%; SL 1.5 ATR; TP1 2 ATR; TP2 4 ATR. **FAIL:** 53,043 OOS trades; Win 42.51%; PF 0.9042; expectancy -0.0579R. Stops/same-bar stop ambiguity: 71.14%; TP2: 26.87%.
+- **v2 — structure-confirmed pullback:** 4H EMA50/EMA200 defines regime; 1H pullback toward EMA50 followed by a closed-candle rejection in the regime direction. This changes the entry premise from “EMA state is enough” to “trend regime plus pullback/rejection is required.” **Defined only; not implemented or tested.**
+- **v3 — simple breakout fallback:** 20-period Donchian breakout with ATR trailing exit, independent of the EMA pullback premise. **Defined only; not implemented or tested.**
+
+**Diagnosis:** D2 is the leading hypothesis because EMA ordering plus a spread threshold does not establish continuation; 71.14% of exits were stop-related and PF was below 1.0 for 88/100 symbols. D5 is also indicated by monthly PF dispersion (0.538–1.301), but no causal regime attribution is claimed. D1 remains a separate blocker for complete costs because two-year funding is unavailable.
+
+**Active:** existing MVP remains in production only as an uncalibrated signal source; it is not promoted as profitable.  
+**Escalation:** if v2 and v3 fail, invoke the Innovation Protocol rather than repeatedly tuning EMA parameters.  
+**Budget:** maximum three versions for this baseline stage. No thresholds may be relaxed.
