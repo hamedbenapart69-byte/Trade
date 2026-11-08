@@ -53,6 +53,7 @@ def main() -> int:
         print(json.dumps({
             "status": result["status"],
             "scan_mode": result["scan_mode"],
+            "discovered_assets": result.get("discovered_assets"),
             "eligible_assets": eligible,
             "selected_assets": selected,
             "screened_assets": result.get("screened_assets"),
