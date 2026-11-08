@@ -16,6 +16,7 @@ import xml.etree.ElementTree as ET
 import httpx
 
 VISION = "https://data.binance.vision"
+VISION_LIST = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
 FAPI = "https://fapi.binance.com/fapi/v1/premiumIndex"
 COINGECKO_DERIVATIVES = "https://api.coingecko.com/api/v3/derivatives"
 
@@ -62,7 +63,7 @@ class Stage1ADataProvider:
         return rows
 
     def _vision_symbols(self) -> set[str]:
-        url = VISION + "/"
+        url = VISION_LIST
         params = {"list-type": "2", "delimiter": "/",
                   "prefix": "data/futures/um/daily/klines/"}
         symbols: set[str] = set()
