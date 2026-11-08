@@ -1,0 +1,118 @@
+name: Futures Signals Pipeline
+on:
+  schedule:
+    - cron: "7 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      test_telegram:
+        description: "Send one Telegram connectivity test"
+        type: boolean
+        required: false
+        default: false
+      collect_history:
+        description: "Run the full two-year Parquet collection"
+        type: boolean
+        required: false
+        default: false
+  push:
+    branches: [stage1-webfirst-v2-clean, main]
+    paths:
+      - ".github/workflows/futures-signals.yml"
+      - "signal_autopilot/**"
+      - "web/futures/**"
+      - "!signal_autopilot/data/**"
+      - "!web/futures/data/**"
+permissions:
+  contents: write
+concurrency:
+  group: futures-signals-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  signals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: signal_autopilot/requirements.txt
+      - name: Install signal pipeline dependencies
+        working-directory: signal_autopilot
+        run: pip install -r requirements.txt
+      - name: Test OKX CCXT ticker from GitHub Actions runner
+        continue-on-error: true
+        working-directory: signal_autopilot
+        run: |
+          python - <<'PY'
+          import ccxt
+          ex=ccxt.okx()
+          try:
+              ticker=ex.fetch_ticker("BTC/USDT:USDT")
+              print("OKX PASS: BTCUSDT =",ticker["last"])
+          except Exception as exc:
+              print("OKX FAIL:",type(exc).__name__,str(exc)[:240])
+              raise
+          finally:
+              ex.close()
+          PY
+      - name: Run placeholder engine tests
+        working-directory: signal_autopilot
+        run: python -m unittest discover -s tests -v
+      - name: Optional two-year Parquet collection
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.collect_history == true }}
+        working-directory: signal_autopilot
+        run: python scripts/run_stage1_data.py --provider okx --symbols 100 --years 2
+      - name: Fetch data, compute signals and publish dashboard payload
+        working-directory: signal_autopilot
+        env:
+          PYTHONUNBUFFERED: "1"
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          SIGNAL_SYMBOL_LIMIT: "100"
+        run: python logic.py
+      - name: Optional Telegram test
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_telegram == true }}
+        working-directory: signal_autopilot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -c 'from modules.notifier import send_test_message; print(send_test_message())'
+      - name: Validate JSON, CSV and C10
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("signal_autopilot/data/signals.json").read_text(encoding="utf-8"))
+          allowed={"BUY_NOW","SELL_NOW","CONDITIONAL_BUY","CONDITIONAL_SELL","WATCHLIST","NO_QUALIFIED_SETUP","MARKET_DATA_DEGRADED"}
+          assert p.get("signals") and all(s.get("status") in allowed for s in p["signals"])
+          assert Path("signal_autopilot/data/history.csv").exists()
+          assert Path("web/futures/data/signals.json").exists()
+          assert Path("web/futures/data/history.csv").exists()
+          print("END-TO-END PAYLOAD PASS:",len(p["signals"]))
+          PY
+      - name: Commit generated dashboard data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f signal_autopilot/data/signals.json signal_autopilot/data/history.csv web/futures/data/signals.json web/futures/data/history.csv
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: publish futures dashboard data [skip ci]"
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push
+          else
+            echo "No dashboard data changes"
+          fi
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-signal-evidence
+          path: |
+            signal_autopilot/data/signals.json
+            signal_autopilot/data/history.csv
+            signal_autopilot/data/stage1/
+          if-no-files-found: warn
+          retention-days: 30
