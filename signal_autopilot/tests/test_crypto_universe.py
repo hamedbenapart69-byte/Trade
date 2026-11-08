@@ -88,6 +88,12 @@ class CryptoUniverseTests(unittest.TestCase):
         market["info"] = {"launchTime": str(now - 900 * 86_400_000)}
         self.assertEqual(MarketDataFetcher._listing_time_ms(market, "bybit"), now - 900 * 86_400_000)
 
+    def test_binance_onboard_date_is_supported(self):
+        now = 1_800_000_000_000
+        market = self.market("BTC", 0)
+        market["info"] = {"onboardDate": str(now - 900 * 86_400_000)}
+        self.assertEqual(MarketDataFetcher._listing_time_ms(market, "binance"), now - 900 * 86_400_000)
+
 
 if __name__ == "__main__":
     unittest.main()
