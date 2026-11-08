@@ -265,3 +265,29 @@ Cloudflare account authorization and the initial Pages project creation require 
 | 15 | Final decision | complete audited dataset | final gates and recommendation | final report + stable dashboard |
 
 Every stage must preserve the read-only, zero-cost, browser-first, manual-trade-only contract. Stage contracts still follow SLRP v1/v2/v3, D1–D6 diagnosis, R1–R11 and the original V8 gates.
+
+
+## 13. Verified compute-run evidence (2026-11-08)
+
+A GitHub-hosted runner completed run [42478801565](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42478801565) successfully:
+- The requested CCXT `fetch_ticker("BTC/USDT:USDT")` step passed on the GitHub Actions runner.
+- Unit tests passed.
+- `logic.py` completed with provider `okx`, pipeline status `OK`, and 100 symbols processed.
+- 100 signal records were appended to history: 15 `WATCHLIST`, 85 `NO_QUALIFIED_SETUP`, zero BUY/SELL or conditional signals.
+- The four public outputs were committed and pushed in the successful run.
+- Telegram was skipped because bot secrets were not configured.
+
+A subsequent hard-gate revision removes `continue-on-error` from the OKX smoke-test step. The exact smoke test was also observed successful on run [42478911424](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42478911424); its final pipeline/push result is tracked separately from the earlier completed run.
+
+The historical Stage 1 report contains Funding history for 100/100 symbols, each with 93.67 days of coverage, and OI history for 100/100 symbols, each with 29.96 days. Funding is therefore historically present for all selected symbols, but not two years.
+
+## 14. Scheduling limitation on the current feature branch
+
+The repository default branch is `main`; this work is on `stage-1-data-layer-v1`. GitHub scheduled workflows run from the repository's default branch. Therefore the four-hour cron is defined in this branch but does not become an autonomous scheduled job until this workflow is merged into `main` or the repository default branch is changed. Neither action is performed automatically here. Until then, `workflow_dispatch` and branch push runs are available, but they are not a substitute for two successful scheduled executions.
+
+## 15. Remaining external acceptance blockers
+
+- Cloudflare Pages project creation and the actual `*.pages.dev` URL require the owner's Cloudflare account authorization. The 10-step guide is committed at [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md); no live deployment is claimed yet.
+- Telegram delivery requires the owner to add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as repository Actions secrets. No token is present in this environment; no test notification is claimed.
+- The current placeholder intentionally emits no Tier-A classification and never emits BUY_NOW/SELL_NOW. Telegram Tier-A notifications will remain silent until a later validated engine assigns Tier A.
+- Two successful scheduled runs cannot be claimed until the workflow is active on the default branch.
