@@ -732,6 +732,12 @@ def performance():
     def tf(r):
         try:return json.loads(r["data_json"]).get("primary_timeframe","1h")
         except Exception:return "unknown"
+    def family(r):
+        try:return json.loads(r["data_json"]).get("strategy_family","unknown")
+        except Exception:return "unknown"
+    def regime(r):
+        try:return json.loads(r["data_json"]).get("technical",{}).get("market_regime","unknown")
+        except Exception:return "unknown"
     legacy_rows=[r for r in rows if r["strategy_version"]!=active_strategy]
     return {"mode":"paper_signal_tracking_not_executed_trades","strategy_version":active_strategy,
       "outcome_source":outcome_source,"outcome_providers":providers,"historical_outcome_providers":historical_providers,
@@ -751,6 +757,8 @@ def performance():
       "by_asset":segment(current_rows,lambda r:r["symbol"]),"by_timeframe":segment(current_rows,tf),
       "by_decision":segment(current_rows,lambda r:r["decision"]),"by_data_grade":segment(current_rows,lambda r:r["data_grade"]),
       "by_confidence_range":segment(current_rows,conf),"by_provider":segment(rows,lambda r:r["provider_name"]),
+      "by_strategy_family":segment(current_rows,family),"by_market_regime":segment(current_rows,regime),
+      "by_direction":segment(current_rows,lambda r:r["direction"]),
       "by_strategy":segment(rows,lambda r:r["strategy_version"])}
 
 def render_output(r):
