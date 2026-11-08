@@ -141,7 +141,7 @@ Workflow path: `.github/workflows/futures-signals.yml`; engine entry point: `sig
 - Bot token and chat ID are GitHub Actions secrets only; never commit them or put them in `config.json`.
 - A real test requires the user to create a bot with @BotFather and add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as repository Actions secrets. Until supplied, notification state is `NOT_CONFIGURED`, not PASS.
 - Setup: (1) open Telegram and message `@BotFather`; (2) run `/newbot` and save the returned token privately; (3) open the new bot and press Start; (4) obtain the private chat ID using Telegram's official Bot API `getUpdates` after sending the bot a message; (5) in GitHub repository Settings -> Secrets and variables -> Actions, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; (6) open Actions -> Futures Signals Pipeline -> Run workflow, select `test_telegram`, and verify the test message arrives. Never paste the bot token into this chat or commit it.
-- Email is not a mandatory fallback in Stage 1: a free tier may change, require account verification, or become unavailable. Do not rely on SendGrid unless separately verified and configured.
+- Email is not a guaranteed zero-cost fallback in Stage 1. SendGrid's current documentation says new accounts receive a 60-day trial with up to 100 emails/day, after which sending stops unless a paid plan is selected. Existing legacy free accounts may differ. Therefore SendGrid is not treated as a permanent free dependency; only add it if the owner's own account has a verified continuing free entitlement.
 
 ## 9. Cloudflare Pages deployment (one-time owner action)
 
