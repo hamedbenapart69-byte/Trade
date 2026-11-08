@@ -7,15 +7,19 @@ from modules.data_fetcher import MarketDataFetcher
 
 
 class FakeExchange:
-    def __init__(self, markets, tickers):
+    def __init__(self, markets, tickers, candles=None):
         self.markets = markets
         self._tickers = tickers
+        self._candles = candles or {}
 
     def load_markets(self):
         return self.markets
 
     def fetch_tickers(self):
         return self._tickers
+
+    def fetch_ohlcv(self, symbol, timeframe="1d", since=None, limit=1):
+        return self._candles.get(symbol, [])[:limit]
 
 
 class CryptoUniverseTests(unittest.TestCase):
@@ -81,6 +85,21 @@ class CryptoUniverseTests(unittest.TestCase):
         selected = self.fetcher._eligible_markets(exchange, "okx", {"BTC"}, now)
         self.assertEqual(selected, [])
         self.assertEqual(self.fetcher.universe_diagnostics["okx"]["rejected"]["listing_time_missing"], 1)
+
+
+    def test_missing_listing_metadata_can_pass_with_two_year_ohlcv_evidence(self):
+        now = 1_800_000_000_000
+        cutoff = now - 730 * 86_400_000
+        market = self.market("BTC", 0)
+        market["info"] = {}
+        exchange = FakeExchange(
+            {"BTC/USDT:USDT": market},
+            {"BTC/USDT:USDT": {"quoteVolume": 50_000_000}},
+            {"BTC/USDT:USDT": [[cutoff, 10, 11, 9, 10, 100]]},
+        )
+        selected = self.fetcher._eligible_markets(exchange, "bitget", {"BTC"}, now)
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(self.fetcher.universe_diagnostics["bitget"]["rejected"]["history_verified"], 1)
 
     def test_bybit_launch_time_is_supported(self):
         now = 1_800_000_000_000
