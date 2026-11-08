@@ -65,7 +65,7 @@ class DataLayerQualityTests(unittest.TestCase):
         collector=Stage1Collector(data_dir=tempfile.mkdtemp(),exchange=fake)
         got=collector.fetch_open_interest_history("BTC/USDT:USDT",start,start+30*MS_DAY)
         self.assertEqual(len(got),720)
-        self.assertEqual(fake.calls,2)
+        self.assertEqual(fake.calls,3)
         self.assertEqual(got[0]["symbol"],"BTCUSDT")
         self.assertEqual(got[-1]["timestamp"],start+719*MS_HOUR)
 
