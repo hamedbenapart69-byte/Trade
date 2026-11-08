@@ -57,6 +57,10 @@ class Stage1Collector:
                 os.unlink(temp_name)
         return str(path)
 
+    @staticmethod
+    def _utc(ms: int | None) -> str | None:
+        return datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat() if ms else None
+
     def probe_binance(self, attempts: int = 5) -> dict:
         checks = [
             ("ping", "/fapi/v1/ping", {}),
@@ -178,7 +182,7 @@ class Stage1Collector:
         return [collected[k] for k in sorted(collected)]
 
     def fetch_open_interest_history(self, symbol: str, since_ms: int, until_ms: int) -> list[dict]:
-        # Binance's USD-M openInterestHist endpoint exposes only the latest month.
+        # Binance USD-M openInterestHist exposes only the latest month.
         start = max(since_ms, until_ms - 30*MS_DAY)
         rows = self.exchange.request("openInterestHist", "fapiPublic", "GET",
                                      {"symbol":symbol,"period":"1h","limit":500,
@@ -217,16 +221,19 @@ class Stage1Collector:
             raise RuntimeError("binance_probe_failed; see probe report")
         symbols = self.discover_symbols(target_count)
         reports = {}
+        expected_ohlcv_rows = max(1, (now_ms-since_ms)//MS_HOUR)
         for symbol in symbols:
             try:
                 ohlcv = self.fetch_ohlcv(symbol,since_ms,now_ms,"1h")
                 funding = self.fetch_funding(symbol,since_ms,now_ms)
                 oi = self.fetch_open_interest_history(symbol,since_ms,now_ms)
                 safe = symbol.replace("/","_")
+                gaps = gap_report(ohlcv)
+                gaps["coverage_of_requested_window_pct"] = round(100*len(ohlcv)/expected_ohlcv_rows, 3)
                 reports[symbol] = {
-                    "ohlcv":gap_report(ohlcv),
-                    "funding":{"rows":len(funding),"first_utc":funding[0]["timestamp"] if funding else None,
-                               "last_utc":funding[-1]["timestamp"] if funding else None},
+                    "ohlcv":gaps,
+                    "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
+                               "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None},
                     "open_interest":{"rows":len(oi),"coverage_days":round((oi[-1]["timestamp"]-oi[0]["timestamp"])/MS_DAY,2) if len(oi)>1 else 0,
                                      "label":"BINANCE_PUBLIC_HISTORY_LIMIT_30D"},
                     "files":{
@@ -245,15 +252,22 @@ class Stage1Collector:
         except Exception as exc:
             fng_error=f"{type(exc).__name__}:{str(exc)[:180]}"
         good=[v for v in reports.values() if "error" not in v]
+        expected_total = expected_ohlcv_rows * max(len(symbols),1)
+        actual_total = sum(v["ohlcv"]["rows"] for v in good)
+        missing_total = sum(max(expected_ohlcv_rows-v["ohlcv"]["rows"],0) for v in good)
         report={
             "stage":1,"version":"v1_ccxt_parquet","generated_at_utc":datetime.now(timezone.utc).isoformat(),
             "requested_symbols":target_count,"active_symbols":len(symbols),"successful_symbols":len(good),
             "failed_symbols":len(reports)-len(good),"history_target_years":years,
-            "ohlcv_coverage":{"symbols_with_no_gap_over_1h":sum(1 for v in good if v["ohlcv"]["no_gap_over_1h"]),
-                              "symbols_with_full_2y":sum(1 for v in good if v["ohlcv"]["first_utc"] and
-                                  (now_ms-int(datetime.fromisoformat(v["ohlcv"]["first_utc"]).timestamp()*1000)) >= years*365*MS_DAY)},
-            "fear_greed":{"rows":len(fng),"first_utc":fng[0]["timestamp"] if fng else None,
-                          "last_utc":fng[-1]["timestamp"] if fng else None,"error":fng_error},
+            "ohlcv_coverage":{
+                "symbols_with_no_gap_over_1h":sum(1 for v in good if v["ohlcv"]["no_gap_over_1h"]),
+                "symbols_with_full_requested_window":sum(1 for v in good if v["ohlcv"]["coverage_of_requested_window_pct"] >= 99.9),
+                "expected_rows_all_symbols":expected_total,"actual_rows_successful_symbols":actual_total,
+                "missing_rows_estimate_successful_symbols":missing_total,
+                "gap_rate_pct_successful_symbols":round(100*missing_total/max(expected_total,1),4),
+            },
+            "fear_greed":{"rows":len(fng),"first_timestamp_utc":self._utc(fng[0]["timestamp"]) if fng else None,
+                          "last_timestamp_utc":self._utc(fng[-1]["timestamp"]) if fng else None,"error":fng_error},
             "binance_probe":probe,"bybit_probe":bybit_probe,"symbols":reports,
             "limitations":{
                 "open_interest":"Binance USD-M historical open-interest statistics are limited to the latest 1 month; not a 2-year series.",
