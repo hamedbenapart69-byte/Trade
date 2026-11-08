@@ -161,10 +161,9 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
 
     def test_chat_not_found_returns_actionable_status(self):
         import os
-        from telegram.error import ChatNotFound
         from modules.notifier import notify_tier_a
         async def fail_send(token, chat_id, messages):
-            raise ChatNotFound("chat not found")
+            raise RuntimeError("Chat not found")
         with tempfile.TemporaryDirectory() as tmp:
             with patch.dict(os.environ, {
                 "TELEGRAM_TOKEN": "test-token",
