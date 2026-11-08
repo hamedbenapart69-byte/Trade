@@ -71,7 +71,8 @@ def main() -> None:
                 "error": type(exc).__name__, "detail": str(exc)[:240]
             }
 
-    now = datetime.now(timezone.utc)\n    month = (datetime(now.year, now.month, 1, tzinfo=timezone.utc) - timedelta(days=1)).strftime("%Y-%m")
+    now = datetime.now(timezone.utc)
+    month = (datetime(now.year, now.month, 1, tzinfo=timezone.utc) - timedelta(days=1)).strftime("%Y-%m")
     for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT"):
         for kind, suffix in (
             ("klines_1h", f"klines/{symbol}/1h/{symbol}-1h-{month}.zip"),
