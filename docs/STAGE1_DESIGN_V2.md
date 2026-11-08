@@ -303,3 +303,14 @@ Run [42479108791](https://github.com/hamedbenapart69-byte/Trade/actions/runs/424
 - `history.csv` now contains 200 rows (100 from each of two successful branch pipeline runs).
 - Commit/push of `data/signals.json`, `data/history.csv`, and the public `web/data/` copies succeeded after replacing the conflict-prone rebase with fetch/reset/stage of generated outputs.
 - Telegram remains `SKIPPED_NOT_CONFIGURED`; no token or chat ID was available.
+
+
+## 16. Zero-cost email correction
+
+The original suggestion of a permanent SendGrid Free tier with 100 emails/day is outdated. Twilio's current official pricing describes 100 emails/day as a **60-day free trial**, after which a paid plan is required to continue sending. The official changelog also records retirement of the former free plan in 2025. Therefore SendGrid is not accepted as a permanent zero-cost fallback under C15. Telegram remains optional and secret-configured; no email provider is enabled unless a genuinely ongoing free option is verified.
+
+Sources:
+- [Twilio SendGrid Email API pricing](https://www.twilio.com/en-us/products/email-api/pricing)
+- [Twilio changelog: changes to SendGrid Free Plan](https://www.twilio.com/en-us/changelog/sendgrid-free-plan)
+
+Signal history idempotency is now keyed by symbol + engine + four-hour UTC bucket, so reruns in the same bucket do not append duplicate snapshots.
