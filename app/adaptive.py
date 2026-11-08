@@ -54,7 +54,7 @@ def adaptive_setup(
         momentum_aligned = (macd_now is not None and macd_prev is not None and macd_now > 0 and macd_now >= macd_prev) if direction == "LONG" else (macd_now is not None and macd_prev is not None and macd_now < 0 and macd_now <= macd_prev)
         flow_aligned = (obv_delta > 0 and mfi_value >= 50) if direction == "LONG" else (obv_delta < 0 and mfi_value <= 50)
         rsi_ok = 38 <= rsi <= 68 if direction == "LONG" else 32 <= rsi <= 62
-        pullback = distance_ema_atr <= 1.25 and rsi_ok and aligned4h and not opposite1d
+        pullback = distance_ema_atr <= 1.25 and rsi_ok and aligned4h and not opposite1d and ema_aligned
         breakout = breakout_long if direction == "LONG" else breakout_short
         structure = structure_long if direction == "LONG" else structure_short
         sweep = bool(structure.get("liquidity_sweep_aligned"))
