@@ -198,7 +198,7 @@ def metrics(trades: list[dict[str, Any]]) -> dict[str, Any]:
 def walk_forward_symbol(symbol: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     trades_by_entry: dict[int, dict[str, Any]] = {}
     test_start = TRAIN_HOURS
-    while test_start + TEST_HOURS <= len(rows):
+    while test_start + TEST_HOURS < len(rows):
         warm_start = max(0, test_start - 80)
         window = rows[warm_start:test_start + TEST_HOURS]
         for trade in backtest_window(symbol, window):
