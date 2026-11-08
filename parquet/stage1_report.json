@@ -1,0 +1,3292 @@
+{
+  "stage": 1,
+  "version": "v1_ccxt_parquet_okx",
+  "provider": "OKX public market-data API",
+  "generated_at_utc": "2026-11-08T19:48:23.434621+00:00",
+  "requested_symbols": 100,
+  "active_symbols": 100,
+  "successful_symbols": 100,
+  "failed_symbols": 0,
+  "history_target_years": 2,
+  "ohlcv_coverage": {
+    "symbols_with_no_gap_over_1h": 100,
+    "symbols_with_full_requested_window": 100,
+    "expected_rows_all_symbols": 1753200,
+    "actual_rows_successful_symbols": 1753200,
+    "missing_rows_estimate_successful_symbols": 0,
+    "gap_rate_pct_successful_symbols": 0.0
+  },
+  "fear_greed": {
+    "rows": 3199,
+    "first_timestamp_utc": "2018-02-01T00:00:00+00:00",
+    "last_timestamp_utc": "2026-11-08T00:00:00+00:00",
+    "error": null
+  },
+  "primary_provider": "okx",
+  "primary_provider_probe": {
+    "provider": "OKX public REST",
+    "passed": true,
+    "required_passed": 5,
+    "required_total": 5,
+    "checks": [
+      {
+        "dataset": "instruments",
+        "required": true,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 543
+      },
+      {
+        "dataset": "tickers",
+        "required": true,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 546
+      },
+      {
+        "dataset": "candles",
+        "required": true,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 2
+      },
+      {
+        "dataset": "funding",
+        "required": true,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 1
+      },
+      {
+        "dataset": "open_interest",
+        "required": true,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 1
+      },
+      {
+        "dataset": "open_interest_history",
+        "required": false,
+        "passed": true,
+        "http_status": 200,
+        "row_count": 100
+      }
+    ]
+  },
+  "bybit_probe": {
+    "provider": "Bybit public REST",
+    "passed": false,
+    "error": "HTTPStatusError",
+    "detail": "Client error '403 Forbidden' for url 'https://api.bybit.com/v5/market/time'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "symbols": {
+    "BTC-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BTC-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BTC-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BTC-USDT-SWAP.parquet"
+      }
+    },
+    "ETH-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ETH-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ETH-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ETH-USDT-SWAP.parquet"
+      }
+    },
+    "SOL-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/SOL-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/SOL-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/SOL-USDT-SWAP.parquet"
+      }
+    },
+    "PEPE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/PEPE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/PEPE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/PEPE-USDT-SWAP.parquet"
+      }
+    },
+    "XRP-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/XRP-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/XRP-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/XRP-USDT-SWAP.parquet"
+      }
+    },
+    "ONE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 709,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ONE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ONE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ONE-USDT-SWAP.parquet"
+      }
+    },
+    "DOGE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/DOGE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/DOGE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/DOGE-USDT-SWAP.parquet"
+      }
+    },
+    "NEAR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/NEAR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/NEAR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/NEAR-USDT-SWAP.parquet"
+      }
+    },
+    "WLD-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/WLD-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/WLD-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/WLD-USDT-SWAP.parquet"
+      }
+    },
+    "BCH-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BCH-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BCH-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BCH-USDT-SWAP.parquet"
+      }
+    },
+    "UNI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/UNI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/UNI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/UNI-USDT-SWAP.parquet"
+      }
+    },
+    "FIL-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/FIL-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/FIL-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/FIL-USDT-SWAP.parquet"
+      }
+    },
+    "ARB-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ARB-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ARB-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ARB-USDT-SWAP.parquet"
+      }
+    },
+    "AAVE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/AAVE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/AAVE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/AAVE-USDT-SWAP.parquet"
+      }
+    },
+    "SUI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/SUI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/SUI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/SUI-USDT-SWAP.parquet"
+      }
+    },
+    "BNB-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BNB-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BNB-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BNB-USDT-SWAP.parquet"
+      }
+    },
+    "RSR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 374,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/RSR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/RSR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/RSR-USDT-SWAP.parquet"
+      }
+    },
+    "LINK-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/LINK-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/LINK-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/LINK-USDT-SWAP.parquet"
+      }
+    },
+    "INJ-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/INJ-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/INJ-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/INJ-USDT-SWAP.parquet"
+      }
+    },
+    "HMSTR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/HMSTR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/HMSTR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/HMSTR-USDT-SWAP.parquet"
+      }
+    },
+    "ONDO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 474,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ONDO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ONDO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ONDO-USDT-SWAP.parquet"
+      }
+    },
+    "ADA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ADA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ADA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ADA-USDT-SWAP.parquet"
+      }
+    },
+    "STRK-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/STRK-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/STRK-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/STRK-USDT-SWAP.parquet"
+      }
+    },
+    "LTC-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/LTC-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/LTC-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/LTC-USDT-SWAP.parquet"
+      }
+    },
+    "TAO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/TAO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/TAO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/TAO-USDT-SWAP.parquet"
+      }
+    },
+    "AVAX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/AVAX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/AVAX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/AVAX-USDT-SWAP.parquet"
+      }
+    },
+    "DOT-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/DOT-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/DOT-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/DOT-USDT-SWAP.parquet"
+      }
+    },
+    "ZRO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ZRO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ZRO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ZRO-USDT-SWAP.parquet"
+      }
+    },
+    "TIA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/TIA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/TIA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/TIA-USDT-SWAP.parquet"
+      }
+    },
+    "XLM-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/XLM-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/XLM-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/XLM-USDT-SWAP.parquet"
+      }
+    },
+    "TRX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/TRX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/TRX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/TRX-USDT-SWAP.parquet"
+      }
+    },
+    "SHIB-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/SHIB-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/SHIB-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/SHIB-USDT-SWAP.parquet"
+      }
+    },
+    "OP-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/OP-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/OP-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/OP-USDT-SWAP.parquet"
+      }
+    },
+    "ETHFI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ETHFI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ETHFI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ETHFI-USDT-SWAP.parquet"
+      }
+    },
+    "BAT-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BAT-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BAT-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BAT-USDT-SWAP.parquet"
+      }
+    },
+    "APT-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/APT-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/APT-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/APT-USDT-SWAP.parquet"
+      }
+    },
+    "RAY-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/RAY-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/RAY-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/RAY-USDT-SWAP.parquet"
+      }
+    },
+    "CRV-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CRV-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CRV-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CRV-USDT-SWAP.parquet"
+      }
+    },
+    "GRASS-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/GRASS-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/GRASS-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/GRASS-USDT-SWAP.parquet"
+      }
+    },
+    "MERL-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MERL-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MERL-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MERL-USDT-SWAP.parquet"
+      }
+    },
+    "MAGIC-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MAGIC-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MAGIC-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MAGIC-USDT-SWAP.parquet"
+      }
+    },
+    "ATOM-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ATOM-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ATOM-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ATOM-USDT-SWAP.parquet"
+      }
+    },
+    "STX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/STX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/STX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/STX-USDT-SWAP.parquet"
+      }
+    },
+    "ETC-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ETC-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ETC-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ETC-USDT-SWAP.parquet"
+      }
+    },
+    "JTO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/JTO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/JTO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/JTO-USDT-SWAP.parquet"
+      }
+    },
+    "SAND-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 394,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/SAND-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/SAND-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/SAND-USDT-SWAP.parquet"
+      }
+    },
+    "ALGO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ALGO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ALGO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ALGO-USDT-SWAP.parquet"
+      }
+    },
+    "HBAR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/HBAR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/HBAR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/HBAR-USDT-SWAP.parquet"
+      }
+    },
+    "BOME-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BOME-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BOME-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BOME-USDT-SWAP.parquet"
+      }
+    },
+    "BLUR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 580,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BLUR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BLUR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BLUR-USDT-SWAP.parquet"
+      }
+    },
+    "W-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/W-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/W-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/W-USDT-SWAP.parquet"
+      }
+    },
+    "ICP-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ICP-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ICP-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ICP-USDT-SWAP.parquet"
+      }
+    },
+    "CFX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CFX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CFX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CFX-USDT-SWAP.parquet"
+      }
+    },
+    "JUP-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/JUP-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/JUP-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/JUP-USDT-SWAP.parquet"
+      }
+    },
+    "LDO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/LDO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/LDO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/LDO-USDT-SWAP.parquet"
+      }
+    },
+    "RENDER-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/RENDER-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/RENDER-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/RENDER-USDT-SWAP.parquet"
+      }
+    },
+    "POL-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/POL-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/POL-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/POL-USDT-SWAP.parquet"
+      }
+    },
+    "WIF-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/WIF-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/WIF-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/WIF-USDT-SWAP.parquet"
+      }
+    },
+    "PYTH-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/PYTH-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/PYTH-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/PYTH-USDT-SWAP.parquet"
+      }
+    },
+    "PEOPLE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/PEOPLE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/PEOPLE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/PEOPLE-USDT-SWAP.parquet"
+      }
+    },
+    "ORDI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ORDI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ORDI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ORDI-USDT-SWAP.parquet"
+      }
+    },
+    "BONK-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BONK-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BONK-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BONK-USDT-SWAP.parquet"
+      }
+    },
+    "EIGEN-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/EIGEN-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/EIGEN-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/EIGEN-USDT-SWAP.parquet"
+      }
+    },
+    "APE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/APE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/APE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/APE-USDT-SWAP.parquet"
+      }
+    },
+    "IMX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/IMX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/IMX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/IMX-USDT-SWAP.parquet"
+      }
+    },
+    "TRB-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/TRB-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/TRB-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/TRB-USDT-SWAP.parquet"
+      }
+    },
+    "MINA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MINA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MINA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MINA-USDT-SWAP.parquet"
+      }
+    },
+    "XTZ-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/XTZ-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/XTZ-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/XTZ-USDT-SWAP.parquet"
+      }
+    },
+    "GALA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/GALA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/GALA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/GALA-USDT-SWAP.parquet"
+      }
+    },
+    "CORE-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CORE-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CORE-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CORE-USDT-SWAP.parquet"
+      }
+    },
+    "DYDX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/DYDX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/DYDX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/DYDX-USDT-SWAP.parquet"
+      }
+    },
+    "AR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/AR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/AR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/AR-USDT-SWAP.parquet"
+      }
+    },
+    "ZK-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ZK-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ZK-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ZK-USDT-SWAP.parquet"
+      }
+    },
+    "API3-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/API3-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/API3-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/API3-USDT-SWAP.parquet"
+      }
+    },
+    "CHZ-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CHZ-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CHZ-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CHZ-USDT-SWAP.parquet"
+      }
+    },
+    "NMR-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 579,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/NMR-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/NMR-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/NMR-USDT-SWAP.parquet"
+      }
+    },
+    "ENS-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ENS-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ENS-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ENS-USDT-SWAP.parquet"
+      }
+    },
+    "MOODENG-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MOODENG-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MOODENG-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MOODENG-USDT-SWAP.parquet"
+      }
+    },
+    "AXS-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/AXS-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/AXS-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/AXS-USDT-SWAP.parquet"
+      }
+    },
+    "ZIL-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ZIL-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ZIL-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ZIL-USDT-SWAP.parquet"
+      }
+    },
+    "SUSHI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/SUSHI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/SUSHI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/SUSHI-USDT-SWAP.parquet"
+      }
+    },
+    "LUNA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/LUNA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/LUNA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/LUNA-USDT-SWAP.parquet"
+      }
+    },
+    "BICO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 539,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/BICO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/BICO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/BICO-USDT-SWAP.parquet"
+      }
+    },
+    "COMP-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/COMP-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/COMP-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/COMP-USDT-SWAP.parquet"
+      }
+    },
+    "EGLD-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/EGLD-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/EGLD-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/EGLD-USDT-SWAP.parquet"
+      }
+    },
+    "IOST-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 492,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/IOST-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/IOST-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/IOST-USDT-SWAP.parquet"
+      }
+    },
+    "MANA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MANA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MANA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MANA-USDT-SWAP.parquet"
+      }
+    },
+    "MEW-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 574,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MEW-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MEW-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MEW-USDT-SWAP.parquet"
+      }
+    },
+    "ATH-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/ATH-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/ATH-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/ATH-USDT-SWAP.parquet"
+      }
+    },
+    "CRO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CRO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CRO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CRO-USDT-SWAP.parquet"
+      }
+    },
+    "NEIRO-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/NEIRO-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/NEIRO-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/NEIRO-USDT-SWAP.parquet"
+      }
+    },
+    "MEME-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MEME-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MEME-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MEME-USDT-SWAP.parquet"
+      }
+    },
+    "RVN-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 460,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/RVN-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/RVN-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/RVN-USDT-SWAP.parquet"
+      }
+    },
+    "CVX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/CVX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/CVX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/CVX-USDT-SWAP.parquet"
+      }
+    },
+    "YFI-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/YFI-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/YFI-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/YFI-USDT-SWAP.parquet"
+      }
+    },
+    "IOTA-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/IOTA-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/IOTA-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/IOTA-USDT-SWAP.parquet"
+      }
+    },
+    "GMX-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/GMX-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/GMX-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/GMX-USDT-SWAP.parquet"
+      }
+    },
+    "YGG-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 565,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/YGG-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/YGG-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/YGG-USDT-SWAP.parquet"
+      }
+    },
+    "1INCH-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/1INCH-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/1INCH-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/1INCH-USDT-SWAP.parquet"
+      }
+    },
+    "MASK-USDT-SWAP": {
+      "ohlcv": {
+        "rows": 17532,
+        "duplicates_removed": 0,
+        "expected_rows_between_endpoints": 17532,
+        "missing_intervals": 0,
+        "gap_count_over_interval": 0,
+        "max_gap_ms": 3600000,
+        "max_gap_hours": 1.0,
+        "first_utc": "2024-11-08T08:00:00+00:00",
+        "last_utc": "2026-11-08T19:00:00+00:00",
+        "no_gap_over_1h": true,
+        "coverage_of_requested_window_pct": 100.0
+      },
+      "funding": {
+        "rows": 283,
+        "first_timestamp_utc": "2026-08-06T16:00:00+00:00",
+        "last_timestamp_utc": "2026-11-08T16:00:00+00:00",
+        "coverage_days": 94.0,
+        "coverage_of_requested_window_pct": 12.868
+      },
+      "open_interest": {
+        "rows": 720,
+        "coverage_days": 29.96,
+        "label": "OKX_PUBLIC_HISTORY_WINDOW_30D"
+      },
+      "files": {
+        "ohlcv": "data/stage1/okx_swap/ohlcv_1h/MASK-USDT-SWAP.parquet",
+        "funding": "data/stage1/okx_swap/funding/MASK-USDT-SWAP.parquet",
+        "open_interest": "data/stage1/okx_swap/open_interest_1h/MASK-USDT-SWAP.parquet"
+      }
+    }
+  },
+  "limitations": {
+    "open_interest": "OKX public market-data API historical open-interest coverage is limited to the latest 30 days in this Stage 1 collector; not a 2-year series.",
+    "fear_greed": "Daily series, not hourly. No synthetic interpolation is performed.",
+    "order_book": "No historical order-book snapshots stored in Stage 1.",
+    "liquidations": "No verified historical liquidation feed stored in Stage 1.",
+    "basis": "No continuous historical basis series stored in Stage 1.",
+    "iran_access": "A probe executed on GitHub-hosted infrastructure does not establish reachability from the user's own Iranian IP/network."
+  }
+}
