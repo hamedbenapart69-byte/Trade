@@ -32,7 +32,8 @@ def main():
                     cutoff = int(time.time()*1000) - int(args.years*365.25*MS_DAY)
                     universe = collector.discover_symbols(args.symbols, min_listing_ms=cutoff)
                     result["ccxt_universe"] = {"selected_count":len(universe),"requested_count":args.symbols,
-                                               "sample_symbols":universe[:12],"passed":len(universe)>=args.symbols}
+                                               "sample_symbols":universe[:12],"filter_diagnostics":collector.universe_diagnostics,
+                                               "passed":len(universe)>=args.symbols}
                 except Exception as exc:
                     result["ccxt_universe"] = {"passed":False,"error":type(exc).__name__,
                                                "detail":str(exc)[:180]}
