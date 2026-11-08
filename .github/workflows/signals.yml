@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       test_telegram:
-        description: "Send a Telegram test message (requires TELEGRAM_TOKEN and TELEGRAM_CHAT_ID)"
+        description: "Send a Telegram test message"
         required: false
         type: boolean
         default: false
@@ -16,6 +16,8 @@ on:
       - "logic.py"
       - "modules/**"
       - "requirements.txt"
+      - "web/**"
+      - "docs/**"
 permissions:
   contents: write
 concurrency:
@@ -67,6 +69,7 @@ jobs:
           set -euo pipefail
           cp data/signals.json /tmp/signals.json
           cp data/history.csv /tmp/history.csv
+          git reset --hard HEAD
           git fetch origin signals
           git switch --force-create publish-signals origin/signals
           cp /tmp/signals.json ./signals.json
