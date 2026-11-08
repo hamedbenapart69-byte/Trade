@@ -1,5 +1,7 @@
 name: Stage 1 Data Layer
 on:
+  push:
+    branches: [stage-1-data-layer-v1]
   workflow_dispatch:
     inputs:
       symbols:
@@ -28,12 +30,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt ccxt pyarrow
+      - run: pip install -r requirements.txt
       - name: Probe and collect
         env:
           PYTHONUNBUFFERED: "1"
         run: |
-          if [ "${{ inputs.probe_only }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.probe_only }}" = "true" ]; then
             python scripts/run_stage1_data.py --probe-only
           else
             python scripts/run_stage1_data.py --symbols "${{ inputs.symbols }}" --years "${{ inputs.years }}"
