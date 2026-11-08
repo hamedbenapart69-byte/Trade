@@ -13,7 +13,6 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from telegram import Bot
-from telegram.error import ChatNotFound
 
 LOG = logging.getLogger("signal_autopilot.telegram")
 
@@ -143,10 +142,10 @@ def notify_tier_a(payload: dict) -> dict:
         sent = len(chunks)
         LOG.info("Telegram delivery succeeded: %d message(s) for %d item(s).", sent, len(pending))
         return {"status": "SENT", "sent": sent}
-    except ChatNotFound:
-        LOG.error("Telegram chat not found. Open the bot in Telegram, send /start, and verify TELEGRAM_CHAT_ID.")
-        return {"status": "CHAT_NOT_FOUND", "sent": sent}
-    except Exception:
+    except Exception as exc:
+        if "chat not found" in str(exc).lower():
+            LOG.error("Telegram chat not found. Open the bot in Telegram, send /start, and verify TELEGRAM_CHAT_ID.")
+            return {"status": "CHAT_NOT_FOUND", "sent": sent}
         LOG.exception("Telegram delivery failed.")
         return {"status": "ERROR", "sent": sent}
 
@@ -214,9 +213,9 @@ def send_test_message() -> dict:
         ]))
         LOG.info("Telegram test message delivered successfully.")
         return {"status": "TEST_SENT", "sent": 1}
-    except ChatNotFound:
-        LOG.error("Telegram chat not found. Open the bot in Telegram and send /start; verify TELEGRAM_CHAT_ID.")
-        return {"status": "CHAT_NOT_FOUND", "sent": 0}
-    except Exception:
+    except Exception as exc:
+        if "chat not found" in str(exc).lower():
+            LOG.error("Telegram chat not found. Open the bot in Telegram and send /start; verify TELEGRAM_CHAT_ID.")
+            return {"status": "CHAT_NOT_FOUND", "sent": 0}
         LOG.exception("Telegram test delivery failed.")
         return {"status": "ERROR", "sent": 0}
