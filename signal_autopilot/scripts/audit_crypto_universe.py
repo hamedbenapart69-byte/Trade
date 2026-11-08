@@ -1,0 +1,79 @@
+"""Live audit of the crypto-only USDT perpetual universe."""
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from modules.data_fetcher import MarketDataFetcher
+
+
+def main() -> None:
+    fetcher = MarketDataFetcher(limit=100)
+    report = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
+        "providers": {},
+    }
+    try:
+        whitelist = fetcher._coingecko_top_symbols()
+        selected_provider = None
+        selected = []
+        for provider in ("okx", "bybit"):
+            try:
+                exchange = fetcher._new_exchange(provider)
+                rows = fetcher._eligible_markets(
+                    exchange, provider, whitelist,
+                    int(datetime.now(timezone.utc).timestamp() * 1000),
+                )
+                report["providers"][provider] = {
+                    "eligible_count": len(rows),
+                    "diagnostics": fetcher.universe_diagnostics.get(provider, {}),
+                }
+                if provider == "okx" and len(rows) >= 50:
+                    selected_provider, selected = provider, rows
+                    break
+                if provider == "bybit":
+                    if len(rows) >= len(selected):
+                        selected_provider, selected = provider, rows
+                elif len(rows) > len(selected):
+                    selected_provider, selected = provider, rows
+            except Exception as exc:
+                report["providers"][provider] = {
+                    "error": type(exc).__name__, "detail": str(exc)[:200]
+                }
+        report["coingecko_unique_top200_symbols"] = len(whitelist)
+        report["selected_provider"] = selected_provider
+        report["selected_count"] = len(selected)
+        report["first_10"] = [
+            {"symbol": symbol, "quote_volume_24h_usd": round(volume, 2)}
+            for volume, symbol, _ in selected[:10]
+        ]
+        report["policy_checks"] = {
+            "all_quote_usdt_linear_swaps": bool(selected_provider) and all(
+                fetcher.exchanges[-1].market(symbol).get("swap")
+                and fetcher.exchanges[-1].market(symbol).get("linear")
+                and fetcher.exchanges[-1].market(symbol).get("quote") == "USDT"
+                and fetcher.exchanges[-1].market(symbol).get("settle") == "USDT"
+                for _, symbol, _ in selected
+            ),
+            "all_coin_gecko_whitelisted": all(
+                fetcher.exchanges[-1].market(symbol).get("base", "").upper() in whitelist
+                for _, symbol, _ in selected
+            ),
+            "all_over_10m_usd_volume": all(volume >= 10_000_000 for volume, _, _ in selected),
+            "count_at_least_50": len(selected) >= 50,
+        }
+        report["pass"] = all(report["policy_checks"].values())
+        out = Path("data/universe_audit.json")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        if not report["pass"]:
+            raise SystemExit("CRYPTO_UNIVERSE_AUDIT_FAIL")
+    finally:
+        fetcher.close()
+
+
+if __name__ == "__main__":
+    main()
