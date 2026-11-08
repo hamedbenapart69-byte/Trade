@@ -20,7 +20,16 @@ def main() -> None:
         "providers": {},
     }
     try:
-        whitelist = fetcher._coingecko_top_symbols()
+        cached_report = Path("data/universe_audit.json")
+        cached_symbols = []
+        if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1" and cached_report.exists():
+            try:
+                cached_symbols = json.loads(cached_report.read_text(encoding="utf-8")).get(
+                    "coingecko_whitelist_symbols", []
+                )
+            except Exception:
+                cached_symbols = []
+        whitelist = set(cached_symbols) if cached_symbols else fetcher._coingecko_top_symbols()
         selected_provider = None
         selected_exchange = None
         selected = []
@@ -69,6 +78,7 @@ def main() -> None:
                     "error": type(exc).__name__, "detail": str(exc)[:200]
                 }
         report["coingecko_unique_whitelist_symbols"] = len(whitelist)
+        report["coingecko_whitelist_symbols"] = sorted(whitelist)
         report["selected_provider"] = selected_provider
         report["selected_count"] = len(selected)
         union_rows = sorted(union_by_symbol.values(), key=lambda row: row[0], reverse=True)
