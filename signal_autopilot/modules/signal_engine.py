@@ -42,6 +42,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     availability = row.get("availability") or {}
     base: dict[str, Any] = {
         "symbol": row.get("symbol"),
+        "provider": row.get("provider", "unknown"),
         "status": "MARKET_DATA_DEGRADED",
         "side": None,
         "entry": None,
@@ -141,8 +142,11 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
 
 
 def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
+    data.setdefault("provider", "unknown")
     generated = data.get("generated_at_utc")
     rows = data.get("symbols") or []
+    for row in rows:
+        row.setdefault("provider", data.get("provider", "unknown"))
     requested = max(int(data.get("symbols_requested") or len(rows)), len(rows))
     processed = len(rows)
     coverage_pct = round((processed / requested) * 100.0, 2) if requested else 0.0
