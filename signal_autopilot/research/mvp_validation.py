@@ -79,7 +79,7 @@ def _trade_result(position: dict[str, Any], exit_time: int, exit_price: float,
     }
 
 
-def backtest_window(symbol: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 50) -> list[dict[str, Any]]:
     """تست بدون نگاه به آینده؛ تصمیم در close و ورود در open کندل بعد."""
     if len(rows) < 80:
         return []
@@ -92,7 +92,7 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]]) -> list[dict[str, A
     slow_by_index = {i + 49: value for i, value in enumerate(slow)}
     trades: list[dict[str, Any]] = []
     position: dict[str, Any] | None = None
-    i = 50
+    i = max(50, start_index)
 
     while i < len(rows) - 1:
         candle = rows[i]
@@ -201,7 +201,7 @@ def walk_forward_symbol(symbol: str, rows: list[dict[str, Any]]) -> list[dict[st
     while test_start + TEST_HOURS < len(rows):
         warm_start = max(0, test_start - 80)
         window = rows[warm_start:test_start + TEST_HOURS]
-        for trade in backtest_window(symbol, window):
+        for trade in backtest_window(symbol, window, start_index=test_start - warm_start):
             if int(rows[test_start]["timestamp"]) <= trade["entry_time"] < int(rows[test_start + TEST_HOURS]["timestamp"]):
                 trades_by_entry.setdefault(int(trade["entry_time"]), trade)
         test_start += STEP_HOURS
