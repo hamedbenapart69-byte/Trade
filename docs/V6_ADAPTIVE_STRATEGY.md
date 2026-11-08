@@ -28,7 +28,7 @@ A market that passes data validation but has no qualifying pattern is `WAIT`, no
 - V6 blends 60% of the existing evidence-weighted technical/market score with 40% of the adaptive pattern score.
 - `confidence_v6` is a deterministic ranking score from 0–100, not a probability of winning.
 - The old `confidence_v5` field remains as a compatibility alias during migration.
-- Immediate signals require score at least 70, data grade A/B, completed-candle confirmation, no unresolved daily conflict, verified contract and prices, and all risk gates.
+- Adaptive signals must also have at least 2R of clear space before the nearest verified opposing structure level; otherwise they remain WAIT.\n- Immediate signals require score at least 70, data grade A/B, completed-candle confirmation, no unresolved daily conflict, verified contract and prices, and all risk gates.
 - Conditional signals require score at least 60 and publish a measurable trigger/confirmation rule. Trend pullbacks use a retest-and-rejection trigger (wick touches the 1H EMA20 zone, then the 15m close returns in the trend direction); other families use explicit close-above/close-below triggers.
 - The strict V3 baseline keeps its original funding ceiling of 0.05% per 8-hour equivalent. Adaptive families may continue through moderate funding with a score penalty, but funding at or above 0.15% per 8-hour equivalent is a hard safety rejection.
 - Risk remains capped at $4 planned loss, 5x leverage maximum, 0.5%–3.0% stop distance, and at least 2.0 reward-to-risk. Actual losses can exceed planned loss due to slippage, gaps, fees, and funding.
