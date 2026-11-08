@@ -101,9 +101,9 @@ class PagesPayloadTests(unittest.TestCase):
         raw=source()
         raw["actionable"]=[]
         raw["conditional"]=[{
-          "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "symbol":"BTC-USDT-SWAP","strategy_family":"V3_STRICT_BASELINE","decision":"CONDITIONAL_BUY","direction":"LONG",
           "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-30_000,
-          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
+          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{**{key:True for key in REQUIRED_AUDIT_CHECKS},"v3_baseline_passed":True,"v3_funding_threshold_passed":True,"strategy_family":"V3_STRICT_BASELINE"},"stop_pct":1.5,
           "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
