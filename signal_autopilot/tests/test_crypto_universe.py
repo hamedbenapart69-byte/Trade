@@ -1,6 +1,8 @@
 import json
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from modules.data_fetcher import MarketDataFetcher
@@ -113,6 +115,25 @@ class CryptoUniverseTests(unittest.TestCase):
         market["info"] = {"onboardDate": str(now - 900 * 86_400_000)}
         self.assertEqual(MarketDataFetcher._listing_time_ms(market, "binance"), now - 900 * 86_400_000)
 
+
+
+    def test_debug_block_okx_forces_fallback_without_touching_okx(self):
+        self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
+        fallback_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(60)]
+
+        def fake_provider(provider, whitelist):
+            if provider == "okx":
+                self.fail("OKX must be skipped while DEBUG_BLOCK_OKX=1")
+            if provider == "bybit":
+                return fallback_rows
+            self.fail(f"unexpected provider after successful Bybit fallback: {provider}")
+
+        self.fetcher._fetch_from_provider = fake_provider
+        with patch.dict(os.environ, {"DEBUG_BLOCK_OKX": "1"}):
+            result = self.fetcher.fetch()
+        self.assertEqual(result["provider"], "bybit")
+        self.assertTrue(result["fallback_used"])
+        self.assertEqual(result["primary_error"], "DEBUG_BLOCK_OKX_FORCED")
 
     def test_fallback_continues_after_bybit_block_and_selects_binance(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
