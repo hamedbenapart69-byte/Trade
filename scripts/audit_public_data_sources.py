@@ -96,6 +96,13 @@ def get_json(name: str, url: str) -> dict[str, Any]:
                 result.update({"lastUpdateId": obj.get("lastUpdateId"),
                                "bid_levels": len(obj.get("bids", [])),
                                "ask_levels": len(obj.get("asks", []))})
+            elif name == "okx_orderbook":
+                rows = obj.get("data", [])
+                book = rows[0] if rows else {}
+                result.update({"code": obj.get("code"), "message": obj.get("msg"),
+                               "bid_levels": len(book.get("bids", [])),
+                               "ask_levels": len(book.get("asks", [])),
+                               "ts": book.get("ts")})
             elif name in {"binance_spot_kline", "binance_futures_kline"}:
                 result["count"] = len(obj) if isinstance(obj, list) else None
                 if isinstance(obj, list) and obj:
@@ -187,6 +194,7 @@ def main() -> None:
                    "NEARUSDT", "WLDUSDT", "BCHUSDT", "UNIUSDT", "AAVEUSDT"]:
         results.append(archive_kline(f"binance_vision_spot_{symbol}_2026_10", "spot", "2026-10", symbol))
         results.append(archive_kline(f"binance_vision_futures_{symbol}_2026_10", "futures_um", "2026-10", symbol))
+    by_name = {x["name"]: x for x in results}
     for symbol in ["BTCUSDT", "ETHUSDT", "SOLUSDT"]:
         spot = by_name.get("binance_vision_spot_1h_2026_10" if symbol == "BTCUSDT" else f"binance_vision_spot_{symbol}_2026_10", {})
         fut = by_name.get("binance_vision_um_futures_1h_2026_10" if symbol == "BTCUSDT" else f"binance_vision_futures_{symbol}_2026_10", {})
