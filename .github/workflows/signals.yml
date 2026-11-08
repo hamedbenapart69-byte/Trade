@@ -11,9 +11,13 @@ on:
         default: false
   push:
     branches: [stage-1-data-layer-v1]
-    paths-ignore:
-      - "data/**"
-      - "web/data/**"
+    paths:
+      - ".github/workflows/signals.yml"
+      - "logic.py"
+      - "modules/**"
+      - "web/**"
+      - "requirements.txt"
+      - "!web/data/**"
 permissions:
   contents: write
 concurrency:
