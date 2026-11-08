@@ -151,7 +151,7 @@ class Stage1Collector:
             return {"provider":"Bybit public REST","passed":False,"error":type(exc).__name__,
                     "detail":str(exc)[:160]}
 
-    def discover_symbols(self, target_count: int = 100) -> list[str]:
+    def discover_symbols(self, target_count: int = 100, min_listing_ms: int | None = None) -> list[str]:
         self.exchange.load_markets()
         tickers = self.exchange.fetch_tickers()
         candidates = []
@@ -165,6 +165,15 @@ class Stage1Collector:
                 continue
             if not market.get("contract"):
                 continue
+            if min_listing_ms is not None:
+                info = market.get("info") or {}
+                listing_raw = info.get("listTime") if self.provider == "okx" else info.get("onboardDate")
+                try:
+                    listing_ms = int(listing_raw or 0)
+                except (TypeError, ValueError):
+                    listing_ms = 0
+                if listing_ms <= 0 or listing_ms > min_listing_ms:
+                    continue
             ticker = tickers.get(unified_symbol) or {}
             quote_volume = ticker.get("quoteVolume")
             if quote_volume is None:
@@ -340,7 +349,7 @@ class Stage1Collector:
         bybit_probe = self.probe_bybit()
         if not probe["passed"]:
             raise RuntimeError(f"{self.provider}_probe_failed; see probe report")
-        symbols = self.discover_symbols(target_count)
+        symbols = self.discover_symbols(target_count, min_listing_ms=since_ms)
         reports = {}
         expected_ohlcv_rows = max(1, (now_ms-since_ms)//MS_HOUR)
         for symbol in symbols:
