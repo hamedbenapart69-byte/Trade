@@ -30,6 +30,11 @@ def _format_signal(signal: dict, payload: dict) -> str:
     tp2 = targets[1] if len(targets) > 1 else signal.get("take_profit_2", "—")
     calibrated = signal.get("calibrated_probability_pct")
     probability = f"{calibrated}%" if isinstance(calibrated, (int, float)) else "NOT_CALIBRATED"
+    entry = signal.get("entry") if signal.get("entry") is not None else "—"
+    stop = signal.get("stop_loss") if signal.get("stop_loss") is not None else "—"
+    tp1 = tp1 if tp1 is not None else "—"
+    tp2 = tp2 if tp2 is not None else "—"
+    dashboard = os.getenv("DASHBOARD_URL") or "آدرس داشبورد پس از Deploy ثبت می‌شود"
     return "\n".join([
         "🔔 سیگنال Tier A",
         "",
