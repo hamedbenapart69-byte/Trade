@@ -46,7 +46,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -c 'from modules.notifier import send_test_message; print(send_test_message())'
+        run: python -c 'from modules.notifier import send_test_message; result=send_test_message(); print(result); raise SystemExit(0 if result.get("status") == "TEST_SENT" else 1)'
 
   signals:
     if: github.event_name != 'workflow_dispatch' || inputs.test_telegram != true
