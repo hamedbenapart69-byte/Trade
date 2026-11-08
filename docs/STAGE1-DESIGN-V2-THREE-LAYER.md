@@ -29,16 +29,16 @@ GitHub Actions (UTC cron every 4h / manual dispatch)
   |      Parquet cache + data-quality report
   |
   +--> L2 COMPUTE
-  |      logic.py
-  |        -> modules/signal_engine.py (Stage 1 placeholder)
+  |      signal_autopilot/logic.py
+  |        -> signal_autopilot/modules/signal_engine.py (Stage 1 placeholder)
   |        -> strict 7-state C10 output
-  |        -> signals.json + history.csv
+  |        -> signal_autopilot/data/signals.json + history.csv
   |
   +--> L3 DELIVERY
   |      commit/push generated public, non-secret artifacts
   |        -> Cloudflare Pages Git integration auto-build
-  |        -> web dashboard reads same-origin /data/signals.json
-  |      modules/notifier.py -> Telegram Bot API (Tier-A only)
+  |        -> web/futures dashboard reads same-origin /data/signals.json
+  |      signal_autopilot/modules/notifier.py -> Telegram Bot API (Tier-A only)
   |
   +--> evidence artifacts + run summary + health/status fields
 ```
@@ -103,7 +103,7 @@ Do not append duplicate `run_id + symbol + timeframe` records. All timestamps IS
 
 ### Parquet
 
-Use provider-specific folders (for example `data/parquet/okx/ohlcv_1h/`, `funding/`, `open_interest_1h/`, and `sentiment/`). Writes are atomic. No credentials or notification tokens are stored in artifacts.
+Use provider-specific folders under `signal_autopilot/data/stage1/` (for example `okx_swap/ohlcv_1h/`, `okx_swap/funding/`, `okx_swap/open_interest_1h/`, and `sentiment/`). Writes are atomic. No credentials or notification tokens are stored in artifacts.
 
 ## 6. L3 web dashboard
 
@@ -124,7 +124,7 @@ Dashboard requirements:
 
 ## 7. Schedule and automation
 
-Workflow path: `.github/workflows/futures-signals.yml`
+Workflow path: `.github/workflows/futures-signals.yml`; engine entry point: `signal_autopilot/logic.py`.
 
 - Schedule: `7 */4 * * *` (00:07, 04:07, 08:07, 12:07, 16:07, 20:07 UTC).
 - Manual run: `workflow_dispatch`.
