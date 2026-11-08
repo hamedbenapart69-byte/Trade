@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -215,6 +216,8 @@ def main() -> None:
         (ROOT / "web" / "index.html").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    for asset in ("app.js", "style.css"):
+        shutil.copy2(ROOT / "web" / asset, SITE / asset)
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
     print(json.dumps({
         "status": payload["status"],
