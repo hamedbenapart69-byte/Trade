@@ -40,6 +40,17 @@ class PagesPayloadTests(unittest.TestCase):
         self.assertEqual(len(payload["actionable"]),1)
         self.assertTrue(payload["publication_gate"]["source_verified"])
 
+    def test_adaptive_strategy_can_pass_publication_without_v3_baseline(self):
+        raw=source()
+        item=raw["actionable"][0]
+        item["strategy_family"]="TREND_PULLBACK"
+        item["self_audit"]["strategy_family"]="TREND_PULLBACK"
+        item["self_audit"]["v3_baseline_passed"]=False
+        item["self_audit"]["v3_funding_threshold_passed"]=False
+        payload=build_payload(raw)
+        self.assertEqual(len(payload["actionable"]),1)
+        self.assertEqual(payload["actionable"][0]["strategy_family"],"TREND_PULLBACK")
+
     def test_drops_actionable_signal_if_a_v5_risk_gate_fails(self):
         raw=source()
         raw["actionable"][0]["risk"]["planned_loss_usd"]=4.01
