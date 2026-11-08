@@ -103,17 +103,22 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                 "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
             }],
         }
-        class FakeResponse:
-            status_code = 202
+        class FakeSMTP:
+            sent_message = None
+            def __init__(self, *args, **kwargs): pass
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def login(self, username, password): self.credentials = (username, password)
+            def send_message(self, message): FakeSMTP.sent_message = message
         with patch.dict(os.environ, {
-            "SENDGRID_KEY": "test-key",
+            "SMTP_HOST": "smtp.gmail.com", "SMTP_PORT": "465",
+            "SMTP_USER": "from@example.test", "SMTP_PASSWORD": "test-app-password",
             "ALERT_EMAIL_TO": "to@example.test",
-            "ALERT_EMAIL_FROM": "from@example.test",
-        }, clear=True), patch("modules.notifier.httpx.post", return_value=FakeResponse()) as post:
+        }, clear=True), patch("modules.notifier.smtplib.SMTP_SSL", FakeSMTP):
             result = notify_email(payload)
         self.assertEqual(result, {"status": "SENT", "sent": 1})
-        self.assertEqual(post.call_args.kwargs["json"]["personalizations"][0]["to"][0]["email"], "to@example.test")
-        self.assertIn(chr(10) + "جهت:", post.call_args.kwargs["json"]["content"][0]["value"])
+        self.assertEqual(FakeSMTP.sent_message["To"], "to@example.test")
+        self.assertIn(chr(10) + "جهت:", FakeSMTP.sent_message.get_content())
 
     def test_signal_message_uses_real_newline_characters(self):
         from modules.notifier import _format_signal
