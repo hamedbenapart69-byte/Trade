@@ -12,8 +12,9 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 import xml.etree.ElementTree as ET
-
-import httpx
+import urllib.error
+import urllib.parse
+import urllib.request
 
 VISION = "https://data.binance.vision"
 VISION_LIST = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
@@ -21,10 +22,47 @@ FAPI = "https://fapi.binance.com/fapi/v1/premiumIndex"
 COINGECKO_DERIVATIVES = "https://api.coingecko.com/api/v3/derivatives"
 
 
+class _StdlibResponse:
+    def __init__(self, status_code: int, content: bytes):
+        self.status_code = status_code
+        self.content = content
+        self.text = content.decode("utf-8", errors="replace")
+
+    def json(self):
+        return json.loads(self.text)
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP_{self.status_code}")
+
+
+class _StdlibHttpClient:
+    """HTTP GET/HEAD بدون وابستگی خارجی."""
+    def get(self, url: str, params: dict | None = None, timeout: int = 25):
+        if params:
+            url += ("&" if "?" in url else "?") + urllib.parse.urlencode(params)
+        return self._request(url, "GET", timeout)
+
+    def head(self, url: str, timeout: int = 20, follow_redirects: bool = True):
+        return self._request(url, "HEAD", timeout)
+
+    @staticmethod
+    def _request(url: str, method: str, timeout: int):
+        request = urllib.request.Request(url, method=method, headers={"User-Agent": "Trade-Stage1A/1.0"})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return _StdlibResponse(response.status, response.read() if method != "HEAD" else b"")
+        except urllib.error.HTTPError as exc:
+            return _StdlibResponse(exc.code, exc.read() if method != "HEAD" else b"")
+
+    def close(self):
+        return None
+
+
 class Stage1ADataProvider:
     def __init__(self, config: dict[str, Any], client: Any = None):
         self.config = config
-        self.client = client or httpx.Client(timeout=25, follow_redirects=True)
+        self.client = client or _StdlibHttpClient()
         self._owns_client = client is None
         md = config.get("market_data") or {}
         strategy = md.get("provider_strategy") or {}
