@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 from app.adaptive import adaptive_setup
-from app.signals import _conditional_trigger_hit
+from app.signals import _conditional_trigger_hit, _planned_entry_price
 
 
 def bars(count, high=105.0, low=95.0, close=100.0, interval=3_600_000):
@@ -82,6 +82,13 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertEqual(result["direction"],"LONG")
         self.assertEqual(result["strategy_family"],"BREAKOUT_CONFIRMATION")
         self.assertTrue(result["pattern_confirmed"])
+
+    def test_unconfirmed_adaptive_setup_sizes_risk_from_planned_trigger_entry(self):
+        adaptive={"pattern_confirmed":False,"trigger_level":98.0}
+        self.assertEqual(_planned_entry_price(97.0,adaptive),98.0)
+        adaptive["pattern_confirmed"]=True
+        self.assertEqual(_planned_entry_price(97.0,adaptive),97.0)
+        self.assertEqual(_planned_entry_price(97.0,None),97.0)
 
     def test_conditional_short_retest_requires_wick_to_level_and_close_back_below(self):
         self.assertTrue(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=99.8,close=99.9),100.0,"retest_rejection"))
