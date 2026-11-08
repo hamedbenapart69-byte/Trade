@@ -103,7 +103,7 @@ def main() -> None:
             "cross_exchange_union_at_least_50": len(union_rows) >= 50,
         }
         report["pass"] = all(report["policy_checks"].values())
-        out = Path("data/universe_audit.json")
+        out = Path("data/universe_audit_fallback.json" if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1" else "data/universe_audit.json")
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
         print(json.dumps(report, indent=2, ensure_ascii=False))
