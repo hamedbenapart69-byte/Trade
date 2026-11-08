@@ -892,7 +892,7 @@ class FuturesSignalEngine:
         vol_regime=volatility_regime(one)
         market_regime=classify_market_regime(one,ad,vol_regime,trends["1h"],vr)
         bbpos="lower_band" if cl[-1]<=bl[-1] else "lower_half" if cl[-1]<bm[-1] else "upper_band" if cl[-1]>=bu[-1] else "upper_half"
-        baseline_direction=v3_directional_baseline(rv,vr,cl[-1],e20,e50,trends["4h"])
+        baseline_direction=v3_directional_baseline(rv,vr,cl[-1],e20,e50,trends["4h"]) if abs(funding_8h)<.0005 else None
         price_change=float(oi_obj.get("priceChange24hPct") or 0)
         atr4h=atr(cs["4h"])[-1]
         if atr4h is None:raise DataError("mandatory_4h_atr_missing")
@@ -985,7 +985,7 @@ class FuturesSignalEngine:
           "toobit_bid_ask_depth_gate_passed":bool(not is_toobit or float(price.get("bidDepthUsd") or 0)>=depth_required and float(price.get("askDepthUsd") or 0)>=depth_required),
           "mark_price_valid":True,"index_price_valid":True,"last_trade_price_valid":True,
           "live_price_and_derivatives_timestamps_fresh":True,"ohlcv_15m_validated":True,"ohlcv_1h_validated":True,
-          "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":bool(baseline_direction),"strategy_family":strategy_family,
+          "ohlcv_4h_validated":True,"ohlcv_1d_validated":True,"completed_candles_only":True,"v3_baseline_passed":bool(baseline_direction),"v3_funding_threshold_passed":abs(funding_8h)<.0005,"strategy_family":strategy_family,
           "funding_rate_verified":True,"funding_interval_verified":True,"funding_safety_limit_passed":abs(funding_8h)<.0015,"funding_rate_8h_equivalent":funding_8h,
           "current_open_interest_verified":oi>0,"oi_changes_recorded_where_available":True,"positioning_timestamp_verified_if_used":True,"smart_money_timestamp_verified_if_used":True,"multi_timeframe_checked":True,
           "market_structure_checked":True,"market_regime_classified":market_regime in {"TRENDING","RANGING","BREAKOUT","HIGH_VOLATILITY","LOW_VOLATILITY","UNSTABLE"},"volume_and_momentum_checked":True,"anti_chase_checked":True,
