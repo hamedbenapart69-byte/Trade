@@ -565,7 +565,9 @@ def _structure(cs,direction,atr_value=None):
     }
 
 def _audit_checks_passed(audit):
-    return all(value is True for value in audit.values() if isinstance(value,bool))
+    family=audit.get("strategy_family")
+    return all(value is True for key,value in audit.items()
+      if isinstance(value,bool) and not (key=="v3_baseline_passed" and family!="V3_STRICT_BASELINE"))
 
 
 def _score(direction,tech,trends,structure,oi1h,oi4h,oi24h,ls,taker,funding,entry_points,risk_ok,smart_points,independent_ok):
@@ -1001,6 +1003,8 @@ class FuturesSignalEngine:
         if decision.startswith("CONDITIONAL"):
             if market_regime=="UNSTABLE":confirm="wait for 1H volatility to normalize and a completed 15m direction confirmation";trigger=e15
             elif chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
+            elif adaptive and adaptive.get("confirmation_required"):
+                confirm=adaptive["confirmation_required"];trigger=adaptive.get("trigger_level")
             elif not entry_ok:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
