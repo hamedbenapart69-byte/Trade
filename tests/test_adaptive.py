@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 from app.adaptive import adaptive_setup
-from app.signals import _conditional_trigger_hit, _planned_entry_price
+from app.signals import _audit_checks_passed, _conditional_trigger_hit, _planned_entry_price
 
 
 def bars(count, high=105.0, low=95.0, close=100.0, interval=3_600_000):
@@ -82,6 +82,13 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertEqual(result["direction"],"LONG")
         self.assertEqual(result["strategy_family"],"BREAKOUT_CONFIRMATION")
         self.assertTrue(result["pattern_confirmed"])
+
+    def test_adaptive_audit_fails_when_verified_structure_blocks_2r(self):
+        audit={"strategy_family":"TREND_PULLBACK","v3_baseline_passed":False,
+          "v3_funding_threshold_passed":False,"minimum_2R_room_before_nearest_structure":False}
+        self.assertFalse(_audit_checks_passed(audit))
+        audit["minimum_2R_room_before_nearest_structure"]=True
+        self.assertTrue(_audit_checks_passed(audit))
 
     def test_unconfirmed_adaptive_setup_sizes_risk_from_planned_trigger_entry(self):
         adaptive={"pattern_confirmed":False,"trigger_level":98.0}
