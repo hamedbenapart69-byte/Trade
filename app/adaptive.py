@@ -109,6 +109,10 @@ def adaptive_setup(
             score += 3; evidence.append("15m entry distance acceptable")
         if range_reversal:
             score += 12; evidence.append("range-edge mean-reversion setup")
+            if (direction == "LONG" and rsi <= 30) or (direction == "SHORT" and rsi >= 70):
+                score += 7; evidence.append("range momentum is statistically stretched")
+            if tech.get("stoch_rsi") is not None and ((direction == "LONG" and tech["stoch_rsi"] <= 25) or (direction == "SHORT" and tech["stoch_rsi"] >= 75)):
+                score += 6; evidence.append("stochastic RSI confirms range-edge exhaustion")
         if opposite4h:
             score -= 18; evidence.append("4H trend conflict")
         if opposite1d:
