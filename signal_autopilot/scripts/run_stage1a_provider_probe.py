@@ -23,7 +23,7 @@ def main() -> int:
         row.setdefault("provider", row.get("ohlcv_provider", "BINANCE_VISION"))
     out = ROOT / "data" / "stage1a_provider_report.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "stage1a_status": report.get("stage1a_status", "FAIL"),
         "symbols_scanned": report.get("symbols_scanned", 0),
