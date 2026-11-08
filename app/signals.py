@@ -919,7 +919,7 @@ class FuturesSignalEngine:
               "reason":"no_qualified_pattern_after_multi_strategy_scan","technical":{"rsi14":rv,"volume_ratio":vr,"ema20":e20,"ema50":e50,
                 "adx":ad,"market_regime":market_regime,"macd_histogram":mh[-1],"funding_rate_8h":funding_8h},
               "trends":trends,"strategy_diagnostics":{"v3_baseline_passed":False,"adaptive_families_checked":
-                ["TREND_PULLBACK","BREAKOUT_RETEST","LIQUIDITY_SWEEP_REVERSAL","RANGE_MEAN_REVERSION"],
+                ["TREND_PULLBACK","BREAKOUT_CONFIRMATION","BREAKOUT_RETEST","LIQUIDITY_SWEEP_REVERSAL","RANGE_MEAN_REVERSION"],
                 "best_adaptive_candidate":None if adaptive is None else adaptive}}
         tech={**common_tech,
           "obv_aligned":(ov[-1]>ov[-10] if direction=="LONG" else ov[-1]<ov[-10]),
