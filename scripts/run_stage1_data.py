@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """Stage 1 CLI. Run --probe-only first from the target network."""
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from app.data_layer.collector import Stage1Collector
 
 
@@ -16,6 +25,10 @@ def main():
     try:
         if args.probe_only:
             result={"binance":collector.probe_binance(),"bybit":collector.probe_bybit()}
+            out=Path(args.data_dir)
+            out.mkdir(parents=True,exist_ok=True)
+            (out/"endpoint_probe.json").write_text(
+                json.dumps(result,indent=2,ensure_ascii=False),encoding="utf-8")
         else:
             result=collector.run(target_count=args.symbols,years=args.years)
         print(json.dumps(result,indent=2,ensure_ascii=False))
