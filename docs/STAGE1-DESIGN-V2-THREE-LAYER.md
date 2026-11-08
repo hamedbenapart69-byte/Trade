@@ -200,8 +200,8 @@ From Actions run `42468815714` (completed successfully on GitHub-hosted runner):
 - Fear & Greed returned 3,199 daily rows.
 - This run used the OKX collector probe, not the exact requested CCXT `fetch_ticker` probe.
 - The Actions runner is not the user's Iranian network. No claim about user's ISP reachability is made.
-- No Cloudflare Pages account has been linked; no live Pages URL verified.
-- No Telegram token/chat ID was supplied; no Telegram notification has been sent.
+- No Cloudflare Pages account has been linked; no live Pages URL verified. The static dashboard source exists in `web/` and reads same-origin `web/data/signals.json` / `history.csv`.
+- Telegram test-message function and workflow dispatch option exist, but no token/chat ID was supplied; no real Telegram notification has been sent.
 
 ## 12. Stage roadmap while preserving all three layers
 
