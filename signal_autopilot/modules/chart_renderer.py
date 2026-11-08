@@ -57,7 +57,7 @@ def render_signal_chart(signal: dict[str, Any]) -> bytes:
                     va="center", clip_on=False)
 
     direction = "LONG" if signal.get("side") == "BUY" else "SHORT"
-    reason = str(signal.get("reason") or "EMA20/EMA50 trend condition")
+    reason = "EMA20 above EMA50; relative spread > 0.5%; risk levels from ATR14" if direction == "LONG" else "EMA20 below EMA50; relative spread > 0.5%; risk levels from ATR14"
     title = f"{signal.get('symbol', 'UNKNOWN')}  |  {direction}  |  1H  |  EMA TREND"
     fig.suptitle(title, fontsize=15, fontweight="bold", x=0.07, ha="left")
     ax.set_title(reason[:160], fontsize=9, loc="left", color="#475569", pad=12)
