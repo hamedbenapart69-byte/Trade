@@ -1,5 +1,6 @@
 """Atomic JSON/CSV publication for the dashboard."""
 import csv,json,os,tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 FIELDS=["generated_at_utc","symbol","status","side","tier","provider","engine","reason","confidence","ev_net","idempotency_key"]
 def atomic_text(path,text):
@@ -22,7 +23,10 @@ def publish(payload,root="."):
     if not old: writer.writeheader()
     added=0
     for s in payload.get("signals",[]):
-        key=f'{payload.get("generated_at_utc")}|{s.get("symbol")}|{payload.get("engine")}'
+        generated=datetime.fromisoformat(payload.get("generated_at_utc").replace("Z","+00:00"))
+        bucket_hour=(generated.hour//4)*4
+        bucket=generated.replace(hour=bucket_hour,minute=0,second=0,microsecond=0).astimezone(timezone.utc).isoformat()
+        key=f'{bucket}|{s.get("symbol")}|{payload.get("engine")}'
         if key in seen: continue
         writer.writerow({"generated_at_utc":payload.get("generated_at_utc"),"symbol":s.get("symbol"),
           "status":s.get("status"),"side":s.get("side"),"tier":s.get("tier"),"provider":payload.get("provider"),
