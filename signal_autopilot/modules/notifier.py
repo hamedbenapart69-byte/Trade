@@ -68,6 +68,7 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"نماد: {signal.get('symbol', '—')}",
         f"جهت: {'خرید' if signal.get('status') == 'BUY_NOW' else 'فروش'}",
         f"ورود: {signal.get('entry') if signal.get('entry') is not None else '—'}",
+        f"کیفیت زمان قیمت ورود: {signal.get('entry_price_quality', 'UNKNOWN')}",
         f"حد ضرر: {signal.get('stop_loss') if signal.get('stop_loss') is not None else '—'}",
         f"تارگت ۱: {tp1}",
         f"تارگت ۲: {tp2}",
