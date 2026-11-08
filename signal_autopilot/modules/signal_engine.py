@@ -65,4 +65,8 @@ def generate_signals(data):
       "fear_greed":data.get("fear_greed"),
       "quality":{"symbols_requested":data.get("symbols_requested",0),"symbols_processed":data.get("symbols_processed",0),
         "symbols_degraded":sum(1 for s in signals if s["status"]=="MARKET_DATA_DEGRADED")},
+      "universe_policy":data.get("universe_policy","UNVERIFIED"),
+      "universe_diagnostics":data.get("universe_diagnostics",{}),
+      "coingecko_whitelist_count":data.get("coingecko_whitelist_count"),
+      "universe_under_50":data.get("universe_under_50",False),
       "signals":signals}
