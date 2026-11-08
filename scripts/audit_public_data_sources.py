@@ -24,7 +24,13 @@ def iso_ms(value: Any) -> str | None:
     try:
         return datetime.fromtimestamp(int(value) / 1000, tz=timezone.utc).isoformat()
     except (TypeError, ValueError, OSError):
-        return None
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).isoformat()
+        except (TypeError, ValueError, OSError):
+            return None
 
 
 def request(url: str, method: str = "GET", max_bytes: int = 8_000_000) -> dict[str, Any]:
@@ -121,9 +127,14 @@ def archive_kline(name: str, market: str, month: str) -> dict[str, Any]:
             rows = rows[1:]
         parsed = [row for row in rows if len(row) >= 5]
         if parsed:
-            last = parsed[-1]
+            closes = {}
+            for row in parsed:
+                ts = iso_ms(row[0])
+                if ts:
+                    closes[ts] = float(row[4])
             out.update({"archive_rows": len(parsed), "first_open_utc": iso_ms(parsed[0][0]),
-                        "last_open_utc": iso_ms(last[0]), "last_close": float(last[4])})
+                        "last_open_utc": iso_ms(parsed[-1][0]), "last_close": float(parsed[-1][4]),
+                        "close_by_open_time": closes})
     except Exception as exc:
         out["archive_parse_error"] = f"{type(exc).__name__}: {str(exc)[:180]}"
     return out
@@ -133,6 +144,7 @@ def main() -> None:
     q = urllib.parse.urlencode({"symbol": "BTCUSDT", "startTime": 0, "limit": 1000})
     results = [
         get_json("binance_funding_earliest", f"https://fapi.binance.com/fapi/v1/fundingRate?{q}"),
+        get_json("binance_funding_fapi1", f"https://fapi1.binance.com/fapi/v1/fundingRate?{q}"),
         get_json("binance_open_interest_daily",
                  "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=30"),
         get_json("binance_depth", "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=100"),
@@ -148,12 +160,21 @@ def main() -> None:
     by_name = {x["name"]: x for x in results}
     spot = by_name.get("binance_vision_spot_1h_2026_10", {})
     fut = by_name.get("binance_vision_um_futures_1h_2026_10", {})
-    if spot.get("last_close") and fut.get("last_close"):
-        basis = (float(fut["last_close"]) - float(spot["last_close"])) / float(spot["last_close"])
-        results.append({"name": "binance_vision_basis_sample", "basis_fraction": basis,
-                        "basis_percent": basis * 100,
+    spot_closes = spot.get("close_by_open_time", {})
+    futures_closes = fut.get("close_by_open_time", {})
+    common_times = sorted(set(spot_closes) & set(futures_closes))
+    if common_times:
+        matched_time = common_times[-1]
+        spot_close = float(spot_closes[matched_time])
+        futures_close = float(futures_closes[matched_time])
+        basis = (futures_close - spot_close) / spot_close
+        results.append({"name": "binance_vision_basis_sample", "matched_open_time_utc": matched_time,
+                        "spot_close": spot_close, "futures_close": futures_close,
+                        "basis_fraction": basis, "basis_percent": basis * 100,
                         "spot_month": "2026-10", "futures_month": "2026-10",
-                        "note": "Last row of each monthly archive; timestamps must be matched before using this as a synchronized basis observation."})
+                        "note": "Spot and futures closes matched by identical 1h candle open timestamp."})
+    for item in results:
+        item.pop("close_by_open_time", None)
     report = {"audit_version": 1, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
               "runner": "GitHub Actions ubuntu-latest", "credentials_used": False,
               "scope": "public read-only endpoints and Binance Vision archive HEAD/GET",
