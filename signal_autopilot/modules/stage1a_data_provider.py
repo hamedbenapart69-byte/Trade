@@ -267,7 +267,10 @@ class Stage1ADataProvider:
                     "ohlcv_path": path, "ohlcv_rows": len(rows),
                     "quote_volume_24h_usd": quote_volume,
                     "aggtrades": agg, "funding": funding,
-                    "quality_label": "PROXY" if funding.get("status") == "PROXY" or agg["status"] != "AVAILABLE" else "REAL_DATA",
+                    "quality_label": (
+                        "PROXY" if funding.get("status") == "PROXY" or agg["status"] != "AVAILABLE"
+                        else ("REAL_DATA" if funding.get("status") == "OK" else "UNAVAILABLE")
+                    ),
                 })
             except Exception as exc:
                 coverage.append({"symbol": symbol, "status": "DATA_UNAVAILABLE",
@@ -281,6 +284,7 @@ class Stage1ADataProvider:
             "target_symbols": self.target, "minimum_qualifying_symbols": self.minimum,
             "symbols_scanned": len(candidates), "symbols_qualifying": len(qualifying),
             "symbols_proxy": sum(x.get("quality_label") == "PROXY" for x in qualifying),
+            "symbols_funding_unavailable": sum(x.get("quality_label") == "UNAVAILABLE" for x in qualifying),
             "stage1a_status": "PASS" if len(qualifying) >= self.minimum else "FAIL",
             "coverage_per_symbol": coverage,
             "errors": self.errors,
