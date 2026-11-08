@@ -84,7 +84,7 @@ class AdaptiveSetupTests(unittest.TestCase):
         self.assertTrue(result["pattern_confirmed"])
 
     def test_conditional_short_retest_requires_wick_to_level_and_close_back_below(self):
-        self.assertTrue(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=99.8,close=100.1),100.0,"retest_rejection"))
+        self.assertTrue(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=99.8,close=99.9),100.0,"retest_rejection"))
         self.assertFalse(_conditional_trigger_hit("SHORT",SimpleNamespace(high=99.9,low=99.1,close=99.4),100.0,"retest_rejection"))
         self.assertFalse(_conditional_trigger_hit("SHORT",SimpleNamespace(high=101.2,low=100.1,close=100.4),100.0,"retest_rejection"))
 
