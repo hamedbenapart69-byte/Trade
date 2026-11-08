@@ -19,7 +19,7 @@ def publish(payload):
     repo_root=Path(__file__).resolve().parents[2]
     data_root=repo_root/"signal_autopilot"/"data"
     web_data=repo_root/"web"/"futures"/"data"
-    text=json.dumps(payload,ensure_ascii=False,indent=2)+"\\n"
+    text=json.dumps(payload,ensure_ascii=False,indent=2)+"\n"
     history=data_root/"history.csv"
     history.parent.mkdir(parents=True,exist_ok=True)
     old=history.read_text(encoding="utf-8") if history.exists() else ""
@@ -49,5 +49,5 @@ def publish(payload):
         atomic_text(history,old+buf.getvalue())
     atomic_text(data_root/"signals.json",text)
     atomic_text(web_data/"signals.json",text)
-    atomic_text(web_data/"history.csv",history.read_text(encoding="utf-8") if history.exists() else ",".join(FIELDS)+"\\n")
+    atomic_text(web_data/"history.csv",history.read_text(encoding="utf-8") if history.exists() else ",".join(FIELDS)+"\n")
     return {"signals_added_to_history":added,"signals_total":len(payload.get("signals",[]))}
