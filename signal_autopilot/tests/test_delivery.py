@@ -113,7 +113,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             result = notify_email(payload)
         self.assertEqual(result, {"status": "SENT", "sent": 1})
         self.assertEqual(post.call_args.kwargs["json"]["personalizations"][0]["to"][0]["email"], "to@example.test")
-        self.assertIn("\\nجهت:", post.call_args.kwargs["json"]["content"][0]["value"])
+        self.assertIn(chr(10) + "جهت:", post.call_args.kwargs["json"]["content"][0]["value"])
 
     def test_signal_message_uses_real_newline_characters(self):
         from modules.notifier import _format_signal
@@ -121,8 +121,8 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "entry": 100,
             "stop_loss": 95, "take_profit": [110, 120],
         }, {})
-        self.assertIn("\\n", message)
-        self.assertNotIn("\\\\n", message)
+        self.assertIn(chr(10), message)
+        self.assertNotIn(chr(92) + "n", message)
 
 if __name__=="__main__":
     unittest.main()
