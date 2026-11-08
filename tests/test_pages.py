@@ -135,10 +135,11 @@ class PagesPayloadTests(unittest.TestCase):
         if not node:
             self.skipTest("Node.js is unavailable")
         html=Path("web/index.html").read_text(encoding="utf-8")
-        scripts=re.findall(r"<script>([\s\S]*?)</script>",html)
-        self.assertEqual(len(scripts),1)
+        script=Path("web/app.js").read_text(encoding="utf-8")
+        self.assertIn('src="./app.js"',html)
+        self.assertIn('href="./style.css"',html)
         with tempfile.NamedTemporaryFile("w",suffix=".js",encoding="utf-8") as f:
-            f.write(scripts[0])
+            f.write(script)
             f.flush()
             subprocess.run([node,"--check",f.name],check=True,capture_output=True,text=True)
 
