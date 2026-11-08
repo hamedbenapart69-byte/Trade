@@ -1,0 +1,1 @@
+One-time marker: run the four-hour signal workflow again to verify repeatability after commit reconciliation.
