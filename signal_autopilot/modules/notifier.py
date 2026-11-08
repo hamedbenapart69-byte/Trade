@@ -32,21 +32,23 @@ async def _send(token: str, chat_id: str, messages: list[str]) -> None:
             await bot.send_message(chat_id=chat_id, text=message, disable_web_page_preview=True)
 
 
-async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]]) -> int:
+async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]]) -> tuple[int, int]:
     """هر سیگنال را با چارت همان نماد و کپشن تحلیلی ارسال می‌کند."""
     sent = 0
+    chart_failures = 0
     async with Bot(token=token) as bot:
         for signal, caption in signals:
             try:
                 chart = render_signal_chart(signal)
                 await bot.send_photo(chat_id=chat_id, photo=BytesIO(chart), caption=caption[:1024])
             except Exception:
+                chart_failures += 1
                 LOG.exception("Chart image delivery failed for %s; sending text fallback.", signal.get("symbol"))
                 await bot.send_message(chat_id=chat_id,
                     text=(caption + "\n\n⚠️ تصویر چارت ساخته/ارسال نشد؛ سطوح و تحلیل بالا معتبرِ متنی هستند.")[:4096],
                     disable_web_page_preview=True)
             sent += 1
-    return sent
+    return sent, chart_failures
 
 
 def _parse_time(value):
@@ -115,8 +117,9 @@ def notify_tier_a(payload: dict) -> dict:
     pending: list[tuple[str, dict, str]] = []
 
     for signal in candidates:
-        key = "|".join(str(signal.get(k, "")) for k in (
-            "symbol", "status", "analysis_type", "timeframe", "generated_at_utc"
+        key = "|".join(str(value or "") for value in (
+            signal.get("symbol"), signal.get("status"), signal.get("analysis_type"),
+            signal.get("timeframe"), payload.get("generated_at_utc")
         ))
         if key not in sent_state:
             pending.append((key, signal, _format_signal(signal, payload)))
@@ -146,15 +149,17 @@ def notify_tier_a(payload: dict) -> dict:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     try:
-        sent = asyncio.run(_send_signal_photos(
+        sent, chart_failures = asyncio.run(_send_signal_photos(
             token, chat_id, [(signal, caption) for _, signal, caption in pending]
         ))
         for key, _, _ in pending:
             sent_state[key] = now.isoformat()
         state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                               encoding="utf-8")
-        LOG.info("Telegram chart delivery succeeded: %d signal photo(s).", sent)
-        return {"status": "SENT_WITH_CHARTS", "sent": sent}
+        LOG.info("Telegram signal delivery succeeded: %d item(s), %d chart fallback(s).",
+                 sent, chart_failures)
+        return {"status": "SENT_WITH_CHARTS" if chart_failures == 0 else "SENT_TEXT_FALLBACK",
+                "sent": sent}
     except Exception as exc:
         if "chat not found" in str(exc).lower():
             LOG.error("Telegram chat not found. Open the bot in Telegram, send /start, and verify TELEGRAM_CHAT_ID.")
