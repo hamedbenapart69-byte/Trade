@@ -997,7 +997,7 @@ class FuturesSignalEngine:
         audit_passed=_audit_checks_passed(audit)
         if not risk["valid"]:decision="REJECT"
         elif not audit_passed:decision="WAIT"
-        elif score>=70 and entry_ok and not conflict:decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
+        elif score>=70 and entry_ok and not conflict and (not adaptive or adaptive.get("pattern_confirmed")):decision="BUY_NOW" if direction=="LONG" else "SELL_NOW"
         elif score>=60:decision="CONDITIONAL_BUY" if direction=="LONG" else "CONDITIONAL_SELL"
         else:decision="WAIT"
         confirm=None;trigger=None
@@ -1006,6 +1006,8 @@ class FuturesSignalEngine:
             elif chase:confirm="15m pullback toward EMA20; do not chase beyond 2 ATR";trigger=e15
             elif adaptive and adaptive.get("confirmation_required"):
                 confirm=adaptive["confirmation_required"];trigger=adaptive.get("trigger_level")
+            elif adaptive and score<70:
+                confirm="next completed 1H candle must preserve the selected setup structure and maintain volume ratio above 1.0";trigger=e20
             elif not entry_ok:
                 confirm="15m close confirms direction relative to EMA20 and prior candle"
                 trigger=max(e15,prev.close) if direction=="LONG" else min(e15,prev.close)
