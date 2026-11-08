@@ -196,7 +196,13 @@ class Stage1Collector:
             quote_volume = ticker.get("quoteVolume")
             if quote_volume is None:
                 info = ticker.get("info") or {}
-                quote_volume = info.get("quoteVolume") or 0
+                raw_base_volume = info.get("volCcy24h") or ticker.get("baseVolume") or 0
+                last_price = ticker.get("last") or info.get("last") or 0
+                try:
+                    # OKX swap volCcy24h is base-asset volume; convert to quote turnover for ranking.
+                    quote_volume = float(raw_base_volume) * float(last_price)
+                except (TypeError, ValueError):
+                    quote_volume = 0
             try:
                 volume = float(quote_volume or 0)
             except (TypeError, ValueError):
