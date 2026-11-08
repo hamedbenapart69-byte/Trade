@@ -37,7 +37,7 @@
 - Exact cron: `7 */4 * * *`.
 - Meaning: every four hours at minute 7 UTC.
 - Runtime evidence: Run 42520941228 was created with event `schedule` and completed successfully.
-- The README still describes an older V5 cadence of minutes 07, 22, 37 and 52 every hour. That description is stale for the active Futures Signals Pipeline and must not be used to infer its schedule.
+- The original README described an older V5 cadence of minutes 07, 22, 37 and 52 every hour. This was corrected on the audit branch so V5 is explicitly marked legacy/manual and the active four-hour cron is attributed to Futures Signals Pipeline.
 - The V5 legacy workflow has no cron and is manual-only.
 
 ## 3. Dashboard deployment and the two different hosting systems
@@ -76,6 +76,12 @@
 - GitHub repository evidence cannot establish whether the Cloudflare Pages site is currently fresh or which external source is connected.
 - The exact provider-selection reason and adapter fallback sequence require source-code tracing and runtime logs; not inferred from README text.
 
-## 6. Audit gate
+## 6. Documentation reconciliation
+
+- The README was corrected on this audit branch in commit `6318ecdb9a2d930b346fffe50b2653e1c926153b` to distinguish the legacy manual V5 workflow from the active scheduled Futures Signals Pipeline.
+- The README now marks the legacy GitHub Pages dashboard freshness as unverified and records the Cloudflare Pages URL as externally configured / source unverified.
+- No workflow YAML, schedule, data provider, secrets, engine code, or deployment configuration was changed.
+
+## 7. Audit gate
 
 This document records repository truth only. It does not implement or change any engine, data adapter, workflow schedule, deployment, trading behavior, or secret. Data audit A, edge hypothesis B, and cost model C remain separate deliverables and require their own evidence. No code under `src/engines/` is authorized before all four documents are delivered and approved.
