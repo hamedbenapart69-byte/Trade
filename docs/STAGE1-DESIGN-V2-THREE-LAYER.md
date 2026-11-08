@@ -149,8 +149,8 @@ Workflow path: `.github/workflows/signals.yml`
 3. Choose Connect to Git.
 4. Authorize the GitHub account and select `hamedbenapart69-byte/Trade`.
 5. Select branch `stage-1-data-layer-v1` for preview, or the approved release branch later.
-6. Set build command to none / leave empty for a static site.
-7. Set output directory to `web` only if the deployment layout copies `data/` into the Pages output; otherwise set repository root with the configured static output. The implementation will include a build-copy step so `web/` and `data/` are published together.
+6. Set the project root directory to `web`.
+7. Leave the build command empty and set the build output directory to `.`. The pipeline writes `signals.json` and `history.csv` into `web/data/` and commits both files, so the static site serves them same-origin.
 8. Save and deploy; Cloudflare assigns a `.pages.dev` hostname.
 9. Open the hostname from the user's actual target network and verify `/data/signals.json` loads.
 10. Confirm Git integration auto-deploys after a new workflow commit.
