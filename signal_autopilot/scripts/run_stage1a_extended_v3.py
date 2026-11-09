@@ -54,7 +54,7 @@ def strict_request_bytes(url: str, method: str = "GET", retries: int = 3) -> tup
     raise downloader.FetchFailure(f"RETRIES_EXHAUSTED_{last_error}")
 
 
-def fetch_json_fallback(urls: list[str], label: str) -> Any:
+def fetch_json_fallback(urls: list[str], label: str, validator) -> Any:
     failures: list[str] = []
     for url in urls:
         try:
@@ -63,9 +63,8 @@ def fetch_json_fallback(urls: list[str], label: str) -> Any:
                 failures.append(f"{url}:HTTP_{status}")
                 continue
             parsed = json.loads(payload)
-            if parsed:
-                return parsed
-            failures.append(f"{url}:EMPTY_RESPONSE")
+            validator(parsed)
+            return parsed
         except Exception as exc:
             failures.append(f"{url}:{type(exc).__name__}:{str(exc)[:160]}")
     raise downloader.FetchFailure(f"{label}_ALL_ENDPOINTS_FAILED | " + " | ".join(failures))
@@ -199,9 +198,13 @@ async def run_v3(start: date, end: date, outdir: Path, report_path: Path) -> dic
     if (end - start).days != MIN_LISTING_AGE_DAYS:
         raise ValueError("The historical window must remain exactly 730 days.")
 
-    exchange_payload = fetch_json_fallback(EXCHANGE_INFO_URLS, "BINANCE_EXCHANGE_INFO")
+    exchange_payload = fetch_json_fallback(
+        EXCHANGE_INFO_URLS, "BINANCE_EXCHANGE_INFO", parse_exchange_info
+    )
     exchange_symbols = parse_exchange_info(exchange_payload)
-    ticker_payload = fetch_json_fallback(TICKER_URLS, "BINANCE_TICKER_24HR")
+    ticker_payload = fetch_json_fallback(
+        TICKER_URLS, "BINANCE_TICKER_24HR", parse_tickers
+    )
     quote_volumes = parse_tickers(ticker_payload)
 
     listing_map, symbols, inventory, counts = build_universe(
