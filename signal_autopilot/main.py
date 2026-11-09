@@ -13,11 +13,10 @@ from modules.chart_renderer_lrt15m import render_lrt15m_chart
 from modules.signal_tracker import SignalTracker
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
-    MIN_LFS_SCORE_PROXY_CVD,
-    MIN_LFS_SCORE_REAL_CVD,
     WATCHLIST_CONFLUENCE_THRESHOLD,
     aggregate_bars,
-    analyze_symbol,
+    evaluate_stage1_symbol,
+    score_stage1_confluence,
     ichimoku,
 )
 from telegram_bot import send_signal_to_telegram, verify_telegram_connection
@@ -55,32 +54,33 @@ def calculate_confluence(
     engine_result: dict[str, Any],
     rows: list[dict[str, Any]],
     direction: str,
-) -> tuple[int, dict[str, bool]]:
-    """پنج Gate مصوب: Bias 4H، Bias 1H، LFS، Cross-10 و فاصله Zone."""
-    from modules.lrt15m_engine import (
-        MAX_ZONE_DISTANCE_PCT, MIN_LFS_SCORE_PROXY_CVD,
-        MIN_LFS_SCORE_REAL_CVD, WATCHLIST_CONFLUENCE_THRESHOLD,
-    )
+) -> tuple[int, dict[str, int]]:
+    """امتیاز پنج مؤلفهٔ مصوب؛ LFS فقط Veto است و امتیاز Confluence نیست."""
     expected = "BULLISH" if direction == "BUY" else "BEARISH"
     biases = engine_result.get("higher_timeframe_bias") or {}
-    bias4_ok = biases.get("4h_kumo") == expected
-    bias1_ok = biases.get("1h_kijun") == expected
-    cvd = engine_result.get("cvd") or {}
-    threshold = MIN_LFS_SCORE_REAL_CVD if cvd.get("source") == "AGGTRADES_REAL" else MIN_LFS_SCORE_PROXY_CVD
-    lfs_score = engine_result.get("lfs_score")
-    lfs_ok = isinstance(lfs_score, (int, float)) and float(lfs_score) >= threshold
-    cross_ok = tenkan_kijun_cross(rows, direction, lookback=10)
-    zone_distance_value = engine_result.get("zone_distance_pct")
-    zone_ok = isinstance(zone_distance_value, (int, float)) and float(zone_distance_value) <= MAX_ZONE_DISTANCE_PCT
+    lfs_parts = engine_result.get("lfs_components") or {}
+    zone_ok = bool(engine_result.get("zone_present")) or (
+        engine_result.get("zone_type") not in {None, "NONE"}
+        and isinstance(engine_result.get("zone_distance_pct"), (int, float))
+        and float(engine_result["zone_distance_pct"]) <= 0.80
+    )
     components = {
-        "bias_4h_aligned": bias4_ok,
-        "bias_1h_aligned": bias1_ok,
-        "lfs_above_threshold": lfs_ok,
-        "tenkan_kijun_cross_10": cross_ok,
-        "zone_distance_within_0_80_pct": zone_ok,
+        "bias_4h": biases.get("4h_kumo") == expected,
+        "bias_1h": biases.get("1h_kijun") == expected,
+        "sweep": bool(lfs_parts.get("liquidity_sweep", False)),
+        "zone_reaction": zone_ok,
+        "cross": tenkan_kijun_cross(rows, direction, lookback=10),
     }
-    return 20 * sum(1 for value in components.values() if value), components
-
+    cvd = engine_result.get("cvd") or {}
+    scored = score_stage1_confluence(
+        components,
+        str(cvd.get("source", "PROXY_OHLCV")),
+        cvd.get("source") == "AGGTRADES_REAL" and (
+            (float(cvd.get("delta", 0.0)) > 0 and direction == "BUY")
+            or (float(cvd.get("delta", 0.0)) < 0 and direction == "SELL")
+        ),
+    )
+    return int(scored["raw_score"]), scored["points"]
 
 def _ichimoku_status(rows: list[dict[str, Any]], result: dict[str, Any]) -> dict[str, Any]:
     bars_1h = aggregate_bars(rows, 4)
@@ -143,43 +143,59 @@ def _signal_id(symbol: str, direction: str, open_time: int) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
-def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, Any] | None, str]:
+def process_symbol(
+    symbol: str, fetcher: LiveOHLCVFetcher
+) -> tuple[dict[str, Any] | None, str, dict[str, Any]]:
     try:
         rows = fetcher.fetch_symbol(symbol)
-        if len(rows) < 1300:
-            return None, f"INSUFFICIENT_CLOSED_15M_BARS:{len(rows)}"
+        result = evaluate_stage1_symbol(symbol, rows)
+        diagnostic = {
+            key: result.get(key)
+            for key in (
+                "symbol", "direction", "veto", "decision", "tier", "raw_score",
+                "tier_score", "points", "components", "lfs_score", "lfs_source",
+                "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
+                "zone_distance_pct", "rows_available",
+            )
+        }
+        if result.get("decision") != "WATCHLIST":
+            return None, str(result.get("reason", result.get("decision", "NO_TRADE"))), diagnostic
 
-        result = analyze_symbol(symbol, rows)
-        if result.get("decision") != "WATCHLIST" or result.get("direction") not in {"BUY", "SELL"}:
-            reason = str(result.get("reason", result.get("decision", "NO_SETUP")))
-            diagnostics = result.get("gate_diagnostics")
-            if diagnostics:
-                reason += "|" + json.dumps(diagnostics, ensure_ascii=False, separators=(",", ":"))
-            return None, reason
-
-        confluence_score, confluence_components = calculate_confluence(
-            result, rows, str(result["direction"])
-        )
-        if confluence_score < WATCHLIST_CONFLUENCE_THRESHOLD:
-            return None, f"CONFLUENCE_BELOW_WATCHLIST_60:{confluence_score}"
-
-        lfs_source = (result.get("cvd") or {}).get("source", "UNAVAILABLE")
-        lfs_status = "REAL" if lfs_source == "AGGTRADES_REAL" else (
-            "PROXY" if "PROXY" in lfs_source else "UNAVAILABLE"
-        )
-        levels = _levels(result)
-        ichimoku_data = _ichimoku_status(rows, result)
+        lfs_source = str(result.get("lfs_source", "UNAVAILABLE"))
+        lfs_status = "REAL" if lfs_source == "AGGTRADES_REAL" else "PROXY"
+        levels = {
+            "entry": float(result["entry"]),
+            "stop_loss": float(result["stop_loss"]),
+            "tp1": float(result["entry"]) + (1 if result["direction"] == "BUY" else -1) * abs(float(result["entry"]) - float(result["stop_loss"])),
+            "tp2": float(result["take_profit"]),
+            "tp3": float(result["entry"]) + (3 if result["direction"] == "BUY" else -3) * abs(float(result["entry"]) - float(result["stop_loss"])),
+            "rr": float(result.get("rr", 2.0)),
+        }
+        ichimoku_data = {
+            "bias": (
+                f"4H Kumo={result['higher_timeframe_bias']['4h_kumo']} | "
+                f"1H Kijun={result['higher_timeframe_bias']['1h_kijun']}"
+            ),
+            "price_vs_kumo": result.get("price_vs_kumo", "UNAVAILABLE"),
+            "tenkan_kijun": "SEE_CONFLUENCE_BREAKDOWN",
+            "chikou": "NOT_USED_AS_STAGE_1_GATE",
+        }
         created = datetime.now(timezone.utc).isoformat()
+        spread_pct = 0.0008  # PROXY مصوب کاربر؛ نه Spread اندازه‌گیری‌شده
+        points = result.get("points") or {}
         signal = {
             "symbol": symbol,
             "direction": result["direction"],
             "engine": "LRT-15m + ICT + Ichimoku",
             "timeframe": "15m",
             "status": "WATCHLIST",
+            "tier": result.get("tier"),
             "calibration_status": "UNCALIBRATED",
-            "confluence_score": confluence_score,
-            "confluence_components": confluence_components,
-            "stage1_threshold_label": "LFS_0.30_CROSS_10_ZONE_0.80_WATCHLIST_60",
+            "stage_label": "STAGE_1_UNCALIBRATED",
+            "confluence_score": result.get("raw_score"),
+            "confluence_tier_score": result.get("tier_score"),
+            "confluence_components": points,
+            "stage1_threshold_label": "VETO_3_LFS_0.30_PROXY_0.70_REAL|CONFLUENCE_100_A_80_B_60_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
@@ -192,13 +208,15 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
             "costs": {
                 "fee_pct": None,
                 "slippage_pct": None,
-                "spread_pct": None,
+                "spread_pct": spread_pct,
+                "spread_source": "PROXY",
             },
             "risk_flags": [
-                "UNCALIBRATED: confidence و EV کالیبره نشده‌اند.",
-                "SPREAD_UNAVAILABLE: اسپرد تاریخی/لحظه‌ای معتبر به موتور داده نشده است.",
-                "COSTS_INCOMPLETE: هزینهٔ کامل معامله محاسبه نشده است.",
-                "TP1/TP3 فقط سطوح مرجع ریاضی هستند؛ TP2 از خروجی موتور آمده است.",
+                "STAGE_1_UNCALIBRATED: confidence و EV کالیبره نشده‌اند.",
+                "SPREAD_SOURCE=PROXY: مقدار 0.0008 (0.08%) طبق مصوبه؛ Bid/Ask واقعی متصل نیست.",
+                "SPREAD_LIMIT_UNCONFIGURED: سقف عددی مصوب ارائه نشده؛ هیچ ادعای RISK_FLAG_SPREAD_HIGH نمی‌شود.",
+                "COSTS_INCOMPLETE: Fee و Slippage کامل محاسبه نشده‌اند.",
+                "سطوح Entry/SL/TP مرجع تحلیلی‌اند و بک‌تست/تأیید نشده‌اند.",
             ],
             "hypothesis": result.get("hypothesis", "UNAVAILABLE"),
             "falsification": result.get("falsification", "UNAVAILABLE"),
@@ -212,11 +230,16 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
         }
         chart_path = ARTIFACT_DIR / f"{symbol}_15m_{signal['signal_id']}.png"
         render_lrt15m_chart(symbol, rows, signal, chart_path)
-        return {**signal, "chart_path": str(chart_path)}, "CANDIDATE"
+        return {**signal, "chart_path": str(chart_path)}, "CANDIDATE", diagnostic
     except Exception as exc:
         LOG.exception("%s processing failed; skipping symbol.", symbol)
-        return None, f"{type(exc).__name__}:{str(exc)[:160]}"
-
+        return None, f"{type(exc).__name__}:{str(exc)[:160]}", {
+            "symbol": symbol,
+            "direction": None,
+            "veto": "DATA_INSUFFICIENT",
+            "decision": "NO_TRADE",
+            "reason": f"{type(exc).__name__}:{str(exc)[:160]}",
+        }
 
 def main() -> int:
     symbols = load_universe()
@@ -228,9 +251,12 @@ def main() -> int:
     skipped = 0
     candidates = 0
     sent = 0
+    telegram_message_ids: list[dict[str, Any]] = []
+    diagnostics: list[dict[str, Any]] = []
     try:
         for symbol in symbols:
-            signal, reason = process_symbol(symbol, fetcher)
+            signal, reason, diagnostic = process_symbol(symbol, fetcher)
+            diagnostics.append(diagnostic)
             if signal is None:
                 skipped += 1
                 LOG.info("SYMBOL_SKIPPED %s reason=%s", symbol, reason)
@@ -240,22 +266,64 @@ def main() -> int:
             candidates += 1
             tracker.upsert({key: value for key, value in signal.items() if key != "chart_path"})
             chart_path = signal.pop("chart_path")
-            if telegram_ready and send_signal_to_telegram(signal, chart_path):
+            message_id = (
+                send_signal_to_telegram(signal, chart_path)
+                if telegram_ready else None
+            )
+            if isinstance(message_id, int) and message_id > 0:
                 sent += 1
+                telegram_message_ids.append({
+                    "symbol": signal["symbol"],
+                    "signal_id": signal["signal_id"],
+                    "message_id": message_id,
+                })
+                LOG.info(
+                    "TELEGRAM_SIGNAL_MESSAGE_ID symbol=%s message_id=%s",
+                    signal["symbol"], message_id,
+                )
             else:
                 LOG.warning("SIGNAL_NOT_DELIVERED %s", signal["signal_id"])
     finally:
         fetcher.close()
 
     tracker.save()
+    REPORT_PATH = Path(__file__).resolve().parent / "artifacts" / "stage1_lrt_report.json"
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    veto_counts: dict[str, list[str]] = {}
+    for row in diagnostics:
+        veto = str(row.get("veto", "UNAVAILABLE"))
+        if veto != "PASS":
+            veto_counts.setdefault(veto, []).append(str(row["symbol"]))
+    report = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "stage": "STAGE_1_UNCALIBRATED",
+        "universe_count": len(symbols),
+        "symbols_reported": len(diagnostics),
+        "watchlist_count": candidates,
+        "telegram_preflight": telegram_ready,
+        "telegram_signals_sent": sent,
+        "telegram_message_ids": telegram_message_ids,
+        "veto_distribution": {
+            key: {"count": len(value), "symbols": value}
+            for key, value in sorted(veto_counts.items())
+        },
+        "symbols": diagnostics,
+        "calibration": "UNCALIBRATED",
+        "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
+        "spread": {"value": 0.0008, "source": "PROXY", "limit": None},
+    }
+    REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
     summary = {
         "universe": len(symbols),
+        "symbols_reported": len(diagnostics),
         "candidate_symbols": candidates,
         "symbols_skipped": skipped,
         "telegram_preflight": telegram_ready,
         "telegram_signals_sent": sent,
+        "telegram_message_ids": telegram_message_ids,
         "open_signals_in_state": len(tracker.snapshot()["open_signals"]),
-        "signal_state_path": str(STATE_PATH),
+        "report_path": str(REPORT_PATH),
         "calibration": "UNCALIBRATED",
         "decision_policy": "WATCHLIST_ONLY",
     }
@@ -264,12 +332,33 @@ def main() -> int:
     summary_path = os.getenv("GITHUB_STEP_SUMMARY")
     if summary_path:
         with open(summary_path, "a", encoding="utf-8") as handle:
-            handle.write("## Trader_me Stage 1 Signal Bot\n\n")
-            handle.write("| شاخص | مقدار |\n|---|---:|\n")
+            handle.write("## Stage 1 LRT: گزارش ۲۷ نماد\\n\\n")
+            handle.write("| شاخص | مقدار |\\n|---|---:|\\n")
             for key, value in summary.items():
-                handle.write(f"| {key} | {value} |\n")
+                handle.write(f"| {key} | {json.dumps(value, ensure_ascii=False)} |\\n")
+            handle.write("\\n### Confluence و Veto به تفکیک نماد\\n\\n")
+            handle.write("| Symbol | Veto | Bias4H | Bias1H | Sweep | Zone | Cross | Total | Tier |\\n")
+            handle.write("|---|---|---|---|---|---|---|---:|---|\\n")
+            for row in diagnostics:
+                components = row.get("components") or {}
+                points = row.get("points") or {}
+                total = row.get("raw_score")
+                tier = row.get("tier") or row.get("decision") or "NO_TRADE"
+                handle.write(
+                    f"| {row['symbol']} | {row.get('veto')} | "
+                    f"{components.get('bias_4h', '—')} | {components.get('bias_1h', '—')} | "
+                    f"{components.get('sweep', '—')} | {points.get('zone_reaction', '—')} | "
+                    f"{components.get('cross', '—')} | {total if total is not None else '—'} | {tier} |\\n"
+                )
+            if candidates == 0:
+                handle.write("\\n### توزیع Veto Gateها\\n\\n")
+                handle.write("| Veto Gate | تعداد نماد رد شده | نمادهای رد شده |\\n|---|---:|---|\\n")
+                for gate, names in sorted(veto_counts.items()):
+                    handle.write(f"| {gate} | {len(names)} | {', '.join(names)} |\\n")
+                if not veto_counts:
+                    handle.write("| بدون Veto؛ رد در Scoring | 0 | — |\\n")
 
-    return 0 if processed > 0 or skipped == len(symbols) else 1
+    return 0 if len(diagnostics) == len(symbols) else 1
 
 
 if __name__ == "__main__":

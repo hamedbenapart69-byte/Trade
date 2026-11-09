@@ -54,7 +54,7 @@ jobs:
       - name: Run unit tests
         working-directory: signal_autopilot
         run: |
-          python -m unittest tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download tests.test_cvd_proxy_tracker -v
+          python -m unittest tests.test_lrt_engine tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download tests.test_cvd_proxy_tracker -v
 
       - name: Restore persisted open-signal state
         run: |
@@ -108,5 +108,6 @@ jobs:
           path: |
             signal_autopilot/artifacts/charts/
             signal_autopilot/artifacts/diagnostics/gates_diagnostic.json
+            signal_autopilot/artifacts/stage1_lrt_report.json
           if-no-files-found: ignore
           retention-days: 7

@@ -22,7 +22,8 @@ MIN_LFS_SCORE_REAL_CVD = 0.70
 MIN_LFS_SCORE_PROXY_CVD = 0.30
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
-WATCHLIST_CONFLUENCE_THRESHOLD = 60
+WATCHLIST_CONFLUENCE_THRESHOLD = 80
+MONITORING_CONFLUENCE_THRESHOLD = 60
 ICHIMOKU_TENKAN = 9
 ICHIMOKU_KIJUN = 26
 ICHIMOKU_SENKOU_B = 52
@@ -391,6 +392,285 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         "data_sources": data_sources,
         "lfs_weights": LFS_WEIGHTS,
     }
+
+
+
+def score_stage1_confluence(
+    components: dict[str, bool],
+    cvd_source: str,
+    cvd_aligned: bool,
+) -> dict[str, Any]:
+    """امتیاز پنج‌جزئی Stage 1؛ CVD فقط کیفیت Zone Reaction را تعدیل می‌کند."""
+    zone_points = 0
+    if components.get("zone_reaction", False):
+        if cvd_source == "AGGTRADES_REAL":
+            zone_points = 20 if cvd_aligned else 0
+        else:
+            zone_points = 12
+    points = {
+        "bias_4h": 20 if components.get("bias_4h", False) else 0,
+        "bias_1h": 20 if components.get("bias_1h", False) else 0,
+        "sweep": 20 if components.get("sweep", False) else 0,
+        "zone_reaction": zone_points,
+        "tenkan_kijun_cross_10": 20 if components.get("cross", False) else 0,
+    }
+    raw_score = sum(points.values())
+    # Tierها فقط روی مضرب‌های ۲۰ تصمیم می‌گیرند؛ امتیاز خام حفظ می‌شود.
+    tier_score = (raw_score // 20) * 20
+    if tier_score >= 100:
+        decision, tier = "WATCHLIST", "A"
+    elif tier_score >= 80:
+        decision, tier = "WATCHLIST", "B"
+    elif tier_score >= MONITORING_CONFLUENCE_THRESHOLD:
+        decision, tier = "MONITORING", None
+    else:
+        decision, tier = "NO_TRADE", None
+    return {
+        "raw_score": raw_score,
+        "tier_score": tier_score,
+        "points": points,
+        "decision": decision,
+        "tier": tier,
+    }
+
+
+def evaluate_stage1_decision(
+    data_valid: bool,
+    inside_kumo: bool,
+    lfs_score: float,
+    cvd_source: str,
+    components: dict[str, bool],
+    cvd_aligned: bool = False,
+) -> dict[str, Any]:
+    """سه Veto قطعی و سپس امتیازدهی؛ هیچ مسیر BUY_NOW/SELL_NOW ندارد."""
+    if not data_valid:
+        return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "score": None}
+    if inside_kumo:
+        return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "score": None}
+    threshold = (
+        MIN_LFS_SCORE_REAL_CVD
+        if cvd_source == "AGGTRADES_REAL"
+        else MIN_LFS_SCORE_PROXY_CVD
+    )
+    if float(lfs_score) < threshold:
+        return {
+            "veto": "LFS_BELOW_THRESHOLD",
+            "decision": "NO_TRADE",
+            "score": None,
+            "lfs_threshold": threshold,
+        }
+    scored = score_stage1_confluence(components, cvd_source, cvd_aligned)
+    return {"veto": "PASS", **scored, "lfs_threshold": threshold}
+
+
+def _continuous_bars(bars: list[dict[str, Any]], interval_ms: int, required: int) -> bool:
+    if len(bars) < required:
+        return False
+    tail = bars[-required:]
+    return all(
+        int(tail[i]["open_time"]) - int(tail[i - 1]["open_time"]) == interval_ms
+        for i in range(1, len(tail))
+    )
+
+
+def evaluate_stage1_symbol(
+    symbol: str,
+    rows: list[dict[str, Any]],
+    aggtrades: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """ارزیابی مستقل Stage 1 برای یک نماد؛ خروجی تشخیصی حتی در حالت رد."""
+    base = {
+        "symbol": symbol,
+        "direction": None,
+        "veto": "DATA_INSUFFICIENT",
+        "decision": "NO_TRADE",
+        "tier": None,
+        "raw_score": None,
+        "tier_score": None,
+        "points": {},
+        "components": {},
+        "lfs_score": None,
+        "lfs_source": "UNAVAILABLE",
+        "rows_available": len(rows),
+    }
+    if len(rows) < 1300:
+        return {**base, "reason": f"INSUFFICIENT_CLOSED_15M_BARS:{len(rows)}"}
+    try:
+        bars: list[dict[str, Any]] = []
+        for row in rows:
+            bar: dict[str, Any] = {}
+            for key, value in row.items():
+                if key == "open_time":
+                    bar[key] = int(value)
+                elif key in {"data_source", "cvd_source"}:
+                    bar[key] = str(value)
+                else:
+                    bar[key] = float(value)
+            if bar["high"] < bar["low"] or bar["close"] <= 0 or bar["open"] <= 0:
+                return {**base, "reason": "INVALID_OHLC"}
+            bars.append(bar)
+        bars.sort(key=lambda item: item["open_time"])
+        if not _continuous_bars(bars, 900_000, 1300):
+            return {**base, "reason": "15M_GAP_OR_DUPLICATE"}
+        bars_1h = aggregate_bars(bars, 4)
+        bars_4h = aggregate_bars(bars, 16)
+        if not _continuous_bars(bars_1h, 3_600_000, 80):
+            return {**base, "reason": "DATA_INSUFFICIENT_1H"}
+        if not _continuous_bars(bars_4h, 14_400_000, 79):
+            return {**base, "reason": "DATA_INSUFFICIENT_4H"}
+
+        bias4, cloud = _bias_4h(bars_4h)
+        bias1, kijun_values = _bias_1h(bars_1h)
+        span_a, span_b = cloud.get("span_a"), cloud.get("span_b")
+        current = bars[-1]
+        if span_a is None or span_b is None or bias1 == "UNKNOWN":
+            return {**base, "reason": "HTF_INDICATOR_UNAVAILABLE"}
+        cloud_low, cloud_high = min(span_a, span_b), max(span_a, span_b)
+        inside_kumo = cloud_low <= float(current["close"]) <= cloud_high
+        if inside_kumo:
+            return {
+                **base,
+                "veto": "INSIDE_KUMO_4H",
+                "reason": "INSIDE_KUMO_4H",
+                "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
+                "price_vs_kumo": "INSIDE_KUMO",
+            }
+
+        cvd_value: float | None = None
+        cvd_source = CVD_SOURCE
+        if aggtrades is not None:
+            current_bucket = int(current["open_time"])
+            bucket_rows = [
+                item for item in aggtrades
+                if int(item.get("bucket_open_time", -1)) == current_bucket
+            ]
+            if bucket_rows:
+                cvd_value = sum(float(item.get("delta", 0.0)) for item in bucket_rows)
+                cvd_source = "AGGTRADES_REAL"
+            else:
+                raw_rows = [
+                    item for item in aggtrades
+                    if current_bucket <= int(item.get("timestamp", item.get("T", -1)))
+                    < current_bucket + 900_000
+                ]
+                if raw_rows:
+                    cvd_value = cvd_delta_from_aggtrades(raw_rows)
+                    cvd_source = "AGGTRADES_REAL"
+        if cvd_value is None:
+            cvd_value = cvd_proxy_from_klines(bars)
+            cvd_source = CVD_SOURCE
+        cvd_sign = "BUY" if cvd_value > 0 else "SELL" if cvd_value < 0 else "NEUTRAL"
+
+        atr_value = atr(bars)
+        sweep_data = detect_sweep(bars)
+        candidates: list[dict[str, Any]] = []
+        rejected_lfs: list[dict[str, Any]] = []
+        for direction in ("BUY", "SELL"):
+            expected = "BULLISH" if direction == "BUY" else "BEARISH"
+            bias4_ok = bias4 == expected
+            bias1_ok = bias1 == expected
+            sweep_ok = bool(sweep_data["bullish"] if direction == "BUY" else sweep_data["bearish"])
+            ob_ok = detect_order_block(bars, direction, atr_value)
+            fvg_ok = detect_fvg(bars, direction)
+            zone = zone_distance(bars, direction, atr_value)
+            zone_ok = (ob_ok or fvg_ok) and bool(zone["within_limit"])
+            cross_ok = tenkan_kijun_cross(bars, direction, CROSS_LOOKBACK)
+            cvd_aligned = cvd_sign == direction
+            bias_gate_ok = bias4_ok and bias1_ok
+            lfs_parts = {
+                "liquidity_sweep": 1.0 if sweep_ok else 0.0,
+                "order_block": 1.0 if ob_ok else 0.0,
+                "fair_value_gap": 1.0 if fvg_ok else 0.0,
+                "ichimoku_bias": 1.0 if bias_gate_ok else 0.0,
+                "cvd": 1.0 if cvd_aligned else 0.0,
+            }
+            lfs_score = _score(lfs_parts)
+            components = {
+                "bias_4h": bias4_ok,
+                "bias_1h": bias1_ok,
+                "sweep": sweep_ok,
+                "zone_reaction": zone_ok,
+                "cross": cross_ok,
+            }
+            decision = evaluate_stage1_decision(
+                True, False, lfs_score, cvd_source, components, cvd_aligned
+            )
+            record = {
+                **decision,
+                "symbol": symbol,
+                "direction": direction,
+                "lfs_score": lfs_score,
+                "lfs_source": cvd_source,
+                "lfs_components": lfs_parts,
+                "components": components,
+                "cvd": {"delta": round(cvd_value, 8), "source": cvd_source},
+                "zone_type": zone["zone_type"],
+                "zone_distance_pct": zone["distance_pct"],
+                "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
+                "price_vs_kumo": "ABOVE_KUMO" if float(current["close"]) > cloud_high else "BELOW_KUMO",
+                "data_sources": sorted({str(x.get("data_source", "UNAVAILABLE")) for x in bars}),
+                "rows_available": len(bars),
+            }
+            if decision["veto"] == "PASS":
+                entry = float(current["close"])
+                stop = float(current["low"]) if direction == "BUY" else float(current["high"])
+                risk = abs(entry - stop)
+                if risk <= 0:
+                    record.update({"decision": "NO_TRADE", "reason": "INVALID_RISK_DISTANCE"})
+                else:
+                    sign = 1 if direction == "BUY" else -1
+                    record.update({
+                        "entry": entry,
+                        "stop_loss": stop,
+                        "take_profit": entry + sign * 2.0 * risk,
+                        "rr": 2.0,
+                        "hypothesis": (
+                            f"{direction} setup: 4H/1H bias, liquidity sweep, OB/FVG zone "
+                            "reaction and 10-candle Tenkan/Kijun cross confluence"
+                        ),
+                        "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+                    })
+                candidates.append(record)
+            else:
+                rejected_lfs.append(record)
+
+        if not candidates:
+            if rejected_lfs:
+                best = max(rejected_lfs, key=lambda item: float(item["lfs_score"]))
+                return {
+                    **base,
+                    **best,
+                    "veto": "LFS_BELOW_THRESHOLD",
+                    "decision": "NO_TRADE",
+                    "reason": "LFS_BELOW_THRESHOLD",
+                }
+            return {**base, "reason": "NO_DIRECTION_CANDIDATE"}
+
+        candidates.sort(
+            key=lambda item: (
+                int(item.get("tier_score") or 0),
+                int(item.get("raw_score") or 0),
+                float(item.get("lfs_score") or 0),
+            ),
+            reverse=True,
+        )
+        if len(candidates) > 1 and (
+            candidates[0].get("tier_score") == candidates[1].get("tier_score")
+            and candidates[0].get("raw_score") == candidates[1].get("raw_score")
+        ):
+            return {
+                **base,
+                "veto": "PASS",
+                "decision": "NO_TRADE",
+                "reason": "DIRECTION_CONFLICT",
+                "direction_candidates": [
+                    {k: item.get(k) for k in ("direction", "raw_score", "tier_score", "lfs_score")}
+                    for item in candidates
+                ],
+            }
+        return candidates[0]
+    except (KeyError, TypeError, ValueError, IndexError) as exc:
+        return {**base, "reason": f"DATA_VALIDATION_ERROR:{type(exc).__name__}:{str(exc)[:100]}"}
 
 
 def _no_setup(symbol: str, reason: str, rows: int) -> dict[str, Any]:

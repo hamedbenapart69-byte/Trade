@@ -38,7 +38,7 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
         "1. HEADER\n"
         f"⚠️ {symbol} | {direction} | {engine} | {timeframe}\n"
         "Calibration: UNCALIBRATED | Decision: WATCHLIST\n"
-        "⚙️ Stage 1: LFS_0.30_CROSS_10_ZONE_0.80_WATCHLIST_60"
+        "⚙️ STAGE_1_UNCALIBRATED | Veto: DATA/KUMO/LFS | WATCHLIST Tier A/B only"
     )
     chart_caption = "2. CHART | کندل‌های بسته‌شدهٔ 15m + Kumo + Tenkan/Kijun + Entry/SL/TP"
 
@@ -46,7 +46,12 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
         (
             "3. تحلیل کوتاه فارسی",
             "\n".join([
-                f"• امتیاز Confluence: {_value(signal.get('confluence_score'))}/100",
+                f"• امتیاز Confluence: {_value(signal.get('confluence_score'))}/100 | Tier {signal.get('tier', '—')}",
+                "• Confluence Breakdown:",
+                *[
+                    f"  - {name}: {_value(value)} امتیاز"
+                    for name, value in (signal.get("confluence_components") or {}).items()
+                ],
                 f"• وضعیت ایچیموکو: {ichimoku.get('bias', 'UNAVAILABLE')}",
                 f"• فرضیه: {signal.get('hypothesis', 'UNAVAILABLE')}",
                 "• خروجی صرفاً WATCHLIST است؛ هیچ سفارش یا توصیهٔ ورود صادر نشده است.",
@@ -119,7 +124,7 @@ async def _preflight(token: str, chat_id: str) -> tuple[bool, str]:
         return True, f"bot=@{me.username or me.id}; chat={chat.id}"
     except Exception as exc:
         LOG.exception("Telegram preflight failed.")
-        return False, f"{type(exc).__name__}: {str(exc)[:180]}"
+        return None, f"{type(exc).__name__}: {str(exc)[:180]}"
 
 
 def verify_telegram_connection() -> bool:
@@ -127,7 +132,7 @@ def verify_telegram_connection() -> bool:
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
     if not token or not chat_id:
         LOG.warning("TELEGRAM_PREFLIGHT_SKIPPED: missing repository secrets.")
-        return False
+        return None
     ok, detail = asyncio.run(_preflight(token, chat_id))
     if ok:
         LOG.info("TELEGRAM_PREFLIGHT_OK: %s", detail)
@@ -136,7 +141,7 @@ def verify_telegram_connection() -> bool:
     return ok
 
 
-async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path: Path) -> bool:
+async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path: Path) -> int:
     header, chart_caption, body = build_signal_messages(signal)
     async with Bot(token=token) as bot:
         header_message = await bot.send_message(chat_id=chat_id, text=header, disable_web_page_preview=True)
@@ -156,14 +161,14 @@ async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path:
                 text="2. CHART\n⚠️ تصویر نمودار ارسال نشد.",
             )
         await bot.send_message(chat_id=chat_id, text=body, disable_web_page_preview=True)
-    LOG.info("TELEGRAM_SIGNAL_SENT: %s | sections=9 | status=WATCHLIST", signal["signal_id"])
-    return True
+    LOG.info("TELEGRAM_SIGNAL_SENT: %s | sections=9 | status=WATCHLIST | message_id=%s", signal["signal_id"], header_message.message_id)
+    return int(header_message.message_id)
 
 
 def send_signal_to_telegram(
     signal_data: dict[str, Any],
     chart_path: str | Path,
-) -> bool:
+) -> int | None:
     """ارسال فقط WATCHLIST با Confluence بالاتر از ۸۰؛ بدون اجرای سفارش."""
     if signal_data.get("status") != "WATCHLIST":
         LOG.warning("TELEGRAM_REJECTED_NON_WATCHLIST: %s", signal_data.get("symbol"))
@@ -173,7 +178,7 @@ def send_signal_to_telegram(
         return False
     score = signal_data.get("confluence_score")
     if not isinstance(score, (int, float)) or score < WATCHLIST_CONFLUENCE_THRESHOLD:
-        LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_60: %s score=%s", signal_data.get("symbol"), score)
+        LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_80: %s score=%s", signal_data.get("symbol"), score)
         return False
 
     token = os.getenv("TELEGRAM_TOKEN", "").strip()
