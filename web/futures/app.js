@@ -1,48 +1,128 @@
 "use strict";
-const SIGNALS_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/signals.json";
+
+const REPORT_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_signals.json";
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[char]));
-const number = (value) => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n.toLocaleString("en-US", { maximumFractionDigits: 8 }) : "—";
+const labels = {
+  BUY_NOW: "خرید فوری",
+  SELL_NOW: "فروش فوری",
+  CONDITIONAL_BUY: "خرید مشروط",
+  CONDITIONAL_SELL: "فروش مشروط",
+  WATCHLIST: "زیرنظر",
+  NO_QUALIFIED_SETUP: "بدون موقعیت معتبر",
+  MARKET_DATA_DEGRADED: "اختلال داده"
 };
-async function loadSignals() {
-  const output = $("signals");
+const direction = (value) => ({
+  BULLISH: "صعودی", BEARISH: "نزولی", RANGE: "خنثی / رنج"
+}[value] || value || "—");
+const sourceLabel = (value) => ({
+  BINANCE_VISION_KLINES: "Binance Vision",
+  OKX_PUBLIC_SWAP_CANDLE: "OKX Futures",
+  MEXC_FUTURES_15M: "MEXC Futures",
+  OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY: "OKX Spot، تبدیل مقیاس Proxy"
+}[value] || value);
+const cvdLabel = (value) => ({
+  KLINE_TAKER_BUY_PROXY: "Proxy حجم خرید کندل",
+  AGGTRADES_REAL: "AggTrades واقعی",
+  OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی OKX",
+  MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی MEXC",
+  OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی OKX Spot"
+}[value] || value || "—");
+const fmt = (value) => Number.isFinite(Number(value))
+  ? Number(value).toLocaleString("fa-IR")
+  : "—";
+
+function setStatus(text, kind) {
+  const el = $("status");
+  el.textContent = text;
+  el.className = "pill " + (kind || "muted");
+}
+
+function render(report) {
+  const rows = Array.isArray(report.signals) ? report.signals : [];
+  const count = (decision) => rows.filter((item) => item.decision === decision).length;
+  const generated = report.generated_at_utc ? new Date(report.generated_at_utc) : null;
+  const generatedText = generated && !Number.isNaN(generated.getTime())
+    ? generated.toLocaleString("fa-IR")
+    : "نامشخص";
+
+  $("summary").innerHTML = [
+    ["نمادهای بررسی‌شده", fmt(report.symbols_analyzed ?? rows.length)],
+    ["موقعیت‌های واجد شرایط", fmt(report.candidate_setups ?? 0)],
+    ["وضعیت کالیبراسیون", esc(report.calibration_status || "نامشخص")],
+    ["وضعیت EV", esc(report.ev_status || "نامشخص")]
+  ].map(([label, value]) =>
+    "<article><span>" + label + "</span><strong>" + value + "</strong></article>"
+  ).join("");
+
+  const calibrated = report.calibration_status === "CALIBRATED";
+  const evReady = report.ev_status === "CALCULATED";
+  const noteClass = report.status === "PASS" ? "notice good" : "notice";
+  const notices = [];
+  if (report.status !== "PASS") notices.push("دروازهٔ داده PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
+  if (!calibrated) notices.push("کالیبراسیون احتمال برد انجام نشده است؛ Tier A و اطمینان عددی صادر نمی‌شود.");
+  if (!evReady) notices.push("EV محاسبه نشده است؛ تا ثبت احتمال کالیبره و هزینهٔ واقعی، معاملهٔ اجرایی مجاز نیست.");
+  if (count("NO_QUALIFIED_SETUP") === rows.length && rows.length) {
+    notices.push("در این اسکن هیچ موقعیت واجد شرایطی پیدا نشد. آستانه‌ها برای تولید اجباری سیگنال کاهش داده نشده‌اند.");
+  }
+  $("notice").className = noteClass;
+  $("notice").textContent = notices.join(" ");
+
+  $("updated").textContent = "زمان تولید گزارش: " + generatedText +
+    " · " + (report.stage || "Stage 1b") + " · " + (report.engine || "LRT-15m");
+
+  $("sources").textContent = (report.data_sources || []).map(sourceLabel).join("، ") +
+    " · CVD: " + (report.cvd_sources || []).map(cvdLabel).join("، ");
+
+  if (!rows.length) {
+    $("signals").innerHTML = '<p class="empty">گزارش نمادها خالی است؛ دادهٔ نمونه نمایش داده نمی‌شود.</p>';
+    return;
+  }
+
+  $("signals").innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+    "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>سوگیری ۴ساعته</th>" +
+    "<th>سوگیری ۱ساعته</th><th>منبع CVD</th><th>تعداد کندل</th><th>اطمینان</th>" +
+    "</tr></thead><tbody>" +
+    rows.map((item) => {
+      const decision = item.decision || "MARKET_DATA_DEGRADED";
+      const css = decision === "BUY_NOW" || decision === "CONDITIONAL_BUY"
+        ? "buy" : decision === "SELL_NOW" || decision === "CONDITIONAL_SELL"
+          ? "sell" : "wait";
+      const bias = item.higher_timeframe_bias || {};
+      return "<tr>" +
+        '<td dir="ltr">' + esc(item.symbol) + "</td>" +
+        '<td><span class="tag ' + css + '">' + esc(labels[decision] || decision) + "</span></td>" +
+        "<td>" + esc(item.tier || "—") + "</td>" +
+        "<td>" + esc(direction(bias['4h_kumo'])) + "</td>" +
+        "<td>" + esc(direction(bias['1h_kijun'])) + "</td>" +
+        "<td>" + esc(cvdLabel(item.cvd_source || (item.cvd && item.cvd.source))) + "</td>" +
+        "<td>" + fmt(item.rows_available) + "</td>" +
+        "<td>" + esc(item.confidence || "NOT_CALIBRATED") + "</td>" +
+        "</tr>";
+    }).join("") +
+    "</tbody></table></div>";
+}
+
+async function loadReport() {
+  $("refresh").disabled = true;
+  setStatus("در حال دریافت…", "muted");
   try {
-    const response = await fetch(SIGNALS_URL + "?v=" + Date.now(), { cache: "no-store" });
+    const response = await fetch(REPORT_URL + "?v=" + Date.now(), { cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
-    const payload = await response.json();
-    const signals = (payload.trade_signals || payload.signals || []).filter((signal) =>
-      ["BUY_NOW", "SELL_NOW"].includes(signal.status) &&
-      signal.entry != null && signal.stop_loss != null &&
-      Array.isArray(signal.take_profit) && signal.take_profit.length >= 2
-    );
-    if (!signals.length) {
-      const message = payload.today_signal_message ||
-        (payload.pipeline_status === "DEGRADED" ? "دادهٔ کافی برای ارزیابی بازار در دسترس نیست" : "امروز سیگنال نیست");
-      output.innerHTML = '<p class="empty">' + esc(message) + '</p>';
-      return;
-    }
-    const coverageWarning = payload.pipeline_status === "DEGRADED" && payload.today_signal_message
-      ? '<p class="empty">' + esc(payload.today_signal_message) + '</p>'
-      : "";
-    output.innerHTML = coverageWarning + '<div class="table-wrap"><table><thead><tr>' +
-      "<th>نماد</th><th>جهت</th><th>Entry</th><th>Stop Loss</th><th>TP1</th><th>TP2</th>" +
-      "</tr></thead><tbody>" + signals.map((signal) =>
-        "<tr><td dir=\"ltr\">" + esc(signal.symbol) + "</td>" +
-        '<td class="' + (signal.side === "BUY" ? "buy" : "sell") + '">' +
-        (signal.side === "BUY" ? "خرید" : "فروش") + "</td>" +
-        "<td dir=\"ltr\">" + number(signal.entry) + "</td>" +
-        "<td dir=\"ltr\">" + number(signal.stop_loss) + "</td>" +
-        "<td dir=\"ltr\">" + number(signal.take_profit[0]) + "</td>" +
-        "<td dir=\"ltr\">" + number(signal.take_profit[1]) + "</td></tr>"
-      ).join("") + "</tbody></table></div>";
+    const report = await response.json();
+    render(report);
+    setStatus(report.status === "PASS" ? "داده: PASS" : "داده: نیازمند بررسی", report.status === "PASS" ? "ok" : "muted");
   } catch (error) {
-    output.innerHTML = '<p class="empty">دادهٔ سیگنال فعلاً در دسترس نیست.</p>';
+    $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
+    $("notice").textContent = "داده دریافت نشد؛ هیچ سیگنال قدیمی یا ساختگی جایگزین نمی‌شود.";
+    setStatus("عدم دسترسی به داده", "bad");
+  } finally {
+    $("refresh").disabled = false;
   }
 }
-$("refresh").addEventListener("click", loadSignals);
-loadSignals();
-window.setInterval(loadSignals, 60000);
+
+$("refresh").addEventListener("click", loadReport);
+loadReport();
+window.setInterval(loadReport, 60000);
