@@ -163,6 +163,64 @@ def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int,
     return grouped
 
 
+def parse_mexc_futures_klines(payload: bytes, detail_payload: bytes,
+                                start_ms: int, end_ms: int,
+                                contract_symbol: str) -> dict[int, dict[str, Any]]:
+    """تبدیل کندل Futures عمومی MEXC با ضریب قرارداد واقعی."""
+    detail = json.loads(detail_payload.decode("utf-8"))
+    if not detail.get("success") or detail.get("code") != 0:
+        raise ArchiveError(f"MEXC_DETAIL_ERROR:{str(detail)[:200]}")
+    contract = next((x for x in detail.get("data", [])
+                     if x.get("symbol") == contract_symbol), None)
+    if contract is None:
+        raise ArchiveError(f"MEXC_CONTRACT_NOT_LISTED:{contract_symbol}")
+    contract_size = float(contract.get("contractSize", 0))
+    if contract_size <= 0:
+        raise ArchiveError(f"MEXC_INVALID_CONTRACT_SIZE:{contract_symbol}")
+    raw = json.loads(payload.decode("utf-8"))
+    if not raw.get("success") or raw.get("code") != 0:
+        raise ArchiveError(f"MEXC_KLINE_ERROR:{str(raw)[:200]}")
+    data = raw.get("data") or {}
+    output: dict[int, dict[str, Any]] = {}
+    keys = ("time", "open", "close", "high", "low", "vol", "amount")
+    if any(key not in data for key in keys):
+        raise ArchiveError("MEXC_KLINE_FIELDS_MISSING")
+    for values in zip(*(data[key] for key in keys)):
+        ts = int(values[0]) * 1000
+        if not start_ms <= ts < end_ms:
+            continue
+        base_volume = float(values[5]) * contract_size
+        quote_volume = float(values[6])
+        output[ts] = {
+            "open": float(values[1]), "high": float(values[3]),
+            "low": float(values[4]), "close": float(values[2]),
+            "volume": base_volume, "quote_volume": quote_volume,
+            "trades": 0.0, "taker_buy_base": base_volume * 0.5,
+            "taker_buy_quote": quote_volume * 0.5,
+            "data_source": "MEXC_FUTURES_15M",
+            "cvd_source": "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+        }
+    return output
+
+
+def fetch_mexc_futures_15m(symbol: str, start_ms: int, end_ms: int) -> tuple[dict[int, dict[str, Any]], str]:
+    base = symbol[:-4] if symbol.endswith("USDT") else symbol
+    contract_symbol = f"{base}_USDT"
+    detail_url = "https://contract.mexc.com/api/v1/contract/detail"
+    detail_status, detail_payload = request_bytes(detail_url, "GET")
+    if detail_status != 200:
+        return {}, f"DETAIL_HTTP_{detail_status}"
+    query = urllib.parse.urlencode({
+        "interval": "Min15", "start": start_ms // 1000, "end": end_ms // 1000,
+    })
+    url = f"https://contract.mexc.com/api/v1/contract/kline/{contract_symbol}?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"KLINE_HTTP_{status}"
+    rows = parse_mexc_futures_klines(payload, detail_payload, start_ms, end_ms, contract_symbol)
+    return rows, "200" if rows else "NO_MATCHING_CANDLES"
+
+
 def parse_bybit_klines(payload: bytes, start_ms: int, end_ms: int,
                        category: str) -> dict[int, dict[str, Any]]:
     """تبدیل کندل عمومی Bybit؛ نبود دادهٔ taker-buy با Proxy خنثی ثبت می‌شود."""
@@ -516,6 +574,23 @@ async def download_symbol(symbol: str, start: date, end: date,
                     events.append({"archive": f"BYBIT_{category.upper()}_15M_{day:%Y-%m-%d}",
                                    "status": f"GAP_REPAIR_BYBIT_{category.upper()}_ERROR:{type(exc).__name__}:{exc}",
                                    "rows_in_archive": "0", "rows_added": "0"})
+
+        # آخرین منبع مستقل: MEXC Futures عمومی، فقط با ضریب قرارداد تأییدشده.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            try:
+                mexc_bars, mexc_status = await asyncio.to_thread(
+                    fetch_mexc_futures_15m, symbol, day_start, day_end
+                )
+                added_mexc = sum(1 for ts in mexc_bars if ts not in bars)
+                bars.update(mexc_bars)
+                events.append({"archive": f"MEXC_FUTURES_15M_{day:%Y-%m-%d}",
+                               "status": "GAP_REPAIR_MEXC_FUTURES_OK" if mexc_bars else f"GAP_REPAIR_MEXC_FUTURES_{mexc_status}",
+                               "rows_in_archive": str(len(mexc_bars)), "rows_added": str(added_mexc)})
+            except Exception as exc:
+                events.append({"archive": f"MEXC_FUTURES_15M_{day:%Y-%m-%d}",
+                               "status": f"GAP_REPAIR_MEXC_FUTURES_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
 
     timestamps = sorted(bars)
     expected = (end_ms - start_ms) // INTERVAL_MS
