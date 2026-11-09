@@ -10,6 +10,13 @@ from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
 
+def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
+    return {
+        "open_time": ts, "open": open_, "high": high, "low": low,
+        "close": close, "volume": volume, "taker_buy_base": buy,
+    }
+
+
 class LiveSignalBotTests(unittest.TestCase):
     def test_open_candle_is_excluded_by_close_time_rule(self):
         now_ms = 1_800_000_000_000
@@ -87,7 +94,7 @@ class LiveSignalBotTests(unittest.TestCase):
         # With fewer than 30 bars the cross component correctly remains false.
         score, parts = calculate_confluence(result, rows, "BUY")
         self.assertLessEqual(score, 80)
-        self.assertFalse(parts["tenkan_kijun_cross"])
+        self.assertFalse(parts["tenkan_kijun_cross_10"])
 
 
     def test_ccxt_short_pages_are_paginated_until_history_requirement_is_met(self):
