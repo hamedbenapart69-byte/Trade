@@ -31,6 +31,24 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bars[ts]["taker_buy_base"], 7.25)
         self.assertEqual(bars[ts]["taker_buy_quote"], 742.0)
 
+    def test_parses_okx_swap_candle_and_marks_cvd_as_proxy(self):
+        ts = 1_798_156_800_000
+        payload = {
+            "code": "0",
+            "msg": "",
+            "data": [[str(ts), "100", "105", "99", "103", "12", "12.5",
+                      "1280", "1"]],
+        }
+        bars = downloader.parse_okx_history_candles(
+            json.dumps(payload).encode("utf-8"), ts, ts + 900_000
+        )
+        self.assertEqual(list(bars), [ts])
+        self.assertEqual(bars[ts]["volume"], 12.5)
+        self.assertEqual(bars[ts]["quote_volume"], 1280.0)
+        self.assertEqual(bars[ts]["taker_buy_base"], 6.25)
+        self.assertEqual(bars[ts]["data_source"], "OKX_PUBLIC_SWAP_CANDLE")
+        self.assertEqual(bars[ts]["cvd_source"], "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+
     def test_rebuilds_ohlcv_and_taker_buy_from_aggtrades(self):
         rows = [
             ["1", "100", "2", "1", "1", "1000", "false", "true"],
