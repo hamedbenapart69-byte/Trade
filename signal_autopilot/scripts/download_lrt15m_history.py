@@ -405,6 +405,49 @@ async def download_symbol(symbol: str, start: date, end: date,
                 events.append({"archive": name5, "status": f"GAP_REPAIR_5M_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
 
+        # مسیر نهایی در همان منبع: تجمیع 15 کندل 1m معتبر به یک کندل 15m.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            name1 = f"{symbol}-1m-{day:%Y-%m-%d}.zip"
+            url1 = f"{BASE}/data/futures/um/daily/klines/{symbol}/1m/{name1}"
+            try:
+                payload1, status1 = await asyncio.to_thread(head_get, url1)
+                if payload1 is None:
+                    events.append({"archive": name1, "status": f"GAP_REPAIR_1M_{status1}",
+                                   "rows_in_archive": "0", "rows_added": "0"})
+                else:
+                    one = parse_zip(payload1, day_start, day_end)
+                    grouped1: dict[int, list[tuple[int, dict[str, float]]]] = {}
+                    for ts1, row1 in one.items():
+                        bucket = (ts1 // INTERVAL_MS) * INTERVAL_MS
+                        grouped1.setdefault(bucket, []).append((ts1, row1))
+                    added1 = 0
+                    for bucket, rows1 in grouped1.items():
+                        rows1.sort(key=lambda item: item[0])
+                        expected_1m = list(range(bucket, bucket + INTERVAL_MS, 60_000))
+                        if [item[0] for item in rows1] != expected_1m or bucket in bars:
+                            continue
+                        values = [item[1] for item in rows1]
+                        bars[bucket] = {
+                            "open": values[0]["open"],
+                            "high": max(x["high"] for x in values),
+                            "low": min(x["low"] for x in values),
+                            "close": values[-1]["close"],
+                            "volume": sum(x["volume"] for x in values),
+                            "quote_volume": sum(x["quote_volume"] for x in values),
+                            "trades": sum(x["trades"] for x in values),
+                            "taker_buy_base": sum(x["taker_buy_base"] for x in values),
+                            "taker_buy_quote": sum(x["taker_buy_quote"] for x in values),
+                            "data_source": "BINANCE_VISION_1M_AGGREGATED",
+                            "cvd_source": "BINANCE_1M_TAKER_BUY_AGGREGATED",
+                        }
+                        added1 += 1
+                    events.append({"archive": name1, "status": "GAP_REPAIR_1M_AGGREGATED",
+                                   "rows_in_archive": str(len(one)), "rows_added": str(added1)})
+            except Exception as exc:
+                events.append({"archive": name1, "status": f"GAP_REPAIR_1M_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
     timestamps = sorted(bars)
     expected = (end_ms - start_ms) // INTERVAL_MS
     missing_after_repair = [ts for ts in range(start_ms, end_ms, INTERVAL_MS) if ts not in bars]
