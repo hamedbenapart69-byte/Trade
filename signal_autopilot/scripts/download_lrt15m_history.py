@@ -405,7 +405,22 @@ def month_end(month: date) -> date:
                 1 if month.month == 12 else month.month + 1, 1)
 
 
-async def download_symbol(symbol: str, start: date, end: date,
+async def build_parquet_records(bars: dict[int, dict[str, Any]],
+                           timestamps: list[int]) -> list[dict[str, Any]]:
+    """متادیتای منبع را برای تمام ردیف‌ها نگه می‌دارد تا schema حذفش نکند."""
+    records = []
+    for ts in timestamps:
+        bar = bars[ts]
+        records.append({
+            "open_time": ts,
+            "data_source": bar.get("data_source", "BINANCE_VISION_KLINES"),
+            "cvd_source": bar.get("cvd_source", "BINANCE_KLINE_TAKER_BUY_PROXY"),
+            **bar,
+        })
+    return records
+
+
+def download_symbol(symbol: str, start: date, end: date,
                           outdir: Path, semaphore: asyncio.Semaphore) -> dict[str, Any]:
     start_ms = int(datetime.combine(start, datetime.min.time(), timezone.utc).timestamp() * 1000)
     end_ms = int(datetime.combine(end, datetime.min.time(), timezone.utc).timestamp() * 1000)
@@ -684,7 +699,7 @@ async def download_symbol(symbol: str, start: date, end: date,
         try:
             import pyarrow as pa
             import pyarrow.parquet as pq
-            records = [{"open_time": ts, **bars[ts]} for ts in timestamps]
+            records = build_parquet_records(bars, timestamps)
             table = pa.Table.from_pylist(records)
             outdir.mkdir(parents=True, exist_ok=True)
             target = outdir / f"{symbol}_15m_{start}_{end}.parquet"
