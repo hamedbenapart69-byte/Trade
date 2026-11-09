@@ -265,6 +265,44 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
     listing_map = await asyncio.to_thread(fetch_exchange_info)
     candidates = [s for s in symbols if s in listing_map and
                   date.fromisoformat(listing_map[s]["listing_date"]) <= start]
+    if len(candidates) < 40:
+        # Fail cheap: وقتی سقف ممکن از ۴۰ کمتر است، آرشیوها را بی‌دلیل دانلود نکن.
+        precheck_rows = []
+        for symbol in symbols:
+            meta = listing_map.get(symbol)
+            eligible = bool(meta and date.fromisoformat(meta["listing_date"]) <= start)
+            precheck_rows.append({
+                "symbol": symbol,
+                "listing_date": meta.get("listing_date") if meta else None,
+                "exchange_status": meta.get("status") if meta else None,
+                "archive_status": "NOT_CHECKED_PREVALIDATION_BELOW_40" if eligible else (
+                    "EXCLUDED_LISTED_AFTER_WINDOW_START" if meta else "NOT_IN_EXCHANGE_INFO"
+                ),
+                "rows": None, "continuity": False,
+                "reason": "PREVALIDATION_FAIL_BELOW_40; no archive requests issued",
+            })
+        report = {
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "source": "BINANCE_FUTURES_EXCHANGEINFO_ONBOARDDATE_SNAPSHOT",
+            "start_utc": f"{start.isoformat()}T00:00:00+00:00",
+            "end_exclusive_utc": f"{end.isoformat()}T00:00:00+00:00",
+            "expected_rows_per_symbol": (end-start).days * 24,
+            "symbols_before_filter": len(symbols),
+            "symbols_after_listing_filter": len(candidates),
+            "symbols_processed": len(symbols), "symbols_full_history": 0,
+            "maximum_possible_full_history_symbols": len(candidates),
+            "minimum_full_history_symbols": 40,
+            "stage1a_extended_status": "FAIL",
+            "failure_reason": f"Only {len(candidates)} of {len(symbols)} symbols were listed by {start.isoformat()}; threshold is 40",
+            "archive_requests_issued": 0,
+            "parallelism": 5, "head_before_get": True,
+            "retry_policy": "3 attempts only for transient 5xx/timeout/408/425/429; no 404 retry",
+            "symbols": precheck_rows,
+        }
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps({k:v for k,v in report.items() if k != "symbols"}, ensure_ascii=False, indent=2))
+        return report
     results: list[dict[str, Any]] = []
     semaphore = asyncio.Semaphore(5)
     # ترتیب ثابت، هم‌زمانی محدود به پنج نماد.
