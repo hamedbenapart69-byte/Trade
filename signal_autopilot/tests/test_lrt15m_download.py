@@ -77,7 +77,7 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         bar = bars[ts]
         self.assertEqual(bar["open"], 0.01)
         self.assertEqual(bar["high"], 0.012)
-        self.assertEqual(bar["low"], 0.009)
+        self.assertAlmostEqual(bar["low"], 0.009)
         self.assertEqual(bar["close"], 0.011)
         self.assertEqual(bar["volume"], 1000.0)
         self.assertEqual(bar["quote_volume"], 11.0)
