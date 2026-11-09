@@ -169,6 +169,19 @@ def _bias_1h(bars_1h: list[dict[str, float]]) -> tuple[str, dict[str, float | No
     return ("BULLISH" if close > kijun else "BEARISH"), values
 
 
+def higher_timeframe_gate(direction: str, bias4: str, bias1: str) -> tuple[bool, str]:
+    """Bias مخالف یا نامشخص فقط WATCHLIST می‌دهد، نه BUY_NOW/SELL_NOW."""
+    expected = "BULLISH" if direction == "BUY" else "BEARISH"
+    opposite = "BEARISH" if direction == "BUY" else "BULLISH"
+    if bias4 == opposite:
+        return False, "WATCHLIST_4H_KUMO_OPPOSITE"
+    if bias1 == opposite:
+        return False, "WATCHLIST_1H_KIJUN_OPPOSITE"
+    if bias4 == expected and bias1 == expected:
+        return True, "BIAS_CONFIRMED"
+    return False, "WATCHLIST_HIGHER_TF_BIAS_INCOMPLETE"
+
+
 def _score(parts: dict[str, float]) -> float:
     return round(sum(parts[name] * weight for name, weight in LFS_WEIGHTS.items()), 4)
 
@@ -214,7 +227,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         sweep_ok = sweep["bullish"] if bullish else sweep["bearish"]
         ob_ok = detect_order_block(bars, direction, atr_value)
         fvg_ok = detect_fvg(bars, direction)
-        bias_ok = bias4 == ("BULLISH" if bullish else "BEARISH") and bias1 == ("BULLISH" if bullish else "BEARISH")
+        bias_ok, bias_gate = higher_timeframe_gate(direction, bias4, bias1)
         cvd_ok = cvd_sign == direction
         minimum_score = MIN_LFS_SCORE_REAL_CVD if cvd_source == "AGGTRADES_REAL" else MIN_LFS_SCORE_PROXY_CVD
         parts = {
@@ -225,7 +238,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
             "cvd": 1.0 if cvd_ok else 0.0,
         }
         score = _score(parts)
-        trigger = sweep_ok and (ob_ok or fvg_ok) and bias_ok and cvd_ok and score >= minimum_score
+        trigger = sweep_ok and (ob_ok or fvg_ok) and cvd_ok and score >= minimum_score
         if trigger:
             entry = float(current["close"])
             if bullish:
@@ -243,6 +256,8 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                     "entry": round(entry, 10), "stop_loss": round(stop, 10),
                     "take_profit": round(target, 10), "rr": 2.0,
                     "lfs_score": score, "lfs_components": parts,
+                    "higher_timeframe_bias_confirmed": bias_ok,
+                    "higher_timeframe_gate": bias_gate,
                     "hypothesis": f"{direction} liquidity sweep + OB/FVG retest with 4H Kumo and 1H Kijun confirmation",
                     "falsification": "15m close beyond stop-loss or loss of aligned 4H Kumo / 1H Kijun bias",
                     "confidence": "NOT_CALIBRATED", "brier_score": "NOT_CALIBRATED",
