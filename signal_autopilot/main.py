@@ -250,7 +250,7 @@ def main() -> int:
 
             processed += 1
             candidates += 1
-            tracker.upsert(signal)
+            tracker.upsert({key: value for key, value in signal.items() if key != "chart_path"})
             chart_path = signal.pop("chart_path")
             if telegram_ready and send_signal_to_telegram(signal, chart_path):
                 sent += 1
