@@ -17,7 +17,12 @@ from typing import Any
 BASE = "https://data.binance.vision"
 EXCHANGE_INFO_URLS = [
     "https://fapi.binance.com/fapi/v1/exchangeInfo",
-    # fallback عمومی وب‌سایت Binance؛ فقط اگر schema دارای onboardDate باشد پذیرفته می‌شود.
+    # میزبان‌های جایگزین همان API؛ فقط پاسخ واقعی Binance با onboardDate پذیرفته می‌شود.
+    "https://fapi1.binance.com/fapi/v1/exchangeInfo",
+    "https://fapi2.binance.com/fapi/v1/exchangeInfo",
+    "https://fapi3.binance.com/fapi/v1/exchangeInfo",
+    "https://fapi4.binance.com/fapi/v1/exchangeInfo",
+    # fallback وب‌سایت؛ فقط در صورت بازگشت schema معتبر.
     "https://www.binance.com/bapi/futures/v1/public/future/common/get-exchange-info",
 ]
 HOUR_MS = 3_600_000
