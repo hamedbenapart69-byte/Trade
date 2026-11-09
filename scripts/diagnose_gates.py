@@ -86,11 +86,11 @@ def _unavailable(symbol: str, reason: str) -> dict[str, Any]:
         "gates": {
             "g1_bias_4h": {
                 "status": "DATA_UNAVAILABLE", "value": "UNKNOWN",
-                "kumo_position": "INSIDE", "reason": reason,
+                "kumo_position": None, "reason": reason,
             },
             "g2_bias_1h": {
                 "status": "DATA_UNAVAILABLE", "value": "UNKNOWN",
-                "kijun_position": "BELOW", "reason": reason,
+                "kijun_position": None, "reason": reason,
             },
             "g3_lfs": {
                 "status": "DATA_UNAVAILABLE", "score": None,
@@ -185,7 +185,7 @@ def _diagnose_direction(
         },
         "g5_tenkan_kijun_cross": {
             "status": "PASS" if cross else "FAIL",
-            "cross_type": direction if cross else "NONE",
+            "cross_type": ("BULLISH" if direction == "BUY" else "BEARISH") if cross else "NONE",
             "candles_ago": candles_ago,
             "reason": None if cross else "NO_CROSS_IN_LAST_3",
         },
@@ -257,8 +257,16 @@ def diagnose_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> dict[str, Any]:
     pass_count = selected["pass_count"]
     confluence = round((pass_count / len(GATE_KEYS)) * 100)
     failures = [key for key in GATE_KEYS if gates[key]["status"] == "FAIL"]
-    primary = failures[0].upper() if failures else "NONE"
-    decision = "WATCHLIST" if confluence > 80 else "MONITORING" if pass_count else "NO_TRADE"
+    rejection_codes = {
+        "g1_bias_4h": "G1_BIAS_4H_NOT_ALIGNED",
+        "g2_bias_1h": "G2_BIAS_1H_NOT_ALIGNED",
+        "g3_lfs": "G3_LFS_BELOW_THRESHOLD",
+        "g4_sweep": "G4_NO_SWEEP_DETECTED",
+        "g5_tenkan_kijun_cross": "G5_NO_CROSS_IN_LAST_3",
+        "g6_zone_reaction": "G6_PRICE_NOT_IN_ZONE",
+    }
+    primary = rejection_codes[failures[0]] if failures else "NONE"
+    decision = "WATCHLIST" if pass_count == len(GATE_KEYS) else "MONITORING" if pass_count else "NO_TRADE"
 
     return {
         "symbol": symbol,
@@ -283,21 +291,19 @@ def build_summary(results: list[dict[str, Any]]) -> str:
             f"{counter['FAIL']} FAIL / {counter['DATA_UNAVAILABLE']} UNAVAILABLE"
         )
 
-    rejected = Counter(
-        item["primary_rejection_gate"]
-        for item in results
-        if item["primary_rejection_gate"] not in {"NONE", "DATA_UNAVAILABLE"}
-    )
-    if rejected:
-        highest = max(rejected.items(), key=lambda pair: pair[1])
-        lowest = min(rejected.items(), key=lambda pair: pair[1])
+    failure_counts = {key: counts[key]["FAIL"] for key in GATE_KEYS}
+    if any(failure_counts.values()):
+        highest_count = max(failure_counts.values())
+        lowest_count = min(failure_counts.values())
+        highest_gates = [GATE_LABELS[key] for key, value in failure_counts.items() if value == highest_count]
+        lowest_gates = [GATE_LABELS[key] for key, value in failure_counts.items() if value == lowest_count]
         lines.extend([
             "",
-            f"بیشترین علت رد: {highest[0]} — {highest[1]} نماد",
-            f"کمترین علت رد: {lowest[0]} — {lowest[1]} نماد",
+            f"بیشترین علت رد: {', '.join(highest_gates)} — {highest_count} نماد",
+            f"کمترین علت رد: {', '.join(lowest_gates)} — {lowest_count} نماد",
         ])
     else:
-        lines.extend(["", "علت رد غالب: قابل تعیین نیست؛ هیچ Gate ردکننده ثبت نشده است."])
+        lines.extend(["", "هیچ Gateای FAIL نشده است."])
 
     lines.extend([
         "",
