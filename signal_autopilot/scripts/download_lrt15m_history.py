@@ -351,6 +351,65 @@ def fetch_okx_history_15m(symbol: str, start_ms: int, end_ms: int) -> tuple[dict
     return rows, "200" if rows else "NO_MATCHING_CANDLES"
 
 
+def parse_mexc_contract_candles(
+    payload: bytes, start_ms: int, end_ms: int, price_scale: float = 1.0
+) -> dict[int, dict[str, Any]]:
+    """کندل‌های عمومی MEXC؛ تبدیل صریح واحد و CVD خنثی به‌عنوان Proxy."""
+    raw = json.loads(payload.decode("utf-8"))
+    if not isinstance(raw, dict) or raw.get("success") is not True:
+        raise ArchiveError(f"MEXC_API_ERROR:{str(raw)[:200]}")
+    data = raw.get("data") or {}
+    fields = ("time", "open", "high", "low", "close", "vol", "amount")
+    if any(not isinstance(data.get(key), list) for key in fields):
+        raise ArchiveError("MEXC_CANDLE_SCHEMA_INVALID")
+    lengths = {len(data[key]) for key in fields}
+    if len(lengths) != 1:
+        raise ArchiveError("MEXC_CANDLE_ARRAY_LENGTH_MISMATCH")
+    output: dict[int, dict[str, Any]] = {}
+    for i, timestamp in enumerate(data["time"]):
+        ts = int(timestamp) * 1000
+        if not start_ms <= ts < end_ms:
+            continue
+        base_volume = float(data["vol"][i]) / price_scale
+        quote_volume = float(data["amount"][i])
+        output[ts] = {
+            "open": float(data["open"][i]) * price_scale,
+            "high": float(data["high"][i]) * price_scale,
+            "low": float(data["low"][i]) * price_scale,
+            "close": float(data["close"][i]) * price_scale,
+            "volume": base_volume, "quote_volume": quote_volume,
+            "trades": 0.0,
+            "taker_buy_base": base_volume * 0.5,
+            "taker_buy_quote": quote_volume * 0.5,
+            "data_source": "MEXC_PUBLIC_CONTRACT_CANDLE",
+            "cvd_source": "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+        }
+    return output
+
+
+def fetch_mexc_history_15m(
+    symbol: str, start_ms: int, end_ms: int
+) -> tuple[dict[int, dict[str, Any]], str]:
+    # قرارداد PEPE در MEXC برحسب PEPE است؛ نماد Binance با ضریب 1000 قیمت‌گذاری می‌شود.
+    contract_map = {
+        "HOTUSDT": ("HOT_USDT", 1.0),
+        "1000PEPEUSDT": ("PEPE_USDT", 1000.0),
+    }
+    contract, price_scale = contract_map.get(
+        symbol, (f"{symbol[:-4]}_USDT" if symbol.endswith("USDT") else symbol, 1.0)
+    )
+    query = urllib.parse.urlencode({
+        "interval": "Min15", "start": start_ms // 1000,
+        "end": (end_ms - 1) // 1000,
+    })
+    url = f"https://contract.mexc.com/api/v1/contract/kline/{contract}?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"HTTP_{status}"
+    rows = parse_mexc_contract_candles(payload, start_ms, end_ms, price_scale)
+    return rows, "200" if rows else "NO_MATCHING_CANDLES"
+
+
 def parse_binance_rest_klines(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
     """تبدیل کندل‌های عمومی Futures REST به ساختار یکسان Parquet."""
     raw = json.loads(payload.decode("utf-8"))
@@ -550,6 +609,23 @@ async def download_symbol(symbol: str, start: date, end: date,
             except Exception as exc:
                 events.append({"archive": f"OKX_SWAP_15M_{day:%Y-%m-%d}",
                                "status": f"GAP_REPAIR_OKX_REST_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
+        # مسیر چهارم: MEXC برای قراردادهایی که در OKX فهرست نشده‌اند.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            try:
+                mexc_bars, mexc_status = await asyncio.to_thread(
+                    fetch_mexc_history_15m, symbol, day_start, day_end
+                )
+                added_mexc = sum(1 for ts in mexc_bars if ts not in bars)
+                bars.update(mexc_bars)
+                events.append({"archive": f"MEXC_CONTRACT_15M_{symbol}_{day:%Y-%m-%d}",
+                               "status": "GAP_REPAIR_MEXC_REST_OK" if mexc_bars else f"GAP_REPAIR_MEXC_REST_{mexc_status}",
+                               "rows_in_archive": str(len(mexc_bars)), "rows_added": str(added_mexc)})
+            except Exception as exc:
+                events.append({"archive": f"MEXC_CONTRACT_15M_{symbol}_{day:%Y-%m-%d}",
+                               "status": f"GAP_REPAIR_MEXC_REST_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
 
         # اگر منابع دیگر کافی نبودند، سه کندل 5m را به یک کندل 15m تبدیل کن.
