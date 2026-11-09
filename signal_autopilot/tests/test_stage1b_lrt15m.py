@@ -71,6 +71,21 @@ class LRT15mTests(unittest.TestCase):
         self.assertIn("NOT_CALCULATED", result["ev"])
         self.assertIn(result["decision"], {"WATCHLIST", "NO_QUALIFIED_SETUP"})
 
+    def test_okx_source_metadata_survives_engine_and_neutralizes_cvd(self):
+        bars = []
+        for i in range(1400):
+            base = 100 + i * 0.01
+            bars.append({
+                **candle(i * 900000, base, base + 0.5, base - 0.5,
+                         base + 0.1, volume=100, buy=50),
+                "data_source": "OKX_PUBLIC_SWAP_CANDLE",
+                "cvd_source": "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+            })
+        result = engine.analyze_symbol("BTCUSDT", bars)
+        self.assertIn("OKX_PUBLIC_SWAP_CANDLE", result["data_sources"])
+        self.assertEqual(result["cvd_source"], "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+        self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
+
     def test_short_history_is_not_qualified(self):
         result = engine.analyze_symbol("BTCUSDT", [candle(i * 900000, 1, 2, 0.5, 1) for i in range(100)])
         self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
