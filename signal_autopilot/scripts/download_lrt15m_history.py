@@ -144,6 +144,22 @@ async def download_symbol(symbol: str, start: date, end: date,
                 except Exception as exc:
                     events.append({"archive": name, "status": f"DAILY_ERROR:{type(exc).__name__}:{exc}"})
 
+    # ماه انتهایی در months_between عمداً وارد نمی‌شود؛ daily آرشیو آن را جداگانه می‌گیریم.
+    if end.day > 1:
+        partial_month_start = max(date(end.year, end.month, 1), start)
+        for day in days_between(partial_month_start, end):
+            name = f"{symbol}-{INTERVAL}-{day:%Y-%m-%d}.zip"
+            url = f"{BASE}/data/futures/um/daily/klines/{symbol}/{INTERVAL}/{name}"
+            try:
+                payload, status = await asyncio.to_thread(head_get, url)
+                if payload is None:
+                    events.append({"archive": name, "status": f"DAILY_{status}"})
+                    continue
+                bars.update(parse_zip(payload, start_ms, end_ms))
+                events.append({"archive": name, "status": "DAILY_OK"})
+            except Exception as exc:
+                events.append({"archive": name, "status": f"DAILY_ERROR:{type(exc).__name__}:{exc}"})
+
     timestamps = sorted(bars)
     gaps = sum(1 for a, b in zip(timestamps, timestamps[1:]) if b - a != INTERVAL_MS)
     expected = (end_ms - start_ms) // INTERVAL_MS
