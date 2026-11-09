@@ -15,8 +15,11 @@
 10. URL واقعی را در GitHub Repository Variables با نام `DASHBOARD_URL` ثبت کنید و دسترسی URL را از شبکهٔ واقعی خود در ایران آزمایش کنید. تا قبل از این آزمایش، دسترسی از ایران تأییدشده نیست.
 
 ## منابع داده
-- [signals.json](https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/signals.json)
-- [history.csv](https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/history.csv)
+- [گزارش فعلی LRT-15m](https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_signals.json)
+- [تاریخچه اسکن‌های LRT-15m](https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_history.csv) (پس از اولین انتشار خودکار ساخته می‌شود)
+- [signals.json و history.csv](https://github.com/hamedbenapart69-byte/Trade/tree/signals) متعلق به خط لولهٔ قدیمی‌تر هستند و با موتور LRT ادغام نمی‌شوند.
+
+اسکن Stage 1b از شاخهٔ اصلی، هر ۴ ساعت زمان‌بندی شده است؛ کد موتور از شاخهٔ stage1b-lrt15m و داده‌ها از منابع عمومی بازار خوانده می‌شوند.
 
 ## پذیرش
 Cloudflare Deploy به‌تنهایی PASS نیست. باید URL واقعی باز شود، دادهٔ واقعی از شاخهٔ `signals` بارگذاری شود و دسترسی از شبکهٔ هدف بررسی شود. در نبود فرصت معتبر، صفحه باید وضعیت `NO_QUALIFIED_SETUP` را نشان دهد؛ هیچ معاملهٔ نمونه‌ای در رابط قرار داده نشده است.
