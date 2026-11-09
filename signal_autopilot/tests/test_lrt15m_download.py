@@ -1,5 +1,8 @@
+import csv
+import io
 import json
 import sys
+import zipfile
 import unittest
 from pathlib import Path
 
@@ -27,6 +30,30 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bars[ts]["trades"], 42.0)
         self.assertEqual(bars[ts]["taker_buy_base"], 7.25)
         self.assertEqual(bars[ts]["taker_buy_quote"], 742.0)
+
+    def test_rebuilds_ohlcv_and_taker_buy_from_aggtrades(self):
+        rows = [
+            ["1", "100", "2", "1", "1", "1000", "false", "true"],
+            ["2", "101", "1", "2", "2", "2000", "true", "true"],
+        ]
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerows(rows)
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("aggTrades.csv", csv_buffer.getvalue())
+        bars = downloader.parse_aggtrades_zip(zip_buffer.getvalue(), 0, 900_000)
+        self.assertEqual(len(bars), 1)
+        bar = bars[0]
+        self.assertEqual(bar["open"], 100.0)
+        self.assertEqual(bar["high"], 101.0)
+        self.assertEqual(bar["low"], 100.0)
+        self.assertEqual(bar["close"], 101.0)
+        self.assertEqual(bar["volume"], 3.0)
+        self.assertEqual(bar["quote_volume"], 301.0)
+        self.assertEqual(bar["trades"], 2.0)
+        self.assertEqual(bar["taker_buy_base"], 2.0)
+        self.assertEqual(bar["taker_buy_quote"], 200.0)
 
     def test_rejects_non_list_api_error_payload(self):
         with self.assertRaises(downloader.ArchiveError):
