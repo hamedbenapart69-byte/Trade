@@ -31,6 +31,23 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bars[ts]["taker_buy_base"], 7.25)
         self.assertEqual(bars[ts]["taker_buy_quote"], 742.0)
 
+    def test_parquet_records_preserve_source_metadata_for_every_row(self):
+        bars = {
+            0: {"open": 1, "high": 2, "low": 0.5, "close": 1.5,
+                "volume": 10, "quote_volume": 15, "trades": 3,
+                "taker_buy_base": 5, "taker_buy_quote": 7.5},
+            900_000: {"open": 1.5, "high": 2, "low": 1, "close": 1.8,
+                      "volume": 20, "quote_volume": 30, "trades": 4,
+                      "taker_buy_base": 10, "taker_buy_quote": 15,
+                      "data_source": "OKX_PUBLIC_SWAP_CANDLE",
+                      "cvd_source": "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"},
+        }
+        records = downloader.build_parquet_records(bars, [0, 900_000])
+        self.assertEqual(records[0]["data_source"], "BINANCE_VISION_KLINES")
+        self.assertEqual(records[0]["cvd_source"], "BINANCE_KLINE_TAKER_BUY_PROXY")
+        self.assertEqual(records[1]["data_source"], "OKX_PUBLIC_SWAP_CANDLE")
+        self.assertEqual(records[1]["cvd_source"], "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+
     def test_aggregates_exactly_15_one_minute_bars_to_one_15m_bar(self):
         one = {}
         for i in range(15):
