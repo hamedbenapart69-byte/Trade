@@ -1,0 +1,88 @@
+name: P0 LRT Gate Diagnostics
+
+on:
+  push:
+    branches:
+      - diagnostics/gates-report-p0
+    paths:
+      - "scripts/diagnose_gates.py"
+      - ".github/workflows/diagnose-gates-p0.yml"
+      - "config/universe.json"
+      - "signal_autopilot/modules/lrt15m_engine.py"
+      - "signal_autopilot/modules/live_data_adapter.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-lrt-gate-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+        with:
+          ref: diagnostics/gates-report-p0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install public market-data dependencies
+        run: python -m pip install --disable-pip-version-check -r signal_autopilot/requirements.txt
+
+      - name: Validate diagnostic script syntax
+        run: python -m py_compile scripts/diagnose_gates.py
+
+      - name: Run six-gate diagnosis on all 27 symbols
+        run: |
+          python scripts/diagnose_gates.py \
+            --universe config/universe.json \
+            --output diagnostics/gates_report.json \
+            --summary diagnostics/summary.txt \
+            --limit 1500
+
+      - name: Validate report completeness and schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("diagnostics/gates_report.json").read_text(encoding="utf-8"))
+          assert report["universe_count"] == 27
+          assert report["symbols_analyzed"] == 27
+          assert len(report["results"]) == 27
+          required = {
+              "g1_bias_4h", "g2_bias_1h", "g3_lfs",
+              "g4_sweep", "g5_tenkan_kijun_cross", "g6_zone_reaction",
+          }
+          allowed = {"PASS", "FAIL", "DATA_UNAVAILABLE"}
+          for item in report["results"]:
+              assert item["data_status"] in {"AVAILABLE", "DATA_UNAVAILABLE"}
+              assert set(item["gates"]) == required
+              assert all(gate["status"] in allowed for gate in item["gates"].values())
+              assert item["final_decision"] in {"NO_TRADE", "MONITORING", "WATCHLIST"}
+          summary = Path("diagnostics/summary.txt").read_text(encoding="utf-8")
+          assert all(label in summary for label in (
+              "Gate 1 (Bias 4H)", "Gate 2 (Bias 1H)", "Gate 3 (LFS)",
+              "Gate 4 (Sweep)", "Gate 5 (Tenkan/Kijun Cross)", "Gate 6 (Zone Reaction)"
+          ))
+          print("REPORT_SCHEMA_PASS: 27 symbols; six gates per symbol")
+          PY
+
+      - name: Upload P0 diagnostic artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-lrt-gates-diagnostics
+          path: |
+            diagnostics/summary.txt
+            diagnostics/gates_report.json
+          if-no-files-found: error
+          retention-days: 30
