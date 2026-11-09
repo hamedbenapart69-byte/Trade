@@ -85,7 +85,9 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
                 "• برچسب تصمیم: WATCHLIST",
                 f"• LFS: {calibration.get('lfs_status', 'UNAVAILABLE')}",
                 f"• LFS Source: {calibration.get('lfs_source', 'UNAVAILABLE')}",
-                f"• Coverage: {_value(calibration.get('coverage_per_symbol'))}",
+                (f"• LFS Coverage: {_value(calibration.get('lfs_coverage_pct'))}%"
+                 if calibration.get("lfs_coverage_pct") is not None else "• LFS Coverage: UNAVAILABLE"),
+                f"• Data Window: {_value(calibration.get('coverage_per_symbol'))}",
             ]),
         ),
         (
