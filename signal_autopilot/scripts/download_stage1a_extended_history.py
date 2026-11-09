@@ -104,8 +104,10 @@ def parse_zip(payload: bytes, start_ms: int, end_ms: int) -> list[list[str]]:
 
 
 def month_iter(start: date, end: date):
+    """فقط آرشیو ماهانه کامل/منتشرشده؛ ماه پایانی ناقص با daily پوشش داده می‌شود."""
     cur = date(start.year, start.month, 1)
-    while cur < end:
+    end_month = date(end.year, end.month, 1)
+    while cur < end_month:
         yield cur
         cur = date(cur.year + (cur.month == 12), 1 if cur.month == 12 else cur.month + 1, 1)
 
@@ -168,6 +170,21 @@ async def process_symbol(symbol: str, listing: dict[str, Any] | None, start: dat
                 archive_events.append({"archive": monthly_name, "status": status})
             # Monthly missing: daily fallback only for the intersecting days.
             for day in dates_for_month(month, start, end):
+                daily_name = f"{symbol}-1h-{day:%Y-%m-%d}.zip"
+                daily_url = f"{BASE}/data/futures/um/daily/klines/{symbol}/1h/{daily_name}"
+                try:
+                    daily_payload, daily_status = await asyncio.to_thread(head_then_get, daily_url)
+                    if daily_payload is None:
+                        archive_events.append({"archive": daily_name, "status": daily_status})
+                        continue
+                    for row in parse_zip(daily_payload, start_ms, end_ms):
+                        collected[int(row[0])] = row
+                    archive_events.append({"archive": daily_name, "status": "DAILY_OK"})
+                except Exception as exc:
+                    archive_events.append({"archive": daily_name, "status": f"ERROR_{type(exc).__name__}:{exc}"})
+        # بخش ناقص ماه پایانی هنوز آرشیو ماهانه منتشرشده ندارد؛ فقط daily.
+        if end.day > 1:
+            for day in dates_for_month(date(end.year, end.month, 1), start, end):
                 daily_name = f"{symbol}-1h-{day:%Y-%m-%d}.zip"
                 daily_url = f"{BASE}/data/futures/um/daily/klines/{symbol}/1h/{daily_name}"
                 try:
