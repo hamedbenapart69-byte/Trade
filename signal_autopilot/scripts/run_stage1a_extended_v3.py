@@ -262,11 +262,16 @@ async def run_v3(start: date, end: date, outdir: Path, report_path: Path) -> dic
 
     report = await downloader.run(symbols, start, end, outdir, report_path)
 
+    report["source"] = "BINANCE_USDM_EXCHANGE_INFO_AND_24HR_TICKER"
     report["universe_source"] = "BINANCE_FAPI_EXCHANGE_INFO_FULL_USDTM_PERPETUALS"
     report["universe_source_mode"] = source_mode
     report["universe_snapshot_metadata"] = snapshot_meta
     report["volume_source"] = "BINANCE_FAPI_TICKER_24HR_QUOTE_VOLUME"
-    report["volume_threshold_usd"] = MIN_QUOTE_VOLUME_USD
+    report["volume_unit"] = "USDT quote volume; USD-equivalent threshold proxy"
+    report["volume_threshold_usdt"] = MIN_QUOTE_VOLUME_USD
+    report["archive_fallback_chain"] = "monthly ZIP -> daily ZIP"
+    report["graceful_degradation"] = "per-symbol errors recorded; only complete history emits Parquet"
+    report["progress_checkpoint_resume"] = True
     report["listing_age_threshold_days"] = MIN_LISTING_AGE_DAYS
     report["listing_cutoff_utc"] = start.isoformat()
     report["universe_counts"] = counts
