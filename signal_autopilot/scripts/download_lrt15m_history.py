@@ -163,6 +163,46 @@ def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int,
     return grouped
 
 
+def parse_bybit_klines(payload: bytes, start_ms: int, end_ms: int,
+                       category: str) -> dict[int, dict[str, Any]]:
+    """تبدیل کندل عمومی Bybit؛ نبود دادهٔ taker-buy با Proxy خنثی ثبت می‌شود."""
+    raw = json.loads(payload.decode("utf-8"))
+    if not isinstance(raw, dict) or raw.get("retCode") != 0:
+        raise ArchiveError(f"BYBIT_API_ERROR:{str(raw)[:200]}")
+    output: dict[int, dict[str, Any]] = {}
+    for row in raw.get("result", {}).get("list", []):
+        if len(row) < 7:
+            continue
+        ts = int(row[0])
+        if not start_ms <= ts < end_ms:
+            continue
+        volume, turnover = float(row[5]), float(row[6])
+        output[ts] = {
+            "open": float(row[1]), "high": float(row[2]),
+            "low": float(row[3]), "close": float(row[4]),
+            "volume": volume, "quote_volume": turnover,
+            "trades": 0.0, "taker_buy_base": volume * 0.5,
+            "taker_buy_quote": turnover * 0.5,
+            "data_source": f"BYBIT_{category.upper()}_15M",
+            "cvd_source": "BYBIT_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+        }
+    return output
+
+
+def fetch_bybit_15m(symbol: str, start_ms: int, end_ms: int,
+                    category: str) -> tuple[dict[int, dict[str, Any]], str]:
+    query = urllib.parse.urlencode({
+        "category": category, "symbol": symbol, "interval": "15",
+        "start": start_ms, "end": end_ms - 1, "limit": 200,
+    })
+    url = f"https://api.bybit.com/v5/market/kline?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"HTTP_{status}"
+    rows = parse_bybit_klines(payload, start_ms, end_ms, category)
+    return rows, "200" if rows else "NO_MATCHING_CANDLES"
+
+
 def parse_okx_history_candles(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, Any]]:
     """تبدیل کندل‌های عمومی قرارداد دائمی OKX؛ CVD به‌صراحت خنثی و Proxy است."""
     raw = json.loads(payload.decode("utf-8"))
@@ -455,6 +495,27 @@ async def download_symbol(symbol: str, start: date, end: date,
             except Exception as exc:
                 events.append({"archive": name1, "status": f"GAP_REPAIR_1M_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
+
+        # مسیر چندصرافی آخر: Bybit Linear؛ در صورت نبود قرارداد، Spot با برچسب Proxy.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            categories = ["linear", "spot"] if not symbol.startswith("1000") else ["linear"]
+            for category in categories:
+                try:
+                    bybit_bars, bybit_status = await asyncio.to_thread(
+                        fetch_bybit_15m, symbol, day_start, day_end, category
+                    )
+                    added_bybit = sum(1 for ts in bybit_bars if ts not in bars)
+                    bars.update(bybit_bars)
+                    events.append({"archive": f"BYBIT_{category.upper()}_15M_{day:%Y-%m-%d}",
+                                   "status": f"GAP_REPAIR_BYBIT_{category.upper()}_OK" if bybit_bars else f"GAP_REPAIR_BYBIT_{category.upper()}_{bybit_status}",
+                                   "rows_in_archive": str(len(bybit_bars)), "rows_added": str(added_bybit)})
+                    if not [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]:
+                        break
+                except Exception as exc:
+                    events.append({"archive": f"BYBIT_{category.upper()}_15M_{day:%Y-%m-%d}",
+                                   "status": f"GAP_REPAIR_BYBIT_{category.upper()}_ERROR:{type(exc).__name__}:{exc}",
+                                   "rows_in_archive": "0", "rows_added": "0"})
 
     timestamps = sorted(bars)
     expected = (end_ms - start_ms) // INTERVAL_MS
