@@ -144,7 +144,7 @@ jobs:
               "interval": report.get("interval"),
           }
           target = Path("signals-publish/lrt15m_signals.json")
-          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n")
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
           PY
           git -C signals-publish config user.name "github-actions[bot]"
           git -C signals-publish config user.email "41898282+github-actions[bot]@users.noreply.github.com"
