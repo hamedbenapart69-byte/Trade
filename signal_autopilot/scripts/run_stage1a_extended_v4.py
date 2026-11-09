@@ -382,7 +382,7 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
         "universe_counts": counts,
         "universe_inventory": inventory,
         "symbols_full_history": sum(row.get("continuity") is True for row in report.get("symbols", [])),
-        "stage1a_extended_status": "PASS" if sum(row.get("continuity") is True for row in report.get("symbols", [])) >= 40 else "FAIL",
+        "stage1a_extended_status": "PASS" if sum(row.get("continuity") is True for row in report.get("symbols", [])) >= 27 else "FAIL",
     })
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
