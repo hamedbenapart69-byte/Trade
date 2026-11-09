@@ -160,9 +160,96 @@ async def download_symbol(symbol: str, start: date, end: date,
             except Exception as exc:
                 events.append({"archive": name, "status": f"DAILY_ERROR:{type(exc).__name__}:{exc}"})
 
+    # ترمیم روزهای ناقص حتی اگر آرشیو ماهانه با HTTP 200 دریافت شده باشد.
+    expected_timestamps = range(start_ms, end_ms, INTERVAL_MS)
+    missing_before_repair = [ts for ts in expected_timestamps if ts not in bars]
+    missing_days = sorted({datetime.fromtimestamp(ts / 1000, timezone.utc).date()
+                           for ts in missing_before_repair})
+    for day in missing_days:
+        day_start = max(start_ms, int(datetime.combine(day, datetime.min.time(), timezone.utc).timestamp() * 1000))
+        day_end = min(end_ms, day_start + 86_400_000)
+        name = f"{symbol}-{INTERVAL}-{day:%Y-%m-%d}.zip"
+        url = f"{BASE}/data/futures/um/daily/klines/{symbol}/{INTERVAL}/{name}"
+        try:
+            payload, status = await asyncio.to_thread(head_get, url)
+            if payload is not None:
+                repaired = parse_zip(payload, day_start, day_end)
+                added = sum(1 for ts, row in repaired.items() if ts not in bars)
+                bars.update(repaired)
+                events.append({"archive": name, "status": "GAP_REPAIR_15M_OK",
+                               "rows_in_archive": str(len(repaired)), "rows_added": str(added)})
+            else:
+                events.append({"archive": name, "status": f"GAP_REPAIR_15M_{status}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+        except Exception as exc:
+            events.append({"archive": name, "status": f"GAP_REPAIR_15M_ERROR:{type(exc).__name__}:{exc}",
+                           "rows_in_archive": "0", "rows_added": "0"})
+
+        # اگر آرشیو روزانهٔ 15m کافی نبود، سه کندل 5m را به یک کندل 15m تبدیل کن.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            name5 = f"{symbol}-5m-{day:%Y-%m-%d}.zip"
+            url5 = f"{BASE}/data/futures/um/daily/klines/{symbol}/5m/{name5}"
+            try:
+                payload5, status5 = await asyncio.to_thread(head_get, url5)
+                if payload5 is None:
+                    events.append({"archive": name5, "status": f"GAP_REPAIR_5M_{status5}",
+                                   "rows_in_archive": "0", "rows_added": "0"})
+                else:
+                    five = parse_zip(payload5, day_start, day_end)
+                    grouped: dict[int, list[tuple[int, dict[str, float]]]] = {}
+                    for ts5, row5 in five.items():
+                        bucket = (ts5 // INTERVAL_MS) * INTERVAL_MS
+                        grouped.setdefault(bucket, []).append((ts5, row5))
+                    added5 = 0
+                    for bucket, rows in grouped.items():
+                        rows.sort(key=lambda item: item[0])
+                        expected_5m = [bucket, bucket + 300_000, bucket + 600_000]
+                        if [item[0] for item in rows] != expected_5m or bucket in bars:
+                            continue
+                        values = [item[1] for item in rows]
+                        bars[bucket] = {
+                            "open": values[0]["open"],
+                            "high": max(x["high"] for x in values),
+                            "low": min(x["low"] for x in values),
+                            "close": values[-1]["close"],
+                            "volume": sum(x["volume"] for x in values),
+                            "quote_volume": sum(x["quote_volume"] for x in values),
+                            "trades": sum(x["trades"] for x in values),
+                            "taker_buy_base": sum(x["taker_buy_base"] for x in values),
+                            "taker_buy_quote": sum(x["taker_buy_quote"] for x in values),
+                        }
+                        added5 += 1
+                    events.append({"archive": name5, "status": "GAP_REPAIR_5M_AGGREGATED",
+                                   "rows_in_archive": str(len(five)), "rows_added": str(added5)})
+            except Exception as exc:
+                events.append({"archive": name5, "status": f"GAP_REPAIR_5M_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
     timestamps = sorted(bars)
-    gaps = sum(1 for a, b in zip(timestamps, timestamps[1:]) if b - a != INTERVAL_MS)
     expected = (end_ms - start_ms) // INTERVAL_MS
+    missing_after_repair = [ts for ts in range(start_ms, end_ms, INTERVAL_MS) if ts not in bars]
+    missing_ranges: list[dict[str, Any]] = []
+    if missing_after_repair:
+        range_start = previous = missing_after_repair[0]
+        count = 1
+        for ts in missing_after_repair[1:]:
+            if ts == previous + INTERVAL_MS:
+                count += 1
+            else:
+                missing_ranges.append({
+                    "start_utc": datetime.fromtimestamp(range_start / 1000, timezone.utc).isoformat(),
+                    "end_exclusive_utc": datetime.fromtimestamp((previous + INTERVAL_MS) / 1000, timezone.utc).isoformat(),
+                    "missing_bars": count,
+                })
+                range_start, count = ts, 1
+            previous = ts
+        missing_ranges.append({
+            "start_utc": datetime.fromtimestamp(range_start / 1000, timezone.utc).isoformat(),
+            "end_exclusive_utc": datetime.fromtimestamp((previous + INTERVAL_MS) / 1000, timezone.utc).isoformat(),
+            "missing_bars": count,
+        })
+    gaps = sum(1 for a, b in zip(timestamps, timestamps[1:]) if b - a != INTERVAL_MS)
     complete = len(timestamps) == expected and gaps == 0
     output_file = None
     if timestamps:
@@ -180,6 +267,7 @@ async def download_symbol(symbol: str, start: date, end: date,
     return {
         "symbol": symbol, "rows": len(timestamps), "expected_rows": expected,
         "gap_count": gaps, "continuity": complete,
+        "missing_ranges": missing_ranges,
         "first_open_ms": timestamps[0] if timestamps else None,
         "last_open_ms": timestamps[-1] if timestamps else None,
         "file": output_file, "archive_events": events,
