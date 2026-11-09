@@ -100,5 +100,5 @@ jobs:
           print("Complete 730d histories:", report.get("symbols_full_history"))
           print("Status:", report.get("stage1a_extended_status"))
           if report.get("stage1a_extended_status") != "PASS":
-              raise SystemExit("Stage 1a v4 did not meet the unchanged >=40 complete-history gate")
+              raise SystemExit("Stage 1a v4 did not meet the unchanged >=27 complete-history gate")
           PY
