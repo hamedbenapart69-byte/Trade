@@ -1,6 +1,7 @@
 "use strict";
 
 const REPORT_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_signals.json";
+const HISTORY_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_history.csv";
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -106,6 +107,36 @@ function render(report) {
     "</tbody></table></div>";
 }
 
+async function loadHistory() {
+  const target = $("history");
+  try {
+    const response = await fetch(HISTORY_URL + "?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const text = await response.text();
+    const lines = text.trim().split(/\\r?\\n/);
+    if (lines.length < 2) throw new Error("EMPTY_HISTORY");
+    const header = lines.shift().split(",");
+    const rows = lines.map((line) => {
+      const cells = line.split(",");
+      return Object.fromEntries(header.map((key, index) => [key, cells[index] || ""]));
+    }).slice(-54).reverse();
+    target.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+      "<th>زمان</th><th>نماد</th><th>وضعیت</th><th>سوگیری ۴ساعته</th><th>سوگیری ۱ساعته</th><th>اطمینان</th>" +
+      "</tr></thead><tbody>" +
+      rows.map((row) => "<tr>" +
+        "<td>" + esc(row.generated_at_utc ? new Date(row.generated_at_utc).toLocaleString("fa-IR") : "—") + "</td>" +
+        '<td dir="ltr">' + esc(row.symbol) + "</td>" +
+        "<td>" + esc(labels[row.decision] || row.decision) + "</td>" +
+        "<td>" + esc(direction(row.htf_4h_kumo)) + "</td>" +
+        "<td>" + esc(direction(row.htf_1h_kijun)) + "</td>" +
+        "<td>" + esc(row.confidence || "NOT_CALIBRATED") + "</td>" +
+        "</tr>").join("") +
+      "</tbody></table></div>";
+  } catch (error) {
+    target.innerHTML = '<p class="empty">تاریخچهٔ اسکن هنوز منتشر نشده است.</p>';
+  }
+}
+
 async function loadReport() {
   $("refresh").disabled = true;
   setStatus("در حال دریافت…", "muted");
@@ -115,6 +146,7 @@ async function loadReport() {
     const report = await response.json();
     render(report);
     setStatus(dataGateStatus === "PASS" ? "داده: PASS" : "دروازه داده: گزارش نشده", dataGateStatus === "PASS" ? "ok" : "muted");
+    loadHistory();
   } catch (error) {
     $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
     $("notice").textContent = "داده دریافت نشد؛ هیچ سیگنال قدیمی یا ساختگی جایگزین نمی‌شود.";
