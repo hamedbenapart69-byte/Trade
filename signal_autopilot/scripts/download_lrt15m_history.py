@@ -133,6 +133,51 @@ def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int,
     return grouped
 
 
+def parse_okx_history_candles(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, Any]]:
+    """تبدیل کندل‌های عمومی قرارداد دائمی OKX؛ CVD به‌صراحت خنثی و Proxy است."""
+    raw = json.loads(payload.decode("utf-8"))
+    if not isinstance(raw, dict) or raw.get("code") != "0":
+        raise ArchiveError(f"OKX_API_ERROR:{str(raw)[:200]}")
+    output: dict[int, dict[str, Any]] = {}
+    for row in raw.get("data", []):
+        if len(row) < 9:
+            continue
+        ts = int(row[0])
+        if not start_ms <= ts < end_ms or row[8] != "1":
+            continue
+        base_volume = float(row[6])
+        quote_volume = float(row[7])
+        output[ts] = {
+            "open": float(row[1]), "high": float(row[2]),
+            "low": float(row[3]), "close": float(row[4]),
+            "volume": base_volume, "quote_volume": quote_volume,
+            "trades": 0.0,
+            # OKX candles do not expose taker-buy volume: neutral proxy only.
+            "taker_buy_base": base_volume * 0.5,
+            "taker_buy_quote": quote_volume * 0.5,
+            "data_source": "OKX_PUBLIC_SWAP_CANDLE",
+            "cvd_source": "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+        }
+    return output
+
+
+def fetch_okx_history_15m(symbol: str, start_ms: int, end_ms: int) -> tuple[dict[int, dict[str, Any]], str]:
+    base = symbol[:-4] if symbol.endswith("USDT") else symbol
+    # Avoid silently mapping leveraged-denomination symbols to a differently scaled contract.
+    if base.startswith("1000"):
+        return {}, "UNSUPPORTED_CONTRACT_MULTIPLIER"
+    inst_id = f"{base}-USDT-SWAP"
+    query = urllib.parse.urlencode({
+        "instId": inst_id, "bar": "15m", "after": end_ms, "limit": 100,
+    })
+    url = f"https://www.okx.com/api/v5/market/history-candles?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"HTTP_{status}"
+    rows = parse_okx_history_candles(payload, start_ms, end_ms)
+    return rows, "200" if rows else "NO_MATCHING_CANDLES"
+
+
 def parse_binance_rest_klines(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
     """تبدیل کندل‌های عمومی Futures REST به ساختار یکسان Parquet."""
     raw = json.loads(payload.decode("utf-8"))
@@ -302,7 +347,24 @@ async def download_symbol(symbol: str, start: date, end: date,
                 events.append({"archive": agg_name, "status": f"GAP_REPAIR_AGGTRADES_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
 
-        # اگر منابع اصلی کافی نبودند، سه کندل 5m را به یک کندل 15m تبدیل کن.
+        # مسیر سوم: کندل عمومی قرارداد دائمی OKX؛ منبع و محدودیت CVD جداگانه ثبت می‌شود.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            try:
+                okx_bars, okx_status = await asyncio.to_thread(
+                    fetch_okx_history_15m, symbol, day_start, day_end
+                )
+                added_okx = sum(1 for ts in okx_bars if ts not in bars)
+                bars.update(okx_bars)
+                events.append({"archive": f"OKX_SWAP_15M_{day:%Y-%m-%d}",
+                               "status": "GAP_REPAIR_OKX_REST_OK" if okx_bars else f"GAP_REPAIR_OKX_REST_{okx_status}",
+                               "rows_in_archive": str(len(okx_bars)), "rows_added": str(added_okx)})
+            except Exception as exc:
+                events.append({"archive": f"OKX_SWAP_15M_{day:%Y-%m-%d}",
+                               "status": f"GAP_REPAIR_OKX_REST_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
+        # اگر منابع دیگر کافی نبودند، سه کندل 5m را به یک کندل 15m تبدیل کن.
         day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
         if day_missing:
             name5 = f"{symbol}-5m-{day:%Y-%m-%d}.zip"
