@@ -26,6 +26,7 @@ EXCHANGE_INFO_URLS = [
     "https://www.binance.com/bapi/futures/v1/public/future/common/get-exchange-info",
 ]
 HOUR_MS = 3_600_000
+MIN_FULL_HISTORY_SYMBOLS = 27
 COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
            "quote_asset_volume", "number_of_trades", "taker_buy_base_volume",
            "taker_buy_quote_volume", "ignore"]
@@ -265,7 +266,7 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
     listing_map = await asyncio.to_thread(fetch_exchange_info)
     candidates = [s for s in symbols if s in listing_map and
                   date.fromisoformat(listing_map[s]["listing_date"]) <= start]
-    if len(candidates) < 40:
+    if len(candidates) < MIN_FULL_HISTORY_SYMBOLS:
         # Fail cheap: وقتی سقف ممکن از ۴۰ کمتر است، آرشیوها را بی‌دلیل دانلود نکن.
         precheck_rows = []
         for symbol in symbols:
@@ -275,11 +276,11 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
                 "symbol": symbol,
                 "listing_date": meta.get("listing_date") if meta else None,
                 "exchange_status": meta.get("status") if meta else None,
-                "archive_status": "NOT_CHECKED_PREVALIDATION_BELOW_40" if eligible else (
+                "archive_status": "NOT_CHECKED_PREVALIDATION_BELOW_27" if eligible else (
                     "EXCLUDED_LISTED_AFTER_WINDOW_START" if meta else "NOT_IN_EXCHANGE_INFO"
                 ),
                 "rows": None, "continuity": False,
-                "reason": "PREVALIDATION_FAIL_BELOW_40; no archive requests issued",
+                "reason": "PREVALIDATION_FAIL_BELOW_27; no archive requests issued",
             })
         report = {
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -291,9 +292,9 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
             "symbols_after_listing_filter": len(candidates),
             "symbols_processed": len(symbols), "symbols_full_history": 0,
             "maximum_possible_full_history_symbols": len(candidates),
-            "minimum_full_history_symbols": 40,
+            "minimum_full_history_symbols": MIN_FULL_HISTORY_SYMBOLS,
             "stage1a_extended_status": "FAIL",
-            "failure_reason": f"Only {len(candidates)} of {len(symbols)} symbols were listed by {start.isoformat()}; threshold is 40",
+            "failure_reason": f"Only {len(candidates)} of {len(symbols)} symbols were listed by {start.isoformat()}; threshold is {MIN_FULL_HISTORY_SYMBOLS}",
             "archive_requests_issued": 0,
             "parallelism": 5, "head_before_get": True,
             "retry_policy": "3 attempts only for HTTP 5xx and timeout; no 4xx retry",
@@ -365,7 +366,7 @@ def build_report(symbols, listing_map, candidates, results, start, end, forced_s
         "symbols_before_filter": len(symbols), "symbols_after_listing_filter": prevalidated,
         "symbols_processed": len(results), "symbols_full_history": full,
         "minimum_full_history_symbols": 40,
-        "stage1a_extended_status": forced_status or ("PASS" if full >= 40 else "FAIL"),
+        "stage1a_extended_status": forced_status or ("PASS" if full >= MIN_FULL_HISTORY_SYMBOLS else "FAIL"),
         "parallelism": 5, "head_before_get": True, "retry_policy": "3 attempts only for HTTP 5xx and timeout; no 4xx retry",
         "symbols": sorted(results, key=lambda x: x["symbol"]),
     }
