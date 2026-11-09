@@ -21,7 +21,7 @@ class SignalTracker:
 
     def _load(self) -> dict[str, Any]:
         if not self.path.exists():
-            return {"schema_version": 1, "updated_at_utc": _now(), "open_signals": {}}
+            return {"schema_version": 1, "updated_at_utc": _now(), "open_signals": {}, "closed_signals": {}}
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -29,6 +29,7 @@ class SignalTracker:
         if not isinstance(data, dict) or not isinstance(data.get("open_signals"), dict):
             raise ValueError("signal_state_schema_invalid")
         data.setdefault("schema_version", 1)
+        data.setdefault("closed_signals", {})
         return data
 
     def upsert(self, signal: dict[str, Any]) -> dict[str, Any]:
@@ -46,12 +47,13 @@ class SignalTracker:
         return record
 
     def close(self, signal_id: str, reason: str = "CLOSED") -> bool:
-        record = self.state["open_signals"].get(signal_id)
+        record = self.state["open_signals"].pop(signal_id, None)
         if not record:
             return False
         record["tracker_status"] = "CLOSED"
         record["closed_at_utc"] = _now()
         record["close_reason"] = reason
+        self.state.setdefault("closed_signals", {})[signal_id] = record
         self.save()
         return True
 
