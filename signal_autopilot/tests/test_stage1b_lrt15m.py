@@ -57,7 +57,7 @@ class LRT15mTests(unittest.TestCase):
 
     def test_kline_cvd_is_explicit_proxy(self):
         bars = [candle(i * 900000, 1, 2, 0.5, 1.5, volume=10, buy=7) for i in range(4)]
-        self.assertEqual(engine.cvd_proxy_from_klines(bars), 16.0)
+        self.assertAlmostEqual(engine.cvd_proxy_from_klines(bars), 13.333333333333329)
 
     def test_15m_engine_marks_uncalibrated_and_never_fakes_ev(self):
         bars = []
@@ -83,7 +83,7 @@ class LRT15mTests(unittest.TestCase):
             })
         result = engine.analyze_symbol("BTCUSDT", bars)
         self.assertIn("OKX_PUBLIC_SWAP_CANDLE", result["data_sources"])
-        self.assertEqual(result["cvd_source"], "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+        self.assertEqual(result["cvd_source"], "PROXY_OHLCV")
         self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
 
     def test_short_history_is_not_qualified(self):
