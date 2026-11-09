@@ -168,7 +168,11 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
 
         result = analyze_symbol(symbol, rows)
         if result.get("decision") != "WATCHLIST" or result.get("direction") not in {"BUY", "SELL"}:
-            return None, str(result.get("reason", result.get("decision", "NO_SETUP")))
+            reason = str(result.get("reason", result.get("decision", "NO_SETUP")))
+            diagnostics = result.get("gate_diagnostics")
+            if diagnostics:
+                reason += "|" + json.dumps(diagnostics, ensure_ascii=False, separators=(",", ":"))
+            return None, reason
 
         confluence_score, confluence_components = calculate_confluence(
             result, rows, str(result["direction"])
