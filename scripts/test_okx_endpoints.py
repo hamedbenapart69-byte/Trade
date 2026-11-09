@@ -159,6 +159,66 @@ def test_one(symbol: str, endpoint: str) -> dict[str, Any]:
     return result
 
 
+def test_oi_daily_history(symbol: str) -> dict[str, Any]:
+    """تست تکمیلی: آیا Rubik می‌دهد تاریخچهٔ روزانهٔ کافی برای رتبهٔ OI نودروزه؟"""
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    begin_ms = now_ms - 100 * 24 * 60 * 60 * 1000
+    path = "/api/v5/rubik/stat/contracts/open-interest-volume"
+    params = {
+        "ccy": symbol,
+        "period": "1D",
+        "begin": str(begin_ms),
+        "end": str(now_ms),
+    }
+    status, payload, error = _get_json(path, params)
+    result: dict[str, Any] = {
+        "symbol": symbol,
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": path,
+        "params": params,
+        "http_status": status,
+        "okx_code": None,
+        "status": "NETWORK_ERROR",
+        "record_count": 0,
+    }
+    if status is not None and status != 200:
+        result["status"] = "HTTP_ERROR"
+        result["error"] = error or f"unexpected_http_status:{status}"
+        return result
+    if error:
+        result["status"] = "INVALID_JSON" if status == 200 and error.startswith("invalid_json") else "NETWORK_ERROR"
+        result["error"] = error
+        return result
+    if not isinstance(payload, dict):
+        result["status"] = "INVALID_JSON"
+        return result
+    result["okx_code"] = str(payload.get("code", "MISSING"))
+    result["okx_message"] = str(payload.get("msg", ""))
+    if result["okx_code"] != "0":
+        result["status"] = "API_ERROR"
+        result["error"] = "okx_code_not_zero"
+        return result
+
+    rows = payload.get("data")
+    valid, detail, validation_error = _validate_rows("open_interest", rows)
+    result.update(detail)
+    if not valid:
+        result["status"] = "EMPTY" if validation_error == "empty_or_non_list_data" else "INVALID_SCHEMA"
+        result["error"] = validation_error
+        return result
+
+    oldest = int(result["oldest_timestamp"])
+    newest = int(result["newest_timestamp"])
+    span_days = (newest - oldest) / (24 * 60 * 60 * 1000)
+    result["history_span_days"] = round(span_days, 2)
+    # 90 daily OI changes require at least 91 daily observations.
+    if result["record_count"] >= 91 and span_days >= 89:
+        result["status"] = "SUCCESS_90D_HISTORY"
+    else:
+        result["status"] = "INSUFFICIENT_HISTORY"
+    return result
+
+
 def main() -> int:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, Any]] = []
@@ -169,6 +229,8 @@ def main() -> int:
 
     success_count = sum(item["status"] == "SUCCESS" for item in results)
     classification = "ALL_PASS" if success_count >= 13 else "PARTIAL_PASS" if success_count >= 8 else "MOSTLY_FAIL"
+    supplemental_oi_1d = [test_oi_daily_history(symbol) for symbol in SYMBOLS]
+    supplemental_oi_1d_ready = all(item["status"] == "SUCCESS_90D_HISTORY" for item in supplemental_oi_1d)
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "base_url": BASE_URL,
@@ -178,6 +240,11 @@ def main() -> int:
         "success_count": success_count,
         "failure_count": len(results) - success_count,
         "classification": classification,
+        "supplemental_checks": {
+            "oi_1d_90d_history": supplemental_oi_1d,
+            "all_symbols_have_90d_history": supplemental_oi_1d_ready,
+            "note": "Supplemental history check; not included in the 15-combination gate count.",
+        },
         "gate_rules": {
             "ALL_PASS": "success_count >= 13",
             "PARTIAL_PASS": "8 <= success_count <= 12",
@@ -192,6 +259,7 @@ def main() -> int:
         f"- Classification: **{classification}**\n"
         f"- Successful combinations: **{success_count}/15**\n"
         f"- Failed combinations: **{len(results) - success_count}/15**\n"
+        f"- 90-day daily OI history ready: **{sum(item['status'] == 'SUCCESS_90D_HISTORY' for item in supplemental_oi_1d)}/5 symbols**\n"
         "- Artifact: artifacts/okx_endpoints_test.json\n"
     )
     summary_path = os.getenv("GITHUB_STEP_SUMMARY")
@@ -204,6 +272,11 @@ def main() -> int:
             f"{item['symbol']} | {item['endpoint']} | HTTP={item['http_status']} "
             f"| OKX={item['okx_code']} | records={item['record_count']} "
             f"| {item['status']} {item.get('error', '')}"
+        )
+    for item in supplemental_oi_1d:
+        print(
+            f"{item['symbol']} | oi_1d_90d_supplemental | records={item['record_count']} "
+            f"| span_days={item.get('history_span_days')} | {item['status']} {item.get('error', '')}"
         )
     # MOSTLY_FAIL is a completed diagnostic result, not a script crash.
     # The next phase is gated by the JSON classification, not this exit code.
