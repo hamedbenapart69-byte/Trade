@@ -277,22 +277,15 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
 
     # Prefer Binance ticker quoteVolume if reachable; otherwise use CoinGecko derivatives USD volume.
     volume_source = "COINGECKO_DERIVATIVES_VOLUME_USD"
-    try:
-        ticker_payload = await asyncio.to_thread(
-            lambda: next(
-                (get_json(url, "BINANCE_TICKER_24HR") for url in BINANCE_TICKER_URLS
-                 if _json_endpoint_valid(url)),
-                None,
-            )
-        )
-        if ticker_payload is not None:
+    ticker_volumes: dict[str, float] = {}
+    for ticker_url in BINANCE_TICKER_URLS:
+        try:
+            ticker_payload = await asyncio.to_thread(get_json, ticker_url, "BINANCE_TICKER_24HR")
             ticker_volumes = parse_binance_tickers(ticker_payload)
-            if len(ticker_volumes) > 0:
-                volume_source = "BINANCE_TICKER_24HR_QUOTEVOLUME"
-        else:
-            ticker_volumes = {}
-    except Exception:
-        ticker_volumes = {}
+            volume_source = "BINANCE_TICKER_24HR_QUOTEVOLUME"
+            break
+        except Exception:
+            continue
 
     candidates = []
     for symbol in active_symbols:
