@@ -49,7 +49,7 @@ def request_bytes(url: str, method: str = "GET", retries: int = 3) -> tuple[int,
                 return exc.code, b""
             if exc.code in (405, 501) and method == "HEAD":
                 return exc.code, b""
-            if exc.code not in (408, 425, 429, 500, 502, 503, 504):
+            if exc.code not in (500, 502, 503, 504):
                 raise FetchFailure(f"HTTP_{exc.code}") from exc
             last = f"HTTP_{exc.code}"
         except (TimeoutError, urllib.error.URLError) as exc:
@@ -304,12 +304,42 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
         print(json.dumps({k:v for k,v in report.items() if k != "symbols"}, ensure_ascii=False, indent=2))
         return report
     results: list[dict[str, Any]] = []
+    # بازیابی نمادهای کامل‌شده از checkpoint قبلی؛ نمادهای ناقص دوباره تلاش می‌شوند.
+    if report_path.exists():
+        try:
+            previous = json.loads(report_path.read_text(encoding="utf-8"))
+            same_window = (
+                previous.get("start_utc") == f"{start.isoformat()}T00:00:00+00:00"
+                and previous.get("end_exclusive_utc") == f"{end.isoformat()}T00:00:00+00:00"
+            )
+            if same_window:
+                allowed = set(symbols)
+                results = [
+                    row for row in previous.get("symbols", [])
+                    if row.get("symbol") in allowed and row.get("continuity") is True
+                    and row.get("archive_status") == "COMPLETE"
+                ]
+                if results:
+                    print(f"RESUME loaded {len(results)} complete symbols from checkpoint", flush=True)
+        except (OSError, ValueError, TypeError):
+            results = []
+    completed = {row["symbol"] for row in results}
+    pending = [symbol for symbol in symbols if symbol not in completed]
     semaphore = asyncio.Semaphore(5)
-    # ترتیب ثابت، هم‌زمانی محدود به پنج نماد.
+    # ترتیب ورودی ثابت است؛ هم‌زمانی واقعی به پنج نماد محدود می‌شود.
     tasks = [asyncio.create_task(process_symbol(s, listing_map.get(s), start, end, outdir, semaphore))
-             for s in symbols]
-    for idx, task in enumerate(asyncio.as_completed(tasks), 1):
-        item = await task
+             for s in pending]
+    for idx, task in enumerate(asyncio.as_completed(tasks), len(results) + 1):
+        try:
+            item = await task
+        except Exception as exc:
+            item = {
+                "symbol": "TASK_ERROR",
+                "archive_status": "INCOMPLETE",
+                "rows": 0,
+                "continuity": False,
+                "reason": f"{type(exc).__name__}:{str(exc)[:200]}",
+            }
         results.append(item)
         if idx % 10 == 0 or idx == len(symbols):
             report = build_report(symbols, listing_map, candidates, results, start, end, "RUNNING")
