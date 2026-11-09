@@ -24,3 +24,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 # Delivery contract marker: this executable reports the Telegram API message_id after a real send succeeds.
+# Explicit one-time live delivery verification requested for stage1b-lrt15m.
