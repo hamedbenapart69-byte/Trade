@@ -31,6 +31,39 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bars[ts]["taker_buy_base"], 7.25)
         self.assertEqual(bars[ts]["taker_buy_quote"], 742.0)
 
+    def test_aggregates_exactly_15_one_minute_bars_to_one_15m_bar(self):
+        one = {}
+        for i in range(15):
+            ts = i * 60_000
+            one[ts] = {
+                "open": 100.0 + i, "high": 101.0 + i, "low": 99.0 + i,
+                "close": 100.5 + i, "volume": 2.0, "quote_volume": 200.0,
+                "trades": 3.0, "taker_buy_base": 1.2, "taker_buy_quote": 120.0,
+            }
+        bars = downloader.aggregate_1m_to_15m(one, {})
+        self.assertEqual(list(bars), [0])
+        bar = bars[0]
+        self.assertEqual(bar["open"], 100.0)
+        self.assertEqual(bar["high"], 115.0)
+        self.assertEqual(bar["low"], 99.0)
+        self.assertEqual(bar["close"], 114.5)
+        self.assertEqual(bar["volume"], 30.0)
+        self.assertEqual(bar["quote_volume"], 3000.0)
+        self.assertEqual(bar["trades"], 45.0)
+        self.assertEqual(bar["taker_buy_base"], 18.0)
+        self.assertEqual(bar["data_source"], "BINANCE_VISION_1M_AGGREGATED")
+
+    def test_rejects_incomplete_1m_group(self):
+        one = {
+            i * 60_000: {
+                "open": 1.0, "high": 2.0, "low": 0.5, "close": 1.5,
+                "volume": 1.0, "quote_volume": 1.5, "trades": 1.0,
+                "taker_buy_base": 0.5, "taker_buy_quote": 0.75,
+            }
+            for i in range(14)
+        }
+        self.assertEqual(downloader.aggregate_1m_to_15m(one, {}), {})
+
     def test_parses_okx_swap_candle_and_marks_cvd_as_proxy(self):
         ts = 1_798_156_800_000
         payload = {
