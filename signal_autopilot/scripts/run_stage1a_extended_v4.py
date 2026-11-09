@@ -250,45 +250,65 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
 
     cg_active: dict[str, dict[str, Any]] | None = None
     cg_error = None
-    try:
-        cg_payload = await asyncio.to_thread(get_json, COINGECKO_DERIVATIVES, "COINGECKO_DERIVATIVES")
-        cg_active = parse_coingecko_derivatives(cg_payload)
-    except Exception as exc:
-        cg_error = f"{type(exc).__name__}:{exc}"
-
     snapshot_meta: dict[str, Any] = {}
     snapshot_data: dict[str, dict[str, Any]] | None = None
+
     print(f"V4_S3_DISCOVERY {'OK' if s3_symbols is not None else 'FAILED'} count={len(s3_symbols) if s3_symbols is not None else 0} detail={s3_error}", flush=True)
-    print(f"V4_COINGECKO_DERIVATIVES {'OK' if cg_active is not None else 'FAILED'} count={len(cg_active) if cg_active is not None else 0} detail={cg_error}", flush=True)
 
-    if s3_symbols is not None and cg_active is not None:
-        active_symbols = sorted(set(s3_symbols).intersection(cg_active))
-        metadata_source = cg_active
-        if not active_symbols:
-            raise downloader.FetchFailure("S3_AND_COINGECKO_INTERSECTION_EMPTY")
-    elif s3_symbols is None and cg_active is not None:
-        # Fallback 2: derivatives API is now both universe and active-contract source.
-        active_symbols = sorted(cg_active)
-        metadata_source = cg_active
-        universe_source = "COINGECKO_DERIVATIVES_BINANCE_FUTURES_FALLBACK"
-    else:
-        # Fallback 3: a manually refreshed, Binance-sourced snapshot (max age 30 days).
-        snapshot_data, snapshot_meta = await asyncio.to_thread(load_snapshot)
-        active_symbols = sorted(snapshot_data)
-        metadata_source = snapshot_data
-        universe_source = "BINANCE_OFFICIAL_30D_SNAPSHOT_FALLBACK"
-
-    # Prefer Binance ticker quoteVolume if reachable; otherwise use CoinGecko derivatives USD volume.
-    volume_source = "COINGECKO_DERIVATIVES_VOLUME_USD"
-    ticker_volumes: dict[str, float] = {}
-    for ticker_url in BINANCE_TICKER_URLS:
+    if s3_symbols is not None:
+        # Primary path: S3 proves archive presence; current Binance snapshot validates active status, quote volume and onboardDate.
         try:
-            ticker_payload = await asyncio.to_thread(get_json, ticker_url, "BINANCE_TICKER_24HR")
-            ticker_volumes = parse_binance_tickers(ticker_payload)
-            volume_source = "BINANCE_TICKER_24HR_QUOTEVOLUME"
-            break
-        except Exception:
-            continue
+            snapshot_data, snapshot_meta = await asyncio.to_thread(load_snapshot)
+            active_symbols = sorted(set(s3_symbols).intersection(snapshot_data))
+            metadata_source = snapshot_data
+            universe_source = "BINANCE_VISION_S3_DIRECTORY_LISTING"
+            if not active_symbols:
+                raise downloader.FetchFailure("S3_AND_BINANCE_SNAPSHOT_INTERSECTION_EMPTY")
+        except Exception as snapshot_error:
+            # CoinGecko is only a metadata substitute when S3 discovery itself succeeded.
+            try:
+                cg_payload = await asyncio.to_thread(get_json, COINGECKO_DERIVATIVES, "COINGECKO_DERIVATIVES")
+                cg_active = parse_coingecko_derivatives(cg_payload)
+                active_symbols = sorted(set(s3_symbols).intersection(cg_active))
+                metadata_source = cg_active
+                universe_source = "BINANCE_VISION_S3_WITH_COINGECKO_METADATA"
+                cg_error = f"SNAPSHOT_METADATA_UNAVAILABLE:{type(snapshot_error).__name__}:{snapshot_error}"
+                if not active_symbols:
+                    raise downloader.FetchFailure("S3_AND_COINGECKO_INTERSECTION_EMPTY")
+            except Exception as cg_exc:
+                raise downloader.FetchFailure(
+                    f"S3_DISCOVERY_OK_BUT_METADATA_SOURCES_FAILED: snapshot={snapshot_error}; coingecko={cg_exc}"
+                ) from cg_exc
+    else:
+        # Fallback 2: CoinGecko derivatives becomes the universe source if S3 listing fails.
+        try:
+            cg_payload = await asyncio.to_thread(get_json, COINGECKO_DERIVATIVES, "COINGECKO_DERIVATIVES")
+            cg_active = parse_coingecko_derivatives(cg_payload)
+            active_symbols = sorted(cg_active)
+            metadata_source = cg_active
+            universe_source = "COINGECKO_DERIVATIVES_BINANCE_FUTURES_FALLBACK"
+        except Exception as cg_exc:
+            cg_error = f"{type(cg_exc).__name__}:{cg_exc}"
+            # Fallback 3: manually refreshed Binance snapshot, valid for at most 30 days.
+            snapshot_data, snapshot_meta = await asyncio.to_thread(load_snapshot)
+            active_symbols = sorted(snapshot_data)
+            metadata_source = snapshot_data
+            universe_source = "BINANCE_OFFICIAL_30D_SNAPSHOT_FALLBACK"
+
+    print(f"V4_METADATA_SOURCE {universe_source}; active_symbols={len(active_symbols)}; snapshot={snapshot_meta.get('captured_at_utc')}", flush=True)
+
+    # Use the volume supplied by the selected source. Binance ticker is a final live refresh when using CoinGecko only.
+    volume_source = "BINANCE_OFFICIAL_SNAPSHOT_QUOTEVOLUME" if snapshot_data is not None else "COINGECKO_DERIVATIVES_VOLUME_USD"
+    ticker_volumes: dict[str, float] = {}
+    if snapshot_data is None and cg_active is not None:
+        for ticker_url in BINANCE_TICKER_URLS:
+            try:
+                ticker_payload = await asyncio.to_thread(get_json, ticker_url, "BINANCE_TICKER_24HR")
+                ticker_volumes = parse_binance_tickers(ticker_payload)
+                volume_source = "BINANCE_TICKER_24HR_QUOTEVOLUME"
+                break
+            except Exception:
+                continue
 
     candidates = []
     for symbol in active_symbols:
@@ -304,13 +324,10 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
         "listing_metadata_missing": 0,
     }
 
-    # Archive-derived listing date is approximate: first available monthly 1h archive.
+    # Prefer the official onboardDate snapshot; otherwise infer from the oldest monthly archive.
     if snapshot_data is not None:
         listing_dates = {s: snapshot_data[s].get("listing_date") for s in active_symbols}
-        listing_method = "BINANCE_OFFICIAL_SNAPSHOT_LISTING_DATE"
-    elif s3_symbols is not None:
-        listing_dates = await resolve_listing_dates([s for s, _, _ in candidates])
-        listing_method = "OLDEST_BINANCE_VISION_MONTHLY_1H_ARCHIVE_APPROXIMATION"
+        listing_method = "BINANCE_OFFICIAL_SNAPSHOT_ONBOARDDATE"
     else:
         listing_dates = await resolve_listing_dates([s for s, _, _ in candidates])
         listing_method = "OLDEST_BINANCE_VISION_MONTHLY_1H_ARCHIVE_APPROXIMATION"
@@ -352,7 +369,7 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
     downloader.request_bytes = http_bytes
     report = await downloader.run(qualifying, start, end, outdir, report_path)
     report.update({
-        "source": "BINANCE_VISION_S3_PLUS_ACTIVE_DERIVATIVES_VALIDATION",
+        "source": "BINANCE_VISION_S3_WITH_BINANCE_SNAPSHOT_METADATA",
         "universe_source": universe_source,
         "s3_error": s3_error,
         "coingecko_error": cg_error,
