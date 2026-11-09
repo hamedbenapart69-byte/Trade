@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from modules.chart_renderer_lrt15m import render_lrt15m_chart
+from modules.signal_tracker import SignalTracker
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     MIN_LFS_SCORE_PROXY_CVD,
@@ -23,6 +24,7 @@ from telegram_bot import send_signal_to_telegram, verify_telegram_connection
 ROOT = Path(__file__).resolve().parents[1]
 UNIVERSE_PATH = ROOT / "config" / "universe.json"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts" / "charts"
+STATE_PATH = Path(__file__).resolve().parent / "state" / "open_signals.json"
 
 LOG = logging.getLogger("trader_me.main")
 logging.basicConfig(
@@ -232,6 +234,7 @@ def main() -> int:
     symbols = load_universe()
     telegram_ready = verify_telegram_connection()
     fetcher = LiveOHLCVFetcher(limit=1500)
+    tracker = SignalTracker(STATE_PATH)
 
     processed = 0
     skipped = 0
@@ -247,6 +250,7 @@ def main() -> int:
 
             processed += 1
             candidates += 1
+            tracker.upsert(signal)
             chart_path = signal.pop("chart_path")
             if telegram_ready and send_signal_to_telegram(signal, chart_path):
                 sent += 1
@@ -255,12 +259,15 @@ def main() -> int:
     finally:
         fetcher.close()
 
+    tracker.save()
     summary = {
         "universe": len(symbols),
         "candidate_symbols": candidates,
         "symbols_skipped": skipped,
         "telegram_preflight": telegram_ready,
         "telegram_signals_sent": sent,
+        "open_signals_in_state": len(tracker.snapshot()["open_signals"]),
+        "signal_state_path": str(STATE_PATH),
         "calibration": "UNCALIBRATED",
         "decision_policy": "WATCHLIST_ONLY",
     }
