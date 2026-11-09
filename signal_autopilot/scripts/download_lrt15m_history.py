@@ -405,7 +405,7 @@ def month_end(month: date) -> date:
                 1 if month.month == 12 else month.month + 1, 1)
 
 
-async def build_parquet_records(bars: dict[int, dict[str, Any]],
+def build_parquet_records(bars: dict[int, dict[str, Any]],
                            timestamps: list[int]) -> list[dict[str, Any]]:
     """متادیتای منبع را برای تمام ردیف‌ها نگه می‌دارد تا schema حذفش نکند."""
     records = []
@@ -420,7 +420,7 @@ async def build_parquet_records(bars: dict[int, dict[str, Any]],
     return records
 
 
-def download_symbol(symbol: str, start: date, end: date,
+async def download_symbol(symbol: str, start: date, end: date,
                           outdir: Path, semaphore: asyncio.Semaphore) -> dict[str, Any]:
     start_ms = int(datetime.combine(start, datetime.min.time(), timezone.utc).timestamp() * 1000)
     end_ms = int(datetime.combine(end, datetime.min.time(), timezone.utc).timestamp() * 1000)
