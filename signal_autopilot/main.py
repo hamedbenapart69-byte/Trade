@@ -249,7 +249,7 @@ def process_symbol(
 def main() -> int:
     symbols = load_universe()
     telegram_ready = verify_telegram_connection()
-    fetcher = LiveOHLCVFetcher(limit=500, stats_limit=2500)
+    fetcher = LiveOHLCVFetcher(limit=500, stats_limit=2500, fetch_stats=True)
     tracker = SignalTracker(STATE_PATH)
 
     processed = 0
