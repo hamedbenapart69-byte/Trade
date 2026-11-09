@@ -11,7 +11,7 @@ import httpx
 
 LOG = logging.getLogger(__name__)
 INTERVAL_MS = 15 * 60 * 1000
-MIN_BARS_FOR_ENGINE = 500
+MIN_BARS_FOR_ENGINE = 1300
 BINANCE_KLINES_URL = "https://fapi.binance.com/fapi/v1/klines"
 
 
@@ -47,7 +47,7 @@ class LiveOHLCVFetcher:
     """دریافت ۱۵m از Binance Futures عمومی؛ در خطا fallback به صرافی‌های عمومی CCXT."""
 
     def __init__(self, limit: int = 500, stats_limit: int = 2500, fetch_stats: bool = False, timeout: float = 25.0):
-        self.limit = max(int(limit), MIN_BARS_FOR_ENGINE)
+        self.limit = max(int(limit), 1)
         self.stats_limit = max(int(stats_limit), 2500)
         self.fetch_stats = bool(fetch_stats)
         self.client = httpx.Client(timeout=timeout, follow_redirects=True)
