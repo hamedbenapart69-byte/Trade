@@ -1,0 +1,4705 @@
+{
+  "captured_at_utc": "2026-11-09T06:13:33.345Z",
+  "exchange_server_time_utc": "2026-11-09T06:13:33.345Z",
+  "source": "Binance USDⓈ-M public exchangeInfo + 24h ticker, retrieved read-only on 2026-11-09",
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1567965300000,
+      "quoteVolume": 10965953490.64
+    },
+    {
+      "symbol": "ETHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1574840700000,
+      "quoteVolume": 9322200049.44
+    },
+    {
+      "symbol": "BCHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1576745700000,
+      "quoteVolume": 79489149.18
+    },
+    {
+      "symbol": "XRPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1578298800000,
+      "quoteVolume": 908715732.8411
+    },
+    {
+      "symbol": "LTCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1578557100000,
+      "quoteVolume": 66894884.85
+    },
+    {
+      "symbol": "TRXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1579075500000,
+      "quoteVolume": 31378263.18643
+    },
+    {
+      "symbol": "ETCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1579161600000,
+      "quoteVolume": 20668670.123
+    },
+    {
+      "symbol": "LINKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1579248000000,
+      "quoteVolume": 117197226.394
+    },
+    {
+      "symbol": "XLMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1579507200000,
+      "quoteVolume": 39507954.04717
+    },
+    {
+      "symbol": "ADAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1580457600000,
+      "quoteVolume": 120154091.6777
+    },
+    {
+      "symbol": "XMRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1580716800000,
+      "quoteVolume": 40502290.11
+    },
+    {
+      "symbol": "DASHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1580803500000,
+      "quoteVolume": 32380698.28
+    },
+    {
+      "symbol": "ZECUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1580889600000,
+      "quoteVolume": 1741236635.57
+    },
+    {
+      "symbol": "XTZUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1580976000000,
+      "quoteVolume": 4953571.25781
+    },
+    {
+      "symbol": "BNBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581321600000,
+      "quoteVolume": 329716936.437
+    },
+    {
+      "symbol": "ATOMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581077400000,
+      "quoteVolume": 18350363.881
+    },
+    {
+      "symbol": "ONTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581408300000,
+      "quoteVolume": 1671339.860047
+    },
+    {
+      "symbol": "IOTAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581494400000,
+      "quoteVolume": 3253434.050554
+    },
+    {
+      "symbol": "BATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581581100000,
+      "quoteVolume": 9024678.875667
+    },
+    {
+      "symbol": "VETUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581667200000,
+      "quoteVolume": 4312920.245494
+    },
+    {
+      "symbol": "NEOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1581929100000,
+      "quoteVolume": 2428993.435
+    },
+    {
+      "symbol": "QTUMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1582185900000,
+      "quoteVolume": 1945729.76553
+    },
+    {
+      "symbol": "IOSTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1582272300000,
+      "quoteVolume": 4459382.0555678
+    },
+    {
+      "symbol": "THETAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1590566400000,
+      "quoteVolume": 2901322.1112
+    },
+    {
+      "symbol": "ALGOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1592298000000,
+      "quoteVolume": 10326830.723781
+    },
+    {
+      "symbol": "ZILUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1592470800000,
+      "quoteVolume": 3647614.910359
+    },
+    {
+      "symbol": "KNCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1592815800000,
+      "quoteVolume": 918908.4883
+    },
+    {
+      "symbol": "ZRXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1592989200000,
+      "quoteVolume": 861288.3157
+    },
+    {
+      "symbol": "COMPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1593507600000,
+      "quoteVolume": 3835924.18
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1594371600000,
+      "quoteVolume": 386275644.17617
+    },
+    {
+      "symbol": "KAVAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1595919900000,
+      "quoteVolume": 2404951.933314
+    },
+    {
+      "symbol": "BANDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1596006000000,
+      "quoteVolume": 795252.2306
+    },
+    {
+      "symbol": "RLCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1596178800000,
+      "quoteVolume": 4495670.4778
+    },
+    {
+      "symbol": "SNXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1597388400000,
+      "quoteVolume": 4080540.44995
+    },
+    {
+      "symbol": "DOTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1598079600000,
+      "quoteVolume": 36492636.02111
+    },
+    {
+      "symbol": "YFIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1598857200000,
+      "quoteVolume": 2347483.8
+    },
+    {
+      "symbol": "CRVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1598943600000,
+      "quoteVolume": 17708592.14473
+    },
+    {
+      "symbol": "TRBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1599116400000,
+      "quoteVolume": 3696753.091
+    },
+    {
+      "symbol": "RUNEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1599203400000,
+      "quoteVolume": 5092694.2904
+    },
+    {
+      "symbol": "SUSHIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1599202800000,
+      "quoteVolume": 2281791.2829
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1600066800000,
+      "quoteVolume": 3405089.839
+    },
+    {
+      "symbol": "SOLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1600066800000,
+      "quoteVolume": 1620181598.4142
+    },
+    {
+      "symbol": "UNIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1600412400000,
+      "quoteVolume": 158950600.652
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1600844400000,
+      "quoteVolume": 87694563.06
+    },
+    {
+      "symbol": "ENJUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1601362800000,
+      "quoteVolume": 1897956.13369
+    },
+    {
+      "symbol": "KSMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1602658800000,
+      "quoteVolume": 1717973.806
+    },
+    {
+      "symbol": "NEARUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1602748800000,
+      "quoteVolume": 381507965.82
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1602831600000,
+      "quoteVolume": 89658083.595
+    },
+    {
+      "symbol": "FILUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1602828000000,
+      "quoteVolume": 75843864.38726
+    },
+    {
+      "symbol": "RSRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1603091100000,
+      "quoteVolume": 52193735.436852
+    },
+    {
+      "symbol": "BELUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1605682800000,
+      "quoteVolume": 704395.98227
+    },
+    {
+      "symbol": "AXSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1605855600000,
+      "quoteVolume": 5367798.8735
+    },
+    {
+      "symbol": "ZENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1606201200000,
+      "quoteVolume": 6661343.651
+    },
+    {
+      "symbol": "SKLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1598252400000,
+      "quoteVolume": 1089497.491788
+    },
+    {
+      "symbol": "GRTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1608274800000,
+      "quoteVolume": 3638693.00001
+    },
+    {
+      "symbol": "1INCHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1608879600000,
+      "quoteVolume": 3311026.28167
+    },
+    {
+      "symbol": "CHZUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1611212400000,
+      "quoteVolume": 4878538.69916
+    },
+    {
+      "symbol": "SANDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1610953200000,
+      "quoteVolume": 11197645.05921
+    },
+    {
+      "symbol": "ANKRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1611558000000,
+      "quoteVolume": 1502332.294558
+    },
+    {
+      "symbol": "RVNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1614063600000,
+      "quoteVolume": 2871328.793586
+    },
+    {
+      "symbol": "SFPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1614150000000,
+      "quoteVolume": 900236.9185
+    },
+    {
+      "symbol": "COTIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615273200000,
+      "quoteVolume": 6442702.275929
+    },
+    {
+      "symbol": "CHRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615532400000,
+      "quoteVolume": 778128.2343
+    },
+    {
+      "symbol": "MANAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615705200000,
+      "quoteVolume": 4799037.22266
+    },
+    {
+      "symbol": "ALICEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615791600000,
+      "quoteVolume": 1617462.04368
+    },
+    {
+      "symbol": "HBARUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615964400000,
+      "quoteVolume": 25099696.48108
+    },
+    {
+      "symbol": "ONEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615964400000,
+      "quoteVolume": 162261577.0857951
+    },
+    {
+      "symbol": "CELRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1617001200000,
+      "quoteVolume": 2138458.509402
+    },
+    {
+      "symbol": "HOTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1617087600000,
+      "quoteVolume": 175059490.521864
+    },
+    {
+      "symbol": "MTLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1617174000000,
+      "quoteVolume": 1033273.1173
+    },
+    {
+      "symbol": "OGNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1617174000000,
+      "quoteVolume": 3426655.26251
+    },
+    {
+      "symbol": "1000SHIBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1620630000000,
+      "quoteVolume": 26985845.517627
+    },
+    {
+      "symbol": "GTCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1615791600000,
+      "quoteVolume": 30892937.044426
+    },
+    {
+      "symbol": "BTCDOMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1623913200000,
+      "quoteVolume": 3790016.5
+    },
+    {
+      "symbol": "IOTXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1628665200000,
+      "quoteVolume": 1155484.794651
+    },
+    {
+      "symbol": "C98USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1629702000000,
+      "quoteVolume": 1539760.25163
+    },
+    {
+      "symbol": "MASKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1626418800000,
+      "quoteVolume": 1788638.3073
+    },
+    {
+      "symbol": "DYDXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1631170800000,
+      "quoteVolume": 5603875.50575
+    },
+    {
+      "symbol": "1000XECUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1631775600000,
+      "quoteVolume": 1099758.625563
+    },
+    {
+      "symbol": "GALAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1631862000000,
+      "quoteVolume": 7198276.472231
+    },
+    {
+      "symbol": "CELOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1632639600000,
+      "quoteVolume": 5012471.762243
+    },
+    {
+      "symbol": "ARUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1632812400000,
+      "quoteVolume": 6116166.925
+    },
+    {
+      "symbol": "ARPAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1634540400000,
+      "quoteVolume": 786627.5734
+    },
+    {
+      "symbol": "CTSIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1635145200000,
+      "quoteVolume": 879560.98415
+    },
+    {
+      "symbol": "LPTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1636527600000,
+      "quoteVolume": 1600366.48
+    },
+    {
+      "symbol": "ENSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1638169200000,
+      "quoteVolume": 3933599.179
+    },
+    {
+      "symbol": "PEOPLEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1640242800000,
+      "quoteVolume": 3550958.982176
+    },
+    {
+      "symbol": "ROSEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1640934000000,
+      "quoteVolume": 2214922.946871
+    },
+    {
+      "symbol": "DUSKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1641452400000,
+      "quoteVolume": 4131800.01136
+    },
+    {
+      "symbol": "FLOWUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1644390000000,
+      "quoteVolume": 1277482.902094
+    },
+    {
+      "symbol": "IMXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1644476400000,
+      "quoteVolume": 6891303.9559
+    },
+    {
+      "symbol": "API3USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1645426800000,
+      "quoteVolume": 2366497.8427
+    },
+    {
+      "symbol": "GMTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1647241200000,
+      "quoteVolume": 2052308.094348
+    },
+    {
+      "symbol": "APEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1647500400000,
+      "quoteVolume": 4914998.2874
+    },
+    {
+      "symbol": "WOOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1649314800000,
+      "quoteVolume": 1165962.74273
+    },
+    {
+      "symbol": "JASMYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1650351600000,
+      "quoteVolume": 4439189.174872
+    },
+    {
+      "symbol": "OPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1654066800000,
+      "quoteVolume": 22147091.651271
+    },
+    {
+      "symbol": "INJUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1660633200000,
+      "quoteVolume": 80416692.5392
+    },
+    {
+      "symbol": "SPELLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1662361200000,
+      "quoteVolume": 1001416.1355691
+    },
+    {
+      "symbol": "1000LUNCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1662620400000,
+      "quoteVolume": 3766286.79705
+    },
+    {
+      "symbol": "LUNA2USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1662706800000,
+      "quoteVolume": 1326313.57939
+    },
+    {
+      "symbol": "LDOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1663743600000,
+      "quoteVolume": 11024934.895
+    },
+    {
+      "symbol": "ICPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1627628400000,
+      "quoteVolume": 17271390.961
+    },
+    {
+      "symbol": "APTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1666076400000,
+      "quoteVolume": 30332365.17421
+    },
+    {
+      "symbol": "QNTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1666076400000,
+      "quoteVolume": 56507436.238
+    },
+    {
+      "symbol": "FETUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1673766000000,
+      "quoteVolume": 28724043.0989
+    },
+    {
+      "symbol": "MAGICUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1674457200000,
+      "quoteVolume": 4083602.051648
+    },
+    {
+      "symbol": "TUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1675148400000,
+      "quoteVolume": 2908914.33074
+    },
+    {
+      "symbol": "MINAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1675407600000,
+      "quoteVolume": 4224402.71034
+    },
+    {
+      "symbol": "ASTRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1676271600000,
+      "quoteVolume": 781221.715412
+    },
+    {
+      "symbol": "GMXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1676530800000,
+      "quoteVolume": 2069200.30623
+    },
+    {
+      "symbol": "CFXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1676790000000,
+      "quoteVolume": 4293364.6046
+    },
+    {
+      "symbol": "STXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1676876400000,
+      "quoteVolume": 9729873.2735
+    },
+    {
+      "symbol": "ACHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1676962800000,
+      "quoteVolume": 1114899.776769
+    },
+    {
+      "symbol": "SSVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1677135600000,
+      "quoteVolume": 1772973.73979
+    },
+    {
+      "symbol": "CKBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1677481200000,
+      "quoteVolume": 3176161.9638305
+    },
+    {
+      "symbol": "LQTYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1678258800000,
+      "quoteVolume": 718977.81225
+    },
+    {
+      "symbol": "USDCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1678579200000,
+      "quoteVolume": 6863383.921744
+    },
+    {
+      "symbol": "IDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1679529600000,
+      "quoteVolume": 2343285.03048
+    },
+    {
+      "symbol": "ARBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1679554800000,
+      "quoteVolume": 79613896.040303
+    },
+    {
+      "symbol": "JOEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1679961600000,
+      "quoteVolume": 567100.88349
+    },
+    {
+      "symbol": "TLMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1680048000000,
+      "quoteVolume": 1175712.713387
+    },
+    {
+      "symbol": "XVSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1681257600000,
+      "quoteVolume": 621066.839
+    },
+    {
+      "symbol": "BLURUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1682553600000,
+      "quoteVolume": 3253050.800274
+    },
+    {
+      "symbol": "EDUUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1682640000000,
+      "quoteVolume": 1857054.52653
+    },
+    {
+      "symbol": "SUIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1683072000000,
+      "quoteVolume": 161280761.74303
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1683244800000,
+      "quoteVolume": 467740628.9630962
+    },
+    {
+      "symbol": "1000FLOKIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1683331200000,
+      "quoteVolume": 4164884.72177
+    },
+    {
+      "symbol": "UMAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1683590400000,
+      "quoteVolume": 958817.8122
+    },
+    {
+      "symbol": "NMRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1687435200000,
+      "quoteVolume": 2587084.4771
+    },
+    {
+      "symbol": "MAVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1688040000000,
+      "quoteVolume": 1020835.366367
+    },
+    {
+      "symbol": "XVGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1688558400000,
+      "quoteVolume": 1158461.232418
+    },
+    {
+      "symbol": "WLDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1690200000000,
+      "quoteVolume": 134462328.3162
+    },
+    {
+      "symbol": "PENDLEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1690511400000,
+      "quoteVolume": 8763111.9775
+    },
+    {
+      "symbol": "ARKMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1690512300000,
+      "quoteVolume": 2314044.2475
+    },
+    {
+      "symbol": "AGLDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1690597800000,
+      "quoteVolume": 939283.8637
+    },
+    {
+      "symbol": "YGGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1691206200000,
+      "quoteVolume": 1809844.06529
+    },
+    {
+      "symbol": "DODOXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1691496000000,
+      "quoteVolume": 2255253.16552
+    },
+    {
+      "symbol": "BNTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1691668800000,
+      "quoteVolume": 1888824.3097
+    },
+    {
+      "symbol": "SEIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1692239400000,
+      "quoteVolume": 12770267.54165
+    },
+    {
+      "symbol": "CYBERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1692619200000,
+      "quoteVolume": 30118777.18582
+    },
+    {
+      "symbol": "ARKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1695133800000,
+      "quoteVolume": 5872537.7353
+    },
+    {
+      "symbol": "BICOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1695904200000,
+      "quoteVolume": 1062290.95786
+    },
+    {
+      "symbol": "BIGTIMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1697121000000,
+      "quoteVolume": 1319991.193832
+    },
+    {
+      "symbol": "WAXPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1697640300000,
+      "quoteVolume": 700086.438623
+    },
+    {
+      "symbol": "BSVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1697805000000,
+      "quoteVolume": 819995.708
+    },
+    {
+      "symbol": "RIFUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1697891400000,
+      "quoteVolume": 1219960.62112
+    },
+    {
+      "symbol": "POLYXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1698201000000,
+      "quoteVolume": 1115478.57964
+    },
+    {
+      "symbol": "GASUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1698201900000,
+      "quoteVolume": 938862.4145
+    },
+    {
+      "symbol": "POWRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1698373800000,
+      "quoteVolume": 2876999.20981
+    },
+    {
+      "symbol": "TIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1698769800000,
+      "quoteVolume": 25118939.1574
+    },
+    {
+      "symbol": "CAKEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1698929100000,
+      "quoteVolume": 5222606.4335
+    },
+    {
+      "symbol": "MEMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1699012800000,
+      "quoteVolume": 2732861.4711436
+    },
+    {
+      "symbol": "TWTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1699021800000,
+      "quoteVolume": 999180.7244
+    },
+    {
+      "symbol": "ORDIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1699360200000,
+      "quoteVolume": 6444469.6247
+    },
+    {
+      "symbol": "STEEMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1699453800000,
+      "quoteVolume": 1145572.78037
+    },
+    {
+      "symbol": "ILVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1699633800000,
+      "quoteVolume": 1715003.2907
+    },
+    {
+      "symbol": "KASUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1700186400000,
+      "quoteVolume": 2781924.04362
+    },
+    {
+      "symbol": "BEAMXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1700227800000,
+      "quoteVolume": 19352185.482811
+    },
+    {
+      "symbol": "1000BONKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1700661600000,
+      "quoteVolume": 14697840.513002
+    },
+    {
+      "symbol": "PYTHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1700663400000,
+      "quoteVolume": 10022892.25073
+    },
+    {
+      "symbol": "SUPERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1701003600000,
+      "quoteVolume": 2434762.71978
+    },
+    {
+      "symbol": "USTCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1701088200000,
+      "quoteVolume": 910835.072697
+    },
+    {
+      "symbol": "ONGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1701090000000,
+      "quoteVolume": 1975966.95936
+    },
+    {
+      "symbol": "ETHWUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1701174600000,
+      "quoteVolume": 725299.5697
+    },
+    {
+      "symbol": "JTOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1702029600000,
+      "quoteVolume": 7535402.1643
+    },
+    {
+      "symbol": "1000SATSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1702389600000,
+      "quoteVolume": 2044420.73862802
+    },
+    {
+      "symbol": "AUCTIONUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1702645200000,
+      "quoteVolume": 838405.88828
+    },
+    {
+      "symbol": "1000RATSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1702648800000,
+      "quoteVolume": 1627104.92332
+    },
+    {
+      "symbol": "ACEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1702893600000,
+      "quoteVolume": 2884129.068073
+    },
+    {
+      "symbol": "MOVRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1703593800000,
+      "quoteVolume": 3866068.587971
+    },
+    {
+      "symbol": "XAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1704808800000,
+      "quoteVolume": 1131967.893915
+    },
+    {
+      "symbol": "WIFUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1705587300000,
+      "quoteVolume": 12033839.475
+    },
+    {
+      "symbol": "MANTAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1705586400000,
+      "quoteVolume": 1317567.935477
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1705755600000,
+      "quoteVolume": 47115661.00184
+    },
+    {
+      "symbol": "LSKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1706192100000,
+      "quoteVolume": 14854312.46536
+    },
+    {
+      "symbol": "ALTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1706191200000,
+      "quoteVolume": 3505519.043033
+    },
+    {
+      "symbol": "JUPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1706725800000,
+      "quoteVolume": 8956235.672
+    },
+    {
+      "symbol": "ZETAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1706862600000,
+      "quoteVolume": 1211667.63179
+    },
+    {
+      "symbol": "RONINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1707193800000,
+      "quoteVolume": 1129020.933556
+    },
+    {
+      "symbol": "DYMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1707289200000,
+      "quoteVolume": 974767.166919
+    },
+    {
+      "symbol": "PIXELUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1708354800000,
+      "quoteVolume": 4033113.133715
+    },
+    {
+      "symbol": "STRKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1708448400000,
+      "quoteVolume": 29809050.837609
+    },
+    {
+      "symbol": "GLMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1708596000000,
+      "quoteVolume": 1064221.47761
+    },
+    {
+      "symbol": "PORTALUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1709218800000,
+      "quoteVolume": 2368634.960831
+    },
+    {
+      "symbol": "AXLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1709307000000,
+      "quoteVolume": 1279856.009584
+    },
+    {
+      "symbol": "METISUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1710232200000,
+      "quoteVolume": 1126604.369
+    },
+    {
+      "symbol": "AEVOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1710336600000,
+      "quoteVolume": 954384.717588
+    },
+    {
+      "symbol": "BOMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1710592200000,
+      "quoteVolume": 6251168.6512165
+    },
+    {
+      "symbol": "ETHFIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1710775800000,
+      "quoteVolume": 23129757.4479
+    },
+    {
+      "symbol": "ENAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1712061000000,
+      "quoteVolume": 195945273.90274
+    },
+    {
+      "symbol": "WUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1712158200000,
+      "quoteVolume": 5285948.2723621
+    },
+    {
+      "symbol": "TNSRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1712595600000,
+      "quoteVolume": 1285237.352841
+    },
+    {
+      "symbol": "SAGAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1712658600000,
+      "quoteVolume": 3415926.468048
+    },
+    {
+      "symbol": "TAOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1712845800000,
+      "quoteVolume": 87479956.11
+    },
+    {
+      "symbol": "REZUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1714485600000,
+      "quoteVolume": 3796906.491613
+    },
+    {
+      "symbol": "BBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1715603400000,
+      "quoteVolume": 2407305.182159
+    },
+    {
+      "symbol": "NOTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1715868000000,
+      "quoteVolume": 1769865.8217084
+    },
+    {
+      "symbol": "TURBOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1717083000000,
+      "quoteVolume": 1684464.0041165
+    },
+    {
+      "symbol": "IOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1718114400000,
+      "quoteVolume": 2577741.04564
+    },
+    {
+      "symbol": "ZKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1718622000000,
+      "quoteVolume": 5650193.267426
+    },
+    {
+      "symbol": "MEWUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1718632800000,
+      "quoteVolume": 1515498.0701732
+    },
+    {
+      "symbol": "LISTAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1718886600000,
+      "quoteVolume": 701661.66928
+    },
+    {
+      "symbol": "ZROUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1718893800000,
+      "quoteVolume": 31672356.54692
+    },
+    {
+      "symbol": "RENDERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1721988000000,
+      "quoteVolume": 15684862.7272
+    },
+    {
+      "symbol": "BANANAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1723687200000,
+      "quoteVolume": 671047.637
+    },
+    {
+      "symbol": "RAREUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1723726800000,
+      "quoteVolume": 741205.73258
+    },
+    {
+      "symbol": "GUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1723725000000,
+      "quoteVolume": 3204314.006344
+    },
+    {
+      "symbol": "SYNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1723811400000,
+      "quoteVolume": 2493166.88066
+    },
+    {
+      "symbol": "BRETTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1724150100000,
+      "quoteVolume": 1700049.379809
+    },
+    {
+      "symbol": "POPCATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1724331600000,
+      "quoteVolume": 1666247.34905
+    },
+    {
+      "symbol": "SUNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1724331900000,
+      "quoteVolume": 982725.601409
+    },
+    {
+      "symbol": "DOGSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1724675400000,
+      "quoteVolume": 1595011.40346604
+    },
+    {
+      "symbol": "FLUXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1725346800000,
+      "quoteVolume": 692822.52006
+    },
+    {
+      "symbol": "RPLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1725885000000,
+      "quoteVolume": 653390.4576
+    },
+    {
+      "symbol": "POLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1726229700000,
+      "quoteVolume": 7460995.69026
+    },
+    {
+      "symbol": "1MBABYDOGEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1726486500000,
+      "quoteVolume": 1128873.5484958
+    },
+    {
+      "symbol": "NEIROUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1726486200000,
+      "quoteVolume": 14156697.91343472
+    },
+    {
+      "symbol": "FIDAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1726749000000,
+      "quoteVolume": 738693.08215
+    },
+    {
+      "symbol": "CATIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1726831800000,
+      "quoteVolume": 1137991.96827
+    },
+    {
+      "symbol": "HMSTRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1727353800000,
+      "quoteVolume": 7563426.546982
+    },
+    {
+      "symbol": "EIGENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1727762400000,
+      "quoteVolume": 8361174.59967
+    },
+    {
+      "symbol": "DIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1727872200000,
+      "quoteVolume": 714177.5155
+    },
+    {
+      "symbol": "1000CATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1729513800000,
+      "quoteVolume": 2589229.505898
+    },
+    {
+      "symbol": "SCRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1729591200000,
+      "quoteVolume": 1538227.8583
+    },
+    {
+      "symbol": "GOATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1729776600000,
+      "quoteVolume": 779360.32529
+    },
+    {
+      "symbol": "MOODENGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1729850400000,
+      "quoteVolume": 1882131.51597
+    },
+    {
+      "symbol": "SAFEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1729859400000,
+      "quoteVolume": 2386584.21134
+    },
+    {
+      "symbol": "SANTOSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1730124000000,
+      "quoteVolume": 483755.04271
+    },
+    {
+      "symbol": "COWUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1730899800000,
+      "quoteVolume": 2330854.5948
+    },
+    {
+      "symbol": "CETUSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1730901600000,
+      "quoteVolume": 557403.40177
+    },
+    {
+      "symbol": "1000000MOGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1730982600000,
+      "quoteVolume": 937531.46584
+    },
+    {
+      "symbol": "GRASSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731079800000,
+      "quoteVolume": 10102018.17422
+    },
+    {
+      "symbol": "DRIFTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731080700000,
+      "quoteVolume": 856016.67431
+    },
+    {
+      "symbol": "ACTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731327300000,
+      "quoteVolume": 17125570.385272
+    },
+    {
+      "symbol": "PNUTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731328200000,
+      "quoteVolume": 4181475.43629
+    },
+    {
+      "symbol": "BANUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731929400000,
+      "quoteVolume": 782198.4214
+    },
+    {
+      "symbol": "AKTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1731929400000,
+      "quoteVolume": 3117564.26727
+    },
+    {
+      "symbol": "1000CHEEMSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1732535100000,
+      "quoteVolume": 1367942.4984544
+    },
+    {
+      "symbol": "THEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1732709700000,
+      "quoteVolume": 4166902.801812
+    },
+    {
+      "symbol": "MORPHOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1732717800000,
+      "quoteVolume": 5926240.23289
+    },
+    {
+      "symbol": "CHILLGUYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1732718700000,
+      "quoteVolume": 1589140.634425
+    },
+    {
+      "symbol": "KAIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733320800000,
+      "quoteVolume": 2479772.01529
+    },
+    {
+      "symbol": "AEROUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733321700000,
+      "quoteVolume": 19793097.23652
+    },
+    {
+      "symbol": "ORCAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733497200000,
+      "quoteVolume": 2828278.397
+    },
+    {
+      "symbol": "MOVEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733752800000,
+      "quoteVolume": 1277774.768952
+    },
+    {
+      "symbol": "RAYSOLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733832000000,
+      "quoteVolume": 15421118.32942
+    },
+    {
+      "symbol": "KOMAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733832900000,
+      "quoteVolume": 67582822.512336
+    },
+    {
+      "symbol": "VIRTUALUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733833800000,
+      "quoteVolume": 13703821.90036
+    },
+    {
+      "symbol": "SPXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733834700000,
+      "quoteVolume": 5907328.1892
+    },
+    {
+      "symbol": "MEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1733850000000,
+      "quoteVolume": 1854694.41081
+    },
+    {
+      "symbol": "AVAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734094800000,
+      "quoteVolume": 3760473.40887
+    },
+    {
+      "symbol": "MOCAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734348600000,
+      "quoteVolume": 690099.057422
+    },
+    {
+      "symbol": "VANAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734355800000,
+      "quoteVolume": 1345877.010857
+    },
+    {
+      "symbol": "PENGUUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734452100000,
+      "quoteVolume": 35617859.214322
+    },
+    {
+      "symbol": "LUMIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734521400000,
+      "quoteVolume": 2062882.986061
+    },
+    {
+      "symbol": "USUALUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734526800000,
+      "quoteVolume": 1791485.662833
+    },
+    {
+      "symbol": "AIXBTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734719400000,
+      "quoteVolume": 1182014.18544
+    },
+    {
+      "symbol": "FARTCOINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734720300000,
+      "quoteVolume": 15227240.48919
+    },
+    {
+      "symbol": "KMNOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734721200000,
+      "quoteVolume": 3389170.27268
+    },
+    {
+      "symbol": "CGPTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734722100000,
+      "quoteVolume": 1108771.76168
+    },
+    {
+      "symbol": "HIVEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1734953400000,
+      "quoteVolume": 853392.88398
+    },
+    {
+      "symbol": "DEXEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1735039800000,
+      "quoteVolume": 3486344.33752
+    },
+    {
+      "symbol": "PHAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1735558200000,
+      "quoteVolume": 3500656.59906
+    },
+    {
+      "symbol": "GRIFFAINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1735824600000,
+      "quoteVolume": 1592650.075085
+    },
+    {
+      "symbol": "ZEREBROUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1735826400000,
+      "quoteVolume": 1757483.772544
+    },
+    {
+      "symbol": "BIOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1735906500000,
+      "quoteVolume": 3558360.09135
+    },
+    {
+      "symbol": "COOKIEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1736249400000,
+      "quoteVolume": 1213870.297098
+    },
+    {
+      "symbol": "ALCHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1736250300000,
+      "quoteVolume": 1107801.51064
+    },
+    {
+      "symbol": "SWARMSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1736252100000,
+      "quoteVolume": 8432014.669763
+    },
+    {
+      "symbol": "SONICUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1736319600000,
+      "quoteVolume": 959514.47445
+    },
+    {
+      "symbol": "PROMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1736944200000,
+      "quoteVolume": 3959011.8281
+    },
+    {
+      "symbol": "SUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737021600000,
+      "quoteVolume": 7079506.91815
+    },
+    {
+      "symbol": "SOLVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737116100000,
+      "quoteVolume": 2243665.978948
+    },
+    {
+      "symbol": "ARCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737118800000,
+      "quoteVolume": 1795122.70095
+    },
+    {
+      "symbol": "AVAAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737119700000,
+      "quoteVolume": 1449179.696354
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737205200000,
+      "quoteVolume": 83693431.51616
+    },
+    {
+      "symbol": "MELANIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737365400000,
+      "quoteVolume": 2143057.788015
+    },
+    {
+      "symbol": "VTHOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737538200000,
+      "quoteVolume": 1610955.424322
+    },
+    {
+      "symbol": "ANIMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737651600000,
+      "quoteVolume": 1234608.935983
+    },
+    {
+      "symbol": "PIPPINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1737713700000,
+      "quoteVolume": 2391849.32198
+    },
+    {
+      "symbol": "VVVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1738138500000,
+      "quoteVolume": 19486260.84361
+    },
+    {
+      "symbol": "BERAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1738854000000,
+      "quoteVolume": 6606650.44868
+    },
+    {
+      "symbol": "TSTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1739106000000,
+      "quoteVolume": 1558316.477876
+    },
+    {
+      "symbol": "LAYERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1739288700000,
+      "quoteVolume": 1625653.793647
+    },
+    {
+      "symbol": "HEIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1739437200000,
+      "quoteVolume": 1970483.607625
+    },
+    {
+      "symbol": "GPSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1739811600000,
+      "quoteVolume": 2685981.61161
+    },
+    {
+      "symbol": "SHELLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1739812500000,
+      "quoteVolume": 702565.50968
+    },
+    {
+      "symbol": "KAITOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1740056400000,
+      "quoteVolume": 6423403.81919
+    },
+    {
+      "symbol": "REDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1741276800000,
+      "quoteVolume": 4204286.2262
+    },
+    {
+      "symbol": "BMTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742218200000,
+      "quoteVolume": 54091188.14464
+    },
+    {
+      "symbol": "MUBARAKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742219100000,
+      "quoteVolume": 4758704.12124
+    },
+    {
+      "symbol": "FORMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742371200000,
+      "quoteVolume": 2689838.76231
+    },
+    {
+      "symbol": "TUTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742461200000,
+      "quoteVolume": 2577208.81526
+    },
+    {
+      "symbol": "BROCCOLI714USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742547600000,
+      "quoteVolume": 3071949.63813
+    },
+    {
+      "symbol": "BROCCOLIF3BUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742548500000,
+      "quoteVolume": 917071.464559
+    },
+    {
+      "symbol": "SIRENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742634000000,
+      "quoteVolume": 4847276.69194
+    },
+    {
+      "symbol": "BANANAS31USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742634900000,
+      "quoteVolume": 712439.4526
+    },
+    {
+      "symbol": "BRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742561100000,
+      "quoteVolume": 4640501.41494
+    },
+    {
+      "symbol": "PLUMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742562000000,
+      "quoteVolume": 4396884.0422
+    },
+    {
+      "symbol": "NILUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742821200000,
+      "quoteVolume": 5648743.071002
+    },
+    {
+      "symbol": "PARTIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1742907600000,
+      "quoteVolume": 6333191.41181
+    },
+    {
+      "symbol": "JELLYJELLYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743004800000,
+      "quoteVolume": 705668.42507
+    },
+    {
+      "symbol": "MAVIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743008400000,
+      "quoteVolume": 3481033.87399
+    },
+    {
+      "symbol": "PAXGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743071400000,
+      "quoteVolume": 53191630.3755
+    },
+    {
+      "symbol": "WALUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743089400000,
+      "quoteVolume": 3587839.30663
+    },
+    {
+      "symbol": "GUNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743426000000,
+      "quoteVolume": 1895690.183349
+    },
+    {
+      "symbol": "ATHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743608700000,
+      "quoteVolume": 3259144.659191
+    },
+    {
+      "symbol": "BABYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1743859800000,
+      "quoteVolume": 2721287.65523
+    },
+    {
+      "symbol": "STOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1744469100000,
+      "quoteVolume": 1236901.8401
+    },
+    {
+      "symbol": "FHEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1744470000000,
+      "quoteVolume": 1801617.00963
+    },
+    {
+      "symbol": "KERNELUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1744632000000,
+      "quoteVolume": 893429.69016
+    },
+    {
+      "symbol": "WCTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1744714800000,
+      "quoteVolume": 981823.5223
+    },
+    {
+      "symbol": "INITUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1744785000000,
+      "quoteVolume": 12565935.36847
+    },
+    {
+      "symbol": "BANKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1745001000000,
+      "quoteVolume": 5392624.02325
+    },
+    {
+      "symbol": "DEEPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1745310600000,
+      "quoteVolume": 902636.78777
+    },
+    {
+      "symbol": "HYPERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1745326800000,
+      "quoteVolume": 1384565.38681
+    },
+    {
+      "symbol": "JSTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1745832600000,
+      "quoteVolume": 4524634.25445
+    },
+    {
+      "symbol": "SIGNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1745838000000,
+      "quoteVolume": 9540443.759245
+    },
+    {
+      "symbol": "PUNDIXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746007200000,
+      "quoteVolume": 665184.17722
+    },
+    {
+      "symbol": "CTKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746008100000,
+      "quoteVolume": 667716.8029
+    },
+    {
+      "symbol": "AIOTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746016200000,
+      "quoteVolume": 173523322.15912
+    },
+    {
+      "symbol": "DOLOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746068400000,
+      "quoteVolume": 551657.3444
+    },
+    {
+      "symbol": "HAEDALUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746069300000,
+      "quoteVolume": 5151212.71782
+    },
+    {
+      "symbol": "SXTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746174600000,
+      "quoteVolume": 2713506.550052
+    },
+    {
+      "symbol": "ASRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746523800000,
+      "quoteVolume": 1287195.32107
+    },
+    {
+      "symbol": "ALPINEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746524700000,
+      "quoteVolume": 801145.57939
+    },
+    {
+      "symbol": "B2USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746538200000,
+      "quoteVolume": 13666918.5215
+    },
+    {
+      "symbol": "SYRUPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746606600000,
+      "quoteVolume": 3750154.61709
+    },
+    {
+      "symbol": "DOODUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1746797400000,
+      "quoteVolume": 3802033.518516
+    },
+    {
+      "symbol": "OGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747040400000,
+      "quoteVolume": 1273793.19
+    },
+    {
+      "symbol": "SKYAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747129500000,
+      "quoteVolume": 48451824.66868
+    },
+    {
+      "symbol": "NXPCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747290600000,
+      "quoteVolume": 14288104.3811
+    },
+    {
+      "symbol": "CVCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747384200000,
+      "quoteVolume": 991394.62719
+    },
+    {
+      "symbol": "AGTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747737000000,
+      "quoteVolume": 21432612.693003
+    },
+    {
+      "symbol": "AWEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747814400000,
+      "quoteVolume": 1662909.14586
+    },
+    {
+      "symbol": "BUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747931400000,
+      "quoteVolume": 1602155.5754
+    },
+    {
+      "symbol": "SOONUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1747989000000,
+      "quoteVolume": 3642908.4425
+    },
+    {
+      "symbol": "HUMAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1748264400000,
+      "quoteVolume": 19837643.728657
+    },
+    {
+      "symbol": "AUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1748419200000,
+      "quoteVolume": 2603277.0113
+    },
+    {
+      "symbol": "SOPHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1748437200000,
+      "quoteVolume": 6961372.567814
+    },
+    {
+      "symbol": "MERLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1748507400000,
+      "quoteVolume": 9820483.16349
+    },
+    {
+      "symbol": "HYPEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1748601000000,
+      "quoteVolume": 531123349.2337
+    },
+    {
+      "symbol": "LAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1749114000000,
+      "quoteVolume": 3068762.17634
+    },
+    {
+      "symbol": "HOMEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1749555000000,
+      "quoteVolume": 2876715.110284
+    },
+    {
+      "symbol": "RESOLVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1749562200000,
+      "quoteVolume": 1281752.5488
+    },
+    {
+      "symbol": "TAIKOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1749645000000,
+      "quoteVolume": 695227.66624
+    },
+    {
+      "symbol": "SQDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1749645900000,
+      "quoteVolume": 1278481.83192
+    },
+    {
+      "symbol": "SPKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750150800000,
+      "quoteVolume": 1836149.17601
+    },
+    {
+      "symbol": "MYXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750249800000,
+      "quoteVolume": 2775783.65297
+    },
+    {
+      "symbol": "FUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750250700000,
+      "quoteVolume": 1115376.937453
+    },
+    {
+      "symbol": "NEWTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750343400000,
+      "quoteVolume": 835790.38933
+    },
+    {
+      "symbol": "HUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750843800000,
+      "quoteVolume": 3343970.16183
+    },
+    {
+      "symbol": "SAHARAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1750939200000,
+      "quoteVolume": 1836029.841208
+    },
+    {
+      "symbol": "ICNTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1751547600000,
+      "quoteVolume": 99165730.0111
+    },
+    {
+      "symbol": "BULLAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1751619600000,
+      "quoteVolume": 4043238.441485
+    },
+    {
+      "symbol": "IDOLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1751620500000,
+      "quoteVolume": 98263367.779863
+    },
+    {
+      "symbol": "MUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1751880600000,
+      "quoteVolume": 1132008.813
+    },
+    {
+      "symbol": "PUMPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752132600000,
+      "quoteVolume": 125407872.053599
+    },
+    {
+      "symbol": "CROSSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752143400000,
+      "quoteVolume": 590480.65274
+    },
+    {
+      "symbol": "AINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752144300000,
+      "quoteVolume": 53464808.79236
+    },
+    {
+      "symbol": "CUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752570000000,
+      "quoteVolume": 975833.00474
+    },
+    {
+      "symbol": "VELVETUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752570900000,
+      "quoteVolume": 2033704.12637
+    },
+    {
+      "symbol": "TACUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752575400000,
+      "quoteVolume": 2379196.32527
+    },
+    {
+      "symbol": "ERAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1752766200000,
+      "quoteVolume": 18964492.84219
+    },
+    {
+      "symbol": "TAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753083000000,
+      "quoteVolume": 55879230.13858
+    },
+    {
+      "symbol": "CVXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753270200000,
+      "quoteVolume": 2372313.2296
+    },
+    {
+      "symbol": "SLPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753271100000,
+      "quoteVolume": 794285.0210637
+    },
+    {
+      "symbol": "ZORAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753441200000,
+      "quoteVolume": 1339702.156952
+    },
+    {
+      "symbol": "TAGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753442100000,
+      "quoteVolume": 2066396.9872694
+    },
+    {
+      "symbol": "ESPORTSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753783200000,
+      "quoteVolume": 12759346.050524
+    },
+    {
+      "symbol": "TREEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753797600000,
+      "quoteVolume": 2923877.99418
+    },
+    {
+      "symbol": "PLAYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753954200000,
+      "quoteVolume": 4451994.1934
+    },
+    {
+      "symbol": "NAORISUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1753965000000,
+      "quoteVolume": 5303795.52956
+    },
+    {
+      "symbol": "TOWNSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1754404200000,
+      "quoteVolume": 1774489.359283
+    },
+    {
+      "symbol": "PROVEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1754413200000,
+      "quoteVolume": 2806849.72509
+    },
+    {
+      "symbol": "ALLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1754472600000,
+      "quoteVolume": 1011689.6006
+    },
+    {
+      "symbol": "INUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1754562600000,
+      "quoteVolume": 2838581.91267
+    },
+    {
+      "symbol": "CARVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1754585100000,
+      "quoteVolume": 3290316.17774
+    },
+    {
+      "symbol": "AIOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755084600000,
+      "quoteVolume": 33537210.14075
+    },
+    {
+      "symbol": "XNYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755085500000,
+      "quoteVolume": 811344.796027
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755260100000,
+      "quoteVolume": 19142132.49476
+    },
+    {
+      "symbol": "SAPIENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755711000000,
+      "quoteVolume": 810766.42637
+    },
+    {
+      "symbol": "XPLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755855000000,
+      "quoteVolume": 36427029.90706
+    },
+    {
+      "symbol": "WLFIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1755937800000,
+      "quoteVolume": 19055481.39237
+    },
+    {
+      "symbol": "SOMIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756114200000,
+      "quoteVolume": 942283.8907
+    },
+    {
+      "symbol": "BASUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756215000000,
+      "quoteVolume": 755184.972858
+    },
+    {
+      "symbol": "BTRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756290600000,
+      "quoteVolume": 2033154.16342
+    },
+    {
+      "symbol": "HEMIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756441800000,
+      "quoteVolume": 1559910.579581
+    },
+    {
+      "symbol": "LINEAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756715400000,
+      "quoteVolume": 2246891.782123
+    },
+    {
+      "symbol": "QUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756798200000,
+      "quoteVolume": 48567500.436982
+    },
+    {
+      "symbol": "ARIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756897200000,
+      "quoteVolume": 19529594.68959
+    },
+    {
+      "symbol": "TAKEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1756898100000,
+      "quoteVolume": 1415623.37792
+    },
+    {
+      "symbol": "OPENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757336400000,
+      "quoteVolume": 5054300.4637
+    },
+    {
+      "symbol": "FLOCKUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757400300000,
+      "quoteVolume": 2973484.10709
+    },
+    {
+      "symbol": "SKYUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757401200000,
+      "quoteVolume": 4714205.19073
+    },
+    {
+      "symbol": "AVNTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757430000000,
+      "quoteVolume": 3031046.88187
+    },
+    {
+      "symbol": "HOLOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757592000000,
+      "quoteVolume": 1200839.20179
+    },
+    {
+      "symbol": "XPINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757664000000,
+      "quoteVolume": 4429526.5459165
+    },
+    {
+      "symbol": "UBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757673000000,
+      "quoteVolume": 2132468.90402
+    },
+    {
+      "symbol": "ZKCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1757944800000,
+      "quoteVolume": 2084409.28847
+    },
+    {
+      "symbol": "TOSHIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758087000000,
+      "quoteVolume": 1166127.8784275
+    },
+    {
+      "symbol": "STBLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758087900000,
+      "quoteVolume": 921313.34893
+    },
+    {
+      "symbol": "0GUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758123900000,
+      "quoteVolume": 3461094.9327
+    },
+    {
+      "symbol": "BARDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758193200000,
+      "quoteVolume": 1320320.2211
+    },
+    {
+      "symbol": "ASTERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758283200000,
+      "quoteVolume": 55269777.7751
+    },
+    {
+      "symbol": "TRADOORUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758285000000,
+      "quoteVolume": 2090874.0555
+    },
+    {
+      "symbol": "BLESSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758619800000,
+      "quoteVolume": 4588353.537853
+    },
+    {
+      "symbol": "FLUIDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758708900000,
+      "quoteVolume": 2812863.1571
+    },
+    {
+      "symbol": "COAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758785400000,
+      "quoteVolume": 1070666.7844
+    },
+    {
+      "symbol": "HANAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758886200000,
+      "quoteVolume": 56945076.79754
+    },
+    {
+      "symbol": "MIRAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758888000000,
+      "quoteVolume": 1472140.65311
+    },
+    {
+      "symbol": "AKEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758889800000,
+      "quoteVolume": 101252545.012568
+    },
+    {
+      "symbol": "ORDERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758890700000,
+      "quoteVolume": 2789718.34161
+    },
+    {
+      "symbol": "LIGHTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1758972600000,
+      "quoteVolume": 2032781.4501
+    },
+    {
+      "symbol": "XANUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759141800000,
+      "quoteVolume": 1290509.393335
+    },
+    {
+      "symbol": "FFUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759152600000,
+      "quoteVolume": 2596355.24375
+    },
+    {
+      "symbol": "EDENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759230000000,
+      "quoteVolume": 1804859.77442
+    },
+    {
+      "symbol": "NOMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759305600000,
+      "quoteVolume": 2238491.142831
+    },
+    {
+      "symbol": "TRUTHUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759320000000,
+      "quoteVolume": 4431102.081895
+    },
+    {
+      "symbol": "2ZUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759408200000,
+      "quoteVolume": 3309719.46858
+    },
+    {
+      "symbol": "EVAAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759487400000,
+      "quoteVolume": 23633561.25431
+    },
+    {
+      "symbol": "LYNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759735800000,
+      "quoteVolume": 14711448.8318
+    },
+    {
+      "symbol": "KGENUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759847400000,
+      "quoteVolume": 2579837.3698
+    },
+    {
+      "symbol": "4USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1759923000000,
+      "quoteVolume": 3872812.153772
+    },
+    {
+      "symbol": "GIGGLEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760003100000,
+      "quoteVolume": 5185858.326
+    },
+    {
+      "symbol": "MONUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760080500000,
+      "quoteVolume": 8740412.37214
+    },
+    {
+      "symbol": "YBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760107500000,
+      "quoteVolume": 2975611.39903
+    },
+    {
+      "symbol": "METUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760185800000,
+      "quoteVolume": 20980570.1116
+    },
+    {
+      "symbol": "EULUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760365800000,
+      "quoteVolume": 1817018.67358
+    },
+    {
+      "symbol": "ENSOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760432400000,
+      "quoteVolume": 2801274.3449
+    },
+    {
+      "symbol": "CLOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760441400000,
+      "quoteVolume": 1508575.25418
+    },
+    {
+      "symbol": "RECALLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760531400000,
+      "quoteVolume": 801824.09598
+    },
+    {
+      "symbol": "ZBTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760700600000,
+      "quoteVolume": 2737897.47616
+    },
+    {
+      "symbol": "LABUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760711400000,
+      "quoteVolume": 6161492.12699
+    },
+    {
+      "symbol": "RIVERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760712300000,
+      "quoteVolume": 7954186.935
+    },
+    {
+      "symbol": "币安人生USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1760958000000,
+      "quoteVolume": 2964166.6747
+    },
+    {
+      "symbol": "BLUAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761046200000,
+      "quoteVolume": 2836247.320451
+    },
+    {
+      "symbol": "TURTLEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761145200000,
+      "quoteVolume": 878710.02423
+    },
+    {
+      "symbol": "APRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761215400000,
+      "quoteVolume": 11151142.66616
+    },
+    {
+      "symbol": "ONUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761294600000,
+      "quoteVolume": 73573226.1885
+    },
+    {
+      "symbol": "KITEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761733800000,
+      "quoteVolume": 4089291.61984
+    },
+    {
+      "symbol": "ATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761737400000,
+      "quoteVolume": 3204743.4409
+    },
+    {
+      "symbol": "CCUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1761912000000,
+      "quoteVolume": 6143481.56865
+    },
+    {
+      "symbol": "MMTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762257600000,
+      "quoteVolume": 1776033.3217
+    },
+    {
+      "symbol": "TRUSTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762335000000,
+      "quoteVolume": 2841142.3164
+    },
+    {
+      "symbol": "UAIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762428600000,
+      "quoteVolume": 95289941.8755
+    },
+    {
+      "symbol": "FOLKSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762432200000,
+      "quoteVolume": 4510804.8227
+    },
+    {
+      "symbol": "STABLEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762430400000,
+      "quoteVolume": 2750027.616388
+    },
+    {
+      "symbol": "JCTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762770600000,
+      "quoteVolume": 2307559331.253305
+    },
+    {
+      "symbol": "ALLOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762869600000,
+      "quoteVolume": 2174004.94689
+    },
+    {
+      "symbol": "CLANKERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762948800000,
+      "quoteVolume": 7306582.941
+    },
+    {
+      "symbol": "BEATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1762949700000,
+      "quoteVolume": 14973432.58143
+    },
+    {
+      "symbol": "PIEVERSEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1763119800000,
+      "quoteVolume": 19967428.2413
+    },
+    {
+      "symbol": "SENTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1763124300000,
+      "quoteVolume": 2900502.71813
+    },
+    {
+      "symbol": "IRYSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1764172800000,
+      "quoteVolume": 9512446.52648
+    },
+    {
+      "symbol": "POWERUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765011600000,
+      "quoteVolume": 1499920.70689
+    },
+    {
+      "symbol": "WETUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765350000000,
+      "quoteVolume": 985707.43798
+    },
+    {
+      "symbol": "NIGHTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765364400000,
+      "quoteVolume": 6890215.27247
+    },
+    {
+      "symbol": "USUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765536300000,
+      "quoteVolume": 6141901.764645
+    },
+    {
+      "symbol": "CYSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765537200000,
+      "quoteVolume": 3242455.1937
+    },
+    {
+      "symbol": "RAVEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1765726200000,
+      "quoteVolume": 1696747.8264
+    },
+    {
+      "symbol": "ZKPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1766311200000,
+      "quoteVolume": 1192548.47727
+    },
+    {
+      "symbol": "GUAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1766312100000,
+      "quoteVolume": 1198967.90871
+    },
+    {
+      "symbol": "LITUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1766511000000,
+      "quoteVolume": 49824984.95217
+    },
+    {
+      "symbol": "BREVUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1767091500000,
+      "quoteVolume": 1212744.75361
+    },
+    {
+      "symbol": "COLLECTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1767186900000,
+      "quoteVolume": 2954511.78969
+    },
+    {
+      "symbol": "MAGMAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1767187800000,
+      "quoteVolume": 12419498.63241
+    },
+    {
+      "symbol": "ZAMAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1767949200000,
+      "quoteVolume": 7604310.23973
+    },
+    {
+      "symbol": "FOGOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1768053600000,
+      "quoteVolume": 8826033.942128
+    },
+    {
+      "symbol": "FRAXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1768464000000,
+      "quoteVolume": 855112.9285
+    },
+    {
+      "symbol": "SPORTFUNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1768571100000,
+      "quoteVolume": 1046049.60098
+    },
+    {
+      "symbol": "AIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1768907700000,
+      "quoteVolume": 1054393.11568
+    },
+    {
+      "symbol": "ACUUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1768999500000,
+      "quoteVolume": 989875.47675
+    },
+    {
+      "symbol": "我踏马来了USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769005800000,
+      "quoteVolume": 1242692.931562
+    },
+    {
+      "symbol": "ELSAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769066700000,
+      "quoteVolume": 9553755.2208
+    },
+    {
+      "symbol": "SKRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769078700000,
+      "quoteVolume": 1243372.660417
+    },
+    {
+      "symbol": "SPACEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769168700000,
+      "quoteVolume": 1374297.943839
+    },
+    {
+      "symbol": "FIGHTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769170500000,
+      "quoteVolume": 1538598.47846
+    },
+    {
+      "symbol": "BIRBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769663700000,
+      "quoteVolume": 23968339.34347
+    },
+    {
+      "symbol": "GWEIUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769664600000,
+      "quoteVolume": 2785731.97271
+    },
+    {
+      "symbol": "MEGAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769775300000,
+      "quoteVolume": 13576551.90622
+    },
+    {
+      "symbol": "INXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1769799600000,
+      "quoteVolume": 1142984.910975
+    },
+    {
+      "symbol": "TRIAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1770380100000,
+      "quoteVolume": 1539884.127534
+    },
+    {
+      "symbol": "ESPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1770711000000,
+      "quoteVolume": 1672311.86489
+    },
+    {
+      "symbol": "AZTECUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1770784200000,
+      "quoteVolume": 2060892.54887
+    },
+    {
+      "symbol": "OPNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1771686000000,
+      "quoteVolume": 2560659.71482
+    },
+    {
+      "symbol": "ROBOUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1772181900000,
+      "quoteVolume": 1692180.267783
+    },
+    {
+      "symbol": "KATUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1772427600000,
+      "quoteVolume": 3987821.419083
+    },
+    {
+      "symbol": "MANTRAUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1772611200000,
+      "quoteVolume": 1841713.230813
+    },
+    {
+      "symbol": "龙虾USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1773228600000,
+      "quoteVolume": 7450463.52959
+    },
+    {
+      "symbol": "CFGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1773666000000,
+      "quoteVolume": 3543363.4689
+    },
+    {
+      "symbol": "EDGEUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1773928800000,
+      "quoteVolume": 6524651.8603
+    },
+    {
+      "symbol": "BSBUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1774439100000,
+      "quoteVolume": 3021895.31236
+    },
+    {
+      "symbol": "XAUTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1774533600000,
+      "quoteVolume": 34228808.56
+    },
+    {
+      "symbol": "BASEDUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1774864800000,
+      "quoteVolume": 2015505.6594
+    },
+    {
+      "symbol": "PRLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1775039400000,
+      "quoteVolume": 1657524.5016
+    },
+    {
+      "symbol": "GENIUSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1776310200000,
+      "quoteVolume": 1675450.2734
+    },
+    {
+      "symbol": "CHIPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1776323700000,
+      "quoteVolume": 9626845.48773
+    },
+    {
+      "symbol": "OPGUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1776871800000,
+      "quoteVolume": 1746039.6112
+    },
+    {
+      "symbol": "AIGENSYNUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1777472100000,
+      "quoteVolume": 1722859.00446
+    },
+    {
+      "symbol": "BILLUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1778141700000,
+      "quoteVolume": 2794535.248809
+    },
+    {
+      "symbol": "PHAROSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1778735700000,
+      "quoteVolume": 1012640.6028
+    },
+    {
+      "symbol": "STARUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1778736600000,
+      "quoteVolume": 4723093.59216
+    },
+    {
+      "symbol": "CTRUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1779960600000,
+      "quoteVolume": 1122561.756528
+    },
+    {
+      "symbol": "SLXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1780299000000,
+      "quoteVolume": 3322693.47064
+    },
+    {
+      "symbol": "ZESTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1780581600000,
+      "quoteVolume": 1420551.40432
+    },
+    {
+      "symbol": "BTWUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1780582500000,
+      "quoteVolume": 30097408.72054
+    },
+    {
+      "symbol": "REUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1781791200000,
+      "quoteVolume": 3286261.971
+    },
+    {
+      "symbol": "ARXUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1782189900000,
+      "quoteVolume": 9093732.0215
+    },
+    {
+      "symbol": "OUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1782301500000,
+      "quoteVolume": 4775596.0907
+    },
+    {
+      "symbol": "CAPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1782560700000,
+      "quoteVolume": 23606618.84737
+    },
+    {
+      "symbol": "GRAMUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1782979200000,
+      "quoteVolume": 16573942.8957
+    },
+    {
+      "symbol": "DATAIPUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1783061100000,
+      "quoteVolume": 1411884.4417
+    },
+    {
+      "symbol": "GRVTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1785501900000,
+      "quoteVolume": 3273833.7761
+    },
+    {
+      "symbol": "DOSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1786460400000,
+      "quoteVolume": 7118819.5908
+    },
+    {
+      "symbol": "牛来USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1788089400000,
+      "quoteVolume": 12203342.83392
+    },
+    {
+      "symbol": "MARSCOINUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1788255900000,
+      "quoteVolume": 12205643.45371
+    },
+    {
+      "symbol": "PONSUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1788677100000,
+      "quoteVolume": 34782726.2011
+    },
+    {
+      "symbol": "哈基米USDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1788678900000,
+      "quoteVolume": 1579816.59516
+    },
+    {
+      "symbol": "CTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1790840700000,
+      "quoteVolume": 11964904.2168
+    },
+    {
+      "symbol": "PREDICTUSDT",
+      "status": "TRADING",
+      "contractType": "PERPETUAL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "onboardDate": 1792916100000,
+      "quoteVolume": 1828405.8453
+    }
+  ]
+}
