@@ -180,7 +180,7 @@ class LiveOHLCVFetcher:
         cursor: int | None = None
         endpoint = "/api/v5/market/candles"
         page_size = 300
-        for _ in range((limit + page_size - 1) // page_size + 4):
+        for _ in range((limit + 99) // 100 + 5):
             params = {"instId": inst_id, "bar": timeframe, "limit": str(page_size)}
             if cursor is not None:
                 params["after"] = str(cursor)
