@@ -39,7 +39,7 @@ class LiveSignalBotTests(unittest.TestCase):
         rows = []
         score, parts = calculate_confluence(result, rows, "BUY")
         self.assertEqual(score, 40)
-        self.assertEqual(set(parts), {
+        self.assertEqual(parts, {
             "bias_4h": 20, "bias_1h": 0, "sweep": 20,
             "zone_reaction": 0, "tenkan_kijun_cross_10": 0,
         })
