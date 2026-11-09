@@ -132,7 +132,7 @@ def verify_telegram_connection() -> bool:
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
     if not token or not chat_id:
         LOG.warning("TELEGRAM_PREFLIGHT_SKIPPED: missing repository secrets.")
-        return None
+        return False
     ok, detail = asyncio.run(_preflight(token, chat_id))
     if ok:
         LOG.info("TELEGRAM_PREFLIGHT_OK: %s", detail)
