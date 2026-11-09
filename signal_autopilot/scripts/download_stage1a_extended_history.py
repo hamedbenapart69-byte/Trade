@@ -80,6 +80,26 @@ def head_then_get(url: str) -> tuple[bytes | None, str]:
 
 
 def fetch_exchange_info() -> dict[str, dict[str, Any]]:
+    # Snapshot رسمی exchangeInfo برای دور زدن محدودیت 451 در GitHub Actions.
+    # onboardDate دادهٔ تغییرناپذیر listing است؛ وضعیت روزانه از snapshot تاریخی است.
+    snapshot_path = Path("data/binance_futures_exchange_info_snapshot.json")
+    if snapshot_path.exists():
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        result = {}
+        for item in snapshot.get("symbols", []):
+            symbol = item.get("symbol")
+            onboard = item.get("onboardDate")
+            if symbol and onboard is not None and int(onboard) > 0:
+                result[symbol] = {
+                    "listing_date": item.get("listing_date_utc") or datetime.fromtimestamp(int(onboard) / 1000, timezone.utc).date().isoformat(),
+                    "status": item.get("status"),
+                    "contract_type": item.get("contractType"),
+                    "metadata_source": snapshot.get("source"),
+                    "metadata_captured_at_utc": snapshot.get("captured_at_utc"),
+                }
+        if result:
+            return result
+
     failures = []
     for endpoint in EXCHANGE_INFO_URLS:
         try:
