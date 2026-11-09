@@ -2,20 +2,50 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101923">
-  <title>سیگنال‌های فیوچرز</title>
+  <meta name="description" content="گزارش روزانه موتور مستقل LRT در تایم‌فریم ۱۵ دقیقه">
+  <title>داشبورد LRT-15m | Trade</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <main class="signal-page">
-    <header class="signal-header">
-      <h1>سیگنال‌های امروز</h1>
+  <header class="top">
+    <div>
+      <p class="eyebrow">TRADE / STAGE 1B</p>
+      <h1>گزارش موتور LRT ـ ۱۵ دقیقه</h1>
+      <p class="sub">۲۷ نماد ثابت · دادهٔ عمومی · معاملات فقط دستی</p>
+    </div>
+    <div class="actions">
+      <span id="status" class="pill muted">در حال دریافت داده…</span>
       <button id="refresh" type="button">به‌روزرسانی</button>
-    </header>
-    <section id="signals" aria-live="polite">
-      <p class="empty">در حال دریافت سیگنال‌ها…</p>
+    </div>
+  </header>
+  <main>
+    <section id="summary" class="summary" aria-label="خلاصه وضعیت">
+      <article><span>نمادهای بررسی‌شده</span><strong>—</strong></article>
+      <article><span>موقعیت‌های واجد شرایط</span><strong>—</strong></article>
+      <article><span>وضعیت کالیبراسیون</span><strong>—</strong></article>
+      <article><span>وضعیت ارزش مورد انتظار</span><strong>—</strong></article>
     </section>
+    <section id="notice" class="notice" aria-live="polite">در حال بارگذاری گزارش…</section>
+    <section class="section-head">
+      <div>
+        <h2>وضعیت هر نماد</h2>
+        <p id="updated">زمان تولید گزارش: —</p>
+      </div>
+    </section>
+    <section id="signals" aria-live="polite">
+      <p class="empty">در حال دریافت گزارش ۱۵ دقیقه…</p>
+    </section>
+    <section class="section-head">
+      <div>
+        <h2>منابع و محدودیت‌ها</h2>
+        <p id="sources">—</p>
+      </div>
+    </section>
+    <footer>
+      این صفحه گزارش تحلیلی است، نه دستور اجرای سفارش. تا زمان کالیبراسیون احتمال برد و محاسبهٔ هزینه‌ها، EV و اطمینان NOT_CALIBRATED هستند. دادهٔ جایگزین و CVD تخمینی با برچسب Proxy مشخص می‌شوند.
+    </footer>
   </main>
   <script src="./app.js" defer></script>
 </body>
