@@ -14,6 +14,16 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LRT15mTests(unittest.TestCase):
+    def test_higher_timeframe_conflict_is_watchlist_not_trade(self):
+        confirmed, state = engine.higher_timeframe_gate("BUY", "BEARISH", "BULLISH")
+        self.assertFalse(confirmed)
+        self.assertEqual(state, "WATCHLIST_4H_KUMO_OPPOSITE")
+
+    def test_higher_timeframe_alignment_is_confirmed(self):
+        confirmed, state = engine.higher_timeframe_gate("BUY", "BULLISH", "BULLISH")
+        self.assertTrue(confirmed)
+        self.assertEqual(state, "BIAS_CONFIRMED")
+
     def test_lfs_weights_sum_to_one(self):
         self.assertAlmostEqual(sum(engine.LFS_WEIGHTS.values()), 1.0)
 
