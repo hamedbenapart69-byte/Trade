@@ -75,9 +75,12 @@ class LiveSignalBotTests(unittest.TestCase):
 
     def test_watchlist_and_monitoring_thresholds_are_separate(self):
         from modules.lrt15m_engine import (
-            MONITORING_CONFLUENCE_THRESHOLD, WATCHLIST_CONFLUENCE_THRESHOLD,
+            MONITORING_CONFLUENCE_THRESHOLD,
+            STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD,
+            WATCHLIST_CONFLUENCE_THRESHOLD,
         )
-        self.assertEqual(WATCHLIST_CONFLUENCE_THRESHOLD, 80)
+        self.assertEqual(WATCHLIST_CONFLUENCE_THRESHOLD, 60)  # Diagnostic قدیمی
+        self.assertEqual(STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD, 80)
         self.assertEqual(MONITORING_CONFLUENCE_THRESHOLD, 60)
 
     def test_five_components_score_100(self):
