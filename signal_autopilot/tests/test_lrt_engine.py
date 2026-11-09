@@ -53,17 +53,22 @@ class LRTStage1DecisionTests(unittest.TestCase):
         self.assertEqual(result["decision"], "NO_TRADE")
         self.assertIsNone(result["score"])
 
-    def test_proxy_and_real_lfs_thresholds_are_source_aware(self):
+    def test_lfs_v2_uses_fixed_threshold_for_proxy_and_real_sources(self):
         proxy = evaluate_stage1_decision(
             True, False, 0.35, "PROXY_OHLCV", components(3), False
         )
         real = evaluate_stage1_decision(
             True, False, 0.65, "AGGTRADES_REAL", components(3), True
         )
+        below = evaluate_stage1_decision(
+            True, False, 0.25, "AGGTRADES_REAL", components(3), True
+        )
         self.assertEqual(proxy["veto"], "PASS")
+        self.assertEqual(real["veto"], "PASS")
         self.assertEqual(proxy["lfs_threshold"], 0.30)
-        self.assertEqual(real["veto"], "LFS_BELOW_THRESHOLD")
-        self.assertEqual(real["lfs_threshold"], 0.70)
+        self.assertEqual(real["lfs_threshold"], 0.30)
+        self.assertEqual(below["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(below["lfs_threshold"], 0.30)
 
 
 if __name__ == "__main__":
