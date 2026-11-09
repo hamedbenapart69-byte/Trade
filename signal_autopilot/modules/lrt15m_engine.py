@@ -190,8 +190,22 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
     sweep = detect_sweep(bars)
     bias4, cloud = _bias_4h(bars_4h)
     bias1, kijun = _bias_1h(bars_1h)
-    cvd_source = "AGGTRADES_REAL" if aggtrades is not None else "KLINE_TAKER_BUY_PROXY"
-    cvd = cvd_delta_from_aggtrades(aggtrades) if aggtrades is not None else cvd_proxy_from_klines(bars)
+    cvd = None
+    cvd_source = "KLINE_TAKER_BUY_PROXY"
+    if aggtrades is not None:
+        current_bucket = int(current["open_time"])
+        bucket_rows = [x for x in aggtrades if int(x.get("bucket_open_time", -1)) == current_bucket]
+        if bucket_rows:
+            cvd = sum(float(x.get("delta", 0.0)) for x in bucket_rows)
+            cvd_source = "AGGTRADES_REAL"
+        else:
+            raw_rows = [x for x in aggtrades
+                        if current_bucket <= int(x.get("timestamp", x.get("T", -1))) < current_bucket + 900_000]
+            if raw_rows:
+                cvd = cvd_delta_from_aggtrades(raw_rows)
+                cvd_source = "AGGTRADES_REAL"
+    if cvd is None:
+        cvd = cvd_proxy_from_klines(bars)
     cvd_sign = "BUY" if cvd > 0 else "SELL" if cvd < 0 else "NEUTRAL"
 
     candidates = []
@@ -202,7 +216,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         fvg_ok = detect_fvg(bars, direction)
         bias_ok = bias4 == ("BULLISH" if bullish else "BEARISH") and bias1 == ("BULLISH" if bullish else "BEARISH")
         cvd_ok = cvd_sign == direction
-        minimum_score = MIN_LFS_SCORE_REAL_CVD if aggtrades is not None else MIN_LFS_SCORE_PROXY_CVD
+        minimum_score = MIN_LFS_SCORE_REAL_CVD if cvd_source == "AGGTRADES_REAL" else MIN_LFS_SCORE_PROXY_CVD
         parts = {
             "liquidity_sweep": 1.0 if sweep_ok else 0.0,
             "order_block": 1.0 if ob_ok else 0.0,
