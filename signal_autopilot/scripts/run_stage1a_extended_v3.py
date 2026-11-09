@@ -170,10 +170,13 @@ def build_universe(
             continue
 
         counts["symbols_volume_50m"] += 1
-        volume_candidates.append(symbol)
         if listing_date is None:
             counts["listing_metadata_missing"] += 1
             classification = "EXCLUDED_LISTING_DATE_UNAVAILABLE"
+        else:
+            volume_candidates.append(symbol)
+        if listing_date is None:
+            pass
         elif date.fromisoformat(listing_date) <= listing_cutoff:
             counts["symbols_listing_730d"] += 1
             classification = "QUALIFYING_VOLUME_AND_LISTING_AGE"
