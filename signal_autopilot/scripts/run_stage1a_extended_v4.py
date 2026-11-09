@@ -29,7 +29,7 @@ BINANCE_TICKER_URLS = [
 ]
 MIN_QUOTE_VOLUME_USD = 50_000_000
 MIN_LISTING_AGE_DAYS = 730
-SNAPSHOT_PATH = Path("config/binance_perpetuals_snapshot.json")
+SNAPSHOT_PATH = Path("../config/binance_perpetuals_snapshot.json")
 
 
 def http_bytes(url: str, method: str = "GET", retries: int = 2) -> tuple[int, bytes]:
@@ -258,6 +258,9 @@ async def run_v4(start: date, end: date, outdir: Path, report_path: Path) -> dic
 
     snapshot_meta: dict[str, Any] = {}
     snapshot_data: dict[str, dict[str, Any]] | None = None
+    print(f"V4_S3_DISCOVERY {'OK' if s3_symbols is not None else 'FAILED'} count={len(s3_symbols) if s3_symbols is not None else 0} detail={s3_error}", flush=True)
+    print(f"V4_COINGECKO_DERIVATIVES {'OK' if cg_active is not None else 'FAILED'} count={len(cg_active) if cg_active is not None else 0} detail={cg_error}", flush=True)
+
     if s3_symbols is not None and cg_active is not None:
         active_symbols = sorted(set(s3_symbols).intersection(cg_active))
         metadata_source = cg_active
