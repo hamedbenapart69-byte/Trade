@@ -87,6 +87,36 @@ def parse_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str,
     return output
 
 
+def aggregate_1m_to_15m(one: dict[int, dict[str, float]],
+                           existing: dict[int, dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    """فقط 15 کندل 1m پیوسته را به یک کندل 15m تبدیل می‌کند."""
+    grouped: dict[int, list[tuple[int, dict[str, float]]]] = {}
+    for ts, row in one.items():
+        bucket = (ts // INTERVAL_MS) * INTERVAL_MS
+        grouped.setdefault(bucket, []).append((ts, row))
+    output: dict[int, dict[str, Any]] = {}
+    for bucket, rows in grouped.items():
+        rows.sort(key=lambda item: item[0])
+        expected = list(range(bucket, bucket + INTERVAL_MS, 60_000))
+        if [item[0] for item in rows] != expected or bucket in existing:
+            continue
+        values = [item[1] for item in rows]
+        output[bucket] = {
+            "open": values[0]["open"],
+            "high": max(x["high"] for x in values),
+            "low": min(x["low"] for x in values),
+            "close": values[-1]["close"],
+            "volume": sum(x["volume"] for x in values),
+            "quote_volume": sum(x["quote_volume"] for x in values),
+            "trades": sum(x["trades"] for x in values),
+            "taker_buy_base": sum(x["taker_buy_base"] for x in values),
+            "taker_buy_quote": sum(x["taker_buy_quote"] for x in values),
+            "data_source": "BINANCE_VISION_1M_AGGREGATED",
+            "cvd_source": "BINANCE_1M_TAKER_BUY_AGGREGATED",
+        }
+    return output
+
+
 def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
     """بازسازی کندل 15m از معاملات تجمیعی واقعی Binance Vision."""
     grouped: dict[int, dict[str, float]] = {}
@@ -417,31 +447,9 @@ async def download_symbol(symbol: str, start: date, end: date,
                                    "rows_in_archive": "0", "rows_added": "0"})
                 else:
                     one = parse_zip(payload1, day_start, day_end)
-                    grouped1: dict[int, list[tuple[int, dict[str, float]]]] = {}
-                    for ts1, row1 in one.items():
-                        bucket = (ts1 // INTERVAL_MS) * INTERVAL_MS
-                        grouped1.setdefault(bucket, []).append((ts1, row1))
-                    added1 = 0
-                    for bucket, rows1 in grouped1.items():
-                        rows1.sort(key=lambda item: item[0])
-                        expected_1m = list(range(bucket, bucket + INTERVAL_MS, 60_000))
-                        if [item[0] for item in rows1] != expected_1m or bucket in bars:
-                            continue
-                        values = [item[1] for item in rows1]
-                        bars[bucket] = {
-                            "open": values[0]["open"],
-                            "high": max(x["high"] for x in values),
-                            "low": min(x["low"] for x in values),
-                            "close": values[-1]["close"],
-                            "volume": sum(x["volume"] for x in values),
-                            "quote_volume": sum(x["quote_volume"] for x in values),
-                            "trades": sum(x["trades"] for x in values),
-                            "taker_buy_base": sum(x["taker_buy_base"] for x in values),
-                            "taker_buy_quote": sum(x["taker_buy_quote"] for x in values),
-                            "data_source": "BINANCE_VISION_1M_AGGREGATED",
-                            "cvd_source": "BINANCE_1M_TAKER_BUY_AGGREGATED",
-                        }
-                        added1 += 1
+                    rebuilt_1m = aggregate_1m_to_15m(one, bars)
+                    added1 = len(rebuilt_1m)
+                    bars.update(rebuilt_1m)
                     events.append({"archive": name1, "status": "GAP_REPAIR_1M_AGGREGATED",
                                    "rows_in_archive": str(len(one)), "rows_added": str(added1)})
             except Exception as exc:
