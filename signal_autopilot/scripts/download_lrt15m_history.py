@@ -8,6 +8,7 @@ import io
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from datetime import date, datetime, timedelta, timezone
@@ -84,6 +85,39 @@ def parse_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str,
                         "taker_buy_quote": float(row[10]),
                     }
     return output
+
+
+def parse_binance_rest_klines(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
+    """تبدیل کندل‌های عمومی Futures REST به ساختار یکسان Parquet."""
+    raw = json.loads(payload.decode("utf-8"))
+    if not isinstance(raw, list):
+        raise ArchiveError(f"BINANCE_REST_UNEXPECTED_RESPONSE:{str(raw)[:200]}")
+    output: dict[int, dict[str, float]] = {}
+    for row in raw:
+        if not isinstance(row, list) or len(row) < 11:
+            continue
+        ts = int(row[0])
+        if start_ms <= ts < end_ms:
+            output[ts] = {
+                "open": float(row[1]), "high": float(row[2]),
+                "low": float(row[3]), "close": float(row[4]),
+                "volume": float(row[5]), "quote_volume": float(row[7]),
+                "trades": float(row[8]), "taker_buy_base": float(row[9]),
+                "taker_buy_quote": float(row[10]),
+            }
+    return output
+
+
+def fetch_binance_rest_15m(symbol: str, start_ms: int, end_ms: int) -> tuple[dict[int, dict[str, float]], str]:
+    query = urllib.parse.urlencode({
+        "symbol": symbol, "interval": "15m",
+        "startTime": start_ms, "endTime": end_ms - 1, "limit": 1000,
+    })
+    url = f"https://fapi.binance.com/fapi/v1/klines?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"HTTP_{status}"
+    return parse_binance_rest_klines(payload, start_ms, end_ms), "200"
 
 
 def months_between(start: date, end: date):
@@ -185,7 +219,24 @@ async def download_symbol(symbol: str, start: date, end: date,
             events.append({"archive": name, "status": f"GAP_REPAIR_15M_ERROR:{type(exc).__name__}:{exc}",
                            "rows_in_archive": "0", "rows_added": "0"})
 
-        # اگر آرشیو روزانهٔ 15m کافی نبود، سه کندل 5m را به یک کندل 15m تبدیل کن.
+        # اگر آرشیو Vision ناقص بود، از API عمومی Futures REST با دادهٔ کامل OHLCV و taker-buy استفاده کن.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            try:
+                rest_bars, rest_status = await asyncio.to_thread(
+                    fetch_binance_rest_15m, symbol, day_start, day_end
+                )
+                added_rest = sum(1 for ts in rest_bars if ts not in bars)
+                bars.update(rest_bars)
+                events.append({"archive": f"BINANCE_FAPI_REST_{day:%Y-%m-%d}",
+                               "status": "GAP_REPAIR_BINANCE_REST_OK" if rest_bars else f"GAP_REPAIR_BINANCE_REST_{rest_status}",
+                               "rows_in_archive": str(len(rest_bars)), "rows_added": str(added_rest)})
+            except Exception as exc:
+                events.append({"archive": f"BINANCE_FAPI_REST_{day:%Y-%m-%d}",
+                               "status": f"GAP_REPAIR_BINANCE_REST_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
+        # اگر REST هم کافی نبود، سه کندل 5m را به یک کندل 15m تبدیل کن.
         day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
         if day_missing:
             name5 = f"{symbol}-5m-{day:%Y-%m-%d}.zip"
