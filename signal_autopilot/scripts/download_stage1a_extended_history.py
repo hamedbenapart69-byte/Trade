@@ -296,7 +296,7 @@ async def run(symbols: list[str], start: date, end: date, outdir: Path, report_p
             "failure_reason": f"Only {len(candidates)} of {len(symbols)} symbols were listed by {start.isoformat()}; threshold is 40",
             "archive_requests_issued": 0,
             "parallelism": 5, "head_before_get": True,
-            "retry_policy": "3 attempts only for transient 5xx/timeout/408/425/429; no 404 retry",
+            "retry_policy": "3 attempts only for HTTP 5xx and timeout; no 4xx retry",
             "symbols": precheck_rows,
         }
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -366,7 +366,7 @@ def build_report(symbols, listing_map, candidates, results, start, end, forced_s
         "symbols_processed": len(results), "symbols_full_history": full,
         "minimum_full_history_symbols": 40,
         "stage1a_extended_status": forced_status or ("PASS" if full >= 40 else "FAIL"),
-        "parallelism": 5, "head_before_get": True, "retry_policy": "3 attempts only for transient 5xx/timeout/408/425/429; no 404 retry",
+        "parallelism": 5, "head_before_get": True, "retry_policy": "3 attempts only for HTTP 5xx and timeout; no 4xx retry",
         "symbols": sorted(results, key=lambda x: x["symbol"]),
     }
 
