@@ -204,7 +204,7 @@ def process_symbol(
             "calibration": {
                 "lfs_status": lfs_status,
                 "lfs_source": lfs_source,
-                "coverage_per_symbol": f"{len(rows)}/500 closed 15m + {len(getattr(rows, \"stats_1h\", []) or [])}/2500 closed 1H candles",
+                "coverage_per_symbol": f"{len(rows)}/500 closed 15m + {len(getattr(rows, 'stats_1h', []) or [])}/2500 closed 1H candles",
             },
             "costs": {
                 "fee_pct": None,
