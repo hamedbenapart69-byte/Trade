@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from telegram import Bot
-from modules.lrt15m_engine import STAGE1_STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD
+from modules.lrt15m_engine import STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD
 
 LOG = logging.getLogger("trader_me.telegram")
 
