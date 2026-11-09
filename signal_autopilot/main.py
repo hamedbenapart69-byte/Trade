@@ -64,10 +64,11 @@ def calculate_confluence(
         and isinstance(engine_result.get("zone_distance_pct"), (int, float))
         and float(engine_result["zone_distance_pct"]) <= 0.80
     )
+    legacy_components = engine_result.get("components") or {}
     components = {
         "bias_4h": biases.get("4h_kumo") == expected,
         "bias_1h": biases.get("1h_kijun") == expected,
-        "sweep": bool(lfs_parts.get("liquidity_sweep", False)),
+        "sweep": bool(legacy_components.get("sweep", lfs_parts.get("liquidity_sweep", False))),
         "zone_reaction": zone_ok,
         "cross": tenkan_kijun_cross(rows, direction, lookback=10),
     }
