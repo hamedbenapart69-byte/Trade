@@ -64,6 +64,22 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         }
         self.assertEqual(downloader.aggregate_1m_to_15m(one, {}), {})
 
+    def test_parses_bybit_kline_and_marks_cvd_as_neutral_proxy(self):
+        ts = 1_798_156_800_000
+        payload = {
+            "retCode": 0, "retMsg": "OK",
+            "result": {"list": [[str(ts), "100", "105", "99", "103", "12.5", "1280"]]},
+        }
+        bars = downloader.parse_bybit_klines(
+            json.dumps(payload).encode("utf-8"), ts, ts + 900_000, "linear"
+        )
+        self.assertEqual(list(bars), [ts])
+        self.assertEqual(bars[ts]["volume"], 12.5)
+        self.assertEqual(bars[ts]["quote_volume"], 1280.0)
+        self.assertEqual(bars[ts]["taker_buy_base"], 6.25)
+        self.assertEqual(bars[ts]["data_source"], "BYBIT_LINEAR_15M")
+        self.assertEqual(bars[ts]["cvd_source"], "BYBIT_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+
     def test_parses_okx_swap_candle_and_marks_cvd_as_proxy(self):
         ts = 1_798_156_800_000
         payload = {
