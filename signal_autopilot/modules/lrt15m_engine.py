@@ -15,6 +15,7 @@ if str(_package_root) not in sys.path:
     sys.path.insert(0, str(_package_root))
 
 from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
+from modules.lfs_v2 import calculate_lfs_v2
 
 
 LFS_WEIGHTS = {
@@ -455,11 +456,7 @@ def evaluate_stage1_decision(
         return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "score": None}
     if inside_kumo:
         return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "score": None}
-    threshold = (
-        MIN_LFS_SCORE_REAL_CVD
-        if cvd_source == "AGGTRADES_REAL"
-        else MIN_LFS_SCORE_PROXY_CVD
-    )
+    threshold = 0.30  # LFS_v2: آستانه برای FULL و PARTIAL_PROXY یکسان است.
     if float(lfs_score) < threshold:
         return {
             "veto": "LFS_BELOW_THRESHOLD",
@@ -469,6 +466,30 @@ def evaluate_stage1_decision(
         }
     scored = score_stage1_confluence(components, cvd_source, cvd_aligned)
     return {"veto": "PASS", **scored, "lfs_threshold": threshold}
+
+
+def _aggregate_hourly_to_4h(bars_1h: list[dict[str, Any]]) -> list[dict[str, float]]:
+    """تجمیع 1H به 4H؛ منطق شاخص‌ها ثابت می‌ماند و فقط منبع تاریخچه عوض می‌شود."""
+    buckets: dict[int, list[dict[str, Any]]] = {}
+    for row in bars_1h:
+        buckets.setdefault(int(row["open_time"]) // 14_400_000, []).append(row)
+    output = []
+    for key in sorted(buckets):
+        bucket = sorted(buckets[key], key=lambda item: int(item["open_time"]))
+        if len(bucket) != 4 or any(
+            int(bucket[i]["open_time"]) - int(bucket[i - 1]["open_time"]) != 3_600_000
+            for i in range(1, 4)
+        ):
+            continue
+        output.append({
+            "open_time": int(bucket[0]["open_time"]), "open": float(bucket[0]["open"]),
+            "high": max(float(x["high"]) for x in bucket),
+            "low": min(float(x["low"]) for x in bucket),
+            "close": float(bucket[-1]["close"]),
+            "volume": sum(float(x["volume"]) for x in bucket),
+            "taker_buy_base": sum(float(x.get("taker_buy_base", 0.0)) for x in bucket),
+        })
+    return output
 
 
 def _continuous_bars(bars: list[dict[str, Any]], interval_ms: int, required: int) -> bool:
@@ -486,80 +507,89 @@ def evaluate_stage1_symbol(
     rows: list[dict[str, Any]],
     aggtrades: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """ارزیابی مستقل Stage 1 برای یک نماد؛ خروجی تشخیصی حتی در حالت رد."""
+    """ارزیابی Stage 1؛ LFS_v2 به‌صورت قطعی در Python محاسبه می‌شود."""
+    stats_rows = getattr(rows, "stats_1h", None) or []
+    okx_metrics = getattr(rows, "okx_metrics", None) or {}
     base = {
-        "symbol": symbol,
-        "direction": None,
-        "veto": "DATA_INSUFFICIENT",
-        "decision": "NO_TRADE",
-        "tier": None,
-        "raw_score": None,
-        "tier_score": None,
-        "points": {},
-        "components": {},
-        "lfs_score": None,
-        "lfs_source": "UNAVAILABLE",
+        "symbol": symbol, "direction": None, "veto": "DATA_INSUFFICIENT",
+        "decision": "NO_TRADE", "tier": None, "raw_score": None,
+        "tier_score": None, "points": {}, "components": {},
+        "lfs_score": None, "lfs_source": "LFS_V2",
+        "lfs_coverage_pct": 0.0, "lfs_status": "INSUFFICIENT",
+        "lfs_components": {}, "api_status": okx_metrics.get("api_status", {}),
         "rows_available": len(rows),
     }
-    if len(rows) < 1300:
+    if len(rows) < 500:
         return {**base, "reason": f"INSUFFICIENT_CLOSED_15M_BARS:{len(rows)}"}
     try:
-        bars: list[dict[str, Any]] = []
+        bars = []
         for row in rows:
-            bar: dict[str, Any] = {}
+            bar = {}
             for key, value in row.items():
-                if key == "open_time":
-                    bar[key] = int(value)
-                elif key in {"data_source", "cvd_source"}:
-                    bar[key] = str(value)
-                else:
-                    bar[key] = float(value)
+                bar[key] = int(value) if key == "open_time" else (
+                    str(value) if key in {"data_source", "cvd_source"} else float(value)
+                )
             if bar["high"] < bar["low"] or bar["close"] <= 0 or bar["open"] <= 0:
                 return {**base, "reason": "INVALID_OHLC"}
             bars.append(bar)
         bars.sort(key=lambda item: item["open_time"])
-        if not _continuous_bars(bars, 900_000, 1300):
+        if not _continuous_bars(bars, 900_000, 500):
             return {**base, "reason": "15M_GAP_OR_DUPLICATE"}
-        bars_1h = aggregate_bars(bars, 4)
-        bars_4h = aggregate_bars(bars, 16)
+
+        bars_1h = []
+        for row in stats_rows:
+            bar = {
+                "open_time": int(row["open_time"]), "open": float(row["open"]),
+                "high": float(row["high"]), "low": float(row["low"]),
+                "close": float(row["close"]), "volume": float(row["volume"]),
+            }
+            if bar["high"] >= bar["low"] and bar["close"] > 0 and bar["open"] > 0:
+                bars_1h.append(bar)
+        bars_1h.sort(key=lambda item: item["open_time"])
+        if not bars_1h:
+            bars_1h = aggregate_bars(bars, 4)  # سازگاری قدیمی؛ برای LFS تاریخچه کافی نیست.
+
+        lfs_data = calculate_lfs_v2(
+            symbol, bars, bars_1h,
+            funding_rate=okx_metrics.get("funding_rate"),
+            oi_1h=okx_metrics.get("oi_1h"), oi_1d=okx_metrics.get("oi_1d"),
+            long_short_ratio=okx_metrics.get("long_short_ratio"),
+        )
+        base.update(lfs_data)
+        base["lfs_source"] = "LFS_V2"
+
         if not _continuous_bars(bars_1h, 3_600_000, 80):
             return {**base, "reason": "DATA_INSUFFICIENT_1H"}
+        bars_4h = _aggregate_hourly_to_4h(bars_1h)
         if not _continuous_bars(bars_4h, 14_400_000, 79):
             return {**base, "reason": "DATA_INSUFFICIENT_4H"}
 
         bias4, cloud = _bias_4h(bars_4h)
-        bias1, kijun_values = _bias_1h(bars_1h)
+        bias1, _ = _bias_1h(bars_1h)
         span_a, span_b = cloud.get("span_a"), cloud.get("span_b")
         current = bars[-1]
         if span_a is None or span_b is None or bias1 == "UNKNOWN":
             return {**base, "reason": "HTF_INDICATOR_UNAVAILABLE"}
         cloud_low, cloud_high = min(span_a, span_b), max(span_a, span_b)
-        inside_kumo = cloud_low <= float(current["close"]) <= cloud_high
-        if inside_kumo:
+        if cloud_low <= float(current["close"]) <= cloud_high:
             return {
-                **base,
-                "veto": "INSIDE_KUMO_4H",
-                "reason": "INSIDE_KUMO_4H",
+                **base, "veto": "INSIDE_KUMO_4H", "reason": "INSIDE_KUMO_4H",
                 "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
                 "price_vs_kumo": "INSIDE_KUMO",
             }
 
-        cvd_value: float | None = None
+        cvd_value = None
         cvd_source = CVD_SOURCE
         if aggtrades is not None:
             current_bucket = int(current["open_time"])
-            bucket_rows = [
-                item for item in aggtrades
-                if int(item.get("bucket_open_time", -1)) == current_bucket
-            ]
+            bucket_rows = [x for x in aggtrades if int(x.get("bucket_open_time", -1)) == current_bucket]
             if bucket_rows:
-                cvd_value = sum(float(item.get("delta", 0.0)) for item in bucket_rows)
+                cvd_value = sum(float(x.get("delta", 0.0)) for x in bucket_rows)
                 cvd_source = "AGGTRADES_REAL"
             else:
                 raw_rows = [
-                    item for item in aggtrades
-                    if current_bucket <= int(item.get("timestamp", item.get("T", -1)))
-                    < current_bucket + 900_000
+                    x for x in aggtrades
+                    if current_bucket <= int(x.get("timestamp", x.get("T", -1))) < current_bucket + 900_000
                 ]
                 if raw_rows:
                     cvd_value = cvd_delta_from_aggtrades(raw_rows)
@@ -568,15 +598,13 @@ def evaluate_stage1_symbol(
             cvd_value = cvd_proxy_from_klines(bars)
             cvd_source = CVD_SOURCE
         cvd_sign = "BUY" if cvd_value > 0 else "SELL" if cvd_value < 0 else "NEUTRAL"
-
         atr_value = atr(bars)
         sweep_data = detect_sweep(bars)
-        candidates: list[dict[str, Any]] = []
-        rejected_lfs: list[dict[str, Any]] = []
+        candidates, rejected_lfs = [], []
+
         for direction in ("BUY", "SELL"):
             expected = "BULLISH" if direction == "BUY" else "BEARISH"
-            bias4_ok = bias4 == expected
-            bias1_ok = bias1 == expected
+            bias4_ok, bias1_ok = bias4 == expected, bias1 == expected
             sweep_ok = bool(sweep_data["bullish"] if direction == "BUY" else sweep_data["bearish"])
             ob_ok = detect_order_block(bars, direction, atr_value)
             fvg_ok = detect_fvg(bars, direction)
@@ -584,40 +612,32 @@ def evaluate_stage1_symbol(
             zone_ok = (ob_ok or fvg_ok) and bool(zone["within_limit"])
             cross_ok = tenkan_kijun_cross(bars, direction, CROSS_LOOKBACK)
             cvd_aligned = cvd_sign == direction
-            bias_gate_ok = bias4_ok and bias1_ok
-            lfs_parts = {
-                "liquidity_sweep": 1.0 if sweep_ok else 0.0,
-                "order_block": 1.0 if ob_ok else 0.0,
-                "fair_value_gap": 1.0 if fvg_ok else 0.0,
-                "ichimoku_bias": 1.0 if bias_gate_ok else 0.0,
-                "cvd": 1.0 if cvd_aligned else 0.0,
-            }
-            lfs_score = _score(lfs_parts)
             components = {
-                "bias_4h": bias4_ok,
-                "bias_1h": bias1_ok,
-                "sweep": sweep_ok,
-                "zone_reaction": zone_ok,
-                "cross": cross_ok,
+                "bias_4h": bias4_ok, "bias_1h": bias1_ok, "sweep": sweep_ok,
+                "zone_reaction": zone_ok, "cross": cross_ok,
             }
             decision = evaluate_stage1_decision(
-                True, False, lfs_score, cvd_source, components, cvd_aligned
+                True, False, float(lfs_data["lfs_score"]), cvd_source, components, cvd_aligned
             )
+            if lfs_data["lfs_status"] == "INSUFFICIENT":
+                decision = {"veto": "LFS_INSUFFICIENT_COVERAGE", "decision": "NO_TRADE",
+                            "score": None, "lfs_threshold": 0.30}
             record = {
-                **decision,
-                "symbol": symbol,
-                "direction": direction,
-                "lfs_score": lfs_score,
-                "lfs_source": cvd_source,
-                "lfs_components": lfs_parts,
-                "components": components,
+                **decision, "symbol": symbol, "direction": direction,
+                "lfs_score": lfs_data["lfs_score"], "lfs_source": "LFS_V2",
+                "lfs_coverage_pct": lfs_data["lfs_coverage_pct"],
+                "lfs_status": lfs_data["lfs_status"],
+                "lfs_components": lfs_data["lfs_components"],
+                "api_status": lfs_data["api_status"], "components": components,
                 "cvd": {"delta": round(cvd_value, 8), "source": cvd_source},
-                "zone_type": zone["zone_type"],
-                "zone_distance_pct": zone["distance_pct"],
+                "zone_type": zone["zone_type"], "zone_distance_pct": zone["distance_pct"],
                 "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
                 "price_vs_kumo": "ABOVE_KUMO" if float(current["close"]) > cloud_high else "BELOW_KUMO",
-                "data_sources": sorted({str(x.get("data_source", "UNAVAILABLE")) for x in bars}),
-                "rows_available": len(bars),
+                "data_sources": sorted(
+                    {str(x.get("data_source", "UNAVAILABLE")) for x in bars}
+                    | {str(x.get("data_source", "UNAVAILABLE")) for x in bars_1h}
+                ),
+                "rows_available": len(bars), "stats_1h_rows_available": len(bars_1h),
             }
             if decision["veto"] == "PASS":
                 entry = float(current["close"])
@@ -628,14 +648,9 @@ def evaluate_stage1_symbol(
                 else:
                     sign = 1 if direction == "BUY" else -1
                     record.update({
-                        "entry": entry,
-                        "stop_loss": stop,
-                        "take_profit": entry + sign * 2.0 * risk,
+                        "entry": entry, "stop_loss": stop, "take_profit": entry + sign * 2.0 * risk,
                         "rr": 2.0,
-                        "hypothesis": (
-                            f"{direction} setup: 4H/1H bias, liquidity sweep, OB/FVG zone "
-                            "reaction and 10-candle Tenkan/Kijun cross confluence"
-                        ),
+                        "hypothesis": f"{direction} setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
                         "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
                     })
                 candidates.append(record)
@@ -645,32 +660,19 @@ def evaluate_stage1_symbol(
         if not candidates:
             if rejected_lfs:
                 best = max(rejected_lfs, key=lambda item: float(item["lfs_score"]))
-                return {
-                    **base,
-                    **best,
-                    "veto": "LFS_BELOW_THRESHOLD",
-                    "decision": "NO_TRADE",
-                    "reason": "LFS_BELOW_THRESHOLD",
-                }
+                return {**base, **best, "veto": best["veto"], "decision": "NO_TRADE",
+                        "reason": best.get("veto", "LFS_BELOW_THRESHOLD")}
             return {**base, "reason": "NO_DIRECTION_CANDIDATE"}
-
-        candidates.sort(
-            key=lambda item: (
-                int(item.get("tier_score") or 0),
-                int(item.get("raw_score") or 0),
-                float(item.get("lfs_score") or 0),
-            ),
-            reverse=True,
-        )
+        candidates.sort(key=lambda item: (
+            int(item.get("tier_score") or 0), int(item.get("raw_score") or 0),
+            float(item.get("lfs_score") or 0),
+        ), reverse=True)
         if len(candidates) > 1 and (
             candidates[0].get("tier_score") == candidates[1].get("tier_score")
             and candidates[0].get("raw_score") == candidates[1].get("raw_score")
         ):
             return {
-                **base,
-                "veto": "PASS",
-                "decision": "NO_TRADE",
-                "reason": "DIRECTION_CONFLICT",
+                **base, "veto": "PASS", "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
                 "direction_candidates": [
                     {k: item.get(k) for k in ("direction", "raw_score", "tier_score", "lfs_score")}
                     for item in candidates
