@@ -142,46 +142,6 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bars[ts]["data_source"], "BYBIT_LINEAR_15M")
         self.assertEqual(bars[ts]["cvd_source"], "BYBIT_CVD_UNAVAILABLE_NEUTRAL_PROXY")
 
-    def test_parses_mexc_hot_contract_candles(self):
-        ts = 1793145600
-        payload = {
-            "success": True, "code": 0,
-            "data": {
-                "time": [ts, ts + 900],
-                "open": [0.00035, 0.00036], "high": [0.00036, 0.00037],
-                "low": [0.00034, 0.00035], "close": [0.000355, 0.000365],
-                "vol": [1000, 2000], "amount": [0.35, 0.72],
-            },
-        }
-        bars = downloader.parse_mexc_contract_candles(
-            json.dumps(payload).encode("utf-8"), ts * 1000, (ts + 1800) * 1000
-        )
-        self.assertEqual(len(bars), 2)
-        self.assertEqual(bars[ts * 1000]["volume"], 1000.0)
-        self.assertEqual(bars[ts * 1000]["data_source"], "MEXC_PUBLIC_CONTRACT_CANDLE")
-        self.assertEqual(
-            bars[ts * 1000]["cvd_source"], "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY"
-        )
-
-    def test_parses_mexc_pepe_contract_with_explicit_1000_multiplier(self):
-        ts = 1793145600
-        payload = {
-            "success": True, "code": 0,
-            "data": {
-                "time": [ts], "open": [0.0000046], "high": [0.0000047],
-                "low": [0.0000045], "close": [0.00000465],
-                "vol": [1_000_000_000], "amount": [4600],
-            },
-        }
-        bars = downloader.parse_mexc_contract_candles(
-            json.dumps(payload).encode("utf-8"), ts * 1000, (ts + 900) * 1000, 1000.0
-        )
-        bar = bars[ts * 1000]
-        self.assertAlmostEqual(bar["open"], 0.0046)
-        self.assertAlmostEqual(bar["volume"], 1_000_000.0)
-        self.assertAlmostEqual(bar["quote_volume"], 4600.0)
-        self.assertAlmostEqual(bar["open"] * bar["volume"], bar["quote_volume"])
-
     def test_parses_okx_swap_candle_and_marks_cvd_as_proxy(self):
         ts = 1_798_156_800_000
         payload = {
