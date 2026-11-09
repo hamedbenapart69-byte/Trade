@@ -87,6 +87,52 @@ def parse_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str,
     return output
 
 
+def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
+    """بازسازی کندل 15m از معاملات تجمیعی واقعی Binance Vision."""
+    grouped: dict[int, dict[str, float]] = {}
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        csv_name = next((n for n in archive.namelist() if n.lower().endswith(".csv")), None)
+        if not csv_name:
+            raise ArchiveError("AGGTRADES_ZIP_WITHOUT_CSV")
+        with archive.open(csv_name) as raw:
+            for row in csv.reader(io.TextIOWrapper(raw, encoding="utf-8")):
+                if len(row) < 7 or not row[5].isdigit():
+                    continue
+                ts = int(row[5])
+                if not start_ms <= ts < end_ms:
+                    continue
+                price, qty = float(row[1]), float(row[2])
+                bucket = (ts // INTERVAL_MS) * INTERVAL_MS
+                quote_qty = price * qty
+                buyer_is_maker = row[6].strip().lower() == "true"
+                if bucket not in grouped:
+                    grouped[bucket] = {
+                        "open": price, "high": price, "low": price, "close": price,
+                        "volume": 0.0, "quote_volume": 0.0, "trades": 0.0,
+                        "taker_buy_base": 0.0, "taker_buy_quote": 0.0,
+                        "_first_ts": float(ts),
+                    }
+                bar = grouped[bucket]
+                if ts < bar["_first_ts"]:
+                    bar["open"] = price
+                    bar["_first_ts"] = float(ts)
+                bar["high"] = max(bar["high"], price)
+                bar["low"] = min(bar["low"], price)
+                if ts >= bar.get("_last_ts", -1):
+                    bar["close"] = price
+                    bar["_last_ts"] = float(ts)
+                bar["volume"] += qty
+                bar["quote_volume"] += quote_qty
+                bar["trades"] += 1.0
+                if not buyer_is_maker:
+                    bar["taker_buy_base"] += qty
+                    bar["taker_buy_quote"] += quote_qty
+    for bar in grouped.values():
+        bar.pop("_first_ts", None)
+        bar.pop("_last_ts", None)
+    return grouped
+
+
 def parse_binance_rest_klines(payload: bytes, start_ms: int, end_ms: int) -> dict[int, dict[str, float]]:
     """تبدیل کندل‌های عمومی Futures REST به ساختار یکسان Parquet."""
     raw = json.loads(payload.decode("utf-8"))
@@ -236,7 +282,27 @@ async def download_symbol(symbol: str, start: date, end: date,
                                "status": f"GAP_REPAIR_BINANCE_REST_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
 
-        # اگر REST هم کافی نبود، سه کندل 5m را به یک کندل 15m تبدیل کن.
+        # مسیر دوم: بازسازی کندل از آرشیو معاملات تجمیعی واقعی، بدون حدس‌زدن OHLCV.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing:
+            agg_name = f"{symbol}-aggTrades-{day:%Y-%m-%d}.zip"
+            agg_url = f"{BASE}/data/futures/um/daily/aggTrades/{symbol}/{agg_name}"
+            try:
+                agg_payload, agg_status = await asyncio.to_thread(head_get, agg_url)
+                if agg_payload is not None:
+                    rebuilt = parse_aggtrades_zip(agg_payload, day_start, day_end)
+                    added_agg = sum(1 for ts in rebuilt if ts not in bars)
+                    bars.update(rebuilt)
+                    events.append({"archive": agg_name, "status": "GAP_REPAIR_AGGTRADES_OK",
+                                   "rows_in_archive": str(len(rebuilt)), "rows_added": str(added_agg)})
+                else:
+                    events.append({"archive": agg_name, "status": f"GAP_REPAIR_AGGTRADES_{agg_status}",
+                                   "rows_in_archive": "0", "rows_added": "0"})
+            except Exception as exc:
+                events.append({"archive": agg_name, "status": f"GAP_REPAIR_AGGTRADES_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
+        # اگر منابع اصلی کافی نبودند، سه کندل 5m را به یک کندل 15m تبدیل کن.
         day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
         if day_missing:
             name5 = f"{symbol}-5m-{day:%Y-%m-%d}.zip"
