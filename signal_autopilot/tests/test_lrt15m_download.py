@@ -64,6 +64,26 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         }
         self.assertEqual(downloader.aggregate_1m_to_15m(one, {}), {})
 
+    def test_scales_okx_pepe_spot_to_1000pepe_with_proxy_label(self):
+        ts = 1_798_156_800_000
+        payload = {
+            "code": "0", "msg": "",
+            "data": [[str(ts), "0.00001", "0.000012", "0.000009",
+                      "0.000011", "1000000", "10", "11", "1"]],
+        }
+        bars = downloader.parse_okx_pepe_spot_as_1000pepe(
+            json.dumps(payload).encode("utf-8"), ts, ts + 900_000
+        )
+        bar = bars[ts]
+        self.assertEqual(bar["open"], 0.01)
+        self.assertEqual(bar["high"], 0.012)
+        self.assertEqual(bar["low"], 0.009)
+        self.assertEqual(bar["close"], 0.011)
+        self.assertEqual(bar["volume"], 1000.0)
+        self.assertEqual(bar["quote_volume"], 11.0)
+        self.assertEqual(bar["data_source"], "OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY")
+        self.assertEqual(bar["cvd_source"], "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+
     def test_parses_mexc_futures_kline_using_verified_contract_size(self):
         ts = 1_798_156_800
         detail = {
