@@ -28,6 +28,12 @@ jobs:
           ref: market-data
           path: market-data
 
+      - name: Checkout signals publication branch
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-publish
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -112,3 +118,26 @@ jobs:
           if report.get("status") != "PASS":
               raise SystemExit("Stage 1b requires complete 730-day 15m history for all 27 symbols")
           PY
+
+      - name: Publish LRT-15m report to signals branch
+        if: success() && steps.download15m.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("signal_autopilot/data/stage1b_15m_data_report.json").read_text())
+          if report.get("status") != "PASS" or report.get("symbols_complete") != 27:
+              raise SystemExit("Refusing to publish: Stage 1b 27-symbol data gate is not PASS")
+          source = Path("market-data/datasets/stage1b/signals/signals.json")
+          if not source.exists():
+              raise SystemExit("LRT-15m signals output is missing")
+          target = Path("signals-publish/lrt15m_signals.json")
+          target.write_bytes(source.read_bytes())
+          PY
+          git -C signals-publish config user.name "github-actions[bot]"
+          git -C signals-publish config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C signals-publish add lrt15m_signals.json
+          if ! git -C signals-publish diff --cached --quiet; then
+            git -C signals-publish commit -m "data: publish LRT-15m report"
+            git -C signals-publish push origin HEAD:signals
+          fi
