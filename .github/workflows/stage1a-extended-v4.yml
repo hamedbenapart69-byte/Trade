@@ -1,0 +1,104 @@
+name: Stage 1a Extended v4 - Binance Vision S3 with fallbacks
+
+on:
+  push:
+    branches: [stage1a-extended-v4]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage1a-extended-v4-history
+  cancel-in-progress: false
+
+jobs:
+  validate-and-fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout v4 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: stage1a-extended-v4
+
+      - name: Checkout persistent market-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: market-data
+          path: market-data
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Parquet writer
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Run Stage 1a tests
+        working-directory: signal_autopilot
+        run: python -m unittest tests.test_stage1a_extended tests.test_stage1a_extended_v3 tests.test_stage1a_extended_v4 -v
+
+      - name: Calculate rolling 730-day UTC window
+        id: window
+        run: |
+          END_DATE="$(python -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).date().isoformat())')"
+          START_DATE="$(python -c 'from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc).date() - timedelta(days=730)).isoformat())')"
+          echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
+          echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
+          echo "730-day UTC window: $START_DATE to $END_DATE (end exclusive)"
+
+      - name: Discover universe and download 730-day hourly history
+        id: history
+        working-directory: signal_autopilot
+        run: |
+          python scripts/run_stage1a_extended_v4.py \
+            --start-date "${{ steps.window.outputs.start_date }}" \
+            --end-date "${{ steps.window.outputs.end_date }}" \
+            --output-dir ../market-data/datasets/stage1a_extended_v4/ohlcv_1h \
+            --report data/stage1a_extended_v4_report.json
+
+      - name: Upload Stage 1a v4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1a-extended-v4-evidence
+          path: signal_autopilot/data/stage1a_extended_v4_report.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commit complete historical datasets
+        if: steps.history.outcome == 'success'
+        working-directory: market-data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datasets/stage1a_extended_v4/ohlcv_1h
+          if ! git diff --cached --quiet; then
+            git commit -m "Add Stage 1a v4 validated 730-day Binance futures history"
+            git push origin HEAD:market-data
+          fi
+
+      - name: Verify Stage 1a v4 gate
+        if: always()
+        working-directory: signal_autopilot
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("data/stage1a_extended_v4_report.json")
+          if not p.exists():
+              raise SystemExit("No v4 report was generated")
+          report = json.loads(p.read_text())
+          counts = report.get("universe_counts", {})
+          print("Universe source:", report.get("universe_source"))
+          print("S3 directories:", counts.get("binance_vision_s3_symbol_directories"))
+          print("Active Binance USDT perpetuals:", counts.get("active_binance_usdt_perpetuals"))
+          print("24h volume >= $50M:", counts.get("symbols_volume_50m"))
+          print("Listing age >= 730d:", counts.get("symbols_listing_730d"))
+          print("Complete 730d histories:", report.get("symbols_full_history"))
+          print("Status:", report.get("stage1a_extended_status"))
+          if report.get("stage1a_extended_status") != "PASS":
+              raise SystemExit("Stage 1a v4 did not meet the unchanged >=40 complete-history gate")
+          PY
