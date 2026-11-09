@@ -38,10 +38,10 @@ class LiveSignalBotTests(unittest.TestCase):
         }
         rows = []
         score, parts = calculate_confluence(result, rows, "BUY")
-        self.assertEqual(score, 60)
+        self.assertEqual(score, 40)
         self.assertEqual(set(parts), {
-            "bias_4h_aligned", "bias_1h_aligned", "lfs_above_threshold",
-            "tenkan_kijun_cross_10", "zone_distance_within_0_80_pct",
+            "bias_4h": 20, "bias_1h": 0, "sweep": 20,
+            "zone_reaction": 0, "tenkan_kijun_cross_10": 0,
         })
         self.assertFalse(parts["tenkan_kijun_cross_10"])
 
@@ -73,10 +73,12 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.30)
         self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.70)
 
-    def test_watchlist_threshold_is_60_for_three_of_five_gates(self):
-        from modules.lrt15m_engine import WATCHLIST_CONFLUENCE_THRESHOLD
-        self.assertEqual(WATCHLIST_CONFLUENCE_THRESHOLD, 60)
-        self.assertGreaterEqual(20 * 3, WATCHLIST_CONFLUENCE_THRESHOLD)
+    def test_watchlist_and_monitoring_thresholds_are_separate(self):
+        from modules.lrt15m_engine import (
+            MONITORING_CONFLUENCE_THRESHOLD, WATCHLIST_CONFLUENCE_THRESHOLD,
+        )
+        self.assertEqual(WATCHLIST_CONFLUENCE_THRESHOLD, 80)
+        self.assertEqual(MONITORING_CONFLUENCE_THRESHOLD, 60)
 
     def test_five_components_score_100(self):
         result = {
