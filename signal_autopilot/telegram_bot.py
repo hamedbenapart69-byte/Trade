@@ -188,3 +188,35 @@ def send_signal_to_telegram(
     except Exception:
         LOG.exception("TELEGRAM_DELIVERY_FAILED: %s", signal_data.get("signal_id"))
         return False
+
+
+
+async def _deliver_test_message(token: str, chat_id: str) -> tuple[int, str | None]:
+    """Send one explicit test message and return Telegram's real message_id."""
+    async with Bot(token=token) as bot:
+        chat = await bot.get_chat(chat_id=chat_id)
+        message = await bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "[TEST MODE] Trader_me Telegram delivery verification\\n"
+                "Transport test only; not a trading signal.\\n"
+                "Stage 1B | LRT-15m"
+            ),
+            disable_web_page_preview=True,
+        )
+        username = getattr(chat, "username", None)
+        link = f"https://t.me/{username}/{message.message_id}" if username else None
+        LOG.info(
+            "FORCE_TEST_SENT message_id=%s chat_id=%s message_link=%s",
+            message.message_id, chat.id, link or "UNAVAILABLE_PRIVATE_CHAT",
+        )
+        return int(message.message_id), link
+
+
+def send_test_message_to_telegram() -> tuple[int, str | None]:
+    """Synchronous entry point used by force_test.py."""
+    token = os.getenv("TELEGRAM_TOKEN", "").strip()
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        raise RuntimeError("TELEGRAM_TOKEN_OR_CHAT_ID_MISSING")
+    return asyncio.run(_deliver_test_message(token, chat_id))
