@@ -43,7 +43,8 @@ jobs:
             tests.test_stage1a_extended \
             tests.test_stage1a_extended_v3 \
             tests.test_stage1a_extended_v4 \
-            tests.test_stage1b_lrt15m -v
+            tests.test_stage1b_lrt15m \
+            tests.test_lrt15m_download -v
 
       - name: Calculate 730-day UTC history window
         id: window
