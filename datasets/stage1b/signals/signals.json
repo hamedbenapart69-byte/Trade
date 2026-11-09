@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-09T19:00:52.270169+00:00",
+  "generated_at_utc": "2026-11-09T22:35:58.667815+00:00",
   "stage": "1b-test",
   "engine": "LRT-15m",
   "universe_count": 27,
@@ -17,7 +17,7 @@
   "calibration_status": "UNCALIBRATED",
   "ev_status": "NOT_CALCULATED_UNTIL_CALIBRATED_PROBABILITY_AND_COSTS_EXIST",
   "cvd_sources": [
-    "KLINE_TAKER_BUY_PROXY"
+    "PROXY_OHLCV"
   ],
   "data_sources": [
     "BINANCE_VISION_KLINES",
@@ -41,7 +41,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BULLISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.15,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.285338,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.2,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -69,7 +106,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.435975,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -97,7 +171,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.214439,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -125,7 +236,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.439306,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -153,7 +301,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.368539,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -181,7 +366,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.342661,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -209,7 +431,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.464239,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -237,7 +496,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.428589,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -265,7 +561,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.374784,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -293,7 +626,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.479329,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -321,7 +691,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.238693,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -349,7 +756,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.41841,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -377,7 +821,44 @@
         "4h_kumo": "BULLISH",
         "1h_kijun": "BULLISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.2,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.223658,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.35,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -405,7 +886,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.42735,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -433,7 +951,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.336791,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -461,7 +1016,44 @@
         "4h_kumo": "BULLISH",
         "1h_kijun": "BULLISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.35,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -489,7 +1081,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.309306,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -517,7 +1146,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.450835,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -545,7 +1211,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.15,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.106035,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.4,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -573,7 +1276,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.160256,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -601,7 +1341,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.486494,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -629,7 +1406,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.237888,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "PASS",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.55,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -657,7 +1471,44 @@
         "4h_kumo": "RANGE",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.15,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_HIGHER_TF_BIAS_INCOMPLETE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -685,7 +1536,44 @@
         "4h_kumo": "BULLISH",
         "1h_kijun": "BULLISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.2,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.15,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -713,7 +1601,44 @@
         "4h_kumo": "BULLISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.15,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_PUBLIC_SWAP_CANDLE"
@@ -741,7 +1666,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BEARISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.35,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "MEXC_FUTURES_15M"
@@ -769,7 +1731,44 @@
         "4h_kumo": "BEARISH",
         "1h_kijun": "BULLISH"
       },
-      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.0,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
+          "ZONE_DISTANCE_PCT": 0.809627,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.35,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
       "data_sources": [
         "BINANCE_VISION_KLINES",
         "OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY"
