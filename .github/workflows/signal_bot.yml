@@ -70,6 +70,10 @@ jobs:
           LOG_LEVEL: INFO
         run: python force_test.py
 
+      - name: Diagnose every 27-symbol gate (read-only)
+        working-directory: signal_autopilot
+        run: python scripts/diagnose_gates.py --universe ../config/universe.json --output artifacts/diagnostics/gates_diagnostic.json
+
       - name: Run live 27-symbol scan and Telegram delivery
         working-directory: signal_autopilot
         env:
