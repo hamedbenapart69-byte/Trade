@@ -15,7 +15,11 @@ from pathlib import Path
 from typing import Any
 
 BASE = "https://data.binance.vision"
-EXCHANGE_INFO = "https://fapi.binance.com/fapi/v1/exchangeInfo"
+EXCHANGE_INFO_URLS = [
+    "https://fapi.binance.com/fapi/v1/exchangeInfo",
+    # fallback عمومی وب‌سایت Binance؛ فقط اگر schema دارای onboardDate باشد پذیرفته می‌شود.
+    "https://www.binance.com/bapi/futures/v1/public/future/common/get-exchange-info",
+]
 HOUR_MS = 3_600_000
 COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
            "quote_asset_volume", "number_of_trades", "taker_buy_base_volume",
@@ -71,21 +75,34 @@ def head_then_get(url: str) -> tuple[bytes | None, str]:
 
 
 def fetch_exchange_info() -> dict[str, dict[str, Any]]:
-    status, payload = request_bytes(EXCHANGE_INFO, "GET")
-    if status != 200:
-        raise FetchFailure(f"BINANCE_EXCHANGE_INFO_HTTP_{status}")
-    data = json.loads(payload)
-    result = {}
-    for item in data.get("symbols", []):
-        symbol = item.get("symbol")
-        onboard = item.get("onboardDate")
-        if symbol and onboard:
-            result[symbol] = {
-                "listing_date": datetime.fromtimestamp(int(onboard) / 1000, timezone.utc).date().isoformat(),
-                "status": item.get("status"),
-                "contract_type": item.get("contractType"),
-            }
-    return result
+    failures = []
+    for endpoint in EXCHANGE_INFO_URLS:
+        try:
+            status, payload = request_bytes(endpoint, "GET")
+            if status != 200:
+                failures.append(f"{endpoint}:HTTP_{status}")
+                continue
+            data = json.loads(payload)
+            # bapi ممکن است پاسخ را در data بسته‌بندی کند.
+            if isinstance(data, dict) and isinstance(data.get("data"), dict):
+                data = data["data"]
+            symbols = data.get("symbols", []) if isinstance(data, dict) else []
+            result = {}
+            for item in symbols:
+                symbol = item.get("symbol")
+                onboard = item.get("onboardDate")
+                if symbol and onboard is not None and int(onboard) > 0:
+                    result[symbol] = {
+                        "listing_date": datetime.fromtimestamp(int(onboard) / 1000, timezone.utc).date().isoformat(),
+                        "status": item.get("status") or item.get("contractStatus"),
+                        "contract_type": item.get("contractType"),
+                    }
+            if result:
+                return result
+            failures.append(f"{endpoint}:NO_SYMBOLS_WITH_ONBOARDDATE")
+        except Exception as exc:
+            failures.append(f"{endpoint}:{type(exc).__name__}:{exc}")
+    raise FetchFailure("BINANCE_EXCHANGE_INFO_ALL_SOURCES_FAILED|" + " | ".join(failures))
 
 
 def parse_zip(payload: bytes, start_ms: int, end_ms: int) -> list[list[str]]:
