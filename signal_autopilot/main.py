@@ -197,7 +197,7 @@ def process_symbol(
             "confluence_score": result.get("raw_score"),
             "confluence_tier_score": result.get("tier_score"),
             "confluence_components": points,
-            "stage1_threshold_label": "VETO_3_LFS_0.30_PROXY_0.70_REAL|CONFLUENCE_100_A_80_B_60_MONITORING",
+            "stage1_threshold_label": "LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_80_B_60_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
@@ -205,6 +205,7 @@ def process_symbol(
             "calibration": {
                 "lfs_status": lfs_status,
                 "lfs_source": lfs_source,
+                "lfs_coverage_pct": result.get("lfs_coverage_pct"),
                 "coverage_per_symbol": f"{len(rows)}/500 closed 15m + {len(getattr(rows, 'stats_1h', []) or [])}/2500 closed 1H candles",
             },
             "costs": {
