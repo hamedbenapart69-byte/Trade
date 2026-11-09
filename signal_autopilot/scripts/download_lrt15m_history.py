@@ -163,6 +163,51 @@ def parse_aggtrades_zip(payload: bytes, start_ms: int, end_ms: int) -> dict[int,
     return grouped
 
 
+def parse_okx_pepe_spot_as_1000pepe(payload: bytes, start_ms: int,
+                                           end_ms: int) -> dict[int, dict[str, Any]]:
+    """تبدیل PEPE-USDT Spot به مقیاس قرارداد 1000PEPE؛ صریحاً Proxy است."""
+    raw = json.loads(payload.decode("utf-8"))
+    if not isinstance(raw, dict) or raw.get("code") != "0":
+        raise ArchiveError(f"OKX_SPOT_PEPE_ERROR:{str(raw)[:200]}")
+    output: dict[int, dict[str, Any]] = {}
+    for row in raw.get("data", []):
+        if len(row) < 9:
+            continue
+        ts = int(row[0])
+        if not start_ms <= ts < end_ms or row[8] != "1":
+            continue
+        base_volume = float(row[5])
+        quote_volume = float(row[7])
+        scaled_volume = base_volume / 1000.0
+        output[ts] = {
+            "open": float(row[1]) * 1000.0,
+            "high": float(row[2]) * 1000.0,
+            "low": float(row[3]) * 1000.0,
+            "close": float(row[4]) * 1000.0,
+            "volume": scaled_volume, "quote_volume": quote_volume,
+            "trades": 0.0, "taker_buy_base": scaled_volume * 0.5,
+            "taker_buy_quote": quote_volume * 0.5,
+            "data_source": "OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY",
+            "cvd_source": "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY",
+        }
+    return output
+
+
+def fetch_okx_pepe_spot_as_1000pepe(symbol: str, start_ms: int,
+                                    end_ms: int) -> tuple[dict[int, dict[str, Any]], str]:
+    if symbol != "1000PEPEUSDT":
+        return {}, "NOT_APPLICABLE"
+    query = urllib.parse.urlencode({
+        "instId": "PEPE-USDT", "bar": "15m", "after": end_ms, "limit": 100,
+    })
+    url = f"https://www.okx.com/api/v5/market/history-candles?{query}"
+    status, payload = request_bytes(url, "GET")
+    if status != 200:
+        return {}, f"HTTP_{status}"
+    rows = parse_okx_pepe_spot_as_1000pepe(payload, start_ms, end_ms)
+    return rows, "200" if rows else "NO_MATCHING_CANDLES"
+
+
 def parse_mexc_futures_klines(payload: bytes, detail_payload: bytes,
                                 start_ms: int, end_ms: int,
                                 contract_symbol: str) -> dict[int, dict[str, Any]]:
@@ -590,6 +635,23 @@ async def download_symbol(symbol: str, start: date, end: date,
             except Exception as exc:
                 events.append({"archive": f"MEXC_FUTURES_15M_{day:%Y-%m-%d}",
                                "status": f"GAP_REPAIR_MEXC_FUTURES_ERROR:{type(exc).__name__}:{exc}",
+                               "rows_in_archive": "0", "rows_added": "0"})
+
+        # Proxy محدود برای 1000PEPE: PEPE Spot با تبدیل مقیاس ×1000 و ثبت منبع.
+        day_missing = [ts for ts in range(day_start, day_end, INTERVAL_MS) if ts not in bars]
+        if day_missing and symbol == "1000PEPEUSDT":
+            try:
+                scaled_bars, scaled_status = await asyncio.to_thread(
+                    fetch_okx_pepe_spot_as_1000pepe, symbol, day_start, day_end
+                )
+                added_scaled = sum(1 for ts in scaled_bars if ts not in bars)
+                bars.update(scaled_bars)
+                events.append({"archive": f"OKX_SPOT_PEPE_SCALED_1000PEPE_{day:%Y-%m-%d}",
+                               "status": "GAP_REPAIR_OKX_SPOT_1000PEPE_PROXY_OK" if scaled_bars else f"GAP_REPAIR_OKX_SPOT_1000PEPE_PROXY_{scaled_status}",
+                               "rows_in_archive": str(len(scaled_bars)), "rows_added": str(added_scaled)})
+            except Exception as exc:
+                events.append({"archive": f"OKX_SPOT_PEPE_SCALED_1000PEPE_{day:%Y-%m-%d}",
+                               "status": f"GAP_REPAIR_OKX_SPOT_1000PEPE_PROXY_ERROR:{type(exc).__name__}:{exc}",
                                "rows_in_archive": "0", "rows_added": "0"})
 
     timestamps = sorted(bars)
