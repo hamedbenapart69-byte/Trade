@@ -24,8 +24,8 @@ class Stage1aV4Tests(unittest.TestCase):
         self.assertEqual(parsed["BTCUSDT"]["quote_volume_24h_usd"], 75_000_000)
 
     def test_snapshot_rejects_stale_data(self):
-        with patch.object(v4.SNAPSHOT_PATH, "exists", return_value=True), \
-             patch.object(v4.SNAPSHOT_PATH, "read_text", return_value='{"captured_at_utc":"2020-01-01T00:00:00Z","symbols":[]}'):
+        with patch.object(type(v4.SNAPSHOT_PATH), "exists", return_value=True), \
+             patch.object(type(v4.SNAPSHOT_PATH), "read_text", return_value='{"captured_at_utc":"2020-01-01T00:00:00Z","symbols":[]}'):
             with self.assertRaises(v4.downloader.FetchFailure):
                 v4.load_snapshot()
 
