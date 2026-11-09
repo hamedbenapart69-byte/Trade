@@ -190,9 +190,19 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                    aggtrades: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     if len(rows) < 300:
         return _no_setup(symbol, "INSUFFICIENT_15M_HISTORY", len(rows))
-    bars = [{k: float(v) if k != "open_time" else int(v) for k, v in row.items()}
-            for row in rows]
+    bars = []
+    for row in rows:
+        bar = {}
+        for key, value in row.items():
+            if key == "open_time":
+                bar[key] = int(value)
+            elif key in {"data_source", "cvd_source"}:
+                bar[key] = str(value)
+            else:
+                bar[key] = float(value)
+        bars.append(bar)
     bars.sort(key=lambda x: x["open_time"])
+    data_sources = sorted({x.get("data_source", "BINANCE_VISION_KLINES") for x in bars})
     bars_1h = aggregate_bars(bars, 4)
     bars_4h = aggregate_bars(bars, 16)
     if len(bars_1h) < 80 or len(bars_4h) < 80:
@@ -204,8 +214,13 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
     bias4, cloud = _bias_4h(bars_4h)
     bias1, kijun = _bias_1h(bars_1h)
     cvd = None
-    cvd_source = "KLINE_TAKER_BUY_PROXY"
-    if aggtrades is not None:
+    recent_sources = {x.get("cvd_source") for x in bars[-4:] if x.get("cvd_source")}
+    if "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY" in recent_sources:
+        cvd = 0.0
+        cvd_source = "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
+    else:
+        cvd_source = "KLINE_TAKER_BUY_PROXY"
+    if cvd is None and aggtrades is not None:
         current_bucket = int(current["open_time"])
         bucket_rows = [x for x in aggtrades if int(x.get("bucket_open_time", -1)) == current_bucket]
         if bucket_rows:
@@ -263,6 +278,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                     "confidence": "NOT_CALIBRATED", "brier_score": "NOT_CALIBRATED",
                     "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
                     "cvd": {"delta": round(cvd, 8), "source": cvd_source},
+                    "data_sources": data_sources,
                     "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
                     "status": "UNCALIBRATED",
                     "note": "Tier A ممنوع تا زمانی که Brier OOS < 0.25 و کالیبراسیون معتبر موجود باشد.",
@@ -273,6 +289,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         **_no_setup(symbol, "NO_QUALIFIED_LRT15M_SETUP", len(rows)),
         "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
         "cvd_source": cvd_source,
+        "data_sources": data_sources,
         "lfs_weights": LFS_WEIGHTS,
     }
 
@@ -324,6 +341,7 @@ def run(data_dir: Path, output_path: Path, universe_path: Path,
         "calibration_status": "UNCALIBRATED",
         "ev_status": "NOT_CALCULATED_UNTIL_CALIBRATED_PROBABILITY_AND_COSTS_EXIST",
         "cvd_sources": sorted({x.get("cvd", {}).get("source", x.get("cvd_source", "UNAVAILABLE")) for x in results}),
+        "data_sources": sorted({source for x in results for source in x.get("data_sources", [])}),
         "signals": results,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
