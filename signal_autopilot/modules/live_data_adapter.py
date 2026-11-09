@@ -46,9 +46,10 @@ class OHLCVBundle(list):
 class LiveOHLCVFetcher:
     """دریافت ۱۵m از Binance Futures عمومی؛ در خطا fallback به صرافی‌های عمومی CCXT."""
 
-    def __init__(self, limit: int = 500, stats_limit: int = 2500, timeout: float = 25.0):
+    def __init__(self, limit: int = 500, stats_limit: int = 2500, fetch_stats: bool = False, timeout: float = 25.0):
         self.limit = max(int(limit), MIN_BARS_FOR_ENGINE)
         self.stats_limit = max(int(stats_limit), 2500)
+        self.fetch_stats = bool(fetch_stats)
         self.client = httpx.Client(timeout=timeout, follow_redirects=True)
         self.exchanges: dict[str, Any] = {}
         self.market_cache: dict[str, dict[str, Any]] = {}
@@ -326,8 +327,29 @@ class LiveOHLCVFetcher:
         return metrics
 
     def fetch_symbol(self, symbol: str) -> OHLCVBundle:
-        """هم‌زمان دو پنجرهٔ مستقل می‌گیرد: ۲۵۰۰ کندل 1H و ۵۰۰ کندل 15m."""
+        """برای موتور زنده دو تایم‌فریم؛ برای Diagnostic قدیمی فقط مسیر 15m حفظ می‌شود."""
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        if not self.fetch_stats:
+            errors: list[str] = []
+            for provider in ("okx", "bybit"):
+                try:
+                    live_15m = self._from_ccxt(provider, symbol, now_ms)
+                    return OHLCVBundle(live_15m, [], {})
+                except Exception as exc:
+                    errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:120]}")
+            try:
+                live_15m = self._binance(symbol, now_ms)
+                return OHLCVBundle(live_15m, [], {})
+            except Exception as exc:
+                errors.append(f"binance:{type(exc).__name__}:{str(exc)[:120]}")
+            for provider in ("kucoinfutures", "mexc", "bitget"):
+                try:
+                    live_15m = self._from_ccxt(provider, symbol, now_ms)
+                    return OHLCVBundle(live_15m, [], {})
+                except Exception as exc:
+                    errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:120]}")
+            raise RuntimeError("all_15m_public_data_providers_failed|" + "|".join(errors))
+
         errors: list[str] = []
         try:
             stats_1h = self._okx_candles(symbol, "1H", self.stats_limit, now_ms)
