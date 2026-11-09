@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from telegram import Bot
+from modules.lrt15m_engine import WATCHLIST_CONFLUENCE_THRESHOLD
 
 LOG = logging.getLogger("trader_me.telegram")
 
@@ -36,7 +37,8 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
     header = (
         "1. HEADER\n"
         f"⚠️ {symbol} | {direction} | {engine} | {timeframe}\n"
-        "Calibration: UNCALIBRATED | Decision: WATCHLIST"
+        "Calibration: UNCALIBRATED | Decision: WATCHLIST\n"
+        "⚙️ Stage 1: LFS_0.30_CROSS_10_ZONE_0.80_WATCHLIST_60"
     )
     chart_caption = "2. CHART | کندل‌های بسته‌شدهٔ 15m + Kumo + Tenkan/Kijun + Entry/SL/TP"
 
@@ -101,6 +103,7 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
                 f"• زمان UTC: {signal.get('created_at_utc', 'UNAVAILABLE')}",
                 f"• Signal ID: {signal_id}",
                 "• Stage 1 | Manual trade only | No order execution",
+                "⚠️ این آستانه‌ها برای جمع‌آوری داده در Stage 1 تنظیم شده‌اند. پس از 100+ سیگنال، بازبینی می‌شوند.",
             ]),
         ),
     ]
@@ -136,7 +139,8 @@ def verify_telegram_connection() -> bool:
 async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path: Path) -> bool:
     header, chart_caption, body = build_signal_messages(signal)
     async with Bot(token=token) as bot:
-        await bot.send_message(chat_id=chat_id, text=header, disable_web_page_preview=True)
+        header_message = await bot.send_message(chat_id=chat_id, text=header, disable_web_page_preview=True)
+        LOG.info("TELEGRAM_HEADER_MESSAGE_ID: %s | signal_id=%s", header_message.message_id, signal["signal_id"])
         try:
             with chart_path.open("rb") as image:
                 await bot.send_photo(
@@ -168,8 +172,8 @@ def send_signal_to_telegram(
         LOG.warning("TELEGRAM_REJECTED_CALIBRATION_STATE: %s", signal_data.get("symbol"))
         return False
     score = signal_data.get("confluence_score")
-    if not isinstance(score, (int, float)) or score <= 80:
-        LOG.info("TELEGRAM_SKIPPED_CONFLUENCE: %s score=%s", signal_data.get("symbol"), score)
+    if not isinstance(score, (int, float)) or score < WATCHLIST_CONFLUENCE_THRESHOLD:
+        LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_60: %s score=%s", signal_data.get("symbol"), score)
         return False
 
     token = os.getenv("TELEGRAM_TOKEN", "").strip()

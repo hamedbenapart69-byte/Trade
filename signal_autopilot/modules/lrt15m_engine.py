@@ -19,7 +19,10 @@ LFS_WEIGHTS = {
 }
 TIER_A_BRIER_MAX = 0.25
 MIN_LFS_SCORE_REAL_CVD = 0.70
-MIN_LFS_SCORE_PROXY_CVD = 0.72
+MIN_LFS_SCORE_PROXY_CVD = 0.30
+CROSS_LOOKBACK = 10
+MAX_ZONE_DISTANCE_PCT = 0.80
+WATCHLIST_CONFLUENCE_THRESHOLD = 60
 ICHIMOKU_TENKAN = 9
 ICHIMOKU_KIJUN = 26
 ICHIMOKU_SENKOU_B = 52
@@ -133,6 +136,75 @@ def detect_fvg(bars: list[dict[str, Any]], direction: str) -> bool:
     return current["high"] < left["low"] and current["close"] <= left["low"]
 
 
+
+def tenkan_kijun_cross(
+    bars: list[dict[str, Any]], direction: str, lookback: int = CROSS_LOOKBACK
+) -> bool:
+    """تقاطع تأییدشدهٔ تنکان/کیجون در حداکثر ۱۰ کندل بسته‌شدهٔ ۱۵دقیقه‌ای."""
+    if len(bars) < 30 or lookback < 1:
+        return False
+
+    def values(index: int) -> tuple[float, float]:
+        tenkan_window = bars[index - 8:index + 1]
+        kijun_window = bars[index - 25:index + 1]
+        tenkan = (max(float(x["high"]) for x in tenkan_window)
+                  + min(float(x["low"]) for x in tenkan_window)) / 2.0
+        kijun = (max(float(x["high"]) for x in kijun_window)
+                 + min(float(x["low"]) for x in kijun_window)) / 2.0
+        return tenkan, kijun
+
+    start = max(26, len(bars) - lookback)
+    for index in range(start, len(bars)):
+        previous_tenkan, previous_kijun = values(index - 1)
+        current_tenkan, current_kijun = values(index)
+        if direction == "BUY" and previous_tenkan <= previous_kijun and current_tenkan > current_kijun:
+            return True
+        if direction == "SELL" and previous_tenkan >= previous_kijun and current_tenkan < current_kijun:
+            return True
+    return False
+
+
+def zone_distance(
+    bars: list[dict[str, Any]], direction: str, atr_value: float | None
+) -> dict[str, Any]:
+    """نزدیک‌ترین فاصلهٔ قیمت بسته‌شده تا ناحیهٔ OB/FVG را به درصد برمی‌گرداند."""
+    if len(bars) < 8:
+        return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
+    current = bars[-1]
+    close = float(current["close"])
+    if close <= 0:
+        return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
+    zones: list[tuple[str, float, float]] = []
+    displacement = 1.2 * atr_value if atr_value is not None else 0.0
+    for candle in bars[-8:-2]:
+        if direction == "BUY" and candle["close"] < candle["open"] and close > candle["high"] + displacement:
+            zones.append(("OB", float(candle["low"]), float(candle["high"])))
+        elif direction == "SELL" and candle["close"] > candle["open"] and close < candle["low"] - displacement:
+            zones.append(("OB", float(candle["low"]), float(candle["high"])))
+    left = bars[-3]
+    if direction == "BUY" and float(current["low"]) > float(left["high"]):
+        zones.append(("FVG", float(left["high"]), float(current["low"])))
+    elif direction == "SELL" and float(current["high"]) < float(left["low"]):
+        zones.append(("FVG", float(current["high"]), float(left["low"])))
+    if not zones:
+        return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
+    distances: list[tuple[float, str]] = []
+    for zone_type, lower, upper in zones:
+        if lower <= close <= upper:
+            distance = 0.0
+        elif close > upper:
+            distance = (close - upper) / close * 100.0
+        else:
+            distance = (lower - close) / close * 100.0
+        distances.append((distance, zone_type))
+    distance, zone_type = min(distances, key=lambda item: item[0])
+    return {
+        "zone_type": zone_type,
+        "distance_pct": round(distance, 6),
+        "within_limit": distance <= MAX_ZONE_DISTANCE_PCT,
+    }
+
+
 def cvd_delta_from_aggtrades(trades: list[dict[str, Any]]) -> float:
     """aggTrade: m=True یعنی خریدار maker و فروشنده aggressor است."""
     delta = 0.0
@@ -241,6 +313,9 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         sweep_ok = sweep["bullish"] if bullish else sweep["bearish"]
         ob_ok = detect_order_block(bars, direction, atr_value)
         fvg_ok = detect_fvg(bars, direction)
+        zone = zone_distance(bars, direction, atr_value)
+        zone_ok = (ob_ok or fvg_ok) and bool(zone["within_limit"])
+        cross_ok = tenkan_kijun_cross(bars, direction)
         bias_ok, bias_gate = higher_timeframe_gate(direction, bias4, bias1)
         cvd_ok = cvd_sign == direction
         minimum_score = MIN_LFS_SCORE_REAL_CVD if cvd_source == "AGGTRADES_REAL" else MIN_LFS_SCORE_PROXY_CVD
@@ -252,11 +327,16 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
             "cvd": 1.0 if cvd_ok else 0.0,
         }
         score = _score(parts)
-        trigger = sweep_ok and (ob_ok or fvg_ok) and cvd_ok and score >= minimum_score
+        trigger = sweep_ok and zone_ok and cvd_ok and score >= minimum_score
         gate_diagnostics.append({
             "direction": direction,
             "LIQUIDITY_SWEEP_GATE": "PASS" if sweep_ok else "FAIL",
             "ORDER_BLOCK_OR_FVG_GATE": "PASS" if (ob_ok or fvg_ok) else "FAIL",
+            "ZONE_DISTANCE_PCT": zone["distance_pct"],
+            "ZONE_DISTANCE_LIMIT_PCT": MAX_ZONE_DISTANCE_PCT,
+            "ZONE_DISTANCE_GATE": "PASS" if zone_ok else "FAIL",
+            "CROSS_10_GATE": "PASS" if cross_ok else "FAIL",
+            "CROSS_LOOKBACK": CROSS_LOOKBACK,
             "HTF_BIAS_GATE": "PASS" if bias_ok else f"FAIL:{bias_gate}",
             "CVD_DIRECTION_GATE": "PASS" if cvd_ok else "FAIL",
             "CVD_SOURCE": cvd_source,
@@ -282,6 +362,12 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                     "entry": round(entry, 10), "stop_loss": round(stop, 10),
                     "take_profit": round(target, 10), "rr": 2.0,
                     "lfs_score": score, "lfs_components": parts,
+                    "cross_10_pass": cross_ok,
+                    "cross_lookback": CROSS_LOOKBACK,
+                    "zone_type": zone["zone_type"],
+                    "zone_distance_pct": zone["distance_pct"],
+                    "zone_distance_limit_pct": MAX_ZONE_DISTANCE_PCT,
+                    "zone_distance_pass": zone_ok,
                     "higher_timeframe_bias_confirmed": bias_ok,
                     "higher_timeframe_gate": bias_gate,
                     "hypothesis": f"{direction} liquidity sweep + OB/FVG retest with 4H Kumo and 1H Kijun confirmation",

@@ -44,29 +44,10 @@ def load_universe() -> list[str]:
     return cleaned
 
 
-def tenkan_kijun_cross(rows: list[dict[str, Any]], direction: str, lookback: int = 3) -> bool:
-    """تقاطع تأییدشدهٔ Tenkan/Kijun روی کندل‌های بسته‌شدهٔ ۱۵ دقیقه."""
-    if len(rows) < 30:
-        return False
-
-    def values(index: int) -> tuple[float, float]:
-        tenkan_window = rows[index - 8:index + 1]
-        kijun_window = rows[index - 25:index + 1]
-        tenkan = (max(float(x["high"]) for x in tenkan_window) +
-                  min(float(x["low"]) for x in tenkan_window)) / 2
-        kijun = (max(float(x["high"]) for x in kijun_window) +
-                 min(float(x["low"]) for x in kijun_window)) / 2
-        return tenkan, kijun
-
-    start = max(26, len(rows) - lookback)
-    for index in range(start, len(rows)):
-        previous_tenkan, previous_kijun = values(index - 1)
-        current_tenkan, current_kijun = values(index)
-        if direction == "BUY" and previous_tenkan <= previous_kijun and current_tenkan > current_kijun:
-            return True
-        if direction == "SELL" and previous_tenkan >= previous_kijun and current_tenkan < current_kijun:
-            return True
-    return False
+def tenkan_kijun_cross(rows: list[dict[str, Any]], direction: str, lookback: int = 10) -> bool:
+    """سازگاری API قدیمی؛ منطق اصلی Cross در موتور LRT پیاده‌سازی شده است."""
+    from modules.lrt15m_engine import tenkan_kijun_cross as engine_cross
+    return engine_cross(rows, direction, lookback)
 
 
 def calculate_confluence(
@@ -74,27 +55,28 @@ def calculate_confluence(
     rows: list[dict[str, Any]],
     direction: str,
 ) -> tuple[int, dict[str, bool]]:
-    """Confluence مستقل از LFS: پنج مؤلفهٔ ثابت، هر کدام ۲۰ امتیاز."""
-    parts = engine_result.get("lfs_components") or {}
-    bias_ok = bool(engine_result.get("higher_timeframe_bias_confirmed"))
-    sweep_ok = bool(parts.get("liquidity_sweep"))
-    zone_reaction = bool(parts.get("order_block") or parts.get("fair_value_gap"))
-    tk_cross = tenkan_kijun_cross(rows, direction)
-    cvd = engine_result.get("cvd") or {}
-    lfs_score = engine_result.get("lfs_score")
-    threshold = (
-        MIN_LFS_SCORE_REAL_CVD
-        if cvd.get("source") == "AGGTRADES_REAL"
-        else MIN_LFS_SCORE_PROXY_CVD
+    """پنج Gate مصوب: Bias 4H، Bias 1H، LFS، Cross-10 و فاصله Zone."""
+    from modules.lrt15m_engine import (
+        MAX_ZONE_DISTANCE_PCT, MIN_LFS_SCORE_PROXY_CVD,
+        MIN_LFS_SCORE_REAL_CVD, WATCHLIST_CONFLUENCE_THRESHOLD,
     )
+    expected = "BULLISH" if direction == "BUY" else "BEARISH"
+    biases = engine_result.get("higher_timeframe_bias") or {}
+    bias4_ok = biases.get("4h_kumo") == expected
+    bias1_ok = biases.get("1h_kijun") == expected
+    cvd = engine_result.get("cvd") or {}
+    threshold = MIN_LFS_SCORE_REAL_CVD if cvd.get("source") == "AGGTRADES_REAL" else MIN_LFS_SCORE_PROXY_CVD
+    lfs_score = engine_result.get("lfs_score")
     lfs_ok = isinstance(lfs_score, (int, float)) and float(lfs_score) >= threshold
-
+    cross_ok = tenkan_kijun_cross(rows, direction, lookback=10)
+    zone_distance_value = engine_result.get("zone_distance_pct")
+    zone_ok = isinstance(zone_distance_value, (int, float)) and float(zone_distance_value) <= MAX_ZONE_DISTANCE_PCT
     components = {
-        "mtf_bias_aligned": bias_ok,
-        "liquidity_sweep": sweep_ok,
-        "ob_fvg_reaction": zone_reaction,
-        "tenkan_kijun_cross": tk_cross,
+        "bias_4h_aligned": bias4_ok,
+        "bias_1h_aligned": bias1_ok,
         "lfs_above_threshold": lfs_ok,
+        "tenkan_kijun_cross_10": cross_ok,
+        "zone_distance_within_0_80_pct": zone_ok,
     }
     return 20 * sum(1 for value in components.values() if value), components
 
@@ -177,8 +159,8 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
         confluence_score, confluence_components = calculate_confluence(
             result, rows, str(result["direction"])
         )
-        if confluence_score <= 80:
-            return None, f"CONFLUENCE_NOT_ABOVE_80:{confluence_score}"
+        if confluence_score < 60:
+            return None, f"CONFLUENCE_BELOW_WATCHLIST_60:{confluence_score}"
 
         lfs_source = (result.get("cvd") or {}).get("source", "UNAVAILABLE")
         lfs_status = "REAL" if lfs_source == "AGGTRADES_REAL" else (
@@ -196,6 +178,7 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
             "calibration_status": "UNCALIBRATED",
             "confluence_score": confluence_score,
             "confluence_components": confluence_components,
+            "stage1_threshold_label": "LFS_0.30_CROSS_10_ZONE_0.80_WATCHLIST_60",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,

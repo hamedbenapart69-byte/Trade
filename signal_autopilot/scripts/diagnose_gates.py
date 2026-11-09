@@ -42,7 +42,8 @@ def _direction_diagnostic(
     sweep_ok = bool(sweep["bullish"] if bullish else sweep["bearish"])
     ob_ok = engine.detect_order_block(rows, direction, atr_value)
     fvg_ok = engine.detect_fvg(rows, direction)
-    zone_ok = ob_ok or fvg_ok
+    zone = engine.zone_distance(rows, direction, atr_value)
+    zone_ok = (ob_ok or fvg_ok) and bool(zone["within_limit"])
     bias_ok, bias_reason = engine.higher_timeframe_gate(direction, bias4, bias1)
     cvd_ok = (cvd_delta > 0) if bullish else (cvd_delta < 0)
     threshold = (
@@ -59,27 +60,32 @@ def _direction_diagnostic(
     }
     lfs = engine._score(components)
     lfs_pass = lfs >= threshold
+    expected = "BULLISH" if bullish else "BEARISH"
     confluence_parts = {
-        "mtf_bias_aligned": bias_ok,
-        "liquidity_sweep": sweep_ok,
-        "ob_fvg_reaction": zone_ok,
-        "tenkan_kijun_cross": cross,
+        "bias_4h_aligned": bias4 == expected,
+        "bias_1h_aligned": bias1 == expected,
         "lfs_above_threshold": lfs_pass,
+        "tenkan_kijun_cross_10": cross,
+        "zone_distance_within_0_80_pct": zone_ok,
     }
     confluence = 20 * sum(confluence_parts.values())
     # ترتیب رد، همان ترتیب منطقی موتور و فیلتر نهایی main.py است.
-    if not bias_ok:
-        rejected = bias_reason
-    elif not sweep_ok:
-        rejected = "LIQUIDITY_SWEEP"
-    elif not zone_ok:
-        rejected = "OB_FVG_REACTION"
-    elif not cvd_ok:
-        rejected = "CVD_DIRECTION"
+    if bias4 != expected:
+        rejected = "BIAS_4H_NOT_ALIGNED"
+    elif bias1 != expected:
+        rejected = "BIAS_1H_NOT_ALIGNED"
     elif not lfs_pass:
         rejected = "LFS_THRESHOLD"
-    elif confluence <= 80:
-        rejected = "CONFLUENCE_SCORE"
+    elif not cross:
+        rejected = "CROSS_10_NOT_FOUND"
+    elif not zone_ok:
+        rejected = "ZONE_DISTANCE_OVER_0_80_PCT_OR_NO_ZONE"
+    elif not sweep_ok:
+        rejected = "LIQUIDITY_SWEEP"
+    elif not cvd_ok:
+        rejected = "CVD_DIRECTION"
+    elif confluence < 60:
+        rejected = "WATCHLIST_SCORE_BELOW_60"
     else:
         rejected = "NONE"
 
@@ -92,7 +98,11 @@ def _direction_diagnostic(
         "order_block_detected": ob_ok,
         "fvg_detected": fvg_ok,
         "ob_fvg_reaction": zone_ok,
+        "zone_type": zone["zone_type"],
+        "zone_distance_pct": zone["distance_pct"],
+        "zone_distance_limit_pct": engine.MAX_ZONE_DISTANCE_PCT,
         "tenkan_kijun_cross": cross,
+        "cross_lookback": engine.CROSS_LOOKBACK,
         "confluence_score": confluence,
         "confluence_components": confluence_parts,
         "cvd_direction_pass": cvd_ok,
@@ -221,6 +231,8 @@ def diagnose_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> dict[str, Any]:
             "ob_fvg_reaction": selected["ob_fvg_reaction"],
             "confluence_score": selected["confluence_score"],
             "rejected_by_gate": selected["rejected_by_gate"],
+            "watchlist_threshold": engine.WATCHLIST_CONFLUENCE_THRESHOLD,
+            "stage1_threshold_label": "LFS_0.30_CROSS_10_ZONE_0.80_WATCHLIST_60",
         },
         "directions": directions,
     }
