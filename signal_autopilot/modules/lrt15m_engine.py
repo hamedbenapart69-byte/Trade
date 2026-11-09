@@ -6,6 +6,13 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import sys
+
+# اجرای مستقیم این فایل از ریشهٔ مخزن نیز باید importهای محلی را پیدا کند.
+_current_file = Path(__file__).resolve()
+_package_root = _current_file.parent.parent  # signal_autopilot/
+if str(_package_root) not in sys.path:
+    sys.path.insert(0, str(_package_root))
 
 from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
 

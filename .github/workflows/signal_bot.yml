@@ -22,6 +22,8 @@ jobs:
   live-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/signal_autopilot
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
