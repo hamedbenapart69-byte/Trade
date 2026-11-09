@@ -81,7 +81,7 @@ jobs:
           fi
 
       - name: Verify Stage 1a v4 gate
-        if: always()
+        if: steps.history.outcome == 'success'
         working-directory: signal_autopilot
         run: |
           python - <<'PY'
