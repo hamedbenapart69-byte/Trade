@@ -43,6 +43,7 @@ function setStatus(text, kind) {
 function render(report) {
   const rows = Array.isArray(report.signals) ? report.signals : [];
   const count = (decision) => rows.filter((item) => item.decision === decision).length;
+  const dataGateStatus = report.data_gate_status || "NOT_REPORTED";
   const generated = report.generated_at_utc ? new Date(report.generated_at_utc) : null;
   const generatedText = generated && !Number.isNaN(generated.getTime())
     ? generated.toLocaleString("fa-IR")
@@ -61,7 +62,7 @@ function render(report) {
   const evReady = report.ev_status === "CALCULATED";
   const noteClass = report.status === "PASS" ? "notice good" : "notice";
   const notices = [];
-  if (report.status !== "PASS") notices.push("دروازهٔ داده PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
+  if (dataGateStatus !== "PASS") notices.push("وضعیت دروازهٔ داده گزارش نشده یا PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
   if (!calibrated) notices.push("کالیبراسیون احتمال برد انجام نشده است؛ Tier A و اطمینان عددی صادر نمی‌شود.");
   if (!evReady) notices.push("EV محاسبه نشده است؛ تا ثبت احتمال کالیبره و هزینهٔ واقعی، معاملهٔ اجرایی مجاز نیست.");
   if (count("NO_QUALIFIED_SETUP") === rows.length && rows.length) {
@@ -113,7 +114,7 @@ async function loadReport() {
     if (!response.ok) throw new Error("HTTP " + response.status);
     const report = await response.json();
     render(report);
-    setStatus(report.status === "PASS" ? "داده: PASS" : "داده: نیازمند بررسی", report.status === "PASS" ? "ok" : "muted");
+    setStatus(dataGateStatus === "PASS" ? "داده: PASS" : "دروازه داده: گزارش نشده", dataGateStatus === "PASS" ? "ok" : "muted");
   } catch (error) {
     $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
     $("notice").textContent = "داده دریافت نشد؛ هیچ سیگنال قدیمی یا ساختگی جایگزین نمی‌شود.";
