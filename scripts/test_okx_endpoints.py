@@ -52,6 +52,10 @@ def _get_json(path: str, params: dict[str, str]) -> tuple[int | None, dict[str, 
                 return status, None, f"invalid_json:{exc}"
             if not isinstance(payload, dict):
                 return status, None, "response_root_not_object"
+            if str(payload.get("code", "")) == "50011" and attempt < RETRIES:
+                last_error = "okx_rate_limit_50011"
+                time.sleep(1.5 * (attempt + 1))
+                continue
             return status, payload, None
         except HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")[:1000]
@@ -229,7 +233,10 @@ def main() -> int:
 
     success_count = sum(item["status"] == "SUCCESS" for item in results)
     classification = "ALL_PASS" if success_count >= 13 else "PARTIAL_PASS" if success_count >= 8 else "MOSTLY_FAIL"
-    supplemental_oi_1d = [test_oi_daily_history(symbol) for symbol in SYMBOLS]
+    supplemental_oi_1d = []
+    for symbol in SYMBOLS:
+        supplemental_oi_1d.append(test_oi_daily_history(symbol))
+        time.sleep(0.5)
     supplemental_oi_1d_ready = all(item["status"] == "SUCCESS_90D_HISTORY" for item in supplemental_oi_1d)
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
