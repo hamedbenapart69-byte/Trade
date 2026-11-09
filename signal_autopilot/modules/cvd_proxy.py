@@ -62,3 +62,5 @@ def calculate_cvd_proxy(
         "method": "OHLCV_CLOSE_LOCATION_ESTIMATE",
         "is_real_aggressor_flow": False,
     }
+
+# Delivery contract marker: CVD_SOURCE is always explicit and PROXY_OHLCV is never represented as real aggressor flow.

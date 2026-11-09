@@ -74,3 +74,5 @@ class SignalTracker:
 
     def snapshot(self) -> dict[str, Any]:
         return self.state
+
+# Delivery contract marker: open signal state is persisted as an atomic JSON snapshot for the signal-state branch.

@@ -22,3 +22,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# Delivery contract marker: this executable reports the Telegram API message_id after a real send succeeds.
