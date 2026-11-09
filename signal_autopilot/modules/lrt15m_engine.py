@@ -235,6 +235,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
     cvd_sign = "BUY" if cvd > 0 else "SELL" if cvd < 0 else "NEUTRAL"
 
     candidates = []
+    gate_diagnostics = []
     for direction in ("BUY", "SELL"):
         bullish = direction == "BUY"
         sweep_ok = sweep["bullish"] if bullish else sweep["bearish"]
@@ -252,6 +253,18 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         }
         score = _score(parts)
         trigger = sweep_ok and (ob_ok or fvg_ok) and cvd_ok and score >= minimum_score
+        gate_diagnostics.append({
+            "direction": direction,
+            "LIQUIDITY_SWEEP_GATE": "PASS" if sweep_ok else "FAIL",
+            "ORDER_BLOCK_OR_FVG_GATE": "PASS" if (ob_ok or fvg_ok) else "FAIL",
+            "HTF_BIAS_GATE": "PASS" if bias_ok else f"FAIL:{bias_gate}",
+            "CVD_DIRECTION_GATE": "PASS" if cvd_ok else "FAIL",
+            "CVD_SOURCE": cvd_source,
+            "LFS_SCORE": score,
+            "LFS_THRESHOLD": minimum_score,
+            "LFS_SCORE_GATE": "PASS" if score >= minimum_score else "FAIL",
+            "QUALIFIED_SETUP_GATE": "PASS" if trigger else "FAIL",
+        })
         if trigger:
             entry = float(current["close"])
             if bullish:
@@ -287,6 +300,8 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         **_no_setup(symbol, "NO_QUALIFIED_LRT15M_SETUP", len(rows)),
         "higher_timeframe_bias": {"4h_kumo": bias4, "1h_kijun": bias1},
         "cvd_source": cvd_source,
+        "CVD_SOURCE": cvd_source,
+        "gate_diagnostics": gate_diagnostics,
         "data_sources": data_sources,
         "lfs_weights": LFS_WEIGHTS,
     }
