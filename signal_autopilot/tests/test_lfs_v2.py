@@ -24,7 +24,7 @@ def make_bars(count, interval_ms, base=100.0):
 
 def oi_rows(hourly=False, change=-0.10):
     step = 3_600_000 if hourly else 86_400_000
-    count = 2 if hourly else 91
+    count = 25 if hourly else 91
     rows = []
     for i in range(count):
         value = 1000.0
