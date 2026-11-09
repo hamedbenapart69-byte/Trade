@@ -1,15 +1,15 @@
-name: Stage 1a Extended - Two Year History and Funding Unit
+name: Stage 1a Extended v2 - Prevalidated Parallel History
 
 on:
   push:
-    branches: [stage1a-extended]
+    branches: [stage1a-extended-v2]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: stage1a-extended-history
+  group: stage1a-extended-v2-history
   cancel-in-progress: true
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout implementation
         uses: actions/checkout@v4
         with:
-          ref: stage1a-extended
+          ref: stage1a-extended-v2
 
       - name: Checkout persistent market-data branch
         uses: actions/checkout@v4
@@ -36,17 +36,15 @@ jobs:
       - name: Install Parquet writer
         run: python -m pip install --disable-pip-version-check pyarrow
 
-      - name: Run Stage 1a extended unit tests
+      - name: Run Stage 1a extended tests
         working-directory: signal_autopilot
         run: python -m unittest tests.test_stage1a_extended -v
 
-      - name: Verify CoinGecko funding unit against Bybit BTCUSDT
-        id: funding
-        continue-on-error: true
+      - name: Record funding source availability
         working-directory: signal_autopilot
         run: python scripts/verify_funding_unit.py
 
-      - name: Download and validate two years of 1H OHLCV
+      - name: Prevalidate and download two years of 1H OHLCV
         id: history
         working-directory: signal_autopilot
         run: >-
@@ -56,27 +54,25 @@ jobs:
           --output-dir ../market-data/datasets/stage1a_extended/ohlcv_1h
           --report data/stage1a_extension_report.json
 
-      - name: Upload Stage 1a extended evidence
+      - name: Upload Stage 1a v2 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stage1a-extended-evidence
+          name: stage1a-extended-v2-evidence
           path: |
             signal_autopilot/data/stage1a_extension_report.json
             signal_autopilot/data/funding_unit_verification.json
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commit complete historical datasets to market-data branch
+      - name: Commit complete historical datasets
         if: steps.history.outcome == 'success'
         working-directory: market-data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add datasets/stage1a_extended/ohlcv_1h
-          if git diff --cached --quiet; then
-            echo "No new dataset files to commit"
-          else
+          if ! git diff --cached --quiet; then
             git commit -m "Add validated two-year 1H futures OHLCV Parquet"
             git push origin HEAD:market-data
           fi
@@ -88,14 +84,13 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          history = json.loads(Path("data/stage1a_extension_report.json").read_text())
-          funding_path = Path("data/funding_unit_verification.json")
-          funding = json.loads(funding_path.read_text()) if funding_path.exists() else {"status": "UNVERIFIED"}
-          print("Full-history symbols:", history.get("symbols_full_history"))
-          print("Funding unit status:", funding.get("status"))
-          if history.get("stage1a_extended_status") != "PASS":
+          h = json.loads(Path("data/stage1a_extension_report.json").read_text())
+          f = json.loads(Path("data/funding_unit_verification.json").read_text())
+          print("Full-history symbols:", h.get("symbols_full_history"))
+          print("Funding:", f.get("status"), f.get("funding_usage"))
+          if h.get("stage1a_extended_status") != "PASS":
               raise SystemExit("FAIL: fewer than 40 symbols have continuous two-year hourly history")
-          if funding.get("status") != "VERIFIED":
-              raise SystemExit("HOLD: funding unit is unverified; funding must remain NOT_USED_BECAUSE_UNVERIFIED")
-          print("PASS: Stage 1a extended gates satisfied")
+          if f.get("status") != "VERIFIED":
+              raise SystemExit("HOLD: Funding remains NOT_USED_BECAUSE_UNVERIFIED")
+          print("PASS: all Stage 1a extended gates satisfied")
           PY
