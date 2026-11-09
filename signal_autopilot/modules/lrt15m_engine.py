@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
+
 
 LFS_WEIGHTS = {
     "liquidity_sweep": 0.25,
@@ -17,7 +19,7 @@ LFS_WEIGHTS = {
 }
 TIER_A_BRIER_MAX = 0.25
 MIN_LFS_SCORE_REAL_CVD = 0.70
-MIN_LFS_SCORE_PROXY_CVD = 0.75
+MIN_LFS_SCORE_PROXY_CVD = 0.72
 ICHIMOKU_TENKAN = 9
 ICHIMOKU_KIJUN = 26
 ICHIMOKU_SENKOU_B = 52
@@ -142,8 +144,8 @@ def cvd_delta_from_aggtrades(trades: list[dict[str, Any]]) -> float:
 
 
 def cvd_proxy_from_klines(bars: list[dict[str, Any]], lookback: int = 4) -> float:
-    recent = bars[-lookback:]
-    return sum(2.0 * float(x.get("taker_buy_base", 0)) - float(x["volume"]) for x in recent)
+    """Compatibility adapter: OHLCV close-location proxy, never real CVD."""
+    return float(calculate_cvd_proxy(bars, lookback)["delta"])
 
 
 def _bias_4h(bars_4h: list[dict[str, float]]) -> tuple[str, dict[str, float | None]]:
@@ -214,17 +216,8 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
     bias4, cloud = _bias_4h(bars_4h)
     bias1, kijun = _bias_1h(bars_1h)
     cvd = None
-    recent_sources = {x.get("cvd_source") for x in bars[-4:] if x.get("cvd_source")}
-    neutral_proxy_source = next(
-        (source for source in sorted(recent_sources) if "NEUTRAL_PROXY" in source),
-        None,
-    )
-    if neutral_proxy_source:
-        cvd = 0.0
-        cvd_source = neutral_proxy_source
-    else:
-        cvd_source = "KLINE_TAKER_BUY_PROXY"
-    if cvd is None and aggtrades is not None:
+    cvd_source = CVD_SOURCE
+    if aggtrades is not None:
         current_bucket = int(current["open_time"])
         bucket_rows = [x for x in aggtrades if int(x.get("bucket_open_time", -1)) == current_bucket]
         if bucket_rows:
@@ -238,6 +231,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                 cvd_source = "AGGTRADES_REAL"
     if cvd is None:
         cvd = cvd_proxy_from_klines(bars)
+        cvd_source = CVD_SOURCE
     cvd_sign = "BUY" if cvd > 0 else "SELL" if cvd < 0 else "NEUTRAL"
 
     candidates = []
