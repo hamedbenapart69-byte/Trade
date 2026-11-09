@@ -113,7 +113,7 @@ async function loadHistory() {
     const response = await fetch(HISTORY_URL + "?v=" + Date.now(), { cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
     const text = await response.text();
-    const lines = text.trim().split(/\\r?\\n/);
+    const lines = text.trim().split(/\r?\n/);
     if (lines.length < 2) throw new Error("EMPTY_HISTORY");
     const header = lines.shift().split(",");
     const rows = lines.map((line) => {
