@@ -64,6 +64,31 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         }
         self.assertEqual(downloader.aggregate_1m_to_15m(one, {}), {})
 
+    def test_parses_mexc_futures_kline_using_verified_contract_size(self):
+        ts = 1_798_156_800
+        detail = {
+            "success": True, "code": 0,
+            "data": [{"symbol": "HOT_USDT", "contractSize": 10}],
+        }
+        kline = {
+            "success": True, "code": 0,
+            "data": {
+                "time": [ts], "open": [100], "close": [103],
+                "high": [105], "low": [99], "vol": [12],
+                "amount": [1236],
+            },
+        }
+        bars = downloader.parse_mexc_futures_klines(
+            json.dumps(kline).encode("utf-8"),
+            json.dumps(detail).encode("utf-8"),
+            ts * 1000, (ts + 900) * 1000, "HOT_USDT",
+        )
+        self.assertEqual(list(bars), [ts * 1000])
+        self.assertEqual(bars[ts * 1000]["volume"], 120.0)
+        self.assertEqual(bars[ts * 1000]["quote_volume"], 1236.0)
+        self.assertEqual(bars[ts * 1000]["data_source"], "MEXC_FUTURES_15M")
+        self.assertEqual(bars[ts * 1000]["cvd_source"], "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY")
+
     def test_parses_bybit_kline_and_marks_cvd_as_neutral_proxy(self):
         ts = 1_798_156_800_000
         payload = {
