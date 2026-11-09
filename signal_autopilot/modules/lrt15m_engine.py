@@ -16,7 +16,8 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
-MIN_LFS_SCORE = 0.70
+MIN_LFS_SCORE_REAL_CVD = 0.70
+MIN_LFS_SCORE_PROXY_CVD = 0.75
 ICHIMOKU_TENKAN = 9
 ICHIMOKU_KIJUN = 26
 ICHIMOKU_SENKOU_B = 52
@@ -201,6 +202,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
         fvg_ok = detect_fvg(bars, direction)
         bias_ok = bias4 == ("BULLISH" if bullish else "BEARISH") and bias1 == ("BULLISH" if bullish else "BEARISH")
         cvd_ok = cvd_sign == direction
+        minimum_score = MIN_LFS_SCORE_REAL_CVD if aggtrades is not None else MIN_LFS_SCORE_PROXY_CVD
         parts = {
             "liquidity_sweep": 1.0 if sweep_ok else 0.0,
             "order_block": 1.0 if ob_ok else 0.0,
@@ -209,7 +211,7 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
             "cvd": 1.0 if cvd_ok else 0.0,
         }
         score = _score(parts)
-        trigger = sweep_ok and (ob_ok or fvg_ok) and bias_ok and cvd_ok and score >= MIN_LFS_SCORE
+        trigger = sweep_ok and (ob_ok or fvg_ok) and bias_ok and cvd_ok and score >= minimum_score
         if trigger:
             entry = float(current["close"])
             if bullish:
