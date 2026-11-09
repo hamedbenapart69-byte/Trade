@@ -154,6 +154,7 @@ def process_symbol(
             for key in (
                 "symbol", "direction", "veto", "decision", "tier", "raw_score",
                 "tier_score", "points", "components", "lfs_score", "lfs_source",
+                "lfs_coverage_pct", "lfs_status", "lfs_components", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
                 "zone_distance_pct", "rows_available",
             )
@@ -162,7 +163,7 @@ def process_symbol(
             return None, str(result.get("reason", result.get("decision", "NO_TRADE"))), diagnostic
 
         lfs_source = str(result.get("lfs_source", "UNAVAILABLE"))
-        lfs_status = "REAL" if lfs_source == "AGGTRADES_REAL" else "PROXY"
+        lfs_status = str(result.get("lfs_status", "INSUFFICIENT"))
         levels = {
             "entry": float(result["entry"]),
             "stop_loss": float(result["stop_loss"]),
@@ -203,7 +204,7 @@ def process_symbol(
             "calibration": {
                 "lfs_status": lfs_status,
                 "lfs_source": lfs_source,
-                "coverage_per_symbol": f"{len(rows)}/1500 closed 15m candles",
+                "coverage_per_symbol": f"{len(rows)}/500 closed 15m + {len(getattr(rows, \"stats_1h\", []) or [])}/2500 closed 1H candles",
             },
             "costs": {
                 "fee_pct": None,
@@ -221,7 +222,10 @@ def process_symbol(
             "hypothesis": result.get("hypothesis", "UNAVAILABLE"),
             "falsification": result.get("falsification", "UNAVAILABLE"),
             "lfs_score": result.get("lfs_score"),
+            "lfs_coverage_pct": result.get("lfs_coverage_pct"),
+            "lfs_status": result.get("lfs_status"),
             "lfs_components": result.get("lfs_components"),
+            "api_status": result.get("api_status"),
             "cvd": result.get("cvd"),
             "data_sources": result.get("data_sources", []),
             "last_closed_candle_utc": datetime.fromtimestamp(
@@ -244,7 +248,7 @@ def process_symbol(
 def main() -> int:
     symbols = load_universe()
     telegram_ready = verify_telegram_connection()
-    fetcher = LiveOHLCVFetcher(limit=1500)
+    fetcher = LiveOHLCVFetcher(limit=500, stats_limit=2500)
     tracker = SignalTracker(STATE_PATH)
 
     processed = 0
@@ -294,8 +298,17 @@ def main() -> int:
         veto = str(row.get("veto", "UNAVAILABLE"))
         if veto != "PASS":
             veto_counts.setdefault(veto, []).append(str(row["symbol"]))
+    api_keys = ("funding", "oi_1h", "oi_1d", "long_short_ratio")
+    okx_api_distribution = {
+        key: {
+            "available_symbols": sum(1 for row in diagnostics if (row.get("api_status") or {}).get(key, False)),
+            "unavailable_symbols": sum(1 for row in diagnostics if not (row.get("api_status") or {}).get(key, False)),
+        }
+        for key in api_keys
+    }
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "okx_api_distribution": okx_api_distribution,
         "stage": "STAGE_1_UNCALIBRATED",
         "universe_count": len(symbols),
         "symbols_reported": len(diagnostics),
@@ -303,6 +316,7 @@ def main() -> int:
         "telegram_preflight": telegram_ready,
         "telegram_signals_sent": sent,
         "telegram_message_ids": telegram_message_ids,
+        "okx_api_distribution": okx_api_distribution,
         "veto_distribution": {
             key: {"count": len(value), "symbols": value}
             for key, value in sorted(veto_counts.items())
