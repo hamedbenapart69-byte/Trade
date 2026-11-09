@@ -365,7 +365,7 @@ def build_report(symbols, listing_map, candidates, results, start, end, forced_s
         "expected_rows_per_symbol": (end-start).days * 24,
         "symbols_before_filter": len(symbols), "symbols_after_listing_filter": prevalidated,
         "symbols_processed": len(results), "symbols_full_history": full,
-        "minimum_full_history_symbols": 40,
+        "minimum_full_history_symbols": MIN_FULL_HISTORY_SYMBOLS,
         "stage1a_extended_status": forced_status or ("PASS" if full >= MIN_FULL_HISTORY_SYMBOLS else "FAIL"),
         "parallelism": 5, "head_before_get": True, "retry_policy": "3 attempts only for HTTP 5xx and timeout; no 4xx retry",
         "symbols": sorted(results, key=lambda x: x["symbol"]),
