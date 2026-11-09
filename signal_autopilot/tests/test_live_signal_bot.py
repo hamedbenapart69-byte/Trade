@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from main import calculate_confluence, tenkan_kijun_cross
-from modules.live_data_adapter import is_closed_candle
+from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
 
@@ -49,6 +49,41 @@ class LiveSignalBotTests(unittest.TestCase):
         score, parts = calculate_confluence(result, rows, "BUY")
         self.assertLessEqual(score, 80)
         self.assertFalse(parts["tenkan_kijun_cross"])
+
+
+    def test_ccxt_short_pages_are_paginated_until_history_requirement_is_met(self):
+        class DummyExchange:
+            rateLimit = 0
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
+                }
+            }
+
+            def __init__(self):
+                self.calls = 0
+
+            def fetch_ohlcv(self, symbol, timeframe, since, limit):
+                self.calls += 1
+                return [
+                    [since + i * 900_000, 100, 102, 99, 101, 10]
+                    for i in range(300)
+                ]
+
+        fetcher = LiveOHLCVFetcher.__new__(LiveOHLCVFetcher)
+        fetcher.limit = 1500
+        exchange = DummyExchange()
+        fetcher._exchange = lambda provider: exchange
+        rows = fetcher._from_ccxt(
+            "okx",
+            "BTCUSDT",
+            1_900_000_000_000,
+        )
+        self.assertEqual(len(rows), 1500)
+        self.assertEqual(exchange.calls, 5)
+        self.assertEqual(rows[0]["cvd_source"], "UNAVAILABLE_NEUTRAL_PROXY")
 
     def test_message_contains_nine_ordered_sections(self):
         signal = {

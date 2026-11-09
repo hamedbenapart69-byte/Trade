@@ -42,7 +42,7 @@ class LiveOHLCVFetcher:
         self.client = httpx.Client(timeout=timeout, follow_redirects=True)
         self.exchanges: dict[str, Any] = {}
         self.market_cache: dict[str, dict[str, Any]] = {}
-        self.provider_names = ("okx", "bybit", "binanceusdm", "bitget", "mexc", "kucoinfutures")
+        self.provider_names = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
 
     def close(self) -> None:
         self.client.close()
@@ -116,7 +116,7 @@ class LiveOHLCVFetcher:
         cursor = since
         collected: dict[int, list[Any]] = {}
 
-        for _ in range(4):
+        for _ in range(6):
             remaining = self.limit - len(collected)
             if remaining <= 0:
                 break
@@ -140,8 +140,6 @@ class LiveOHLCVFetcher:
             if next_cursor <= cursor:
                 break
             cursor = next_cursor
-            if len(batch) < min(1000, remaining):
-                break
             time.sleep(max(float(getattr(exchange, "rateLimit", 0)) / 1000, 0.05))
 
         candles = [collected[key] for key in sorted(collected)]
@@ -167,6 +165,16 @@ class LiveOHLCVFetcher:
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
         errors: list[str] = []
 
+        # اولویت L1 پروژه: OKX، سپس Bybit؛ Binance بعد از آن.
+        for provider in ("okx", "bybit"):
+            try:
+                rows = self._from_ccxt(provider, symbol, now_ms)
+                LOG.info("%s data_source=%s bars=%d", symbol, rows[-1]["data_source"], len(rows))
+                return rows
+            except Exception as exc:
+                errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:120]}")
+                LOG.warning("%s provider fallback failed: %s", symbol, errors[-1])
+
         try:
             rows = self._binance(symbol, now_ms)
             LOG.info("%s data_source=BINANCE_FAPI_PUBLIC_KLINE bars=%d", symbol, len(rows))
@@ -175,9 +183,7 @@ class LiveOHLCVFetcher:
             errors.append(f"binance:{type(exc).__name__}:{str(exc)[:120]}")
             LOG.warning("%s Binance public klines unavailable: %s", symbol, errors[-1])
 
-        for provider in self.provider_names:
-            if provider == "binanceusdm":
-                continue
+        for provider in ("kucoinfutures", "mexc", "bitget"):
             try:
                 rows = self._from_ccxt(provider, symbol, now_ms)
                 LOG.info("%s data_source=%s bars=%d", symbol, rows[-1]["data_source"], len(rows))
