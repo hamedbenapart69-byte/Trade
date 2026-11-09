@@ -194,18 +194,64 @@ def build_universe(
     return all_perpetuals, volume_candidates, inventory, counts
 
 
+def load_recent_snapshot(path: Path) -> tuple[list[dict[str, Any]], dict[str, float], dict[str, Any]]:
+    """Use a recent Binance-sourced snapshot only when the runner is region-blocked."""
+    if not path.exists():
+        raise downloader.FetchFailure("BINANCE_SNAPSHOT_NOT_FOUND")
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    captured = datetime.fromisoformat(str(snapshot["captured_at_utc"]).replace("Z", "+00:00"))
+    age = datetime.now(timezone.utc) - captured
+    if age < timedelta(minutes=-5) or age > timedelta(hours=6):
+        raise downloader.FetchFailure(f"BINANCE_SNAPSHOT_STALE_OR_CLOCK_INVALID:{age}")
+    rows = snapshot.get("symbols")
+    if not isinstance(rows, list) or not rows:
+        raise downloader.FetchFailure("BINANCE_SNAPSHOT_HAS_NO_SYMBOLS")
+    volumes: dict[str, float] = {}
+    for row in rows:
+        try:
+            if row.get("quoteVolume") is not None:
+                volumes[str(row["symbol"])] = float(row["quoteVolume"])
+        except (TypeError, ValueError):
+            continue
+    if not volumes:
+        raise downloader.FetchFailure("BINANCE_SNAPSHOT_HAS_NO_TICKER_VOLUMES")
+    return rows, volumes, {
+        "captured_at_utc": snapshot.get("captured_at_utc"),
+        "exchange_server_time_utc": snapshot.get("exchange_server_time_utc"),
+        "ticker_latest_close_utc": snapshot.get("ticker_latest_close_utc"),
+        "source": snapshot.get("source"),
+    }
+
+
 async def run_v3(start: date, end: date, outdir: Path, report_path: Path) -> dict[str, Any]:
     if (end - start).days != MIN_LISTING_AGE_DAYS:
         raise ValueError("The historical window must remain exactly 730 days.")
 
-    exchange_payload = fetch_json_fallback(
-        EXCHANGE_INFO_URLS, "BINANCE_EXCHANGE_INFO", parse_exchange_info
-    )
-    exchange_symbols = parse_exchange_info(exchange_payload)
-    ticker_payload = fetch_json_fallback(
-        TICKER_URLS, "BINANCE_TICKER_24HR", parse_tickers
-    )
-    quote_volumes = parse_tickers(ticker_payload)
+    source_mode = "LIVE_BINANCE_FAPI"
+    snapshot_meta: dict[str, Any] = {}
+    try:
+        exchange_payload = fetch_json_fallback(
+            EXCHANGE_INFO_URLS, "BINANCE_EXCHANGE_INFO", parse_exchange_info
+        )
+        exchange_symbols = parse_exchange_info(exchange_payload)
+        ticker_payload = fetch_json_fallback(
+            TICKER_URLS, "BINANCE_TICKER_24HR", parse_tickers
+        )
+        quote_volumes = parse_tickers(ticker_payload)
+    except Exception as live_error:
+        snapshot_path = Path("data/binance_usdm_perpetual_snapshot_v3.json")
+        try:
+            exchange_symbols, quote_volumes, snapshot_meta = load_recent_snapshot(snapshot_path)
+            source_mode = "RECENT_BINANCE_OFFICIAL_DATA_SNAPSHOT"
+            print(
+                f"BINANCE_LIVE_API_UNAVAILABLE; using recent snapshot captured "
+                f"{snapshot_meta.get('captured_at_utc')}; cause={type(live_error).__name__}:{live_error}",
+                flush=True,
+            )
+        except Exception as snapshot_error:
+            raise downloader.FetchFailure(
+                f"LIVE_BINANCE_API_FAILED:{live_error}; SNAPSHOT_FALLBACK_FAILED:{snapshot_error}"
+            ) from snapshot_error
 
     listing_map, symbols, inventory, counts = build_universe(
         exchange_symbols, quote_volumes, start
@@ -217,6 +263,8 @@ async def run_v3(start: date, end: date, outdir: Path, report_path: Path) -> dic
     report = await downloader.run(symbols, start, end, outdir, report_path)
 
     report["universe_source"] = "BINANCE_FAPI_EXCHANGE_INFO_FULL_USDTM_PERPETUALS"
+    report["universe_source_mode"] = source_mode
+    report["universe_snapshot_metadata"] = snapshot_meta
     report["volume_source"] = "BINANCE_FAPI_TICKER_24HR_QUOTE_VOLUME"
     report["volume_threshold_usd"] = MIN_QUOTE_VOLUME_USD
     report["listing_age_threshold_days"] = MIN_LISTING_AGE_DAYS
