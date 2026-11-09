@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: stage1b-lrt15m-history
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   stage1b-test:
