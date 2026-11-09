@@ -1,0 +1,756 @@
+{
+  "generated_at_utc": "2026-11-09T14:48:34.997644+00:00",
+  "stage": "1b-test",
+  "engine": "LRT-15m",
+  "universe_count": 27,
+  "symbols_analyzed": 27,
+  "candidate_setups": 0,
+  "target_signals_per_day": "2-4 (target only; not guaranteed)",
+  "lfs_weights": {
+    "liquidity_sweep": 0.25,
+    "order_block": 0.2,
+    "fair_value_gap": 0.2,
+    "ichimoku_bias": 0.2,
+    "cvd": 0.15
+  },
+  "brier_tier_a_threshold": 0.25,
+  "calibration_status": "UNCALIBRATED",
+  "ev_status": "NOT_CALCULATED_UNTIL_CALIBRATED_PROBABILITY_AND_COSTS_EXIST",
+  "cvd_sources": [
+    "KLINE_TAKER_BUY_PROXY"
+  ],
+  "data_sources": [
+    "BINANCE_VISION_KLINES"
+  ],
+  "signals": [
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "BCHUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "XRPUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "LTCUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "LINKUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ADAUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ZECUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "BNBUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "SOLUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "UNIUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "NEARUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "FILUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "RSRUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ONEUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "HOTUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "INJUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "QNTUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "RANGE",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ARBUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "SUIUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "WLDUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "ENAUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "TAOUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BEARISH",
+        "1h_kijun": "BEARISH"
+      },
+      "cvd_source": "KLINE_TAKER_BUY_PROXY",
+      "data_sources": [
+        "BINANCE_VISION_KLINES"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    }
+  ]
+}
