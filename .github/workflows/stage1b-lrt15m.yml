@@ -131,13 +131,32 @@ jobs:
           source = Path("market-data/datasets/stage1b/signals/signals.json")
           if not source.exists():
               raise SystemExit("LRT-15m signals output is missing")
+          payload = json.loads(source.read_text())
+          payload["data_gate_status"] = report["status"]
+          payload["data_coverage"] = {
+              "universe_count": report.get("universe_count"),
+              "symbols_complete": report.get("symbols_complete"),
+              "symbols_processed": report.get("symbols_processed"),
+              "start_date_utc": report.get("start_date_utc"),
+              "end_date_exclusive_utc": report.get("end_date_exclusive_utc"),
+              "interval": report.get("interval"),
+          }
           target = Path("signals-publish/lrt15m_signals.json")
-          target.write_bytes(source.read_bytes())
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n")
           PY
           git -C signals-publish config user.name "github-actions[bot]"
           git -C signals-publish config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C signals-publish add lrt15m_signals.json
           if ! git -C signals-publish diff --cached --quiet; then
             git -C signals-publish commit -m "data: publish LRT-15m report"
-            git -C signals-publish push origin HEAD:signals
+            for attempt in 1 2 3; do
+              git -C signals-publish fetch origin signals
+              git -C signals-publish rebase origin/signals
+              if git -C signals-publish push origin HEAD:signals; then
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "Could not publish after 3 synchronized push attempts"
+            exit 1
           fi
