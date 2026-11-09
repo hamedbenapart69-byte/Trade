@@ -215,9 +215,13 @@ def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
     bias1, kijun = _bias_1h(bars_1h)
     cvd = None
     recent_sources = {x.get("cvd_source") for x in bars[-4:] if x.get("cvd_source")}
-    if "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY" in recent_sources:
+    neutral_proxy_source = next(
+        (source for source in sorted(recent_sources) if "NEUTRAL_PROXY" in source),
+        None,
+    )
+    if neutral_proxy_source:
         cvd = 0.0
-        cvd_source = "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
+        cvd_source = neutral_proxy_source
     else:
         cvd_source = "KLINE_TAKER_BUY_PROXY"
     if cvd is None and aggtrades is not None:
