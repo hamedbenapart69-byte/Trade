@@ -54,7 +54,7 @@ jobs:
         working-directory: signal_autopilot
         run: |
           python scripts/run_stage1a_extended_v3.py \
-            --start-date "\${{ steps.window.outputs.start_date }}" \
+            --start-date "${{ steps.window.outputs.start_date }}" \
             --end-date "\${{ steps.window.outputs.end_date }}" \
             --output-dir ../market-data/datasets/stage1a_extended_v3/ohlcv_1h \
             --report data/stage1a_extended_v3_report.json
