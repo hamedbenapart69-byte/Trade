@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-09T14:48:34.997644+00:00",
+  "generated_at_utc": "2026-11-09T14:53:52.329685+00:00",
   "stage": "1b-test",
   "engine": "LRT-15m",
   "universe_count": 27,
@@ -20,7 +20,10 @@
     "KLINE_TAKER_BUY_PROXY"
   ],
   "data_sources": [
-    "BINANCE_VISION_KLINES"
+    "BINANCE_VISION_KLINES",
+    "MEXC_FUTURES_15M",
+    "OKX_PUBLIC_SWAP_CANDLE",
+    "OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY"
   ],
   "signals": [
     {
@@ -40,7 +43,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -67,7 +71,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -94,7 +99,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -121,7 +127,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -148,7 +155,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -175,7 +183,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -202,7 +211,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -229,7 +239,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -256,7 +267,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -283,7 +295,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -310,7 +323,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -337,7 +351,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -364,7 +379,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -391,7 +407,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -418,7 +435,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -445,7 +463,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -472,7 +491,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -499,7 +519,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -526,7 +547,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "MEXC_FUTURES_15M"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -553,7 +575,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -580,7 +603,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -607,7 +631,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -634,7 +659,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -661,7 +687,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_SPOT_PEPE_SCALED_1000PEPE_PROXY"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -688,7 +715,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -715,7 +743,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
@@ -742,7 +771,8 @@
       },
       "cvd_source": "KLINE_TAKER_BUY_PROXY",
       "data_sources": [
-        "BINANCE_VISION_KLINES"
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
       ],
       "lfs_weights": {
         "liquidity_sweep": 0.25,
