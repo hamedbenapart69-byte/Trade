@@ -72,29 +72,29 @@ def _validate_rows(endpoint: str, rows: Any) -> tuple[bool, dict[str, Any], str 
     for row in rows:
         if endpoint == "funding":
             if not isinstance(row, dict):
-                return False, {}, "funding_row_not_object"
+                return False, {"data_empty": False, "record_count": len(rows)}, "funding_row_not_object"
             ts = _timestamp(row.get("fundingTime"))
             val = _number(row.get("fundingRate"))
             if ts is None or val is None:
-                return False, {}, "funding_row_missing_valid_fundingTime_or_fundingRate"
+                return False, {"data_empty": False, "record_count": len(rows)}, "funding_row_missing_valid_fundingTime_or_fundingRate"
             timestamps.append(ts)
             values.append({"fundingRate": str(row.get("fundingRate")), "fundingTime": ts})
         elif endpoint == "open_interest":
             if not isinstance(row, (list, tuple)) or len(row) < 3:
-                return False, {}, "oi_row_must_be_[timestamp,oi,volume]"
+                return False, {"data_empty": False, "record_count": len(rows)}, "oi_row_must_be_[timestamp,oi,volume]"
             ts = _timestamp(row[0])
             oi, volume = _number(row[1]), _number(row[2])
             if ts is None or oi is None or volume is None or oi <= 0 or volume < 0:
-                return False, {}, "oi_row_has_invalid_timestamp_or_numeric_values"
+                return False, {"data_empty": False, "record_count": len(rows)}, "oi_row_has_invalid_timestamp_or_numeric_values"
             timestamps.append(ts)
             values.append({"oi": str(row[1]), "volume": str(row[2])})
         else:
             if not isinstance(row, (list, tuple)) or len(row) < 2:
-                return False, {}, "long_short_row_must_be_[timestamp,ratio]"
+                return False, {"data_empty": False, "record_count": len(rows)}, "long_short_row_must_be_[timestamp,ratio]"
             ts = _timestamp(row[0])
             ratio = _number(row[1])
             if ts is None or ratio is None or ratio <= 0:
-                return False, {}, "long_short_row_has_invalid_timestamp_or_ratio"
+                return False, {"data_empty": False, "record_count": len(rows)}, "long_short_row_has_invalid_timestamp_or_ratio"
             timestamps.append(ts)
             values.append({"ratio": str(row[1])})
 
@@ -128,15 +128,17 @@ def test_one(symbol: str, endpoint: str) -> dict[str, Any]:
         "http_status": status, "okx_code": None, "okx_message": None,
         "status": "NETWORK_ERROR", "data_empty": None, "record_count": 0,
     }
-    if error:
-        result["error"] = error
-        return result
-    if status != 200:
+    if status is not None and status != 200:
         result["status"] = "HTTP_ERROR"
-        result["error"] = f"unexpected_http_status:{status}"
+        result["error"] = error or f"unexpected_http_status:{status}"
+        return result
+    if error:
+        result["status"] = "INVALID_JSON" if status == 200 and error.startswith("invalid_json") else "NETWORK_ERROR"
+        result["error"] = error
         return result
     if payload is None:
         result["status"] = "INVALID_JSON"
+        result["error"] = "empty_or_invalid_json_payload"
         return result
 
     result["okx_code"] = str(payload.get("code", "MISSING"))
