@@ -56,7 +56,7 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(near["zone_type"], "FVG")
         self.assertTrue(near["within_limit"])
         self.assertLess(near["distance_pct"], 0.80)
-        rows[-1] = candle(7 * 900000, 102.0, 102.2, 101.9, 102.1)
+        rows[-1] = candle(7 * 900000, 102.0, 102.3, 101.0, 102.1)
         far = zone_distance(rows, "BUY", None)
         self.assertFalse(far["within_limit"])
         self.assertGreater(far["distance_pct"], 0.80)

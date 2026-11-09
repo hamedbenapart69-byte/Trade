@@ -15,6 +15,7 @@ from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     MIN_LFS_SCORE_PROXY_CVD,
     MIN_LFS_SCORE_REAL_CVD,
+    WATCHLIST_CONFLUENCE_THRESHOLD,
     aggregate_bars,
     analyze_symbol,
     ichimoku,
@@ -159,7 +160,7 @@ def process_symbol(symbol: str, fetcher: LiveOHLCVFetcher) -> tuple[dict[str, An
         confluence_score, confluence_components = calculate_confluence(
             result, rows, str(result["direction"])
         )
-        if confluence_score < 60:
+        if confluence_score < WATCHLIST_CONFLUENCE_THRESHOLD:
             return None, f"CONFLUENCE_BELOW_WATCHLIST_60:{confluence_score}"
 
         lfs_source = (result.get("cvd") or {}).get("source", "UNAVAILABLE")
