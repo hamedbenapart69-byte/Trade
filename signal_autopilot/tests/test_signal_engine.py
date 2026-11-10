@@ -19,12 +19,15 @@ class EmaContinuationV2Tests(unittest.TestCase):
             base = 100.0 if sign >= 0 else 160.0
             close = base + sign * index * 0.05 + amplitude * math.sin(index * 1.17)
             open_ = close - sign * 0.025
-            if sign >= 0:
+            if sign > 0:
                 high = close + 0.10
                 low = 99.5 + index * 0.05 + 0.05 * math.sin(index * 1.17)
-            else:
+            elif sign < 0:
                 high = 160.7 - index * 0.05 + 0.10 * math.sin(index * 1.17)
                 low = close - 0.10
+            else:
+                high = close + 0.10
+                low = close - 0.50
             if index == 219:
                 open_ = close - sign * 0.22
                 high = close + 0.10 if sign >= 0 else close + 0.50
