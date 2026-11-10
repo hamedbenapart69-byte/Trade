@@ -336,6 +336,13 @@ class MarketDataFetcher:
             "kucoinfutures", "gateio", "toobit",
         ]
         provider_diagnostics: dict[str, dict] = {}
+        if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
+            errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
+            provider_diagnostics["okx"] = {
+                "status": "BLOCKED", "error": "DEBUG_BLOCK_OKX_FORCED",
+                "symbols_added": 0,
+            }
+            providers.remove("okx")
 
         for provider in providers:
             remaining = self.limit - len(selected)
