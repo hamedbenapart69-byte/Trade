@@ -1,0 +1,38 @@
+{
+  "status": "PARTIAL",
+  "providers": {
+    "okx": {
+      "status": "PASS",
+      "rows": 590,
+      "error": null
+    },
+    "bybit": {
+      "status": "PASS",
+      "rows": 591,
+      "error": null
+    },
+    "kucoin": {
+      "status": "ERROR",
+      "rows": 0,
+      "error": "ConnectionClosedOK:received 1000 (OK) Bye; then sent 1000 (OK) Bye"
+    }
+  },
+  "total_rows": 1181,
+  "captured_at_utc": "2026-11-10T15:37:26.283466+00:00",
+  "symbols": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "XRP",
+    "DOGE",
+    "ADA",
+    "LINK",
+    "LTC",
+    "BCH",
+    "AVAX"
+  ],
+  "parquet_files": [
+    "data/orderbook_l2/2026-11-10/okx.parquet",
+    "data/orderbook_l2/2026-11-10/bybit.parquet"
+  ]
+}
