@@ -69,6 +69,8 @@ class LRT15mTests(unittest.TestCase):
         self.assertEqual(result["confidence"], "NOT_CALIBRATED")
         self.assertEqual(result["brier_score"], "NOT_CALIBRATED")
         self.assertIn("NOT_CALCULATED", result["ev"])
+        self.assertEqual(result["ev_status"], "NOT_CALIBRATED")
+        self.assertIsNone(result["ev_net"])
         self.assertIn(result["decision"], {"WATCHLIST", "NO_QUALIFIED_SETUP"})
 
     def test_okx_source_metadata_survives_engine_and_neutralizes_cvd(self):
@@ -90,6 +92,8 @@ class LRT15mTests(unittest.TestCase):
         result = engine.analyze_symbol("BTCUSDT", [candle(i * 900000, 1, 2, 0.5, 1) for i in range(100)])
         self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
         self.assertEqual(result["reason"], "INSUFFICIENT_15M_HISTORY")
+        self.assertEqual(result["ev_status"], "NOT_CALIBRATED")
+        self.assertIsNone(result["ev_net"])
 
 
 if __name__ == "__main__":
