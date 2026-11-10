@@ -38,18 +38,21 @@ def ema(values: list[float], period: int) -> list[float]:
 
 
 def atr(candles: list[dict[str, Any]], period: int = 14) -> float | None:
-    """ATR14 با میانگین True Range چهارده کندل اخیر."""
-    if len(candles) < period + 1:
+    """ATR14 با Wilder smoothing؛ باید با موتور Walk-Forward هم‌تعریف باشد."""
+    if len(candles) < period:
         return None
     true_ranges = []
-    for index in range(1, len(candles)):
-        current, previous = candles[index], candles[index - 1]
-        true_ranges.append(max(
-            float(current["high"]) - float(current["low"]),
-            abs(float(current["high"]) - float(previous["close"])),
-            abs(float(current["low"]) - float(previous["close"])),
-        ))
-    return sum(true_ranges[-period:]) / period
+    for index, current in enumerate(candles):
+        if index == 0:
+            true_ranges.append(float(current["high"]) - float(current["low"]))
+            continue
+        previous_close = float(candles[index - 1]["close"])
+        high, low = float(current["high"]), float(current["low"])
+        true_ranges.append(max(high - low, abs(high - previous_close), abs(low - previous_close)))
+    current_atr = sum(true_ranges[:period]) / period
+    for true_range in true_ranges[period:]:
+        current_atr = (current_atr * (period - 1) + true_range) / period
+    return current_atr
 
 
 def _finite_ohlcv(candles: list[dict[str, Any]]) -> bool:
