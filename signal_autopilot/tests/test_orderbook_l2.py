@@ -1,6 +1,6 @@
 import json
 import unittest
-from modules.orderbook_l2 import apply_bybit_update, _metrics, _sorted_book
+from modules.orderbook_l2 import apply_bybit_update, _metrics, _sorted_book, _sample
 
 
 class _FakeWebSocket:
@@ -9,6 +9,40 @@ class _FakeWebSocket:
 
     async def send(self, payload):
         self.sent.append(json.loads(payload))
+
+
+class BybitHeartbeatTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ping_is_sent_on_schedule_even_during_active_market_stream(self):
+        from modules.orderbook_l2 import _bybit_heartbeat_if_due
+
+        ws = _FakeWebSocket()
+        last_ping = await _bybit_heartbeat_if_due(ws, 100.0, 20.0, now=119.9)
+        self.assertEqual(last_ping, 100.0)
+        self.assertEqual(ws.sent, [])
+
+        last_ping = await _bybit_heartbeat_if_due(ws, last_ping, 20.0, now=120.0)
+        self.assertEqual(last_ping, 120.0)
+        self.assertEqual(ws.sent, [{"op": "ping"}])
+
+
+class PerSymbolFreshnessTests(unittest.TestCase):
+    def test_active_symbol_does_not_refresh_stale_symbol(self):
+        latest = {
+            "BTC": {
+                "bids": [["100", "2"]], "asks": [["101", "3"]],
+                "exchange_ts_ms": 95_000, "sequence": "1",
+                "received_at_ms": 95_000,
+            },
+            "ETH": {
+                "bids": [["200", "2"]], "asks": [["201", "3"]],
+                "exchange_ts_ms": 40_000, "sequence": "2",
+                "received_at_ms": 40_000,
+            },
+        }
+        output = []
+        _sample(latest, output, "bybit", 100_000, 0, 50, "BASE_QTY_LINEAR", 10_000)
+        self.assertEqual([row["symbol"] for row in output], ["BTC"])
+        self.assertEqual(output[0]["book_age_ms"], 5_000)
 
 
 class KuCoinHeartbeatTests(unittest.IsolatedAsyncioTestCase):
