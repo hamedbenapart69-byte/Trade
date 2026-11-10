@@ -111,14 +111,20 @@ def _record(exchange: str, symbol: str, book: dict[str, Any], sampled_ms: int,
     }
 
 
-def _sample(latest, output, exchange, now_ms, last_ms, depth, size_unit, alive_ms, interval_ms):
-    if now_ms - last_ms < interval_ms or now_ms - alive_ms > 45_000:
+def _sample(latest, output, exchange, now_ms, last_ms, depth, size_unit, interval_ms):
+    if now_ms - last_ms < interval_ms:
         return last_ms
+    sampled = False
     for symbol, book in latest.items():
+        # تازگی هر نماد مستقل بررسی می‌شود؛ پیام BTC نباید دفتر سفارش ETH را تازه جلوه دهد.
+        received_ms = int(book.get("received_at_ms") or 0)
+        if received_ms <= 0 or now_ms - received_ms > 45_000:
+            continue
         row = _record(exchange, symbol, book, now_ms, depth, size_unit)
         if row:
             output.append(row)
-    return now_ms
+            sampled = True
+    return now_ms if sampled else last_ms
 
 
 async def _capture_okx(symbols, duration, interval):
@@ -129,11 +135,10 @@ async def _capture_okx(symbols, duration, interval):
         await ws.send(json.dumps({"op": "subscribe", "args": [
             {"channel": "books5", "instId": SYMBOLS[s]["okx"]} for s in symbols]}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
-        alive_ms = int(time.time() * 1000)
         while time.monotonic() - started < duration:
+            last_ping = await _bybit_heartbeat_if_due(ws, last_ping, 20.0)
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
-                alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
                 if time.monotonic() - last_ping >= 20:
                     await ws.send("ping")
@@ -150,15 +155,26 @@ async def _capture_okx(symbols, duration, interval):
             symbol = reverse.get((msg.get("arg") or {}).get("instId"))
             if not symbol:
                 continue
+            received_ms = int(time.time() * 1000)
             for item in msg.get("data", []) or []:
                 bids, asks = _sorted_book(item.get("bids", []), item.get("asks", []), 5)
                 latest[symbol] = {"bids": bids, "asks": asks,
                     "exchange_ts_ms": int(item.get("ts") or 0),
-                    "sequence": str(item.get("seqId") or ""), "received_at_ms": alive_ms}
+                    "sequence": str(item.get("seqId") or ""), "received_at_ms": received_ms}
             now = int(time.time() * 1000)
             last_sample = _sample(latest, rows, "okx", now, last_sample, 5,
-                                  "CONTRACTS", alive_ms, interval * 1000)
+                                  "CONTRACTS", interval * 1000)
     return rows
+
+
+async def _bybit_heartbeat_if_due(ws, last_ping: float, interval_seconds: float = 20.0,
+                                  now: float | None = None) -> float:
+    """Bybit requires periodic application-level JSON pings even during active traffic."""
+    current = time.monotonic() if now is None else now
+    if current - last_ping < interval_seconds:
+        return last_ping
+    await ws.send(json.dumps({"op": "ping"}))
+    return current
 
 
 async def _capture_bybit(symbols, duration, interval):
@@ -175,12 +191,9 @@ async def _capture_bybit(symbols, duration, interval):
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
                 alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
-                if time.monotonic() - last_ping >= 20:
-                    await ws.send(json.dumps({"op": "ping"}))
-                    last_ping = time.monotonic()
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "bybit", now, last_sample, 50,
-                                      "BASE_QTY_LINEAR", alive_ms, interval * 1000)
+                                      "BASE_QTY_LINEAR", interval * 1000)
                 continue
             msg = json.loads(raw)
             if msg.get("success") is False:
@@ -195,12 +208,13 @@ async def _capture_bybit(symbols, duration, interval):
                               key=lambda row: float(row[0]), reverse=True)[:50]
                 asks = sorted([[p, q] for p, q in book["asks"].items()],
                               key=lambda row: float(row[0]))[:50]
+                received_ms = int(time.time() * 1000)
                 latest[symbol] = {"bids": bids, "asks": asks,
                     "exchange_ts_ms": book.get("exchange_ts_ms", 0),
-                    "sequence": book.get("sequence", ""), "received_at_ms": alive_ms}
+                    "sequence": book.get("sequence", ""), "received_at_ms": received_ms}
             now = int(time.time() * 1000)
             last_sample = _sample(latest, rows, "bybit", now, last_sample, 50,
-                                  "BASE_QTY_LINEAR", alive_ms, interval * 1000)
+                                  "BASE_QTY_LINEAR", interval * 1000)
     return rows
 
 
@@ -269,7 +283,7 @@ async def _capture_kucoin(symbols, duration, interval):
             except asyncio.TimeoutError:
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
-                                      "CONTRACTS", alive_ms, interval * 1000)
+                                      "CONTRACTS", interval * 1000)
                 continue
             except websockets.exceptions.ConnectionClosedOK as exc:
                 elapsed = time.monotonic() - started
@@ -296,13 +310,14 @@ async def _capture_kucoin(symbols, duration, interval):
             symbol, book_data = parsed
             diagnostics["book_messages"] += 1
             diagnostics["symbols_with_book"].add(symbol)
+            received_ms = int(time.time() * 1000)
             latest[symbol] = {
                 **book_data,
-                "received_at_ms": alive_ms,
+                "received_at_ms": received_ms,
             }
             now = int(time.time() * 1000)
             last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
-                                  "CONTRACTS", alive_ms, interval * 1000)
+                                  "CONTRACTS", interval * 1000)
     diagnostics["symbols_with_book"] = sorted(diagnostics["symbols_with_book"])
     diagnostics["rows_sampled"] = len(rows)
     diagnostics["elapsed_seconds"] = round(time.monotonic() - started, 2)
