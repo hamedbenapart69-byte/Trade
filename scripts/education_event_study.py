@@ -29,6 +29,7 @@ from app.research_education import (
     detect_value_boundary_rejections,
     filter_events_by_higher_timeframe,
     filter_events_by_higher_timeframe_regime,
+    map_events_to_signal_candles,
 )
 from app.signals import Candle
 
@@ -36,6 +37,12 @@ HOUR_MS = 3_600_000
 FOUR_HOURS_MS = 4 * HOUR_MS
 ROUND_TRIP_FEE = 0.0008  # 0.04% each side, per project cost rule
 HORIZONS = (1, 4, 8)
+BASE_HYPOTHESES = (
+    "H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7",
+    "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC",
+)
+HYPOTHESIS_HORIZONS = {hypothesis: HORIZONS for hypothesis in BASE_HYPOTHESES}
+HYPOTHESIS_HORIZONS["H1_LRT_V3_4H"] = (4, 8, 12)
 
 
 def _to_ms(value: Any) -> int:
@@ -171,6 +178,11 @@ def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
     h5 = _non_overlapping(detect_breakout_acceptance(hourly))
     h6 = _non_overlapping(detect_breakout_retests(hourly))
     four_hour = resample_4h(hourly)
+    # V3: تغییر فرضیهٔ تایم‌فریم؛ Sweep/Reclaim روی کندل 4h و ورود در کندل بعدی.
+    h1_4h_raw = _non_overlapping(
+        detect_liquidity_sweeps(four_hour), gap_bars=2
+    )
+    h1_4h = map_events_to_signal_candles(h1_4h_raw, four_hour, hourly)
     four_hour_close_times = [c.close_time for c in four_hour]
     closes = [c.close for c in four_hour]
     fast_values = _ema_series(closes, 20)
@@ -202,6 +214,7 @@ def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
     h8_nmt = filter_events_by_higher_timeframe(h5, hourly, four_hour)
     return {
         "H1": h1,
+        "H1_LRT_V3_4H": h1_4h,
         "H2_TIME_REJECTION_PROXY": h2,
         "H5_PRICE_PROXY": h5,
         "H6": h6,
@@ -259,7 +272,7 @@ def event_observation(
     gross = direction * (exit_price / entry - 1.0)
     net_after_fee_only = gross - ROUND_TRIP_FEE
     return {
-        "signal_time_ms": candles[event.signal_index].open_time,
+        "signal_time_ms": candles[event.signal_index].close_time,
         "exit_time_ms": candles[exit_index].close_time,
         "gross_return": gross,
         "net_after_fee_only": net_after_fee_only,
@@ -300,14 +313,14 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"No Parquet files found in {data_root}")
 
     all_results: dict[str, dict[int, list[dict[str, Any]]]] = {
-        hypothesis: {horizon: [] for horizon in HORIZONS}
-        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC")
+        hypothesis: {horizon: [] for horizon in horizons}
+        for hypothesis, horizons in HYPOTHESIS_HORIZONS.items()
     }
     fold_results: dict[str, dict[int, dict[int, list[dict[str, Any]]]]] = {
         hypothesis: {
-            horizon: defaultdict(list) for horizon in HORIZONS
+            horizon: defaultdict(list) for horizon in horizons
         }
-        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC")
+        for hypothesis, horizons in HYPOTHESIS_HORIZONS.items()
     }
 
     loaded_symbols = 0
@@ -330,7 +343,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
         for hypothesis, events in event_sets.items():
             event_counts[hypothesis] += len(events)
             for event in events:
-                for horizon in HORIZONS:
+                for horizon in HYPOTHESIS_HORIZONS[hypothesis]:
                     observation = event_observation(event, candles, horizon)
                     if observation is None:
                         continue
@@ -348,12 +361,12 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
 
     overall = {}
     per_fold = {}
-    for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC"):
+    for hypothesis, horizons in HYPOTHESIS_HORIZONS.items():
         overall[hypothesis] = {
-            str(h): summarize(all_results[hypothesis][h]) for h in HORIZONS
+            str(h): summarize(all_results[hypothesis][h]) for h in horizons
         }
         per_fold[hypothesis] = {}
-        for horizon in HORIZONS:
+        for horizon in horizons:
             per_fold[hypothesis][str(horizon)] = {
                 str(fold): summarize(rows)
                 for fold, rows in sorted(fold_results[hypothesis][horizon].items())
@@ -401,6 +414,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
             "H5_PRICE_PROXY measures consecutive price closes only; it does not use real aggressor flow or delta.",
             "H7 is an H6 breakout-retest subset filtered by completed 4h EMA20/EMA50 direction.",
             "H8_LRT_DLC filters H1 sweep/reclaim events by completed 4h EMA20/EMA50 direction; H8_LRT_RANGE_V2 keeps H1 events only in a neutral 4h regime; H8_NMT_DLC separately filters H5 price-acceptance events by directional alignment. No LRT/NMT triggers are blended.",
+            "H1_LRT_V3_4H detects sweep/reclaim on resampled 4h bars; the event is mapped to the exact matching hourly close, entered at the next hourly open (the next 4h bar open), and evaluated over 4h/8h/12h horizons.",
             "The rolling 2-month test windows overlap by one month; fold results must be inspected separately.",
             "No threshold was tuned on test windows; no strategy is promoted by this pre-screen.",
         ],
