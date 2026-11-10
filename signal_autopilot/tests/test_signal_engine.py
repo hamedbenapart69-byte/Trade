@@ -2,7 +2,7 @@ import math
 import unittest
 from datetime import datetime
 
-from modules.signal_engine import build_signal, generate_signals, C10
+from modules.signal_engine import build_signal, generate_signals, C10, ema, atr
 
 
 GENERATED = "2026-11-08T19:00:00+03:30"
@@ -26,21 +26,21 @@ class EmaContinuationV2Tests(unittest.TestCase):
             })
 
         if sign:
-            ema50_1h = build_signal.__globals__["ema"](
+            ema50_1h = ema(
                 [float(c["close"]) for c in candles_1h], 50
             )[-1]
-            atr_1h = build_signal.__globals__["atr"](candles_1h)
+            atr_1h = atr(candles_1h)
             if sign > 0:
                 candles_1h[-1]["open"] = candles_1h[-1]["close"] - 0.20
                 candles_1h[-1]["high"] = candles_1h[-1]["close"] + 0.20
                 candles_1h[-1]["low"] = (
-                    ema50_1h + 0.05 * atr_1h if pullback else candles_1h[-1]["close"] - 1.0
+                    ema50_1h + 0.05 * atr_1h if pullback else candles_1h[-1]["close"] - 0.20
                 )
             else:
                 candles_1h[-1]["open"] = candles_1h[-1]["close"] + 0.20
                 candles_1h[-1]["low"] = candles_1h[-1]["close"] - 0.20
                 candles_1h[-1]["high"] = (
-                    ema50_1h - 0.05 * atr_1h if pullback else candles_1h[-1]["close"] + 1.0
+                    ema50_1h - 0.05 * atr_1h if pullback else candles_1h[-1]["close"] + 0.20
                 )
 
         candles_4h = []
@@ -59,7 +59,7 @@ class EmaContinuationV2Tests(unittest.TestCase):
             "symbol": "BTC/USDT:USDT", "timeframe": "1H",
             "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"},
             "ohlcv": candles_1h, "ohlcv_4h": candles_4h,
-            "last": candles_1h[-1]["close"],
+            "last": candles_1h[-1]["close"], "quote_volume_24h": 20_000_000.0,
             "ticker_timestamp_utc": "2026-11-08T15:29:00+00:00",
             "ticker_timestamp_source": "FETCH_TIME_PROXY" if proxy else "EXCHANGE",
         }
@@ -99,6 +99,13 @@ class EmaContinuationV2Tests(unittest.TestCase):
     def test_flat_4h_regime_has_no_setup(self):
         result = build_signal(self.make_row("flat"), GENERATED)
         self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+
+    def test_low_liquidity_fails_g4(self):
+        row = self.make_row("up")
+        row["quote_volume_24h"] = 5_000_000.0
+        result = build_signal(row, GENERATED)
+        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+        self.assertIn("G4 minimum", result["reason"])
 
     def test_insufficient_4h_history_is_degraded(self):
         row = self.make_row("up")
