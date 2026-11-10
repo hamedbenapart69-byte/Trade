@@ -196,10 +196,16 @@ The official free-content page points to trade reviews, strategy videos, article
 - Initial eight hypotheses converted into falsifiable specifications: H1–H8.
 - Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. The available review is based on public instructor/course descriptions and curriculum pages. No paid transcript credits used.
 - OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H6 breakout/retest, H7 higher-timeframe gate. These are isolated from the production V5 path and emit research events, not executable signals.
-- Unit tests added in `tests/test_research_education.py`; GitHub Actions CI run 42872315205 completed successfully: root unittest suite, futures signal pipeline tests, dashboard JavaScript validation, Compose validation, Docker build, and container health smoke test all passed. This verifies the code/test suite, not strategy performance.
-- Integration with the scanner/backtest engine: **NOT DONE**.
-- Walk-forward/OOS validation: **NOT RUN**.
-- Edge acceptance: **NONE**.
-- Production integration/deployment: **NOT AUTHORIZED / NOT DONE**.
+- Unit tests added in `tests/test_research_education.py`. GitHub Actions run 42873115671 completed successfully: root unittest suite, futures signal pipeline tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the isolated event-study job all passed.
+- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H6/H7 event counts across the full archive were 84,165 / 49,973 / 24,635. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
+- **Mean forward return after round-trip fees only** (0.04% per side; slippage and funding unavailable for the full 2y window and excluded):
+  - H1: 1h **-0.0879%**, 4h **-0.0913%**, 8h **-0.0847%**.
+  - H6: 1h **-0.0557%**, 4h **-0.0470%**, 8h **-0.0766%**.
+  - H7: 1h **-0.0519%**, 4h **-0.0411%**, 8h **-0.1154%**.
+- **Interpretation:** all nine aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H6/H7 therefore do not show a positive mean-forward-return edge in this pre-screen. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO.
+- Integration with the production scanner: **NOT DONE**. The research module remains isolated.
+- Formal strategy backtest / Gate evaluation: **NOT DONE**. The completed event study is a pre-screen only.
+- Edge acceptance: **NONE**. Do not promote H1/H6/H7 into live signal generation.
+- Production integration/deployment: **NOT DONE**.
 
 This is a research handoff, not a strategy PASS.
