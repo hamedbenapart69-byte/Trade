@@ -122,6 +122,29 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
 
 
 
+    def test_conditional_only_day_sends_conditional_status_not_no_signal(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+            conditional = {"symbol": "ARB/USDT:USDT", "status": "CONDITIONAL_BUY"}
+            payload = {
+                "pipeline_status": "OK",
+                "today_signal_message": "تنظیم مشروط وجود دارد؛ ورود فوری مجاز نیست",
+                "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                "signals": [conditional], "conditional_signals": [conditional],
+                "trade_signals": [],
+            }
+            with patch.dict(os.environ, {
+                "TELEGRAM_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }, clear=True), patch("modules.notifier._send", new=fake_send):
+                result = notify_tier_a(payload)
+            self.assertEqual(result, {"status": "SENT", "sent": 1})
+            self.assertEqual(sent, [payload["today_signal_message"]])
+
     def test_email_fallback_sends_only_with_configured_sender_and_recipient(self):
         import os
         from modules.notifier import notify_email
@@ -175,7 +198,8 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                      "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
                      "entry_price_quality": "EXCHANGE_TIMESTAMP"},
                     {"symbol": "ETH/USDT:USDT", "status": "SELL_NOW", "side": "SELL",
-                     "entry": 200, "stop_loss": 210, "take_profit": [180, 160]},
+                     "entry": 200, "stop_loss": 210, "take_profit": [180, 160],
+                     "entry_price_quality": "EXCHANGE_TIMESTAMP"},
                 ],
             }
             with patch.dict(os.environ, {
@@ -207,6 +231,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                     "signals": [{
                         "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
                         "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                        "entry_price_quality": "EXCHANGE_TIMESTAMP",
                     }],
                 })
         self.assertEqual(result, {"status": "CHAT_NOT_FOUND", "sent": 0})
