@@ -5,80 +5,123 @@
       "__schema_version__": 2,
       "signals": {
         "48a9cd125ef3d7b5fe84bb923599b919e9b5065fdb6374d2b54938a6f80ead49": {
-          "fingerprint": "643fa2934128e82da059e895f42cff178bf87c3855bb8e8cb29ddf146dfcf853",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "0b38e3185f3fb889121f739955dcf13ee6acc640b42e317f49cc045d79e30207",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "3e4857b97fe12bfaa9d668891bd5828fb76b4e0263338fe1f7a6727778e82808": {
-          "fingerprint": "600e10a3987ad1bb3cda610cebf7e78945b3f002d88b9a4e9b019d5d5369dcc0",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "a5f31134b5adb3a320c03302f7e203d6e62a9a5246841cbd62716a71a724c27e",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "72ade89389d7c22cd4bc930103d8f56c48d345af2ae7f1b3db9a283411a8fcd9": {
-          "fingerprint": "29863e59ed831fc44b116c24d2ce9dc9fdfece4319521299e87f337dc4266beb",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "601aaa2bb478e2c3399530fd2a68f290c353a9749e275dfb4593c4f287ab9d7d",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "16c88aa54051b6e5609e685bdff3ee0d35b2ef0a6a54415c3cd87285b5cbecaf": {
-          "fingerprint": "13e17c94a0002a3e970fe371b7006042b9131bf141f498ad79b7d93fe18d50d5",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "9bbb82416ebf0cf6fc156550d6b1a63c4a7e619e08f8326407f09770b6ad35dd",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "c7392aab81e341d5a4ac821a9b3954161c52893caa1c9eb90f4b041305cf44d7": {
-          "fingerprint": "fa70e305274293909d537168e1ca6a1191159448f1b3fe0bd33aa1240ded0d54",
-          "sent_at": "2026-11-10T16:51:32.986189+00:00"
+          "fingerprint": "bfa85fbf4b787c1d09eaffbb133b719eb82819759f867cbb0921fdc0b3ee3a1c",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "1871332666313b100e5e9847fb8943b8d5d02c95cb0c83fa504030d0ee3b06a7": {
-          "fingerprint": "692a51f7be6811b7caa39ee77d3f8b3ab5b69926193ff015f75a54ebc658b7e8",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "a4d7a79cda36bb8062855ba6853b8b5fff017815b84ee3f5d03b80ee98ff72c9",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "df983e8297ca268304c06fba56b62c5ba71790393e3fbaa31da0d2a00b118d16": {
-          "fingerprint": "85e5f59c2855e02834ae9bdf73749bc1291a8a3dcbf3f97c18ab70d7b5e3ed32",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "5641041f11481a0761b155ff7a9d5264f3b0f18acfb5b2740f246f99ccec35f2",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "dca9a1f877e46e1b6607ea38faeeeb95df69eacebc5b64a9ab3c45ed37db5cc2": {
-          "fingerprint": "4cba78565439b35ff5fd2e22c5a9e85fb58fcb167de4257d7f8d2394f5b1adff",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "5a46275f711ea6cbc795bbce8c6f008a2b3eefae29b737942ca6c8eb0f62585a",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "8a557443dbc498e6ab5af5b354db67015722d63d03c8349d60496828083d0b1c": {
-          "fingerprint": "0de69a00c5c3115713be3f0b0af9cc6f7f1be6c732a2e0886efdc13dcb1f6f04",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "6ad81401fd4a747b52ad13598d83c86b2a48c97f1fb4df506e46222b6dc7b684",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "8ba0a68b3c296057126fb2ff74f8581bbca26dfe4e095648b92825f701e77517": {
-          "fingerprint": "85cec7aefb5684e93048bb0579dc1128cbc0a71c3bfef1a615aaeb7122638a23",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "23a596d6fa9c5b6227084cd3270f55fbd3b9eebebe291f7f95ab97b18abdcdca",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "57dfa7fa6e17179bb179e276d14a0f910f90e1e24e57b211925238a6d59e7aa1": {
-          "fingerprint": "c7cfd3089aae430b2c9c45a0f639c71fe2f662a73f3ef168d6c2a4754778cc39",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "ac30e57c1449ae20aa4a34166bff8f227adbd36881561af0c8eb1139b66e05a7",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "9fd87e037810b2697a64c90e3f49756db582eaaadc60be05098abded5bd4ecce": {
-          "fingerprint": "b23a11317d0c3a06f2f0960af7e56c7aed8871e881f9b03eeac3d12fa59bfcb1",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "7dfcb61e4c382daba26997a97619b84df7fd4d95911be2b7df5caa623eacaad7",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "af5d49f0ac8dad999e131945189224b6eb3339e3621e6ea503549e63ea398e08": {
-          "fingerprint": "adfc92e79943827f0a00fbff3641191b99a9ec0034095e545e5a520268af9d55",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "3177b04bfa6219d537991947a9f51d4e2c85ef1040506fc7bc60047fcc7dcb37",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "81d8b0af12ad2a19b0208cc384d488f4c920fb9c41af95057b69a62cb4c0821b": {
-          "fingerprint": "8af30a895642e20c4de78c8aeac1ae829cbf6523a60b814c400ad921a7aa45c4",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "c4115a393122d5802e04bc367b17aa71a3d18fc8e18cd5d9ab81d5752a094d28",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "864c2c9f0549fe1f8ce1c670b4673dc3158fcedd791784424e4289766c9324ac": {
-          "fingerprint": "e03e964604aaee455fe37bb3a8cf800b396d3286768ffe2223579eced2be26b7",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "d526a083a5b9ab6839c82ec45e7bbccbd58fe067be9acea8a9a5550e3b96ba70",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "b23096ce235ea2458214a2eb2d244f869a937207cc6882a1ad4ddb5bf8bbf0fa": {
-          "fingerprint": "0808d354a253352709609ec637bc771f7c1a8b6e3d93795da99e7dd1fd727634",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "40f13460c6856e1346783983d977201eb56bc9a93fb4d27e9ae7ce76ced65ebb",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "b5f1fd9352a9ec13a8a098569bfb300aa8bdf8d4422332a1ce2d86fb495734bc": {
-          "fingerprint": "1388fcf07cf9e34d273c9ac4e6d502f17bb7b2d7d1c8c46defda5c74215bad0b",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "3177db11da18587df0a2212bc4807b8d58570111763f699480d89c40a8175acd",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         },
         "0791c076d6e270a0c294143416054c73a1defdfaaeffae67ce81a17db1c293b9": {
           "fingerprint": "edbc8dee6bb872a374eb2dfef73048b29a1a93ae4014e83e339226c42e7af8a9",
           "sent_at": "2026-11-10T16:54:02.538269+00:00"
         },
         "0bce69323bfbaf59ef333f9035c5e58881bd85bded8ef2b93418bb11a0c015de": {
-          "fingerprint": "f1747ceaa1769af199069920907e230fad56697cb950b738702bc105b05ff56c",
-          "sent_at": "2026-11-10T16:54:02.538269+00:00"
+          "fingerprint": "753a9d59d142b6f6f67907ceab295ce86ccfdc655fe3f16ef86c2d7285302949",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "0cf3d45b1c3770c8848b629f865c07ab8b68972f2c8d2f9743f19c514ad38cdd": {
+          "fingerprint": "2576762724317607713082439f2543d77305f577cab40bf4bbd581a8e1ab65f2",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00",
+          "migration": "legacy_suppressed"
+        },
+        "f761cc9f1cd002461fecd779e44a95f8f45513c7a58ccc5b763ce8f01433b5a9": {
+          "fingerprint": "193bcb1300d9b542c4a20d2b93093646654f5ba33a16cc2c498af469bcfd4d18",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00",
+          "migration": "legacy_suppressed"
+        },
+        "52a2ff7f71f16c8f75aac80a80499f6b2f1f40c66b11fd3dcabdd786b0354ad1": {
+          "fingerprint": "3d70697d85dab351f09c03ac44a667ca1c2e8c06cc7ca31c107a78592c2c088a",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00",
+          "migration": "legacy_suppressed"
+        },
+        "0c3f26892e166915e20f53737c5cd7a45b9a4a6260bd432b725ee9151ac73544": {
+          "fingerprint": "320465b08a3e03aa6f662dcde60576e4bd4f3a434db0133d6f5c80e17a74ec7c",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "50c3b01c19e06ece8062e6660ff89ddd85babbeb24fc06930dd98a891e9925d4": {
+          "fingerprint": "2dce48b6ac9193f77ba816f0f71334309d5f4a36da245fd0014b2b7b46c41c3c",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "c1065f8e6bcbcc9a034e9c6c863de6a357fd7064dfa8e19b2ba92a6ffd80350e": {
+          "fingerprint": "162f77da1bd6f9b70f80e601db5213404f1c68515a020fc2d711d140a6a9830b",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "555607e9088dab5ce11d9278b19179cbb1d9b256932b73b4265ed26049dcf9f5": {
+          "fingerprint": "7c3e15637d66d48d093d6732791ae7c1edf4d79ca1874f497c39baa59b8178f9",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "03d5ee8ade4c4d7f4dc4cbb68754a7748981486e5ba229029d689a9f1be3e192": {
+          "fingerprint": "5182b0dec730398ddedd82d8dcc45ef64cfd21927b8c89fefbad745e60dad902",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "244e8f78d69c5a39cc34279c6d7d42278e97f84b308c84eac5404711490ecacf": {
+          "fingerprint": "b65b52633b46a802c670b13a5f573d86a6a1d3203a3e96cc43b7a74a55c044e1",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
+        },
+        "e02cd072a88180d48b1f3c2e9057526bd8b58b81a8a3de8aff9062db7266aa7a": {
+          "fingerprint": "1f50ae30dd16dfc7e98d17caa9bd88bf100671b1a12f8c0bafe6c8908114e0fd",
+          "sent_at": "2026-11-10T17:03:29.765333+00:00"
         }
       },
       "daily": {
