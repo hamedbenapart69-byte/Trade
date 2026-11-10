@@ -127,6 +127,16 @@ def _sample(latest, output, exchange, now_ms, last_ms, depth, size_unit, interva
     return now_ms if sampled else last_ms
 
 
+async def _okx_heartbeat_if_due(ws, last_ping: float, interval_seconds: float = 20.0,
+                                now: float | None = None) -> float:
+    """OKX expects the literal text frame 'ping', not a JSON operation."""
+    current = time.monotonic() if now is None else now
+    if current - last_ping < interval_seconds:
+        return last_ping
+    await ws.send("ping")
+    return current
+
+
 async def _capture_okx(symbols, duration, interval):
     reverse = {SYMBOLS[s]["okx"]: s for s in symbols}
     latest, rows = {}, []
@@ -139,9 +149,7 @@ async def _capture_okx(symbols, duration, interval):
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
             except asyncio.TimeoutError:
-                if time.monotonic() - last_ping >= 20:
-                    await ws.send("ping")
-                    last_ping = time.monotonic()
+                last_ping = await _okx_heartbeat_if_due(ws, last_ping, 20.0)
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "okx", now, last_sample, 5,
                                       "CONTRACTS", interval * 1000)
