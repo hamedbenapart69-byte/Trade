@@ -5,6 +5,7 @@ from app.research_education import (
     detect_breakout_retests,
     detect_breakout_acceptance,
     detect_liquidity_sweeps,
+    detect_value_boundary_rejections,
     higher_timeframe_bias,
     passes_higher_timeframe_gate,
 )
@@ -75,6 +76,31 @@ class EducationHypothesisTests(unittest.TestCase):
         bars.append(candle(26, 102, 102.5, 99.5, 100))
         bars.append(candle(27, 100, 101, 99, 100))
         self.assertEqual(detect_breakout_acceptance(bars), [])
+
+    def test_h2_time_proxy_requires_two_closes_back_inside_prior_24h_range(self):
+        bars = [candle(i, 100, 101, 99, 100) for i in range(30)]
+        bars.append(candle(30, 100, 103, 100, 102))
+        bars.append(candle(31, 102, 102.5, 100, 100.5))
+        bars.append(candle(32, 100.5, 101, 99.5, 100))
+        events = detect_value_boundary_rejections(
+            bars, lookback=24, rejection_bars=2
+        )
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].hypothesis_id, "H2_TIME_REJECTION_PROXY")
+        self.assertEqual(events[0].side, "SHORT")
+        self.assertEqual(events[0].signal_index, 32)
+
+    def test_h2_time_proxy_rejects_single_close_reclaim_without_second_close(self):
+        bars = [candle(i, 100, 101, 99, 100) for i in range(30)]
+        bars.append(candle(30, 100, 103, 100, 102))
+        bars.append(candle(31, 102, 102.5, 100, 100.5))
+        bars.append(candle(32, 100.5, 103, 100, 102))
+        self.assertEqual(
+            detect_value_boundary_rejections(
+                bars, lookback=24, rejection_bars=2
+            ),
+            [],
+        )
 
     def test_h7_requires_completed_htf_bars_and_directional_alignment(self):
         rising = [
