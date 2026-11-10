@@ -62,6 +62,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                     "signals": [{
                         "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
                         "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                        "entry_price_quality": "EXCHANGE_TIMESTAMP",
                     }],
                 })
             self.assertEqual(result, {"status": "SENT", "sent": 1})
@@ -80,6 +81,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                 "signals": [{
                     "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
                     "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                    "entry_price_quality": "EXCHANGE_TIMESTAMP",
                 }],
             }
             with patch.dict(os.environ, {
@@ -128,6 +130,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             "signals": [{
                 "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
                 "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                "entry_price_quality": "EXCHANGE_TIMESTAMP",
             }],
         }
         class FakeSMTP:
@@ -169,7 +172,8 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                 "quality": {"symbols_requested": 100, "symbols_processed": 26},
                 "signals": [
                     {"symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
-                     "entry": 100, "stop_loss": 95, "take_profit": [110, 120]},
+                     "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                     "entry_price_quality": "EXCHANGE_TIMESTAMP"},
                     {"symbol": "ETH/USDT:USDT", "status": "SELL_NOW", "side": "SELL",
                      "entry": 200, "stop_loss": 210, "take_profit": [180, 160]},
                 ],
