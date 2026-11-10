@@ -231,9 +231,17 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
 
         if direction is None:
             return {
-                **_degraded(row, generated_at_utc, "Trend alignment or EMA slopes do not confirm continuation"),
+                "symbol": row.get("symbol"), "status": "NO_QUALIFIED_SETUP", "side": None,
+                "entry": round(entry, 10), "stop_loss": None, "take_profit": [],
                 "ema20": round(ema20_value, 10), "ema50": round(ema50_value, 10),
-                "atr14": round(atr_value, 10), "entry": round(entry, 10),
+                "atr14": round(atr_value, 10), "confidence": "NOT_CALIBRATED",
+                "generated_at_utc": generated_at_utc, "data_availability": availability,
+                "ticker_timestamp_utc": row.get("ticker_timestamp_utc"),
+                "ticker_timestamp_source": row.get("ticker_timestamp_source", "EXCHANGE"),
+                "entry_price_quality": "PROXY_FETCH_TIME" if row.get("ticker_timestamp_source") == "FETCH_TIME_PROXY" else "EXCHANGE_TIMESTAMP",
+                "analysis_type": "EMA_TREND_CONTINUATION_V2", "timeframe": row.get("timeframe", "1H"),
+                "input_hash": _input_hash(row), "chart_candles": candles[-70:],
+                "reason": "Trend alignment or EMA slopes do not confirm continuation",
             }
 
         gates = {
