@@ -331,6 +331,49 @@ def higher_timeframe_bias(
     return "NEUTRAL"
 
 
+def _ema_series(values: Sequence[float], period: int) -> list[float | None]:
+    """EMAهای همهٔ پیشوندها را در O(n) محاسبه می‌کند."""
+    output: list[float | None] = [None] * len(values)
+    if period <= 0 or len(values) < period:
+        return output
+    value = sum(values[:period]) / period
+    output[period - 1] = value
+    alpha = 2.0 / (period + 1.0)
+    for i in range(period, len(values)):
+        value = alpha * values[i] + (1.0 - alpha) * value
+        output[i] = value
+    return output
+
+
+def _higher_timeframe_bias_series(
+    candles: Sequence[Candle],
+    fast_period: int = 20,
+    slow_period: int = 50,
+) -> list[Bias]:
+    """جهت HTF هر کندل بسته‌شده را یک‌بار محاسبه می‌کند؛ بدون محاسبهٔ تکراری EMA."""
+    if (
+        fast_period < 2
+        or slow_period <= fast_period
+        or not _valid_series(candles)
+    ):
+        return ["NEUTRAL"] * len(candles)
+    closes = [c.close for c in candles]
+    fast_values = _ema_series(closes, fast_period)
+    slow_values = _ema_series(closes, slow_period)
+    output: list[Bias] = []
+    for i, close in enumerate(closes):
+        fast = fast_values[i]
+        slow = slow_values[i]
+        if fast is None or slow is None:
+            output.append("NEUTRAL")
+        elif close > fast and fast > slow:
+            output.append("UP")
+        elif close < fast and fast < slow:
+            output.append("DOWN")
+        else:
+            output.append("NEUTRAL")
+    return output
+
 def filter_events_by_higher_timeframe(
     events: Sequence[ResearchEvent],
     signal_candles: Sequence[Candle],
@@ -348,16 +391,19 @@ def filter_events_by_higher_timeframe(
         return []
 
     htf_close_times = [c.close_time for c in higher_timeframe_candles]
+    htf_biases = _higher_timeframe_bias_series(higher_timeframe_candles)
     filtered: list[ResearchEvent] = []
     for event in events:
         if event.signal_index < 0 or event.signal_index >= len(signal_candles):
             continue
         signal_close_time = signal_candles[event.signal_index].close_time
-        completed_count = bisect_right(htf_close_times, signal_close_time)
-        if completed_count < 50:
+        completed_index = bisect_right(htf_close_times, signal_close_time) - 1
+        if completed_index < 49:
             continue
-        completed_htf = higher_timeframe_candles[:completed_count]
-        if passes_higher_timeframe_gate(event.side, completed_htf):
+        bias = htf_biases[completed_index]
+        if (event.side == "LONG" and bias == "UP") or (
+            event.side == "SHORT" and bias == "DOWN"
+        ):
             filtered.append(event)
     return filtered
 
