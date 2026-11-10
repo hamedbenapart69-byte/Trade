@@ -37,6 +37,17 @@ def _write_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     pq.write_table(table, path, compression="zstd", version="2.6")
 
 
+def freshness_state(last_open_ms: int | None, now_ms: int,
+                    max_age_minutes: int = DEFAULT_MAX_AGE_MINUTES,
+                    continuity: bool = True) -> dict[str, Any]:
+    """فقط کندل بسته‌شده و پیوسته با سن حداکثر تعیین‌شده تازه محسوب می‌شود."""
+    if last_open_ms is None:
+        return {"fresh": False, "age_minutes": None}
+    age = round((now_ms - (int(last_open_ms) + INTERVAL_MS)) / 60_000, 2)
+    fresh = continuity and -1 <= age <= max_age_minutes
+    return {"fresh": bool(fresh), "age_minutes": age}
+
+
 def _legacy_end_date(path: Path) -> str:
     parts = path.stem.split("_")
     return parts[-1] if len(parts) >= 4 else ""
@@ -282,13 +293,13 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     for symbol in symbols:
         item = compute_results[symbol]
         last_open = item["last_open_ms"]
-        age = None if last_open is None else round(
-            (now_ms - (int(last_open) + INTERVAL_MS)) / 60_000, 2
+        freshness_result = freshness_state(
+            int(last_open) if last_open is not None else None,
+            now_ms, max_age_minutes, item["continuity"] and symbol not in base_missing,
         )
-        fresh = (age is not None and -1 <= age <= max_age_minutes)
-        fresh = fresh and item["continuity"] and symbol not in base_missing
+        fresh = freshness_result["fresh"]
         freshness[symbol] = {
-            "fresh": bool(fresh), "age_minutes": age,
+            "fresh": fresh, "age_minutes": freshness_result["age_minutes"],
             "last_open_ms": last_open, "continuity": item["continuity"],
             "reason": None if fresh else (
                 "BASELINE_MISSING_OR_INCOMPLETE" if symbol in base_missing or not item["continuity"]
