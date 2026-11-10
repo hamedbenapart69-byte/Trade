@@ -194,9 +194,10 @@ The official free-content page points to trade reviews, strategy videos, article
 
 - Public curriculum/page descriptions reviewed: Andrea, Carmine, Fabio, FT71, Al Brooks, Trader Mayne, Follis, SMB.
 - Initial eight hypotheses converted into falsifiable specifications: H1–H8.
-- Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. No paid transcript credits used.
-- Strategy implementation: **NOT STARTED** in this research branch.
-- Unit/integration tests: **NOT RUN**.
+- Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. The available review is based on public instructor/course descriptions and curriculum pages. No paid transcript credits used.
+- OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H6 breakout/retest, H7 higher-timeframe gate. These are isolated from the production V5 path and emit research events, not executable signals.
+- Unit tests added in `tests/test_research_education.py`; GitHub Actions CI run 42872315205 was still in progress at the time of this update. No PASS claim until its final conclusion is checked.
+- Integration with the scanner/backtest engine: **NOT DONE**.
 - Walk-forward/OOS validation: **NOT RUN**.
 - Edge acceptance: **NONE**.
 - Production integration/deployment: **NOT AUTHORIZED / NOT DONE**.
