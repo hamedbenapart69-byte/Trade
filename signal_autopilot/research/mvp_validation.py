@@ -202,16 +202,13 @@ def metrics(trades: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def walk_forward_symbol(symbol: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    trades_by_entry: dict[int, dict[str, Any]] = {}
-    test_start = TRAIN_HOURS
-    while test_start + TEST_HOURS < len(rows):
-        warm_start = max(0, test_start - 80)
-        window = rows[warm_start:test_start + TEST_HOURS]
-        for trade in backtest_window(symbol, window, start_index=test_start - warm_start):
-            if int(rows[test_start]["timestamp"]) <= trade["entry_time"] < int(rows[test_start + TEST_HOURS]["timestamp"]):
-                trades_by_entry.setdefault(int(trade["entry_time"]), trade)
-        test_start += STEP_HOURS
-    return list(trades_by_entry.values())
+    """اجرای OOS پیوسته؛ بدون پنجره‌های تست هم‌پوشان یا ریست موقعیت."""
+    # این MVP پارامتر یادگرفتنی ندارد؛ ۶ ماه اول فقط warm-up اندیکاتورهاست.
+    # پس از warm-up یک مسیر زمانی واحد اجرا می‌شود تا هر نماد فقط یک
+    # موقعیت باز هم‌زمان داشته باشد و مرز پنجره مصنوعی معامله را نبندد.
+    if len(rows) <= TRAIN_HOURS + 1:
+        return []
+    return backtest_window(symbol, rows, start_index=TRAIN_HOURS)
 
 
 def run_validation(data_dir: Path) -> dict[str, Any]:
@@ -241,14 +238,18 @@ def run_validation(data_dir: Path) -> dict[str, Any]:
 
     summary = metrics(all_trades)
     return {
-        "stage": "MVP_BASELINE_WALK_FORWARD",
+        "stage": "MVP_BASELINE_CHRONOLOGICAL_OOS",
         "version": "v1_exact_ema20_ema50_atr14_rule",
         "data_source": "OKX public perpetual OHLCV Parquet",
         "timeframe": "1H",
-        "walk_forward": {
-            "train_months": 6, "test_months": 2, "step_months": 1,
+        "evaluation": {
+            "initial_warmup_months": 6,
+            "mode": "single_chronological_oos_path_per_symbol",
             "signal_scan_interval_hours": SIGNAL_SCAN_INTERVAL_HOURS,
+            "one_active_position_per_symbol": True,
+            "positions_continue_across_oos_bars": True,
             "oos_only_metrics": True,
+            "note": "Fixed-rule MVP; the initial six months warm indicators and are not a fitted training sample.",
         },
         "costs": {
             "fee_per_side_pct": FEE_PER_SIDE * 100.0,
