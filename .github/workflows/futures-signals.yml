@@ -91,6 +91,7 @@ jobs:
         working-directory: signal_autopilot
         run: python -m unittest discover -s tests -v
       - name: Fetch data, compute signals and publish dashboard payload
+        if: github.event_name != 'pull_request'
         working-directory: signal_autopilot
         env:
           PYTHONUNBUFFERED: "1"
@@ -106,6 +107,7 @@ jobs:
           SIGNAL_SYMBOL_LIMIT: "100"
         run: python logic.py
       - name: Validate JSON, CSV and C10
+        if: github.event_name != 'pull_request'
         run: |
           python - <<'PY'
           import json
