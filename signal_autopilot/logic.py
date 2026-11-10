@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 
 from modules.data_fetcher import MarketDataFetcher
-from modules.signal_engine import generate_signals
+from legacy.signal_engine_1h import generate_signals  # موتور تاریخی؛ فقط پژوهش، خارج از مسیر تولید
 from modules.storage import publish
 from modules.notifier import notify_tier_a, notify_email
 
