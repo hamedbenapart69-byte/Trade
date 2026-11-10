@@ -207,7 +207,7 @@ The official free-content page points to trade reviews, strategy videos, article
 - **Interpretation:** all twelve aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H5_PRICE_PROXY/H6/H7 therefore do not show a positive mean-forward-return edge in this pre-screen. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
 - Integration with the production scanner: **NOT DONE**. The research module remains isolated.
 - Formal strategy backtest / Gate evaluation: **NOT DONE**. The completed event study is a pre-screen only.
-- Edge acceptance: **NONE**. Do not promote H1/H6/H7 into live signal generation.
+- Edge acceptance: **NONE**. Do not promote H1/H5_PRICE_PROXY/H6/H7 into live signal generation.
 - Production integration/deployment: **NOT DONE**.
 
 This is a research handoff, not a strategy PASS.
