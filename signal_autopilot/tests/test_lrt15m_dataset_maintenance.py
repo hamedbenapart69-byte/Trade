@@ -22,6 +22,7 @@ _merge_rows = _maintenance._merge_rows
 _tail_partition_path = _maintenance._tail_partition_path
 freshness_state = _maintenance.freshness_state
 migrate_legacy_snapshots = _maintenance.migrate_legacy_snapshots
+_missing_baseline_result = _maintenance._missing_baseline_result
 
 
 def write_timestamps(path: Path, timestamps: list[int]) -> None:
@@ -121,6 +122,16 @@ class BaselineMigrationTests(unittest.TestCase):
             self.assertTrue(result["validation"]["BTCUSDT"]["valid"])
             self.assertEqual(result["validation"]["BTCUSDT"]["rows"], EXPECTED_ROWS)
             self.assertFalse(latest.exists())
+
+
+
+class MissingBaselineContractTests(unittest.TestCase):
+    def test_missing_baseline_returns_all_four_worker_fields(self):
+        symbol, bars, status, ephemeral = _missing_baseline_result("BTCUSDT")
+        self.assertEqual(symbol, "BTCUSDT")
+        self.assertEqual(bars, {})
+        self.assertEqual(status, {"status": "BASELINE_MISSING"})
+        self.assertEqual(ephemeral, {})
 
 
 if __name__ == "__main__":
