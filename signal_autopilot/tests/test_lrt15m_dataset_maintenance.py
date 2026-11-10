@@ -77,7 +77,7 @@ class TailCollectorTests(unittest.TestCase):
         self.assertEqual([x["open_time"] for x in rows], [1, 2, 3])
         self.assertEqual(rows[1]["close"], 21)
 
-    def test_tail_partition_uses_last_closed_bar_hour(self):
+    def test_tail_partition_uses_utc_day(self):
         end = int(datetime(2026, 1, 1, 17, 15, tzinfo=timezone.utc).timestamp() * 1000)
         path = _tail_partition_path(Path("/tmp/data"), "BTCUSDT", end)
         self.assertEqual(path.parts[-2:], ("2026-01-01", "BTCUSDT_15m.parquet"))
