@@ -8,7 +8,24 @@ class _FakeWebSocket:
         self.sent = []
 
     async def send(self, payload):
-        self.sent.append(json.loads(payload))
+        try:
+            self.sent.append(json.loads(payload))
+        except (TypeError, json.JSONDecodeError):
+            self.sent.append(payload)
+
+
+class OKXHeartbeatTests(unittest.IsolatedAsyncioTestCase):
+    async def test_okx_uses_literal_text_ping_not_json(self):
+        from modules.orderbook_l2 import _okx_heartbeat_if_due
+
+        ws = _FakeWebSocket()
+        last_ping = await _okx_heartbeat_if_due(ws, 100.0, 20.0, now=119.9)
+        self.assertEqual(last_ping, 100.0)
+        self.assertEqual(ws.sent, [])
+
+        last_ping = await _okx_heartbeat_if_due(ws, last_ping, 20.0, now=120.0)
+        self.assertEqual(last_ping, 120.0)
+        self.assertEqual(ws.sent, ["ping"])
 
 
 class BybitHeartbeatTests(unittest.IsolatedAsyncioTestCase):
