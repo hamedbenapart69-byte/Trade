@@ -126,7 +126,12 @@ class MarketDataFetcher:
         self.exchanges.append(exchange)
         return exchange
 
-    def _eligible_markets(self, exchange, provider: str, whitelist: set[str], now_ms: int):
+    def _eligible_markets(
+        self, exchange, provider: str, whitelist: set[str], now_ms: int,
+        exclude_bases: set[str] | None = None, target_count: int | None = None,
+    ):
+        exclude_bases = {str(x).upper() for x in (exclude_bases or set())}
+        target_count = self.limit if target_count is None else max(0, int(target_count))
         min_age_ms = int(self.universe.get("min_listing_age_days", 730)) * 86_400_000
         min_volume = float(self.universe.get("min_quote_volume_24h_usd", 10_000_000))
         quote = str(self.universe.get("quote", "USDT")).upper()
@@ -138,7 +143,8 @@ class MarketDataFetcher:
                     "wrong_settle": 0, "not_contract": 0, "not_crypto_whitelist": 0,
                     "blacklisted": 0, "rwa_or_noncrypto_classification": 0,
                     "listing_time_missing": 0, "history_too_short": 0, "history_verified": 0,
-                    "too_new": 0, "volume_below_10m": 0, "invalid_volume": 0}
+                    "too_new": 0, "volume_below_10m": 0, "invalid_volume": 0,
+                    "already_covered": 0}
         accepted = []
         for symbol, market in markets.items():
             if not market.get("active"):
@@ -160,6 +166,9 @@ class MarketDataFetcher:
                 rejected["not_contract"] += 1
                 continue
             base = str(market.get("base") or "").upper()
+            if base in exclude_bases:
+                rejected["already_covered"] += 1
+                continue
             market_id = str(market.get("id") or "").upper()
             info = market.get("info") or {}
             is_rwa = str(info.get("isRwa", "")).strip().lower() in ("1", "true", "yes")
@@ -218,11 +227,12 @@ class MarketDataFetcher:
         accepted.sort(key=lambda item: item[0], reverse=True)
         self.universe_diagnostics[provider] = {
             "markets_total": len(markets), "eligible_before_limit": len(accepted),
-            "selected": min(len(accepted), self.limit), "minimum_listing_age_days": min_age_ms // 86_400_000,
+            "selected": min(len(accepted), target_count), "target_remaining": target_count,
+            "minimum_listing_age_days": min_age_ms // 86_400_000,
             "minimum_quote_volume_24h_usd": min_volume, "whitelist_source": "CoinGecko top 1000",
             "rejected": rejected,
         }
-        return accepted[:self.limit]
+        return accepted[:target_count]
 
     @staticmethod
     def _completed_ohlcv(candles, now_ms: int):
@@ -233,10 +243,16 @@ class MarketDataFetcher:
         )
         return [c for c in ordered if int(c[0]) + 3_600_000 <= now_ms]
 
-    def _fetch_from_provider(self, provider: str, whitelist: set[str]):
+    def _fetch_from_provider(
+        self, provider: str, whitelist: set[str],
+        exclude_bases: set[str] | None = None, target_count: int | None = None,
+    ):
         exchange = self._new_exchange(provider)
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-        candidates = self._eligible_markets(exchange, provider, whitelist, now_ms)
+        candidates = self._eligible_markets(
+            exchange, provider, whitelist, now_ms,
+            exclude_bases=exclude_bases, target_count=target_count,
+        )
         output = []
         for qv, symbol, ticker in candidates:
             ticker_timestamp = ticker.get("timestamp")
@@ -253,6 +269,8 @@ class MarketDataFetcher:
                 ticker_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
                 ticker_timestamp_source = "FETCH_TIME_PROXY"
             row = {
+                "base": str(exchange.market(symbol).get("base") or "").upper(),
+                "provider": provider,
                 "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
                 "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
                 "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
@@ -273,6 +291,11 @@ class MarketDataFetcher:
                     row["availability"]["ohlcv"] = "OK"
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
+            if row["availability"]["ohlcv"] != "OK":
+                if not any(item.startswith("ohlcv:") for item in row["errors"]):
+                    row["errors"].append("ohlcv:insufficient_completed_history")
+                output.append(row)
+                continue
             try:
                 funding = exchange.fetch_funding_rate(symbol)
                 rate = funding.get("fundingRate")
@@ -303,43 +326,81 @@ class MarketDataFetcher:
         return output
 
     def fetch(self):
-        # CoinGecko is used only to establish crypto-asset membership, never as spot-price fallback.
+        # CoinGecko defines eligible crypto assets; exchange fallback fills
+        # missing symbols one-by-one without mixing OHLCV across venues.
         whitelist = self._coingecko_top_symbols()
-        errors = {}
-        results = {}
-        providers = ["okx", "bybit", "binance", "bitget", "mexc", "kucoinfutures"]
-        if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
-            errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
-            providers.remove("okx")
+        errors: dict[str, str] = {}
+        selected: dict[str, dict] = {}
+        providers = [
+            "okx", "bybit", "binance", "bitget", "mexc",
+            "kucoinfutures", "gateio", "toobit",
+        ]
+        provider_diagnostics: dict[str, dict] = {}
+
         for provider in providers:
+            remaining = self.limit - len(selected)
+            if remaining <= 0:
+                break
             try:
-                rows = self._fetch_from_provider(provider, whitelist)
-                results[provider] = rows
-                if provider == "okx" and len(rows) >= 50:
-                    chosen = provider
-                    break
-                if provider != "okx" and len(rows) >= 50:
-                    chosen = provider
-                    break
+                rows = self._fetch_from_provider(
+                    provider, whitelist,
+                    exclude_bases=set(selected),
+                    target_count=remaining,
+                )
+                added = 0
+                duplicates = 0
+                ohlcv_unavailable = 0
+                for row in rows:
+                    symbol = str(row.get("symbol") or "")
+                    base = str(row.get("base") or symbol.split("/", 1)[0]).upper()
+                    if not base:
+                        continue
+                    if base in selected:
+                        duplicates += 1
+                        continue
+                    if (row.get("availability") or {}).get("ohlcv") != "OK":
+                        ohlcv_unavailable += 1
+                        continue
+                    row["base"] = base
+                    row["provider"] = str(row.get("provider") or provider)
+                    selected[base] = row
+                    added += 1
+                    if len(selected) >= self.limit:
+                        break
+                provider_diagnostics[provider] = {
+                    **self.universe_diagnostics.get(provider, {}),
+                    "rows_returned": len(rows),
+                    "symbols_added": added,
+                    "duplicates_skipped": duplicates,
+                    "ohlcv_unavailable": ohlcv_unavailable,
+                }
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
-        else:
-            chosen = max(results, key=lambda key: len(results[key])) if results else None
-        rows = results.get(chosen, []) if chosen else []
-        if not rows:
-            return {
-                "provider": "none", "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-                "symbols_requested": self.limit, "symbols_processed": 0, "symbols": [],
-                "fallback_used": True, "errors": errors or {"universe": "no_crypto_usdt_perpetual_passed_filters"},
-                "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
-                "universe_diagnostics": self.universe_diagnostics,
-            }
+                provider_diagnostics[provider] = {
+                    **self.universe_diagnostics.get(provider, {}),
+                    "status": "ERROR",
+                    "error": errors[provider],
+                    "symbols_added": 0,
+                }
+
+        rows = list(selected.values())
+        provider_sources = list(dict.fromkeys(row["provider"] for row in rows))
+        chosen = (
+            provider_sources[0] if len(provider_sources) == 1
+            else ("multi-provider" if provider_sources else "none")
+        )
         return {
-            "provider": chosen, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-            "symbols_requested": self.limit, "symbols_processed": len(rows), "symbols": rows,
-            "fallback_used": chosen != "okx", "primary_error": errors.get("okx"),
+            "provider": chosen,
+            "provider_sources": provider_sources,
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "symbols_requested": self.limit,
+            "symbols_processed": len(rows),
+            "symbols": rows,
+            "fallback_used": len(provider_sources) > 1 or (bool(provider_sources) and provider_sources[0] != "okx"),
+            "primary_error": errors.get("okx"),
+            "errors": errors,
             "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
-            "universe_diagnostics": self.universe_diagnostics,
+            "universe_diagnostics": provider_diagnostics,
             "coingecko_whitelist_count": len(whitelist),
-            "universe_under_50": len(rows) < 50,
+            "universe_under_50": len(rows) < min(50, self.limit),
         }
