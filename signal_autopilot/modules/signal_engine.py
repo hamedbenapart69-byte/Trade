@@ -49,6 +49,8 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     })
     base: dict[str, Any] = {
         "symbol": row.get("symbol"),
+        "base": row.get("base"),
+        "data_provider": row.get("provider"),
         "status": "MARKET_DATA_DEGRADED",
         "side": None,
         "entry": None,
@@ -191,6 +193,9 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
         "schema_version": "1.2",
         "generated_at_utc": generated,
         "provider": data.get("provider", "unknown"),
+        "provider_sources": data.get("provider_sources") or ([data.get("provider")] if data.get("provider") else []),
+        "fallback_used": bool(data.get("fallback_used", False)),
+        "universe_diagnostics": data.get("universe_diagnostics", {}),
         "engine": "EMA20_EMA50_ATR14_MVP",
         "manual_trade_only": True,
         "pipeline_status": "DEGRADED" if degraded else "OK",
