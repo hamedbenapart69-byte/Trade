@@ -1,5 +1,5 @@
 {
-  "status": "PARTIAL",
+  "status": "PASS",
   "providers": {
     "okx": {
       "status": "PASS",
@@ -12,13 +12,13 @@
       "error": null
     },
     "kucoin": {
-      "status": "ERROR",
-      "rows": 0,
-      "error": "RuntimeError:KUCOIN_WS_ERROR:{'id': '6af342f523a72d1133482a3c', 'type': 'error', 'code': 400, 'data': 'ping timeout'}"
+      "status": "PASS",
+      "rows": 591,
+      "error": null
     }
   },
-  "total_rows": 1181,
-  "captured_at_utc": "2026-11-10T16:23:49.752334+00:00",
+  "total_rows": 1772,
+  "captured_at_utc": "2026-11-10T16:39:49.763707+00:00",
   "symbols": [
     "BTC",
     "ETH",
@@ -33,6 +33,7 @@
   ],
   "parquet_files": [
     "data/orderbook_l2/2026-11-10/okx.parquet",
-    "data/orderbook_l2/2026-11-10/bybit.parquet"
+    "data/orderbook_l2/2026-11-10/bybit.parquet",
+    "data/orderbook_l2/2026-11-10/kucoin.parquet"
   ]
 }
