@@ -106,7 +106,10 @@ class EducationHypothesisTests(unittest.TestCase):
 
     def test_h8_dlc_direction_gate_filters_misaligned_confirmation_events(self):
         signal_bars = [
-            candle(i, 100 + i, 101 + i, 99 + i, 100 + i)
+            Candle(
+                i * 60 * 60_000, 100 + i, 101 + i, 99 + i, 100 + i,
+                100.0, (i + 1) * 60 * 60_000 - 1, True,
+            )
             for i in range(240)
         ]
         htf_bars = [
@@ -133,7 +136,10 @@ class EducationHypothesisTests(unittest.TestCase):
 
     def test_h8_dlc_uses_only_completed_higher_timeframe_candles(self):
         signal_bars = [
-            candle(i, 100 + i, 101 + i, 99 + i, 100 + i)
+            Candle(
+                i * 60 * 60_000, 100 + i, 101 + i, 99 + i, 100 + i,
+                100.0, (i + 1) * 60 * 60_000 - 1, True,
+            )
             for i in range(240)
         ]
         htf_bars = [
