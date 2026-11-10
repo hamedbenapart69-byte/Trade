@@ -283,14 +283,24 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             }
             with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
                 first = notify_tier_a(payload)
-                second = notify_tier_a(payload)
+                current_ids = payload["message_id_current"]
+                audience_ids = payload["message_id_audience"]
+                second = notify_tier_a({
+                    "pipeline_status": "OK",
+                    "generated_at_utc": "2026-11-10T16:04:00+00:00",
+                    "signals": [{
+                        "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                        "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                        "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                    }],
+                })
             self.assertEqual(first["status"], "SENT")
             self.assertEqual(first["sent"], 2)
             self.assertEqual(second["status"], "NO_NEW_MESSAGES")
             self.assertEqual(second["sent"], 0)
             self.assertEqual({chat for chat, _ in sent}, {"-100-current", "-100-audience"})
-            self.assertIsNotNone(payload["message_id_current"])
-            self.assertIsNotNone(payload["message_id_audience"])
+            self.assertIsNotNone(current_ids)
+            self.assertIsNotNone(audience_ids)
             state = json.loads((Path(tmp) / "sent.json").read_text(encoding="utf-8"))
             self.assertEqual(state["__schema_version__"], 3)
             self.assertIn("signals", state["destinations"]["current"])
