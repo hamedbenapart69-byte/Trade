@@ -1,6 +1,7 @@
 """آزمون‌های نگهداری افزایشی و تازگی دادهٔ LRT-15m."""
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pyarrow as pa
@@ -77,10 +78,9 @@ class TailCollectorTests(unittest.TestCase):
         self.assertEqual(rows[1]["close"], 21)
 
     def test_tail_partition_uses_last_closed_bar_hour(self):
-        end = 17 * 60 * 60 * 1000 + 15 * 60 * 1000
+        end = int(datetime(2026, 1, 1, 17, 15, tzinfo=timezone.utc).timestamp() * 1000)
         path = _tail_partition_path(Path("/tmp/data"), "BTCUSDT", end)
-        self.assertEqual(path.parts[-3:], ("2026-01-01", "1700", "BTCUSDT_15m.parquet")
-                         if path.parts[-3] == "2026-01-01" else path.parts[-3:])
+        self.assertEqual(path.parts[-3:], ("2026-01-01", "1700", "BTCUSDT_15m.parquet"))
 
 
 class BaselineMigrationTests(unittest.TestCase):
