@@ -14,8 +14,8 @@ jobs:
           python-version: "3.12"
       - name: Probe public read-only endpoints
         run: |
-        set -o pipefail
-        python scripts/public_market_endpoint_probe.py | tee public-market-endpoint-probe.json
+          set -o pipefail
+          python scripts/public_market_endpoint_probe.py | tee public-market-endpoint-probe.json
       - name: Upload probe evidence
         uses: actions/upload-artifact@v4
         with:
