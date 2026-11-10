@@ -1,9 +1,11 @@
 name: Stage 1b - LRT 15m data maintenance (P0 data-only)
 
 on:
-  # Trigger موقت P0؛ فقط روی همین شاخه اجرا می‌شود و پس از Run برگردانده خواهد شد.
+  # Trigger موقت P0؛ فقط PR شاخهٔ آزمایشی اجازهٔ اجرای data-only دارد.
   push:
     branches: [p0-stage1b-run-20261110]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -14,6 +16,7 @@ concurrency:
 
 jobs:
   stage1b-data:
+    if: github.head_ref == 'p0-stage1b-run-20261110' || github.ref == 'refs/heads/p0-stage1b-run-20261110'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
