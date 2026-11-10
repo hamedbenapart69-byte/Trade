@@ -289,8 +289,8 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
 
     migration = migrate_legacy_snapshots(storage_dir, symbols)
     base_missing = migration["missing_symbols"]
-    if base_missing:
-        # فقط در نبود baseline معتبر، backfill دوساله اجرا می‌شود.
+    if base_missing and not data_only:
+        # backfill کامل فقط خارج از P0 data-only و پس از تشخیص baseline نامعتبر مجاز است.
         end_date = datetime.fromtimestamp(now_ms / 1000, timezone.utc).date()
         start_date = end_date - timedelta(days=730)
         report_tmp = report_path.with_name("stage1b_backfill_report.json")
@@ -313,7 +313,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     def collect_one(symbol: str):
         base_path = storage_dir / "base" / f"{symbol}_15m.parquet"
         if not base_path.exists():
-            return symbol, {}, {"status": "BASELINE_MISSING"}
+            return _missing_baseline_result(symbol)
         base_rows = _read_rows(base_path)
         tail_paths = sorted((storage_dir / "live_tail").glob(f"**/{symbol}_15m.parquet"))
         tail_rows = _merge_rows(*[_read_rows(path) for path in tail_paths]) if tail_paths else []
