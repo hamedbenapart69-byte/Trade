@@ -262,14 +262,14 @@ class MarketDataFetcher:
                                  "open_interest": "UNAVAILABLE"}, "errors": [],
             }
             try:
-                candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=70)
+                candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=210)
                 completed = self._completed_ohlcv(candles, now_ms)
                 row["ohlcv"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
                     "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
                     "close": float(c[4]), "volume": float(c[5]),
                 } for c in completed]
-                if len(row["ohlcv"]) >= 52:
+                if len(row["ohlcv"]) >= 200:
                     row["availability"]["ohlcv"] = "OK"
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
