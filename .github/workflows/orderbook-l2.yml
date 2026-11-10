@@ -77,7 +77,23 @@ jobs:
           git -C /tmp/market-data add orderbook_l2
           if ! git -C /tmp/market-data diff --cached --quiet; then
             git -C /tmp/market-data commit -m "data: append public L2 order-book samples"
-            git -C /tmp/market-data push origin HEAD:refs/heads/market-data
+            # Stage 1b writes to this branch too; rebase and retry instead of
+            # failing or overwriting another collector's newly committed data.
+            for attempt in 1 2 3; do
+              git -C /tmp/market-data fetch origin refs/heads/market-data:refs/remotes/origin/market-data
+              if ! git -C /tmp/market-data rebase origin/market-data; then
+                git -C /tmp/market-data rebase --abort || true
+                echo "Rebase conflict on market-data; refusing a force push"
+                exit 1
+              fi
+              if git -C /tmp/market-data push origin HEAD:refs/heads/market-data; then
+                exit 0
+              fi
+              echo "market-data advanced during push (attempt $attempt/3); retrying"
+              sleep 2
+            done
+            echo "Could not update market-data after 3 synchronized push attempts"
+            exit 1
           else
             echo "No new Parquet rows."
           fi
