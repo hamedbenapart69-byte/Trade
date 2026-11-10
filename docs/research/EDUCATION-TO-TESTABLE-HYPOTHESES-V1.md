@@ -2,7 +2,7 @@
 
 **Status:** Research specification only. No strategy edge is established by this document.  
 **Target repository:** `hamedbenapart69-byte/Trade`  
-**Isolation:** `research/education-hypotheses-v1`; no production or main-branch changes.  
+**Isolation:** `research/education-ohlcv-prototypes-v1`; no production or main-branch changes.  
 **Date:** 2026-11-10
 
 ## 1. Scope and evidence standard
@@ -82,7 +82,8 @@ All hypotheses are initially **UNVALIDATED**. Each is to be tested independently
 - **Required data:** Trade-level volume-at-price for REAL profile. OHLCV-based profile allocation is PROXY only.
 - **Falsification:** Conditional outcome distributions do not differ from matched controls, or net expectancy is non-positive.
 - **Path:** Test rotation as LRT and acceptance/continuation as NMT in separate experiments.
-- **Status:** Candidate; profile fidelity is a gating dependency.
+- **Status:** Real profile version BLOCKED; profile fidelity is a gating dependency.
+- **Implemented alternative:** `H2_TIME_REJECTION_PROXY` uses a rolling 24-hour high/low from completed 1h OHLCV bars and requires two consecutive completed closes back inside after a close outside the boundary. It is a time/price rejection proxy only; it does not calculate Volume Profile, POC, VAH or VAL.
 
 ### H3 — Price / CVD divergence at a structural level (LRT)
 
@@ -195,19 +196,22 @@ The official free-content page points to trade reviews, strategy videos, article
 - Public curriculum/page descriptions reviewed: Andrea, Carmine, Fabio, FT71, Al Brooks, Trader Mayne, Follis, SMB.
 - Initial eight hypotheses converted into falsifiable specifications: H1–H8.
 - Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. The available review is based on public instructor/course descriptions and curriculum pages. No paid transcript credits used.
-- OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H5 price-only acceptance proxy, H6 breakout/retest, H7 higher-timeframe gate. These are isolated from the production V5 path and emit research events, not executable signals.
-- Unit tests added in `tests/test_research_education.py`. GitHub Actions run 42873761031 completed successfully: root unittest suite (including H5), futures signal pipeline tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded H1/H5/H6/H7 event-study job all passed.
-- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H5_PRICE_PROXY/H6/H7 event counts across the full archive were 84,165 / 53,271 / 49,973 / 24,635. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
+- OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H2 time-boundary rejection proxy, H5 price-only acceptance proxy, H6 breakout/retest, H7 higher-timeframe gate. These are isolated from the production V5 path and emit research events, not executable signals.
+- Unit tests added in `tests/test_research_education.py`. Latest verified GitHub Actions run **42877304242** passed: 139 root tests, 68 signal-autopilot tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded H1/H2/H5/H6/H7 event-study job.
+- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 event counts across the full archive were 84,165 / 30,183 / 53,271 / 49,973 / 24,635. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
 - **Timeframe qualification:** the original H1 research specification called for 15m signals with 1h context. The available Stage-1 archive contains 1h OHLCV only, so the run tests a 1h adaptation, not the original 15m implementation. H7's 4h context is resampled from completed 1h candles; no native 4h series was used.
 - **Mean forward return after round-trip fees only** (0.04% per side; slippage and funding unavailable for the full 2y window and excluded):
   - H1: 1h **-0.0879%**, 4h **-0.0913%**, 8h **-0.0847%**.
+  - H2_TIME_REJECTION_PROXY: 1h **-0.0620%**, 4h **-0.0730%**, 8h **-0.0710%**.
   - H5_PRICE_PROXY: 1h **-0.0867%**, 4h **-0.0411%**, 8h **-0.1261%**.
   - H6: 1h **-0.0557%**, 4h **-0.0470%**, 8h **-0.0766%**.
   - H7: 1h **-0.0519%**, 4h **-0.0411%**, 8h **-0.1154%**.
-- **Interpretation:** all twelve aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H5_PRICE_PROXY/H6/H7 therefore do not show a positive mean-forward-return edge in this pre-screen. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
+- **Interpretation:** all fifteen aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 therefore do not show a positive mean-forward-return edge in this pre-screen. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
 - Integration with the production scanner: **NOT DONE**. The research module remains isolated.
 - Formal strategy backtest / Gate evaluation: **NOT DONE**. The completed event study is a pre-screen only.
-- Edge acceptance: **NONE**. Do not promote H1/H5_PRICE_PROXY/H6/H7 into live signal generation.
+- Edge acceptance: **NONE**. Do not promote H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 into live signal generation.
 - Production integration/deployment: **NOT DONE**.
+
+Data inventory and blocked requirements are documented in `docs/research/DATA-READINESS-AUDIT-2026-11-10.md`. The expanded event-study artifact is attached to [GitHub Actions run 42877304242](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42877304242) and retained for 14 days.
 
 This is a research handoff, not a strategy PASS.
