@@ -17,7 +17,8 @@ import pyarrow.parquet as pq
 INTERVAL_MS = 15 * 60 * 1000
 WINDOW_MS = 730 * 24 * 60 * 60 * 1000
 EXPECTED_ROWS = WINDOW_MS // INTERVAL_MS
-MAX_TAIL_BARS_PER_RUN = 100
+MAX_TAIL_BARS_PER_RUN = 7 * 96
+MAX_BARS_PER_API_REQUEST = 100
 DEFAULT_MAX_AGE_MINUTES = 30
 
 
@@ -133,48 +134,58 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
 
     collected: dict[int, dict[str, Any]] = {}
     statuses: dict[str, str] = {}
+    chunk_count = 0
 
-    try:
-        okx_rows, okx_status = downloader.fetch_okx_history_15m(symbol, start_ms, end_ms)
-        statuses["okx"] = okx_status
-        for ts, row in okx_rows.items():
-            ts = int(ts)
-            if ts in expected and ts + INTERVAL_MS <= now_ms:
-                collected[ts] = dict(row)
-    except Exception as exc:
-        statuses["okx"] = f"ERROR:{type(exc).__name__}:{exc}"
+    for chunk_start in range(start_ms, end_ms, MAX_BARS_PER_API_REQUEST * INTERVAL_MS):
+        chunk_end = min(end_ms, chunk_start + MAX_BARS_PER_API_REQUEST * INTERVAL_MS)
+        chunk_expected = set(range(chunk_start, chunk_end, INTERVAL_MS))
+        chunk_count += 1
 
-    missing = expected.difference(collected)
-    if missing:
         try:
-            mexc_rows, mexc_status = downloader.fetch_mexc_futures_15m(symbol, start_ms, end_ms)
-            statuses["mexc"] = mexc_status
-            for ts, row in mexc_rows.items():
-                ts = int(ts)
-                if ts in missing and ts + INTERVAL_MS <= now_ms:
-                    collected[ts] = dict(row)
-        except Exception as exc:
-            statuses["mexc"] = f"ERROR:{type(exc).__name__}:{exc}"
-
-    missing = expected.difference(collected)
-    if missing and symbol == "1000PEPEUSDT":
-        try:
-            proxy_rows, proxy_status = downloader.fetch_okx_pepe_spot_as_1000pepe(
-                symbol, start_ms, end_ms
+            okx_rows, okx_status = downloader.fetch_okx_history_15m(
+                symbol, chunk_start, chunk_end
             )
-            statuses["okx_spot_proxy"] = proxy_status
-            for ts, row in proxy_rows.items():
+            statuses["okx"] = okx_status
+            for ts, row in okx_rows.items():
                 ts = int(ts)
-                if ts in missing and ts + INTERVAL_MS <= now_ms:
+                if ts in chunk_expected and ts + INTERVAL_MS <= now_ms:
                     collected[ts] = dict(row)
         except Exception as exc:
-            statuses["okx_spot_proxy"] = f"ERROR:{type(exc).__name__}:{exc}"
+            statuses["okx"] = f"ERROR:{type(exc).__name__}:{exc}"
 
+        missing = chunk_expected.difference(collected)
+        if missing:
+            try:
+                mexc_rows, mexc_status = downloader.fetch_mexc_futures_15m(
+                    symbol, chunk_start, chunk_end
+                )
+                statuses["mexc"] = mexc_status
+                for ts, row in mexc_rows.items():
+                    ts = int(ts)
+                    if ts in missing and ts + INTERVAL_MS <= now_ms:
+                        collected[ts] = dict(row)
+            except Exception as exc:
+                statuses["mexc"] = f"ERROR:{type(exc).__name__}:{exc}"
+
+        missing = chunk_expected.difference(collected)
+        if missing and symbol == "1000PEPEUSDT":
+            try:
+                proxy_rows, proxy_status = downloader.fetch_okx_pepe_spot_as_1000pepe(
+                    symbol, chunk_start, chunk_end
+                )
+                statuses["okx_spot_proxy"] = proxy_status
+                for ts, row in proxy_rows.items():
+                    ts = int(ts)
+                    if ts in missing and ts + INTERVAL_MS <= now_ms:
+                        collected[ts] = dict(row)
+            except Exception as exc:
+                statuses["okx_spot_proxy"] = f"ERROR:{type(exc).__name__}:{exc}"
+
+    statuses["chunks"] = str(chunk_count)
     statuses["expected_bars"] = str(len(expected))
     statuses["received_bars"] = str(len(collected))
     statuses["missing_bars"] = str(len(expected.difference(collected)))
     return collected, statuses
-
 
 def _tail_partition_path(storage_dir: Path, symbol: str, open_time_ms: int) -> Path:
     day = datetime.fromtimestamp(open_time_ms / 1000, timezone.utc).strftime("%Y-%m-%d")
@@ -267,8 +278,16 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
         tail_paths = sorted((storage_dir / "live_tail").glob(f"**/{symbol}_15m.parquet"))
         tail_rows = _merge_rows(*[_read_rows(path) for path in tail_paths]) if tail_paths else []
         existing = _merge_rows(base_rows, tail_rows)
+        existing_timestamps = {int(row["open_time"]) for row in existing}
         latest = int(existing[-1]["open_time"]) if existing else None
-        start_ms = (latest + INTERVAL_MS) if latest is not None else window_start_ms
+        recent_start_ms = max(window_start_ms, closed_end_ms - 7 * 24 * 60 * 60 * 1000)
+        missing_recent = [
+            ts for ts in range(recent_start_ms, closed_end_ms, INTERVAL_MS)
+            if ts not in existing_timestamps
+        ]
+        start_ms = min(missing_recent) if missing_recent else (
+            (latest + INTERVAL_MS) if latest is not None else window_start_ms
+        )
         bars, statuses = _fetch_symbol_tail(symbol, start_ms, closed_end_ms, now_ms, downloader)
         # فقط روزهای کامل‌شده در Git ذخیره می‌شوند؛ tail روز جاری موقت است.
         persist_by_day: dict[str, list[dict[str, Any]]] = {}
