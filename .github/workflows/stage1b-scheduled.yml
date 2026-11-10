@@ -36,6 +36,12 @@ jobs:
           ref: signals
           path: signals-publish
 
+      - name: Checkout Stage 1b maintenance tools
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: stage1b-tools
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -54,30 +60,16 @@ jobs:
             tests.test_stage1b_lrt15m \
             tests.test_lrt15m_download -v
 
-      - name: Calculate 730-day UTC history window
-        id: window
+      - name: Maintain rolling 730-day data and compute guarded LRT-15m report
+        id: maintain15m
         run: |
-          END_DATE="$(python -c 'from datetime import datetime, timezone; print(datetime.now(timezone.utc).date().isoformat())')"
-          START_DATE="$(python -c 'from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc).date() - timedelta(days=730)).isoformat())')"
-          echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
-          echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
-
-      - name: Download 15m history for the fixed 27-symbol universe (blocking data prerequisite)
-        id: download15m
-        run: |
-          python signal_autopilot/scripts/download_lrt15m_history.py \
-            --start-date "${{ steps.window.outputs.start_date }}" \
-            --end-date "${{ steps.window.outputs.end_date }}" \
-            --output-dir market-data/datasets/stage1b/lrt15m \
-            --report signal_autopilot/data/stage1b_15m_data_report.json
-
-      - name: Compute LRT-15m signals
-        if: always() && steps.download15m.outcome != 'skipped'
-        run: |
-          python signal_autopilot/modules/lrt15m_engine.py \
-            --data-dir market-data/datasets/stage1b/lrt15m \
+          python stage1b-tools/signal_autopilot/scripts/maintain_lrt15m_dataset.py \
+            --storage-dir market-data/datasets/stage1b/lrt15m \
+            --compute-dir signal_autopilot/data/stage1b_compute \
+            --report signal_autopilot/data/stage1b_15m_data_report.json \
             --output market-data/datasets/stage1b/signals/signals.json \
-            --universe signal_autopilot/data/stage1b_universe_27.json
+            --universe signal_autopilot/data/stage1b_universe_27.json \
+            --max-age-minutes 30
 
       - name: Upload Stage 1b evidence
         if: always()
@@ -90,15 +82,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commit validated 15m data and signals
-        if: steps.download15m.outcome == 'success'
+      - name: Commit incremental 15m data and signals
+        if: steps.maintain15m.outcome == 'success'
         working-directory: market-data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add datasets/stage1b/lrt15m datasets/stage1b/signals
+          git add -A datasets/stage1b/lrt15m datasets/stage1b/signals
           if ! git diff --cached --quiet; then
-            git commit -m "Add validated Stage 1b LRT 15m data and signals"
+            git commit -m "Update incremental Stage 1b LRT 15m data and signals"
             # The order-book collector writes to the same branch. Rebase before
             # every push so concurrent public-data jobs cannot lose each other's
             # commits or leave the Stage 1b run red after successful computation.
@@ -130,22 +122,22 @@ jobs:
               raise SystemExit("Stage 1b data report is missing")
           report = json.loads(report_path.read_text())
           print("Universe:", report.get("universe_count"))
-          print("15m complete histories:", report.get("symbols_complete"))
-          print("Processed:", report.get("symbols_processed"))
+          print("730-day continuous histories:", report.get("symbols_complete"))
+          print("Fresh 15m feeds:", report.get("symbols_fresh"))
           print("Status:", report.get("status"))
-          if report.get("status") != "PASS":
-              raise SystemExit("Stage 1b requires complete 730-day 15m history for all 27 symbols")
+          if report.get("status") not in {"PASS", "DEGRADED"}:
+              raise SystemExit("Stage 1b report has an invalid data-gate state")
           PY
 
       - name: Publish LRT-15m report to signals branch
-        if: success() && steps.download15m.outcome == 'success'
+        if: success() && steps.maintain15m.outcome == 'success'
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           report = json.loads(Path("signal_autopilot/data/stage1b_15m_data_report.json").read_text())
-          if report.get("status") != "PASS" or report.get("symbols_complete") != 27:
-              raise SystemExit("Refusing to publish: Stage 1b 27-symbol data gate is not PASS")
+          if report.get("status") not in {"PASS", "DEGRADED"}:
+              raise SystemExit("Refusing to publish: Stage 1b report state is invalid")
           source = Path("market-data/datasets/stage1b/signals/signals.json")
           if not source.exists():
               raise SystemExit("LRT-15m signals output is missing")
@@ -155,10 +147,13 @@ jobs:
               "universe_count": report.get("universe_count"),
               "symbols_complete": report.get("symbols_complete"),
               "symbols_processed": report.get("symbols_processed"),
+              "symbols_fresh": report.get("symbols_fresh"),
               "start_date_utc": report.get("start_date_utc"),
               "end_date_exclusive_utc": report.get("end_date_exclusive_utc"),
               "interval": report.get("interval"),
+              "max_age_minutes": 30,
           }
+          payload["data_freshness"] = report.get("symbols", [])
           target = Path("signals-publish/lrt15m_signals.json")
           target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
           PY
