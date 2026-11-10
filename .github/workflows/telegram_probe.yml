@@ -1,0 +1,74 @@
+name: Telegram Delivery Probe (Manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Telegram client
+        run: pip install "python-telegram-bot>=20,<22"
+      - name: Probe both configured Telegram destinations
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_AUDIENCE_CHANNEL_ID: ${{ secrets.TELEGRAM_AUDIENCE_CHANNEL_ID }}
+        run: |
+          python - <<'PY'
+          import asyncio
+          import os
+          from datetime import datetime, timezone
+          from telegram import Bot
+          from telegram.error import TelegramError
+
+          async def main():
+              token = (os.getenv("TELEGRAM_TOKEN") or "").strip()
+              if not token:
+                  print("TOKEN=TELEGRAM_TOKEN_MISSING")
+                  raise SystemExit(2)
+
+              bot = Bot(token=token)
+              me = await bot.get_me()
+              print(f"BOT=@{me.username} id={me.id}")
+
+              failures = []
+              targets = [
+                  ("CURRENT", "TELEGRAM_CHAT_ID"),
+                  ("AUDIENCE", "TELEGRAM_AUDIENCE_CHANNEL_ID"),
+              ]
+              for label, env_name in targets:
+                  chat_id = (os.getenv(env_name) or "").strip()
+                  if not chat_id:
+                      print(f"{label}={env_name}_MISSING")
+                      failures.append(label)
+                      continue
+                  try:
+                      chat = await bot.get_chat(chat_id=chat_id)
+                      member = await bot.get_chat_member(chat_id=chat_id, user_id=me.id)
+                      print(f"{label}=title:{getattr(chat, 'title', None)!r} id:{chat_id} status:{member.status}")
+                      stamp = datetime.now(timezone.utc).isoformat()
+                      msg = await bot.send_message(
+                          chat_id=chat_id,
+                          text=f"V9 PROBE {label} {stamp}",
+                          disable_web_page_preview=True,
+                      )
+                      print(f"{label}_MSG_ID={msg.message_id}")
+                  except TelegramError as exc:
+                      print(f"{label}_ERR={type(exc).__name__}:{str(exc)[:300]}")
+                      failures.append(label)
+
+              if failures:
+                  print("PROBE_RESULT=BLOCKED_OR_FAILED:" + ",".join(failures))
+                  raise SystemExit(1)
+              print("PROBE_RESULT=PASS_BOTH_DESTINATIONS")
+
+          asyncio.run(main())
+          PY
