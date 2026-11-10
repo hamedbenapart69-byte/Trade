@@ -22,6 +22,7 @@ STOP_BUFFER_ATR = 0.25
 MAX_STOP_PCT = 3.0
 TP1_R = 1.5
 TP2_R = 2.5
+MIN_QUOTE_VOLUME_24H_USD = 10_000_000.0  # G4: حداقل نقدشوندگی ۲۴ساعته
 
 
 def ema(values: list[float], period: int) -> list[float]:
@@ -151,6 +152,13 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         entry = float(ticker_price)
         if not isfinite(entry) or entry <= 0:
             return _base(row, generated_at_utc, "MARKET_DATA_DEGRADED", "Invalid futures ticker price")
+        quote_volume = row.get("quote_volume_24h")
+        if quote_volume is None:
+            return _base(row, generated_at_utc, "MARKET_DATA_DEGRADED", "24H quote-volume data unavailable")
+        quote_volume = float(quote_volume)
+        if not isfinite(quote_volume) or quote_volume < 0:
+            return _base(row, generated_at_utc, "MARKET_DATA_DEGRADED", "Invalid 24H quote-volume data")
+        liquidity_ok = quote_volume >= MIN_QUOTE_VOLUME_24H_USD
 
         close_1h = [float(c["close"]) for c in candles_1h]
         close_4h = [float(c["close"]) for c in candles_4h]
@@ -190,6 +198,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             else False
         )
         gates = {
+            "liquidity_24h_usd": liquidity_ok,
             "4h_ema50_200_regime": regime is not None,
             "4h_close_on_regime_side": (
                 close4h > ema50_4h if regime == "LONG"
@@ -206,6 +215,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             "ema200_4h": round(ema200_4h, 10),
             "atr14_1h": round(atr_1h, 10),
             "pullback_distance_atr": round(pullback_distance, 4) if pullback_distance is not None else None,
+            "quote_volume_24h_usd": round(quote_volume, 2),
         }
         base = _base(row, generated_at_utc, "NO_QUALIFIED_SETUP",
                      "4H regime or 1H EMA50 pullback/rejection conditions not satisfied")
@@ -216,6 +226,9 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             entry=round(entry, 10), quality_gates=gates, quality_metrics=metrics,
             chart_candles=candles_1h[-70:],
         )
+        if not liquidity_ok:
+            base["reason"] = f"24H quote volume below G4 minimum of {MIN_QUOTE_VOLUME_24H_USD:.0f} USD"
+            return base
         if regime is None or not pullback_touch or not rejection:
             return base
 
