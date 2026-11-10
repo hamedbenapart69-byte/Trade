@@ -295,7 +295,7 @@ def notify_tier_a(payload: dict) -> dict:
 
     if not pending:
         # ذخیرهٔ مهاجرت حتی وقتی هیچ پیام جدیدی برای ارسال وجود ندارد.
-        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\\n",
+        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                               encoding="utf-8")
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
