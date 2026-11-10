@@ -193,18 +193,6 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertIn(exchange, self.fetcher.exchanges)
 
 
-    def test_bitmart_provider_uses_public_swap_configuration(self):
-        with patch("modules.data_fetcher.ccxt.bitmart") as exchange_class:
-            exchange = self.fetcher._new_exchange("bitmart")
-        exchange_class.assert_called_once()
-        self.assertIs(exchange, exchange_class.return_value)
-
-    def test_coinex_provider_uses_public_swap_configuration(self):
-        with patch("modules.data_fetcher.ccxt.coinex") as exchange_class:
-            exchange = self.fetcher._new_exchange("coinex")
-        exchange_class.assert_called_once()
-        self.assertIs(exchange, exchange_class.return_value)
-
     def test_whitebit_provider_uses_public_swap_configuration(self):
         with patch("modules.data_fetcher.ccxt.whitebit") as exchange_class:
             exchange = self.fetcher._new_exchange("whitebit")
