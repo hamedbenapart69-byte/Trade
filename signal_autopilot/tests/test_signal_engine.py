@@ -15,14 +15,20 @@ class EmaContinuationV2Tests(unittest.TestCase):
         candles = []
         sign = 1.0 if direction == "up" else -1.0 if direction == "down" else 0.0
         for index in range(220):
-            close = 100.0 + sign * index * 0.08 + 0.30 * math.sin(index * 1.17)
+            amplitude = 0.18 if sign >= 0 else 0.40
+            base = 100.0 if sign >= 0 else 160.0
+            close = base + sign * index * 0.05 + amplitude * math.sin(index * 1.17)
             open_ = close - sign * 0.025
-            high = max(open_, close) + 0.20
-            low = min(open_, close) - 0.20
+            if sign >= 0:
+                high = close + 0.10
+                low = 99.5 + index * 0.05 + 0.05 * math.sin(index * 1.17)
+            else:
+                high = 160.7 - index * 0.05 + 0.10 * math.sin(index * 1.17)
+                low = close - 0.10
             if index == 219:
                 open_ = close - sign * 0.22
-                high = max(open_, close) + 0.20
-                low = min(open_, close) - 0.20
+                high = close + 0.10 if sign >= 0 else close + 0.50
+                low = close - 0.50 if sign >= 0 else close - 0.10
             candles.append({
                 "timestamp": start + index * 3_600_000,
                 "open": open_, "high": high, "low": low, "close": close,
@@ -49,6 +55,8 @@ class EmaContinuationV2Tests(unittest.TestCase):
         self.assertTrue(all(result["quality_gates"].values()))
         self.assertEqual(result["quality_metrics"]["reward_risk_tp1"], 1.5)
         self.assertEqual(result["quality_metrics"]["reward_risk_tp2"], 2.5)
+        self.assertEqual(len(result["evidence_candles"]), 200)
+        self.assertEqual(len(result["input_hash"]), 64)
 
     def test_short_signal_has_inverse_risk_levels(self):
         result = build_signal(self.make_row("down"), GENERATED)
