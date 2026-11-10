@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 from modules.data_fetcher import MarketDataFetcher
 from legacy.signal_engine_1h import generate_signals  # موتور تاریخی؛ فقط پژوهش، خارج از مسیر تولید
@@ -11,6 +12,21 @@ from modules.notifier import notify_tier_a, notify_email
 
 
 def main() -> None:
+    # Fail closed: the historical 1h engine must never publish after quarantine.
+    config_path = Path(__file__).with_name("config.json")
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    engine_config = config.get("engine") or {}
+    if engine_config.get("lifecycle") == "LEGACY_RESEARCH_ONLY" or engine_config.get("production_enabled") is False:
+        print(json.dumps({
+            "pipeline_status": "DISABLED_LEGACY_ENGINE",
+            "engine": engine_config.get("version", "UNKNOWN"),
+            "market_scan": "DISABLED",
+            "dashboard_publication": "DISABLED",
+            "telegram_delivery": "DISABLED",
+            "manual_trade_only": True,
+        }, ensure_ascii=False))
+        return
+
     fetcher = None
     try:
         fetcher = MarketDataFetcher(limit=100)
