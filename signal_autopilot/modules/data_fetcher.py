@@ -274,14 +274,14 @@ class MarketDataFetcher:
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
             try:
-                candles_4h = exchange.fetch_ohlcv(symbol, timeframe="4h", limit=210)
+                candles_4h = exchange.fetch_ohlcv(symbol, timeframe="4h", limit=700)
                 completed_4h = self._completed_ohlcv(candles_4h, now_ms, interval_ms=14_400_000)
                 row["ohlcv_4h"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
                     "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
                     "close": float(c[4]), "volume": float(c[5]),
                 } for c in completed_4h]
-                if len(row["ohlcv_4h"]) >= 200:
+                if len(row["ohlcv_4h"]) >= 700:
                     row["availability"]["ohlcv_4h"] = "OK"
             except Exception as exc:
                 row["errors"].append("ohlcv_4h:" + type(exc).__name__)
