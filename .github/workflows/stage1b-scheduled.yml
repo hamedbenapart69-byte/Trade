@@ -104,7 +104,7 @@ jobs:
             # commits or leave the Stage 1b run red after successful computation.
             for attempt in 1 2 3; do
               git fetch origin market-data
-              if ! git rebase origin/market-data; then
+              if ! git rebase FETCH_HEAD; then
                 git rebase --abort || true
                 echo "Rebase conflict on market-data; refusing a force push"
                 exit 1
