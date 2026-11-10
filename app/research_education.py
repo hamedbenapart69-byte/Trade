@@ -1,6 +1,7 @@
 """نمونه‌های پژوهشی مستقل H1/H6/H7؛ خارج از مسیر تولید سیگنال V5."""
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass
 from typing import Literal, Sequence
 
@@ -328,6 +329,37 @@ def higher_timeframe_bias(
     if closes[-1] < fast and fast < slow:
         return "DOWN"
     return "NEUTRAL"
+
+
+def filter_events_by_higher_timeframe(
+    events: Sequence[ResearchEvent],
+    signal_candles: Sequence[Candle],
+    higher_timeframe_candles: Sequence[Candle],
+) -> list[ResearchEvent]:
+    """H8 DLC: رویداد مکان/تأیید را فقط با جهت HTF بسته‌شده هم‌سو می‌کند.
+
+    رویداد ورودی باید از قبل مکان و تأیید مستقل خود را داشته باشد (مثلاً H1 یا H5).
+    این تابع فقط گیت Direction را اعمال می‌کند؛ جهت از کندل HTF ناتمام استفاده نمی‌کند.
+    """
+    if (
+        not _valid_series(signal_candles)
+        or not _valid_series(higher_timeframe_candles)
+    ):
+        return []
+
+    htf_close_times = [c.close_time for c in higher_timeframe_candles]
+    filtered: list[ResearchEvent] = []
+    for event in events:
+        if event.signal_index < 0 or event.signal_index >= len(signal_candles):
+            continue
+        signal_close_time = signal_candles[event.signal_index].close_time
+        completed_count = bisect_right(htf_close_times, signal_close_time)
+        if completed_count < 50:
+            continue
+        completed_htf = higher_timeframe_candles[:completed_count]
+        if passes_higher_timeframe_gate(event.side, completed_htf):
+            filtered.append(event)
+    return filtered
 
 
 def passes_higher_timeframe_gate(
