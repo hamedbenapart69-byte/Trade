@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+  "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
   "provider": "kucoinfutures",
   "engine": "EMA20_EMA50_ATR14_MVP",
   "manual_trade_only": true,
@@ -11,30 +11,56 @@
       "symbol": "BTC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73266.2,
-      "stop_loss": 74150.9214285714,
+      "entry": 73315.2,
+      "stop_loss": 74199.9214285714,
       "take_profit": [
-        72086.5714285714,
-        70906.9428571429
+        72135.5714285714,
+        70955.9428571429
       ],
       "ema20": 74436.8005082274,
       "ema50": 74871.1936902165,
       "atr14": 589.8142857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.514815,
+        "threshold": 0.9,
+        "atr_percentile": 0.740741,
+        "low_volume_percentile": 0.288889,
+        "volume_ratio_vs_rolling_median": 1.213856,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:10:59.507000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:12:59.188000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5802% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74150.9214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74199.9214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -659,38 +685,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5802% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 440,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ETH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2027.98,
-      "stop_loss": 2066.8557142857,
+      "entry": 2028.06,
+      "stop_loss": 2066.9357142857,
       "take_profit": [
-        1976.1457142857,
-        1924.3114285714
+        1976.2257142857,
+        1924.3914285714
       ],
       "ema20": 2100.2063111306,
       "ema50": 2139.6745509976,
       "atr14": 25.9171428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.52963,
+        "threshold": 0.9,
+        "atr_percentile": 0.814815,
+        "low_volume_percentile": 0.244444,
+        "volume_ratio_vs_rolling_median": 1.231406,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:00.124000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:12:59.713000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.8446% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2066.8557142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2066.9357142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -1315,38 +1367,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.8446% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 441,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ZEC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1093.27,
-      "stop_loss": 1133.0596428571,
+      "entry": 1092.49,
+      "stop_loss": 1132.2796428571,
       "take_profit": [
-        1040.2171428571,
-        987.1642857143
+        1039.4371428571,
+        986.3842857143
       ],
       "ema20": 1158.806177228,
       "ema50": 1191.5199820813,
       "atr14": 26.5264285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.522222,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.044444,
+        "volume_ratio_vs_rolling_median": 1.110034,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:00.734000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:00.210000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.7456% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1133.0596428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1132.2796428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -1971,38 +2049,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.7456% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 442,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.211,
-      "stop_loss": 83.8376428571,
+      "entry": 82.312,
+      "stop_loss": 83.9386428571,
       "take_profit": [
-        80.0421428571,
-        77.8732857143
+        80.1431428571,
+        77.9742857143
       ],
       "ema20": 85.2652244567,
       "ema50": 86.5972072879,
       "atr14": 1.0844285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.690741,
+        "threshold": 0.9,
+        "atr_percentile": 0.87037,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.984097,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:01.334000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:00.723000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.5381% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.8376428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9386428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -2627,38 +2731,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.5381% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 443,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2447e-06,
-      "stop_loss": 5.0547e-06,
+      "entry": 5.2351e-06,
+      "stop_loss": 5.0451e-06,
       "take_profit": [
-        5.498e-06,
-        5.7514e-06
+        5.4884e-06,
+        5.7418e-06
       ],
       "ema20": 5.2677e-06,
       "ema50": 5.1488e-06,
       "atr14": 1.267e-07,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "HIGH_THINNESS_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.914815,
+        "threshold": 0.9,
+        "atr_percentile": 0.962963,
+        "low_volume_percentile": 0.866667,
+        "volume_ratio_vs_rolling_median": 0.715221,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:01.945000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:01.229000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.3111% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0547e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0451e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -3283,38 +3413,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.3111% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 444,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.04367,
-      "stop_loss": 1.0659975,
+      "entry": 1.04445,
+      "stop_loss": 1.0667775,
       "take_profit": [
-        1.0139,
-        0.98413
+        1.01468,
+        0.98491
       ],
       "ema20": 1.0831493198,
       "ema50": 1.1062338914,
       "atr14": 0.014885,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.622222,
+        "threshold": 0.9,
+        "atr_percentile": 0.888889,
+        "low_volume_percentile": 0.355556,
+        "volume_ratio_vs_rolling_median": 1.070893,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:02.599000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:01.716000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.0868% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0659975 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0667775 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -3939,38 +4095,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.0868% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 445,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "AVAX/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 8.226,
-      "stop_loss": 8.0348571429,
+      "entry": 8.227,
+      "stop_loss": 8.0358571429,
       "take_profit": [
-        8.4808571429,
-        8.7357142857
+        8.4818571429,
+        8.7367142857
       ],
       "ema20": 8.4127242008,
       "ema50": 8.3406957814,
       "atr14": 0.1274285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.333333,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 2.214129,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:03.217000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:02.219000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0348571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0358571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -4595,38 +4777,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 446,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "AAVE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 123.31,
-      "stop_loss": 126.4878571429,
+      "entry": 123.32,
+      "stop_loss": 126.4978571429,
       "take_profit": [
-        119.0728571429,
-        114.8357142857
+        119.0828571429,
+        114.8457142857
       ],
       "ema20": 127.0893373362,
       "ema50": 128.6092125183,
       "atr14": 2.1185714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.862963,
+        "threshold": 0.9,
+        "atr_percentile": 0.925926,
+        "low_volume_percentile": 0.8,
+        "volume_ratio_vs_rolling_median": 0.87574,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:03.889000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:02.768000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.4878571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.4978571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -5251,38 +5459,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 447,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "BCH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 230.0,
-      "stop_loss": 234.1089285714,
+      "entry": 229.97,
+      "stop_loss": 234.0789285714,
       "take_profit": [
-        224.5214285714,
-        219.0428571429
+        224.4914285714,
+        219.0128571429
       ],
       "ema20": 236.7667240853,
       "ema50": 239.9970842775,
       "atr14": 2.7392857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.888889,
+        "threshold": 0.9,
+        "atr_percentile": 0.777778,
+        "low_volume_percentile": 1.0,
+        "volume_ratio_vs_rolling_median": 0.848735,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:04.514000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:03.272000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3460% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.1089285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.0789285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -5907,28 +6141,54 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3460% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 448,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ENA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.14978,
+      "entry": 0.15004,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1533194837,
       "ema50": 0.1534104625,
       "atr14": 0.0029342857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.811111,
+        "threshold": 0.9,
+        "atr_percentile": 0.777778,
+        "low_volume_percentile": 0.844444,
+        "volume_ratio_vs_rolling_median": 0.771088,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:05.317000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:03.766000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -5946,20 +6206,46 @@
       "symbol": "FIL/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.7458,
+      "entry": 0.7473,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.762995951,
       "ema50": 0.7653156698,
       "atr14": 0.0103,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.766667,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.866667,
+        "volume_ratio_vs_rolling_median": 0.803487,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:05.971000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:04.265000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -5977,30 +6263,56 @@
       "symbol": "LINK/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.283,
-      "stop_loss": 10.4881785714,
+      "entry": 10.287,
+      "stop_loss": 10.4921785714,
       "take_profit": [
-        10.0094285714,
-        9.7358571429
+        10.0134285714,
+        9.7398571429
       ],
       "ema20": 10.5229297227,
       "ema50": 10.5871897641,
       "atr14": 0.1367857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.640741,
+        "threshold": 0.9,
+        "atr_percentile": 0.814815,
+        "low_volume_percentile": 0.466667,
+        "volume_ratio_vs_rolling_median": 1.020315,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:06.567000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:04.794000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6070% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4881785714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4921785714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -6625,38 +6937,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6070% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 449,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5664,
-      "stop_loss": 0.5789035714,
+      "entry": 0.5672,
+      "stop_loss": 0.5797035714,
       "take_profit": [
-        0.5497285714,
-        0.5330571429
+        0.5505285714,
+        0.5338571429
       ],
       "ema20": 0.581763915,
       "ema50": 0.5847184366,
       "atr14": 0.0083357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.616667,
+        "threshold": 0.9,
+        "atr_percentile": 0.611111,
+        "low_volume_percentile": 0.622222,
+        "volume_ratio_vs_rolling_median": 0.980207,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:07.174000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:05.285000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5053% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5789035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5797035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -7281,28 +7619,54 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5053% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 450,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "TAO/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 215.77,
+      "entry": 216.04,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 220.5795314463,
       "ema50": 221.0412767068,
       "atr14": 2.8785714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.794444,
+        "threshold": 0.9,
+        "atr_percentile": 0.722222,
+        "low_volume_percentile": 0.866667,
+        "volume_ratio_vs_rolling_median": 0.762748,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:07.813000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:05.824000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -7320,30 +7684,56 @@
       "symbol": "XMR/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 551.19,
-      "stop_loss": 566.8767857143,
+      "entry": 551.24,
+      "stop_loss": 566.9267857143,
       "take_profit": [
-        530.2742857143,
-        509.3585714286
+        530.3242857143,
+        509.4085714286
       ],
       "ema20": 566.0210914911,
       "ema50": 581.2233390972,
       "atr14": 10.4578571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.644444,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.288889,
+        "volume_ratio_vs_rolling_median": 1.374222,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:08.424000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:06.338000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6156% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 566.8767857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 566.9267857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -7968,28 +8358,54 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6156% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 451,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "NEAR/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 3.566,
+      "entry": 3.559,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 3.6204267003,
       "ema50": 3.6273591903,
       "atr14": 0.0712142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.637037,
+        "threshold": 0.9,
+        "atr_percentile": 0.740741,
+        "low_volume_percentile": 0.533333,
+        "volume_ratio_vs_rolling_median": 0.916366,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:09.042000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:07.012000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -8007,20 +8423,46 @@
       "symbol": "UNI/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 6.821,
+      "entry": 6.815,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 6.9722589077,
       "ema50": 6.9786660446,
       "atr14": 0.1268571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.888889,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.777778,
+        "volume_ratio_vs_rolling_median": 0.8669,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:09.695000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:07.515000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -8038,30 +8480,56 @@
       "symbol": "DOT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8447,
-      "stop_loss": 0.8609214286,
+      "entry": 0.8457,
+      "stop_loss": 0.8619214286,
       "take_profit": [
-        0.8230714286,
-        0.8014428571
+        0.8240714286,
+        0.8024428571
       ],
       "ema20": 0.8565268195,
       "ema50": 0.8668989716,
       "atr14": 0.0108142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.718519,
+        "threshold": 0.9,
+        "atr_percentile": 0.592593,
+        "low_volume_percentile": 0.844444,
+        "volume_ratio_vs_rolling_median": 0.866784,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:10.311000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:08.036000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1965% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8609214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8619214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -8686,38 +9154,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1965% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 452,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3679,
-      "stop_loss": 0.3577857143,
+      "entry": 0.3677,
+      "stop_loss": 0.3575857143,
       "take_profit": [
-        0.3813857143,
-        0.3948714286
+        0.3811857143,
+        0.3946714286
       ],
       "ema20": 0.3711497778,
       "ema50": 0.3666603995,
       "atr14": 0.0067428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.424074,
+        "threshold": 0.9,
+        "atr_percentile": 0.759259,
+        "low_volume_percentile": 0.088889,
+        "volume_ratio_vs_rolling_median": 1.512599,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:10.940000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:08.582000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.2244% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3577857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3575857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -9342,38 +9836,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.2244% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 453,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06777,
-      "stop_loss": 0.0689196429,
+      "entry": 0.06789,
+      "stop_loss": 0.0690396429,
       "take_profit": [
-        0.0662371429,
-        0.0647042857
+        0.0663571429,
+        0.0648242857
       ],
       "ema20": 0.0694366953,
       "ema50": 0.0699114072,
       "atr14": 0.0007664286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.588889,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.975,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:11.573000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:09.078000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6790% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0689196429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0690396429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -9998,28 +10518,54 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6790% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 454,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "TIA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.4242,
+      "entry": 0.4243,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.4312152375,
       "ema50": 0.4292068718,
       "atr14": 0.0064428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.661111,
+        "threshold": 0.9,
+        "atr_percentile": 0.611111,
+        "low_volume_percentile": 0.711111,
+        "volume_ratio_vs_rolling_median": 0.900232,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:12.164000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:09.598000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10037,20 +10583,46 @@
       "symbol": "SUI/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.8144,
+      "entry": 0.815,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.8370767153,
       "ema50": 0.8406077353,
       "atr14": 0.01175,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.57037,
+        "threshold": 0.9,
+        "atr_percentile": 0.62963,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.96812,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:12.799000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:10.295000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10068,30 +10640,56 @@
       "symbol": "JUP/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.2528,
-      "stop_loss": 0.2466607143,
+      "entry": 0.2529,
+      "stop_loss": 0.2467607143,
       "take_profit": [
-        0.2609857143,
-        0.2691714286
+        0.2610857143,
+        0.2692714286
       ],
       "ema20": 0.2522818845,
       "ema50": 0.2471207303,
       "atr14": 0.0040928571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.342593,
+        "threshold": 0.9,
+        "atr_percentile": 0.685185,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 1.987777,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:13.464000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:10.790000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0885% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2466607143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2467607143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -10716,28 +11314,54 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0885% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 455,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "CRV/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.2533,
+      "entry": 0.2536,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.2588053903,
       "ema50": 0.2599319864,
       "atr14": 0.0036285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.598148,
+        "threshold": 0.9,
+        "atr_percentile": 0.796296,
+        "low_volume_percentile": 0.4,
+        "volume_ratio_vs_rolling_median": 1.02951,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:14.067000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:11.292000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10755,20 +11379,46 @@
       "symbol": "BNB/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 677.73,
+      "entry": 677.6,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 687.3919752489,
       "ema50": 689.6403256034,
       "atr14": 4.5757142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.603704,
+        "threshold": 0.9,
+        "atr_percentile": 0.62963,
+        "low_volume_percentile": 0.577778,
+        "volume_ratio_vs_rolling_median": 0.963128,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:14.680000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:11.799000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10786,30 +11436,56 @@
       "symbol": "DASH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 45.25,
-      "stop_loss": 46.3878571429,
+      "entry": 45.06,
+      "stop_loss": 46.1978571429,
       "take_profit": [
-        43.7328571429,
-        42.2157142857
+        43.5428571429,
+        42.0257142857
       ],
       "ema20": 46.2556438677,
       "ema50": 46.5263544525,
       "atr14": 0.7585714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.690741,
+        "threshold": 0.9,
+        "atr_percentile": 0.537037,
+        "low_volume_percentile": 0.844444,
+        "volume_ratio_vs_rolling_median": 0.717182,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:15.290000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:12.294000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.3878571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.1978571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -11434,28 +12110,54 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 456,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "PAXG/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 4031.96,
+      "entry": 4029.01,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 4077.1050296857,
       "ema50": 4079.4791154541,
       "atr14": 15.7707142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.622222,
+        "threshold": 0.9,
+        "atr_percentile": 0.888889,
+        "low_volume_percentile": 0.355556,
+        "volume_ratio_vs_rolling_median": 1.089119,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:15.935000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:12.803000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -11473,30 +12175,56 @@
       "symbol": "RENDER/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 1.555,
-      "stop_loss": 1.5173928571,
+      "entry": 1.558,
+      "stop_loss": 1.5203928571,
       "take_profit": [
-        1.6051428571,
-        1.6552857143
+        1.6081428571,
+        1.6582857143
       ],
       "ema20": 1.5838266838,
       "ema50": 1.5736555839,
       "atr14": 0.0250714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.47963,
+        "threshold": 0.9,
+        "atr_percentile": 0.537037,
+        "low_volume_percentile": 0.422222,
+        "volume_ratio_vs_rolling_median": 1.106611,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:16.547000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:13.296000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.6463% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5173928571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5203928571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -12121,28 +12849,54 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.6463% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 457,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "TRX/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.31913,
+      "entry": 0.31914,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.3184462768,
       "ema50": 0.3187075669,
       "atr14": 0.0008021429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.787037,
+        "threshold": 0.9,
+        "atr_percentile": 0.796296,
+        "low_volume_percentile": 0.777778,
+        "volume_ratio_vs_rolling_median": 0.907457,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:17.164000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:13.798000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12160,20 +12914,46 @@
       "symbol": "OP/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.0978,
+      "entry": 0.0979,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1001332316,
       "ema50": 0.1004121479,
       "atr14": 0.0013571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.522222,
+        "threshold": 0.9,
+        "atr_percentile": 0.555556,
+        "low_volume_percentile": 0.488889,
+        "volume_ratio_vs_rolling_median": 1.006662,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:17.908000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:14.305000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12191,20 +12971,46 @@
       "symbol": "ADA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.17341,
+      "entry": 0.17387,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1773965846,
       "ema50": 0.1780194118,
       "atr14": 0.0021178571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.562963,
+        "threshold": 0.9,
+        "atr_percentile": 0.592593,
+        "low_volume_percentile": 0.533333,
+        "volume_ratio_vs_rolling_median": 0.974381,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:18.514000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:14.798000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12222,20 +13028,46 @@
       "symbol": "INJ/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 7.77,
+      "entry": 7.768,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 8.0408077342,
       "ema50": 8.0806205993,
       "atr14": 0.164,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.6,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.2,
+        "volume_ratio_vs_rolling_median": 1.07548,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:19.125000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:15.292000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12253,30 +13085,56 @@
       "symbol": "ARB/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.161,
-      "stop_loss": 0.1655739286,
+      "entry": 0.16056,
+      "stop_loss": 0.1651339286,
       "take_profit": [
-        0.1549014286,
-        0.1488028571
+        0.1544614286,
+        0.1483628571
       ],
       "ema20": 0.1684352303,
       "ema50": 0.1698615056,
       "atr14": 0.0030492857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.609259,
+        "threshold": 0.9,
+        "atr_percentile": 0.685185,
+        "low_volume_percentile": 0.533333,
+        "volume_ratio_vs_rolling_median": 0.994306,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:19.740000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:15.792000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8397% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1655739286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1651339286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -12901,9 +13759,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8397% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 439,
+      "message_id_current": 458,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:11:21.860820+00:00"
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     }
   ],
   "trade_signals": [
@@ -12911,30 +13769,56 @@
       "symbol": "BTC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73266.2,
-      "stop_loss": 74150.9214285714,
+      "entry": 73315.2,
+      "stop_loss": 74199.9214285714,
       "take_profit": [
-        72086.5714285714,
-        70906.9428571429
+        72135.5714285714,
+        70955.9428571429
       ],
       "ema20": 74436.8005082274,
       "ema50": 74871.1936902165,
       "atr14": 589.8142857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.514815,
+        "threshold": 0.9,
+        "atr_percentile": 0.740741,
+        "low_volume_percentile": 0.288889,
+        "volume_ratio_vs_rolling_median": 1.213856,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:10:59.507000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:12:59.188000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5802% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74150.9214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74199.9214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -13559,38 +14443,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5802% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 440,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ETH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2027.98,
-      "stop_loss": 2066.8557142857,
+      "entry": 2028.06,
+      "stop_loss": 2066.9357142857,
       "take_profit": [
-        1976.1457142857,
-        1924.3114285714
+        1976.2257142857,
+        1924.3914285714
       ],
       "ema20": 2100.2063111306,
       "ema50": 2139.6745509976,
       "atr14": 25.9171428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.52963,
+        "threshold": 0.9,
+        "atr_percentile": 0.814815,
+        "low_volume_percentile": 0.244444,
+        "volume_ratio_vs_rolling_median": 1.231406,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:00.124000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:12:59.713000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.8446% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2066.8557142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2066.9357142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -14215,38 +15125,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.8446% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 441,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ZEC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1093.27,
-      "stop_loss": 1133.0596428571,
+      "entry": 1092.49,
+      "stop_loss": 1132.2796428571,
       "take_profit": [
-        1040.2171428571,
-        987.1642857143
+        1039.4371428571,
+        986.3842857143
       ],
       "ema20": 1158.806177228,
       "ema50": 1191.5199820813,
       "atr14": 26.5264285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.522222,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.044444,
+        "volume_ratio_vs_rolling_median": 1.110034,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:00.734000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:00.210000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.7456% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1133.0596428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1132.2796428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -14871,38 +15807,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.7456% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 442,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.211,
-      "stop_loss": 83.8376428571,
+      "entry": 82.312,
+      "stop_loss": 83.9386428571,
       "take_profit": [
-        80.0421428571,
-        77.8732857143
+        80.1431428571,
+        77.9742857143
       ],
       "ema20": 85.2652244567,
       "ema50": 86.5972072879,
       "atr14": 1.0844285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.690741,
+        "threshold": 0.9,
+        "atr_percentile": 0.87037,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.984097,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:01.334000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:00.723000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.5381% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.8376428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9386428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -15527,38 +16489,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.5381% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 443,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2447e-06,
-      "stop_loss": 5.0547e-06,
+      "entry": 5.2351e-06,
+      "stop_loss": 5.0451e-06,
       "take_profit": [
-        5.498e-06,
-        5.7514e-06
+        5.4884e-06,
+        5.7418e-06
       ],
       "ema20": 5.2677e-06,
       "ema50": 5.1488e-06,
       "atr14": 1.267e-07,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "HIGH_THINNESS_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.914815,
+        "threshold": 0.9,
+        "atr_percentile": 0.962963,
+        "low_volume_percentile": 0.866667,
+        "volume_ratio_vs_rolling_median": 0.715221,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:01.945000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:01.229000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.3111% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0547e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0451e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -16183,38 +17171,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.3111% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 444,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.04367,
-      "stop_loss": 1.0659975,
+      "entry": 1.04445,
+      "stop_loss": 1.0667775,
       "take_profit": [
-        1.0139,
-        0.98413
+        1.01468,
+        0.98491
       ],
       "ema20": 1.0831493198,
       "ema50": 1.1062338914,
       "atr14": 0.014885,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.622222,
+        "threshold": 0.9,
+        "atr_percentile": 0.888889,
+        "low_volume_percentile": 0.355556,
+        "volume_ratio_vs_rolling_median": 1.070893,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:02.599000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:01.716000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.0868% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0659975 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0667775 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -16839,38 +17853,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.0868% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 445,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "AVAX/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 8.226,
-      "stop_loss": 8.0348571429,
+      "entry": 8.227,
+      "stop_loss": 8.0358571429,
       "take_profit": [
-        8.4808571429,
-        8.7357142857
+        8.4818571429,
+        8.7367142857
       ],
       "ema20": 8.4127242008,
       "ema50": 8.3406957814,
       "atr14": 0.1274285714,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.333333,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 2.214129,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:03.217000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:02.219000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0348571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0358571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -17495,38 +18535,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 446,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "AAVE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 123.31,
-      "stop_loss": 126.4878571429,
+      "entry": 123.32,
+      "stop_loss": 126.4978571429,
       "take_profit": [
-        119.0728571429,
-        114.8357142857
+        119.0828571429,
+        114.8457142857
       ],
       "ema20": 127.0893373362,
       "ema50": 128.6092125183,
       "atr14": 2.1185714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.862963,
+        "threshold": 0.9,
+        "atr_percentile": 0.925926,
+        "low_volume_percentile": 0.8,
+        "volume_ratio_vs_rolling_median": 0.87574,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:03.889000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:02.768000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.4878571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.4978571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -18151,38 +19217,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 447,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "BCH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 230.0,
-      "stop_loss": 234.1089285714,
+      "entry": 229.97,
+      "stop_loss": 234.0789285714,
       "take_profit": [
-        224.5214285714,
-        219.0428571429
+        224.4914285714,
+        219.0128571429
       ],
       "ema20": 236.7667240853,
       "ema50": 239.9970842775,
       "atr14": 2.7392857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.888889,
+        "threshold": 0.9,
+        "atr_percentile": 0.777778,
+        "low_volume_percentile": 1.0,
+        "volume_ratio_vs_rolling_median": 0.848735,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:04.514000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:03.272000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3460% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.1089285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.0789285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -18807,38 +19899,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3460% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 448,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "LINK/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.283,
-      "stop_loss": 10.4881785714,
+      "entry": 10.287,
+      "stop_loss": 10.4921785714,
       "take_profit": [
-        10.0094285714,
-        9.7358571429
+        10.0134285714,
+        9.7398571429
       ],
       "ema20": 10.5229297227,
       "ema50": 10.5871897641,
       "atr14": 0.1367857143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.640741,
+        "threshold": 0.9,
+        "atr_percentile": 0.814815,
+        "low_volume_percentile": 0.466667,
+        "volume_ratio_vs_rolling_median": 1.020315,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:06.567000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:04.794000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6070% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4881785714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4921785714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -19463,38 +20581,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6070% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 449,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5664,
-      "stop_loss": 0.5789035714,
+      "entry": 0.5672,
+      "stop_loss": 0.5797035714,
       "take_profit": [
-        0.5497285714,
-        0.5330571429
+        0.5505285714,
+        0.5338571429
       ],
       "ema20": 0.581763915,
       "ema50": 0.5847184366,
       "atr14": 0.0083357143,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.616667,
+        "threshold": 0.9,
+        "atr_percentile": 0.611111,
+        "low_volume_percentile": 0.622222,
+        "volume_ratio_vs_rolling_median": 0.980207,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:07.174000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:05.285000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5053% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5789035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5797035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -20119,38 +21263,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5053% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 450,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "XMR/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 551.19,
-      "stop_loss": 566.8767857143,
+      "entry": 551.24,
+      "stop_loss": 566.9267857143,
       "take_profit": [
-        530.2742857143,
-        509.3585714286
+        530.3242857143,
+        509.4085714286
       ],
       "ema20": 566.0210914911,
       "ema50": 581.2233390972,
       "atr14": 10.4578571429,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.644444,
+        "threshold": 0.9,
+        "atr_percentile": 1.0,
+        "low_volume_percentile": 0.288889,
+        "volume_ratio_vs_rolling_median": 1.374222,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:08.424000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:06.338000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6156% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 566.8767857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 566.9267857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -20775,38 +21945,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6156% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 451,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "DOT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8447,
-      "stop_loss": 0.8609214286,
+      "entry": 0.8457,
+      "stop_loss": 0.8619214286,
       "take_profit": [
-        0.8230714286,
-        0.8014428571
+        0.8240714286,
+        0.8024428571
       ],
       "ema20": 0.8565268195,
       "ema50": 0.8668989716,
       "atr14": 0.0108142857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.718519,
+        "threshold": 0.9,
+        "atr_percentile": 0.592593,
+        "low_volume_percentile": 0.844444,
+        "volume_ratio_vs_rolling_median": 0.866784,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:10.311000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:08.036000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1965% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8609214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8619214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -21431,38 +22627,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1965% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 452,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3679,
-      "stop_loss": 0.3577857143,
+      "entry": 0.3677,
+      "stop_loss": 0.3575857143,
       "take_profit": [
-        0.3813857143,
-        0.3948714286
+        0.3811857143,
+        0.3946714286
       ],
       "ema20": 0.3711497778,
       "ema50": 0.3666603995,
       "atr14": 0.0067428571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.424074,
+        "threshold": 0.9,
+        "atr_percentile": 0.759259,
+        "low_volume_percentile": 0.088889,
+        "volume_ratio_vs_rolling_median": 1.512599,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:10.940000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:08.582000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.2244% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3577857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3575857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -22087,38 +23309,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.2244% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 453,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06777,
-      "stop_loss": 0.0689196429,
+      "entry": 0.06789,
+      "stop_loss": 0.0690396429,
       "take_profit": [
-        0.0662371429,
-        0.0647042857
+        0.0663571429,
+        0.0648242857
       ],
       "ema20": 0.0694366953,
       "ema50": 0.0699114072,
       "atr14": 0.0007664286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.588889,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.975,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:11.573000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:09.078000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6790% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0689196429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0690396429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -22743,38 +23991,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6790% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 454,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "JUP/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.2528,
-      "stop_loss": 0.2466607143,
+      "entry": 0.2529,
+      "stop_loss": 0.2467607143,
       "take_profit": [
-        0.2609857143,
-        0.2691714286
+        0.2610857143,
+        0.2692714286
       ],
       "ema20": 0.2522818845,
       "ema50": 0.2471207303,
       "atr14": 0.0040928571,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.342593,
+        "threshold": 0.9,
+        "atr_percentile": 0.685185,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 1.987777,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:13.464000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:10.790000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0885% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2466607143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2467607143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -23399,38 +24673,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0885% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 455,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "DASH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 45.25,
-      "stop_loss": 46.3878571429,
+      "entry": 45.06,
+      "stop_loss": 46.1978571429,
       "take_profit": [
-        43.7328571429,
-        42.2157142857
+        43.5428571429,
+        42.0257142857
       ],
       "ema20": 46.2556438677,
       "ema50": 46.5263544525,
       "atr14": 0.7585714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.690741,
+        "threshold": 0.9,
+        "atr_percentile": 0.537037,
+        "low_volume_percentile": 0.844444,
+        "volume_ratio_vs_rolling_median": 0.717182,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:15.290000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:12.294000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.3878571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.1978571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -24055,38 +25355,64 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 456,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "RENDER/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 1.555,
-      "stop_loss": 1.5173928571,
+      "entry": 1.558,
+      "stop_loss": 1.5203928571,
       "take_profit": [
-        1.6051428571,
-        1.6552857143
+        1.6081428571,
+        1.6582857143
       ],
       "ema20": 1.5838266838,
       "ema50": 1.5736555839,
       "atr14": 0.0250714286,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.47963,
+        "threshold": 0.9,
+        "atr_percentile": 0.537037,
+        "low_volume_percentile": 0.422222,
+        "volume_ratio_vs_rolling_median": 1.106611,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:16.547000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:13.296000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.6463% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5173928571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5203928571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -24711,38 +26037,64 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.6463% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": null,
+      "message_id_current": 457,
       "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     },
     {
       "symbol": "ARB/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.161,
-      "stop_loss": 0.1655739286,
+      "entry": 0.16056,
+      "stop_loss": 0.1651339286,
       "take_profit": [
-        0.1549014286,
-        0.1488028571
+        0.1544614286,
+        0.1483628571
       ],
       "ema20": 0.1684352303,
       "ema50": 0.1698615056,
       "atr14": 0.0030492857,
       "confidence": "NOT_CALIBRATED",
-      "generated_at_utc": "2026-11-10T16:11:20.471242+00:00",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.609259,
+        "threshold": 0.9,
+        "atr_percentile": 0.685185,
+        "low_volume_percentile": 0.533333,
+        "volume_ratio_vs_rolling_median": 0.994306,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:13:16.360318+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:11:19.740000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:13:15.792000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8397% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1655739286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1651339286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -25367,9 +26719,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8397% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 439,
+      "message_id_current": 458,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:11:21.860820+00:00"
+      "published_at": "2026-11-10T16:13:30.868867+00:00"
     }
   ],
   "quality": {
@@ -25383,8 +26735,26 @@
   },
   "data_errors": {},
   "message_id_current": {
-    "ARB/USDT:USDT": 439
+    "BTC/USDT:USDT": 440,
+    "ETH/USDT:USDT": 441,
+    "ZEC/USDT:USDT": 442,
+    "SOL/USDT:USDT": 443,
+    "PEPE/USDT:USDT": 444,
+    "XRP/USDT:USDT": 445,
+    "AVAX/USDT:USDT": 446,
+    "AAVE/USDT:USDT": 447,
+    "BCH/USDT:USDT": 448,
+    "LINK/USDT:USDT": 449,
+    "APT/USDT:USDT": 450,
+    "XMR/USDT:USDT": 451,
+    "DOT/USDT:USDT": 452,
+    "ONDO/USDT:USDT": 453,
+    "DOGE/USDT:USDT": 454,
+    "JUP/USDT:USDT": 455,
+    "DASH/USDT:USDT": 456,
+    "RENDER/USDT:USDT": 457,
+    "ARB/USDT:USDT": 458
   },
   "message_id_audience": null,
-  "published_at": "2026-11-10T16:11:21.860820+00:00"
+  "published_at": "2026-11-10T16:13:30.868867+00:00"
 }
