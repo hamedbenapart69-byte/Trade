@@ -1,4 +1,5 @@
 name: Stage 1b - LRT 15m data maintenance (P0 data-only)
+# One-shot trigger commit: P0-20261110-02
 
 on:
   # Trigger موقت P0؛ فقط روی همین شاخه اجرا می‌شود و پس از Run برگردانده خواهد شد.
