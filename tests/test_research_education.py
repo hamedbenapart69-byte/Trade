@@ -8,6 +8,7 @@ from app.research_education import (
     detect_value_boundary_rejections,
     filter_events_by_higher_timeframe,
     ResearchEvent,
+    _higher_timeframe_bias_series,
     higher_timeframe_bias,
     passes_higher_timeframe_gate,
 )
@@ -104,6 +105,16 @@ class EducationHypothesisTests(unittest.TestCase):
             [],
         )
 
+    def test_h8_bias_series_matches_scalar_bias_on_each_completed_prefix(self):
+        bars = [
+            Candle(
+                i * 4 * 60 * 60_000, 100 + i, 101 + i, 99 + i, 100 + i,
+                400.0, (i + 1) * 4 * 60 * 60_000 - 1, True,
+            )
+            for i in range(60)
+        ]
+        expected = [higher_timeframe_bias(bars[:i + 1]) for i in range(len(bars))]
+        self.assertEqual(_higher_timeframe_bias_series(bars), expected)
     def test_h8_dlc_direction_gate_filters_misaligned_confirmation_events(self):
         signal_bars = [
             Candle(
