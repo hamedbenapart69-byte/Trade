@@ -171,17 +171,26 @@ def notify_tier_a(payload: dict) -> dict:
 
     # نسخهٔ ۲: شناسهٔ سیگنال مستقل از زمان تولید است و فقط با تغییر سطوح،
     # ارسال مجدد مجاز می‌شود. وضعیت قدیمی برای مهاجرت یک‌باره نگه داشته می‌شود.
-    legacy_state = sent_state if sent_state.get("__schema_version__") != 2 else {}
     if sent_state.get("__schema_version__") == 2:
         signal_state = sent_state.get("signals", {})
         daily_state = sent_state.get("daily", {})
+        legacy_state = sent_state.get("legacy", {})
         if not isinstance(signal_state, dict):
             signal_state = {}
         if not isinstance(daily_state, dict):
             daily_state = {}
+        if not isinstance(legacy_state, dict):
+            legacy_state = {}
     else:
         signal_state = {}
         daily_state = {}
+        legacy_state = sent_state
+
+    legacy_state = {
+        key: value for key, value in legacy_state.items()
+        if isinstance(key, str) and _parse_time(value) is not None
+        and now - _parse_time(value) < timedelta(hours=48)
+    }
 
     # حفظ dedup روزانهٔ نسخهٔ قبلی برای جلوگیری از ارسال مجدد در زمان مهاجرت.
     if legacy_state:
@@ -256,7 +265,10 @@ def notify_tier_a(payload: dict) -> dict:
         if previous_fingerprint != fingerprint:
             pending.append((identity, fingerprint, signal, _format_signal(signal, payload)))
 
-    sent_state = {"__schema_version__": 2, "signals": signal_state, "daily": daily_state}
+    sent_state = {
+        "__schema_version__": 2, "signals": signal_state,
+        "daily": daily_state, "legacy": legacy_state,
+    }
 
     if not candidates:
         generated = payload.get("generated_at_utc") or now.isoformat()
@@ -282,6 +294,9 @@ def notify_tier_a(payload: dict) -> dict:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     if not pending:
+        # ذخیرهٔ مهاجرت حتی وقتی هیچ پیام جدیدی برای ارسال وجود ندارد.
+        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\\n",
+                              encoding="utf-8")
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     try:
