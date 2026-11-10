@@ -119,6 +119,12 @@ class MarketDataFetcher:
             # CCXT's current unified exchange id/class is "gate", not "gateio".
             exchange = ccxt.gate({"enableRateLimit": True, "timeout": 25000,
                                   "options": {"defaultType": "swap"}})
+        elif provider == "phemex":
+            exchange = ccxt.phemex({"enableRateLimit": True, "timeout": 25000,
+                                    "options": {"defaultType": "swap"}})
+        elif provider == "bingx":
+            exchange = ccxt.bingx({"enableRateLimit": True, "timeout": 25000,
+                                   "options": {"defaultType": "swap"}})
         elif provider == "toobit":
             exchange = ccxt.toobit({"enableRateLimit": True, "timeout": 25000,
                                     "options": {"defaultType": "swap"}})
@@ -346,7 +352,7 @@ class MarketDataFetcher:
         selected: dict[str, dict] = {}
         providers = [
             "okx", "bybit", "binance", "bitget", "mexc",
-            "kucoinfutures", "gateio", "toobit",
+            "kucoinfutures", "gateio", "phemex", "bingx", "toobit",
         ]
         provider_diagnostics: dict[str, dict] = {}
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
