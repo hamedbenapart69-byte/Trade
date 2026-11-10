@@ -125,12 +125,6 @@ class MarketDataFetcher:
         elif provider == "bingx":
             exchange = ccxt.bingx({"enableRateLimit": True, "timeout": 25000,
                                    "options": {"defaultType": "swap"}})
-        elif provider == "bitmart":
-            exchange = ccxt.bitmart({"enableRateLimit": True, "timeout": 25000,
-                                     "options": {"defaultType": "swap"}})
-        elif provider == "coinex":
-            exchange = ccxt.coinex({"enableRateLimit": True, "timeout": 25000,
-                                    "options": {"defaultType": "swap"}})
         elif provider == "whitebit":
             exchange = ccxt.whitebit({"enableRateLimit": True, "timeout": 25000,
                                       "options": {"defaultType": "swap"}})
@@ -368,7 +362,7 @@ class MarketDataFetcher:
         providers = [
             "okx", "bybit", "binance", "bitget", "mexc",
             "kucoinfutures", "gateio", "phemex", "bingx",
-            "bitmart", "coinex", "whitebit", "xt", "deepcoin", "toobit",
+            "whitebit", "xt", "deepcoin", "toobit",
         ]
         provider_diagnostics: dict[str, dict] = {}
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
