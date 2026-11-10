@@ -62,11 +62,26 @@ jobs:
       - name: Install signal pipeline dependencies
         working-directory: signal_autopilot
         run: pip install -r requirements.txt
+      - name: Restore Telegram delivery ledger from durable signals branch
+        shell: bash
+        run: |
+          if git ls-remote --exit-code origin refs/heads/signals >/dev/null 2>&1; then
+            git fetch origin +refs/heads/signals:refs/remotes/origin/signals
+            if git cat-file -e refs/remotes/origin/signals:telegram_sent.json 2>/dev/null; then
+              mkdir -p signal_autopilot/data
+              git show refs/remotes/origin/signals:telegram_sent.json > signal_autopilot/data/telegram_sent.json
+              echo "TELEGRAM_LEDGER_SOURCE=signals_branch"
+            else
+              echo "No durable Telegram ledger exists yet on signals branch."
+            fi
+          else
+            echo "Signals branch not present; cache remains the fallback."
+          fi
       - name: Restore Telegram deduplication state
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: signal_autopilot/data/telegram_sent.json
-          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}
+          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ runner.os }}-telegram-sent-
       - name: Advisory OKX reachability probe (non-blocking; provider fallback is independent)
@@ -103,6 +118,12 @@ jobs:
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SIGNAL_SYMBOL_LIMIT: "100"
         run: python logic.py
+      - name: Save Telegram deduplication state
+        if: success() && hashFiles('signal_autopilot/data/telegram_sent.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: signal_autopilot/data/telegram_sent.json
+          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Validate JSON, CSV and C10
         run: |
           python - <<'PY'
@@ -136,6 +157,10 @@ jobs:
             --source-json signal_autopilot/data/signals.json \
             --source-csv signal_autopilot/data/history.csv \
             --output-dir /tmp/signals-public
+          if [ -f signal_autopilot/data/telegram_sent.json ]; then
+            cp signal_autopilot/data/telegram_sent.json /tmp/signals-public/telegram_sent.json
+            git -C /tmp/signals-public add telegram_sent.json
+          fi
           git -C /tmp/signals-public add signals.json history.csv
           if ! git -C /tmp/signals-public diff --cached --quiet; then
             git -C /tmp/signals-public commit -m "data: publish futures signals snapshot"
