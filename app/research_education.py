@@ -188,6 +188,61 @@ def detect_breakout_retests(
     return events
 
 
+def detect_breakout_acceptance(
+    candles: Sequence[Candle],
+    range_lookback: int = 20,
+    acceptance_bars: int = 2,
+) -> list[ResearchEvent]:
+    """H5 price-only proxy: breakout beyond a prior range with consecutive closes.
+
+    این نسخه فقط پذیرش قیمتی را می‌سنجد؛ به‌هیچ‌وجه تأیید دلتا یا جریان سفارش واقعی نیست.
+    رویداد پس از بسته‌شدن آخرین کندل پذیرش ثبت می‌شود و ورود زودتر از کندل بعدی مجاز نیست.
+    """
+    if (
+        range_lookback < 2
+        or acceptance_bars < 1
+        or not _valid_series(candles)
+    ):
+        return []
+
+    events: list[ResearchEvent] = []
+    i = range_lookback
+    while i + acceptance_bars < len(candles):
+        prior = candles[i - range_lookback : i]
+        upper = max(c.high for c in prior)
+        lower = min(c.low for c in prior)
+        breakout = candles[i]
+        side: Side | None = None
+        level = 0.0
+        if breakout.close > upper:
+            side, level = "LONG", upper
+        elif breakout.close < lower:
+            side, level = "SHORT", lower
+
+        if side is None:
+            i += 1
+            continue
+
+        confirmation = candles[i + 1 : i + acceptance_bars + 1]
+        if side == "LONG":
+            accepted = all(c.close > level for c in confirmation)
+        else:
+            accepted = all(c.close < level for c in confirmation)
+
+        if accepted:
+            signal_index = i + acceptance_bars
+            events.append(
+                ResearchEvent(
+                    "H5_PRICE_PROXY", side, signal_index, level, i,
+                    "breakout_accepted_by_consecutive_closes_price_only",
+                )
+            )
+            i = signal_index + 1
+        else:
+            i += 1
+    return events
+
+
 def higher_timeframe_bias(
     candles: Sequence[Candle],
     fast_period: int = 20,
