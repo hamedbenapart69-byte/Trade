@@ -31,13 +31,12 @@ jobs:
       - name: Run unit tests
         working-directory: signal_autopilot
         run: python -m unittest discover -s tests -v
-      - name: Run live public-market universe audit
+      - name: Advisory live public-market universe audit (non-blocking network diagnostic)
         continue-on-error: true
         working-directory: signal_autopilot
         run: python scripts/audit_crypto_universe.py
-      - name: Simulate OKX outage and verify fallback chain
+      - name: Simulate OKX outage and verify fallback chain (blocking reliability test)
         if: always()
-        continue-on-error: true
         working-directory: signal_autopilot
         env:
           DEBUG_BLOCK_OKX: "1"
