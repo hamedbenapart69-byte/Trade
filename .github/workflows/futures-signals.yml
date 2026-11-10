@@ -71,7 +71,7 @@ jobs:
           key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-telegram-sent-
-      - name: Test OKX CCXT ticker from GitHub Actions runner
+      - name: Advisory OKX reachability probe (non-blocking; provider fallback is independent)
         continue-on-error: true
         working-directory: signal_autopilot
         run: |
