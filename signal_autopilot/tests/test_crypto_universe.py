@@ -117,43 +117,58 @@ class CryptoUniverseTests(unittest.TestCase):
 
 
 
+    def provider_rows(self, provider, prefix, count):
+        return [{
+            "base": f"{prefix}{index}",
+            "provider": provider,
+            "symbol": f"{prefix}{index}/USDT:USDT",
+            "availability": {"ohlcv": "OK", "funding": "OK", "open_interest": "OK"},
+            "ohlcv": [{"timestamp": 1, "open": 1, "high": 2, "low": 0.5, "close": 1.5, "volume": 10}],
+        } for index in range(count)]
+
     def test_debug_block_okx_forces_fallback_without_touching_okx(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        fallback_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(60)]
+        fallback_rows = self.provider_rows("bybit", "BTC", 100)
 
-        def fake_provider(provider, whitelist):
+        def fake_provider(provider, whitelist, exclude_bases=None, target_count=None):
             if provider == "okx":
                 self.fail("OKX must be skipped while DEBUG_BLOCK_OKX=1")
             if provider == "bybit":
-                return fallback_rows
-            self.fail(f"unexpected provider after successful Bybit fallback: {provider}")
+                return fallback_rows[:target_count]
+            self.fail(f"unexpected provider after universe was filled: {provider}")
 
         self.fetcher._fetch_from_provider = fake_provider
         with patch.dict(os.environ, {"DEBUG_BLOCK_OKX": "1"}):
             result = self.fetcher.fetch()
         self.assertEqual(result["provider"], "bybit")
+        self.assertEqual(result["symbols_processed"], 100)
+        self.assertEqual(result["provider_sources"], ["bybit"])
         self.assertTrue(result["fallback_used"])
         self.assertEqual(result["primary_error"], "DEBUG_BLOCK_OKX_FORCED")
 
-    def test_fallback_continues_after_bybit_block_and_selects_binance(self):
+    def test_fallback_merges_unique_symbols_after_primary_and_secondary_failures(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        okx_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(20)]
-        binance_rows = [(20_000_000, f"ETH{i}/USDT:USDT", {}) for i in range(60)]
+        okx_rows = self.provider_rows("okx", "BTC", 20)
+        binance_rows = self.provider_rows("binance", "ETH", 80)
 
-        def fake_provider(provider, whitelist):
+        def fake_provider(provider, whitelist, exclude_bases=None, target_count=None):
             if provider == "okx":
-                return okx_rows
+                return okx_rows[:target_count]
             if provider == "bybit":
                 raise RuntimeError("403 blocked")
             if provider == "binance":
-                return binance_rows
-            self.fail(f"unexpected provider call after qualifying Binance fallback: {provider}")
+                return binance_rows[:target_count]
+            self.fail(f"unexpected provider call after universe was filled: {provider}")
 
         self.fetcher._fetch_from_provider = fake_provider
         result = self.fetcher.fetch()
-        self.assertEqual(result["provider"], "binance")
-        self.assertEqual(result["symbols_processed"], 60)
+        self.assertEqual(result["provider"], "multi-provider")
+        self.assertEqual(result["symbols_processed"], 100)
+        self.assertEqual(result["provider_sources"], ["okx", "binance"])
         self.assertTrue(result["fallback_used"])
+        self.assertEqual(len({row["base"] for row in result["symbols"]}), 100)
+        self.assertIn("bybit", result["errors"])
+        self.assertEqual(result["universe_diagnostics"]["binance"]["symbols_added"], 80)
 
 
     def test_gateio_seconds_listing_timestamp_is_normalized(self):
