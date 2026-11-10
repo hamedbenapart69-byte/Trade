@@ -7,15 +7,21 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from scripts.maintain_lrt15m_dataset import (
-    INTERVAL_MS,
-    EXPECTED_ROWS,
-    _fetch_symbol_tail,
-    _merge_rows,
-    _tail_partition_path,
-    freshness_state,
-    migrate_legacy_snapshots,
-)
+import importlib.util
+
+_module_path = Path(__file__).resolve().parents[1] / "scripts" / "maintain_lrt15m_dataset.py"
+_spec = importlib.util.spec_from_file_location("maintain_lrt15m_dataset", _module_path)
+_maintenance = importlib.util.module_from_spec(_spec)
+assert _spec and _spec.loader
+_spec.loader.exec_module(_maintenance)
+
+INTERVAL_MS = _maintenance.INTERVAL_MS
+EXPECTED_ROWS = _maintenance.EXPECTED_ROWS
+_fetch_symbol_tail = _maintenance._fetch_symbol_tail
+_merge_rows = _maintenance._merge_rows
+_tail_partition_path = _maintenance._tail_partition_path
+freshness_state = _maintenance.freshness_state
+migrate_legacy_snapshots = _maintenance.migrate_legacy_snapshots
 
 
 def write_timestamps(path: Path, timestamps: list[int]) -> None:
