@@ -374,6 +374,34 @@ def _higher_timeframe_bias_series(
             output.append("NEUTRAL")
     return output
 
+def filter_events_by_higher_timeframe_regime(
+    events: Sequence[ResearchEvent],
+    signal_candles: Sequence[Candle],
+    higher_timeframe_candles: Sequence[Candle],
+    allowed_biases: Sequence[Bias],
+) -> list[ResearchEvent]:
+    """رویدادها را بر اساس رژیم HTF بسته‌شده محدود می‌کند؛ مستقل از جهت معامله."""
+    valid_biases = {"UP", "DOWN", "NEUTRAL"}
+    if (
+        not allowed_biases
+        or any(bias not in valid_biases for bias in allowed_biases)
+        or not _valid_series(signal_candles)
+        or not _valid_series(higher_timeframe_candles)
+    ):
+        return []
+    htf_close_times = [c.close_time for c in higher_timeframe_candles]
+    htf_biases = _higher_timeframe_bias_series(higher_timeframe_candles)
+    allowed = set(allowed_biases)
+    filtered: list[ResearchEvent] = []
+    for event in events:
+        if event.signal_index < 0 or event.signal_index >= len(signal_candles):
+            continue
+        signal_close_time = signal_candles[event.signal_index].close_time
+        completed_index = bisect_right(htf_close_times, signal_close_time) - 1
+        if completed_index >= 49 and htf_biases[completed_index] in allowed:
+            filtered.append(event)
+    return filtered
+
 def filter_events_by_higher_timeframe(
     events: Sequence[ResearchEvent],
     signal_candles: Sequence[Candle],
