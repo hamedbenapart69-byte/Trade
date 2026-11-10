@@ -1,4 +1,5 @@
 """آزمون‌های نگهداری افزایشی و تازگی دادهٔ LRT-15m."""
+import json
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -22,12 +23,18 @@ _merge_rows = _maintenance._merge_rows
 _tail_partition_path = _maintenance._tail_partition_path
 freshness_state = _maintenance.freshness_state
 migrate_legacy_snapshots = _maintenance.migrate_legacy_snapshots
+build_dataset_manifest = _maintenance.build_dataset_manifest
+maintain_dataset = _maintenance.maintain_dataset
 _missing_baseline_result = _maintenance._missing_baseline_result
 
 
 def write_timestamps(path: Path, timestamps: list[int]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pylist([{"open_time": ts} for ts in timestamps]), path)
+    pq.write_table(pa.Table.from_pylist([
+        {"open_time": ts, "open": 100.0, "high": 102.0, "low": 99.0,
+         "close": 101.0, "volume": 10.0}
+        for ts in timestamps
+    ]), path)
 
 
 class FreshnessGateTests(unittest.TestCase):
@@ -123,6 +130,106 @@ class BaselineMigrationTests(unittest.TestCase):
             self.assertEqual(result["validation"]["BTCUSDT"]["rows"], EXPECTED_ROWS)
             self.assertFalse(latest.exists())
 
+
+
+
+    def test_falls_back_to_older_valid_snapshot_when_newest_is_corrupt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            older = root / "BTCUSDT_15m_2024-11-09_2026-11-09.parquet"
+            newer = root / "BTCUSDT_15m_2024-11-10_2026-11-10.parquet"
+            timestamps = list(range(0, EXPECTED_ROWS * INTERVAL_MS, INTERVAL_MS))
+            write_timestamps(older, timestamps)
+            bad_rows = [
+                {"open_time": ts, "open": 100.0, "high": 102.0, "low": 99.0,
+                 "close": 101.0, "volume": 10.0}
+                for ts in timestamps
+            ]
+            bad_rows[0]["high"] = 98.0
+            pq.write_table(pa.Table.from_pylist(bad_rows), newer)
+
+            result = migrate_legacy_snapshots(root, ["BTCUSDT"])
+            self.assertTrue(result["validation"]["BTCUSDT"]["valid"])
+            self.assertEqual(result["validation"]["BTCUSDT"]["first_open_ms"], 0)
+            self.assertTrue((root / "base" / "BTCUSDT_15m.parquet").exists())
+
+    def test_rejects_duplicate_timestamp_inside_baseline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "baseline.parquet"
+            write_timestamps(path, [0, INTERVAL_MS, INTERVAL_MS])
+            valid, _, _, _, reason = _maintenance._validate_baseline(path)
+            self.assertFalse(valid)
+            self.assertEqual(reason, "BASELINE_DUPLICATE_TIMESTAMPS")
+
+    def test_rejects_invalid_ohlc_relationship(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "baseline.parquet"
+            write_timestamps(path, [0])
+            rows = _read_rows_for_test(path)
+            rows[0]["high"] = 98.0
+            pq.write_table(pa.Table.from_pylist(rows), path)
+            valid, _, _, _, reason = _maintenance._validate_baseline(path)
+            self.assertFalse(valid)
+            self.assertEqual(reason, "BASELINE_OHLC_RELATION:row=0")
+
+
+class P0DataOnlyAndManifestTests(unittest.TestCase):
+    def test_data_only_does_not_trigger_full_backfill_or_signal_engine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            storage = root / "storage"
+            universe = root / "universe.json"
+            symbols = [f"COIN{i:02d}USDT" for i in range(27)]
+            universe.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
+            class NoBackfillDownloader:
+                def run(self, *args, **kwargs):
+                    raise AssertionError("full backfill must not run in P0 data-only mode")
+
+            report = maintain_dataset(
+                storage, root / "compute", root / "report.json",
+                root / "signals.json", universe, now_ms=2_000_000_000_000,
+                downloader=NoBackfillDownloader(), data_only=True,
+            )
+            self.assertEqual(report["status"], "DEGRADED")
+            self.assertFalse((root / "signals.json").exists())
+            self.assertTrue((root / "report.json").exists())
+
+    def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            storage = root / "storage"
+            base = storage / "base"
+            original_expected = _maintenance.EXPECTED_ROWS
+            _maintenance.EXPECTED_ROWS = 2
+            try:
+                symbols = [f"COIN{i:02d}USDT" for i in range(27)]
+                for symbol in symbols:
+                    write_timestamps(base / f"{symbol}_15m.parquet", [0, INTERVAL_MS])
+                tail_row = {
+                    "open_time": 2 * INTERVAL_MS, "open": 101.0, "high": 103.0,
+                    "low": 100.0, "close": 102.0, "volume": 5.0,
+                }
+                write_timestamps(storage / "live_tail" / "2026-01-01" / "COIN00USDT_15m.parquet",
+                                 [2 * INTERVAL_MS])
+                report_path = root / "data_report.json"
+                report_path.write_text(json.dumps({"status": "DEGRADED"}), encoding="utf-8")
+
+                manifest = build_dataset_manifest(
+                    storage, report_path, root / "manifest.json",
+                    "workflow-sha", "engine-sha", "12345", "legacy-sha",
+                )
+                self.assertEqual(manifest["symbols_count"], 27)
+                self.assertEqual(manifest["baseline_files_count"], 27)
+                self.assertEqual(manifest["live_tail_files_count"], 1)
+                self.assertEqual(len(manifest["dataset_sha256"]), 64)
+                self.assertFalse(manifest["signal_engine_executed"])
+                self.assertEqual(manifest["data_gate_status"], "DEGRADED")
+            finally:
+                _maintenance.EXPECTED_ROWS = original_expected
+
+
+def _read_rows_for_test(path: Path) -> list[dict]:
+    return pq.read_table(path).to_pylist()
 
 
 class MissingBaselineContractTests(unittest.TestCase):
