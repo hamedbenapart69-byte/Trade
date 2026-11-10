@@ -78,6 +78,7 @@ V2 follows the already documented Stage design: change the entry premise from "E
 - Fetch 210 candles and require at least 200 completed bars on both 1H and 4H.
 - 4H EMA50/EMA200 define the directional regime; the 4H close must remain on the regime side of EMA50.
 - 1H entry requires a pullback within 0.25 ATR of EMA50 and a completed rejection candle back in the 4H regime direction.
+- G4 liquidity guard: 24H quote turnover must be at least 10,000,000 USD; missing turnover is MARKET_DATA_DEGRADED.
 - FETCH_TIME_PROXY entries are CONDITIONAL, never BUY_NOW/SELL_NOW.
 - Stop is beyond the rejection/nearby structure with a 0.25 ATR buffer; reject risk wider than 3%.
 - Targets are 1.5R and 2.5R.
@@ -98,6 +99,8 @@ Acceptance criteria:
 - Fewer than 200 completed candles on either 1H or 4H => MARKET_DATA_DEGRADED.
 - Every qualified setup has an input hash and replayable 200-candle evidence windows for 1H and 4H.
 - History records entry, stop, targets, EMA20/50, 4H EMA50/200, ATR14, timestamp source, gate metrics, and signal ID.
+- Tunable strategy parameters remain capped at five: pullback tolerance, stop buffer, maximum stop percentage, TP1 R, and TP2 R. EMA periods and G4 are fixed design/constitution constraints.
+- G4: every qualified symbol has verified 24H quote turnover >= 10,000,000 USD.
 - No thresholds are relaxed to increase signal count.
 - V2 is not declared profitable or calibrated until genuine walk-forward/OOS evidence meets the project gates.
 
