@@ -11,7 +11,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python scripts/okx_endpoint_probe_v3.py | tee okx-market-fields.json
+      - run: |
+        set -o pipefail
+        python scripts/okx_endpoint_probe_v3.py | tee okx-market-fields.json
       - uses: actions/upload-artifact@v4
         with:
           name: okx-market-fields
