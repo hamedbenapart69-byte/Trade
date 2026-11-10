@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "engine_id": "legacy_hourly_1h",
+  "lifecycle": "LEGACY_RESEARCH_ONLY",
+  "production_enabled": false,
+  "market_scan_enabled": false,
+  "dashboard_signal_publication_enabled": false,
+  "telegram_signal_delivery_enabled": false,
+  "trading_mode": "MANUAL_ONLY",
+  "account_connection_enabled": false,
+  "order_execution_enabled": false,
+  "output_state": "NO_QUALIFIED_SETUP",
+  "output_state_semantics": "No actionable output is available because the legacy 1h engine is quarantined; this is not a fresh market evaluation.",
+  "reason": "LEGACY_ENGINE_QUARANTINED",
+  "source_config": "signal_autopilot/config.json"
+}

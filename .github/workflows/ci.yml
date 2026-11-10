@@ -40,6 +40,14 @@ jobs:
           result = unittest.TextTestRunner(verbosity=2).run(suite)
           raise SystemExit(0 if result.wasSuccessful() else 1)
           PY
+      - name: Run quarantined legacy engine fail-closed smoke test
+        working-directory: signal_autopilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(python logic.py)"
+          printf '%s\n' "$output"
+          python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d["pipeline_status"] == "DISABLED_LEGACY_ENGINE"; assert d["market_scan"] == "DISABLED"; assert d["dashboard_publication"] == "DISABLED"; assert d["telegram_delivery"] == "DISABLED"; print("LEGACY_FAIL_CLOSED_SMOKE=PASS")' "$output"
       - name: Validate futures dashboard JavaScript
         run: node --check web/futures/app.js
       - name: Validate Compose configuration

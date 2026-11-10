@@ -2,6 +2,7 @@
 
 const REPORT_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_signals.json";
 const HISTORY_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_history.csv";
+const LEGACY_STATUS_URL = "./system_status.json";
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -39,6 +40,28 @@ function setStatus(text, kind) {
   const el = $("status");
   el.textContent = text;
   el.className = "pill " + (kind || "muted");
+}
+
+async function loadLegacyEngineStatus() {
+  const target = $("legacy-engine-status");
+  if (!target) return;
+  try {
+    const response = await fetch(LEGACY_STATUS_URL + "?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const state = await response.json();
+    const safe = state.lifecycle === "LEGACY_RESEARCH_ONLY"
+      && state.production_enabled === false
+      && state.market_scan_enabled === false
+      && state.dashboard_signal_publication_enabled === false
+      && state.telegram_signal_delivery_enabled === false;
+    target.className = safe ? "notice" : "notice error";
+    target.textContent = safe
+      ? "موتور ۱ ساعته: LEGACY_RESEARCH_ONLY | production_enabled=false | خروجی معاملاتی: NO_QUALIFIED_SETUP | موتور قرنطینه است و ارزیابی زنده انجام نمی‌دهد."
+      : "هشدار: وضعیت قرنطینه موتور ۱ ساعته با قرارداد ایمنی تطبیق ندارد؛ تا بررسی، خروجی آن قابل اتکا نیست.";
+  } catch (error) {
+    target.className = "notice error";
+    target.textContent = "وضعیت موتور ۱ ساعته قابل دریافت نیست؛ وضعیت قرنطینه تأیید نشده است.";
+  }
 }
 
 function render(report) {
@@ -145,6 +168,7 @@ async function loadReport() {
     if (!response.ok) throw new Error("HTTP " + response.status);
     const report = await response.json();
     render(report);
+    const dataGateStatus = report.data_gate_status || "NOT_REPORTED";
     setStatus(dataGateStatus === "PASS" ? "داده: PASS" : "دروازه داده: گزارش نشده", dataGateStatus === "PASS" ? "ok" : "muted");
     loadHistory();
   } catch (error) {
@@ -157,5 +181,6 @@ async function loadReport() {
 }
 
 $("refresh").addEventListener("click", loadReport);
+loadLegacyEngineStatus();
 loadReport();
 window.setInterval(loadReport, 60000);
