@@ -171,6 +171,32 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertEqual(result["universe_diagnostics"]["binance"]["symbols_added"], 80)
 
 
+    def test_gateio_provider_uses_current_ccxt_gate_class(self):
+        with patch("modules.data_fetcher.ccxt.gate") as gate_class:
+            exchange = self.fetcher._new_exchange("gateio")
+        gate_class.assert_called_once()
+        self.assertIs(exchange, gate_class.return_value)
+        self.assertIn(exchange, self.fetcher.exchanges)
+
+    def test_provider_error_classifies_geoblocks_separately_from_rate_limits(self):
+        self.assertEqual(
+            MarketDataFetcher._provider_error_status(
+                RuntimeError("403 Forbidden: The CloudFront distribution is configured to block access from your country")
+            ),
+            "BLOCKED_REGION",
+        )
+        self.assertEqual(
+            MarketDataFetcher._provider_error_status(
+                RuntimeError("451 Service unavailable from a restricted location")
+            ),
+            "BLOCKED_REGION",
+        )
+        self.assertEqual(
+            MarketDataFetcher._provider_error_status(RuntimeError("429 too many requests")),
+            "RATE_LIMITED",
+        )
+
+
     def test_gateio_seconds_listing_timestamp_is_normalized(self):
         seconds = 1_600_000_000
         market = self.market("BTC", 0)
