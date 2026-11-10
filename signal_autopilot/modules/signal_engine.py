@@ -184,7 +184,15 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
 
     try:
         now_ms = datetime.fromisoformat(generated_at_utc.replace("Z", "+00:00")).timestamp() * 1000
-        candle_age_hours = (now_ms - int(candles[-1]["timestamp"])) / 3_600_000
+        try:
+            candle_times = [int(c["timestamp"]) for c in candles]
+        except (KeyError, TypeError, ValueError):
+            return _degraded(row, generated_at_utc, "OHLCV candle timestamp missing or invalid")
+        if any(right - left != 3_600_000 for left, right in zip(candle_times, candle_times[1:])):
+            return _degraded(row, generated_at_utc, "Duplicate, missing, or irregular 1H candle timestamps")
+        if candle_times[-1] + 3_600_000 > now_ms:
+            return _degraded(row, generated_at_utc, "Latest 1H candle is not yet completed")
+        candle_age_hours = (now_ms - candle_times[-1]) / 3_600_000
         if candle_age_hours < 0 or candle_age_hours > 2:
             return _degraded(row, generated_at_utc, "Latest completed 1H candle is stale or from the future")
 
@@ -239,6 +247,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             "candle_confirmation": _candle_confirmation(candles, direction),
             "market_structure": _higher_low_or_lower_high(candles, direction),
             "anti_chase": abs(entry - ema20_value) / atr_value <= MAX_ENTRY_EXTENSION_ATR,
+            "ticker_candle_price_agreement": abs(entry - close) / atr_value <= 0.5,
         }
         failed = [name for name, passed in gates.items() if not passed]
         metrics = {
@@ -248,6 +257,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             "rsi14": round(rsi_value, 2), "adx14": round(adx_value, 2),
             "volume_ratio_20": round(vol_ratio, 3),
             "entry_extension_atr": round(abs(entry - ema20_value) / atr_value, 3),
+            "ticker_to_candle_deviation_atr": round(abs(entry - close) / atr_value, 3),
         }
         base = {
             "symbol": row.get("symbol"), "side": "BUY" if direction == "LONG" else "SELL",
