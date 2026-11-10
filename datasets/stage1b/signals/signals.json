@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-10T04:42:54.847221+00:00",
+  "generated_at_utc": "2026-11-10T08:49:11.998746+00:00",
   "stage": "1b-test",
   "engine": "LRT-15m",
   "universe_count": 27,
@@ -364,7 +364,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -395,12 +395,12 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -444,9 +444,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.15,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -461,9 +461,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -704,9 +704,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -721,11 +721,11 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.2,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -956,7 +956,7 @@
       "gate_diagnostics": [
         {
           "direction": "BUY",
-          "LIQUIDITY_SWEEP_GATE": "PASS",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
@@ -966,7 +966,7 @@
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.25,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -975,7 +975,7 @@
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
-          "ZONE_DISTANCE_PCT": 0.958508,
+          "ZONE_DISTANCE_PCT": 0.945626,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
@@ -1014,7 +1014,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BULLISH",
-        "1h_kijun": "BULLISH"
+        "1h_kijun": "BEARISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -1028,10 +1028,10 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.2,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1354,11 +1354,11 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.4,
+          "LFS_SCORE": 0.25,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         },
         {
@@ -1371,11 +1371,11 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.2,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "FAIL",
+          "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1430,7 +1430,7 @@
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.015202,
+          "ZONE_DISTANCE_PCT": 0.0228,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "PASS",
           "CROSS_10_GATE": "PASS",
@@ -1468,7 +1468,7 @@
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
-        "4h_kumo": "BEARISH",
+        "4h_kumo": "RANGE",
         "1h_kijun": "BEARISH"
       },
       "cvd_source": "PROXY_OHLCV",
@@ -1483,7 +1483,7 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
           "LFS_SCORE": 0.0,
@@ -1500,12 +1500,12 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_HIGHER_TF_BIAS_INCOMPLETE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
