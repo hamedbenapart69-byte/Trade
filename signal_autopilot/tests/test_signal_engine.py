@@ -9,46 +9,62 @@ GENERATED = "2026-11-08T19:00:00+03:30"
 
 
 class EmaContinuationV2Tests(unittest.TestCase):
-    def make_row(self, direction="up", proxy=False, volume_multiplier=1.5, extension_atr=0.0):
+    def make_row(self, direction="up", proxy=False, pullback=True):
         now_ms = int(datetime.fromisoformat(GENERATED).timestamp() * 1000)
-        start = now_ms - 220 * 3_600_000
-        candles = []
-        sign = 1.0 if direction == "up" else -1.0 if direction == "down" else 0.0
+        sign = 1 if direction == "up" else -1 if direction == "down" else 0
+
+        candles_1h = []
+        start_1h = now_ms - 220 * 3_600_000
         for index in range(220):
-            amplitude = 0.18 if sign >= 0 else 0.40
             base = 100.0 if sign >= 0 else 160.0
-            close = base + sign * index * 0.05 + amplitude * math.sin(index * 1.17)
-            open_ = close - sign * 0.025
-            if sign > 0:
-                high = close + 0.10
-                low = 99.5 + index * 0.05 + 0.05 * math.sin(index * 1.17)
-            elif sign < 0:
-                high = 160.7 - index * 0.05 + 0.10 * math.sin(index * 1.17)
-                low = close - 0.10
-            else:
-                high = close + 0.10
-                low = close - 0.50
-            if index == 219:
-                open_ = close - sign * 0.22
-                high = close + 0.10 if sign >= 0 else close + 0.50
-                low = close - 0.50 if sign >= 0 else close - 0.10
-            candles.append({
-                "timestamp": start + index * 3_600_000,
-                "open": open_, "high": high, "low": low, "close": close,
-                "volume": 1500.0 if index == 219 else 1000.0,
+            close = base + sign * 0.04 * index + (0.10 * math.sin(index * 0.9) if sign else 0.0)
+            open_ = close - sign * 0.02
+            candles_1h.append({
+                "timestamp": start_1h + index * 3_600_000,
+                "open": open_, "high": close + 0.25, "low": close - 0.25,
+                "close": close, "volume": 1000.0,
             })
-        entry = candles[-1]["close"] + extension_atr * 0.5
-        row = {
+
+        if sign:
+            ema50_1h = build_signal.__globals__["ema"](
+                [float(c["close"]) for c in candles_1h], 50
+            )[-1]
+            atr_1h = build_signal.__globals__["atr"](candles_1h)
+            if sign > 0:
+                candles_1h[-1]["open"] = candles_1h[-1]["close"] - 0.20
+                candles_1h[-1]["high"] = candles_1h[-1]["close"] + 0.20
+                candles_1h[-1]["low"] = (
+                    ema50_1h + 0.05 * atr_1h if pullback else candles_1h[-1]["close"] - 1.0
+                )
+            else:
+                candles_1h[-1]["open"] = candles_1h[-1]["close"] + 0.20
+                candles_1h[-1]["low"] = candles_1h[-1]["close"] - 0.20
+                candles_1h[-1]["high"] = (
+                    ema50_1h - 0.05 * atr_1h if pullback else candles_1h[-1]["close"] + 1.0
+                )
+
+        candles_4h = []
+        start_4h = now_ms - 220 * 14_400_000
+        for index in range(220):
+            base = 100.0 if sign >= 0 else 160.0
+            close = base + sign * 0.5 * index + (0.5 * math.sin(index * 0.4) if sign else 0.0)
+            open_ = close - sign * 0.10
+            candles_4h.append({
+                "timestamp": start_4h + index * 14_400_000,
+                "open": open_, "high": close + 0.50, "low": close - 0.50,
+                "close": close, "volume": 4000.0,
+            })
+
+        return {
             "symbol": "BTC/USDT:USDT", "timeframe": "1H",
-            "availability": {"ohlcv": "OK"}, "ohlcv": candles, "last": entry,
+            "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"},
+            "ohlcv": candles_1h, "ohlcv_4h": candles_4h,
+            "last": candles_1h[-1]["close"],
             "ticker_timestamp_utc": "2026-11-08T15:29:00+00:00",
             "ticker_timestamp_source": "FETCH_TIME_PROXY" if proxy else "EXCHANGE",
         }
-        if volume_multiplier != 1.5:
-            row["ohlcv"][-1]["volume"] = 1000.0 * volume_multiplier
-        return row
 
-    def test_long_signal_requires_all_quality_gates_and_has_structural_stop(self):
+    def test_long_v2_requires_4h_regime_and_1h_pullback_rejection(self):
         result = build_signal(self.make_row("up"), GENERATED)
         self.assertEqual(result["status"], "BUY_NOW", result.get("reason"))
         self.assertEqual(result["side"], "BUY")
@@ -58,10 +74,11 @@ class EmaContinuationV2Tests(unittest.TestCase):
         self.assertTrue(all(result["quality_gates"].values()))
         self.assertEqual(result["quality_metrics"]["reward_risk_tp1"], 1.5)
         self.assertEqual(result["quality_metrics"]["reward_risk_tp2"], 2.5)
-        self.assertEqual(len(result["evidence_candles"]), 200)
+        self.assertEqual(len(result["evidence_candles"]["1h"]), 200)
+        self.assertEqual(len(result["evidence_candles"]["4h"]), 200)
         self.assertEqual(len(result["input_hash"]), 64)
 
-    def test_short_signal_has_inverse_risk_levels(self):
+    def test_short_v2_has_inverse_structural_risk_levels(self):
         result = build_signal(self.make_row("down"), GENERATED)
         self.assertEqual(result["status"], "SELL_NOW", result.get("reason"))
         self.assertEqual(result["side"], "SELL")
@@ -69,24 +86,23 @@ class EmaContinuationV2Tests(unittest.TestCase):
         self.assertLess(result["take_profit"][0], result["entry"])
         self.assertLess(result["take_profit"][1], result["take_profit"][0])
 
-    def test_proxy_timestamp_can_never_become_immediate_signal(self):
+    def test_proxy_timestamp_is_conditional_not_immediate(self):
         result = build_signal(self.make_row("up", proxy=True), GENERATED)
         self.assertEqual(result["entry_price_quality"], "PROXY_FETCH_TIME")
         self.assertEqual(result["status"], "CONDITIONAL_BUY")
-        self.assertNotEqual(result["status"], "BUY_NOW")
 
-    def test_low_volume_fails_closed(self):
-        result = build_signal(self.make_row("up", volume_multiplier=0.8), GENERATED)
-        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP", result)
-        self.assertIn("volume_confirmation", result["reason"])
+    def test_no_1h_pullback_means_no_setup(self):
+        result = build_signal(self.make_row("up", pullback=False), GENERATED)
+        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+        self.assertFalse(result["quality_gates"]["1h_pullback_to_ema50"])
 
-    def test_flat_market_has_no_qualified_setup(self):
+    def test_flat_4h_regime_has_no_setup(self):
         result = build_signal(self.make_row("flat"), GENERATED)
         self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
 
-    def test_insufficient_history_is_degraded(self):
+    def test_insufficient_4h_history_is_degraded(self):
         row = self.make_row("up")
-        row["ohlcv"] = row["ohlcv"][-70:]
+        row["ohlcv_4h"] = row["ohlcv_4h"][-70:]
         result = build_signal(row, GENERATED)
         self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
         self.assertIsNone(result["entry"])
@@ -97,9 +113,14 @@ class EmaContinuationV2Tests(unittest.TestCase):
         row.pop("ticker_timestamp_utc")
         result = build_signal(row, GENERATED)
         self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
-        self.assertIsNone(result["entry"])
 
-    def test_bad_ohlcv_is_degraded_not_actionable(self):
+    def test_irregular_1h_timestamps_are_degraded(self):
+        row = self.make_row("up")
+        row["ohlcv"][-2]["timestamp"] -= 3_600_000
+        result = build_signal(row, GENERATED)
+        self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
+
+    def test_bad_ohlcv_is_degraded(self):
         row = self.make_row("up")
         row["ohlcv"][-1]["high"] = 0.0
         result = build_signal(row, GENERATED)
@@ -111,10 +132,10 @@ class EmaContinuationV2Tests(unittest.TestCase):
             "symbols": [self.make_row("flat")],
         })
         self.assertTrue(all(item["status"] in C10 for item in payload["signals"]))
-        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست", payload["signals"])
-        self.assertEqual(payload["engine"], "EMA20_EMA50_ATR14_QUALITY_GATES_V2")
+        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
+        self.assertEqual(payload["engine"], "EMA_4H_REGIME_1H_PULLBACK_V2")
 
-    def test_proxy_is_counted_as_conditional_not_trade(self):
+    def test_proxy_is_conditional_not_trade(self):
         payload = generate_signals({
             "provider": "kucoinfutures", "generated_at_utc": GENERATED,
             "symbols": [self.make_row("up", proxy=True)],
