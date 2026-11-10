@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-09T23:20:55.773480+00:00",
+  "generated_at_utc": "2026-11-10T00:34:35.618437+00:00",
   "stage": "1b-test",
   "engine": "LRT-15m",
   "universe_count": 27,
@@ -51,7 +51,7 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
@@ -64,16 +64,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.285338,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.2,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -104,7 +104,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -119,9 +119,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -129,18 +129,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.435975,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -169,7 +169,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -184,9 +184,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -194,18 +194,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.214439,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -246,7 +246,7 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
@@ -259,16 +259,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.439306,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -311,7 +311,7 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
@@ -324,16 +324,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.368539,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -389,16 +389,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.342661,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -429,7 +429,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -444,9 +444,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -454,18 +454,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.464239,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -493,14 +493,31 @@
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
-        "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
       "gate_diagnostics": [
         {
           "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.35,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
           "ZONE_DISTANCE_PCT": null,
@@ -514,23 +531,6 @@
           "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
-          "QUALIFIED_SETUP_GATE": "FAIL"
-        },
-        {
-          "direction": "SELL",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.428589,
-          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "FAIL",
-          "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
-          "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
-          "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -559,7 +559,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -571,7 +571,7 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
@@ -584,18 +584,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.374784,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -624,7 +624,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -649,18 +649,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.479329,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -714,16 +714,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.238693,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -754,7 +754,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -779,18 +779,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.41841,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -831,7 +831,7 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "FAIL",
@@ -844,18 +844,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.223658,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -884,14 +884,14 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
       "gate_diagnostics": [
         {
           "direction": "BUY",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "LIQUIDITY_SWEEP_GATE": "PASS",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
@@ -901,7 +901,7 @@
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.25,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -910,15 +910,15 @@
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.42735,
+          "ZONE_DISTANCE_PCT": 0.042968,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "PASS",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -949,14 +949,14 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
       "gate_diagnostics": [
         {
           "direction": "BUY",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "LIQUIDITY_SWEEP_GATE": "PASS",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
@@ -966,7 +966,7 @@
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.25,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -974,18 +974,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.336791,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": 0.958508,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1029,11 +1029,11 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.2,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         },
         {
@@ -1046,9 +1046,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1079,7 +1079,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -1104,18 +1104,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.309306,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1144,7 +1144,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -1169,18 +1169,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.450835,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1209,7 +1209,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -1224,9 +1224,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.15,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1234,18 +1234,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.106035,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "FAIL",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.4,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1274,7 +1274,7 @@
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
         "4h_kumo": "BEARISH",
-        "1h_kijun": "BEARISH"
+        "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
       "CVD_SOURCE": "PROXY_OHLCV",
@@ -1299,18 +1299,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.160256,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
@@ -1346,7 +1346,7 @@
       "gate_diagnostics": [
         {
           "direction": "BUY",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "LIQUIDITY_SWEEP_GATE": "PASS",
           "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
@@ -1354,26 +1354,91 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.4,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        },
+        {
+          "direction": "SELL",
+          "LIQUIDITY_SWEEP_GATE": "FAIL",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.2,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
+          "QUALIFIED_SETUP_GATE": "FAIL"
+        }
+      ],
+      "data_sources": [
+        "BINANCE_VISION_KLINES",
+        "OKX_PUBLIC_SWAP_CANDLE"
+      ],
+      "lfs_weights": {
+        "liquidity_sweep": 0.25,
+        "order_block": 0.2,
+        "fair_value_gap": 0.2,
+        "ichimoku_bias": 0.2,
+        "cvd": 0.15
+      }
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "timeframe": "15m",
+      "decision": "NO_QUALIFIED_SETUP",
+      "tier": null,
+      "reason": "NO_QUALIFIED_LRT15M_SETUP",
+      "rows_available": 70080,
+      "confidence": "NOT_CALIBRATED",
+      "brier_score": "NOT_CALIBRATED",
+      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
+      "status": "UNCALIBRATED",
+      "higher_timeframe_bias": {
+        "4h_kumo": "BULLISH",
+        "1h_kijun": "BULLISH"
+      },
+      "cvd_source": "PROXY_OHLCV",
+      "CVD_SOURCE": "PROXY_OHLCV",
+      "gate_diagnostics": [
+        {
+          "direction": "BUY",
+          "LIQUIDITY_SWEEP_GATE": "PASS",
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
+          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
+          "CROSS_LOOKBACK": 10,
+          "HTF_BIAS_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_SOURCE": "PROXY_OHLCV",
+          "LFS_SCORE": 0.45,
+          "LFS_THRESHOLD": 0.3,
+          "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
         },
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
           "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.486494,
+          "ZONE_DISTANCE_PCT": 0.015202,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1392,7 +1457,7 @@
       }
     },
     {
-      "symbol": "AAVEUSDT",
+      "symbol": "QNTUSDT",
       "timeframe": "15m",
       "decision": "NO_QUALIFIED_SETUP",
       "tier": null,
@@ -1429,16 +1494,16 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.237888,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "PASS",
-          "CROSS_10_GATE": "PASS",
+          "ZONE_DISTANCE_GATE": "FAIL",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.55,
+          "LFS_SCORE": 0.35,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "PASS",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1457,7 +1522,7 @@
       }
     },
     {
-      "symbol": "QNTUSDT",
+      "symbol": "RSRUSDT",
       "timeframe": "15m",
       "decision": "NO_QUALIFIED_SETUP",
       "tier": null,
@@ -1468,7 +1533,7 @@
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
-        "4h_kumo": "RANGE",
+        "4h_kumo": "BULLISH",
         "1h_kijun": "BEARISH"
       },
       "cvd_source": "PROXY_OHLCV",
@@ -1500,75 +1565,10 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "FAIL:WATCHLIST_HIGHER_TF_BIAS_INCOMPLETE",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
           "LFS_SCORE": 0.0,
-          "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "FAIL",
-          "QUALIFIED_SETUP_GATE": "FAIL"
-        }
-      ],
-      "data_sources": [
-        "BINANCE_VISION_KLINES",
-        "OKX_PUBLIC_SWAP_CANDLE"
-      ],
-      "lfs_weights": {
-        "liquidity_sweep": 0.25,
-        "order_block": 0.2,
-        "fair_value_gap": 0.2,
-        "ichimoku_bias": 0.2,
-        "cvd": 0.15
-      }
-    },
-    {
-      "symbol": "RSRUSDT",
-      "timeframe": "15m",
-      "decision": "NO_QUALIFIED_SETUP",
-      "tier": null,
-      "reason": "NO_QUALIFIED_LRT15M_SETUP",
-      "rows_available": 70080,
-      "confidence": "NOT_CALIBRATED",
-      "brier_score": "NOT_CALIBRATED",
-      "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
-      "status": "UNCALIBRATED",
-      "higher_timeframe_bias": {
-        "4h_kumo": "BULLISH",
-        "1h_kijun": "BULLISH"
-      },
-      "cvd_source": "PROXY_OHLCV",
-      "CVD_SOURCE": "PROXY_OHLCV",
-      "gate_diagnostics": [
-        {
-          "direction": "BUY",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
-          "ZONE_DISTANCE_PCT": null,
-          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
-          "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "PASS",
-          "CVD_DIRECTION_GATE": "FAIL",
-          "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.2,
-          "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "FAIL",
-          "QUALIFIED_SETUP_GATE": "FAIL"
-        },
-        {
-          "direction": "SELL",
-          "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
-          "ZONE_DISTANCE_PCT": null,
-          "ZONE_DISTANCE_LIMIT_PCT": 0.8,
-          "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "PASS",
-          "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "PASS",
-          "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1614,9 +1614,9 @@
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
-          "CVD_DIRECTION_GATE": "FAIL",
+          "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1628,12 +1628,12 @@
           "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "FAIL",
+          "CROSS_10_GATE": "PASS",
           "CROSS_LOOKBACK": 10,
           "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
-          "CVD_DIRECTION_GATE": "PASS",
+          "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.15,
+          "LFS_SCORE": 0.0,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1728,7 +1728,7 @@
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
-        "4h_kumo": "BEARISH",
+        "4h_kumo": "BULLISH",
         "1h_kijun": "BULLISH"
       },
       "cvd_source": "PROXY_OHLCV",
@@ -1743,10 +1743,10 @@
           "ZONE_DISTANCE_GATE": "FAIL",
           "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
+          "HTF_BIAS_GATE": "PASS",
           "CVD_DIRECTION_GATE": "FAIL",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.0,
+          "LFS_SCORE": 0.2,
           "LFS_THRESHOLD": 0.3,
           "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
@@ -1754,18 +1754,18 @@
         {
           "direction": "SELL",
           "LIQUIDITY_SWEEP_GATE": "FAIL",
-          "ORDER_BLOCK_OR_FVG_GATE": "PASS",
-          "ZONE_DISTANCE_PCT": 0.809627,
+          "ORDER_BLOCK_OR_FVG_GATE": "FAIL",
+          "ZONE_DISTANCE_PCT": null,
           "ZONE_DISTANCE_LIMIT_PCT": 0.8,
           "ZONE_DISTANCE_GATE": "FAIL",
-          "CROSS_10_GATE": "PASS",
+          "CROSS_10_GATE": "FAIL",
           "CROSS_LOOKBACK": 10,
-          "HTF_BIAS_GATE": "FAIL:WATCHLIST_1H_KIJUN_OPPOSITE",
+          "HTF_BIAS_GATE": "FAIL:WATCHLIST_4H_KUMO_OPPOSITE",
           "CVD_DIRECTION_GATE": "PASS",
           "CVD_SOURCE": "PROXY_OHLCV",
-          "LFS_SCORE": 0.35,
+          "LFS_SCORE": 0.15,
           "LFS_THRESHOLD": 0.3,
-          "LFS_SCORE_GATE": "PASS",
+          "LFS_SCORE_GATE": "FAIL",
           "QUALIFIED_SETUP_GATE": "FAIL"
         }
       ],
