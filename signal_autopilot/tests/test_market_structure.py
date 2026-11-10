@@ -74,6 +74,38 @@ class ConfirmedSwingTests(unittest.TestCase):
         self.assertEqual(low["pivot_index"], 2)
         self.assertEqual(low["confirmed_at_index"], 4)
 
+    def test_fvg_results_are_prefix_stable(self):
+        prefix = [
+            candle(10, 11, 9, 10),
+            candle(10, 13, 10, 12),
+            candle(14, 15, 13, 14),
+        ]
+        extended = prefix + [candle(14, 16, 13, 15), candle(15, 17, 14, 16)]
+        self.assertEqual(
+            detect_fair_value_gaps(prefix),
+            detect_fair_value_gaps(extended)[:1],
+        )
+
+    def test_confirmed_swings_do_not_repaint_after_confirmation(self):
+        prefix = [
+            candle(8, 9, 7, 8),
+            candle(9, 10, 8, 9),
+            candle(10, 15, 9, 14),
+            candle(9, 11, 8, 9),
+            candle(8, 9, 7, 8),
+        ]
+        extended = prefix + [
+            candle(9, 12, 8, 11),
+            candle(10, 11, 9, 10),
+            candle(8, 9, 7, 8),
+        ]
+        known = detect_confirmed_swings(prefix, span=2)
+        later = [
+            point for point in detect_confirmed_swings(extended, span=2)
+            if point["confirmed_at_index"] < len(prefix)
+        ]
+        self.assertEqual(known, later)
+
     def test_span_must_be_positive(self):
         with self.assertRaises(ValueError):
             detect_confirmed_swings([], span=0)
