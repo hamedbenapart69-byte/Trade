@@ -77,7 +77,7 @@ This is a technically viable zero-key/public-data route for a bounded recent tra
 | H5 imbalance breakout | 2y 1h OHLCV | Price-only proxy tested; real delta version blocked |
 | H6 breakout/retest | 2y 1h OHLCV | Tested as OHLCV event pre-screen |
 | H7 HTF/LTF gate | 2y 1h OHLCV; 4h resampled | Tested as OHLCV filter pre-screen |
-| H8 Direction/Location/Confirmation | Component definitions overlap H1/H5/H7; no distinct ablation protocol yet | Framework only; no independent strategy claim |
+| H8 Direction/Location/Confirmation | H1/H5 price triggers plus completed 4h EMA20/EMA50 direction filter | H8_LRT_DLC and H8_NMT_DLC pre-screened separately; only direction-gate ablation is complete, not independent location/confirmation ablations |
 
 ## 4. Decision and next evidence required
 
@@ -87,6 +87,6 @@ This is a technically viable zero-key/public-data route for a bounded recent tra
 4. H3 requires at least a validated, continuous trade-side series with contract-size normalization and timestamp checks.
 5. H4 additionally requires synchronized order-book snapshots/deltas with sequence continuity. A one-time snapshot cannot substitute for this.
 6. A full H2 real profile implementation requires actual volume-at-price data or sufficiently granular trade prints, with a fixed 24/7 session definition.
-7. H8 must remain a framework until its direction, location and confirmation gates are independently specified and ablated without duplicating the already-tested H1/H5/H7 triggers.
+7. H8 now has two isolated price-only variants: H1 + completed 4h direction gate for LRT, and H5 + completed 4h direction gate for NMT. The direction-gate ablation is tested against unfiltered H1/H5; location and confirmation have not been separately ablated. Do not treat these variants as validated strategies.
 
 **Disposition:** Current data supports OHLCV research prototypes only. Real order-flow and volume-profile claims remain blocked. No production integration or strategy acceptance is authorized by this audit.
