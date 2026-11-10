@@ -6,6 +6,12 @@ on:
       - "pyproject.toml"
       - "signal_autopilot/**"
       - ".github/workflows/pytest.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - "signal_autopilot/**"
+      - ".github/workflows/pytest.yml"
   workflow_dispatch:
 permissions:
   contents: read
