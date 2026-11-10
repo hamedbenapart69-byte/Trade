@@ -1,25 +1,20 @@
-name: Deploy Railway after green CI
+name: Railway Deployment (Manual Opt-In Only)
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy current tested commit to Railway production
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    name: Optional Railway deployment (requires ENABLE_RAILWAY_DEPLOY=true)
+    if: ${{ vars.ENABLE_RAILWAY_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout the exact commit tested by CI
+      - name: Check out the manually selected branch commit
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Check for Railway project token without printing it
         id: token
