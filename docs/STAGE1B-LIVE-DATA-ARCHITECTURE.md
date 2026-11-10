@@ -24,4 +24,4 @@ The former scheduled job re-downloaded a complete 730-day Parquet snapshot every
 - No trading credentials, private endpoints, order placement, or paid data services are used.
 
 ## Operational limits
-The live tail fetch is bounded to 100 candles per symbol per run. If a longer gap occurs, the symbol is marked degraded rather than pretending the missing interval was repaired. Baseline migration removes duplicate date-stamped snapshots from the current branch tree; it does not rewrite Git history or force-push.
+The live tail repair is bounded to seven days per symbol per run and fetched in API chunks of at most 100 candles. A longer gap is marked degraded rather than pretending the missing interval was repaired. Baseline migration removes duplicate date-stamped snapshots from the current branch tree; it does not rewrite Git history or force-push.
