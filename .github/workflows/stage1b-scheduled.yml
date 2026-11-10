@@ -1,8 +1,9 @@
 name: Stage 1b - LRT 15m data maintenance (P0 data-only)
 
 on:
-  # اجرای واقعی فقط با dispatch یا Trigger موقت محدود به شاخهٔ آزمایشی.
-  workflow_dispatch:
+  # Trigger موقت P0؛ فقط روی همین شاخه اجرا می‌شود و پس از Run برگردانده خواهد شد.
+  push:
+    branches: [p0-stage1b-run-20261110]
 
 permissions:
   contents: write
