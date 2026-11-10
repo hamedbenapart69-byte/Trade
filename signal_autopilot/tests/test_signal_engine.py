@@ -74,7 +74,7 @@ class EmaContinuationV2Tests(unittest.TestCase):
 
     def test_low_volume_fails_closed(self):
         result = build_signal(self.make_row("up", volume_multiplier=0.8), GENERATED)
-        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP", result)
         self.assertIn("volume_confirmation", result["reason"])
 
     def test_flat_market_has_no_qualified_setup(self):
@@ -108,7 +108,7 @@ class EmaContinuationV2Tests(unittest.TestCase):
             "symbols": [self.make_row("flat")],
         })
         self.assertTrue(all(item["status"] in C10 for item in payload["signals"]))
-        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
+        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست", payload["signals"])
         self.assertEqual(payload["engine"], "EMA20_EMA50_ATR14_QUALITY_GATES_V2")
 
     def test_proxy_is_counted_as_conditional_not_trade(self):
