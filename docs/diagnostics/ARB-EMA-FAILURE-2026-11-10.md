@@ -124,3 +124,15 @@ Budget: Maximum three versions; current V2 is the only proposed successor.
 3. Costs included? Not yet in this isolated EMA engine's setup qualification; fee/slippage/funding must be included in paper/OOS evaluation before performance claims.
 4. No-signal reporting? Yes, C10 states remain supported; conditional and degraded states are explicit.
 5. Weakest assumption? The chosen RSI/ADX/volume/structure cutoffs may reduce false positives but have not been proven to improve OOS expectancy. Only walk-forward evidence can answer that.
+
+
+## Implementation follow-up — 2026-11-10 09:17 UTC
+
+- Added paginated 4H OHLCV retrieval: requests are capped at 300 bars per page and continue by timestamp until 701 raw bars are collected (700 required completed bars plus one in-progress-bar allowance).
+- Anchored the history window to the latest required completed interval; this avoids returning a sufficiently long but stale window that would fail the candle-freshness gate.
+- Added a deterministic pagination test proving three requests produce exactly 700 latest completed 4H bars after the current incomplete candle is removed.
+- Latest branch head: 93439747fe88806cf57946bdc6ad70edc664a4e0.
+- GitHub Actions on this head: repository CI PASS; pytest PASS; Futures Signals Pipeline PR validation PASS. Root suite: 127 tests PASS. Signal-autopilot suite: 40 tests PASS.
+- These PR workflows skip the live data-fetch/Telegram/publication steps. No live signal activation or Telegram runtime delivery is proven by these checks.
+- Walk-forward workflow completed technically, but its output is still the V1 baseline only: 53,043 trades, 42.51% win rate, PF 0.9042, and gate BLOCKED because funding history is incomplete and DSR/PBO plus baseline comparison are not implemented. This is not a V2 OOS result.
+- V2 remains PENDING. It must not be merged into the active production branch or represented as profitable/calibrated until V2-specific OOS validation, cost-aware portfolio drawdown, calibration and paper/shadow evidence pass the existing gates.
