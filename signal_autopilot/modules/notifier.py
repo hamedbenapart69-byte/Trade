@@ -396,7 +396,6 @@ def notify_tier_a(payload: dict) -> dict:
         destination: _notify_tier_a_single_destination(payload, chat_id, destination)
         for destination, chat_id in destinations
     }
-    _finalize_delivery_metadata(payload)
     if len(results) == 1:
         return next(iter(results.values()))
 
