@@ -1,10 +1,8 @@
 name: Stage 1b - LRT 15m - 27 symbols
 
 on:
-  push:
-    branches: [stage1b-lrt15m]
-  schedule:
-    - cron: "0 */4 * * *"
+  # Full 730-day backfill is intentionally manual until incremental refresh
+  # and storage growth controls are implemented and verified.
   workflow_dispatch:
 
 permissions:
@@ -12,7 +10,7 @@ permissions:
 
 concurrency:
   group: stage1b-lrt15m-history
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   stage1b-test:
@@ -71,8 +69,82 @@ jobs:
             --output-dir market-data/datasets/stage1b/lrt15m \
             --report signal_autopilot/data/stage1b_15m_data_report.json
 
+      - name: Build SHA-256 dataset manifest
+        if: steps.download15m.outcome == 'success'
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import pyarrow.parquet as pq
+
+          root = Path("market-data/datasets/stage1b/lrt15m")
+          files = sorted(root.glob("*.parquet"))
+          if not files:
+              raise SystemExit("DATASET_MANIFEST_FAIL: no parquet files found")
+
+          records = []
+          for path in files:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              metadata = pq.ParquetFile(path).metadata
+              symbol = path.name.split("_15m_", 1)[0]
+              if metadata.num_rows <= 0 or path.stat().st_size <= 0:
+                  raise SystemExit(f"DATASET_MANIFEST_FAIL: empty parquet: {path.name}")
+              records.append({
+                  "path": str(path.relative_to(root.parent)),
+                  "symbol": symbol,
+                  "size_bytes": path.stat().st_size,
+                  "rows": metadata.num_rows,
+                  "sha256": digest.hexdigest(),
+              })
+
+          counts = Counter(row["symbol"] for row in records)
+          symbols = sorted(counts)
+          if len(symbols) != 27:
+              raise SystemExit(f"DATASET_MANIFEST_FAIL: expected 27 symbols, got {len(symbols)}")
+
+          canonical = json.dumps(records, sort_keys=True, separators=(",", ":")).encode()
+          manifest = {
+              "schema_version": 1,
+              "dataset": "stage1b_lrt15m",
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "source_commit": os.environ["GITHUB_SHA"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "files_count": len(records),
+              "symbols_count": len(symbols),
+              "symbols": symbols,
+              "snapshot_files_per_symbol": dict(sorted(counts.items())),
+              "duplicate_snapshot_symbols": sorted(k for k, v in counts.items() if v > 1),
+              "rows_total": sum(row["rows"] for row in records),
+              "files": records,
+              "dataset_sha256": hashlib.sha256(canonical).hexdigest(),
+              "hash_algorithm": "SHA-256",
+              "hash_scope": "canonical sorted list of per-file SHA-256, path, size and row count",
+          }
+          target = Path("market-data/datasets/stage1b/manifest.json")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps({
+              "manifest": str(target),
+              "dataset_sha256": manifest["dataset_sha256"],
+              "files_count": len(records),
+              "symbols_count": len(symbols),
+              "rows_total": manifest["rows_total"],
+              "duplicate_snapshot_symbols": manifest["duplicate_snapshot_symbols"],
+          }, ensure_ascii=False))
+          PY
+
       - name: Compute LRT-15m signals
-        if: always() && steps.download15m.outcome != 'skipped'
+        if: success() && steps.download15m.outcome == 'success'
         run: |
           python signal_autopilot/modules/lrt15m_engine.py \
             --data-dir market-data/datasets/stage1b/lrt15m \
@@ -86,6 +158,7 @@ jobs:
           name: stage1b-lrt15m-evidence
           path: |
             signal_autopilot/data/stage1b_15m_data_report.json
+            market-data/datasets/stage1b/manifest.json
             market-data/datasets/stage1b/signals/signals.json
           if-no-files-found: warn
           retention-days: 30
@@ -96,7 +169,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add datasets/stage1b/lrt15m datasets/stage1b/signals
+          git add datasets/stage1b/lrt15m datasets/stage1b/signals datasets/stage1b/manifest.json
           if ! git diff --cached --quiet; then
             git commit -m "Add validated Stage 1b LRT 15m data and signals"
             # The order-book collector writes to the same branch. Rebase before
@@ -169,7 +242,11 @@ jobs:
             git -C signals-publish commit -m "data: publish LRT-15m report"
             for attempt in 1 2 3; do
               git -C signals-publish fetch origin signals
-              git -C signals-publish rebase origin/signals
+              if ! git -C signals-publish rebase origin/signals; then
+                git -C signals-publish rebase --abort || true
+                echo "Rebase conflict on signals branch; refusing a force push"
+                exit 1
+              fi
               if git -C signals-publish push origin HEAD:signals; then
                 exit 0
               fi
