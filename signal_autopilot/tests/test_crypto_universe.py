@@ -193,6 +193,25 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertIn(exchange, self.fetcher.exchanges)
 
 
+    def test_whitebit_provider_uses_public_swap_configuration(self):
+        with patch("modules.data_fetcher.ccxt.whitebit") as exchange_class:
+            exchange = self.fetcher._new_exchange("whitebit")
+        exchange_class.assert_called_once()
+        self.assertIs(exchange, exchange_class.return_value)
+
+    def test_xt_provider_uses_public_swap_configuration(self):
+        with patch("modules.data_fetcher.ccxt.xt") as exchange_class:
+            exchange = self.fetcher._new_exchange("xt")
+        exchange_class.assert_called_once()
+        self.assertIs(exchange, exchange_class.return_value)
+
+    def test_deepcoin_provider_uses_public_swap_configuration(self):
+        with patch("modules.data_fetcher.ccxt.deepcoin") as exchange_class:
+            exchange = self.fetcher._new_exchange("deepcoin")
+        exchange_class.assert_called_once()
+        self.assertIs(exchange, exchange_class.return_value)
+
+
     def test_provider_error_classifies_geoblocks_separately_from_rate_limits(self):
         self.assertEqual(
             MarketDataFetcher._provider_error_status(
