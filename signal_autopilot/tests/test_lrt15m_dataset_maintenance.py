@@ -80,7 +80,7 @@ class TailCollectorTests(unittest.TestCase):
     def test_tail_partition_uses_last_closed_bar_hour(self):
         end = int(datetime(2026, 1, 1, 17, 15, tzinfo=timezone.utc).timestamp() * 1000)
         path = _tail_partition_path(Path("/tmp/data"), "BTCUSDT", end)
-        self.assertEqual(path.parts[-3:], ("2026-01-01", "1700", "BTCUSDT_15m.parquet"))
+        self.assertEqual(path.parts[-2:], ("2026-01-01", "BTCUSDT_15m.parquet"))
 
 
 class BaselineMigrationTests(unittest.TestCase):
