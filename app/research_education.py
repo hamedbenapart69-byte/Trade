@@ -243,6 +243,67 @@ def detect_breakout_acceptance(
     return events
 
 
+def detect_value_boundary_rejections(
+    candles: Sequence[Candle],
+    lookback: int = 24,
+    rejection_bars: int = 2,
+) -> list[ResearchEvent]:
+    """H2_TIME_REJECTION_PROXY: شکست مرز دامنهٔ ۲۴ساعته و بازگشت پایدار به داخل.
+
+    این فقط پذیرش/رد زمانیِ قیمت بر پایهٔ OHLCV یک‌ساعته است؛
+    Volume Profile، POC، VAH یا VAL واقعی محاسبه نمی‌شود.
+    سیگنال پس از بسته‌شدن همهٔ کندل‌های بازگشت ثبت می‌شود.
+    """
+    if (
+        lookback < 2
+        or rejection_bars < 1
+        or not _valid_series(candles)
+    ):
+        return []
+
+    events: list[ResearchEvent] = []
+    i = lookback
+    while i + rejection_bars < len(candles):
+        prior = candles[i - lookback : i]
+        upper = max(c.high for c in prior)
+        lower = min(c.low for c in prior)
+        breakout = candles[i]
+
+        side: Side | None = None
+        level = 0.0
+        if breakout.close > upper:
+            side, level = "SHORT", upper
+        elif breakout.close < lower:
+            side, level = "LONG", lower
+
+        if side is None:
+            i += 1
+            continue
+
+        confirmation = candles[i + 1 : i + rejection_bars + 1]
+        if side == "SHORT":
+            rejected = all(c.close < level for c in confirmation)
+        else:
+            rejected = all(c.close > level for c in confirmation)
+
+        if rejected:
+            signal_index = i + rejection_bars
+            events.append(
+                ResearchEvent(
+                    "H2_TIME_REJECTION_PROXY",
+                    side,
+                    signal_index,
+                    level,
+                    i,
+                    "two_completed_closes_returned_inside_prior_rolling_range",
+                )
+            )
+            i = signal_index + 1
+        else:
+            i += 1
+    return events
+
+
 def higher_timeframe_bias(
     candles: Sequence[Candle],
     fast_period: int = 20,
