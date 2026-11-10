@@ -247,15 +247,17 @@ async def _capture_kucoin(symbols, duration, interval):
                 "privateChannel": False, "response": True}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
         alive_ms = int(time.time() * 1000)
-        ping_every_seconds = max(5, min(15, ping_ms / 1000 * 0.75))
+        # کوکوین پینگ متنی می‌خواهد؛ ارسال پینگ نباید به سکوت بازار وابسته باشد.
+        ping_every_seconds = max(3.0, min(8.0, ping_ms / 1000 * 0.4))
         while time.monotonic() - started < duration:
+            now_mono = time.monotonic()
+            if now_mono - last_ping >= ping_every_seconds:
+                await ws.send(json.dumps({"id": str(int(time.time() * 1000)), "type": "ping"}))
+                last_ping = now_mono
             try:
-                raw = await asyncio.wait_for(ws.recv(), timeout=5)
+                raw = await asyncio.wait_for(ws.recv(), timeout=2)
                 alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
-                if time.monotonic() - last_ping >= ping_every_seconds:
-                    await ws.send(json.dumps({"id": str(int(time.time() * 1000)), "type": "ping"}))
-                    last_ping = time.monotonic()
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
                                       "CONTRACTS", alive_ms, interval * 1000)
