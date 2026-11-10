@@ -1,6 +1,7 @@
 """Read-only market scan, signal computation and resilient publication."""
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timezone
 
@@ -8,6 +9,18 @@ from modules.data_fetcher import MarketDataFetcher
 from modules.signal_engine import generate_signals
 from modules.storage import publish
 from modules.notifier import notify_tier_a, notify_email
+
+
+def hash_market_input(data: dict) -> str:
+    """ساخت هش پایدار SHA-256 از ورودی خام بازار، پیش از محاسبه سیگنال."""
+    canonical = json.dumps(
+        data,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        default=str,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def main() -> None:
@@ -28,7 +41,11 @@ def main() -> None:
         if fetcher is not None:
             fetcher.close()
 
+    # هش فقط ورودی خام دریافت‌شده را شناسایی می‌کند؛ ادعای اعتبار یا کیفیت داده نیست.
+    input_hash = hash_market_input(raw)
     payload = generate_signals(raw)
+    payload["input_hash"] = input_hash
+    payload["input_hash_algorithm"] = "sha256"
     # Defensive contract: the publisher must never crash on optional metadata.
     payload.setdefault("provider", raw.get("provider", "unknown"))
     payload.setdefault("quality", {})
@@ -53,6 +70,8 @@ def main() -> None:
         "message_id_current": payload.get("message_id_current"),
         "message_id_audience": payload.get("message_id_audience"),
         "published_at": payload.get("published_at"),
+        "input_hash": input_hash,
+        "health_status": result.get("health_status", "UNAVAILABLE"),
         "email_fallback": email_notification,
         "manual_trade_only": True,
     }, ensure_ascii=False))

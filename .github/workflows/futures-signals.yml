@@ -91,6 +91,7 @@ jobs:
         working-directory: signal_autopilot
         run: python -m unittest discover -s tests -v
       - name: Fetch data, compute signals and publish dashboard payload
+        if: github.event_name != 'pull_request'
         working-directory: signal_autopilot
         env:
           PYTHONUNBUFFERED: "1"
@@ -106,6 +107,7 @@ jobs:
           SIGNAL_SYMBOL_LIMIT: "100"
         run: python logic.py
       - name: Validate JSON, CSV and C10
+        if: github.event_name != 'pull_request'
         run: |
           python - <<'PY'
           import json
@@ -119,10 +121,18 @@ jobs:
           assert processed <= requested
           if p.get("pipeline_status") == "OK":
               assert processed == requested, "partial universe must be labeled DEGRADED"
+          health=json.loads(Path("signal_autopilot/data/health.json").read_text(encoding="utf-8"))
+          assert len(p.get("input_hash", "")) == 64
+          assert health.get("input_hash_status") == "OK"
+          assert health.get("input_hash") == p.get("input_hash")
+          assert health.get("generated_at_utc") == p.get("generated_at_utc")
+          assert health.get("pipeline_status") == p.get("pipeline_status")
+          assert health.get("manual_trade_only") is True
           assert Path("signal_autopilot/data/history.csv").exists()
           assert Path("web/futures/data/signals.json").exists()
+          assert Path("web/futures/data/health.json").exists()
           assert Path("web/futures/data/history.csv").exists()
-          print("END-TO-END PAYLOAD PASS:",len(p["signals"]))
+          print("END-TO-END PAYLOAD + HEALTH PASS:",len(p["signals"]))
           PY
       - name: Validate static dashboard JavaScript
         run: node --check web/futures/app.js
@@ -137,8 +147,9 @@ jobs:
           python signal_autopilot/scripts/publish_signals_branch.py \
             --source-json signal_autopilot/data/signals.json \
             --source-csv signal_autopilot/data/history.csv \
+            --source-health signal_autopilot/data/health.json \
             --output-dir /tmp/signals-public
-          git -C /tmp/signals-public add signals.json history.csv
+          git -C /tmp/signals-public add signals.json history.csv health.json
           if ! git -C /tmp/signals-public diff --cached --quiet; then
             git -C /tmp/signals-public commit -m "data: publish futures signals snapshot"
             for attempt in 1 2 3; do
