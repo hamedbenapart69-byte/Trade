@@ -34,13 +34,14 @@ def main() -> None:
     payload.setdefault("quality", {})
     payload["quality"].setdefault("symbols_processed", len(raw.get("symbols") or []))
     payload["data_errors"] = raw.get("errors", {})
-    result = publish(payload)
     notification = notify_tier_a(payload)
     email_notification = (
         notify_email(payload)
         if notification.get("status") in ("SKIPPED_NOT_CONFIGURED", "ERROR", "CHAT_NOT_FOUND")
         else {"status": "SKIPPED_NOT_NEEDED", "sent": 0}
     )
+    # شناسه‌های برگشتی تلگرام باید پیش از انتشار snapshot در signals.json ثبت شوند.
+    result = publish(payload)
 
     print(json.dumps({
         "pipeline_status": payload.get("pipeline_status", "DEGRADED"),
@@ -49,6 +50,9 @@ def main() -> None:
         "signals_added_to_history": result.get("signals_added_to_history", 0),
         "signals_total": result.get("signals_total", 0),
         "telegram": notification,
+        "message_id_current": payload.get("message_id_current"),
+        "message_id_audience": payload.get("message_id_audience"),
+        "published_at": payload.get("published_at"),
         "email_fallback": email_notification,
         "manual_trade_only": True,
     }, ensure_ascii=False))

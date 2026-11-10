@@ -67,6 +67,33 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             self.assertEqual(result, {"status": "SENT", "sent": 1})
             self.assertIn("ورود: 100", sent[0])
 
+
+    def test_real_message_id_is_written_to_snapshot_and_signal(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            async def fake_send(token, chat_id, messages):
+                return [987654]
+            payload = {
+                "pipeline_status": "OK",
+                "generated_at_utc": "2026-11-08T12:00:00+00:00",
+                "signals": [{
+                    "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                    "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                }],
+            }
+            with patch.dict(os.environ, {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }, clear=True), patch("modules.notifier._send", new=fake_send):
+                notify_tier_a(payload)
+            self.assertEqual(payload["message_id_current"], {"BTC/USDT:USDT": 987654})
+            self.assertIsNone(payload["message_id_audience"])
+            self.assertIsNotNone(payload["published_at"])
+            self.assertEqual(payload["signals"][0]["message_id_current"], 987654)
+            self.assertEqual(payload["signals"][0]["published_at"], payload["published_at"])
+
     def test_daily_no_signal_message_is_sent_once(self):
         import os
         from modules.notifier import notify_tier_a

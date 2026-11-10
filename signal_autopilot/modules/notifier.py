@@ -26,10 +26,18 @@ def _credentials() -> tuple[str, str]:
     return token, chat_id
 
 
-async def _send(token: str, chat_id: str, messages: list[str]) -> None:
+async def _send(token: str, chat_id: str, messages: list[str]) -> list[int]:
+    """ارسال پیام و بازگرداندن شناسه‌های واقعی برگشتی از Telegram API."""
+    message_ids: list[int] = []
     async with Bot(token=token) as bot:
         for message in messages:
-            await bot.send_message(chat_id=chat_id, text=message, disable_web_page_preview=True)
+            sent_message = await bot.send_message(
+                chat_id=chat_id, text=message, disable_web_page_preview=True
+            )
+            message_id = getattr(sent_message, "message_id", None)
+            if isinstance(message_id, int) and message_id > 0:
+                message_ids.append(message_id)
+    return message_ids
 
 
 async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]]) -> tuple[int, int]:
@@ -40,13 +48,23 @@ async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict
         for signal, caption in signals:
             try:
                 chart = render_signal_chart(signal)
-                await bot.send_photo(chat_id=chat_id, photo=BytesIO(chart), caption=caption[:1024])
+                sent_message = await bot.send_photo(
+                    chat_id=chat_id, photo=BytesIO(chart), caption=caption[:1024]
+                )
+                message_id = getattr(sent_message, "message_id", None)
+                if isinstance(message_id, int) and message_id > 0:
+                    signal["message_id_current"] = message_id
             except Exception:
                 chart_failures += 1
                 LOG.exception("Chart image delivery failed for %s; sending text fallback.", signal.get("symbol"))
-                await bot.send_message(chat_id=chat_id,
+                sent_message = await bot.send_message(
+                    chat_id=chat_id,
                     text=(caption + "\n\n⚠️ تصویر چارت ساخته/ارسال نشد؛ سطوح و تحلیل بالا معتبرِ متنی هستند.")[:4096],
-                    disable_web_page_preview=True)
+                    disable_web_page_preview=True,
+                )
+                message_id = getattr(sent_message, "message_id", None)
+                if isinstance(message_id, int) and message_id > 0:
+                    signal["message_id_current"] = message_id
             sent += 1
     return sent, chart_failures
 
@@ -82,8 +100,44 @@ def _format_signal(signal: dict, payload: dict) -> str:
     ])
 
 
+def _initialize_delivery_metadata(payload: dict) -> None:
+    """هر snapshot فقط شناسه‌های ارسال همین اجرای pipeline را نگه می‌دارد."""
+    payload["message_id_current"] = None
+    payload["message_id_audience"] = None
+    payload["published_at"] = None
+    for signal in payload.get("signals", []):
+        signal["message_id_current"] = None
+        signal["message_id_audience"] = None
+        signal["published_at"] = None
+
+
+def _finalize_delivery_metadata(payload: dict, daily_message_id: int | None = None) -> None:
+    """ثبت شناسه‌های برگشتی واقعی؛ کانال دوم تا زمان پیکربندی صریحاً null می‌ماند."""
+    current_ids = {
+        str(signal.get("symbol")): signal["message_id_current"]
+        for signal in payload.get("signals", [])
+        if isinstance(signal.get("message_id_current"), int)
+        and signal["message_id_current"] > 0
+    }
+    if isinstance(daily_message_id, int) and daily_message_id > 0:
+        current_ids["_daily_status"] = daily_message_id
+    payload["message_id_current"] = current_ids or None
+    payload["message_id_audience"] = None
+    published_at = datetime.now(timezone.utc).isoformat() if current_ids else None
+    payload["published_at"] = published_at
+    for signal in payload.get("signals", []):
+        if signal.get("message_id_current") is not None:
+            signal["published_at"] = published_at
+        LOG_ID = signal.get("message_id_current")
+        if isinstance(LOG_ID, int) and LOG_ID > 0:
+            LOG.info("TELEGRAM_SIGNAL_MESSAGE_ID symbol=%s message_id=%s", signal.get("symbol"), LOG_ID)
+    if isinstance(daily_message_id, int) and daily_message_id > 0:
+        LOG.info("TELEGRAM_DAILY_STATUS_MESSAGE_ID message_id=%s", daily_message_id)
+
+
 def notify_tier_a(payload: dict) -> dict:
     """نام قدیمی تابع حفظ شده؛ هر سیگنال با تصویر چارت و تحلیل ارسال می‌شود."""
+    _initialize_delivery_metadata(payload)
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
     token, chat_id = _credentials()
@@ -136,7 +190,9 @@ def notify_tier_a(payload: dict) -> dict:
             key = f"DAILY_NO_SIGNAL|{day}"
         if key not in sent_state:
             try:
-                asyncio.run(_send(token, chat_id, [message]))
+                message_ids = asyncio.run(_send(token, chat_id, [message])) or []
+                daily_message_id = message_ids[-1] if message_ids else None
+                _finalize_delivery_metadata(payload, daily_message_id=daily_message_id)
                 sent_state[key] = now.isoformat()
                 state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                                       encoding="utf-8")
@@ -151,7 +207,8 @@ def notify_tier_a(payload: dict) -> dict:
 
     try:
         chart_items = [(signal, caption) for _, signal, caption in pending if signal.get("chart_candles")]
-        text_items = [caption for _, signal, caption in pending if not signal.get("chart_candles")]
+        text_pending = [(signal, caption) for _, signal, caption in pending if not signal.get("chart_candles")]
+        text_items = [caption for _, caption in text_pending]
         sent = 0
         chart_failures = 0
         if chart_items:
@@ -163,8 +220,12 @@ def notify_tier_a(payload: dict) -> dict:
             header = (f"📊 {len(candidates)} سیگنال اقدام‌پذیر | پوشش اسکن: {processed}/{requested} نماد"
                       if requested else "")
             message = "\n\n".join(([header] if header else []) + text_items)
-            asyncio.run(_send(token, chat_id, [message[:4096]]))
+            message_ids = asyncio.run(_send(token, chat_id, [message[:4096]])) or []
+            if message_ids:
+                for signal, _ in text_pending:
+                    signal["message_id_current"] = message_ids[-1]
             sent += 1
+        _finalize_delivery_metadata(payload)
         for key, _, _ in pending:
             sent_state[key] = now.isoformat()
         state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
