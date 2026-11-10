@@ -116,8 +116,9 @@ class MarketDataFetcher:
         elif provider == "kucoinfutures":
             exchange = ccxt.kucoinfutures({"enableRateLimit": True, "timeout": 25000})
         elif provider == "gateio":
-            exchange = ccxt.gateio({"enableRateLimit": True, "timeout": 25000,
-                                    "options": {"defaultType": "swap"}})
+            # CCXT's current unified exchange id/class is "gate", not "gateio".
+            exchange = ccxt.gate({"enableRateLimit": True, "timeout": 25000,
+                                  "options": {"defaultType": "swap"}})
         elif provider == "toobit":
             exchange = ccxt.toobit({"enableRateLimit": True, "timeout": 25000,
                                     "options": {"defaultType": "swap"}})
@@ -325,6 +326,18 @@ class MarketDataFetcher:
             output.append(row)
         return output
 
+    @staticmethod
+    def _provider_error_status(exc: Exception) -> str:
+        """Classify public API failures without mislabeling regional blocks as rate limits."""
+        message = str(exc).lower()
+        if ("block access from your country" in message
+                or "restricted location" in message
+                or "451" in message):
+            return "BLOCKED_REGION"
+        if ("rate limit" in message or "too many requests" in message or "429" in message):
+            return "RATE_LIMITED"
+        return "ERROR"
+
     def fetch(self):
         # CoinGecko defines eligible crypto assets; exchange fallback fills
         # missing symbols one-by-one without mixing OHLCV across venues.
@@ -385,7 +398,7 @@ class MarketDataFetcher:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
                 provider_diagnostics[provider] = {
                     **self.universe_diagnostics.get(provider, {}),
-                    "status": "ERROR",
+                    "status": self._provider_error_status(exc),
                     "error": errors[provider],
                     "symbols_added": 0,
                 }
