@@ -178,6 +178,21 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertIs(exchange, gate_class.return_value)
         self.assertIn(exchange, self.fetcher.exchanges)
 
+    def test_phemex_provider_uses_public_swap_configuration(self):
+        with patch("modules.data_fetcher.ccxt.phemex") as exchange_class:
+            exchange = self.fetcher._new_exchange("phemex")
+        exchange_class.assert_called_once()
+        self.assertIs(exchange, exchange_class.return_value)
+        self.assertIn(exchange, self.fetcher.exchanges)
+
+    def test_bingx_provider_uses_public_swap_configuration(self):
+        with patch("modules.data_fetcher.ccxt.bingx") as exchange_class:
+            exchange = self.fetcher._new_exchange("bingx")
+        exchange_class.assert_called_once()
+        self.assertIs(exchange, exchange_class.return_value)
+        self.assertIn(exchange, self.fetcher.exchanges)
+
+
     def test_provider_error_classifies_geoblocks_separately_from_rate_limits(self):
         self.assertEqual(
             MarketDataFetcher._provider_error_status(
