@@ -44,7 +44,14 @@ jobs:
         env:
           PYTHONUNBUFFERED: "1"
         run: |
-          DURATION="${{ inputs.duration_seconds || '600' }}"
+          DURATION="${{ inputs.duration_seconds }}"
+          if [ -z "$DURATION" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              DURATION=60
+            else
+              DURATION=600
+            fi
+          fi
           SYMBOLS="${{ inputs.symbols || 'BTC,ETH,SOL,XRP,DOGE,ADA,LINK,LTC,BCH,AVAX' }}"
           python scripts/collect_orderbook_l2.py --duration-seconds "$DURATION" --sample-interval-seconds 10 --symbols "$SYMBOLS"
       - name: Upload raw capture evidence
