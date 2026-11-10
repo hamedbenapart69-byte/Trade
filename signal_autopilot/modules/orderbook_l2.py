@@ -232,6 +232,16 @@ def _parse_kucoin_level5(message: dict[str, Any], reverse: dict[str, str]):
     }
 
 
+async def _kucoin_heartbeat_if_due(ws, last_ping: float, interval_seconds: float,
+                                now: float | None = None) -> float:
+    """ارسال پینگ متنی مستقل از تعداد پیام‌های بازار."""
+    current = time.monotonic() if now is None else now
+    if current - last_ping < interval_seconds:
+        return last_ping
+    await ws.send(json.dumps({"id": str(int(time.time() * 1000)), "type": "ping"}))
+    return current
+
+
 async def _capture_kucoin(symbols, duration, interval):
     endpoint, token, ping_ms = await _kucoin_token()
     url = endpoint + "?token=" + token + "&connectId=" + uuid.uuid4().hex
@@ -250,10 +260,9 @@ async def _capture_kucoin(symbols, duration, interval):
         # کوکوین پینگ متنی می‌خواهد؛ ارسال پینگ نباید به سکوت بازار وابسته باشد.
         ping_every_seconds = max(3.0, min(8.0, ping_ms / 1000 * 0.4))
         while time.monotonic() - started < duration:
-            now_mono = time.monotonic()
-            if now_mono - last_ping >= ping_every_seconds:
-                await ws.send(json.dumps({"id": str(int(time.time() * 1000)), "type": "ping"}))
-                last_ping = now_mono
+            last_ping = await _kucoin_heartbeat_if_due(
+                ws, last_ping, ping_every_seconds
+            )
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=2)
                 alive_ms = int(time.time() * 1000)
