@@ -24,6 +24,7 @@ import pyarrow.parquet as pq
 from app.research_education import (
     ResearchEvent,
     detect_breakout_retests,
+    detect_breakout_acceptance,
     detect_liquidity_sweeps,
 )
 from app.signals import Candle
@@ -163,6 +164,7 @@ def _ema_series(values: list[float], period: int) -> list[float | None]:
 
 def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
     h1 = _non_overlapping(detect_liquidity_sweeps(hourly))
+    h5 = _non_overlapping(detect_breakout_acceptance(hourly))
     h6 = _non_overlapping(detect_breakout_retests(hourly))
     four_hour = resample_4h(hourly)
     four_hour_close_times = [c.close_time for c in four_hour]
@@ -185,7 +187,7 @@ def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
         )
         if bias == ("UP" if event.side == "LONG" else "DOWN"):
             h7.append(event)
-    return {"H1": h1, "H6": h6, "H7": h7}
+    return {"H1": h1, "H5_PRICE_PROXY": h5, "H6": h6, "H7": h7}
 
 
 def month_add(dt: datetime, months: int) -> datetime:
@@ -277,13 +279,13 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
 
     all_results: dict[str, dict[int, list[dict[str, Any]]]] = {
         hypothesis: {horizon: [] for horizon in HORIZONS}
-        for hypothesis in ("H1", "H6", "H7")
+        for hypothesis in ("H1", "H5_PRICE_PROXY", "H6", "H7")
     }
     fold_results: dict[str, dict[int, dict[int, list[dict[str, Any]]]]] = {
         hypothesis: {
             horizon: defaultdict(list) for horizon in HORIZONS
         }
-        for hypothesis in ("H1", "H6", "H7")
+        for hypothesis in ("H1", "H5_PRICE_PROXY", "H6", "H7")
     }
 
     loaded_symbols = 0
@@ -324,7 +326,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
 
     overall = {}
     per_fold = {}
-    for hypothesis in ("H1", "H6", "H7"):
+    for hypothesis in ("H1", "H5_PRICE_PROXY", "H6", "H7"):
         overall[hypothesis] = {
             str(h): summarize(all_results[hypothesis][h]) for h in HORIZONS
         }
@@ -373,6 +375,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
             "No stop-loss, take-profit, partial-fill, liquidation or portfolio overlap model is applied.",
             "Returns subtract exchange fees only; slippage and funding are unavailable for the full historical window.",
             "No DSR, PBO, Sharpe, profit factor or drawdown PASS is claimed from this event study.",
+            "H5_PRICE_PROXY measures consecutive price closes only; it does not use real aggressor flow or delta.",
             "H7 is an H6 breakout-retest subset filtered by completed 4h EMA20/EMA50 direction.",
             "The rolling 2-month test windows overlap by one month; fold results must be inspected separately.",
             "No threshold was tuned on test windows; no strategy is promoted by this pre-screen.",
