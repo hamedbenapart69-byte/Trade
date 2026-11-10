@@ -211,7 +211,7 @@ def _compute_window(storage_dir: Path, compute_dir: Path, symbol: str,
         _write_rows(target, rows)
     return {
         "symbol": symbol, "baseline_rows": len(base_rows),
-        "tail_rows": sum(len(group) for group in tail_groups),
+        "tail_rows": sum(len(group) for group in tail_groups) + len(ephemeral_rows or []),
         "rows": len(rows), "expected_rows": expected, "gap_count": gaps,
         "continuity": continuity, "first_open_ms": timestamps[0] if timestamps else None,
         "last_open_ms": timestamps[-1] if timestamps else None,
