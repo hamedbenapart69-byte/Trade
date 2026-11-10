@@ -1,7 +1,7 @@
 name: Pytest
 on:
   push:
-    branches: [main]
+    branches: [main, feat/telegram-dual-destination]
     paths:
       - "pyproject.toml"
       - "signal_autopilot/**"

@@ -257,5 +257,102 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
             self.assertEqual(second["status"], "SENT")
             self.assertEqual(len(sent), 2)
 
+
+    def test_current_and_audience_channels_have_independent_idempotency(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.append((chat_id, list(messages)))
+                return [1000 + len(sent)]
+            env = {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "-100-current",
+                "TELEGRAM_AUDIENCE_CHANNEL_ID": "-100-audience",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }
+            payload = {
+                "pipeline_status": "OK",
+                "generated_at_utc": "2026-11-10T16:00:00+00:00",
+                "signals": [{
+                    "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                    "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                    "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                }],
+            }
+            with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+                first = notify_tier_a(payload)
+                current_ids = payload["message_id_current"]
+                audience_ids = payload["message_id_audience"]
+                second = notify_tier_a({
+                    "pipeline_status": "OK",
+                    "generated_at_utc": "2026-11-10T16:04:00+00:00",
+                    "signals": [{
+                        "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                        "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                        "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+                    }],
+                })
+            self.assertEqual(first["status"], "SENT")
+            self.assertEqual(first["sent"], 2)
+            self.assertEqual(second["status"], "NO_NEW_MESSAGES")
+            self.assertEqual(second["sent"], 0)
+            self.assertEqual({chat for chat, _ in sent}, {"-100-current", "-100-audience"})
+            self.assertIsNotNone(current_ids)
+            self.assertIsNotNone(audience_ids)
+            state = json.loads((Path(tmp) / "sent.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["__schema_version__"], 3)
+            self.assertIn("signals", state["destinations"]["current"])
+            self.assertIn("signals", state["destinations"]["audience"])
+
+    def test_audience_delivery_continues_if_current_channel_fails(self):
+        import os
+        from modules.notifier import notify_tier_a
+        async def fake_send(token, chat_id, messages):
+            if chat_id == "-100-current":
+                raise RuntimeError("Chat not found")
+            return [2001]
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {
+                "TELEGRAM_TOKEN": "test-token",
+                "TELEGRAM_CHAT_ID": "-100-current",
+                "TELEGRAM_AUDIENCE_CHANNEL_ID": "-100-audience",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }
+            payload = {
+                "pipeline_status": "OK",
+                "generated_at_utc": "2026-11-10T16:00:00+00:00",
+                "signals": [{
+                    "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                    "symbol": "ETH/USDT:USDT", "status": "SELL_NOW", "side": "SELL",
+                    "entry": 200, "stop_loss": 210, "take_profit": [180, 160],
+                }],
+            }
+            with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+                result = notify_tier_a(payload)
+            self.assertEqual(result["status"], "PARTIAL")
+            self.assertEqual(result["sent"], 1)
+            self.assertEqual(result["destinations"]["current"]["status"], "CHAT_NOT_FOUND")
+            self.assertEqual(result["destinations"]["audience"]["status"], "SENT")
+            self.assertEqual(payload["message_id_audience"], {"ETH/USDT:USDT": 2001})
+
+    def test_send_test_message_targets_both_configured_channels(self):
+        import os
+        from modules.notifier import send_test_message
+        calls = []
+        async def fake_send(token, chat_id, messages):
+            calls.append(chat_id)
+            return [3000 + len(calls)]
+        env = {
+            "TELEGRAM_TOKEN": "test-token",
+            "TELEGRAM_CHAT_ID": "-100-current",
+            "TELEGRAM_AUDIENCE_CHANNEL_ID": "-100-audience",
+        }
+        with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+            result = send_test_message()
+        self.assertEqual(result, {"status": "TEST_SENT", "sent": 2})
+        self.assertEqual(calls, ["-100-current", "-100-audience"])
+
 if __name__=="__main__":
     unittest.main()
