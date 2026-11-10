@@ -111,7 +111,7 @@ Known fee model: 0.04% per side, 0.08% round trip. Slippage and complete histori
 
 ## Reproducibility
 
-- GitHub Actions run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/42879753589
+- GitHub Actions run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/42880312579
 - Verified: 145 root tests, 68 signal-autopilot tests, event-study execution-timing unit test, dashboard JS validation, Compose validation, Docker build and container health smoke test.
-- Event-study artifact: `education-hypothesis-event-study`, artifact ID `13793721069` (14-day retention).
+- Event-study artifact: `education-hypothesis-event-study`, artifact ID `13794385540` (14-day retention).
 - No production scanner integration, no merge to `main`, and no production deployment.
