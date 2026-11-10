@@ -56,13 +56,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Persist Parquet to market-data branch
-        if: success()
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
           if ! find signal_autopilot/data/orderbook_l2 -name '*.parquet' -print -quit | grep -q .; then
             echo "No valid L2 snapshots; nothing to persist."
-            exit 2
+            exit 0
           fi
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -71,6 +71,9 @@ jobs:
           python signal_autopilot/scripts/merge_orderbook_l2.py \
             --source-dir signal_autopilot/data/orderbook_l2 \
             --target-dir /tmp/market-data/orderbook_l2
+          if [ -f signal_autopilot/data/orderbook_l2/summary_latest.json ]; then
+            cp signal_autopilot/data/orderbook_l2/summary_latest.json /tmp/market-data/orderbook_l2/summary_latest.json
+          fi
           git -C /tmp/market-data add orderbook_l2
           if ! git -C /tmp/market-data diff --cached --quiet; then
             git -C /tmp/market-data commit -m "data: append public L2 order-book samples"

@@ -40,7 +40,7 @@ def main() -> int:
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print("ORDERBOOK_L2_RESULT=" + json.dumps(summary, ensure_ascii=False))
-    return 0 if result["total_rows"] > 0 else 2
+    return 0 if result["status"] == "PASS" else 1
 
 
 if __name__ == "__main__":
