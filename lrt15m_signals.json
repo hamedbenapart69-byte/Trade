@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-10T12:48:30.660156+00:00",
+  "generated_at_utc": "2026-11-10T17:18:11.823847+00:00",
   "stage": "1b-test",
   "engine": "LRT-15m",
   "universe_count": 27,
@@ -35,6 +35,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -100,6 +103,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -165,6 +171,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -230,6 +239,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -295,6 +307,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -360,6 +375,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -425,6 +443,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -490,6 +511,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -555,6 +579,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -620,6 +647,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -685,6 +715,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -750,6 +783,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -815,6 +851,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -880,6 +919,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -945,6 +987,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1010,6 +1055,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1075,6 +1123,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1140,6 +1191,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1205,6 +1259,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1270,6 +1327,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1335,6 +1395,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1400,6 +1463,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1465,6 +1531,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1530,6 +1599,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1595,6 +1667,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1660,6 +1735,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
@@ -1725,6 +1803,9 @@
       "rows_available": 70080,
       "confidence": "NOT_CALIBRATED",
       "brier_score": "NOT_CALIBRATED",
+      "ev_net": null,
+      "ev_status": "NOT_CALIBRATED",
+      "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
       "ev": "NOT_CALCULATED_CALIBRATION_AND_COST_INPUTS_UNAVAILABLE",
       "status": "UNCALIBRATED",
       "higher_timeframe_bias": {
