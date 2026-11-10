@@ -413,6 +413,37 @@ def notify_tier_a(payload: dict) -> dict:
     return {"status": status, "sent": sent, "destinations": results}
 
 
+
+def _format_legacy_quarantine_status(state: dict) -> str:
+    """ساخت پیام وضعیت قرنطینه؛ این پیام ادعای ارزیابی زنده بازار نمی‌کند."""
+    if state.get("lifecycle") != "LEGACY_RESEARCH_ONLY" or state.get("production_enabled") is not False:
+        raise ValueError("LEGACY_QUARANTINE_STATE_INVALID")
+    return "\\n".join([
+        "⛔ وضعیت موتور یک‌ساعته",
+        "Lifecycle: LEGACY_RESEARCH_ONLY",
+        "production_enabled: false",
+        "خروجی معاملاتی: NO_QUALIFIED_SETUP",
+        "توضیح: موتور در قرنطینه است؛ این وضعیت حاصل اسکن زنده بازار نیست.",
+    ])
+
+
+def send_legacy_quarantine_status_test(state: dict) -> dict:
+    """ارسال اختیاری فقط به مقصد تست؛ هرگز از کانال اصلی fallback نمی‌گیرد."""
+    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
+        return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
+    token = (os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    test_chat_id = os.getenv("TELEGRAM_TEST_CHAT_ID", "").strip()
+    if not token or not test_chat_id:
+        return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
+    message = _format_legacy_quarantine_status(state)
+    try:
+        message_ids = asyncio.run(_send(token, test_chat_id, [message])) or []
+        return {"status": "TEST_SENT" if message_ids else "ERROR",
+                "sent": 1 if message_ids else 0}
+    except Exception:
+        LOG.exception("Telegram quarantine test delivery failed.")
+        return {"status": "ERROR", "sent": 0}
+
 def notify_email(payload: dict) -> dict:
     """ایمیل جایگزین از طریق SMTP رایگانِ ارائه‌دهندهٔ ایمیل کاربر."""
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
