@@ -215,11 +215,30 @@ async def _kucoin_token():
     return server["endpoint"], body["data"]["token"], int(server.get("pingInterval", 18000))
 
 
+def _parse_kucoin_level5(message: dict[str, Any], reverse: dict[str, str]):
+    """تبدیل پیام عمومی Level 5 کوکوین به دفتر سفارش استاندارد داخلی."""
+    market_symbol = str(message.get("topic", "")).split(":", 1)[-1]
+    symbol = reverse.get(market_symbol)
+    data = message.get("data") or {}
+    if not symbol or not data.get("bids") or not data.get("asks"):
+        return None
+    bids, asks = _sorted_book(data["bids"], data["asks"], 5)
+    if not bids or not asks:
+        return None
+    return symbol, {
+        "bids": bids, "asks": asks,
+        "exchange_ts_ms": int(data.get("timestamp") or data.get("ts") or 0),
+        "sequence": str(data.get("sequence") or message.get("sn") or ""),
+    }
+
+
 async def _capture_kucoin(symbols, duration, interval):
     endpoint, token, ping_ms = await _kucoin_token()
     url = endpoint + "?token=" + token + "&connectId=" + uuid.uuid4().hex
     reverse = {SYMBOLS[s]["kucoin"]: s for s in symbols}
     latest, rows = {}, []
+    diagnostics = {"messages": 0, "acks": 0, "book_messages": 0,
+                   "symbols_with_book": set(), "normal_close": False}
     async with websockets.connect(url, open_timeout=25, close_timeout=5,
                                   ping_interval=None, max_size=4_000_000) as ws:
         for symbol in symbols:
@@ -228,36 +247,56 @@ async def _capture_kucoin(symbols, duration, interval):
                 "privateChannel": False, "response": True}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
         alive_ms = int(time.time() * 1000)
+        ping_every_seconds = max(5, min(15, ping_ms / 1000 * 0.75))
         while time.monotonic() - started < duration:
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
                 alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
-                if time.monotonic() - last_ping >= max(5, min(15, ping_ms / 2000)):
+                if time.monotonic() - last_ping >= ping_every_seconds:
                     await ws.send(json.dumps({"id": str(int(time.time() * 1000)), "type": "ping"}))
                     last_ping = time.monotonic()
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
                                       "CONTRACTS", alive_ms, interval * 1000)
                 continue
+            except websockets.exceptions.ConnectionClosedOK as exc:
+                elapsed = time.monotonic() - started
+                if elapsed >= duration - 5:
+                    diagnostics["normal_close"] = True
+                    break
+                raise RuntimeError(
+                    f"KUCOIN_EARLY_NORMAL_CLOSE elapsed_seconds={elapsed:.1f} "
+                    f"code={exc.code} reason={exc.reason!r}"
+                ) from exc
             msg = json.loads(raw)
+            diagnostics["messages"] += 1
+            if msg.get("type") == "error":
+                diagnostics["last_error"] = str(msg)[:240]
+                raise RuntimeError("KUCOIN_WS_ERROR:" + str(msg)[:240])
+            if msg.get("type") == "ack":
+                diagnostics["acks"] += 1
+                continue
             if msg.get("type") == "pong":
                 continue
-            market_symbol = str(msg.get("topic", "")).split(":", 1)[-1]
-            symbol = reverse.get(market_symbol)
-            data = msg.get("data") or {}
-            if not symbol or not data.get("bids") or not data.get("asks"):
+            parsed = _parse_kucoin_level5(msg, reverse)
+            if parsed is None:
                 continue
-            bids, asks = _sorted_book(data["bids"], data["asks"], 5)
-            latest[symbol] = {"bids": bids, "asks": asks,
-                "exchange_ts_ms": int(data.get("timestamp") or data.get("ts") or 0),
-                "sequence": str(data.get("sequence") or msg.get("sn") or ""),
-                "received_at_ms": alive_ms}
+            symbol, book_data = parsed
+            diagnostics["book_messages"] += 1
+            diagnostics["symbols_with_book"].add(symbol)
+            latest[symbol] = {
+                **book_data,
+                "received_at_ms": alive_ms,
+            }
             now = int(time.time() * 1000)
             last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
                                   "CONTRACTS", alive_ms, interval * 1000)
+    diagnostics["symbols_with_book"] = sorted(diagnostics["symbols_with_book"])
+    diagnostics["rows_sampled"] = len(rows)
+    diagnostics["elapsed_seconds"] = round(time.monotonic() - started, 2)
+    print("KUCOIN_WS_DIAGNOSTICS=" + json.dumps(diagnostics, ensure_ascii=False))
     return rows
-
 
 async def capture_orderbooks(symbols: list[str], duration: int = 600,
                              sample_interval: int = 10) -> dict[str, Any]:
