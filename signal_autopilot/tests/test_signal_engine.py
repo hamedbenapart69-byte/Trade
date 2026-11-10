@@ -44,10 +44,10 @@ class EmaContinuationV2Tests(unittest.TestCase):
                 )
 
         candles_4h = []
-        start_4h = now_ms - 220 * 14_400_000
-        for index in range(220):
+        start_4h = now_ms - 720 * 14_400_000
+        for index in range(720):
             base = 100.0 if sign >= 0 else 160.0
-            close = base + sign * 0.5 * index + (0.5 * math.sin(index * 0.4) if sign else 0.0)
+            close = base + sign * 0.10 * index + (0.5 * math.sin(index * 0.4) if sign else 0.0)
             open_ = close - sign * 0.10
             candles_4h.append({
                 "timestamp": start_4h + index * 14_400_000,
@@ -75,7 +75,7 @@ class EmaContinuationV2Tests(unittest.TestCase):
         self.assertEqual(result["quality_metrics"]["reward_risk_tp1"], 1.5)
         self.assertEqual(result["quality_metrics"]["reward_risk_tp2"], 2.5)
         self.assertEqual(len(result["evidence_candles"]["1h"]), 200)
-        self.assertEqual(len(result["evidence_candles"]["4h"]), 200)
+        self.assertEqual(len(result["evidence_candles"]["4h"]), 700)
         self.assertEqual(len(result["input_hash"]), 64)
 
     def test_short_v2_has_inverse_structural_risk_levels(self):
