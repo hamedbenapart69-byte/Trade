@@ -9,12 +9,21 @@ permissions:
 jobs:
   deploy:
     name: Optional Railway deployment (requires ENABLE_RAILWAY_DEPLOY=true)
-    if: ${{ vars.ENABLE_RAILWAY_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - name: Check out the manually selected branch commit
         uses: actions/checkout@v4
+
+      - name: Require explicit Railway deployment opt-in
+        env:
+          ENABLE_RAILWAY_DEPLOY: ${{ vars.ENABLE_RAILWAY_DEPLOY }}
+        shell: bash
+        run: |
+          if [[ "${ENABLE_RAILWAY_DEPLOY:-}" != "true" ]]; then
+            echo "::error::DEPLOYMENT_BLOCKED: set repository variable ENABLE_RAILWAY_DEPLOY=true before manually requesting Railway deployment."
+            exit 1
+          fi
 
       - name: Check for Railway project token without printing it
         id: token
