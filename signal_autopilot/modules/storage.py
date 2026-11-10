@@ -5,7 +5,7 @@ from pathlib import Path
 FIELDS = [
     "generated_at_utc", "symbol", "status", "side", "tier", "provider", "engine",
     "reason", "confidence", "ev_net", "entry", "stop_loss", "take_profit_json",
-    "ema20", "ema50", "atr14", "timeframe", "analysis_type",
+    "ema20", "ema50", "ema50_1h", "ema50_4h", "ema200_4h", "atr14", "timeframe", "analysis_type",
     "ticker_timestamp_utc", "ticker_timestamp_source", "entry_price_quality",
     "quality_gates_json", "quality_metrics_json", "input_hash", "signal_id",
     "hypothesis", "falsification", "idempotency_key",
@@ -74,6 +74,8 @@ def publish(payload):
             "entry": signal.get("entry"), "stop_loss": signal.get("stop_loss"),
             "take_profit_json": _json_cell(signal.get("take_profit") or []),
             "ema20": signal.get("ema20"), "ema50": signal.get("ema50"),
+            "ema50_1h": signal.get("ema50_1h"), "ema50_4h": signal.get("ema50_4h"),
+            "ema200_4h": signal.get("ema200_4h"),
             "atr14": signal.get("atr14"), "timeframe": signal.get("timeframe"),
             "analysis_type": signal.get("analysis_type"),
             "ticker_timestamp_utc": signal.get("ticker_timestamp_utc"),
