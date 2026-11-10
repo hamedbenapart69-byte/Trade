@@ -36,6 +36,7 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
         self.assertIn("نماد: BTC/USDT:USDT",message)
         self.assertIn("ورود: —",message)
         self.assertIn("حد ضرر: —",message)
+        self.assertIn("ارزش موردانتظار (EV): کالیبره نشده است", message)
         self.assertNotIn("NOT_CALIBRATED",message)
 
     def test_telegram_silently_skips_without_credentials(self):
