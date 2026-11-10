@@ -25,7 +25,6 @@ from app.research_education import (
     ResearchEvent,
     detect_breakout_retests,
     detect_liquidity_sweeps,
-    higher_timeframe_bias,
 )
 from app.signals import Candle
 
@@ -149,17 +148,42 @@ def _non_overlapping(events: list[ResearchEvent], gap_bars: int = 8) -> list[Res
     return selected
 
 
+def _ema_series(values: list[float], period: int) -> list[float | None]:
+    output: list[float | None] = [None] * len(values)
+    if len(values) < period:
+        return output
+    value = sum(values[:period]) / period
+    output[period - 1] = value
+    alpha = 2.0 / (period + 1.0)
+    for i in range(period, len(values)):
+        value = alpha * values[i] + (1.0 - alpha) * value
+        output[i] = value
+    return output
+
+
 def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
     h1 = _non_overlapping(detect_liquidity_sweeps(hourly))
     h6 = _non_overlapping(detect_breakout_retests(hourly))
     four_hour = resample_4h(hourly)
     four_hour_close_times = [c.close_time for c in four_hour]
+    closes = [c.close for c in four_hour]
+    fast_values = _ema_series(closes, 20)
+    slow_values = _ema_series(closes, 50)
     h7 = []
     for event in h6:
         signal_close = hourly[event.signal_index].close_time
-        completed_count = bisect_right(four_hour_close_times, signal_close)
-        completed = four_hour[:completed_count]
-        if higher_timeframe_bias(completed) == ("UP" if event.side == "LONG" else "DOWN"):
+        completed_index = bisect_right(four_hour_close_times, signal_close) - 1
+        if completed_index < 49:
+            continue
+        fast = fast_values[completed_index]
+        slow = slow_values[completed_index]
+        if fast is None or slow is None:
+            continue
+        close = closes[completed_index]
+        bias = "UP" if close > fast and fast > slow else (
+            "DOWN" if close < fast and fast < slow else "NEUTRAL"
+        )
+        if bias == ("UP" if event.side == "LONG" else "DOWN"):
             h7.append(event)
     return {"H1": h1, "H6": h6, "H7": h7}
 
