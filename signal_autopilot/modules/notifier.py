@@ -135,6 +135,7 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"فرضیه: {signal.get('hypothesis', '—')}",
         f"ابطال تحلیل: {signal.get('falsification', '—')}",
         "اطمینان: هنوز کالیبراسیون آماری انجام نشده است",
+        "ارزش موردانتظار (EV): کالیبره نشده است" if signal.get("ev_status", "NOT_CALIBRATED") == "NOT_CALIBRATED" else f"ارزش موردانتظار (EV): {signal.get('ev_net', '—')}",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
         dashboard,
     ])

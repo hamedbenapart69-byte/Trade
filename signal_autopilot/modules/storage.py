@@ -2,7 +2,7 @@
 import csv, json, os, tempfile
 from pathlib import Path
 
-FIELDS=["generated_at_utc","symbol","status","side","tier","provider","engine","reason","confidence","ev_net","idempotency_key"]
+FIELDS=["generated_at_utc","symbol","status","side","tier","provider","engine","reason","confidence","ev_net","ev_status","idempotency_key"]
 
 def atomic_text(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -15,6 +15,23 @@ def atomic_text(path, text):
         if os.path.exists(tmp):
             os.unlink(tmp)
 
+def migrate_history_csv(old: str) -> str:
+    """مهاجرت امن CSV قدیمی به ستون‌های جاری بدون حذف سوابق یا کلیدهای تکرارزدایی."""
+    if not old:
+        return ""
+    import io
+    reader = csv.DictReader(io.StringIO(old))
+    if reader.fieldnames == FIELDS:
+        return old
+    rows = list(reader)
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=FIELDS)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({field: row.get(field, "") for field in FIELDS})
+    return output.getvalue()
+
+
 def publish(payload):
     repo_root=Path(__file__).resolve().parents[2]
     data_root=repo_root/"signal_autopilot"/"data"
@@ -22,7 +39,9 @@ def publish(payload):
     text=json.dumps(payload,ensure_ascii=False,indent=2)+"\n"
     history=data_root/"history.csv"
     history.parent.mkdir(parents=True,exist_ok=True)
-    old=history.read_text(encoding="utf-8") if history.exists() else ""
+    old_raw=history.read_text(encoding="utf-8") if history.exists() else ""
+    old=migrate_history_csv(old_raw)
+    history_migrated = old != old_raw
     seen=set()
     if old:
         import io
@@ -42,10 +61,10 @@ def publish(payload):
             "status":s.get("status"),"side":s.get("side"),"tier":s.get("tier"),
             "provider":payload.get("provider"),"engine":payload.get("engine"),
             "reason":s.get("reason"),"confidence":s.get("confidence"),
-            "ev_net":s.get("ev_net"),"idempotency_key":key
+            "ev_net":s.get("ev_net"),"ev_status":s.get("ev_status"),"idempotency_key":key
         })
         added+=1
-    if added:
+    if added or history_migrated:
         atomic_text(history,old+buf.getvalue())
     atomic_text(data_root/"signals.json",text)
     atomic_text(web_data/"signals.json",text)
