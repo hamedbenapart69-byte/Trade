@@ -310,13 +310,17 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
                     observation = event_observation(event, candles, horizon)
                     if observation is None:
                         continue
-                    all_results[hypothesis][horizon].append(observation)
+                    belongs_to_oos = False
                     for window in windows:
                         if (
                             observation["signal_time_ms"] >= window["test_start_ms"]
                             and observation["exit_time_ms"] < window["test_end_ms"]
                         ):
                             fold_results[hypothesis][horizon][window["fold"]].append(observation)
+                            belongs_to_oos = True
+                    # جمع‌بندی کلی فقط از رویدادهایی است که داخل حداقل یک پنجره آزمون OOS قرار گرفته‌اند.
+                    if belongs_to_oos:
+                        all_results[hypothesis][horizon].append(observation)
 
     overall = {}
     per_fold = {}
