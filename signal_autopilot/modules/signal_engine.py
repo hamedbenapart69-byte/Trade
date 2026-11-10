@@ -16,7 +16,8 @@ C10 = {
 }
 
 # پارامترهای V2؛ منطق از EMA-state به 4H regime + 1H pullback/rejection تغییر می‌کند.
-MIN_BARS = 200
+MIN_BARS_1H = 200
+MIN_BARS_4H = 700
 PULLBACK_TOLERANCE_ATR = 0.25
 STOP_BUFFER_ATR = 0.25
 MAX_STOP_PCT = 3.0
@@ -122,11 +123,11 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     if (
         availability.get("ohlcv") != "OK"
         or availability.get("ohlcv_4h") != "OK"
-        or len(candles_1h) < MIN_BARS
-        or len(candles_4h) < MIN_BARS
+        or len(candles_1h) < MIN_BARS_1H
+        or len(candles_4h) < MIN_BARS_4H
     ):
         return _base(row, generated_at_utc, "MARKET_DATA_DEGRADED",
-                     "Insufficient completed 1H/4H history; 200 bars required per timeframe")
+                     "Insufficient completed history; require 200x1H and 700x4H bars for EMA200 warm-up")
     if not _finite_ohlcv(candles_1h) or not _finite_ohlcv(candles_4h):
         return _base(row, generated_at_utc, "MARKET_DATA_DEGRADED", "Invalid or non-finite OHLCV")
 
@@ -263,8 +264,8 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             "take_profit": [round(tp1, 10), round(tp2, 10)],
             "entry_price_quality": "PROXY_FETCH_TIME" if is_proxy else "EXCHANGE_TIMESTAMP",
             "evidence_candles": {
-                "1h": candles_1h[-MIN_BARS:],
-                "4h": candles_4h[-MIN_BARS:],
+                "1h": candles_1h[-MIN_BARS_1H:],
+                "4h": candles_4h[-MIN_BARS_4H:],
             },
             "reason": (
                 f"V2: 4H EMA50/EMA200 regime confirmed; 1H pullback to EMA50 "
