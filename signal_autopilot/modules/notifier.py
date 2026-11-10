@@ -135,9 +135,37 @@ def _finalize_delivery_metadata(payload: dict, daily_message_id: int | None = No
         LOG.info("TELEGRAM_DAILY_STATUS_MESSAGE_ID message_id=%s", daily_message_id)
 
 
+
+def _apply_entry_quality_delivery_guard(payload: dict) -> None:
+    """قیمت بدون timestamp معتبر صرافی اجازهٔ BUY_NOW/SELL_NOW ندارد."""
+    downgraded = []
+    for signal in payload.get("signals", []):
+        if signal.get("status") not in ("BUY_NOW", "SELL_NOW"):
+            continue
+        if signal.get("entry_price_quality") == "EXCHANGE_TIMESTAMP":
+            continue
+        old_status = signal.get("status")
+        signal["status"] = "CONDITIONAL_BUY" if old_status == "BUY_NOW" else "CONDITIONAL_SELL"
+        signal["delivery_guard"] = "BLOCKED_UNVERIFIED_ENTRY_TIMESTAMP"
+        downgraded.append(signal)
+
+    if downgraded:
+        trades = [s for s in payload.get("signals", []) if s.get("status") in ("BUY_NOW", "SELL_NOW")]
+        conditionals = [s for s in payload.get("signals", []) if s.get("status") in ("CONDITIONAL_BUY", "CONDITIONAL_SELL")]
+        payload["trade_signals"] = trades
+        payload["conditional_signals"] = conditionals
+        quality = payload.setdefault("quality", {})
+        quality["trade_signals"] = len(trades)
+        quality["conditional_signals"] = len(conditionals)
+        if not trades:
+            payload["today_signal_message"] = "تنظیم مشروط وجود دارد؛ timestamp قیمت ورود تأیید نشده و ورود فوری مجاز نیست"
+
+
+
 def notify_tier_a(payload: dict) -> dict:
     """نام قدیمی تابع حفظ شده؛ هر سیگنال با تصویر چارت و تحلیل ارسال می‌شود."""
     _initialize_delivery_metadata(payload)
+    _apply_entry_quality_delivery_guard(payload)
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
     token, chat_id = _credentials()
@@ -246,6 +274,7 @@ def notify_tier_a(payload: dict) -> dict:
 
 def notify_email(payload: dict) -> dict:
     """ایمیل جایگزین از طریق SMTP رایگانِ ارائه‌دهندهٔ ایمیل کاربر."""
+    _apply_entry_quality_delivery_guard(payload)
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
     host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
