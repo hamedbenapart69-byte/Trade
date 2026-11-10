@@ -5,7 +5,7 @@
     "spot_fallback": null,
     "universe": {
       "policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
-      "whitelist_source": "COINGECKO_TOP_200",
+      "whitelist_source": "COINGECKO_TOP_1000_UNIQUE_TICKERS",
       "whitelist_count": 1000,
       "require_active": true,
       "require_swap": true,
@@ -27,7 +27,7 @@
     "signal_timeframe": "1h"
   },
   "engine": {
-    "version": "EMA20_EMA50_FUNDING_PLACEHOLDER",
+    "version": "EMA20_EMA50_ATR14_MVP",
     "ema_fast": 20,
     "ema_slow": 50,
     "funding_extreme_abs": 0.0005
