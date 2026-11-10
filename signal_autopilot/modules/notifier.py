@@ -354,7 +354,7 @@ def _notify_tier_a_single_destination(payload: dict, chat_id: str, destination: 
             message_ids = asyncio.run(_send(token, chat_id, [message[:4096]])) or []
             if message_ids:
                 for signal, _ in text_pending:
-                    signal[message_id_field] = message_ids[-1]
+                    signal["message_id_" + destination] = message_ids[-1]
             sent += 1
         _finalize_delivery_metadata(payload, destination=destination)
         for identity, fingerprint, _, _ in pending:
