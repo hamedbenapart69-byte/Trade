@@ -225,6 +225,40 @@ class MarketDataFetcher:
         return accepted[:self.limit]
 
     @staticmethod
+    def _fetch_ohlcv_paged(exchange, symbol: str, timeframe: str,
+                           required_completed: int, interval_ms: int, now_ms: int):
+        """دریافت تاریخچهٔ کامل با صفحه‌بندی؛ محدودیت سقف کندل هر صرافی را دور می‌زند."""
+        page_size = 300  # سقف محافظه‌کارانه برای سازگاری با APIهای مختلف
+        target_count = required_completed + 1  # یک کندل اضافه برای حذف کندل باز جاری
+        cursor = now_ms - (target_count + 2) * interval_ms
+        collected = {}
+        max_pages = (target_count + page_size - 1) // page_size + 2
+
+        for _ in range(max_pages):
+            remaining = target_count - len(collected)
+            if remaining <= 0:
+                break
+            request_limit = min(page_size, remaining)
+            batch = exchange.fetch_ohlcv(
+                symbol, timeframe=timeframe, since=cursor, limit=request_limit
+            ) or []
+            if not batch:
+                break
+            ordered = sorted(batch, key=lambda candle: int(candle[0]))
+            previous_count = len(collected)
+            for candle in ordered:
+                if candle and candle[0] is not None:
+                    collected[int(candle[0])] = candle
+            newest = max(int(candle[0]) for candle in ordered if candle and candle[0] is not None)
+            if len(collected) == previous_count or newest < cursor:
+                break  # ارائه‌دهنده صفحهٔ تکراری داده یا cursor را رعایت نکرده است
+            cursor = newest + interval_ms
+            if len(collected) >= target_count or len(batch) < request_limit:
+                break
+
+        return [collected[key] for key in sorted(collected)][-target_count:]
+
+    @staticmethod
     def _completed_ohlcv(candles, now_ms: int, interval_ms: int = 3_600_000):
         """مرتب‌سازی و حذف آخرین کندل بسته‌نشده با توجه به تایم‌فریم."""
         ordered = sorted(
@@ -274,7 +308,10 @@ class MarketDataFetcher:
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
             try:
-                candles_4h = exchange.fetch_ohlcv(symbol, timeframe="4h", limit=700)
+                candles_4h = self._fetch_ohlcv_paged(
+                    exchange, symbol, timeframe="4h", required_completed=700,
+                    interval_ms=14_400_000, now_ms=now_ms,
+                )
                 completed_4h = self._completed_ohlcv(candles_4h, now_ms, interval_ms=14_400_000)
                 row["ohlcv_4h"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
