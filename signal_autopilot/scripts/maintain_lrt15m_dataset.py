@@ -187,6 +187,11 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
     statuses["missing_bars"] = str(len(expected.difference(collected)))
     return collected, statuses
 
+def _missing_baseline_result(symbol: str) -> tuple[str, dict[int, dict[str, Any]], dict[str, str], dict[int, dict[str, Any]]]:
+    """Return the same four-field worker contract when a baseline is unavailable."""
+    return _missing_baseline_result(symbol), {}
+
+
 def _tail_partition_path(storage_dir: Path, symbol: str, open_time_ms: int) -> Path:
     day = datetime.fromtimestamp(open_time_ms / 1000, timezone.utc).strftime("%Y-%m-%d")
     return storage_dir / "live_tail" / day / f"{symbol}_15m.parquet"
