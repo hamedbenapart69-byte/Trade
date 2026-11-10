@@ -69,7 +69,7 @@ This is a technically viable zero-key/public-data route for a bounded recent tra
 
 | Hypothesis | Available data | Honest status |
 |---|---|---|
-| H1 sweep/reclaim | 2y 1h OHLCV | 1h adaptation tested; original 15m version unavailable |
+| H1 sweep/reclaim | 2y 1h OHLCV, with 4h bars resampled | V1 1h all-regime, V2 neutral-4h-regime, V3 4h-signal tested; all fee-only means negative; original 15m version unavailable |
 | H2 volume-profile acceptance/rejection | No volume-at-price archive | Real VAH/VAL/POC blocked |
 | H2 time-boundary rejection | 2y 1h OHLCV | Implemented as `H2_TIME_REJECTION_PROXY`; not a real volume profile |
 | H3 price/CVD divergence | No stored trade tape; public history endpoint max 3 months | Real version blocked pending capture and continuity validation |
@@ -89,4 +89,4 @@ This is a technically viable zero-key/public-data route for a bounded recent tra
 6. A full H2 real profile implementation requires actual volume-at-price data or sufficiently granular trade prints, with a fixed 24/7 session definition.
 7. H8 now has two isolated price-only variants: H1 + completed 4h direction gate for LRT, and H5 + completed 4h direction gate for NMT. The direction-gate ablation is tested against unfiltered H1/H5; location and confirmation have not been separately ablated. Do not treat these variants as validated strategies.
 
-**Disposition:** Current data supports OHLCV research prototypes only. Real order-flow and volume-profile claims remain blocked. No production integration or strategy acceptance is authorized by this audit.
+**Disposition:** Current data supports OHLCV research prototypes only. H1/LRT V1/V2/V3 all failed the fee-only pre-screen; the full SLRP and Honest Stop are recorded in `docs/research/SLRP-EDUCATION-RESEARCH-2026-11-10.md`. Real order-flow and volume-profile claims remain blocked. No production integration or strategy acceptance is authorized by this audit.
