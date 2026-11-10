@@ -1,5 +1,29 @@
+import json
 import unittest
 from modules.orderbook_l2 import apply_bybit_update, _metrics, _sorted_book
+
+
+class _FakeWebSocket:
+    def __init__(self):
+        self.sent = []
+
+    async def send(self, payload):
+        self.sent.append(json.loads(payload))
+
+
+class KuCoinHeartbeatTests(unittest.IsolatedAsyncioTestCase):
+    async def test_heartbeat_is_sent_when_due_without_waiting_for_market_silence(self):
+        from modules.orderbook_l2 import _kucoin_heartbeat_if_due
+
+        ws = _FakeWebSocket()
+        last_ping = await _kucoin_heartbeat_if_due(ws, 100.0, 8.0, now=107.9)
+        self.assertEqual(last_ping, 100.0)
+        self.assertEqual(ws.sent, [])
+
+        last_ping = await _kucoin_heartbeat_if_due(ws, last_ping, 8.0, now=108.0)
+        self.assertEqual(last_ping, 108.0)
+        self.assertEqual(len(ws.sent), 1)
+        self.assertEqual(ws.sent[0]["type"], "ping")
 
 
 class OrderBookParserTests(unittest.TestCase):
