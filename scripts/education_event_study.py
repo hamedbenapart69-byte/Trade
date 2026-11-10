@@ -14,6 +14,10 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import sys
+
+# اجرای مستقیم اسکریپت از پوشه scripts باید ریشه مخزن را برای import ببیند.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pyarrow.parquet as pq
 
