@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.deduplicate_lrt15m_parquet import normalize
 
 
