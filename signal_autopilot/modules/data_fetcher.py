@@ -230,7 +230,7 @@ class MarketDataFetcher:
         """دریافت تاریخچهٔ کامل با صفحه‌بندی؛ محدودیت سقف کندل هر صرافی را دور می‌زند."""
         page_size = 300  # سقف محافظه‌کارانه برای سازگاری با APIهای مختلف
         target_count = required_completed + 1  # یک کندل اضافه برای حذف کندل باز جاری
-        cursor = now_ms - (target_count + 2) * interval_ms
+        cursor = now_ms - required_completed * interval_ms
         collected = {}
         max_pages = (target_count + page_size - 1) // page_size + 2
 
