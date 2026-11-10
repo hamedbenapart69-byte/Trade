@@ -374,6 +374,35 @@ def _higher_timeframe_bias_series(
             output.append("NEUTRAL")
     return output
 
+def map_events_to_signal_candles(
+    events: Sequence[ResearchEvent],
+    source_candles: Sequence[Candle],
+    target_candles: Sequence[Candle],
+) -> list[ResearchEvent]:
+    """رویدادهای تایم‌فریم بالاتر را فقط به کندل هدف با زمان بسته‌شدن یکسان نگاشت می‌کند."""
+    if not _valid_series(source_candles) or not _valid_series(target_candles):
+        return []
+    target_close_times = [c.close_time for c in target_candles]
+    mapped: list[ResearchEvent] = []
+    for event in events:
+        if event.signal_index < 0 or event.signal_index >= len(source_candles):
+            continue
+        signal_close_time = source_candles[event.signal_index].close_time
+        target_index = bisect_right(target_close_times, signal_close_time) - 1
+        if target_index < 0 or target_candles[target_index].close_time != signal_close_time:
+            continue
+        mapped.append(
+            ResearchEvent(
+                event.hypothesis_id,
+                event.side,
+                target_index,
+                event.level,
+                event.reference_index,
+                event.reason,
+            )
+        )
+    return mapped
+
 def filter_events_by_higher_timeframe_regime(
     events: Sequence[ResearchEvent],
     signal_candles: Sequence[Candle],
