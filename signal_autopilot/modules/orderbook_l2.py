@@ -136,7 +136,6 @@ async def _capture_okx(symbols, duration, interval):
             {"channel": "books5", "instId": SYMBOLS[s]["okx"]} for s in symbols]}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
         while time.monotonic() - started < duration:
-            last_ping = await _bybit_heartbeat_if_due(ws, last_ping, 20.0)
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
             except asyncio.TimeoutError:
@@ -145,7 +144,7 @@ async def _capture_okx(symbols, duration, interval):
                     last_ping = time.monotonic()
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "okx", now, last_sample, 5,
-                                      "CONTRACTS", alive_ms, interval * 1000)
+                                      "CONTRACTS", interval * 1000)
                 continue
             if raw == "pong":
                 continue
@@ -185,11 +184,10 @@ async def _capture_bybit(symbols, duration, interval):
         await ws.send(json.dumps({"op": "subscribe",
             "args": [f"orderbook.50.{SYMBOLS[s]['bybit']}" for s in symbols]}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
-        alive_ms = int(time.time() * 1000)
         while time.monotonic() - started < duration:
+            last_ping = await _bybit_heartbeat_if_due(ws, last_ping, 20.0)
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=5)
-                alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "bybit", now, last_sample, 50,
@@ -270,7 +268,6 @@ async def _capture_kucoin(symbols, duration, interval):
                 "topic": "/contractMarket/level2Depth5:" + SYMBOLS[symbol]["kucoin"],
                 "privateChannel": False, "response": True}))
         started, last_sample, last_ping = time.monotonic(), 0, time.monotonic()
-        alive_ms = int(time.time() * 1000)
         # کوکوین پینگ متنی می‌خواهد؛ ارسال پینگ نباید به سکوت بازار وابسته باشد.
         ping_every_seconds = max(3.0, min(8.0, ping_ms / 1000 * 0.4))
         while time.monotonic() - started < duration:
@@ -279,7 +276,6 @@ async def _capture_kucoin(symbols, duration, interval):
             )
             try:
                 raw = await asyncio.wait_for(ws.recv(), timeout=2)
-                alive_ms = int(time.time() * 1000)
             except asyncio.TimeoutError:
                 now = int(time.time() * 1000)
                 last_sample = _sample(latest, rows, "kucoin", now, last_sample, 5,
