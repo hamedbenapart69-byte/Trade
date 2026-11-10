@@ -75,14 +75,14 @@ This is strong evidence that the EMA-state-only V1 premise is failing as a popul
 
 V2 follows the already documented Stage design: change the entry premise from "EMA20/EMA50 state and spread are enough" to "4H EMA50/EMA200 regime plus a 1H pullback toward EMA50 followed by a closed-candle rejection in the regime direction."
 
-- Fetch 210 candles and require at least 200 completed bars on both 1H and 4H.
+- Fetch 210 completed 1H candles (require 200) and 700 completed 4H candles. The 700-bar 4H history reduces the EMA200 seed influence below approximately 1%.
 - 4H EMA50/EMA200 define the directional regime; the 4H close must remain on the regime side of EMA50.
 - 1H entry requires a pullback within 0.25 ATR of EMA50 and a completed rejection candle back in the 4H regime direction.
 - G4 liquidity guard: 24H quote turnover must be at least 10,000,000 USD; missing turnover is MARKET_DATA_DEGRADED.
 - FETCH_TIME_PROXY entries are CONDITIONAL, never BUY_NOW/SELL_NOW.
 - Stop is beyond the rejection/nearby structure with a 0.25 ATR buffer; reject risk wider than 3%.
 - Targets are 1.5R and 2.5R.
-- Persist a SHA-256 input hash, gate results, 1H/4H metrics, and both 200-candle replay windows for qualified setups.
+- Persist a SHA-256 input hash, gate results, 1H/4H metrics, 200 1H candles, and 700 4H candles for qualified setups.
 - Expand history CSV so future signals retain entry, stop, targets, 1H/4H EMA values, ATR, source timestamp quality, metrics, hypothesis, falsification, and input hash.
 
 ## Other paths: deliberate separation
@@ -96,11 +96,12 @@ Stage: EMA Trend Continuation reliability V2
 Acceptance criteria:
 - 100% of actionable BUY_NOW/SELL_NOW signals pass every V2 quality gate.
 - Any FETCH_TIME_PROXY price is never emitted as BUY_NOW/SELL_NOW.
-- Fewer than 200 completed candles on either 1H or 4H => MARKET_DATA_DEGRADED.
-- Every qualified setup has an input hash and replayable 200-candle evidence windows for 1H and 4H.
+- Fewer than 200 completed 1H candles or 700 completed 4H candles => MARKET_DATA_DEGRADED.
+- Every qualified setup has an input hash and replayable 200-candle 1H plus 700-candle 4H evidence windows.
 - History records entry, stop, targets, EMA20/50, 4H EMA50/200, ATR14, timestamp source, gate metrics, and signal ID.
 - Tunable strategy parameters remain capped at five: pullback tolerance, stop buffer, maximum stop percentage, TP1 R, and TP2 R. EMA periods and G4 are fixed design/constitution constraints.
 - G4: every qualified symbol has verified 24H quote turnover >= 10,000,000 USD.
+- EMA200_4H warm-up residual seed weight is below approximately 1% (700 completed 4H bars).
 - No thresholds are relaxed to increase signal count.
 - V2 is not declared profitable or calibrated until genuine walk-forward/OOS evidence meets the project gates.
 
