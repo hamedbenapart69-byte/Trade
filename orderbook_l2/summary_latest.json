@@ -1,24 +1,24 @@
 {
-  "status": "PARTIAL",
+  "status": "PASS",
   "providers": {
     "okx": {
-      "status": "ERROR",
-      "rows": 0,
-      "error": "RuntimeError:OKX_SUBSCRIBE_ERROR:Illegal request: {\"op\": \"ping\"}"
+      "status": "PASS",
+      "rows": 51,
+      "error": null
     },
     "bybit": {
       "status": "PASS",
-      "rows": 591,
+      "rows": 51,
       "error": null
     },
     "kucoin": {
       "status": "PASS",
-      "rows": 591,
+      "rows": 51,
       "error": null
     }
   },
-  "total_rows": 1182,
-  "captured_at_utc": "2026-11-10T17:01:26.146676+00:00",
+  "total_rows": 153,
+  "captured_at_utc": "2026-11-10T17:09:25.680121+00:00",
   "symbols": [
     "BTC",
     "ETH",
@@ -32,6 +32,7 @@
     "AVAX"
   ],
   "parquet_files": [
+    "data/orderbook_l2/2026-11-10/okx.parquet",
     "data/orderbook_l2/2026-11-10/bybit.parquet",
     "data/orderbook_l2/2026-11-10/kucoin.parquet"
   ]
