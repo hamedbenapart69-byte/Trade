@@ -2,8 +2,6 @@ name: Futures Signals Pipeline
 on:
   schedule:
     - cron: "7 */4 * * *"
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       test_telegram:
@@ -65,13 +63,13 @@ jobs:
         working-directory: signal_autopilot
         run: pip install -r requirements.txt
       - name: Restore Telegram deduplication state
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: signal_autopilot/data/telegram_sent.json
-          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}
+          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ runner.os }}-telegram-sent-
-      - name: Test OKX CCXT ticker from GitHub Actions runner
+      - name: Advisory OKX reachability probe (non-blocking; provider fallback is independent)
         continue-on-error: true
         working-directory: signal_autopilot
         run: |
@@ -105,6 +103,12 @@ jobs:
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SIGNAL_SYMBOL_LIMIT: "100"
         run: python logic.py
+      - name: Save Telegram deduplication state
+        if: success() && hashFiles('signal_autopilot/data/telegram_sent.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: signal_autopilot/data/telegram_sent.json
+          key: ${{ runner.os }}-telegram-sent-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Validate JSON, CSV and C10
         run: |
           python - <<'PY'
