@@ -161,6 +161,8 @@ Cloudflare Pages Git integration برای چند PR Preview پاسخ موفق ث
 
 - موتور یک‌ساعته: قرنطینه و بدون اسکن/ارسال/انتشار.
 - یک Workflow جداگانهٔ Stage 1b در شاخهٔ `stage1b-lrt15m` هنوز زمان‌بندی 4 ساعته دارد؛ کد آن صراحتاً فقط وضعیت WATCHLIST را می‌پذیرد و سیگنال BUY_NOW/SELL_NOW تولید نمی‌کند. این مسیر با موتور 1h و Workflow داده‌ای P0 متفاوت است.
+- آخرین Artifact بررسی‌شدهٔ این مسیر: [Run 42862851234](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42862851234). نتیجه: 27 نماد بررسی‌شده، 0 مورد WATCHLIST، `telegram_signals_sent=0`، `calibration=UNCALIBRATED` و سیاست `WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW`.
+- در آن اجرا هیچ پیام سیگنال 15m به تلگرام ارسال نشد. این گزارش، تحویل زندهٔ پیام وضعیت قرنطینهٔ موتور 1h را اثبات نمی‌کند.
 - اجرای موفق P0 داده‌ای، موتور LRT را اجرا نکرد.
 
 ## SLRP — P0
