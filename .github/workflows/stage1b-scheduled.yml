@@ -62,9 +62,8 @@ jobs:
           echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
           echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
 
-      - name: Download 15m history for the fixed 27-symbol universe
+      - name: Download 15m history for the fixed 27-symbol universe (blocking data prerequisite)
         id: download15m
-        continue-on-error: true
         run: |
           python signal_autopilot/scripts/download_lrt15m_history.py \
             --start-date "${{ steps.window.outputs.start_date }}" \

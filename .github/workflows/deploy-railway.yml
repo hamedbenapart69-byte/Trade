@@ -1,25 +1,29 @@
-name: Deploy Railway after green CI
+name: Railway Deployment (Manual Opt-In Only)
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy current tested commit to Railway production
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    name: Optional Railway deployment (requires ENABLE_RAILWAY_DEPLOY=true)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout the exact commit tested by CI
+      - name: Check out the manually selected branch commit
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Require explicit Railway deployment opt-in
+        env:
+          ENABLE_RAILWAY_DEPLOY: ${{ vars.ENABLE_RAILWAY_DEPLOY }}
+        shell: bash
+        run: |
+          if [[ "${ENABLE_RAILWAY_DEPLOY:-}" != "true" ]]; then
+            echo "::error::DEPLOYMENT_BLOCKED: set repository variable ENABLE_RAILWAY_DEPLOY=true before manually requesting Railway deployment."
+            exit 1
+          fi
 
       - name: Check for Railway project token without printing it
         id: token
@@ -35,6 +39,13 @@ jobs:
             echo "BLOCKED: create a Railway Project Token scoped to the production environment and save it as GitHub Actions secret RAILWAY_TOKEN." >> "$GITHUB_STEP_SUMMARY"
             echo "::notice::Railway deployment skipped: required secret RAILWAY_TOKEN is not configured."
           fi
+
+      - name: Fail clearly when Railway deployment is blocked by a missing token
+        if: steps.token.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "::error::DEPLOYMENT_BLOCKED: RAILWAY_TOKEN is not configured; no deployment was attempted."
+          exit 1
 
       - name: Install Railway CLI
         if: steps.token.outputs.available == 'true'

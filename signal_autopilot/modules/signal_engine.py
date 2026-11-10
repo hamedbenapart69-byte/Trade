@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from modules.lfs1_proxy import aggregate_lfs_v2, calculate_lfs1_proxy
+
 C10 = {
     "BUY_NOW", "SELL_NOW", "CONDITIONAL_BUY", "CONDITIONAL_SELL",
     "WATCHLIST", "NO_QUALIFIED_SETUP", "MARKET_DATA_DEGRADED",
@@ -40,6 +42,11 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     """ساخت سیگنال با شرط فاصله EMA حداقل نیم درصد و حدضرر/اهداف مبتنی بر ATR."""
     candles = row.get("ohlcv") or []
     availability = row.get("availability") or {}
+    lfs1_proxy = calculate_lfs1_proxy(candles)
+    lfs_v2 = aggregate_lfs_v2({
+        "LFS1": lfs1_proxy.get("score"), "LFS2": None, "LFS3": None,
+        "LFS4": None, "LFS5": None,
+    })
     base: dict[str, Any] = {
         "symbol": row.get("symbol"),
         "status": "MARKET_DATA_DEGRADED",
@@ -51,6 +58,8 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "ema50": None,
         "atr14": None,
         "confidence": "NOT_CALIBRATED",
+        "lfs1_proxy": lfs1_proxy,
+        "lfs_v2": lfs_v2,
         "generated_at_utc": generated_at_utc,
         "data_availability": availability,
         "ticker_timestamp_utc": row.get("ticker_timestamp_utc"),

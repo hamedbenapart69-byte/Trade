@@ -13,7 +13,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Probe OKX, Gate and Hyperliquid public APIs
-        run: python scripts/public_market_endpoint_probe_v2.py | tee public-market-endpoint-probe-v2.json
+        run: |
+          set -o pipefail
+          python scripts/public_market_endpoint_probe_v2.py | tee public-market-endpoint-probe-v2.json
       - uses: actions/upload-artifact@v4
         with:
           name: public-market-endpoint-probe-v2

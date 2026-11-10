@@ -106,8 +106,10 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
+  # Legacy V5 Pages deployment is opt-in and stays disabled unless the repository variable is explicitly enabled.
   deploy-pages:
-    if: false
+    name: Deploy legacy V5 Pages (requires ENABLE_LEGACY_V5_PAGES_DEPLOY=true)
+    if: ${{ vars.ENABLE_LEGACY_V5_PAGES_DEPLOY == 'true' }}
     needs: scan-and-build
     runs-on: ubuntu-latest
     permissions:

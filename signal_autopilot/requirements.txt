@@ -3,3 +3,4 @@ httpx>=0.27,<1.0
 pyarrow>=18,<25
 python-telegram-bot>=20,<23
 matplotlib>=3.8,<4
+websockets>=13,<16
