@@ -271,8 +271,10 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
                 "4h": candles_4h[-MIN_BARS_4H:],
             },
             "reason": (
-                f"V2: 4H EMA50/EMA200 regime confirmed; 1H pullback to EMA50 "
-                f"({pullback_distance:.3f} ATR) and closed-candle rejection passed."
+                f"V2: 4H EMA50/200={ema50_4h:.8g}/{ema200_4h:.8g}; "
+                f"1H EMA50={ema50_1h:.8g}; ATR14={atr_1h:.8g}; "
+                f"pullback={pullback_distance:.3f} ATR; "
+                f"24H quote turnover={quote_volume:,.0f} USD; closed-candle rejection passed."
                 + (" FETCH_TIME_PROXY: conditional only, not immediate." if is_proxy else "")
             ),
             "hypothesis": (
