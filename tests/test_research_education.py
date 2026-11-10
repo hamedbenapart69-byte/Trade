@@ -6,6 +6,8 @@ from app.research_education import (
     detect_breakout_acceptance,
     detect_liquidity_sweeps,
     detect_value_boundary_rejections,
+    filter_events_by_higher_timeframe,
+    ResearchEvent,
     higher_timeframe_bias,
     passes_higher_timeframe_gate,
 )
@@ -101,6 +103,70 @@ class EducationHypothesisTests(unittest.TestCase):
             ),
             [],
         )
+
+    def test_h8_dlc_direction_gate_filters_misaligned_confirmation_events(self):
+        signal_bars = [
+            candle(i, 100 + i, 101 + i, 99 + i, 100 + i)
+            for i in range(240)
+        ]
+        htf_bars = [
+            Candle(
+                i * 4 * 60 * 60_000,
+                100 + i,
+                101 + i,
+                99 + i,
+                100 + i,
+                400.0,
+                (i + 1) * 4 * 60 * 60_000 - 1,
+                True,
+            )
+            for i in range(60)
+        ]
+        events = [
+            ResearchEvent("H1", "LONG", 239, 300.0, 238, "reclaim"),
+            ResearchEvent("H1", "SHORT", 239, 300.0, 238, "reclaim"),
+        ]
+        filtered = filter_events_by_higher_timeframe(
+            events, signal_bars, htf_bars
+        )
+        self.assertEqual([event.side for event in filtered], ["LONG"])
+
+    def test_h8_dlc_uses_only_completed_higher_timeframe_candles(self):
+        signal_bars = [
+            candle(i, 100 + i, 101 + i, 99 + i, 100 + i)
+            for i in range(240)
+        ]
+        htf_bars = [
+            Candle(
+                i * 4 * 60 * 60_000,
+                100 + i,
+                101 + i,
+                99 + i,
+                100 + i,
+                400.0,
+                (i + 1) * 4 * 60 * 60_000 - 1,
+                True,
+            )
+            for i in range(59)
+        ]
+        # این کندل پس از زمان سیگنال بسته می‌شود و نباید در جهت HTF دخالت کند.
+        htf_bars.append(
+            Candle(
+                59 * 4 * 60 * 60_000,
+                159,
+                160,
+                80,
+                80,
+                400.0,
+                60 * 4 * 60 * 60_000 - 1,
+                True,
+            )
+        )
+        event = ResearchEvent("H5_PRICE_PROXY", "LONG", 235, 150.0, 234, "acceptance")
+        filtered = filter_events_by_higher_timeframe(
+            [event], signal_bars, htf_bars
+        )
+        self.assertEqual(filtered, [event])
 
     def test_h7_requires_completed_htf_bars_and_directional_alignment(self):
         rising = [
