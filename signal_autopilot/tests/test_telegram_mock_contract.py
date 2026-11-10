@@ -62,6 +62,17 @@ class TelegramMockContractTests(unittest.TestCase):
             result = send_legacy_quarantine_status_test(QUARANTINE)
         self.assertEqual(result, {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0})
 
+    def test_live_test_workflow_is_manual_and_uses_only_test_chat_secret(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github" / "workflows" / "telegram-quarantine-test.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertIn("TELEGRAM_TEST_CHAT_ID", workflow)
+        self.assertIn("TELEGRAM_TOKEN", workflow)
+        self.assertNotIn("secrets.TELEGRAM_CHAT_ID", workflow)
+        self.assertIn("send_legacy_quarantine_status_test", workflow)
+
     def test_normal_signal_formatter_and_delivery_are_mocked_without_network(self):
         payload = {
             "generated_at_utc": "2026-11-10T00:00:00+00:00",
