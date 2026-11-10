@@ -22,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-json", required=True)
     parser.add_argument("--source-csv", required=True)
-    parser.add_argument("--source-health", required=True)
+    parser.add_argument("--source-health", required=False)
     parser.add_argument("--output-dir", required=True)
     args = parser.parse_args()
     source_json = Path(args.source_json)
@@ -38,15 +38,18 @@ def main():
             incoming = current
     target_json.write_text(json.dumps(incoming, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    if not source_health.exists():
-        raise FileNotFoundError("source_health_missing")
-    incoming_health = json.loads(source_health.read_text(encoding="utf-8"))
-    target_health = output / "health.json"
-    if target_health.exists():
-        current_health = json.loads(target_health.read_text(encoding="utf-8"))
-        if str(current_health.get("generated_at_utc") or "") > str(incoming_health.get("generated_at_utc") or ""):
-            incoming_health = current_health
-    target_health.write_text(json.dumps(incoming_health, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.source_health:
+        if not source_health.exists():
+            raise FileNotFoundError("source_health_missing")
+        incoming_health = json.loads(source_health.read_text(encoding="utf-8"))
+        target_health = output / "health.json"
+        if target_health.exists():
+            current_health = json.loads(target_health.read_text(encoding="utf-8"))
+            if str(current_health.get("generated_at_utc") or "") > str(incoming_health.get("generated_at_utc") or ""):
+                incoming_health = current_health
+        target_health.write_text(json.dumps(incoming_health, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    else:
+        incoming_health = {}
 
     old_rows, old_fields = load_rows(output / "history.csv")
     new_rows, new_fields = load_rows(source_csv)
