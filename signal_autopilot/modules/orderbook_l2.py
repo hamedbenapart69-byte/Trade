@@ -262,15 +262,19 @@ async def _capture_kucoin(symbols, duration, interval):
 async def capture_orderbooks(symbols: list[str], duration: int = 600,
                              sample_interval: int = 10) -> dict[str, Any]:
     adapters = {"okx": _capture_okx, "bybit": _capture_bybit, "kucoin": _capture_kucoin}
-    results = {}
-    for name, adapter in adapters.items():
+    async def run_one(name, adapter):
         try:
             records = await adapter(symbols, duration, sample_interval)
-            results[name] = {"status": "PASS" if records else "NO_BOOK_SNAPSHOTS",
-                             "rows": records, "error": None}
+            return name, {"status": "PASS" if records else "NO_BOOK_SNAPSHOTS",
+                          "rows": records, "error": None}
         except Exception as exc:
-            results[name] = {"status": "ERROR", "rows": [],
-                             "error": type(exc).__name__ + ":" + str(exc)[:240]}
+            return name, {"status": "ERROR", "rows": [],
+                          "error": type(exc).__name__ + ":" + str(exc)[:240]}
+
+    pairs = await asyncio.gather(
+        *(run_one(name, adapter) for name, adapter in adapters.items())
+    )
+    results = dict(pairs)
     passed = sum(1 for item in results.values() if item["status"] == "PASS")
     records = [row for item in results.values() for row in item["rows"]]
     return {"status": "PASS" if passed == 3 else ("PARTIAL" if passed else "BLOCKED"),
