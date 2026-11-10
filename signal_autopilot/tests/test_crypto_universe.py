@@ -195,5 +195,32 @@ class CryptoUniverseTests(unittest.TestCase):
         )
         self.assertEqual([c[0] for c in result], [old[0], recent[0]])
 
+    def test_4h_history_is_paginated_and_keeps_700_latest_completed_bars(self):
+        interval = 4 * 3_600_000
+        now = 1_800_000_000_000
+        candles = []
+        for index in range(701):
+            timestamp = now - (700 - index) * interval
+            candles.append([timestamp, 100, 101, 99, 100, 1000])
+
+        class PagedExchange:
+            def __init__(self, rows):
+                self.rows = rows
+                self.calls = []
+            def fetch_ohlcv(self, symbol, timeframe, since, limit):
+                self.calls.append((timeframe, since, limit))
+                return [row for row in self.rows if row[0] >= since][:limit]
+
+        exchange = PagedExchange(candles)
+        fetched = MarketDataFetcher._fetch_ohlcv_paged(
+            exchange, "BTC/USDT:USDT", "4h", 700, interval, now
+        )
+        completed = MarketDataFetcher._completed_ohlcv(fetched, now, interval_ms=interval)
+        self.assertEqual(len(exchange.calls), 3)
+        self.assertTrue(all(call[0] == "4h" and call[2] <= 300 for call in exchange.calls))
+        self.assertEqual(len(completed), 700)
+        self.assertEqual(completed[-1][0], now - interval)
+
+
 if __name__ == "__main__":
     unittest.main()
