@@ -60,6 +60,10 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "ema50": None,
         "atr14": None,
         "confidence": "NOT_CALIBRATED",
+        # بدون احتمال برد و توزیع سود/زیان کالیبره‌شده، EV عددی محاسبه نمی‌شود.
+        "ev_net": None,
+        "ev_status": "NOT_CALIBRATED",
+        "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
         "lfs1_proxy": lfs1_proxy,
         "lfs_v2": lfs_v2,
         "generated_at_utc": generated_at_utc,
@@ -166,6 +170,8 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
             "symbol": "MARKET", "status": "MARKET_DATA_DEGRADED", "side": None,
             "entry": None, "stop_loss": None, "take_profit": [],
             "reason": "No market data returned", "confidence": "NOT_CALIBRATED",
+            "ev_net": None, "ev_status": "NOT_CALIBRATED",
+            "ev_reason": "NO_CALIBRATED_WIN_PROBABILITY_OR_PAYOFF_DISTRIBUTION",
             "generated_at_utc": generated,
         }]
     for signal in signals:
