@@ -29,6 +29,33 @@ class OrderBookParserTests(unittest.TestCase):
         self.assertAlmostEqual(metrics["spread_bps"], 200)
         self.assertAlmostEqual(metrics["imbalance_native"], -0.2)
 
+    def test_kucoin_level5_message_uses_public_topic_and_bid_ask_schema(self):
+        from modules.orderbook_l2 import _parse_kucoin_level5
+        message = {
+            "topic": "/contractMarket/level2Depth5:XBTUSDTM",
+            "type": "message",
+            "subject": "level2",
+            "sn": 1731680019100,
+            "data": {
+                "bids": [["89720.9", 513], ["89720.8", 12]],
+                "asks": [["89721", 906], ["89721.1", 203]],
+                "sequence": 1709294294670,
+                "timestamp": 1731680019100,
+                "ts": 1731680019100,
+            },
+        }
+        parsed = _parse_kucoin_level5(message, {"XBTUSDTM": "BTC"})
+        self.assertIsNotNone(parsed)
+        symbol, book = parsed
+        self.assertEqual(symbol, "BTC")
+        self.assertEqual(book["bids"][0], ["89720.9", "513"])
+        self.assertEqual(book["asks"][0], ["89721", "906"])
+        self.assertEqual(book["sequence"], "1709294294670")
+
+    def test_kucoin_ack_or_unknown_topic_is_not_a_book(self):
+        from modules.orderbook_l2 import _parse_kucoin_level5
+        self.assertIsNone(_parse_kucoin_level5({"type": "ack"}, {"XBTUSDTM": "BTC"}))
+
 
 if __name__ == "__main__":
     unittest.main()
