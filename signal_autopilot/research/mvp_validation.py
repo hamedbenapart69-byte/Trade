@@ -52,30 +52,53 @@ def atr_series(rows: list[dict[str, Any]], period: int = 14) -> list[float | Non
 
 
 def _trade_result(position: dict[str, Any], exit_time: int, exit_price: float,
-                  reason: str, remaining_fraction: float) -> dict[str, Any]:
+                  reason: str, remaining_fraction: float,
+                  target_triggers: list[str] | None = None) -> dict[str, Any]:
     side_sign = 1.0 if position["side"] == "LONG" else -1.0
     gross = position["realized_gross_pct"]
     if remaining_fraction > 0:
         gross += remaining_fraction * side_sign * (exit_price / position["entry"] - 1.0)
-    round_trip_cost = 2.0 * (FEE_PER_SIDE + SLIPPAGE_PER_SIDE)
+    round_trip_fee = 2.0 * FEE_PER_SIDE
+    round_trip_slippage = 2.0 * SLIPPAGE_PER_SIDE
+    round_trip_cost = round_trip_fee + round_trip_slippage
     net_pct = gross - round_trip_cost
     risk_pct = abs(position["entry"] - position["stop"]) / position["entry"]
     net_r = net_pct / risk_pct if risk_pct > 0 else 0.0
+    stop_triggered = reason.startswith("STOP")
     return {
         "symbol": position["symbol"],
         "side": position["side"],
+        "signal_time": position["signal_time"],
+        "order_decision_time": position["order_decision_time"],
         "entry_time": position["entry_time"],
         "exit_time": exit_time,
         "entry": position["entry"],
+        "entry_fill_price": position["entry"],
         "exit": exit_price,
+        "exit_fill_price": exit_price,
+        "fill_price_model": "NEXT_BAR_OPEN_ENTRY_OHLCV_BAR_EXIT",
+        "exit_time_precision": "OHLCV_BAR_TIMESTAMP_ONLY",
         "stop": position["stop"],
+        "stop_trigger": position["stop"] if stop_triggered else None,
+        "target_triggers": target_triggers or [],
         "tp1": position["tp1"],
         "tp2": position["tp2"],
         "gross_return_pct": gross * 100.0,
+        "entry_fee_pct": FEE_PER_SIDE * 100.0,
+        "exit_fee_pct": FEE_PER_SIDE * 100.0,
+        "round_trip_fee_pct": round_trip_fee * 100.0,
+        "slippage_per_side_pct": SLIPPAGE_PER_SIDE * 100.0,
+        "round_trip_slippage_pct": round_trip_slippage * 100.0,
+        "spread_cost_pct": "UNAVAILABLE",
+        "market_impact_cost_pct": "UNAVAILABLE",
         "cost_return_pct": round_trip_cost * 100.0,
         "net_return_pct": net_pct * 100.0,
         "net_r": net_r,
         "exit_reason": reason,
+        "position_duration_ms": max(0, int(exit_time) - int(position["entry_time"])),
+        "partial_fill_assumption": "50% at TP1 and 50% at TP2",
+        "latency_assumption": "NEXT_BAR_OPEN; additional latency unavailable",
+        "liquidity_constraints": "UNAVAILABLE",
         "funding_cost": "UNAVAILABLE",
     }
 
@@ -95,9 +118,11 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 
     position: dict[str, Any] | None = None
     i = max(50, start_index)
 
-    while i < len(rows) - 1:
+    while i < len(rows):
         candle = rows[i]
         if position is None:
+            if i >= len(rows) - 1:
+                break
             # هم‌تراز با Cron واقعی: هر ۴ ساعت پس از بسته‌شدن کندل 1H.
             completed_hour = int(candle["timestamp"]) // 3_600_000 + 1
             if completed_hour % SIGNAL_SCAN_INTERVAL_HOURS != 0:
@@ -125,7 +150,10 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 
                 i += 1
                 continue
             position = {
-                "symbol": symbol, "side": side, "entry_time": int(entry_bar["timestamp"]),
+                "symbol": symbol, "side": side,
+                "signal_time": int(candle["timestamp"]) + 3_600_000,
+                "order_decision_time": int(candle["timestamp"]) + 3_600_000,
+                "entry_time": int(entry_bar["timestamp"]),
                 "entry": entry, "stop": stop, "tp1": tp1, "tp2": tp2,
                 "tp1_done": False, "realized_gross_pct": 0.0,
             }
@@ -140,14 +168,18 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 
 
         # اگر SL و هر TP در یک کندل دیده شوند، ترتیب نامعلوم است؛ بدترین حالت یعنی SL.
         if stop_hit and (tp1_hit or tp2_hit):
-            trades.append(_trade_result(position, int(candle["timestamp"]),
-                                        position["stop"], "STOP_SAME_BAR_AMBIGUITY",
-                                        1.0 if not position["tp1_done"] else 0.5))
+            trades.append(_trade_result(
+                position, int(candle["timestamp"]), position["stop"],
+                "STOP_SAME_BAR_AMBIGUITY",
+                1.0 if not position["tp1_done"] else 0.5,
+                [name for name, hit in (("TP1", tp1_hit), ("TP2", tp2_hit)) if hit],
+            ))
             position = None
         elif stop_hit:
-            trades.append(_trade_result(position, int(candle["timestamp"]),
-                                        position["stop"], "STOP",
-                                        1.0 if not position["tp1_done"] else 0.5))
+            trades.append(_trade_result(
+                position, int(candle["timestamp"]), position["stop"], "STOP",
+                1.0 if not position["tp1_done"] else 0.5,
+            ))
             position = None
         else:
             if tp1_hit and not position["tp1_done"]:
@@ -161,8 +193,10 @@ def backtest_window(symbol: str, rows: list[dict[str, Any]], start_index: int = 
                 position["realized_gross_pct"] += 0.5 * sign * (
                     position["tp2"] / position["entry"] - 1.0
                 )
-                trades.append(_trade_result(position, int(candle["timestamp"]),
-                                            position["tp2"], "TP2", 0.0))
+                trades.append(_trade_result(
+                    position, int(candle["timestamp"]), position["tp2"], "TP2", 0.0,
+                    [name for name, hit in (("TP1", tp1_hit), ("TP2", tp2_hit)) if hit],
+                ))
                 position = None
         i += 1
 
