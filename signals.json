@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+  "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
   "provider": "kucoinfutures",
   "engine": "EMA20_EMA50_ATR14_MVP",
   "manual_trade_only": true,
@@ -11,11 +11,11 @@
       "symbol": "BTC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73406.2,
-      "stop_loss": 74290.9214285714,
+      "entry": 72944.9,
+      "stop_loss": 73829.6214285714,
       "take_profit": [
-        72226.5714285714,
-        71046.9428571429
+        71765.2714285714,
+        70585.6428571429
       ],
       "ema20": 74436.8005082274,
       "ema50": 74871.1936902165,
@@ -47,20 +47,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:31.516000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:15.657000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5802% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74290.9214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73829.6214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -685,19 +685,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5802% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 459,
+      "message_id_current": 478,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ETH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2032.64,
-      "stop_loss": 2071.5157142857,
+      "entry": 2019.26,
+      "stop_loss": 2058.1357142857,
       "take_profit": [
-        1980.8057142857,
-        1928.9714285714
+        1967.4257142857,
+        1915.5914285714
       ],
       "ema20": 2100.2063111306,
       "ema50": 2139.6745509976,
@@ -729,20 +729,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:31.911000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:16.235000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.8446% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2071.5157142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2058.1357142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -1367,19 +1367,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.8446% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 460,
+      "message_id_current": 479,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ZEC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1089.98,
-      "stop_loss": 1129.7696428571,
+      "entry": 1015.9,
+      "stop_loss": 1055.6896428571,
       "take_profit": [
-        1036.9271428571,
-        983.8742857143
+        962.8471428571,
+        909.7942857143
       ],
       "ema20": 1158.806177228,
       "ema50": 1191.5199820813,
@@ -1411,20 +1411,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:32.300000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:16.753000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.7456% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1129.7696428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1055.6896428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -2049,19 +2049,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.7456% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 461,
+      "message_id_current": 480,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.366,
-      "stop_loss": 83.9926428571,
+      "entry": 81.931,
+      "stop_loss": 83.5576428571,
       "take_profit": [
-        80.1971428571,
-        78.0282857143
+        79.7621428571,
+        77.5932857143
       ],
       "ema20": 85.2652244567,
       "ema50": 86.5972072879,
@@ -2093,20 +2093,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:32.694000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:17.303000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.5381% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9926428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.5576428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -2731,19 +2731,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.5381% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 462,
+      "message_id_current": 481,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2554e-06,
-      "stop_loss": 5.0654e-06,
+      "entry": 5.1841e-06,
+      "stop_loss": 4.9941e-06,
       "take_profit": [
-        5.5087e-06,
-        5.7621e-06
+        5.4374e-06,
+        5.6908e-06
       ],
       "ema20": 5.2677e-06,
       "ema50": 5.1488e-06,
@@ -2775,20 +2775,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.086000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:17.818000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.3111% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0654e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 4.9941e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -3413,19 +3413,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.3111% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 463,
+      "message_id_current": 482,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.04861,
-      "stop_loss": 1.0709375,
+      "entry": 1.04177,
+      "stop_loss": 1.0640975,
       "take_profit": [
-        1.01884,
-        0.98907
+        1.012,
+        0.98223
       ],
       "ema20": 1.0831493198,
       "ema50": 1.1062338914,
@@ -3457,20 +3457,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.471000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:18.353000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.0868% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0709375 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0640975 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -4095,701 +4095,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.0868% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 464,
+      "message_id_current": 483,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
-    },
-    {
-      "symbol": "AVAX/USDT:USDT",
-      "status": "BUY_NOW",
-      "side": "BUY",
-      "entry": 8.252,
-      "stop_loss": 8.0608571429,
-      "take_profit": [
-        8.5068571429,
-        8.7617142857
-      ],
-      "ema20": 8.4127242008,
-      "ema50": 8.3406957814,
-      "atr14": 0.1274285714,
-      "confidence": "NOT_CALIBRATED",
-      "lfs1_proxy": {
-        "status": "NORMAL_PROXY",
-        "data_class": "PROXY",
-        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
-        "score": 0.333333,
-        "threshold": 0.9,
-        "atr_percentile": 0.666667,
-        "low_volume_percentile": 0.0,
-        "volume_ratio_vs_rolling_median": 2.214129,
-        "lookback_bars": 69,
-        "lookback_hours": 69,
-        "calibration": "NOT_CALIBRATED",
-        "real_orderbook_used": false
-      },
-      "lfs_v2": {
-        "status": "UNAVAILABLE",
-        "data_class": "PARTIAL",
-        "missing_components": [
-          "LFS2",
-          "LFS3",
-          "LFS4",
-          "LFS5"
-        ],
-        "invalid_components": [],
-        "reason": "all_five_components_required_no_missing_to_zero"
-      },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.855000+00:00",
-      "ticker_timestamp_source": "FETCH_TIME_PROXY",
-      "entry_price_quality": "PROXY_FETCH_TIME",
-      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
-      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
-      "timeframe": "1H",
-      "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0608571429 فرضیه را باطل می‌کند.",
-      "chart_candles": [
-        {
-          "timestamp": 1794078000000,
-          "timestamp_utc": "2026-11-07T19:00:00+00:00",
-          "open": 8.244,
-          "high": 8.246,
-          "low": 8.185,
-          "close": 8.201,
-          "volume": 165425.0
-        },
-        {
-          "timestamp": 1794081600000,
-          "timestamp_utc": "2026-11-07T20:00:00+00:00",
-          "open": 8.199,
-          "high": 8.209,
-          "low": 8.145,
-          "close": 8.157,
-          "volume": 145368.0
-        },
-        {
-          "timestamp": 1794085200000,
-          "timestamp_utc": "2026-11-07T21:00:00+00:00",
-          "open": 8.159,
-          "high": 8.203,
-          "low": 8.129,
-          "close": 8.198,
-          "volume": 202740.0
-        },
-        {
-          "timestamp": 1794088800000,
-          "timestamp_utc": "2026-11-07T22:00:00+00:00",
-          "open": 8.2,
-          "high": 8.211,
-          "low": 8.187,
-          "close": 8.198,
-          "volume": 164321.0
-        },
-        {
-          "timestamp": 1794092400000,
-          "timestamp_utc": "2026-11-07T23:00:00+00:00",
-          "open": 8.194,
-          "high": 8.234,
-          "low": 8.19,
-          "close": 8.228,
-          "volume": 111279.0
-        },
-        {
-          "timestamp": 1794096000000,
-          "timestamp_utc": "2026-11-08T00:00:00+00:00",
-          "open": 8.226,
-          "high": 8.226,
-          "low": 8.188,
-          "close": 8.207,
-          "volume": 51169.0
-        },
-        {
-          "timestamp": 1794099600000,
-          "timestamp_utc": "2026-11-08T01:00:00+00:00",
-          "open": 8.209,
-          "high": 8.22,
-          "low": 8.176,
-          "close": 8.179,
-          "volume": 81862.0
-        },
-        {
-          "timestamp": 1794103200000,
-          "timestamp_utc": "2026-11-08T02:00:00+00:00",
-          "open": 8.184,
-          "high": 8.188,
-          "low": 8.152,
-          "close": 8.173,
-          "volume": 106075.0
-        },
-        {
-          "timestamp": 1794106800000,
-          "timestamp_utc": "2026-11-08T03:00:00+00:00",
-          "open": 8.178,
-          "high": 8.202,
-          "low": 8.175,
-          "close": 8.194,
-          "volume": 92228.0
-        },
-        {
-          "timestamp": 1794110400000,
-          "timestamp_utc": "2026-11-08T04:00:00+00:00",
-          "open": 8.196,
-          "high": 8.208,
-          "low": 8.154,
-          "close": 8.154,
-          "volume": 82968.0
-        },
-        {
-          "timestamp": 1794114000000,
-          "timestamp_utc": "2026-11-08T05:00:00+00:00",
-          "open": 8.159,
-          "high": 8.187,
-          "low": 8.156,
-          "close": 8.181,
-          "volume": 77199.0
-        },
-        {
-          "timestamp": 1794117600000,
-          "timestamp_utc": "2026-11-08T06:00:00+00:00",
-          "open": 8.181,
-          "high": 8.198,
-          "low": 8.157,
-          "close": 8.165,
-          "volume": 67812.0
-        },
-        {
-          "timestamp": 1794121200000,
-          "timestamp_utc": "2026-11-08T07:00:00+00:00",
-          "open": 8.169,
-          "high": 8.199,
-          "low": 8.168,
-          "close": 8.191,
-          "volume": 56136.0
-        },
-        {
-          "timestamp": 1794124800000,
-          "timestamp_utc": "2026-11-08T08:00:00+00:00",
-          "open": 8.193,
-          "high": 8.193,
-          "low": 8.161,
-          "close": 8.163,
-          "volume": 68019.0
-        },
-        {
-          "timestamp": 1794128400000,
-          "timestamp_utc": "2026-11-08T09:00:00+00:00",
-          "open": 8.164,
-          "high": 8.165,
-          "low": 8.12,
-          "close": 8.162,
-          "volume": 133180.0
-        },
-        {
-          "timestamp": 1794132000000,
-          "timestamp_utc": "2026-11-08T10:00:00+00:00",
-          "open": 8.162,
-          "high": 8.174,
-          "low": 8.135,
-          "close": 8.159,
-          "volume": 130353.0
-        },
-        {
-          "timestamp": 1794135600000,
-          "timestamp_utc": "2026-11-08T11:00:00+00:00",
-          "open": 8.161,
-          "high": 8.206,
-          "low": 8.157,
-          "close": 8.187,
-          "volume": 144293.0
-        },
-        {
-          "timestamp": 1794139200000,
-          "timestamp_utc": "2026-11-08T12:00:00+00:00",
-          "open": 8.188,
-          "high": 8.208,
-          "low": 8.149,
-          "close": 8.172,
-          "volume": 197249.0
-        },
-        {
-          "timestamp": 1794142800000,
-          "timestamp_utc": "2026-11-08T13:00:00+00:00",
-          "open": 8.172,
-          "high": 8.224,
-          "low": 8.153,
-          "close": 8.166,
-          "volume": 217308.0
-        },
-        {
-          "timestamp": 1794146400000,
-          "timestamp_utc": "2026-11-08T14:00:00+00:00",
-          "open": 8.165,
-          "high": 8.212,
-          "low": 8.142,
-          "close": 8.197,
-          "volume": 201672.0
-        },
-        {
-          "timestamp": 1794150000000,
-          "timestamp_utc": "2026-11-08T15:00:00+00:00",
-          "open": 8.198,
-          "high": 8.251,
-          "low": 8.188,
-          "close": 8.243,
-          "volume": 215559.0
-        },
-        {
-          "timestamp": 1794153600000,
-          "timestamp_utc": "2026-11-08T16:00:00+00:00",
-          "open": 8.244,
-          "high": 8.269,
-          "low": 8.162,
-          "close": 8.174,
-          "volume": 176360.0
-        },
-        {
-          "timestamp": 1794157200000,
-          "timestamp_utc": "2026-11-08T17:00:00+00:00",
-          "open": 8.175,
-          "high": 8.179,
-          "low": 8.135,
-          "close": 8.172,
-          "volume": 253193.0
-        },
-        {
-          "timestamp": 1794160800000,
-          "timestamp_utc": "2026-11-08T18:00:00+00:00",
-          "open": 8.177,
-          "high": 8.227,
-          "low": 8.164,
-          "close": 8.207,
-          "volume": 144144.0
-        },
-        {
-          "timestamp": 1794164400000,
-          "timestamp_utc": "2026-11-08T19:00:00+00:00",
-          "open": 8.209,
-          "high": 8.209,
-          "low": 8.171,
-          "close": 8.204,
-          "volume": 184199.0
-        },
-        {
-          "timestamp": 1794168000000,
-          "timestamp_utc": "2026-11-08T20:00:00+00:00",
-          "open": 8.204,
-          "high": 8.216,
-          "low": 8.171,
-          "close": 8.171,
-          "volume": 221748.0
-        },
-        {
-          "timestamp": 1794171600000,
-          "timestamp_utc": "2026-11-08T21:00:00+00:00",
-          "open": 8.176,
-          "high": 8.185,
-          "low": 7.753,
-          "close": 7.859,
-          "volume": 1055714.0
-        },
-        {
-          "timestamp": 1794175200000,
-          "timestamp_utc": "2026-11-08T22:00:00+00:00",
-          "open": 7.858,
-          "high": 7.983,
-          "low": 7.845,
-          "close": 7.908,
-          "volume": 613484.0
-        },
-        {
-          "timestamp": 1794178800000,
-          "timestamp_utc": "2026-11-08T23:00:00+00:00",
-          "open": 7.911,
-          "high": 8.077,
-          "low": 7.9,
-          "close": 7.93,
-          "volume": 416459.0
-        },
-        {
-          "timestamp": 1794182400000,
-          "timestamp_utc": "2026-11-09T00:00:00+00:00",
-          "open": 7.927,
-          "high": 8.02,
-          "low": 7.888,
-          "close": 8.015,
-          "volume": 187528.0
-        },
-        {
-          "timestamp": 1794186000000,
-          "timestamp_utc": "2026-11-09T01:00:00+00:00",
-          "open": 8.021,
-          "high": 8.072,
-          "low": 7.942,
-          "close": 8.035,
-          "volume": 209986.0
-        },
-        {
-          "timestamp": 1794189600000,
-          "timestamp_utc": "2026-11-09T02:00:00+00:00",
-          "open": 8.033,
-          "high": 8.104,
-          "low": 8.021,
-          "close": 8.059,
-          "volume": 115719.0
-        },
-        {
-          "timestamp": 1794193200000,
-          "timestamp_utc": "2026-11-09T03:00:00+00:00",
-          "open": 8.061,
-          "high": 8.075,
-          "low": 7.975,
-          "close": 8.022,
-          "volume": 140820.0
-        },
-        {
-          "timestamp": 1794196800000,
-          "timestamp_utc": "2026-11-09T04:00:00+00:00",
-          "open": 8.026,
-          "high": 8.049,
-          "low": 7.986,
-          "close": 7.998,
-          "volume": 111172.0
-        },
-        {
-          "timestamp": 1794200400000,
-          "timestamp_utc": "2026-11-09T05:00:00+00:00",
-          "open": 7.997,
-          "high": 7.997,
-          "low": 7.927,
-          "close": 7.927,
-          "volume": 167533.0
-        },
-        {
-          "timestamp": 1794204000000,
-          "timestamp_utc": "2026-11-09T06:00:00+00:00",
-          "open": 7.926,
-          "high": 7.937,
-          "low": 7.872,
-          "close": 7.892,
-          "volume": 127815.0
-        },
-        {
-          "timestamp": 1794207600000,
-          "timestamp_utc": "2026-11-09T07:00:00+00:00",
-          "open": 7.893,
-          "high": 7.897,
-          "low": 7.813,
-          "close": 7.835,
-          "volume": 161382.0
-        },
-        {
-          "timestamp": 1794211200000,
-          "timestamp_utc": "2026-11-09T08:00:00+00:00",
-          "open": 7.836,
-          "high": 8.011,
-          "low": 7.832,
-          "close": 8.009,
-          "volume": 136040.0
-        },
-        {
-          "timestamp": 1794214800000,
-          "timestamp_utc": "2026-11-09T09:00:00+00:00",
-          "open": 8.011,
-          "high": 8.052,
-          "low": 7.989,
-          "close": 8.005,
-          "volume": 85579.0
-        },
-        {
-          "timestamp": 1794218400000,
-          "timestamp_utc": "2026-11-09T10:00:00+00:00",
-          "open": 8.009,
-          "high": 8.019,
-          "low": 7.975,
-          "close": 7.993,
-          "volume": 76759.0
-        },
-        {
-          "timestamp": 1794222000000,
-          "timestamp_utc": "2026-11-09T11:00:00+00:00",
-          "open": 7.993,
-          "high": 8.084,
-          "low": 7.975,
-          "close": 8.028,
-          "volume": 128654.0
-        },
-        {
-          "timestamp": 1794225600000,
-          "timestamp_utc": "2026-11-09T12:00:00+00:00",
-          "open": 8.028,
-          "high": 8.625,
-          "low": 8.028,
-          "close": 8.451,
-          "volume": 1602551.0
-        },
-        {
-          "timestamp": 1794229200000,
-          "timestamp_utc": "2026-11-09T13:00:00+00:00",
-          "open": 8.461,
-          "high": 8.884,
-          "low": 8.377,
-          "close": 8.805,
-          "volume": 1498238.0
-        },
-        {
-          "timestamp": 1794232800000,
-          "timestamp_utc": "2026-11-09T14:00:00+00:00",
-          "open": 8.806,
-          "high": 8.935,
-          "low": 8.711,
-          "close": 8.863,
-          "volume": 1174765.0
-        },
-        {
-          "timestamp": 1794236400000,
-          "timestamp_utc": "2026-11-09T15:00:00+00:00",
-          "open": 8.866,
-          "high": 8.996,
-          "low": 8.782,
-          "close": 8.988,
-          "volume": 551091.0
-        },
-        {
-          "timestamp": 1794240000000,
-          "timestamp_utc": "2026-11-09T16:00:00+00:00",
-          "open": 8.992,
-          "high": 9.011,
-          "low": 8.716,
-          "close": 8.74,
-          "volume": 2083348.0
-        },
-        {
-          "timestamp": 1794243600000,
-          "timestamp_utc": "2026-11-09T17:00:00+00:00",
-          "open": 8.744,
-          "high": 8.764,
-          "low": 8.63,
-          "close": 8.646,
-          "volume": 1252881.0
-        },
-        {
-          "timestamp": 1794247200000,
-          "timestamp_utc": "2026-11-09T18:00:00+00:00",
-          "open": 8.65,
-          "high": 8.674,
-          "low": 8.531,
-          "close": 8.548,
-          "volume": 1892356.0
-        },
-        {
-          "timestamp": 1794250800000,
-          "timestamp_utc": "2026-11-09T19:00:00+00:00",
-          "open": 8.543,
-          "high": 8.6,
-          "low": 8.48,
-          "close": 8.557,
-          "volume": 1769829.0
-        },
-        {
-          "timestamp": 1794254400000,
-          "timestamp_utc": "2026-11-09T20:00:00+00:00",
-          "open": 8.557,
-          "high": 8.751,
-          "low": 8.539,
-          "close": 8.572,
-          "volume": 1506987.0
-        },
-        {
-          "timestamp": 1794258000000,
-          "timestamp_utc": "2026-11-09T21:00:00+00:00",
-          "open": 8.574,
-          "high": 8.676,
-          "low": 8.54,
-          "close": 8.65,
-          "volume": 1296768.0
-        },
-        {
-          "timestamp": 1794261600000,
-          "timestamp_utc": "2026-11-09T22:00:00+00:00",
-          "open": 8.652,
-          "high": 8.667,
-          "low": 8.601,
-          "close": 8.639,
-          "volume": 623089.0
-        },
-        {
-          "timestamp": 1794265200000,
-          "timestamp_utc": "2026-11-09T23:00:00+00:00",
-          "open": 8.638,
-          "high": 8.688,
-          "low": 8.613,
-          "close": 8.646,
-          "volume": 883751.0
-        },
-        {
-          "timestamp": 1794268800000,
-          "timestamp_utc": "2026-11-10T00:00:00+00:00",
-          "open": 8.648,
-          "high": 8.707,
-          "low": 8.624,
-          "close": 8.667,
-          "volume": 948687.0
-        },
-        {
-          "timestamp": 1794272400000,
-          "timestamp_utc": "2026-11-10T01:00:00+00:00",
-          "open": 8.666,
-          "high": 8.742,
-          "low": 8.642,
-          "close": 8.647,
-          "volume": 970358.0
-        },
-        {
-          "timestamp": 1794276000000,
-          "timestamp_utc": "2026-11-10T02:00:00+00:00",
-          "open": 8.648,
-          "high": 8.694,
-          "low": 8.585,
-          "close": 8.598,
-          "volume": 1011254.0
-        },
-        {
-          "timestamp": 1794279600000,
-          "timestamp_utc": "2026-11-10T03:00:00+00:00",
-          "open": 8.597,
-          "high": 8.626,
-          "low": 8.56,
-          "close": 8.563,
-          "volume": 620140.0
-        },
-        {
-          "timestamp": 1794283200000,
-          "timestamp_utc": "2026-11-10T04:00:00+00:00",
-          "open": 8.563,
-          "high": 8.594,
-          "low": 8.52,
-          "close": 8.556,
-          "volume": 725979.0
-        },
-        {
-          "timestamp": 1794286800000,
-          "timestamp_utc": "2026-11-10T05:00:00+00:00",
-          "open": 8.555,
-          "high": 8.614,
-          "low": 8.542,
-          "close": 8.602,
-          "volume": 373531.0
-        },
-        {
-          "timestamp": 1794290400000,
-          "timestamp_utc": "2026-11-10T06:00:00+00:00",
-          "open": 8.601,
-          "high": 8.601,
-          "low": 8.467,
-          "close": 8.482,
-          "volume": 755444.0
-        },
-        {
-          "timestamp": 1794294000000,
-          "timestamp_utc": "2026-11-10T07:00:00+00:00",
-          "open": 8.479,
-          "high": 8.51,
-          "low": 8.445,
-          "close": 8.46,
-          "volume": 547794.0
-        },
-        {
-          "timestamp": 1794297600000,
-          "timestamp_utc": "2026-11-10T08:00:00+00:00",
-          "open": 8.458,
-          "high": 8.493,
-          "low": 8.443,
-          "close": 8.466,
-          "volume": 587158.0
-        },
-        {
-          "timestamp": 1794301200000,
-          "timestamp_utc": "2026-11-10T09:00:00+00:00",
-          "open": 8.465,
-          "high": 8.465,
-          "low": 8.372,
-          "close": 8.411,
-          "volume": 683711.0
-        },
-        {
-          "timestamp": 1794304800000,
-          "timestamp_utc": "2026-11-10T10:00:00+00:00",
-          "open": 8.408,
-          "high": 8.41,
-          "low": 8.274,
-          "close": 8.29,
-          "volume": 920925.0
-        },
-        {
-          "timestamp": 1794308400000,
-          "timestamp_utc": "2026-11-10T11:00:00+00:00",
-          "open": 8.29,
-          "high": 8.332,
-          "low": 8.253,
-          "close": 8.303,
-          "volume": 802147.0
-        },
-        {
-          "timestamp": 1794312000000,
-          "timestamp_utc": "2026-11-10T12:00:00+00:00",
-          "open": 8.306,
-          "high": 8.364,
-          "low": 8.281,
-          "close": 8.362,
-          "volume": 800254.0
-        },
-        {
-          "timestamp": 1794315600000,
-          "timestamp_utc": "2026-11-10T13:00:00+00:00",
-          "open": 8.362,
-          "high": 8.48,
-          "low": 8.221,
-          "close": 8.294,
-          "volume": 1269519.0
-        },
-        {
-          "timestamp": 1794319200000,
-          "timestamp_utc": "2026-11-10T14:00:00+00:00",
-          "open": 8.291,
-          "high": 8.43,
-          "low": 8.266,
-          "close": 8.382,
-          "volume": 1226906.0
-        },
-        {
-          "timestamp": 1794322800000,
-          "timestamp_utc": "2026-11-10T15:00:00+00:00",
-          "open": 8.38,
-          "high": 8.458,
-          "low": 8.061,
-          "close": 8.204,
-          "volume": 1794355.0
-        }
-      ],
-      "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 465,
-      "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "AAVE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 123.43,
-      "stop_loss": 126.6078571429,
+      "entry": 122.57,
+      "stop_loss": 125.7478571429,
       "take_profit": [
-        119.1928571429,
-        114.9557142857
+        118.3328571429,
+        114.0957142857
       ],
       "ema20": 127.0893373362,
       "ema50": 128.6092125183,
@@ -4821,20 +4139,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:34.260000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:18.877000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.6078571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 125.7478571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -5459,19 +4777,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 466,
+      "message_id_current": 484,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "BCH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 230.15,
-      "stop_loss": 234.2589285714,
+      "entry": 228.89,
+      "stop_loss": 232.9989285714,
       "take_profit": [
-        224.6714285714,
-        219.1928571429
+        223.4114285714,
+        217.9328571429
       ],
       "ema20": 236.7667240853,
       "ema50": 239.9970842775,
@@ -5503,20 +4821,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:34.674000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:19.392000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3460% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.2589285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 232.9989285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -6141,15 +5459,697 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3460% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 467,
+      "message_id_current": 485,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
+    },
+    {
+      "symbol": "AVAX/USDT:USDT",
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 8.19,
+      "stop_loss": 7.9988571429,
+      "take_profit": [
+        8.4448571429,
+        8.6997142857
+      ],
+      "ema20": 8.4127242008,
+      "ema50": 8.3406957814,
+      "atr14": 0.1274285714,
+      "confidence": "NOT_CALIBRATED",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.333333,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 2.214129,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "ticker_timestamp_utc": "2026-11-10T16:51:19.897000+00:00",
+      "ticker_timestamp_source": "FETCH_TIME_PROXY",
+      "entry_price_quality": "PROXY_FETCH_TIME",
+      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+      "timeframe": "1H",
+      "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 7.9988571429 فرضیه را باطل می‌کند.",
+      "chart_candles": [
+        {
+          "timestamp": 1794078000000,
+          "timestamp_utc": "2026-11-07T19:00:00+00:00",
+          "open": 8.244,
+          "high": 8.246,
+          "low": 8.185,
+          "close": 8.201,
+          "volume": 165425.0
+        },
+        {
+          "timestamp": 1794081600000,
+          "timestamp_utc": "2026-11-07T20:00:00+00:00",
+          "open": 8.199,
+          "high": 8.209,
+          "low": 8.145,
+          "close": 8.157,
+          "volume": 145368.0
+        },
+        {
+          "timestamp": 1794085200000,
+          "timestamp_utc": "2026-11-07T21:00:00+00:00",
+          "open": 8.159,
+          "high": 8.203,
+          "low": 8.129,
+          "close": 8.198,
+          "volume": 202740.0
+        },
+        {
+          "timestamp": 1794088800000,
+          "timestamp_utc": "2026-11-07T22:00:00+00:00",
+          "open": 8.2,
+          "high": 8.211,
+          "low": 8.187,
+          "close": 8.198,
+          "volume": 164321.0
+        },
+        {
+          "timestamp": 1794092400000,
+          "timestamp_utc": "2026-11-07T23:00:00+00:00",
+          "open": 8.194,
+          "high": 8.234,
+          "low": 8.19,
+          "close": 8.228,
+          "volume": 111279.0
+        },
+        {
+          "timestamp": 1794096000000,
+          "timestamp_utc": "2026-11-08T00:00:00+00:00",
+          "open": 8.226,
+          "high": 8.226,
+          "low": 8.188,
+          "close": 8.207,
+          "volume": 51169.0
+        },
+        {
+          "timestamp": 1794099600000,
+          "timestamp_utc": "2026-11-08T01:00:00+00:00",
+          "open": 8.209,
+          "high": 8.22,
+          "low": 8.176,
+          "close": 8.179,
+          "volume": 81862.0
+        },
+        {
+          "timestamp": 1794103200000,
+          "timestamp_utc": "2026-11-08T02:00:00+00:00",
+          "open": 8.184,
+          "high": 8.188,
+          "low": 8.152,
+          "close": 8.173,
+          "volume": 106075.0
+        },
+        {
+          "timestamp": 1794106800000,
+          "timestamp_utc": "2026-11-08T03:00:00+00:00",
+          "open": 8.178,
+          "high": 8.202,
+          "low": 8.175,
+          "close": 8.194,
+          "volume": 92228.0
+        },
+        {
+          "timestamp": 1794110400000,
+          "timestamp_utc": "2026-11-08T04:00:00+00:00",
+          "open": 8.196,
+          "high": 8.208,
+          "low": 8.154,
+          "close": 8.154,
+          "volume": 82968.0
+        },
+        {
+          "timestamp": 1794114000000,
+          "timestamp_utc": "2026-11-08T05:00:00+00:00",
+          "open": 8.159,
+          "high": 8.187,
+          "low": 8.156,
+          "close": 8.181,
+          "volume": 77199.0
+        },
+        {
+          "timestamp": 1794117600000,
+          "timestamp_utc": "2026-11-08T06:00:00+00:00",
+          "open": 8.181,
+          "high": 8.198,
+          "low": 8.157,
+          "close": 8.165,
+          "volume": 67812.0
+        },
+        {
+          "timestamp": 1794121200000,
+          "timestamp_utc": "2026-11-08T07:00:00+00:00",
+          "open": 8.169,
+          "high": 8.199,
+          "low": 8.168,
+          "close": 8.191,
+          "volume": 56136.0
+        },
+        {
+          "timestamp": 1794124800000,
+          "timestamp_utc": "2026-11-08T08:00:00+00:00",
+          "open": 8.193,
+          "high": 8.193,
+          "low": 8.161,
+          "close": 8.163,
+          "volume": 68019.0
+        },
+        {
+          "timestamp": 1794128400000,
+          "timestamp_utc": "2026-11-08T09:00:00+00:00",
+          "open": 8.164,
+          "high": 8.165,
+          "low": 8.12,
+          "close": 8.162,
+          "volume": 133180.0
+        },
+        {
+          "timestamp": 1794132000000,
+          "timestamp_utc": "2026-11-08T10:00:00+00:00",
+          "open": 8.162,
+          "high": 8.174,
+          "low": 8.135,
+          "close": 8.159,
+          "volume": 130353.0
+        },
+        {
+          "timestamp": 1794135600000,
+          "timestamp_utc": "2026-11-08T11:00:00+00:00",
+          "open": 8.161,
+          "high": 8.206,
+          "low": 8.157,
+          "close": 8.187,
+          "volume": 144293.0
+        },
+        {
+          "timestamp": 1794139200000,
+          "timestamp_utc": "2026-11-08T12:00:00+00:00",
+          "open": 8.188,
+          "high": 8.208,
+          "low": 8.149,
+          "close": 8.172,
+          "volume": 197249.0
+        },
+        {
+          "timestamp": 1794142800000,
+          "timestamp_utc": "2026-11-08T13:00:00+00:00",
+          "open": 8.172,
+          "high": 8.224,
+          "low": 8.153,
+          "close": 8.166,
+          "volume": 217308.0
+        },
+        {
+          "timestamp": 1794146400000,
+          "timestamp_utc": "2026-11-08T14:00:00+00:00",
+          "open": 8.165,
+          "high": 8.212,
+          "low": 8.142,
+          "close": 8.197,
+          "volume": 201672.0
+        },
+        {
+          "timestamp": 1794150000000,
+          "timestamp_utc": "2026-11-08T15:00:00+00:00",
+          "open": 8.198,
+          "high": 8.251,
+          "low": 8.188,
+          "close": 8.243,
+          "volume": 215559.0
+        },
+        {
+          "timestamp": 1794153600000,
+          "timestamp_utc": "2026-11-08T16:00:00+00:00",
+          "open": 8.244,
+          "high": 8.269,
+          "low": 8.162,
+          "close": 8.174,
+          "volume": 176360.0
+        },
+        {
+          "timestamp": 1794157200000,
+          "timestamp_utc": "2026-11-08T17:00:00+00:00",
+          "open": 8.175,
+          "high": 8.179,
+          "low": 8.135,
+          "close": 8.172,
+          "volume": 253193.0
+        },
+        {
+          "timestamp": 1794160800000,
+          "timestamp_utc": "2026-11-08T18:00:00+00:00",
+          "open": 8.177,
+          "high": 8.227,
+          "low": 8.164,
+          "close": 8.207,
+          "volume": 144144.0
+        },
+        {
+          "timestamp": 1794164400000,
+          "timestamp_utc": "2026-11-08T19:00:00+00:00",
+          "open": 8.209,
+          "high": 8.209,
+          "low": 8.171,
+          "close": 8.204,
+          "volume": 184199.0
+        },
+        {
+          "timestamp": 1794168000000,
+          "timestamp_utc": "2026-11-08T20:00:00+00:00",
+          "open": 8.204,
+          "high": 8.216,
+          "low": 8.171,
+          "close": 8.171,
+          "volume": 221748.0
+        },
+        {
+          "timestamp": 1794171600000,
+          "timestamp_utc": "2026-11-08T21:00:00+00:00",
+          "open": 8.176,
+          "high": 8.185,
+          "low": 7.753,
+          "close": 7.859,
+          "volume": 1055714.0
+        },
+        {
+          "timestamp": 1794175200000,
+          "timestamp_utc": "2026-11-08T22:00:00+00:00",
+          "open": 7.858,
+          "high": 7.983,
+          "low": 7.845,
+          "close": 7.908,
+          "volume": 613484.0
+        },
+        {
+          "timestamp": 1794178800000,
+          "timestamp_utc": "2026-11-08T23:00:00+00:00",
+          "open": 7.911,
+          "high": 8.077,
+          "low": 7.9,
+          "close": 7.93,
+          "volume": 416459.0
+        },
+        {
+          "timestamp": 1794182400000,
+          "timestamp_utc": "2026-11-09T00:00:00+00:00",
+          "open": 7.927,
+          "high": 8.02,
+          "low": 7.888,
+          "close": 8.015,
+          "volume": 187528.0
+        },
+        {
+          "timestamp": 1794186000000,
+          "timestamp_utc": "2026-11-09T01:00:00+00:00",
+          "open": 8.021,
+          "high": 8.072,
+          "low": 7.942,
+          "close": 8.035,
+          "volume": 209986.0
+        },
+        {
+          "timestamp": 1794189600000,
+          "timestamp_utc": "2026-11-09T02:00:00+00:00",
+          "open": 8.033,
+          "high": 8.104,
+          "low": 8.021,
+          "close": 8.059,
+          "volume": 115719.0
+        },
+        {
+          "timestamp": 1794193200000,
+          "timestamp_utc": "2026-11-09T03:00:00+00:00",
+          "open": 8.061,
+          "high": 8.075,
+          "low": 7.975,
+          "close": 8.022,
+          "volume": 140820.0
+        },
+        {
+          "timestamp": 1794196800000,
+          "timestamp_utc": "2026-11-09T04:00:00+00:00",
+          "open": 8.026,
+          "high": 8.049,
+          "low": 7.986,
+          "close": 7.998,
+          "volume": 111172.0
+        },
+        {
+          "timestamp": 1794200400000,
+          "timestamp_utc": "2026-11-09T05:00:00+00:00",
+          "open": 7.997,
+          "high": 7.997,
+          "low": 7.927,
+          "close": 7.927,
+          "volume": 167533.0
+        },
+        {
+          "timestamp": 1794204000000,
+          "timestamp_utc": "2026-11-09T06:00:00+00:00",
+          "open": 7.926,
+          "high": 7.937,
+          "low": 7.872,
+          "close": 7.892,
+          "volume": 127815.0
+        },
+        {
+          "timestamp": 1794207600000,
+          "timestamp_utc": "2026-11-09T07:00:00+00:00",
+          "open": 7.893,
+          "high": 7.897,
+          "low": 7.813,
+          "close": 7.835,
+          "volume": 161382.0
+        },
+        {
+          "timestamp": 1794211200000,
+          "timestamp_utc": "2026-11-09T08:00:00+00:00",
+          "open": 7.836,
+          "high": 8.011,
+          "low": 7.832,
+          "close": 8.009,
+          "volume": 136040.0
+        },
+        {
+          "timestamp": 1794214800000,
+          "timestamp_utc": "2026-11-09T09:00:00+00:00",
+          "open": 8.011,
+          "high": 8.052,
+          "low": 7.989,
+          "close": 8.005,
+          "volume": 85579.0
+        },
+        {
+          "timestamp": 1794218400000,
+          "timestamp_utc": "2026-11-09T10:00:00+00:00",
+          "open": 8.009,
+          "high": 8.019,
+          "low": 7.975,
+          "close": 7.993,
+          "volume": 76759.0
+        },
+        {
+          "timestamp": 1794222000000,
+          "timestamp_utc": "2026-11-09T11:00:00+00:00",
+          "open": 7.993,
+          "high": 8.084,
+          "low": 7.975,
+          "close": 8.028,
+          "volume": 128654.0
+        },
+        {
+          "timestamp": 1794225600000,
+          "timestamp_utc": "2026-11-09T12:00:00+00:00",
+          "open": 8.028,
+          "high": 8.625,
+          "low": 8.028,
+          "close": 8.451,
+          "volume": 1602551.0
+        },
+        {
+          "timestamp": 1794229200000,
+          "timestamp_utc": "2026-11-09T13:00:00+00:00",
+          "open": 8.461,
+          "high": 8.884,
+          "low": 8.377,
+          "close": 8.805,
+          "volume": 1498238.0
+        },
+        {
+          "timestamp": 1794232800000,
+          "timestamp_utc": "2026-11-09T14:00:00+00:00",
+          "open": 8.806,
+          "high": 8.935,
+          "low": 8.711,
+          "close": 8.863,
+          "volume": 1174765.0
+        },
+        {
+          "timestamp": 1794236400000,
+          "timestamp_utc": "2026-11-09T15:00:00+00:00",
+          "open": 8.866,
+          "high": 8.996,
+          "low": 8.782,
+          "close": 8.988,
+          "volume": 551091.0
+        },
+        {
+          "timestamp": 1794240000000,
+          "timestamp_utc": "2026-11-09T16:00:00+00:00",
+          "open": 8.992,
+          "high": 9.011,
+          "low": 8.716,
+          "close": 8.74,
+          "volume": 2083348.0
+        },
+        {
+          "timestamp": 1794243600000,
+          "timestamp_utc": "2026-11-09T17:00:00+00:00",
+          "open": 8.744,
+          "high": 8.764,
+          "low": 8.63,
+          "close": 8.646,
+          "volume": 1252881.0
+        },
+        {
+          "timestamp": 1794247200000,
+          "timestamp_utc": "2026-11-09T18:00:00+00:00",
+          "open": 8.65,
+          "high": 8.674,
+          "low": 8.531,
+          "close": 8.548,
+          "volume": 1892356.0
+        },
+        {
+          "timestamp": 1794250800000,
+          "timestamp_utc": "2026-11-09T19:00:00+00:00",
+          "open": 8.543,
+          "high": 8.6,
+          "low": 8.48,
+          "close": 8.557,
+          "volume": 1769829.0
+        },
+        {
+          "timestamp": 1794254400000,
+          "timestamp_utc": "2026-11-09T20:00:00+00:00",
+          "open": 8.557,
+          "high": 8.751,
+          "low": 8.539,
+          "close": 8.572,
+          "volume": 1506987.0
+        },
+        {
+          "timestamp": 1794258000000,
+          "timestamp_utc": "2026-11-09T21:00:00+00:00",
+          "open": 8.574,
+          "high": 8.676,
+          "low": 8.54,
+          "close": 8.65,
+          "volume": 1296768.0
+        },
+        {
+          "timestamp": 1794261600000,
+          "timestamp_utc": "2026-11-09T22:00:00+00:00",
+          "open": 8.652,
+          "high": 8.667,
+          "low": 8.601,
+          "close": 8.639,
+          "volume": 623089.0
+        },
+        {
+          "timestamp": 1794265200000,
+          "timestamp_utc": "2026-11-09T23:00:00+00:00",
+          "open": 8.638,
+          "high": 8.688,
+          "low": 8.613,
+          "close": 8.646,
+          "volume": 883751.0
+        },
+        {
+          "timestamp": 1794268800000,
+          "timestamp_utc": "2026-11-10T00:00:00+00:00",
+          "open": 8.648,
+          "high": 8.707,
+          "low": 8.624,
+          "close": 8.667,
+          "volume": 948687.0
+        },
+        {
+          "timestamp": 1794272400000,
+          "timestamp_utc": "2026-11-10T01:00:00+00:00",
+          "open": 8.666,
+          "high": 8.742,
+          "low": 8.642,
+          "close": 8.647,
+          "volume": 970358.0
+        },
+        {
+          "timestamp": 1794276000000,
+          "timestamp_utc": "2026-11-10T02:00:00+00:00",
+          "open": 8.648,
+          "high": 8.694,
+          "low": 8.585,
+          "close": 8.598,
+          "volume": 1011254.0
+        },
+        {
+          "timestamp": 1794279600000,
+          "timestamp_utc": "2026-11-10T03:00:00+00:00",
+          "open": 8.597,
+          "high": 8.626,
+          "low": 8.56,
+          "close": 8.563,
+          "volume": 620140.0
+        },
+        {
+          "timestamp": 1794283200000,
+          "timestamp_utc": "2026-11-10T04:00:00+00:00",
+          "open": 8.563,
+          "high": 8.594,
+          "low": 8.52,
+          "close": 8.556,
+          "volume": 725979.0
+        },
+        {
+          "timestamp": 1794286800000,
+          "timestamp_utc": "2026-11-10T05:00:00+00:00",
+          "open": 8.555,
+          "high": 8.614,
+          "low": 8.542,
+          "close": 8.602,
+          "volume": 373531.0
+        },
+        {
+          "timestamp": 1794290400000,
+          "timestamp_utc": "2026-11-10T06:00:00+00:00",
+          "open": 8.601,
+          "high": 8.601,
+          "low": 8.467,
+          "close": 8.482,
+          "volume": 755444.0
+        },
+        {
+          "timestamp": 1794294000000,
+          "timestamp_utc": "2026-11-10T07:00:00+00:00",
+          "open": 8.479,
+          "high": 8.51,
+          "low": 8.445,
+          "close": 8.46,
+          "volume": 547794.0
+        },
+        {
+          "timestamp": 1794297600000,
+          "timestamp_utc": "2026-11-10T08:00:00+00:00",
+          "open": 8.458,
+          "high": 8.493,
+          "low": 8.443,
+          "close": 8.466,
+          "volume": 587158.0
+        },
+        {
+          "timestamp": 1794301200000,
+          "timestamp_utc": "2026-11-10T09:00:00+00:00",
+          "open": 8.465,
+          "high": 8.465,
+          "low": 8.372,
+          "close": 8.411,
+          "volume": 683711.0
+        },
+        {
+          "timestamp": 1794304800000,
+          "timestamp_utc": "2026-11-10T10:00:00+00:00",
+          "open": 8.408,
+          "high": 8.41,
+          "low": 8.274,
+          "close": 8.29,
+          "volume": 920925.0
+        },
+        {
+          "timestamp": 1794308400000,
+          "timestamp_utc": "2026-11-10T11:00:00+00:00",
+          "open": 8.29,
+          "high": 8.332,
+          "low": 8.253,
+          "close": 8.303,
+          "volume": 802147.0
+        },
+        {
+          "timestamp": 1794312000000,
+          "timestamp_utc": "2026-11-10T12:00:00+00:00",
+          "open": 8.306,
+          "high": 8.364,
+          "low": 8.281,
+          "close": 8.362,
+          "volume": 800254.0
+        },
+        {
+          "timestamp": 1794315600000,
+          "timestamp_utc": "2026-11-10T13:00:00+00:00",
+          "open": 8.362,
+          "high": 8.48,
+          "low": 8.221,
+          "close": 8.294,
+          "volume": 1269519.0
+        },
+        {
+          "timestamp": 1794319200000,
+          "timestamp_utc": "2026-11-10T14:00:00+00:00",
+          "open": 8.291,
+          "high": 8.43,
+          "low": 8.266,
+          "close": 8.382,
+          "volume": 1226906.0
+        },
+        {
+          "timestamp": 1794322800000,
+          "timestamp_utc": "2026-11-10T15:00:00+00:00",
+          "open": 8.38,
+          "high": 8.458,
+          "low": 8.061,
+          "close": 8.204,
+          "volume": 1794355.0
+        }
+      ],
+      "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
+      "message_id_current": 486,
+      "message_id_audience": null,
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ENA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.15083,
+      "entry": 0.14759,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1533194837,
@@ -6182,13 +6182,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:35.063000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:20.418000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -6206,7 +6206,7 @@
       "symbol": "FIL/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.7514,
+      "entry": 0.7412,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.762995951,
@@ -6239,13 +6239,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:35.444000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:20.934000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -6263,11 +6263,11 @@
       "symbol": "LINK/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.301,
-      "stop_loss": 10.5061785714,
+      "entry": 10.196,
+      "stop_loss": 10.4011785714,
       "take_profit": [
-        10.0274285714,
-        9.7538571429
+        9.9224285714,
+        9.6488571429
       ],
       "ema20": 10.5229297227,
       "ema50": 10.5871897641,
@@ -6299,20 +6299,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:35.832000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:21.456000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6070% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.5061785714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4011785714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -6937,19 +6937,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6070% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 468,
+      "message_id_current": 487,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5685,
-      "stop_loss": 0.5810035714,
+      "entry": 0.5593,
+      "stop_loss": 0.5718035714,
       "take_profit": [
-        0.5518285714,
-        0.5351571429
+        0.5426285714,
+        0.5259571429
       ],
       "ema20": 0.581763915,
       "ema50": 0.5847184366,
@@ -6981,20 +6981,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:36.222000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:21.968000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5053% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5810035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5718035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -7619,15 +7619,15 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5053% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 469,
+      "message_id_current": 488,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "TAO/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 217.13,
+      "entry": 214.33,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 220.5795314463,
@@ -7660,13 +7660,70 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:36.610000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:22.507000+00:00",
+      "ticker_timestamp_source": "FETCH_TIME_PROXY",
+      "entry_price_quality": "PROXY_FETCH_TIME",
+      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+      "timeframe": "1H",
+      "hypothesis": null,
+      "falsification": null,
+      "chart_candles": [],
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%",
+      "message_id_current": null,
+      "message_id_audience": null,
+      "published_at": null
+    },
+    {
+      "symbol": "NEAR/USDT:USDT",
+      "status": "NO_QUALIFIED_SETUP",
+      "side": null,
+      "entry": 3.486,
+      "stop_loss": null,
+      "take_profit": [],
+      "ema20": 3.6204267003,
+      "ema50": 3.6273591903,
+      "atr14": 0.0712142857,
+      "confidence": "NOT_CALIBRATED",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.637037,
+        "threshold": 0.9,
+        "atr_percentile": 0.740741,
+        "low_volume_percentile": 0.533333,
+        "volume_ratio_vs_rolling_median": 0.916366,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "ticker_timestamp_utc": "2026-11-10T16:51:23.087000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -7684,11 +7741,11 @@
       "symbol": "XMR/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 552.41,
-      "stop_loss": 568.0967857143,
+      "entry": 555.65,
+      "stop_loss": 571.3367857143,
       "take_profit": [
-        531.4942857143,
-        510.5785714286
+        534.7342857143,
+        513.8185714286
       ],
       "ema20": 566.0210914911,
       "ema50": 581.2233390972,
@@ -7720,20 +7777,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:36.992000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:23.623000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6156% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 568.0967857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 571.3367857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -8358,72 +8415,15 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6156% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 470,
+      "message_id_current": 489,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
-    },
-    {
-      "symbol": "NEAR/USDT:USDT",
-      "status": "NO_QUALIFIED_SETUP",
-      "side": null,
-      "entry": 3.593,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": 3.6204267003,
-      "ema50": 3.6273591903,
-      "atr14": 0.0712142857,
-      "confidence": "NOT_CALIBRATED",
-      "lfs1_proxy": {
-        "status": "NORMAL_PROXY",
-        "data_class": "PROXY",
-        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
-        "score": 0.637037,
-        "threshold": 0.9,
-        "atr_percentile": 0.740741,
-        "low_volume_percentile": 0.533333,
-        "volume_ratio_vs_rolling_median": 0.916366,
-        "lookback_bars": 69,
-        "lookback_hours": 69,
-        "calibration": "NOT_CALIBRATED",
-        "real_orderbook_used": false
-      },
-      "lfs_v2": {
-        "status": "UNAVAILABLE",
-        "data_class": "PARTIAL",
-        "missing_components": [
-          "LFS2",
-          "LFS3",
-          "LFS4",
-          "LFS5"
-        ],
-        "invalid_components": [],
-        "reason": "all_five_components_required_no_missing_to_zero"
-      },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "ticker_timestamp_utc": "2026-11-10T16:21:37.379000+00:00",
-      "ticker_timestamp_source": "FETCH_TIME_PROXY",
-      "entry_price_quality": "PROXY_FETCH_TIME",
-      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
-      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
-      "timeframe": "1H",
-      "hypothesis": null,
-      "falsification": null,
-      "chart_candles": [],
-      "reason": "EMA20/EMA50 distance is not greater than 0.5%",
-      "message_id_current": null,
-      "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "UNI/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 6.832,
+      "entry": 6.703,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 6.9722589077,
@@ -8456,13 +8456,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:37.785000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:24.165000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -8480,11 +8480,11 @@
       "symbol": "DOT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8465,
-      "stop_loss": 0.8627214286,
+      "entry": 0.8359,
+      "stop_loss": 0.8521214286,
       "take_profit": [
-        0.8248714286,
-        0.8032428571
+        0.8142714286,
+        0.7926428571
       ],
       "ema20": 0.8565268195,
       "ema50": 0.8668989716,
@@ -8516,20 +8516,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.168000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:24.677000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1965% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8627214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8521214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -9154,19 +9154,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1965% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 471,
+      "message_id_current": 490,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3688,
-      "stop_loss": 0.3586857143,
+      "entry": 0.3601,
+      "stop_loss": 0.3499857143,
       "take_profit": [
-        0.3822857143,
-        0.3957714286
+        0.3735857143,
+        0.3870714286
       ],
       "ema20": 0.3711497778,
       "ema50": 0.3666603995,
@@ -9198,20 +9198,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.547000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:25.183000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.2244% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3586857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3499857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -9836,19 +9836,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.2244% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 472,
+      "message_id_current": 491,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06802,
-      "stop_loss": 0.0691696429,
+      "entry": 0.0672,
+      "stop_loss": 0.0683496429,
       "take_profit": [
-        0.0664871429,
-        0.0649542857
+        0.0656671429,
+        0.0641342857
       ],
       "ema20": 0.0694366953,
       "ema50": 0.0699114072,
@@ -9880,20 +9880,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.937000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:25.690000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6790% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0691696429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0683496429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -10518,15 +10518,15 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6790% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 473,
+      "message_id_current": 492,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "SUI/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.8179,
+      "entry": 0.8087,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.8370767153,
@@ -10559,13 +10559,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:39.327000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:26.201000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10583,7 +10583,7 @@
       "symbol": "TIA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.4268,
+      "entry": 0.4176,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.4312152375,
@@ -10616,13 +10616,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:39.743000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:26.712000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10640,11 +10640,11 @@
       "symbol": "JUP/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.255,
-      "stop_loss": 0.2488607143,
+      "entry": 0.2516,
+      "stop_loss": 0.2454607143,
       "take_profit": [
-        0.2631857143,
-        0.2713714286
+        0.2597857143,
+        0.2679714286
       ],
       "ema20": 0.2522818845,
       "ema50": 0.2471207303,
@@ -10676,20 +10676,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:40.128000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:27.224000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0885% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2488607143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2454607143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -11314,15 +11314,15 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0885% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 474,
+      "message_id_current": 493,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "CRV/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.2548,
+      "entry": 0.2513,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.2588053903,
@@ -11355,13 +11355,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:40.518000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:27.738000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -11379,7 +11379,7 @@
       "symbol": "BNB/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 677.86,
+      "entry": 671.7,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 687.3919752489,
@@ -11412,13 +11412,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:40.899000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:28.247000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -11436,11 +11436,11 @@
       "symbol": "DASH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 45.3,
-      "stop_loss": 46.4378571429,
+      "entry": 43.58,
+      "stop_loss": 44.7178571429,
       "take_profit": [
-        43.7828571429,
-        42.2657142857
+        42.0628571429,
+        40.5457142857
       ],
       "ema20": 46.2556438677,
       "ema50": 46.5263544525,
@@ -11472,20 +11472,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:41.286000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:28.798000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.4378571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.7178571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -12110,15 +12110,15 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 475,
+      "message_id_current": 494,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "PAXG/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 4016.21,
+      "entry": 4011.5,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 4077.1050296857,
@@ -12151,13 +12151,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:41.683000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:29.312000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12175,11 +12175,11 @@
       "symbol": "RENDER/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 1.565,
-      "stop_loss": 1.5273928571,
+      "entry": 1.547,
+      "stop_loss": 1.5093928571,
       "take_profit": [
-        1.6151428571,
-        1.6652857143
+        1.5971428571,
+        1.6472857143
       ],
       "ema20": 1.5838266838,
       "ema50": 1.5736555839,
@@ -12211,20 +12211,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:42.062000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:29.827000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.6463% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5273928571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5093928571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -12849,15 +12849,15 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.6463% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 476,
+      "message_id_current": 495,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "TRX/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.3191,
+      "entry": 0.31797,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.3184462768,
@@ -12890,13 +12890,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:42.442000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:30.334000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12914,7 +12914,7 @@
       "symbol": "OP/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.0984,
+      "entry": 0.0972,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1001332316,
@@ -12947,13 +12947,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:42.827000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:30.848000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -12971,7 +12971,7 @@
       "symbol": "ADA/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.17431,
+      "entry": 0.17241,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1773965846,
@@ -13004,13 +13004,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:43.223000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:31.359000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -13028,7 +13028,7 @@
       "symbol": "INJ/USDT:USDT",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 7.832,
+      "entry": 7.767,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 8.0408077342,
@@ -13061,13 +13061,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:43.626000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:31.872000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -13085,11 +13085,11 @@
       "symbol": "ARB/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.16064,
-      "stop_loss": 0.1652139286,
+      "entry": 0.15814,
+      "stop_loss": 0.1627139286,
       "take_profit": [
-        0.1545414286,
-        0.1484428571
+        0.1520414286,
+        0.1459428571
       ],
       "ema20": 0.1684352303,
       "ema50": 0.1698615056,
@@ -13121,20 +13121,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:44.012000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:32.432000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8397% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1652139286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1627139286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -13759,9 +13759,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8397% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 477,
+      "message_id_current": 496,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     }
   ],
   "trade_signals": [
@@ -13769,11 +13769,11 @@
       "symbol": "BTC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73406.2,
-      "stop_loss": 74290.9214285714,
+      "entry": 72944.9,
+      "stop_loss": 73829.6214285714,
       "take_profit": [
-        72226.5714285714,
-        71046.9428571429
+        71765.2714285714,
+        70585.6428571429
       ],
       "ema20": 74436.8005082274,
       "ema50": 74871.1936902165,
@@ -13805,20 +13805,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:31.516000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:15.657000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5802% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 74290.9214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73829.6214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -14443,19 +14443,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5802% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 459,
+      "message_id_current": 478,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ETH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2032.64,
-      "stop_loss": 2071.5157142857,
+      "entry": 2019.26,
+      "stop_loss": 2058.1357142857,
       "take_profit": [
-        1980.8057142857,
-        1928.9714285714
+        1967.4257142857,
+        1915.5914285714
       ],
       "ema20": 2100.2063111306,
       "ema50": 2139.6745509976,
@@ -14487,20 +14487,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:31.911000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:16.235000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.8446% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2071.5157142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2058.1357142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -15125,19 +15125,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.8446% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 460,
+      "message_id_current": 479,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ZEC/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1089.98,
-      "stop_loss": 1129.7696428571,
+      "entry": 1015.9,
+      "stop_loss": 1055.6896428571,
       "take_profit": [
-        1036.9271428571,
-        983.8742857143
+        962.8471428571,
+        909.7942857143
       ],
       "ema20": 1158.806177228,
       "ema50": 1191.5199820813,
@@ -15169,20 +15169,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:32.300000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:16.753000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.7456% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1129.7696428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1055.6896428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -15807,19 +15807,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.7456% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 461,
+      "message_id_current": 480,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.366,
-      "stop_loss": 83.9926428571,
+      "entry": 81.931,
+      "stop_loss": 83.5576428571,
       "take_profit": [
-        80.1971428571,
-        78.0282857143
+        79.7621428571,
+        77.5932857143
       ],
       "ema20": 85.2652244567,
       "ema50": 86.5972072879,
@@ -15851,20 +15851,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:32.694000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:17.303000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.5381% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9926428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.5576428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -16489,19 +16489,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.5381% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 462,
+      "message_id_current": 481,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2554e-06,
-      "stop_loss": 5.0654e-06,
+      "entry": 5.1841e-06,
+      "stop_loss": 4.9941e-06,
       "take_profit": [
-        5.5087e-06,
-        5.7621e-06
+        5.4374e-06,
+        5.6908e-06
       ],
       "ema20": 5.2677e-06,
       "ema50": 5.1488e-06,
@@ -16533,20 +16533,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.086000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:17.818000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.3111% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0654e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 4.9941e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -17171,19 +17171,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.3111% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 463,
+      "message_id_current": 482,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.04861,
-      "stop_loss": 1.0709375,
+      "entry": 1.04177,
+      "stop_loss": 1.0640975,
       "take_profit": [
-        1.01884,
-        0.98907
+        1.012,
+        0.98223
       ],
       "ema20": 1.0831493198,
       "ema50": 1.1062338914,
@@ -17215,20 +17215,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.471000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:18.353000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.0868% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0709375 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0640975 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -17853,701 +17853,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.0868% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 464,
+      "message_id_current": 483,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
-    },
-    {
-      "symbol": "AVAX/USDT:USDT",
-      "status": "BUY_NOW",
-      "side": "BUY",
-      "entry": 8.252,
-      "stop_loss": 8.0608571429,
-      "take_profit": [
-        8.5068571429,
-        8.7617142857
-      ],
-      "ema20": 8.4127242008,
-      "ema50": 8.3406957814,
-      "atr14": 0.1274285714,
-      "confidence": "NOT_CALIBRATED",
-      "lfs1_proxy": {
-        "status": "NORMAL_PROXY",
-        "data_class": "PROXY",
-        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
-        "score": 0.333333,
-        "threshold": 0.9,
-        "atr_percentile": 0.666667,
-        "low_volume_percentile": 0.0,
-        "volume_ratio_vs_rolling_median": 2.214129,
-        "lookback_bars": 69,
-        "lookback_hours": 69,
-        "calibration": "NOT_CALIBRATED",
-        "real_orderbook_used": false
-      },
-      "lfs_v2": {
-        "status": "UNAVAILABLE",
-        "data_class": "PARTIAL",
-        "missing_components": [
-          "LFS2",
-          "LFS3",
-          "LFS4",
-          "LFS5"
-        ],
-        "invalid_components": [],
-        "reason": "all_five_components_required_no_missing_to_zero"
-      },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "ticker_timestamp_utc": "2026-11-10T16:21:33.855000+00:00",
-      "ticker_timestamp_source": "FETCH_TIME_PROXY",
-      "entry_price_quality": "PROXY_FETCH_TIME",
-      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
-      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
-      "timeframe": "1H",
-      "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0608571429 فرضیه را باطل می‌کند.",
-      "chart_candles": [
-        {
-          "timestamp": 1794078000000,
-          "timestamp_utc": "2026-11-07T19:00:00+00:00",
-          "open": 8.244,
-          "high": 8.246,
-          "low": 8.185,
-          "close": 8.201,
-          "volume": 165425.0
-        },
-        {
-          "timestamp": 1794081600000,
-          "timestamp_utc": "2026-11-07T20:00:00+00:00",
-          "open": 8.199,
-          "high": 8.209,
-          "low": 8.145,
-          "close": 8.157,
-          "volume": 145368.0
-        },
-        {
-          "timestamp": 1794085200000,
-          "timestamp_utc": "2026-11-07T21:00:00+00:00",
-          "open": 8.159,
-          "high": 8.203,
-          "low": 8.129,
-          "close": 8.198,
-          "volume": 202740.0
-        },
-        {
-          "timestamp": 1794088800000,
-          "timestamp_utc": "2026-11-07T22:00:00+00:00",
-          "open": 8.2,
-          "high": 8.211,
-          "low": 8.187,
-          "close": 8.198,
-          "volume": 164321.0
-        },
-        {
-          "timestamp": 1794092400000,
-          "timestamp_utc": "2026-11-07T23:00:00+00:00",
-          "open": 8.194,
-          "high": 8.234,
-          "low": 8.19,
-          "close": 8.228,
-          "volume": 111279.0
-        },
-        {
-          "timestamp": 1794096000000,
-          "timestamp_utc": "2026-11-08T00:00:00+00:00",
-          "open": 8.226,
-          "high": 8.226,
-          "low": 8.188,
-          "close": 8.207,
-          "volume": 51169.0
-        },
-        {
-          "timestamp": 1794099600000,
-          "timestamp_utc": "2026-11-08T01:00:00+00:00",
-          "open": 8.209,
-          "high": 8.22,
-          "low": 8.176,
-          "close": 8.179,
-          "volume": 81862.0
-        },
-        {
-          "timestamp": 1794103200000,
-          "timestamp_utc": "2026-11-08T02:00:00+00:00",
-          "open": 8.184,
-          "high": 8.188,
-          "low": 8.152,
-          "close": 8.173,
-          "volume": 106075.0
-        },
-        {
-          "timestamp": 1794106800000,
-          "timestamp_utc": "2026-11-08T03:00:00+00:00",
-          "open": 8.178,
-          "high": 8.202,
-          "low": 8.175,
-          "close": 8.194,
-          "volume": 92228.0
-        },
-        {
-          "timestamp": 1794110400000,
-          "timestamp_utc": "2026-11-08T04:00:00+00:00",
-          "open": 8.196,
-          "high": 8.208,
-          "low": 8.154,
-          "close": 8.154,
-          "volume": 82968.0
-        },
-        {
-          "timestamp": 1794114000000,
-          "timestamp_utc": "2026-11-08T05:00:00+00:00",
-          "open": 8.159,
-          "high": 8.187,
-          "low": 8.156,
-          "close": 8.181,
-          "volume": 77199.0
-        },
-        {
-          "timestamp": 1794117600000,
-          "timestamp_utc": "2026-11-08T06:00:00+00:00",
-          "open": 8.181,
-          "high": 8.198,
-          "low": 8.157,
-          "close": 8.165,
-          "volume": 67812.0
-        },
-        {
-          "timestamp": 1794121200000,
-          "timestamp_utc": "2026-11-08T07:00:00+00:00",
-          "open": 8.169,
-          "high": 8.199,
-          "low": 8.168,
-          "close": 8.191,
-          "volume": 56136.0
-        },
-        {
-          "timestamp": 1794124800000,
-          "timestamp_utc": "2026-11-08T08:00:00+00:00",
-          "open": 8.193,
-          "high": 8.193,
-          "low": 8.161,
-          "close": 8.163,
-          "volume": 68019.0
-        },
-        {
-          "timestamp": 1794128400000,
-          "timestamp_utc": "2026-11-08T09:00:00+00:00",
-          "open": 8.164,
-          "high": 8.165,
-          "low": 8.12,
-          "close": 8.162,
-          "volume": 133180.0
-        },
-        {
-          "timestamp": 1794132000000,
-          "timestamp_utc": "2026-11-08T10:00:00+00:00",
-          "open": 8.162,
-          "high": 8.174,
-          "low": 8.135,
-          "close": 8.159,
-          "volume": 130353.0
-        },
-        {
-          "timestamp": 1794135600000,
-          "timestamp_utc": "2026-11-08T11:00:00+00:00",
-          "open": 8.161,
-          "high": 8.206,
-          "low": 8.157,
-          "close": 8.187,
-          "volume": 144293.0
-        },
-        {
-          "timestamp": 1794139200000,
-          "timestamp_utc": "2026-11-08T12:00:00+00:00",
-          "open": 8.188,
-          "high": 8.208,
-          "low": 8.149,
-          "close": 8.172,
-          "volume": 197249.0
-        },
-        {
-          "timestamp": 1794142800000,
-          "timestamp_utc": "2026-11-08T13:00:00+00:00",
-          "open": 8.172,
-          "high": 8.224,
-          "low": 8.153,
-          "close": 8.166,
-          "volume": 217308.0
-        },
-        {
-          "timestamp": 1794146400000,
-          "timestamp_utc": "2026-11-08T14:00:00+00:00",
-          "open": 8.165,
-          "high": 8.212,
-          "low": 8.142,
-          "close": 8.197,
-          "volume": 201672.0
-        },
-        {
-          "timestamp": 1794150000000,
-          "timestamp_utc": "2026-11-08T15:00:00+00:00",
-          "open": 8.198,
-          "high": 8.251,
-          "low": 8.188,
-          "close": 8.243,
-          "volume": 215559.0
-        },
-        {
-          "timestamp": 1794153600000,
-          "timestamp_utc": "2026-11-08T16:00:00+00:00",
-          "open": 8.244,
-          "high": 8.269,
-          "low": 8.162,
-          "close": 8.174,
-          "volume": 176360.0
-        },
-        {
-          "timestamp": 1794157200000,
-          "timestamp_utc": "2026-11-08T17:00:00+00:00",
-          "open": 8.175,
-          "high": 8.179,
-          "low": 8.135,
-          "close": 8.172,
-          "volume": 253193.0
-        },
-        {
-          "timestamp": 1794160800000,
-          "timestamp_utc": "2026-11-08T18:00:00+00:00",
-          "open": 8.177,
-          "high": 8.227,
-          "low": 8.164,
-          "close": 8.207,
-          "volume": 144144.0
-        },
-        {
-          "timestamp": 1794164400000,
-          "timestamp_utc": "2026-11-08T19:00:00+00:00",
-          "open": 8.209,
-          "high": 8.209,
-          "low": 8.171,
-          "close": 8.204,
-          "volume": 184199.0
-        },
-        {
-          "timestamp": 1794168000000,
-          "timestamp_utc": "2026-11-08T20:00:00+00:00",
-          "open": 8.204,
-          "high": 8.216,
-          "low": 8.171,
-          "close": 8.171,
-          "volume": 221748.0
-        },
-        {
-          "timestamp": 1794171600000,
-          "timestamp_utc": "2026-11-08T21:00:00+00:00",
-          "open": 8.176,
-          "high": 8.185,
-          "low": 7.753,
-          "close": 7.859,
-          "volume": 1055714.0
-        },
-        {
-          "timestamp": 1794175200000,
-          "timestamp_utc": "2026-11-08T22:00:00+00:00",
-          "open": 7.858,
-          "high": 7.983,
-          "low": 7.845,
-          "close": 7.908,
-          "volume": 613484.0
-        },
-        {
-          "timestamp": 1794178800000,
-          "timestamp_utc": "2026-11-08T23:00:00+00:00",
-          "open": 7.911,
-          "high": 8.077,
-          "low": 7.9,
-          "close": 7.93,
-          "volume": 416459.0
-        },
-        {
-          "timestamp": 1794182400000,
-          "timestamp_utc": "2026-11-09T00:00:00+00:00",
-          "open": 7.927,
-          "high": 8.02,
-          "low": 7.888,
-          "close": 8.015,
-          "volume": 187528.0
-        },
-        {
-          "timestamp": 1794186000000,
-          "timestamp_utc": "2026-11-09T01:00:00+00:00",
-          "open": 8.021,
-          "high": 8.072,
-          "low": 7.942,
-          "close": 8.035,
-          "volume": 209986.0
-        },
-        {
-          "timestamp": 1794189600000,
-          "timestamp_utc": "2026-11-09T02:00:00+00:00",
-          "open": 8.033,
-          "high": 8.104,
-          "low": 8.021,
-          "close": 8.059,
-          "volume": 115719.0
-        },
-        {
-          "timestamp": 1794193200000,
-          "timestamp_utc": "2026-11-09T03:00:00+00:00",
-          "open": 8.061,
-          "high": 8.075,
-          "low": 7.975,
-          "close": 8.022,
-          "volume": 140820.0
-        },
-        {
-          "timestamp": 1794196800000,
-          "timestamp_utc": "2026-11-09T04:00:00+00:00",
-          "open": 8.026,
-          "high": 8.049,
-          "low": 7.986,
-          "close": 7.998,
-          "volume": 111172.0
-        },
-        {
-          "timestamp": 1794200400000,
-          "timestamp_utc": "2026-11-09T05:00:00+00:00",
-          "open": 7.997,
-          "high": 7.997,
-          "low": 7.927,
-          "close": 7.927,
-          "volume": 167533.0
-        },
-        {
-          "timestamp": 1794204000000,
-          "timestamp_utc": "2026-11-09T06:00:00+00:00",
-          "open": 7.926,
-          "high": 7.937,
-          "low": 7.872,
-          "close": 7.892,
-          "volume": 127815.0
-        },
-        {
-          "timestamp": 1794207600000,
-          "timestamp_utc": "2026-11-09T07:00:00+00:00",
-          "open": 7.893,
-          "high": 7.897,
-          "low": 7.813,
-          "close": 7.835,
-          "volume": 161382.0
-        },
-        {
-          "timestamp": 1794211200000,
-          "timestamp_utc": "2026-11-09T08:00:00+00:00",
-          "open": 7.836,
-          "high": 8.011,
-          "low": 7.832,
-          "close": 8.009,
-          "volume": 136040.0
-        },
-        {
-          "timestamp": 1794214800000,
-          "timestamp_utc": "2026-11-09T09:00:00+00:00",
-          "open": 8.011,
-          "high": 8.052,
-          "low": 7.989,
-          "close": 8.005,
-          "volume": 85579.0
-        },
-        {
-          "timestamp": 1794218400000,
-          "timestamp_utc": "2026-11-09T10:00:00+00:00",
-          "open": 8.009,
-          "high": 8.019,
-          "low": 7.975,
-          "close": 7.993,
-          "volume": 76759.0
-        },
-        {
-          "timestamp": 1794222000000,
-          "timestamp_utc": "2026-11-09T11:00:00+00:00",
-          "open": 7.993,
-          "high": 8.084,
-          "low": 7.975,
-          "close": 8.028,
-          "volume": 128654.0
-        },
-        {
-          "timestamp": 1794225600000,
-          "timestamp_utc": "2026-11-09T12:00:00+00:00",
-          "open": 8.028,
-          "high": 8.625,
-          "low": 8.028,
-          "close": 8.451,
-          "volume": 1602551.0
-        },
-        {
-          "timestamp": 1794229200000,
-          "timestamp_utc": "2026-11-09T13:00:00+00:00",
-          "open": 8.461,
-          "high": 8.884,
-          "low": 8.377,
-          "close": 8.805,
-          "volume": 1498238.0
-        },
-        {
-          "timestamp": 1794232800000,
-          "timestamp_utc": "2026-11-09T14:00:00+00:00",
-          "open": 8.806,
-          "high": 8.935,
-          "low": 8.711,
-          "close": 8.863,
-          "volume": 1174765.0
-        },
-        {
-          "timestamp": 1794236400000,
-          "timestamp_utc": "2026-11-09T15:00:00+00:00",
-          "open": 8.866,
-          "high": 8.996,
-          "low": 8.782,
-          "close": 8.988,
-          "volume": 551091.0
-        },
-        {
-          "timestamp": 1794240000000,
-          "timestamp_utc": "2026-11-09T16:00:00+00:00",
-          "open": 8.992,
-          "high": 9.011,
-          "low": 8.716,
-          "close": 8.74,
-          "volume": 2083348.0
-        },
-        {
-          "timestamp": 1794243600000,
-          "timestamp_utc": "2026-11-09T17:00:00+00:00",
-          "open": 8.744,
-          "high": 8.764,
-          "low": 8.63,
-          "close": 8.646,
-          "volume": 1252881.0
-        },
-        {
-          "timestamp": 1794247200000,
-          "timestamp_utc": "2026-11-09T18:00:00+00:00",
-          "open": 8.65,
-          "high": 8.674,
-          "low": 8.531,
-          "close": 8.548,
-          "volume": 1892356.0
-        },
-        {
-          "timestamp": 1794250800000,
-          "timestamp_utc": "2026-11-09T19:00:00+00:00",
-          "open": 8.543,
-          "high": 8.6,
-          "low": 8.48,
-          "close": 8.557,
-          "volume": 1769829.0
-        },
-        {
-          "timestamp": 1794254400000,
-          "timestamp_utc": "2026-11-09T20:00:00+00:00",
-          "open": 8.557,
-          "high": 8.751,
-          "low": 8.539,
-          "close": 8.572,
-          "volume": 1506987.0
-        },
-        {
-          "timestamp": 1794258000000,
-          "timestamp_utc": "2026-11-09T21:00:00+00:00",
-          "open": 8.574,
-          "high": 8.676,
-          "low": 8.54,
-          "close": 8.65,
-          "volume": 1296768.0
-        },
-        {
-          "timestamp": 1794261600000,
-          "timestamp_utc": "2026-11-09T22:00:00+00:00",
-          "open": 8.652,
-          "high": 8.667,
-          "low": 8.601,
-          "close": 8.639,
-          "volume": 623089.0
-        },
-        {
-          "timestamp": 1794265200000,
-          "timestamp_utc": "2026-11-09T23:00:00+00:00",
-          "open": 8.638,
-          "high": 8.688,
-          "low": 8.613,
-          "close": 8.646,
-          "volume": 883751.0
-        },
-        {
-          "timestamp": 1794268800000,
-          "timestamp_utc": "2026-11-10T00:00:00+00:00",
-          "open": 8.648,
-          "high": 8.707,
-          "low": 8.624,
-          "close": 8.667,
-          "volume": 948687.0
-        },
-        {
-          "timestamp": 1794272400000,
-          "timestamp_utc": "2026-11-10T01:00:00+00:00",
-          "open": 8.666,
-          "high": 8.742,
-          "low": 8.642,
-          "close": 8.647,
-          "volume": 970358.0
-        },
-        {
-          "timestamp": 1794276000000,
-          "timestamp_utc": "2026-11-10T02:00:00+00:00",
-          "open": 8.648,
-          "high": 8.694,
-          "low": 8.585,
-          "close": 8.598,
-          "volume": 1011254.0
-        },
-        {
-          "timestamp": 1794279600000,
-          "timestamp_utc": "2026-11-10T03:00:00+00:00",
-          "open": 8.597,
-          "high": 8.626,
-          "low": 8.56,
-          "close": 8.563,
-          "volume": 620140.0
-        },
-        {
-          "timestamp": 1794283200000,
-          "timestamp_utc": "2026-11-10T04:00:00+00:00",
-          "open": 8.563,
-          "high": 8.594,
-          "low": 8.52,
-          "close": 8.556,
-          "volume": 725979.0
-        },
-        {
-          "timestamp": 1794286800000,
-          "timestamp_utc": "2026-11-10T05:00:00+00:00",
-          "open": 8.555,
-          "high": 8.614,
-          "low": 8.542,
-          "close": 8.602,
-          "volume": 373531.0
-        },
-        {
-          "timestamp": 1794290400000,
-          "timestamp_utc": "2026-11-10T06:00:00+00:00",
-          "open": 8.601,
-          "high": 8.601,
-          "low": 8.467,
-          "close": 8.482,
-          "volume": 755444.0
-        },
-        {
-          "timestamp": 1794294000000,
-          "timestamp_utc": "2026-11-10T07:00:00+00:00",
-          "open": 8.479,
-          "high": 8.51,
-          "low": 8.445,
-          "close": 8.46,
-          "volume": 547794.0
-        },
-        {
-          "timestamp": 1794297600000,
-          "timestamp_utc": "2026-11-10T08:00:00+00:00",
-          "open": 8.458,
-          "high": 8.493,
-          "low": 8.443,
-          "close": 8.466,
-          "volume": 587158.0
-        },
-        {
-          "timestamp": 1794301200000,
-          "timestamp_utc": "2026-11-10T09:00:00+00:00",
-          "open": 8.465,
-          "high": 8.465,
-          "low": 8.372,
-          "close": 8.411,
-          "volume": 683711.0
-        },
-        {
-          "timestamp": 1794304800000,
-          "timestamp_utc": "2026-11-10T10:00:00+00:00",
-          "open": 8.408,
-          "high": 8.41,
-          "low": 8.274,
-          "close": 8.29,
-          "volume": 920925.0
-        },
-        {
-          "timestamp": 1794308400000,
-          "timestamp_utc": "2026-11-10T11:00:00+00:00",
-          "open": 8.29,
-          "high": 8.332,
-          "low": 8.253,
-          "close": 8.303,
-          "volume": 802147.0
-        },
-        {
-          "timestamp": 1794312000000,
-          "timestamp_utc": "2026-11-10T12:00:00+00:00",
-          "open": 8.306,
-          "high": 8.364,
-          "low": 8.281,
-          "close": 8.362,
-          "volume": 800254.0
-        },
-        {
-          "timestamp": 1794315600000,
-          "timestamp_utc": "2026-11-10T13:00:00+00:00",
-          "open": 8.362,
-          "high": 8.48,
-          "low": 8.221,
-          "close": 8.294,
-          "volume": 1269519.0
-        },
-        {
-          "timestamp": 1794319200000,
-          "timestamp_utc": "2026-11-10T14:00:00+00:00",
-          "open": 8.291,
-          "high": 8.43,
-          "low": 8.266,
-          "close": 8.382,
-          "volume": 1226906.0
-        },
-        {
-          "timestamp": 1794322800000,
-          "timestamp_utc": "2026-11-10T15:00:00+00:00",
-          "open": 8.38,
-          "high": 8.458,
-          "low": 8.061,
-          "close": 8.204,
-          "volume": 1794355.0
-        }
-      ],
-      "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 465,
-      "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "AAVE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 123.43,
-      "stop_loss": 126.6078571429,
+      "entry": 122.57,
+      "stop_loss": 125.7478571429,
       "take_profit": [
-        119.1928571429,
-        114.9557142857
+        118.3328571429,
+        114.0957142857
       ],
       "ema20": 127.0893373362,
       "ema50": 128.6092125183,
@@ -18579,20 +17897,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:34.260000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:18.877000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 126.6078571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 125.7478571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -19217,19 +18535,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 466,
+      "message_id_current": 484,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "BCH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 230.15,
-      "stop_loss": 234.2589285714,
+      "entry": 228.89,
+      "stop_loss": 232.9989285714,
       "take_profit": [
-        224.6714285714,
-        219.1928571429
+        223.4114285714,
+        217.9328571429
       ],
       "ema20": 236.7667240853,
       "ema50": 239.9970842775,
@@ -19261,20 +18579,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:34.674000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:19.392000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3460% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 234.2589285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 232.9989285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -19899,19 +19217,701 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3460% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 467,
+      "message_id_current": 485,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
+    },
+    {
+      "symbol": "AVAX/USDT:USDT",
+      "status": "BUY_NOW",
+      "side": "BUY",
+      "entry": 8.19,
+      "stop_loss": 7.9988571429,
+      "take_profit": [
+        8.4448571429,
+        8.6997142857
+      ],
+      "ema20": 8.4127242008,
+      "ema50": 8.3406957814,
+      "atr14": 0.1274285714,
+      "confidence": "NOT_CALIBRATED",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.333333,
+        "threshold": 0.9,
+        "atr_percentile": 0.666667,
+        "low_volume_percentile": 0.0,
+        "volume_ratio_vs_rolling_median": 2.214129,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "ticker_timestamp_utc": "2026-11-10T16:51:19.897000+00:00",
+      "ticker_timestamp_source": "FETCH_TIME_PROXY",
+      "entry_price_quality": "PROXY_FETCH_TIME",
+      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+      "timeframe": "1H",
+      "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8636% است.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 7.9988571429 فرضیه را باطل می‌کند.",
+      "chart_candles": [
+        {
+          "timestamp": 1794078000000,
+          "timestamp_utc": "2026-11-07T19:00:00+00:00",
+          "open": 8.244,
+          "high": 8.246,
+          "low": 8.185,
+          "close": 8.201,
+          "volume": 165425.0
+        },
+        {
+          "timestamp": 1794081600000,
+          "timestamp_utc": "2026-11-07T20:00:00+00:00",
+          "open": 8.199,
+          "high": 8.209,
+          "low": 8.145,
+          "close": 8.157,
+          "volume": 145368.0
+        },
+        {
+          "timestamp": 1794085200000,
+          "timestamp_utc": "2026-11-07T21:00:00+00:00",
+          "open": 8.159,
+          "high": 8.203,
+          "low": 8.129,
+          "close": 8.198,
+          "volume": 202740.0
+        },
+        {
+          "timestamp": 1794088800000,
+          "timestamp_utc": "2026-11-07T22:00:00+00:00",
+          "open": 8.2,
+          "high": 8.211,
+          "low": 8.187,
+          "close": 8.198,
+          "volume": 164321.0
+        },
+        {
+          "timestamp": 1794092400000,
+          "timestamp_utc": "2026-11-07T23:00:00+00:00",
+          "open": 8.194,
+          "high": 8.234,
+          "low": 8.19,
+          "close": 8.228,
+          "volume": 111279.0
+        },
+        {
+          "timestamp": 1794096000000,
+          "timestamp_utc": "2026-11-08T00:00:00+00:00",
+          "open": 8.226,
+          "high": 8.226,
+          "low": 8.188,
+          "close": 8.207,
+          "volume": 51169.0
+        },
+        {
+          "timestamp": 1794099600000,
+          "timestamp_utc": "2026-11-08T01:00:00+00:00",
+          "open": 8.209,
+          "high": 8.22,
+          "low": 8.176,
+          "close": 8.179,
+          "volume": 81862.0
+        },
+        {
+          "timestamp": 1794103200000,
+          "timestamp_utc": "2026-11-08T02:00:00+00:00",
+          "open": 8.184,
+          "high": 8.188,
+          "low": 8.152,
+          "close": 8.173,
+          "volume": 106075.0
+        },
+        {
+          "timestamp": 1794106800000,
+          "timestamp_utc": "2026-11-08T03:00:00+00:00",
+          "open": 8.178,
+          "high": 8.202,
+          "low": 8.175,
+          "close": 8.194,
+          "volume": 92228.0
+        },
+        {
+          "timestamp": 1794110400000,
+          "timestamp_utc": "2026-11-08T04:00:00+00:00",
+          "open": 8.196,
+          "high": 8.208,
+          "low": 8.154,
+          "close": 8.154,
+          "volume": 82968.0
+        },
+        {
+          "timestamp": 1794114000000,
+          "timestamp_utc": "2026-11-08T05:00:00+00:00",
+          "open": 8.159,
+          "high": 8.187,
+          "low": 8.156,
+          "close": 8.181,
+          "volume": 77199.0
+        },
+        {
+          "timestamp": 1794117600000,
+          "timestamp_utc": "2026-11-08T06:00:00+00:00",
+          "open": 8.181,
+          "high": 8.198,
+          "low": 8.157,
+          "close": 8.165,
+          "volume": 67812.0
+        },
+        {
+          "timestamp": 1794121200000,
+          "timestamp_utc": "2026-11-08T07:00:00+00:00",
+          "open": 8.169,
+          "high": 8.199,
+          "low": 8.168,
+          "close": 8.191,
+          "volume": 56136.0
+        },
+        {
+          "timestamp": 1794124800000,
+          "timestamp_utc": "2026-11-08T08:00:00+00:00",
+          "open": 8.193,
+          "high": 8.193,
+          "low": 8.161,
+          "close": 8.163,
+          "volume": 68019.0
+        },
+        {
+          "timestamp": 1794128400000,
+          "timestamp_utc": "2026-11-08T09:00:00+00:00",
+          "open": 8.164,
+          "high": 8.165,
+          "low": 8.12,
+          "close": 8.162,
+          "volume": 133180.0
+        },
+        {
+          "timestamp": 1794132000000,
+          "timestamp_utc": "2026-11-08T10:00:00+00:00",
+          "open": 8.162,
+          "high": 8.174,
+          "low": 8.135,
+          "close": 8.159,
+          "volume": 130353.0
+        },
+        {
+          "timestamp": 1794135600000,
+          "timestamp_utc": "2026-11-08T11:00:00+00:00",
+          "open": 8.161,
+          "high": 8.206,
+          "low": 8.157,
+          "close": 8.187,
+          "volume": 144293.0
+        },
+        {
+          "timestamp": 1794139200000,
+          "timestamp_utc": "2026-11-08T12:00:00+00:00",
+          "open": 8.188,
+          "high": 8.208,
+          "low": 8.149,
+          "close": 8.172,
+          "volume": 197249.0
+        },
+        {
+          "timestamp": 1794142800000,
+          "timestamp_utc": "2026-11-08T13:00:00+00:00",
+          "open": 8.172,
+          "high": 8.224,
+          "low": 8.153,
+          "close": 8.166,
+          "volume": 217308.0
+        },
+        {
+          "timestamp": 1794146400000,
+          "timestamp_utc": "2026-11-08T14:00:00+00:00",
+          "open": 8.165,
+          "high": 8.212,
+          "low": 8.142,
+          "close": 8.197,
+          "volume": 201672.0
+        },
+        {
+          "timestamp": 1794150000000,
+          "timestamp_utc": "2026-11-08T15:00:00+00:00",
+          "open": 8.198,
+          "high": 8.251,
+          "low": 8.188,
+          "close": 8.243,
+          "volume": 215559.0
+        },
+        {
+          "timestamp": 1794153600000,
+          "timestamp_utc": "2026-11-08T16:00:00+00:00",
+          "open": 8.244,
+          "high": 8.269,
+          "low": 8.162,
+          "close": 8.174,
+          "volume": 176360.0
+        },
+        {
+          "timestamp": 1794157200000,
+          "timestamp_utc": "2026-11-08T17:00:00+00:00",
+          "open": 8.175,
+          "high": 8.179,
+          "low": 8.135,
+          "close": 8.172,
+          "volume": 253193.0
+        },
+        {
+          "timestamp": 1794160800000,
+          "timestamp_utc": "2026-11-08T18:00:00+00:00",
+          "open": 8.177,
+          "high": 8.227,
+          "low": 8.164,
+          "close": 8.207,
+          "volume": 144144.0
+        },
+        {
+          "timestamp": 1794164400000,
+          "timestamp_utc": "2026-11-08T19:00:00+00:00",
+          "open": 8.209,
+          "high": 8.209,
+          "low": 8.171,
+          "close": 8.204,
+          "volume": 184199.0
+        },
+        {
+          "timestamp": 1794168000000,
+          "timestamp_utc": "2026-11-08T20:00:00+00:00",
+          "open": 8.204,
+          "high": 8.216,
+          "low": 8.171,
+          "close": 8.171,
+          "volume": 221748.0
+        },
+        {
+          "timestamp": 1794171600000,
+          "timestamp_utc": "2026-11-08T21:00:00+00:00",
+          "open": 8.176,
+          "high": 8.185,
+          "low": 7.753,
+          "close": 7.859,
+          "volume": 1055714.0
+        },
+        {
+          "timestamp": 1794175200000,
+          "timestamp_utc": "2026-11-08T22:00:00+00:00",
+          "open": 7.858,
+          "high": 7.983,
+          "low": 7.845,
+          "close": 7.908,
+          "volume": 613484.0
+        },
+        {
+          "timestamp": 1794178800000,
+          "timestamp_utc": "2026-11-08T23:00:00+00:00",
+          "open": 7.911,
+          "high": 8.077,
+          "low": 7.9,
+          "close": 7.93,
+          "volume": 416459.0
+        },
+        {
+          "timestamp": 1794182400000,
+          "timestamp_utc": "2026-11-09T00:00:00+00:00",
+          "open": 7.927,
+          "high": 8.02,
+          "low": 7.888,
+          "close": 8.015,
+          "volume": 187528.0
+        },
+        {
+          "timestamp": 1794186000000,
+          "timestamp_utc": "2026-11-09T01:00:00+00:00",
+          "open": 8.021,
+          "high": 8.072,
+          "low": 7.942,
+          "close": 8.035,
+          "volume": 209986.0
+        },
+        {
+          "timestamp": 1794189600000,
+          "timestamp_utc": "2026-11-09T02:00:00+00:00",
+          "open": 8.033,
+          "high": 8.104,
+          "low": 8.021,
+          "close": 8.059,
+          "volume": 115719.0
+        },
+        {
+          "timestamp": 1794193200000,
+          "timestamp_utc": "2026-11-09T03:00:00+00:00",
+          "open": 8.061,
+          "high": 8.075,
+          "low": 7.975,
+          "close": 8.022,
+          "volume": 140820.0
+        },
+        {
+          "timestamp": 1794196800000,
+          "timestamp_utc": "2026-11-09T04:00:00+00:00",
+          "open": 8.026,
+          "high": 8.049,
+          "low": 7.986,
+          "close": 7.998,
+          "volume": 111172.0
+        },
+        {
+          "timestamp": 1794200400000,
+          "timestamp_utc": "2026-11-09T05:00:00+00:00",
+          "open": 7.997,
+          "high": 7.997,
+          "low": 7.927,
+          "close": 7.927,
+          "volume": 167533.0
+        },
+        {
+          "timestamp": 1794204000000,
+          "timestamp_utc": "2026-11-09T06:00:00+00:00",
+          "open": 7.926,
+          "high": 7.937,
+          "low": 7.872,
+          "close": 7.892,
+          "volume": 127815.0
+        },
+        {
+          "timestamp": 1794207600000,
+          "timestamp_utc": "2026-11-09T07:00:00+00:00",
+          "open": 7.893,
+          "high": 7.897,
+          "low": 7.813,
+          "close": 7.835,
+          "volume": 161382.0
+        },
+        {
+          "timestamp": 1794211200000,
+          "timestamp_utc": "2026-11-09T08:00:00+00:00",
+          "open": 7.836,
+          "high": 8.011,
+          "low": 7.832,
+          "close": 8.009,
+          "volume": 136040.0
+        },
+        {
+          "timestamp": 1794214800000,
+          "timestamp_utc": "2026-11-09T09:00:00+00:00",
+          "open": 8.011,
+          "high": 8.052,
+          "low": 7.989,
+          "close": 8.005,
+          "volume": 85579.0
+        },
+        {
+          "timestamp": 1794218400000,
+          "timestamp_utc": "2026-11-09T10:00:00+00:00",
+          "open": 8.009,
+          "high": 8.019,
+          "low": 7.975,
+          "close": 7.993,
+          "volume": 76759.0
+        },
+        {
+          "timestamp": 1794222000000,
+          "timestamp_utc": "2026-11-09T11:00:00+00:00",
+          "open": 7.993,
+          "high": 8.084,
+          "low": 7.975,
+          "close": 8.028,
+          "volume": 128654.0
+        },
+        {
+          "timestamp": 1794225600000,
+          "timestamp_utc": "2026-11-09T12:00:00+00:00",
+          "open": 8.028,
+          "high": 8.625,
+          "low": 8.028,
+          "close": 8.451,
+          "volume": 1602551.0
+        },
+        {
+          "timestamp": 1794229200000,
+          "timestamp_utc": "2026-11-09T13:00:00+00:00",
+          "open": 8.461,
+          "high": 8.884,
+          "low": 8.377,
+          "close": 8.805,
+          "volume": 1498238.0
+        },
+        {
+          "timestamp": 1794232800000,
+          "timestamp_utc": "2026-11-09T14:00:00+00:00",
+          "open": 8.806,
+          "high": 8.935,
+          "low": 8.711,
+          "close": 8.863,
+          "volume": 1174765.0
+        },
+        {
+          "timestamp": 1794236400000,
+          "timestamp_utc": "2026-11-09T15:00:00+00:00",
+          "open": 8.866,
+          "high": 8.996,
+          "low": 8.782,
+          "close": 8.988,
+          "volume": 551091.0
+        },
+        {
+          "timestamp": 1794240000000,
+          "timestamp_utc": "2026-11-09T16:00:00+00:00",
+          "open": 8.992,
+          "high": 9.011,
+          "low": 8.716,
+          "close": 8.74,
+          "volume": 2083348.0
+        },
+        {
+          "timestamp": 1794243600000,
+          "timestamp_utc": "2026-11-09T17:00:00+00:00",
+          "open": 8.744,
+          "high": 8.764,
+          "low": 8.63,
+          "close": 8.646,
+          "volume": 1252881.0
+        },
+        {
+          "timestamp": 1794247200000,
+          "timestamp_utc": "2026-11-09T18:00:00+00:00",
+          "open": 8.65,
+          "high": 8.674,
+          "low": 8.531,
+          "close": 8.548,
+          "volume": 1892356.0
+        },
+        {
+          "timestamp": 1794250800000,
+          "timestamp_utc": "2026-11-09T19:00:00+00:00",
+          "open": 8.543,
+          "high": 8.6,
+          "low": 8.48,
+          "close": 8.557,
+          "volume": 1769829.0
+        },
+        {
+          "timestamp": 1794254400000,
+          "timestamp_utc": "2026-11-09T20:00:00+00:00",
+          "open": 8.557,
+          "high": 8.751,
+          "low": 8.539,
+          "close": 8.572,
+          "volume": 1506987.0
+        },
+        {
+          "timestamp": 1794258000000,
+          "timestamp_utc": "2026-11-09T21:00:00+00:00",
+          "open": 8.574,
+          "high": 8.676,
+          "low": 8.54,
+          "close": 8.65,
+          "volume": 1296768.0
+        },
+        {
+          "timestamp": 1794261600000,
+          "timestamp_utc": "2026-11-09T22:00:00+00:00",
+          "open": 8.652,
+          "high": 8.667,
+          "low": 8.601,
+          "close": 8.639,
+          "volume": 623089.0
+        },
+        {
+          "timestamp": 1794265200000,
+          "timestamp_utc": "2026-11-09T23:00:00+00:00",
+          "open": 8.638,
+          "high": 8.688,
+          "low": 8.613,
+          "close": 8.646,
+          "volume": 883751.0
+        },
+        {
+          "timestamp": 1794268800000,
+          "timestamp_utc": "2026-11-10T00:00:00+00:00",
+          "open": 8.648,
+          "high": 8.707,
+          "low": 8.624,
+          "close": 8.667,
+          "volume": 948687.0
+        },
+        {
+          "timestamp": 1794272400000,
+          "timestamp_utc": "2026-11-10T01:00:00+00:00",
+          "open": 8.666,
+          "high": 8.742,
+          "low": 8.642,
+          "close": 8.647,
+          "volume": 970358.0
+        },
+        {
+          "timestamp": 1794276000000,
+          "timestamp_utc": "2026-11-10T02:00:00+00:00",
+          "open": 8.648,
+          "high": 8.694,
+          "low": 8.585,
+          "close": 8.598,
+          "volume": 1011254.0
+        },
+        {
+          "timestamp": 1794279600000,
+          "timestamp_utc": "2026-11-10T03:00:00+00:00",
+          "open": 8.597,
+          "high": 8.626,
+          "low": 8.56,
+          "close": 8.563,
+          "volume": 620140.0
+        },
+        {
+          "timestamp": 1794283200000,
+          "timestamp_utc": "2026-11-10T04:00:00+00:00",
+          "open": 8.563,
+          "high": 8.594,
+          "low": 8.52,
+          "close": 8.556,
+          "volume": 725979.0
+        },
+        {
+          "timestamp": 1794286800000,
+          "timestamp_utc": "2026-11-10T05:00:00+00:00",
+          "open": 8.555,
+          "high": 8.614,
+          "low": 8.542,
+          "close": 8.602,
+          "volume": 373531.0
+        },
+        {
+          "timestamp": 1794290400000,
+          "timestamp_utc": "2026-11-10T06:00:00+00:00",
+          "open": 8.601,
+          "high": 8.601,
+          "low": 8.467,
+          "close": 8.482,
+          "volume": 755444.0
+        },
+        {
+          "timestamp": 1794294000000,
+          "timestamp_utc": "2026-11-10T07:00:00+00:00",
+          "open": 8.479,
+          "high": 8.51,
+          "low": 8.445,
+          "close": 8.46,
+          "volume": 547794.0
+        },
+        {
+          "timestamp": 1794297600000,
+          "timestamp_utc": "2026-11-10T08:00:00+00:00",
+          "open": 8.458,
+          "high": 8.493,
+          "low": 8.443,
+          "close": 8.466,
+          "volume": 587158.0
+        },
+        {
+          "timestamp": 1794301200000,
+          "timestamp_utc": "2026-11-10T09:00:00+00:00",
+          "open": 8.465,
+          "high": 8.465,
+          "low": 8.372,
+          "close": 8.411,
+          "volume": 683711.0
+        },
+        {
+          "timestamp": 1794304800000,
+          "timestamp_utc": "2026-11-10T10:00:00+00:00",
+          "open": 8.408,
+          "high": 8.41,
+          "low": 8.274,
+          "close": 8.29,
+          "volume": 920925.0
+        },
+        {
+          "timestamp": 1794308400000,
+          "timestamp_utc": "2026-11-10T11:00:00+00:00",
+          "open": 8.29,
+          "high": 8.332,
+          "low": 8.253,
+          "close": 8.303,
+          "volume": 802147.0
+        },
+        {
+          "timestamp": 1794312000000,
+          "timestamp_utc": "2026-11-10T12:00:00+00:00",
+          "open": 8.306,
+          "high": 8.364,
+          "low": 8.281,
+          "close": 8.362,
+          "volume": 800254.0
+        },
+        {
+          "timestamp": 1794315600000,
+          "timestamp_utc": "2026-11-10T13:00:00+00:00",
+          "open": 8.362,
+          "high": 8.48,
+          "low": 8.221,
+          "close": 8.294,
+          "volume": 1269519.0
+        },
+        {
+          "timestamp": 1794319200000,
+          "timestamp_utc": "2026-11-10T14:00:00+00:00",
+          "open": 8.291,
+          "high": 8.43,
+          "low": 8.266,
+          "close": 8.382,
+          "volume": 1226906.0
+        },
+        {
+          "timestamp": 1794322800000,
+          "timestamp_utc": "2026-11-10T15:00:00+00:00",
+          "open": 8.38,
+          "high": 8.458,
+          "low": 8.061,
+          "close": 8.204,
+          "volume": 1794355.0
+        }
+      ],
+      "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8636% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
+      "message_id_current": 486,
+      "message_id_audience": null,
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "LINK/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.301,
-      "stop_loss": 10.5061785714,
+      "entry": 10.196,
+      "stop_loss": 10.4011785714,
       "take_profit": [
-        10.0274285714,
-        9.7538571429
+        9.9224285714,
+        9.6488571429
       ],
       "ema20": 10.5229297227,
       "ema50": 10.5871897641,
@@ -19943,20 +19943,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:35.832000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:21.456000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6070% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.5061785714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4011785714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -20581,19 +20581,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6070% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 468,
+      "message_id_current": 487,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5685,
-      "stop_loss": 0.5810035714,
+      "entry": 0.5593,
+      "stop_loss": 0.5718035714,
       "take_profit": [
-        0.5518285714,
-        0.5351571429
+        0.5426285714,
+        0.5259571429
       ],
       "ema20": 0.581763915,
       "ema50": 0.5847184366,
@@ -20625,20 +20625,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:36.222000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:21.968000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5053% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5810035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5718035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -21263,19 +21263,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5053% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 469,
+      "message_id_current": 488,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "XMR/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 552.41,
-      "stop_loss": 568.0967857143,
+      "entry": 555.65,
+      "stop_loss": 571.3367857143,
       "take_profit": [
-        531.4942857143,
-        510.5785714286
+        534.7342857143,
+        513.8185714286
       ],
       "ema20": 566.0210914911,
       "ema50": 581.2233390972,
@@ -21307,20 +21307,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:36.992000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:23.623000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6156% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 568.0967857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 571.3367857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -21945,19 +21945,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6156% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 470,
+      "message_id_current": 489,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "DOT/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8465,
-      "stop_loss": 0.8627214286,
+      "entry": 0.8359,
+      "stop_loss": 0.8521214286,
       "take_profit": [
-        0.8248714286,
-        0.8032428571
+        0.8142714286,
+        0.7926428571
       ],
       "ema20": 0.8565268195,
       "ema50": 0.8668989716,
@@ -21989,20 +21989,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.168000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:24.677000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1965% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8627214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8521214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -22627,19 +22627,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1965% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 471,
+      "message_id_current": 490,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3688,
-      "stop_loss": 0.3586857143,
+      "entry": 0.3601,
+      "stop_loss": 0.3499857143,
       "take_profit": [
-        0.3822857143,
-        0.3957714286
+        0.3735857143,
+        0.3870714286
       ],
       "ema20": 0.3711497778,
       "ema50": 0.3666603995,
@@ -22671,20 +22671,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.547000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:25.183000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.2244% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3586857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3499857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -23309,19 +23309,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.2244% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 472,
+      "message_id_current": 491,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06802,
-      "stop_loss": 0.0691696429,
+      "entry": 0.0672,
+      "stop_loss": 0.0683496429,
       "take_profit": [
-        0.0664871429,
-        0.0649542857
+        0.0656671429,
+        0.0641342857
       ],
       "ema20": 0.0694366953,
       "ema50": 0.0699114072,
@@ -23353,20 +23353,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:38.937000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:25.690000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6790% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0691696429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.0683496429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -23991,19 +23991,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6790% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 473,
+      "message_id_current": 492,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "JUP/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.255,
-      "stop_loss": 0.2488607143,
+      "entry": 0.2516,
+      "stop_loss": 0.2454607143,
       "take_profit": [
-        0.2631857143,
-        0.2713714286
+        0.2597857143,
+        0.2679714286
       ],
       "ema20": 0.2522818845,
       "ema50": 0.2471207303,
@@ -24035,20 +24035,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:40.128000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:27.224000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0885% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2488607143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2454607143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -24673,19 +24673,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0885% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 474,
+      "message_id_current": 493,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "DASH/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 45.3,
-      "stop_loss": 46.4378571429,
+      "entry": 43.58,
+      "stop_loss": 44.7178571429,
       "take_profit": [
-        43.7828571429,
-        42.2657142857
+        42.0628571429,
+        40.5457142857
       ],
       "ema20": 46.2556438677,
       "ema50": 46.5263544525,
@@ -24717,20 +24717,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:41.286000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:28.798000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5818% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 46.4378571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.7178571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -25355,19 +25355,19 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5818% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 475,
+      "message_id_current": 494,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "RENDER/USDT:USDT",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 1.565,
-      "stop_loss": 1.5273928571,
+      "entry": 1.547,
+      "stop_loss": 1.5093928571,
       "take_profit": [
-        1.6151428571,
-        1.6652857143
+        1.5971428571,
+        1.6472857143
       ],
       "ema20": 1.5838266838,
       "ema50": 1.5736555839,
@@ -25399,20 +25399,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:42.062000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:29.827000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.6463% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5273928571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 1.5093928571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -26037,19 +26037,19 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.6463% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 476,
+      "message_id_current": 495,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     },
     {
       "symbol": "ARB/USDT:USDT",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.16064,
-      "stop_loss": 0.1652139286,
+      "entry": 0.15814,
+      "stop_loss": 0.1627139286,
       "take_profit": [
-        0.1545414286,
-        0.1484428571
+        0.1520414286,
+        0.1459428571
       ],
       "ema20": 0.1684352303,
       "ema50": 0.1698615056,
@@ -26081,20 +26081,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T16:21:44.394642+00:00",
+      "generated_at_utc": "2026-11-10T16:51:32.972586+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T16:21:44.012000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T16:51:32.432000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8397% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1652139286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1627139286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794078000000,
@@ -26719,9 +26719,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8397% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 477,
+      "message_id_current": 496,
       "message_id_audience": null,
-      "published_at": "2026-11-10T16:22:00.597050+00:00"
+      "published_at": "2026-11-10T16:51:49.433532+00:00"
     }
   ],
   "quality": {
@@ -26735,26 +26735,26 @@
   },
   "data_errors": {},
   "message_id_current": {
-    "BTC/USDT:USDT": 459,
-    "ETH/USDT:USDT": 460,
-    "ZEC/USDT:USDT": 461,
-    "SOL/USDT:USDT": 462,
-    "PEPE/USDT:USDT": 463,
-    "XRP/USDT:USDT": 464,
-    "AVAX/USDT:USDT": 465,
-    "AAVE/USDT:USDT": 466,
-    "BCH/USDT:USDT": 467,
-    "LINK/USDT:USDT": 468,
-    "APT/USDT:USDT": 469,
-    "XMR/USDT:USDT": 470,
-    "DOT/USDT:USDT": 471,
-    "ONDO/USDT:USDT": 472,
-    "DOGE/USDT:USDT": 473,
-    "JUP/USDT:USDT": 474,
-    "DASH/USDT:USDT": 475,
-    "RENDER/USDT:USDT": 476,
-    "ARB/USDT:USDT": 477
+    "BTC/USDT:USDT": 478,
+    "ETH/USDT:USDT": 479,
+    "ZEC/USDT:USDT": 480,
+    "SOL/USDT:USDT": 481,
+    "PEPE/USDT:USDT": 482,
+    "XRP/USDT:USDT": 483,
+    "AAVE/USDT:USDT": 484,
+    "BCH/USDT:USDT": 485,
+    "AVAX/USDT:USDT": 486,
+    "LINK/USDT:USDT": 487,
+    "APT/USDT:USDT": 488,
+    "XMR/USDT:USDT": 489,
+    "DOT/USDT:USDT": 490,
+    "ONDO/USDT:USDT": 491,
+    "DOGE/USDT:USDT": 492,
+    "JUP/USDT:USDT": 493,
+    "DASH/USDT:USDT": 494,
+    "RENDER/USDT:USDT": 495,
+    "ARB/USDT:USDT": 496
   },
   "message_id_audience": null,
-  "published_at": "2026-11-10T16:22:00.597050+00:00"
+  "published_at": "2026-11-10T16:51:49.433532+00:00"
 }
