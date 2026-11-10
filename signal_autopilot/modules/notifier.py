@@ -42,7 +42,7 @@ async def _send(token: str, chat_id: str, messages: list[str]) -> list[int]:
     return message_ids
 
 
-async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]]) -> tuple[int, int]:
+async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict, str]], message_id_field: str = "message_id_current") -> tuple[int, int]:
     """هر سیگنال را با چارت همان نماد و کپشن تحلیلی ارسال می‌کند."""
     sent = 0
     chart_failures = 0
@@ -55,7 +55,7 @@ async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict
                 )
                 message_id = getattr(sent_message, "message_id", None)
                 if isinstance(message_id, int) and message_id > 0:
-                    signal["message_id_current"] = message_id
+                    signal[message_id_field] = message_id
             except Exception:
                 chart_failures += 1
                 LOG.exception("Chart image delivery failed for %s; sending text fallback.", signal.get("symbol"))
@@ -66,7 +66,7 @@ async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict
                 )
                 message_id = getattr(sent_message, "message_id", None)
                 if isinstance(message_id, int) and message_id > 0:
-                    signal["message_id_current"] = message_id
+                    signal[message_id_field] = message_id
             sent += 1
     return sent, chart_failures
 
@@ -77,6 +77,43 @@ def _parse_time(value):
         return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
     except (TypeError, ValueError):
         return None
+
+
+def _load_destination_state(state_path: Path, destination: str) -> dict:
+    """خواندن دفتر ارسال مستقل هر مقصد از یک فایل پایدار مشترک."""
+    try:
+        raw = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        raw = {}
+    if not isinstance(raw, dict):
+        raw = {}
+    if raw.get("__schema_version__") == 3 and isinstance(raw.get("destinations"), dict):
+        value = raw["destinations"].get(destination, {})
+        return value if isinstance(value, dict) else {}
+    return raw if destination == "current" else {}
+
+
+def _save_destination_state(state_path: Path, destination: str, destination_state: dict) -> None:
+    """ذخیره وضعیت هر مقصد بدون بازنویسی دفتر مقصد دیگر."""
+    try:
+        raw = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        raw = {}
+    if not isinstance(raw, dict):
+        raw = {}
+    if raw.get("__schema_version__") == 3 and isinstance(raw.get("destinations"), dict):
+        destinations = raw["destinations"]
+    else:
+        current_state = raw if raw else {}
+        destinations = {"current": current_state, "audience": {}}
+    destinations[destination] = destination_state
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps({
+        "__schema_version__": 3,
+        "destinations": destinations,
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 
 
 def _format_signal(signal: dict, payload: dict) -> str:
@@ -114,38 +151,42 @@ def _initialize_delivery_metadata(payload: dict) -> None:
         signal["published_at"] = None
 
 
-def _finalize_delivery_metadata(payload: dict, daily_message_id: int | None = None) -> None:
-    """ثبت شناسه‌های برگشتی واقعی؛ کانال دوم تا زمان پیکربندی صریحاً null می‌ماند."""
-    current_ids = {
-        str(signal.get("symbol")): signal["message_id_current"]
+def _finalize_delivery_metadata(payload: dict, daily_message_id: int | None = None,
+                                destination: str = "current") -> None:
+    """شناسه‌های واقعی هر مقصد را جدا ثبت می‌کند و زمان انتشار را مشترک نگه می‌دارد."""
+    field = "message_id_" + destination
+    destination_ids = {
+        str(signal.get("symbol")): signal[field]
         for signal in payload.get("signals", [])
-        if isinstance(signal.get("message_id_current"), int)
-        and signal["message_id_current"] > 0
+        if isinstance(signal.get(field), int) and signal[field] > 0
     }
     if isinstance(daily_message_id, int) and daily_message_id > 0:
-        current_ids["_daily_status"] = daily_message_id
-    payload["message_id_current"] = current_ids or None
-    payload["message_id_audience"] = None
-    published_at = datetime.now(timezone.utc).isoformat() if current_ids else None
+        destination_ids["_daily_status"] = daily_message_id
+    payload[field] = destination_ids or None
+    any_delivery = any(payload.get(name) for name in ("message_id_current", "message_id_audience"))
+    published_at = payload.get("published_at") or (
+        datetime.now(timezone.utc).isoformat() if any_delivery else None
+    )
     payload["published_at"] = published_at
     for signal in payload.get("signals", []):
-        if signal.get("message_id_current") is not None:
+        if signal.get("message_id_current") is not None or signal.get("message_id_audience") is not None:
             signal["published_at"] = published_at
-        LOG_ID = signal.get("message_id_current")
-        if isinstance(LOG_ID, int) and LOG_ID > 0:
-            LOG.info("TELEGRAM_SIGNAL_MESSAGE_ID symbol=%s message_id=%s", signal.get("symbol"), LOG_ID)
+        message_id = signal.get(field)
+        if isinstance(message_id, int) and message_id > 0:
+            LOG.info("TELEGRAM_SIGNAL_MESSAGE_ID destination=%s symbol=%s message_id=%s",
+                     destination, signal.get("symbol"), message_id)
     if isinstance(daily_message_id, int) and daily_message_id > 0:
-        LOG.info("TELEGRAM_DAILY_STATUS_MESSAGE_ID message_id=%s", daily_message_id)
+        LOG.info("TELEGRAM_DAILY_STATUS_MESSAGE_ID destination=%s message_id=%s",
+                 destination, daily_message_id)
 
 
-def notify_tier_a(payload: dict) -> dict:
+def _notify_tier_a_single_destination(payload: dict, chat_id: str, destination: str) -> dict:
     """نام قدیمی تابع حفظ شده؛ هر سیگنال با تصویر چارت و تحلیل ارسال می‌شود."""
-    _initialize_delivery_metadata(payload)
     if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
         return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
-    token, chat_id = _credentials()
+    token = (os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
     if not token or not chat_id:
-        LOG.info("Telegram skipped: TELEGRAM_TOKEN or TELEGRAM_CHAT_ID is not configured.")
+        LOG.info("Telegram skipped for %s: token or destination is not configured.", destination)
         return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
 
     candidates = [
@@ -161,9 +202,7 @@ def notify_tier_a(payload: dict) -> dict:
     ))
     state_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        sent_state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
-        if not isinstance(sent_state, dict):
-            sent_state = {}
+        sent_state = _load_destination_state(state_path, destination)
     except (OSError, json.JSONDecodeError):
         sent_state = {}
 
@@ -283,10 +322,9 @@ def notify_tier_a(payload: dict) -> dict:
             try:
                 message_ids = asyncio.run(_send(token, chat_id, [message])) or []
                 daily_message_id = message_ids[-1] if message_ids else None
-                _finalize_delivery_metadata(payload, daily_message_id=daily_message_id)
+                _finalize_delivery_metadata(payload, daily_message_id=daily_message_id, destination=destination)
                 daily_state[key] = now.isoformat()
-                state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
-                                      encoding="utf-8")
+                _save_destination_state(state_path, destination, sent_state)
                 return {"status": "SENT", "sent": 1}
             except Exception:
                 LOG.exception("Telegram no-signal status delivery failed.")
@@ -295,8 +333,7 @@ def notify_tier_a(payload: dict) -> dict:
 
     if not pending:
         # ذخیرهٔ مهاجرت حتی وقتی هیچ پیام جدیدی برای ارسال وجود ندارد.
-        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
-                              encoding="utf-8")
+        _save_destination_state(state_path, destination, sent_state)
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     try:
@@ -306,7 +343,7 @@ def notify_tier_a(payload: dict) -> dict:
         sent = 0
         chart_failures = 0
         if chart_items:
-            sent, chart_failures = asyncio.run(_send_signal_photos(token, chat_id, chart_items))
+            sent, chart_failures = asyncio.run(_send_signal_photos(token, chat_id, chart_items, "message_id_" + destination))
         if text_items:
             quality = payload.get("quality") or {}
             requested = quality.get("symbols_requested")
@@ -317,13 +354,12 @@ def notify_tier_a(payload: dict) -> dict:
             message_ids = asyncio.run(_send(token, chat_id, [message[:4096]])) or []
             if message_ids:
                 for signal, _ in text_pending:
-                    signal["message_id_current"] = message_ids[-1]
+                    signal[message_id_field] = message_ids[-1]
             sent += 1
-        _finalize_delivery_metadata(payload)
+        _finalize_delivery_metadata(payload, destination=destination)
         for identity, fingerprint, _, _ in pending:
             signal_state[identity] = {"fingerprint": fingerprint, "sent_at": now.isoformat()}
-        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
-                              encoding="utf-8")
+        _save_destination_state(state_path, destination, sent_state)
         LOG.info("Telegram delivery succeeded: %d message(s), %d chart fallback(s).", sent, chart_failures)
         if not chart_items:
             return {"status": "SENT", "sent": sent}
@@ -336,6 +372,46 @@ def notify_tier_a(payload: dict) -> dict:
         LOG.exception("Telegram chart delivery failed.")
         return {"status": "ERROR", "sent": 0}
 
+
+
+def notify_tier_a(payload: dict) -> dict:
+    """ارسال مستقل به کانال فعلی و کانال مخاطبان، با دفتر idempotency جدا برای هر مقصد."""
+    _initialize_delivery_metadata(payload)
+    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
+        return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
+    token = (os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    current_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    audience_chat = os.getenv("TELEGRAM_AUDIENCE_CHANNEL_ID", "").strip()
+    if not token or not (current_chat or audience_chat):
+        LOG.info("Telegram skipped: token or all destinations are not configured.")
+        return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
+
+    destinations = []
+    if current_chat:
+        destinations.append(("current", current_chat))
+    if audience_chat and audience_chat != current_chat:
+        destinations.append(("audience", audience_chat))
+
+    results = {
+        destination: _notify_tier_a_single_destination(payload, chat_id, destination)
+        for destination, chat_id in destinations
+    }
+    _finalize_delivery_metadata(payload)
+    if len(results) == 1:
+        return next(iter(results.values()))
+
+    sent = sum(int(result.get("sent", 0)) for result in results.values())
+    failures = any(result.get("status") in {"ERROR", "CHAT_NOT_FOUND", "SKIPPED_NOT_CONFIGURED"}
+                   for result in results.values())
+    if sent and failures:
+        status = "PARTIAL"
+    elif sent:
+        status = "SENT"
+    elif failures:
+        status = "ERROR"
+    else:
+        status = "NO_NEW_MESSAGES"
+    return {"status": status, "sent": sent, "destinations": results}
 
 
 def notify_email(payload: dict) -> dict:
@@ -388,21 +464,36 @@ def notify_email(payload: dict) -> dict:
 
 
 def send_test_message() -> dict:
-    token, chat_id = _credentials()
-    if not token or not chat_id:
-        LOG.info("Telegram test skipped: credentials are not configured.")
+    """آزمون ارسال به تمام مقصدهای پیکربندی‌شده؛ کانال مخاطبان اختیاری است."""
+    token = (os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    current_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    audience_chat = os.getenv("TELEGRAM_AUDIENCE_CHANNEL_ID", "").strip()
+    targets = []
+    if current_chat:
+        targets.append(("current", current_chat))
+    if audience_chat and audience_chat != current_chat:
+        targets.append(("audience", audience_chat))
+    if not token or not targets:
+        LOG.info("Telegram test skipped: token or destinations are not configured.")
         return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
-    try:
-        asyncio.run(_send(token, chat_id, [
-            "✅ تست اتصال Futures Signal Autopilot",
-            "ربات به سامانهٔ انتشار سیگنال متصل است.",
-            "معامله فقط دستی است.",
-        ]))
-        LOG.info("Telegram test message delivered successfully.")
-        return {"status": "TEST_SENT", "sent": 1}
-    except Exception as exc:
-        if "chat not found" in str(exc).lower():
-            LOG.error("Telegram chat not found. Open the bot in Telegram and send /start; verify TELEGRAM_CHAT_ID.")
-            return {"status": "CHAT_NOT_FOUND", "sent": 0}
-        LOG.exception("Telegram test delivery failed.")
-        return {"status": "ERROR", "sent": 0}
+
+    sent = 0
+    failures = {}
+    for destination, chat_id in targets:
+        try:
+            asyncio.run(_send(token, chat_id, [
+                "✅ تست اتصال Futures Signal Autopilot",
+                f"مقصد: {destination}",
+                "ربات به سامانهٔ انتشار سیگنال متصل است.",
+                "معامله فقط دستی است.",
+            ]))
+            sent += 1
+            LOG.info("Telegram test message delivered: destination=%s", destination)
+        except Exception as exc:
+            failures[destination] = type(exc).__name__ + ":" + str(exc)[:200]
+            LOG.exception("Telegram test delivery failed: destination=%s", destination)
+    if failures and sent:
+        return {"status": "PARTIAL", "sent": sent, "failures": failures}
+    if failures:
+        return {"status": "ERROR", "sent": 0, "failures": failures}
+    return {"status": "TEST_SENT", "sent": sent}
