@@ -119,7 +119,10 @@ class CryptoUniverseTests(unittest.TestCase):
 
     def test_debug_block_okx_forces_fallback_without_touching_okx(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        fallback_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(60)]
+        fallback_rows = [
+            {"symbol": f"BTC{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(60)
+        ]
 
         def fake_provider(provider, whitelist):
             if provider == "okx":
@@ -137,8 +140,14 @@ class CryptoUniverseTests(unittest.TestCase):
 
     def test_fallback_continues_after_bybit_block_and_selects_binance(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        okx_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(20)]
-        binance_rows = [(20_000_000, f"ETH{i}/USDT:USDT", {}) for i in range(60)]
+        okx_rows = [
+            {"symbol": f"BTC{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(20)
+        ]
+        binance_rows = [
+            {"symbol": f"ETH{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(60)
+        ]
 
         def fake_provider(provider, whitelist):
             if provider == "okx":
@@ -175,6 +184,43 @@ class CryptoUniverseTests(unittest.TestCase):
         still_open = [now - 30 * 60_000, 10, 11, 9, 10, 100]
         result = MarketDataFetcher._completed_ohlcv([recent, still_open, old], now)
         self.assertEqual([c[0] for c in result], [old[0], recent[0]])
+
+    def test_completed_ohlcv_uses_requested_4h_interval(self):
+        now = 1_800_000_000_000
+        old = [now - 8 * 3_600_000, 10, 11, 9, 10, 100]
+        recent = [now - 4 * 3_600_000, 10, 11, 9, 10, 100]
+        still_open = [now - 2 * 3_600_000, 10, 11, 9, 10, 100]
+        result = MarketDataFetcher._completed_ohlcv(
+            [recent, still_open, old], now, interval_ms=4 * 3_600_000
+        )
+        self.assertEqual([c[0] for c in result], [old[0], recent[0]])
+
+    def test_4h_history_is_paginated_and_keeps_700_latest_completed_bars(self):
+        interval = 4 * 3_600_000
+        now = 1_800_000_000_000
+        candles = []
+        for index in range(701):
+            timestamp = now - (700 - index) * interval
+            candles.append([timestamp, 100, 101, 99, 100, 1000])
+
+        class PagedExchange:
+            def __init__(self, rows):
+                self.rows = rows
+                self.calls = []
+            def fetch_ohlcv(self, symbol, timeframe, since, limit):
+                self.calls.append((timeframe, since, limit))
+                return [row for row in self.rows if row[0] >= since][:limit]
+
+        exchange = PagedExchange(candles)
+        fetched = MarketDataFetcher._fetch_ohlcv_paged(
+            exchange, "BTC/USDT:USDT", "4h", 700, interval, now
+        )
+        completed = MarketDataFetcher._completed_ohlcv(fetched, now, interval_ms=interval)
+        self.assertEqual(len(exchange.calls), 3)
+        self.assertTrue(all(call[0] == "4h" and call[2] <= 300 for call in exchange.calls))
+        self.assertEqual(len(completed), 700)
+        self.assertEqual(completed[-1][0], now - interval)
+
 
 if __name__ == "__main__":
     unittest.main()

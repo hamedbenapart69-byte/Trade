@@ -225,13 +225,47 @@ class MarketDataFetcher:
         return accepted[:self.limit]
 
     @staticmethod
-    def _completed_ohlcv(candles, now_ms: int):
-        """مرتب‌سازی کندل‌ها و حذف کندل یک‌ساعتهٔ هنوز بسته‌نشده."""
+    def _fetch_ohlcv_paged(exchange, symbol: str, timeframe: str,
+                           required_completed: int, interval_ms: int, now_ms: int):
+        """دریافت تاریخچهٔ کامل با صفحه‌بندی؛ محدودیت سقف کندل هر صرافی را دور می‌زند."""
+        page_size = 300  # سقف محافظه‌کارانه برای سازگاری با APIهای مختلف
+        target_count = required_completed + 1  # یک کندل اضافه برای حذف کندل باز جاری
+        cursor = now_ms - required_completed * interval_ms
+        collected = {}
+        max_pages = (target_count + page_size - 1) // page_size + 2
+
+        for _ in range(max_pages):
+            remaining = target_count - len(collected)
+            if remaining <= 0:
+                break
+            request_limit = min(page_size, remaining)
+            batch = exchange.fetch_ohlcv(
+                symbol, timeframe=timeframe, since=cursor, limit=request_limit
+            ) or []
+            if not batch:
+                break
+            ordered = sorted(batch, key=lambda candle: int(candle[0]))
+            previous_count = len(collected)
+            for candle in ordered:
+                if candle and candle[0] is not None:
+                    collected[int(candle[0])] = candle
+            newest = max(int(candle[0]) for candle in ordered if candle and candle[0] is not None)
+            if len(collected) == previous_count or newest < cursor:
+                break  # ارائه‌دهنده صفحهٔ تکراری داده یا cursor را رعایت نکرده است
+            cursor = newest + interval_ms
+            if len(collected) >= target_count or len(batch) < request_limit:
+                break
+
+        return [collected[key] for key in sorted(collected)][-target_count:]
+
+    @staticmethod
+    def _completed_ohlcv(candles, now_ms: int, interval_ms: int = 3_600_000):
+        """مرتب‌سازی و حذف آخرین کندل بسته‌نشده با توجه به تایم‌فریم."""
         ordered = sorted(
             (c for c in candles if c[0] is not None),
             key=lambda candle: int(candle[0]),
         )
-        return [c for c in ordered if int(c[0]) + 3_600_000 <= now_ms]
+        return [c for c in ordered if int(c[0]) + interval_ms <= now_ms]
 
     def _fetch_from_provider(self, provider: str, whitelist: set[str]):
         exchange = self._new_exchange(provider)
@@ -255,24 +289,39 @@ class MarketDataFetcher:
             row = {
                 "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
                 "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
-                "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
+                "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None, "ohlcv_4h": None,
                 "funding_rate": None, "funding_timestamp_utc": None, "funding_interval_hours": None,
                 "open_interest": None, "open_interest_timestamp_utc": None,
-                "availability": {"ohlcv": "UNAVAILABLE", "funding": "UNAVAILABLE",
-                                 "open_interest": "UNAVAILABLE"}, "errors": [],
+                "availability": {"ohlcv": "UNAVAILABLE", "ohlcv_4h": "UNAVAILABLE",
+                                 "funding": "UNAVAILABLE", "open_interest": "UNAVAILABLE"}, "errors": [],
             }
             try:
-                candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=70)
+                candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=210)
                 completed = self._completed_ohlcv(candles, now_ms)
                 row["ohlcv"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
                     "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
                     "close": float(c[4]), "volume": float(c[5]),
                 } for c in completed]
-                if len(row["ohlcv"]) >= 52:
+                if len(row["ohlcv"]) >= 200:
                     row["availability"]["ohlcv"] = "OK"
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
+            try:
+                candles_4h = self._fetch_ohlcv_paged(
+                    exchange, symbol, timeframe="4h", required_completed=700,
+                    interval_ms=14_400_000, now_ms=now_ms,
+                )
+                completed_4h = self._completed_ohlcv(candles_4h, now_ms, interval_ms=14_400_000)
+                row["ohlcv_4h"] = [{
+                    "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
+                    "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
+                    "close": float(c[4]), "volume": float(c[5]),
+                } for c in completed_4h]
+                if len(row["ohlcv_4h"]) >= 700:
+                    row["availability"]["ohlcv_4h"] = "OK"
+            except Exception as exc:
+                row["errors"].append("ohlcv_4h:" + type(exc).__name__)
             try:
                 funding = exchange.fetch_funding_rate(symbol)
                 rate = funding.get("fundingRate")
@@ -311,20 +360,27 @@ class MarketDataFetcher:
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
             errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
             providers.remove("okx")
+        qualified_counts = {}
         for provider in providers:
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
                 results[provider] = rows
-                if provider == "okx" and len(rows) >= 50:
-                    chosen = provider
-                    break
-                if provider != "okx" and len(rows) >= 50:
+                qualified = sum(
+                    1 for row in rows
+                    if isinstance(row, dict)
+                    and (row.get("availability") or {}).get("ohlcv") == "OK"
+                    and (row.get("availability") or {}).get("ohlcv_4h") == "OK"
+                )
+                qualified_counts[provider] = qualified
+                if qualified < 50:
+                    errors[provider] = f"INSUFFICIENT_1H_4H_COVERAGE:{qualified}/50"
+                if qualified >= 50:
                     chosen = provider
                     break
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
         else:
-            chosen = max(results, key=lambda key: len(results[key])) if results else None
+            chosen = max(qualified_counts, key=qualified_counts.get) if qualified_counts else None
         rows = results.get(chosen, []) if chosen else []
         if not rows:
             return {
@@ -341,5 +397,6 @@ class MarketDataFetcher:
             "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
             "universe_diagnostics": self.universe_diagnostics,
             "coingecko_whitelist_count": len(whitelist),
-            "universe_under_50": len(rows) < 50,
+            "symbols_with_1h_4h": qualified_counts.get(chosen, 0),
+            "universe_under_50": qualified_counts.get(chosen, 0) < 50,
         }
