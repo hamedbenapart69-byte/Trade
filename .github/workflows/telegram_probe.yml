@@ -1,0 +1,75 @@
+name: Telegram Runtime Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/telegram_probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  telegram-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Telegram client
+        run: python -m pip install "python-telegram-bot>=20,<23"
+      - name: Probe configured Telegram channels
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_AUDIENCE_CHANNEL_ID: ${{ secrets.TELEGRAM_AUDIENCE_CHANNEL_ID }}
+        run: |
+          python - <<'PY'
+          import os
+          import asyncio
+          from datetime import datetime, timezone
+          from telegram import Bot
+          from telegram.error import TelegramError
+
+          async def main():
+              token = os.getenv("TELEGRAM_TOKEN")
+              if not token:
+                  print("PROBE_RESULT: TELEGRAM_TOKEN=UNAVAILABLE")
+                  return
+
+              try:
+                  async with Bot(token=token) as bot:
+                      me = await bot.get_me()
+                      print(f"PROBE_BOT: @{me.username} id={me.id}")
+
+                      for label, env_name in [
+                          ("CURRENT", "TELEGRAM_CHAT_ID"),
+                          ("AUDIENCE", "TELEGRAM_AUDIENCE_CHANNEL_ID"),
+                      ]:
+                          chat_id = os.getenv(env_name)
+                          if not chat_id:
+                              print(f"PROBE_{label}: {env_name}=UNAVAILABLE")
+                              continue
+                          try:
+                              chat = await bot.get_chat(chat_id=chat_id)
+                              member = await bot.get_chat_member(chat_id=chat_id, user_id=me.id)
+                              admin = member.status in {"administrator", "creator"}
+                              print(
+                                  f"PROBE_{label}: title={chat.title!r} id={chat_id} "
+                                  f"bot_status={member.status} bot_admin={str(admin).lower()}"
+                              )
+                              stamp = datetime.now(timezone.utc).isoformat()
+                              msg = await bot.send_message(
+                                  chat_id=chat_id,
+                                  text=f"PROBE {label} {stamp}",
+                              )
+                              print(f"PROBE_{label}_SEND: OK message_id={msg.message_id}")
+                          except TelegramError as exc:
+                              print(f"PROBE_{label}_ERROR: {type(exc).__name__}: {exc}")
+              except TelegramError as exc:
+                  print(f"PROBE_TOKEN_ERROR: {type(exc).__name__}: {exc}")
+
+          asyncio.run(main())
+          PY
