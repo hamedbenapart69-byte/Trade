@@ -8,6 +8,7 @@ from app.research_education import (
     detect_value_boundary_rejections,
     filter_events_by_higher_timeframe,
     filter_events_by_higher_timeframe_regime,
+    map_events_to_signal_candles,
     ResearchEvent,
     _higher_timeframe_bias_series,
     higher_timeframe_bias,
@@ -106,6 +107,21 @@ class EducationHypothesisTests(unittest.TestCase):
             [],
         )
 
+    def test_4h_events_map_to_hourly_candle_with_identical_close_time(self):
+        hour_ms = 60 * 60_000
+        hourly = [
+            Candle(i * hour_ms, 100, 101, 99, 100, 100.0, (i + 1) * hour_ms - 1, True)
+            for i in range(8)
+        ]
+        four_hour = [
+            Candle(i * 4 * hour_ms, 100, 101, 99, 100, 400.0, (i + 1) * 4 * hour_ms - 1, True)
+            for i in range(2)
+        ]
+        event = ResearchEvent("H1_LRT_V3_4H", "LONG", 1, 99.0, 0, "4h_sweep_reclaim")
+        mapped = map_events_to_signal_candles([event], four_hour, hourly)
+        self.assertEqual(len(mapped), 1)
+        self.assertEqual(mapped[0].signal_index, 7)
+        self.assertEqual(mapped[0].side, "LONG")
     def test_h8_lrt_v2_accepts_only_neutral_higher_timeframe_regime(self):
         signal_bars = [
             Candle(i * 60 * 60_000, 100, 101, 99, 100, 100.0, (i + 1) * 60 * 60_000 - 1, True)
