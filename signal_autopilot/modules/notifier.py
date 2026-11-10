@@ -12,6 +12,7 @@ import ssl
 from io import BytesIO
 from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from telegram import Bot
@@ -72,7 +73,8 @@ async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict
 
 def _parse_time(value):
     try:
-        return datetime.fromisoformat(value)
+        parsed = datetime.fromisoformat(value)
+        return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
     except (TypeError, ValueError):
         return None
 
@@ -181,6 +183,12 @@ def notify_tier_a(payload: dict) -> dict:
         signal_state = {}
         daily_state = {}
 
+    # حفظ dedup روزانهٔ نسخهٔ قبلی برای جلوگیری از ارسال مجدد در زمان مهاجرت.
+    if legacy_state:
+        for legacy_key, legacy_value in legacy_state.items():
+            if isinstance(legacy_key, str) and legacy_key.startswith("DAILY_"):
+                daily_state.setdefault(legacy_key, legacy_value)
+
     def _stable_identity(signal: dict) -> str:
         direction = str(
             signal.get("direction") or signal.get("side")
@@ -199,13 +207,21 @@ def notify_tier_a(payload: dict) -> dict:
         raw = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+    def _canonical_price(value):
+        if value is None:
+            return None
+        try:
+            return format(Decimal(str(value)).normalize(), "f")
+        except (InvalidOperation, TypeError, ValueError):
+            return str(value)
+
     def _levels_fingerprint(signal: dict) -> str:
         levels = {
-            "entry": signal.get("entry"),
-            "stop_loss": signal.get("stop_loss"),
-            "take_profit": signal.get("take_profit") or [],
+            "entry": _canonical_price(signal.get("entry")),
+            "stop_loss": _canonical_price(signal.get("stop_loss")),
+            "take_profit": [_canonical_price(value) for value in (signal.get("take_profit") or [])],
         }
-        raw = json.dumps(levels, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
+        raw = json.dumps(levels, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     pending: list[tuple[str, str, dict, str]] = []
@@ -226,6 +242,8 @@ def notify_tier_a(payload: dict) -> dict:
             )
             legacy_match = any(
                 tuple(key.split("|")[:4]) == legacy_prefix
+                and _parse_time(legacy_state.get(key)) is not None
+                and now - _parse_time(legacy_state.get(key)) < timedelta(hours=48)
                 for key in legacy_state
                 if isinstance(key, str) and not key.startswith("DAILY_")
             )
