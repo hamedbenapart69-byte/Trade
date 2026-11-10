@@ -79,7 +79,7 @@ class EmaContinuationV2Tests(unittest.TestCase):
 
     def test_flat_market_has_no_qualified_setup(self):
         result = build_signal(self.make_row("flat"), GENERATED)
-        self.assertNotIn(result["status"], {"BUY_NOW", "SELL_NOW"})
+        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
 
     def test_insufficient_history_is_degraded(self):
         row = self.make_row("up")
