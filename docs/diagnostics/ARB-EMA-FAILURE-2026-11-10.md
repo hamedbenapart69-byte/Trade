@@ -65,16 +65,28 @@ The historical row stores the decision and a reason string but not the input OHL
 4. Plausible but unproven: the stop may have been placed inside ordinary local structure/noise because it was ATR-only.
 5. Not determinable: whether BTC/market regime, funding, open interest, order flow, or a nearby resistance level invalidated the ARB long at 04:52 UTC. The historical input snapshot is missing.
 
+## Existing OOS evidence for V1
+
+The repository's reproducible baseline report records 53,043 out-of-sample trades, 42.51% win rate, PF 0.9042, and expectancy -0.0579R/trade. 71.14% exited at stop or same-bar stop ambiguity; 26.87% reached TP2; 88 of 100 symbols had PF below 1.0. Monthly PF ranged from 0.538 to 1.301.
+
+This is strong evidence that the EMA-state-only V1 premise is failing as a population strategy, not merely that one ARB trade lost. The report is still not a complete Gate_C verdict: historical funding is incomplete, slippage is PROXY, the drawdown is a trade-sequence proxy rather than concurrency-aware portfolio MaxDD, and DSR/PBO plus required baseline comparisons are missing.
+
 ## V2 changes on an isolated feature branch
 
-- Increase requested hourly history to 210 candles and require at least 200 completed candles.
-- Require EMA20/EMA50 directional alignment, both slopes aligned, and last close on the trend side of EMA20.
-- Add RSI, ADX, relative volume, candle-trigger, short-term structure, and anti-chase gates.
-- Make FETCH_TIME_PROXY entries CONDITIONAL rather than BUY_NOW/SELL_NOW.
-- Use the more conservative of an ATR stop and recent structural stop; reject stops wider than 3% rather than silently widening risk.
-- Set targets at 1.5R and 2.5R.
-- Persist a SHA-256 input hash, gate results, metrics, and full 200-candle replay window for qualified setups.
-- Expand history CSV so future signals retain entry, stop, targets, EMA/ATR, source timestamp quality, metrics, hypothesis, falsification, and input hash.
+V2 follows the already documented Stage design: change the entry premise from "EMA20/EMA50 state and spread are enough" to "4H EMA50/EMA200 regime plus a 1H pullback toward EMA50 followed by a closed-candle rejection in the regime direction."
+
+- Fetch 210 candles and require at least 200 completed bars on both 1H and 4H.
+- 4H EMA50/EMA200 define the directional regime; the 4H close must remain on the regime side of EMA50.
+- 1H entry requires a pullback within 0.25 ATR of EMA50 and a completed rejection candle back in the 4H regime direction.
+- FETCH_TIME_PROXY entries are CONDITIONAL, never BUY_NOW/SELL_NOW.
+- Stop is beyond the rejection/nearby structure with a 0.25 ATR buffer; reject risk wider than 3%.
+- Targets are 1.5R and 2.5R.
+- Persist a SHA-256 input hash, gate results, 1H/4H metrics, and both 200-candle replay windows for qualified setups.
+- Expand history CSV so future signals retain entry, stop, targets, 1H/4H EMA values, ATR, source timestamp quality, metrics, hypothesis, falsification, and input hash.
+
+## Other paths: deliberate separation
+
+The scheduled 15m LRT path is a separate engine and must not inherit EMA entry logic. Its current design already uses 4H Kumo and 1H Kijun bias, LFS components, sweep/OB/FVG, CVD with PROXY labeling when needed, and returns WATCHLIST/NO_QUALIFIED_SETUP with NOT_CALIBRATED status rather than immediate BUY_NOW/SELL_NOW. It is not changed by this 1H EMA V2 branch. Other V5/Plan A/B/C/H paths must keep their own gates and reports; only cross-cutting data-integrity and audit requirements should be shared.
 
 ## SLRP
 
@@ -83,15 +95,15 @@ Stage: EMA Trend Continuation reliability V2
 Acceptance criteria:
 - 100% of actionable BUY_NOW/SELL_NOW signals pass every V2 quality gate.
 - Any FETCH_TIME_PROXY price is never emitted as BUY_NOW/SELL_NOW.
-- Fewer than 200 completed hourly candles => MARKET_DATA_DEGRADED.
-- Every qualified setup has an input hash and a replayable 200-candle evidence window.
-- History records entry, stop, targets, EMA20/50, ATR14, timestamp source, gate metrics, and signal ID.
+- Fewer than 200 completed candles on either 1H or 4H => MARKET_DATA_DEGRADED.
+- Every qualified setup has an input hash and replayable 200-candle evidence windows for 1H and 4H.
+- History records entry, stop, targets, EMA20/50, 4H EMA50/200, ATR14, timestamp source, gate metrics, and signal ID.
 - No thresholds are relaxed to increase signal count.
 - V2 is not declared profitable or calibrated until genuine walk-forward/OOS evidence meets the project gates.
 
-v1 → FAIL (specific evidence): The ARB signal was stopped; its published record shows only a 1.2272% EMA spread and a PROXY_FETCH_TIME entry, while the legacy implementation had no momentum, structure, slope, or anti-chase gates. Historical candle inputs are absent, so the exact trade path is unreconstructable.
+v1 → FAIL (specific evidence): OOS baseline is 53,043 trades, 42.51% win, PF 0.9042, expectancy -0.0579R; 71.14% stop/same-bar stop exits. The ARB example also had only a 1.2272% EMA spread and PROXY_FETCH_TIME entry. The historical ARB candle snapshot is absent, so its exact path is unreconstructable.
 
-v2 → PENDING: Code and deterministic tests are being added on an isolated branch. PASS requires GitHub Actions test evidence and later market-data/paper validation; synthetic unit tests alone are not trading-performance evidence.
+v2 → PENDING: The branch implements the documented 4H EMA50/200 regime + 1H EMA50 pullback/rejection premise, data freshness checks, conditional handling for proxy timestamps, structural risk, and replay evidence. PASS requires green GitHub Actions tests plus a new OOS walk-forward comparison against V1 and baselines. Synthetic unit tests alone are not trading-performance evidence.
 
 v3: Not built. R11: no v2 failure has yet been observed.
 
@@ -103,8 +115,8 @@ Budget: Maximum three versions; current V2 is the only proposed successor.
 
 ## Self-critique
 
-1. Future data used? No in the V2 implementation; only completed candles are fetched. Must remain tested.
-2. Params tuned on test data? No OOS optimization was performed. V2 thresholds are conservative engineering gates, not statistically optimized.
+1. Future data used? No in the V2 implementation; only completed 1H and 4H candles are fetched. Must remain tested.
+2. Params tuned on test data? No OOS optimization was performed. V2's pullback/stop/target values remain fixed design assumptions pending validation.
 3. Costs included? Not yet in this isolated EMA engine's setup qualification; fee/slippage/funding must be included in paper/OOS evaluation before performance claims.
 4. No-signal reporting? Yes, C10 states remain supported; conditional and degraded states are explicit.
 5. Weakest assumption? The chosen RSI/ADX/volume/structure cutoffs may reduce false positives but have not been proven to improve OOS expectancy. Only walk-forward evidence can answer that.
