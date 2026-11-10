@@ -139,11 +139,15 @@ All hypotheses are initially **UNVALIDATED**. Each is to be tested independently
 
 - **Source-derived concept:** Fabio's Direction–Location–Aggression and Carmine's Context–Location–Confirmation are structurally similar but not identical.
 - **Hypothesis:** A three-stage gate (direction/regime, pre-defined location, then confirmation) reduces low-quality entries versus the confirmation trigger alone, without destroying sample size or net expectancy.
-- **Operational definition:** Implement as a sequence of independently logged gates. Direction and location are frozen before confirmation; confirmation must be a distinct measurable event. Run ablations for each gate.
-- **Required data:** Depends on confirmation type; OHLCV-only confirmation must be labelled price confirmation, not order flow.
+- **Implemented price-only variants:**
+  - `H8_LRT_DLC`: H1 sweep/reclaim supplies the location and price confirmation; a completed 4h EMA20/EMA50 directional gate must agree with the event side.
+  - `H8_NMT_DLC`: H5 consecutive-close breakout acceptance supplies the location and price confirmation; the same completed 4h directional gate must agree.
+- **Causal guard:** HTF direction is precomputed once from completed 4h candles; an event can only see HTF candles whose close time is at or before the signal candle close. Unit tests compare the vectorized bias series with the scalar calculation and reject future HTF candles.
+- **Ablation scope:** The direction gate is compared with unfiltered H1/H5 triggers. Location and confirmation remain embedded in those trigger definitions; separate location-only and confirmation-only ablations have not been completed.
+- **Required data:** These are price-only variants. They do not include real aggressor flow, delta, footprint or absorption.
 - **Falsification:** The full gate does not improve OOS net expectancy/MaxDD over each component and simple baselines, or the gate reduces the sample below a meaningful count.
-- **Path:** Research framework only; test separately for LRT and NMT. Do not use as an unvalidated composite score.
-- **Status:** Candidate.
+- **Path:** Keep LRT and NMT separate. Do not blend their events or treat the proxy as real order flow.
+- **Status:** Two isolated research variants implemented and pre-screened; no edge accepted.
 
 ## 5. Additional source-derived research tracks (not yet formal strategies)
 
@@ -196,9 +200,9 @@ The official free-content page points to trade reviews, strategy videos, article
 - Public curriculum/page descriptions reviewed: Andrea, Carmine, Fabio, FT71, Al Brooks, Trader Mayne, Follis, SMB.
 - Initial eight hypotheses converted into falsifiable specifications: H1–H8.
 - Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. The available review is based on public instructor/course descriptions and curriculum pages. No paid transcript credits used.
-- OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H2 time-boundary rejection proxy, H5 price-only acceptance proxy, H6 breakout/retest, H7 higher-timeframe gate. These are isolated from the production V5 path and emit research events, not executable signals.
-- Unit tests added in `tests/test_research_education.py`. Latest verified GitHub Actions run **42877304242** passed: 139 root tests, 68 signal-autopilot tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded H1/H2/H5/H6/H7 event-study job.
-- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 event counts across the full archive were 84,165 / 30,183 / 53,271 / 49,973 / 24,635. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
+- OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H2 time-boundary rejection proxy, H5 price-only acceptance proxy, H6 breakout/retest, H7 higher-timeframe gate, and separate H8_LRT_DLC / H8_NMT_DLC variants. These are isolated from the production V5 path and emit research events, not executable signals.
+- Unit tests added in `tests/test_research_education.py`. Latest verified GitHub Actions run **42878539304** passed: 142 root tests, 68 signal-autopilot tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded H1/H2/H5/H6/H7/H8 event-study job.
+- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC event counts across the full archive were 84,165 / 30,183 / 53,271 / 49,973 / 24,635 / 16,417 / 27,026. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
 - **Timeframe qualification:** the original H1 research specification called for 15m signals with 1h context. The available Stage-1 archive contains 1h OHLCV only, so the run tests a 1h adaptation, not the original 15m implementation. H7's 4h context is resampled from completed 1h candles; no native 4h series was used.
 - **Mean forward return after round-trip fees only** (0.04% per side; slippage and funding unavailable for the full 2y window and excluded):
   - H1: 1h **-0.0879%**, 4h **-0.0913%**, 8h **-0.0847%**.
@@ -206,12 +210,14 @@ The official free-content page points to trade reviews, strategy videos, article
   - H5_PRICE_PROXY: 1h **-0.0867%**, 4h **-0.0411%**, 8h **-0.1261%**.
   - H6: 1h **-0.0557%**, 4h **-0.0470%**, 8h **-0.0766%**.
   - H7: 1h **-0.0519%**, 4h **-0.0411%**, 8h **-0.1154%**.
-- **Interpretation:** all fifteen aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 therefore do not show a positive mean-forward-return edge in this pre-screen. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
+  - H8_LRT_DLC: 1h **-0.1042%**, 4h **-0.1182%**, 8h **-0.1527%**.
+  - H8_NMT_DLC: 1h **-0.1113%**, 4h **-0.0197%**, 8h **-0.2065%**.
+- **Interpretation:** all twenty-one aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC therefore do not show a positive mean-forward-return edge in this pre-screen. H8_LRT_DLC is worse than unfiltered H1 at all three horizons. H8_NMT_DLC improves the 4h mean by 2.14 basis points versus H5_PRICE_PROXY, but remains negative after fees and is worse at 1h and 8h. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
 - Integration with the production scanner: **NOT DONE**. The research module remains isolated.
 - Formal strategy backtest / Gate evaluation: **NOT DONE**. The completed event study is a pre-screen only.
-- Edge acceptance: **NONE**. Do not promote H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7 into live signal generation.
+- Edge acceptance: **NONE**. Do not promote H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC into live signal generation.
 - Production integration/deployment: **NOT DONE**.
 
-Data inventory and blocked requirements are documented in `docs/research/DATA-READINESS-AUDIT-2026-11-10.md`. The expanded event-study artifact is attached to [GitHub Actions run 42877304242](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42877304242) and retained for 14 days.
+Data inventory and blocked requirements are documented in `docs/research/DATA-READINESS-AUDIT-2026-11-10.md`. The expanded event-study artifact is attached to [GitHub Actions run 42878539304](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42877304242) and retained for 14 days.
 
 This is a research handoff, not a strategy PASS.
