@@ -176,11 +176,9 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
     return collected, statuses
 
 
-def _tail_partition_path(storage_dir: Path, symbol: str, end_ms: int) -> Path:
-    last_open = end_ms - INTERVAL_MS
-    bucket = datetime.fromtimestamp(last_open / 1000, timezone.utc)
-    return (storage_dir / "live_tail" / bucket.strftime("%Y-%m-%d")
-            / bucket.strftime("%H00") / f"{symbol}_15m.parquet")
+def _tail_partition_path(storage_dir: Path, symbol: str, open_time_ms: int) -> Path:
+    day = datetime.fromtimestamp(open_time_ms / 1000, timezone.utc).strftime("%Y-%m-%d")
+    return storage_dir / "live_tail" / day / f"{symbol}_15m.parquet"
 
 
 def _merge_rows(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -194,12 +192,13 @@ def _merge_rows(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _compute_window(storage_dir: Path, compute_dir: Path, symbol: str,
-                    window_start_ms: int, window_end_ms: int) -> dict[str, Any]:
+                    window_start_ms: int, window_end_ms: int,
+                    ephemeral_rows: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     base_path = storage_dir / "base" / f"{symbol}_15m.parquet"
     base_rows = _read_rows(base_path) if base_path.exists() else []
     tail_paths = sorted((storage_dir / "live_tail").glob(f"**/{symbol}_15m.parquet"))
     tail_groups = [_read_rows(path) for path in tail_paths]
-    all_rows = _merge_rows(base_rows, *tail_groups)
+    all_rows = _merge_rows(base_rows, *tail_groups, ephemeral_rows or [])
     rows = [row for row in all_rows
             if window_start_ms <= int(row["open_time"]) < window_end_ms]
     timestamps = [int(row["open_time"]) for row in rows]
@@ -253,6 +252,12 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     window_start_ms = closed_end_ms - WINDOW_MS
     tail_status: dict[str, dict[str, str]] = {}
     new_rows_by_symbol: dict[str, int] = {}
+    ephemeral_by_symbol: dict[str, list[dict[str, Any]]] = {}
+
+    current_day_start = datetime.fromtimestamp(now_ms / 1000, timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    current_day_start_ms = int(current_day_start.timestamp() * 1000)
 
     def collect_one(symbol: str):
         base_path = storage_dir / "base" / f"{symbol}_15m.parquet"
@@ -265,27 +270,39 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
         latest = int(existing[-1]["open_time"]) if existing else None
         start_ms = (latest + INTERVAL_MS) if latest is not None else window_start_ms
         bars, statuses = _fetch_symbol_tail(symbol, start_ms, closed_end_ms, now_ms, downloader)
-        if bars:
-            partition = _tail_partition_path(storage_dir, symbol, closed_end_ms)
+        # فقط روزهای کامل‌شده در Git ذخیره می‌شوند؛ tail روز جاری موقت است.
+        persist_by_day: dict[str, list[dict[str, Any]]] = {}
+        for ts, row in bars.items():
+            if ts >= current_day_start_ms:
+                continue
+            day = datetime.fromtimestamp(ts / 1000, timezone.utc).strftime("%Y-%m-%d")
+            persist_by_day.setdefault(day, []).append({"open_time": ts, **row})
+        for day_rows in persist_by_day.values():
+            partition = _tail_partition_path(storage_dir, symbol, int(day_rows[0]["open_time"]))
             prior = _read_rows(partition) if partition.exists() else []
-            _write_rows(partition, _merge_rows(prior, [
-                {"open_time": ts, **row} for ts, row in bars.items()
-            ]))
-        return symbol, bars, statuses
+            _write_rows(partition, _merge_rows(prior, day_rows))
+        ephemeral = {
+            ts: row for ts, row in bars.items() if ts >= current_day_start_ms
+        }
+        return symbol, bars, statuses, ephemeral
 
     with ThreadPoolExecutor(max_workers=5) as pool:
         futures = [pool.submit(collect_one, symbol) for symbol in symbols]
         for future in as_completed(futures):
-            symbol, bars, statuses = future.result()
+            symbol, bars, statuses, ephemeral = future.result()
             tail_status[symbol] = statuses
             new_rows_by_symbol[symbol] = len(bars)
+            ephemeral_by_symbol[symbol] = [
+                {"open_time": ts, **row} for ts, row in ephemeral.items()
+            ]
 
     if compute_dir.exists():
         shutil.rmtree(compute_dir)
     compute_dir.mkdir(parents=True, exist_ok=True)
     compute_results = {
         symbol: _compute_window(storage_dir, compute_dir, symbol,
-                                window_start_ms, closed_end_ms)
+                                window_start_ms, closed_end_ms,
+                                ephemeral_by_symbol.get(symbol, []))
         for symbol in symbols
     }
 
@@ -312,6 +329,18 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     symbols_complete = sum(1 for x in compute_results.values() if x["continuity"])
     symbols_fresh = sum(1 for x in freshness.values() if x["fresh"])
     gate_status = "PASS" if symbols_complete == 27 and symbols_fresh == 27 else "DEGRADED"
+
+    # حذف tailهای قدیمی‌تر از پنجرهٔ ۷۳۰روزه از درخت فعلی مخزن.
+    tail_root = storage_dir / "live_tail"
+    if tail_root.exists():
+        cutoff_day = datetime.fromtimestamp(window_start_ms / 1000, timezone.utc).date()
+        for path in tail_root.glob("*/*.parquet"):
+            try:
+                partition_day = date.fromisoformat(path.parent.name)
+            except ValueError:
+                continue
+            if partition_day < cutoff_day:
+                path.unlink(missing_ok=True)
 
     # اجرای موتور فقط روی دادهٔ ادغام‌شده؛ نماد stale به MARKET_DATA_DEGRADED تبدیل می‌شود.
     engine_report = engine.run(compute_dir, output_path, universe_path)
@@ -353,7 +382,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     }
     engine_report["data_freshness"] = freshness
     engine_report["ev_status"] = "NOT_CALIBRATED"
-    engine_report["storage_layout"] = "BASELINE_PLUS_IMMUTABLE_4H_TAIL_PARTITIONS"
+    engine_report["storage_layout"] = "BASELINE_PLUS_COMPLETED_DAILY_TAIL_PARTITIONS"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(engine_report, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
