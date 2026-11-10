@@ -210,11 +210,14 @@ def notify_tier_a(payload: dict) -> dict:
     if not candidates:
         generated = payload.get("generated_at_utc") or now.isoformat()
         day = str(generated)[:10]
-        if payload.get("pipeline_status") == "DEGRADED":
+        if payload.get("conditional_signals"):
+            message = payload.get("today_signal_message") or "تنظیم مشروط وجود دارد؛ ورود فوری مجاز نیست"
+            key = f"DAILY_CONDITIONAL|{day}"
+        elif payload.get("pipeline_status") == "DEGRADED":
             message = "دادهٔ کافی برای ارزیابی بازار در دسترس نیست؛ سیگنالی صادر نشد."
             key = f"DAILY_DEGRADED|{day}"
         else:
-            message = "امروز سیگنال نیست"
+            message = payload.get("today_signal_message") or "امروز سیگنال نیست"
             key = f"DAILY_NO_SIGNAL|{day}"
         if key not in sent_state:
             try:
