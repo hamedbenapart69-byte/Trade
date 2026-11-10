@@ -196,7 +196,7 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
         today_message = "امروز سیگنال نیست"
 
     return {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "generated_at_utc": generated,
         "provider": data.get("provider", "unknown"),
         "provider_sources": data.get("provider_sources") or ([data.get("provider")] if data.get("provider") else []),
