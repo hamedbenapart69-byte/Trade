@@ -155,7 +155,7 @@ def _input_hash(row: dict[str, Any]) -> str:
         "ticker_timestamp_source": row.get("ticker_timestamp_source"),
         "ohlcv": row.get("ohlcv") or [],
     }
-    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
