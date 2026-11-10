@@ -50,7 +50,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "ema20": None,
         "ema50": None,
         "atr14": None,
-        "confidence": "NOT_CALIBRATED",
+        "confidence": "NOT_CALIBRATED",\n        "lfs1_proxy": lfs1_proxy,\n        "lfs_v2": lfs_v2,
         "generated_at_utc": generated_at_utc,
         "data_availability": availability,
         "ticker_timestamp_utc": row.get("ticker_timestamp_utc"),
