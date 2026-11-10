@@ -72,7 +72,8 @@ All hypotheses are initially **UNVALIDATED**. Each is to be tested independently
 - **Required data:** OHLCV is sufficient for the price event. Stop-order execution is not observable.
 - **Falsification:** No positive net expectancy after fees, slippage and funding; or no improvement versus matched non-sweep controls.
 - **Path:** Plan A / LRT. Keep distinct from breakout continuation.
-- **Status:** Candidate; no edge claim.
+- **SLRP disposition:** V1 (1h all regimes), V2 (H1 only in neutral 4h regime), and V3 (4h signal timeframe) all failed the fee-only pre-screen. Full evidence: `docs/research/SLRP-EDUCATION-RESEARCH-2026-11-10.md`.
+- **Status:** No active H1/LRT version; no edge accepted.
 
 ### H2 — Value-area acceptance/rejection (LRT or NMT by regime, tested separately)
 
@@ -201,8 +202,8 @@ The official free-content page points to trade reviews, strategy videos, article
 - Initial eight hypotheses converted into falsifiable specifications: H1–H8.
 - Full lesson-by-lesson transcript extraction: **NOT COMPLETE**. The available review is based on public instructor/course descriptions and curriculum pages. No paid transcript credits used.
 - OHLCV research prototypes implemented in `app/research_education.py`: H1 sweep/reclaim, H2 time-boundary rejection proxy, H5 price-only acceptance proxy, H6 breakout/retest, H7 higher-timeframe gate, and separate H8_LRT_DLC / H8_NMT_DLC variants. These are isolated from the production V5 path and emit research events, not executable signals.
-- Unit tests added in `tests/test_research_education.py`. Latest verified GitHub Actions run **42878539304** passed: 142 root tests, 68 signal-autopilot tests, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded H1/H2/H5/H6/H7/H8 event-study job.
-- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC event counts across the full archive were 84,165 / 30,183 / 53,271 / 49,973 / 24,635 / 16,417 / 27,026. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
+- Unit tests added in `tests/test_research_education.py`. Latest verified GitHub Actions run **42879753589** passed: 145 root tests, 68 signal-autopilot tests, the event-study execution-timing test, dashboard JavaScript validation, Compose validation, Docker build, container health smoke test, and the expanded event-study job.
+- **Historical pre-screen completed:** 100 symbols, 1,753,200 one-hour OHLCV rows from the public OKX archive (2024-11-08 through 2026-11-08), with 17 rolling 6m-train/2m-test/1m-step windows. Full-archive event counts: H1 84,165; H1_LRT_V3_4H 30,846; H2_TIME_REJECTION_PROXY 30,183; H5_PRICE_PROXY 53,271; H6 49,973; H7 24,635; H8_LRT_DLC 16,417; H8_LRT_RANGE_V2 26,975; H8_NMT_DLC 27,026. Aggregate metrics below include only events whose signal and forward outcome fit inside at least one OOS test window.
 - **Timeframe qualification:** the original H1 research specification called for 15m signals with 1h context. The available Stage-1 archive contains 1h OHLCV only, so the run tests a 1h adaptation, not the original 15m implementation. H7's 4h context is resampled from completed 1h candles; no native 4h series was used.
 - **Mean forward return after round-trip fees only** (0.04% per side; slippage and funding unavailable for the full 2y window and excluded):
   - H1: 1h **-0.0879%**, 4h **-0.0913%**, 8h **-0.0847%**.
@@ -212,12 +213,13 @@ The official free-content page points to trade reviews, strategy videos, article
   - H7: 1h **-0.0519%**, 4h **-0.0411%**, 8h **-0.1154%**.
   - H8_LRT_DLC: 1h **-0.1042%**, 4h **-0.1182%**, 8h **-0.1527%**.
   - H8_NMT_DLC: 1h **-0.1113%**, 4h **-0.0197%**, 8h **-0.2065%**.
-- **Interpretation:** all twenty-one aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC therefore do not show a positive mean-forward-return edge in this pre-screen. H8_LRT_DLC is worse than unfiltered H1 at all three horizons. H8_NMT_DLC improves the 4h mean by 2.14 basis points versus H5_PRICE_PROXY, but remains negative after fees and is worse at 1h and 8h. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
+  - H1_LRT_V3_4H: 4h **-0.0751%**, 8h **-0.1474%**, 12h **-0.1298%**.
+- **Interpretation:** all twenty-four aggregate mean returns are negative after fees alone. Slippage and funding are still missing, so the fully-costed result cannot improve on these figures under non-negative costs. H1/H1_LRT_V3_4H/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_LRT_RANGE_V2/H8_NMT_DLC therefore do not show a positive mean-forward-return edge in this pre-screen. H8_LRT_DLC is worse than unfiltered H1 at all three horizons. H8_NMT_DLC improves the 4h mean by 2.14 basis points versus H5_PRICE_PROXY, but remains negative after fees and is worse at 1h and 8h. This is not a formal Gate_A/B/C verdict because there is no stop/target execution model, matched-control design, EMA/RSI/Buy&Hold baseline comparison, portfolio equity curve, PF/MaxDD/Sharpe, DSR or PBO. The test windows overlap and there is no separate untouched final holdout.
 - Integration with the production scanner: **NOT DONE**. The research module remains isolated.
 - Formal strategy backtest / Gate evaluation: **NOT DONE**. The completed event study is a pre-screen only.
-- Edge acceptance: **NONE**. Do not promote H1/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_NMT_DLC into live signal generation.
+- Edge acceptance: **NONE**. Do not promote H1/H1_LRT_V3_4H/H2_TIME_REJECTION_PROXY/H5_PRICE_PROXY/H6/H7/H8_LRT_DLC/H8_LRT_RANGE_V2/H8_NMT_DLC into live signal generation.
 - Production integration/deployment: **NOT DONE**.
 
-Data inventory and blocked requirements are documented in `docs/research/DATA-READINESS-AUDIT-2026-11-10.md`. The expanded event-study artifact is attached to [GitHub Actions run 42878539304](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42877304242) and retained for 14 days.
+Data inventory and blocked requirements are documented in `docs/research/DATA-READINESS-AUDIT-2026-11-10.md`. The H1/LRT V1/V2/V3 SLRP and Honest Stop are recorded in `docs/research/SLRP-EDUCATION-RESEARCH-2026-11-10.md`. The expanded event-study artifact is attached to [GitHub Actions run 42878539304](https://github.com/hamedbenapart69-byte/Trade/actions/runs/42877304242) and retained for 14 days.
 
 This is a research handoff, not a strategy PASS.
