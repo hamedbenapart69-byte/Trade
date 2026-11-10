@@ -94,7 +94,7 @@ jobs:
           git fetch --no-tags origin market-data
           mkdir -p /tmp/market-data
           git archive FETCH_HEAD parquet/okx_swap/ohlcv_1h STAGE1_COMPLETE.json | tar -x -C /tmp/market-data
-      - name: Run H1/H2/H5/H6/H7 walk-forward event study
+      - name: Run H1/H2/H5/H6/H7/H8 walk-forward event study
         run: |
           python scripts/education_event_study.py \
             --data-root /tmp/market-data/parquet/okx_swap/ohlcv_1h \
