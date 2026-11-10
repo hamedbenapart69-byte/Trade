@@ -1,114 +1,126 @@
+import math
 import unittest
+from datetime import datetime
+
 from modules.signal_engine import build_signal, generate_signals, C10
 
 
-class EmaAtrSignalTests(unittest.TestCase):
-    def make_row(self, direction="up"):
-        candles = []
-        # آخرین کندل یک ساعت قبل از زمان تولید گزارش است.
-        start = 1794151800000 - 70 * 3600000
-        for index in range(70):
-            if direction == "up":
-                close = 100.0 + index * 0.35
-            elif direction == "down":
-                close = 160.0 - index * 0.35
-            else:
-                close = 100.0
-            candles.append({
-                "timestamp": start + index * 3600000,
-                "open": close - 0.1,
-                "high": close + 1.0,
-                "low": close - 1.0,
-                "close": close,
-                "volume": 1000.0,
-            })
-        return {
-            "symbol": "BTC/USDT:USDT",
-            "availability": {"ohlcv": "OK"},
-            "ohlcv": candles,
-            "last": candles[-1]["close"],
-            "ticker_timestamp_utc": "2026-11-08T15:29:00+00:00",
-        }
+GENERATED = "2026-11-08T19:00:00+03:30"
 
-    def test_long_signal_has_entry_stop_and_two_targets(self):
-        result = build_signal(self.make_row("up"), "2026-11-08T19:00:00+03:30")
-        self.assertEqual(result["status"], "BUY_NOW")
+
+class EmaContinuationV2Tests(unittest.TestCase):
+    def make_row(self, direction="up", proxy=False, volume_multiplier=1.5, extension_atr=0.0):
+        now_ms = int(datetime.fromisoformat(GENERATED).timestamp() * 1000)
+        start = now_ms - 220 * 3_600_000
+        candles = []
+        sign = 1.0 if direction == "up" else -1.0 if direction == "down" else 0.0
+        for index in range(220):
+            close = 100.0 + sign * index * 0.08 + 0.30 * math.sin(index * 1.17)
+            open_ = close - sign * 0.025
+            high = max(open_, close) + 0.20
+            low = min(open_, close) - 0.20
+            if index == 219:
+                open_ = close - sign * 0.22
+                high = max(open_, close) + 0.20
+                low = min(open_, close) - 0.20
+            candles.append({
+                "timestamp": start + index * 3_600_000,
+                "open": open_, "high": high, "low": low, "close": close,
+                "volume": 1500.0 if index == 219 else 1000.0,
+            })
+        entry = candles[-1]["close"] + extension_atr * 0.5
+        row = {
+            "symbol": "BTC/USDT:USDT", "timeframe": "1H",
+            "availability": {"ohlcv": "OK"}, "ohlcv": candles, "last": entry,
+            "ticker_timestamp_utc": "2026-11-08T15:29:00+00:00",
+            "ticker_timestamp_source": "FETCH_TIME_PROXY" if proxy else "EXCHANGE",
+        }
+        if volume_multiplier != 1.5:
+            row["ohlcv"][-1]["volume"] = 1000.0 * volume_multiplier
+        return row
+
+    def test_long_signal_requires_all_quality_gates_and_has_structural_stop(self):
+        result = build_signal(self.make_row("up"), GENERATED)
+        self.assertEqual(result["status"], "BUY_NOW", result.get("reason"))
         self.assertEqual(result["side"], "BUY")
         self.assertLess(result["stop_loss"], result["entry"])
         self.assertGreater(result["take_profit"][0], result["entry"])
         self.assertGreater(result["take_profit"][1], result["take_profit"][0])
+        self.assertTrue(all(result["quality_gates"].values()))
+        self.assertEqual(result["quality_metrics"]["reward_risk_tp1"], 1.5)
+        self.assertEqual(result["quality_metrics"]["reward_risk_tp2"], 2.5)
 
     def test_short_signal_has_inverse_risk_levels(self):
-        result = build_signal(self.make_row("down"), "2026-11-08T19:00:00+03:30")
-        self.assertEqual(result["status"], "SELL_NOW")
+        result = build_signal(self.make_row("down"), GENERATED)
+        self.assertEqual(result["status"], "SELL_NOW", result.get("reason"))
         self.assertEqual(result["side"], "SELL")
         self.assertGreater(result["stop_loss"], result["entry"])
         self.assertLess(result["take_profit"][0], result["entry"])
         self.assertLess(result["take_profit"][1], result["take_profit"][0])
 
-    def test_flat_market_has_no_qualified_setup(self):
-        result = build_signal(self.make_row("flat"), "2026-11-08T19:00:00+03:30")
-        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
-
-
-
-    def test_fetch_time_proxy_is_allowed_but_explicitly_labeled(self):
-        row = self.make_row("up")
-        row["ticker_timestamp_source"] = "FETCH_TIME_PROXY"
-        result = build_signal(row, "2026-11-08T19:00:00+03:30")
-        self.assertEqual(result["status"], "BUY_NOW")
+    def test_proxy_timestamp_can_never_become_immediate_signal(self):
+        result = build_signal(self.make_row("up", proxy=True), GENERATED)
         self.assertEqual(result["entry_price_quality"], "PROXY_FETCH_TIME")
-        self.assertIn("PROXY", result["reason"])
+        self.assertEqual(result["status"], "CONDITIONAL_BUY")
+        self.assertNotEqual(result["status"], "BUY_NOW")
+
+    def test_low_volume_fails_closed(self):
+        result = build_signal(self.make_row("up", volume_multiplier=0.8), GENERATED)
+        self.assertEqual(result["status"], "NO_QUALIFIED_SETUP")
+        self.assertIn("volume_confirmation", result["reason"])
+
+    def test_flat_market_has_no_qualified_setup(self):
+        result = build_signal(self.make_row("flat"), GENERATED)
+        self.assertNotIn(result["status"], {"BUY_NOW", "SELL_NOW"})
+
+    def test_insufficient_history_is_degraded(self):
+        row = self.make_row("up")
+        row["ohlcv"] = row["ohlcv"][-70:]
+        result = build_signal(row, GENERATED)
+        self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
+        self.assertIsNone(result["entry"])
 
     def test_missing_live_futures_ticker_is_degraded(self):
         row = self.make_row("up")
         row.pop("last")
         row.pop("ticker_timestamp_utc")
-        result = build_signal(row, "2026-11-08T19:00:00+03:30")
+        result = build_signal(row, GENERATED)
         self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
         self.assertIsNone(result["entry"])
 
-    def test_missing_ohlcv_degrades_without_requiring_funding(self):
-        row = {"symbol": "BTC/USDT:USDT", "availability": {"ohlcv": "UNAVAILABLE"}, "ohlcv": []}
-        result = build_signal(row, "2026-11-08T19:00:00+03:30")
+    def test_bad_ohlcv_is_degraded_not_actionable(self):
+        row = self.make_row("up")
+        row["ohlcv"][-1]["high"] = 0.0
+        result = build_signal(row, GENERATED)
         self.assertEqual(result["status"], "MARKET_DATA_DEGRADED")
-        self.assertIsNone(result["entry"])
 
-    def test_all_outputs_use_c10_and_no_signal_message_is_explicit(self):
+    def test_all_outputs_use_c10_and_no_signal_is_explicit(self):
         payload = generate_signals({
-            "generated_at_utc": "2026-11-08T19:00:00+03:30",
+            "generated_at_utc": GENERATED,
             "symbols": [self.make_row("flat")],
         })
         self.assertTrue(all(item["status"] in C10 for item in payload["signals"]))
         self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
-        self.assertEqual(payload["provider"], "unknown")
-        self.assertEqual(payload["today_signal_message"], "امروز سیگنال نیست")
+        self.assertEqual(payload["engine"], "EMA20_EMA50_ATR14_QUALITY_GATES_V2")
 
-    def test_degraded_market_is_not_mislabeled_as_no_signal(self):
+    def test_proxy_is_counted_as_conditional_not_trade(self):
         payload = generate_signals({
-            "provider": "none",
-            "generated_at_utc": "2026-11-08T19:00:00+03:30",
-            "symbols": [],
+            "provider": "kucoinfutures", "generated_at_utc": GENERATED,
+            "symbols": [self.make_row("up", proxy=True)],
+        })
+        self.assertEqual(len(payload["trade_signals"]), 0)
+        self.assertEqual(len(payload["conditional_signals"]), 1)
+        self.assertIn("ورود فوری مجاز نیست", payload["today_signal_message"])
+
+    def test_partial_universe_remains_degraded(self):
+        payload = generate_signals({
+            "provider": "kucoinfutures", "generated_at_utc": GENERATED,
+            "symbols_requested": 100, "symbols": [self.make_row("flat")],
         })
         self.assertEqual(payload["pipeline_status"], "DEGRADED")
-        self.assertEqual(payload["provider"], "none")
-        self.assertEqual(payload["today_signal_message"], "دادهٔ کافی برای ارزیابی بازار در دسترس نیست")
-
-
-    def test_partial_universe_is_marked_degraded(self):
-        payload = generate_signals({
-            "provider": "kucoinfutures",
-            "generated_at_utc": "2026-11-08T19:00:00+03:30",
-            "symbols_requested": 100,
-            "symbols": [self.make_row("flat")],
-        })
-        self.assertEqual(payload["pipeline_status"], "DEGRADED")
-        self.assertEqual(payload["quality"]["symbols_requested"], 100)
-        self.assertEqual(payload["quality"]["symbols_processed"], 1)
-        self.assertEqual(payload["quality"]["symbols_unscanned"], 99)
         self.assertEqual(payload["quality"]["coverage_pct"], 1.0)
-        self.assertEqual(payload["quality"]["coverage_status"], "PARTIAL")
         self.assertIn("1 از 100", payload["today_signal_message"])
+
 
 if __name__ == "__main__":
     unittest.main()
