@@ -323,20 +323,27 @@ class MarketDataFetcher:
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
             errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
             providers.remove("okx")
+        qualified_counts = {}
         for provider in providers:
             try:
                 rows = self._fetch_from_provider(provider, whitelist)
                 results[provider] = rows
-                if provider == "okx" and len(rows) >= 50:
-                    chosen = provider
-                    break
-                if provider != "okx" and len(rows) >= 50:
+                qualified = sum(
+                    1 for row in rows
+                    if isinstance(row, dict)
+                    and (row.get("availability") or {}).get("ohlcv") == "OK"
+                    and (row.get("availability") or {}).get("ohlcv_4h") == "OK"
+                )
+                qualified_counts[provider] = qualified
+                if qualified < 50:
+                    errors[provider] = f"INSUFFICIENT_1H_4H_COVERAGE:{qualified}/50"
+                if qualified >= 50:
                     chosen = provider
                     break
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
         else:
-            chosen = max(results, key=lambda key: len(results[key])) if results else None
+            chosen = max(qualified_counts, key=qualified_counts.get) if qualified_counts else None
         rows = results.get(chosen, []) if chosen else []
         if not rows:
             return {
@@ -353,5 +360,6 @@ class MarketDataFetcher:
             "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
             "universe_diagnostics": self.universe_diagnostics,
             "coingecko_whitelist_count": len(whitelist),
-            "universe_under_50": len(rows) < 50,
+            "symbols_with_1h_4h": qualified_counts.get(chosen, 0),
+            "universe_under_50": qualified_counts.get(chosen, 0) < 50,
         }
