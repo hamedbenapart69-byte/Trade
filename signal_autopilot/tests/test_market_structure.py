@@ -1,7 +1,7 @@
 """Tests for causal market-structure primitives."""
 import unittest
 
-from signal_autopilot.modules.market_structure import (
+from modules.market_structure import (
     detect_confirmed_swings,
     detect_fair_value_gaps,
 )
