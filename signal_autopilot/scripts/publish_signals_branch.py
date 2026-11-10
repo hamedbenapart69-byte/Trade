@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
     source_json = Path(args.source_json)
     source_csv = Path(args.source_csv)
-    source_health = Path(args.source_health)
+    source_health = Path(args.source_health) if args.source_health else None
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     incoming = json.loads(source_json.read_text(encoding="utf-8"))
@@ -38,7 +38,7 @@ def main():
             incoming = current
     target_json.write_text(json.dumps(incoming, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    if args.source_health:
+    if source_health is not None:
         if not source_health.exists():
             raise FileNotFoundError("source_health_missing")
         incoming_health = json.loads(source_health.read_text(encoding="utf-8"))
