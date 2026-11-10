@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ import ssl
 from io import BytesIO
 from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from telegram import Bot
@@ -71,7 +73,8 @@ async def _send_signal_photos(token: str, chat_id: str, signals: list[tuple[dict
 
 def _parse_time(value):
     try:
-        return datetime.fromisoformat(value)
+        parsed = datetime.fromisoformat(value)
+        return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
     except (TypeError, ValueError):
         return None
 
@@ -165,19 +168,107 @@ def notify_tier_a(payload: dict) -> dict:
         sent_state = {}
 
     now = datetime.now(timezone.utc)
-    sent_state = {
-        key: value for key, value in sent_state.items()
-        if _parse_time(value) and now - _parse_time(value) < timedelta(hours=48)
-    }
-    pending: list[tuple[str, dict, str]] = []
 
+    # نسخهٔ ۲: شناسهٔ سیگنال مستقل از زمان تولید است و فقط با تغییر سطوح،
+    # ارسال مجدد مجاز می‌شود. وضعیت قدیمی برای مهاجرت یک‌باره نگه داشته می‌شود.
+    if sent_state.get("__schema_version__") == 2:
+        signal_state = sent_state.get("signals", {})
+        daily_state = sent_state.get("daily", {})
+        legacy_state = sent_state.get("legacy", {})
+        if not isinstance(signal_state, dict):
+            signal_state = {}
+        if not isinstance(daily_state, dict):
+            daily_state = {}
+        if not isinstance(legacy_state, dict):
+            legacy_state = {}
+    else:
+        signal_state = {}
+        daily_state = {}
+        legacy_state = sent_state
+
+    legacy_state = {
+        key: value for key, value in legacy_state.items()
+        if isinstance(key, str) and _parse_time(value) is not None
+        and now - _parse_time(value) < timedelta(hours=48)
+    }
+
+    # حفظ dedup روزانهٔ نسخهٔ قبلی برای جلوگیری از ارسال مجدد در زمان مهاجرت.
+    if legacy_state:
+        for legacy_key, legacy_value in legacy_state.items():
+            if isinstance(legacy_key, str) and legacy_key.startswith("DAILY_"):
+                daily_state.setdefault(legacy_key, legacy_value)
+
+    def _stable_identity(signal: dict) -> str:
+        direction = str(
+            signal.get("direction") or signal.get("side")
+            or ("LONG" if signal.get("status") == "BUY_NOW" else "SHORT")
+        ).upper()
+        signal_id = str(
+            signal.get("signal_id")
+            or f"{signal.get('analysis_type') or signal.get('strategy_id') or 'UNSPECIFIED'}:"
+               f"{signal.get('timeframe') or 'UNSPECIFIED'}"
+        )
+        identity = {
+            "signal_id": signal_id,
+            "symbol": str(signal.get("symbol") or "").upper(),
+            "direction": direction,
+        }
+        raw = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _canonical_price(value):
+        if value is None:
+            return None
+        try:
+            return format(Decimal(str(value)).normalize(), "f")
+        except (InvalidOperation, TypeError, ValueError):
+            return str(value)
+
+    def _levels_fingerprint(signal: dict) -> str:
+        levels = {
+            "entry": _canonical_price(signal.get("entry")),
+            "stop_loss": _canonical_price(signal.get("stop_loss")),
+            "take_profit": [_canonical_price(value) for value in (signal.get("take_profit") or [])],
+        }
+        raw = json.dumps(levels, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    pending: list[tuple[str, str, dict, str]] = []
     for signal in candidates:
-        key = "|".join(str(value or "") for value in (
-            signal.get("symbol"), signal.get("status"), signal.get("analysis_type"),
-            signal.get("timeframe"), payload.get("generated_at_utc")
-        ))
-        if key not in sent_state:
-            pending.append((key, signal, _format_signal(signal, payload)))
+        identity = _stable_identity(signal)
+        fingerprint = _levels_fingerprint(signal)
+        previous = signal_state.get(identity)
+
+        # Legacy migration: اگر نسخهٔ قبلی همین سیگنال را ثبت کرده، در اولین
+        # اجرای نسخهٔ جدید از ارسال تکراری جلوگیری می‌کنیم؛ fingerprint قدیمی
+        # در state موجود نبود، پس سطوح تاریخی قابل بازیابی نیستند.
+        if previous is None and legacy_state:
+            legacy_prefix = (
+                str(signal.get("symbol") or ""),
+                str(signal.get("status") or ""),
+                str(signal.get("analysis_type") or ""),
+                str(signal.get("timeframe") or ""),
+            )
+            legacy_match = any(
+                tuple(key.split("|")[:4]) == legacy_prefix
+                and _parse_time(legacy_state.get(key)) is not None
+                and now - _parse_time(legacy_state.get(key)) < timedelta(hours=48)
+                for key in legacy_state
+                if isinstance(key, str) and not key.startswith("DAILY_")
+            )
+            if legacy_match:
+                signal_state[identity] = {"fingerprint": fingerprint, "sent_at": now.isoformat(),
+                                           "migration": "legacy_suppressed"}
+                continue
+
+        previous_fingerprint = previous.get("fingerprint") if isinstance(previous, dict) else previous
+        if previous_fingerprint != fingerprint:
+            pending.append((identity, fingerprint, signal, _format_signal(signal, payload)))
+
+    sent_state = {
+        "__schema_version__": 2, "signals": signal_state,
+        "daily": daily_state, "legacy": legacy_state,
+    }
 
     if not candidates:
         generated = payload.get("generated_at_utc") or now.isoformat()
@@ -188,12 +279,12 @@ def notify_tier_a(payload: dict) -> dict:
         else:
             message = "امروز سیگنال نیست"
             key = f"DAILY_NO_SIGNAL|{day}"
-        if key not in sent_state:
+        if key not in daily_state:
             try:
                 message_ids = asyncio.run(_send(token, chat_id, [message])) or []
                 daily_message_id = message_ids[-1] if message_ids else None
                 _finalize_delivery_metadata(payload, daily_message_id=daily_message_id)
-                sent_state[key] = now.isoformat()
+                daily_state[key] = now.isoformat()
                 state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                                       encoding="utf-8")
                 return {"status": "SENT", "sent": 1}
@@ -203,11 +294,14 @@ def notify_tier_a(payload: dict) -> dict:
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     if not pending:
+        # ذخیرهٔ مهاجرت حتی وقتی هیچ پیام جدیدی برای ارسال وجود ندارد.
+        state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
+                              encoding="utf-8")
         return {"status": "NO_NEW_MESSAGES", "sent": 0}
 
     try:
-        chart_items = [(signal, caption) for _, signal, caption in pending if signal.get("chart_candles")]
-        text_pending = [(signal, caption) for _, signal, caption in pending if not signal.get("chart_candles")]
+        chart_items = [(signal, caption) for _, _, signal, caption in pending if signal.get("chart_candles")]
+        text_pending = [(signal, caption) for _, _, signal, caption in pending if not signal.get("chart_candles")]
         text_items = [caption for _, caption in text_pending]
         sent = 0
         chart_failures = 0
@@ -226,8 +320,8 @@ def notify_tier_a(payload: dict) -> dict:
                     signal["message_id_current"] = message_ids[-1]
             sent += 1
         _finalize_delivery_metadata(payload)
-        for key, _, _ in pending:
-            sent_state[key] = now.isoformat()
+        for identity, fingerprint, _, _ in pending:
+            signal_state[identity] = {"fingerprint": fingerprint, "sent_at": now.isoformat()}
         state_path.write_text(json.dumps(sent_state, ensure_ascii=False, indent=2) + "\n",
                               encoding="utf-8")
         LOG.info("Telegram delivery succeeded: %d message(s), %d chart fallback(s).", sent, chart_failures)

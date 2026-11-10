@@ -57,6 +57,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         "ticker_timestamp_source": row.get("ticker_timestamp_source", "EXCHANGE"),
         "entry_price_quality": None,
         "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+        "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
         "timeframe": "1H",
         "hypothesis": None,
         "falsification": None,
