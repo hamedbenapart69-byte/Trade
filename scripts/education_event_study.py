@@ -28,6 +28,7 @@ from app.research_education import (
     detect_liquidity_sweeps,
     detect_value_boundary_rejections,
     filter_events_by_higher_timeframe,
+    filter_events_by_higher_timeframe_regime,
 )
 from app.signals import Candle
 
@@ -194,6 +195,10 @@ def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
     # H5 is the NMT location/price-acceptance trigger. The added gate is only
     # the completed 4h direction check (EMA20/EMA50).
     h8_lrt = filter_events_by_higher_timeframe(h1, hourly, four_hour)
+    # V2 LRT: فرضیهٔ متفاوت؛ sweep/reclaim در رژیم خنثی/متعادل، نه هم‌جهت با روند.
+    h8_lrt_range_v2 = filter_events_by_higher_timeframe_regime(
+        h1, hourly, four_hour, allowed_biases=("NEUTRAL",)
+    )
     h8_nmt = filter_events_by_higher_timeframe(h5, hourly, four_hour)
     return {
         "H1": h1,
@@ -202,6 +207,7 @@ def build_event_sets(hourly: list[Candle]) -> dict[str, list[ResearchEvent]]:
         "H6": h6,
         "H7": h7,
         "H8_LRT_DLC": h8_lrt,
+        "H8_LRT_RANGE_V2": h8_lrt_range_v2,
         "H8_NMT_DLC": h8_nmt,
     }
 
@@ -295,13 +301,13 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
 
     all_results: dict[str, dict[int, list[dict[str, Any]]]] = {
         hypothesis: {horizon: [] for horizon in HORIZONS}
-        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_NMT_DLC")
+        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC")
     }
     fold_results: dict[str, dict[int, dict[int, list[dict[str, Any]]]]] = {
         hypothesis: {
             horizon: defaultdict(list) for horizon in HORIZONS
         }
-        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_NMT_DLC")
+        for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC")
     }
 
     loaded_symbols = 0
@@ -342,7 +348,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
 
     overall = {}
     per_fold = {}
-    for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_NMT_DLC"):
+    for hypothesis in ("H1", "H2_TIME_REJECTION_PROXY", "H5_PRICE_PROXY", "H6", "H7", "H8_LRT_DLC", "H8_LRT_RANGE_V2", "H8_NMT_DLC"):
         overall[hypothesis] = {
             str(h): summarize(all_results[hypothesis][h]) for h in HORIZONS
         }
@@ -394,7 +400,7 @@ def run(data_root: Path, manifest_path: Path) -> dict[str, Any]:
             "H2_TIME_REJECTION_PROXY uses a rolling 24-hour OHLCV range and two completed closes back inside; it is not a real volume profile or VAH/VAL.",
             "H5_PRICE_PROXY measures consecutive price closes only; it does not use real aggressor flow or delta.",
             "H7 is an H6 breakout-retest subset filtered by completed 4h EMA20/EMA50 direction.",
-            "H8_LRT_DLC filters H1 sweep/reclaim events by completed 4h EMA20/EMA50 direction; H8_NMT_DLC separately filters H5 price-acceptance events. No LRT/NMT triggers are blended.",
+            "H8_LRT_DLC filters H1 sweep/reclaim events by completed 4h EMA20/EMA50 direction; H8_LRT_RANGE_V2 keeps H1 events only in a neutral 4h regime; H8_NMT_DLC separately filters H5 price-acceptance events by directional alignment. No LRT/NMT triggers are blended.",
             "The rolling 2-month test windows overlap by one month; fold results must be inspected separately.",
             "No threshold was tuned on test windows; no strategy is promoted by this pre-screen.",
         ],
