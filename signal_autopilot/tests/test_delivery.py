@@ -207,5 +207,55 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
                 })
         self.assertEqual(result, {"status": "CHAT_NOT_FOUND", "sent": 0})
 
+
+    def test_same_signal_is_not_resent_when_generated_timestamp_changes(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+                return [100 + len(sent)]
+            env = {
+                "TELEGRAM_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }
+            base_signal = {
+                "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
+                "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
+            }
+            with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+                first = notify_tier_a({"generated_at_utc":"2026-11-10T10:00:00+00:00","signals":[dict(base_signal)]})
+                second = notify_tier_a({"generated_at_utc":"2026-11-10T14:00:00+00:00","signals":[dict(base_signal)]})
+            self.assertEqual(first["status"], "SENT")
+            self.assertEqual(second, {"status":"NO_NEW_MESSAGES","sent":0})
+            self.assertEqual(len(sent), 1)
+
+    def test_same_signal_resends_only_when_entry_sl_or_tp_changes(self):
+        import os
+        from modules.notifier import notify_tier_a
+        with tempfile.TemporaryDirectory() as tmp:
+            sent = []
+            async def fake_send(token, chat_id, messages):
+                sent.extend(messages)
+                return [200 + len(sent)]
+            env = {
+                "TELEGRAM_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "12345",
+                "TELEGRAM_STATE_PATH": str(Path(tmp) / "sent.json"),
+            }
+            base = {
+                "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+                "symbol": "ETH/USDT:USDT", "status": "SELL_NOW", "side": "SELL",
+                "entry": 200, "stop_loss": 210, "take_profit": [180, 160],
+            }
+            changed = dict(base, entry=201)
+            with patch.dict(os.environ, env, clear=True), patch("modules.notifier._send", new=fake_send):
+                first = notify_tier_a({"generated_at_utc":"2026-11-10T10:00:00+00:00","signals":[base]})
+                second = notify_tier_a({"generated_at_utc":"2026-11-10T14:00:00+00:00","signals":[changed]})
+            self.assertEqual(first["status"], "SENT")
+            self.assertEqual(second["status"], "SENT")
+            self.assertEqual(len(sent), 2)
+
 if __name__=="__main__":
     unittest.main()
