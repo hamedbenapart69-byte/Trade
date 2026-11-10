@@ -1,0 +1,45 @@
+name: Telegram quarantine status test (test channel only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send-test-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install notifier dependencies
+        run: python -m pip install --disable-pip-version-check -r signal_autopilot/requirements.txt
+
+      - name: Send quarantine status to test channel only
+        working-directory: signal_autopilot
+        env:
+          GITHUB_EVENT_NAME: workflow_dispatch
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TEST_CHAT_ID: ${{ secrets.TELEGRAM_TEST_CHAT_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          from modules.notifier import send_legacy_quarantine_status_test
+
+          state_path = Path("../web/futures/system_status.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          result = send_legacy_quarantine_status_test(state)
+          print(json.dumps(result, ensure_ascii=False))
+          if result["status"] == "SKIPPED_NOT_CONFIGURED":
+              print("TELEGRAM_TEST_NOT_CONFIGURED: add TELEGRAM_TOKEN and TELEGRAM_TEST_CHAT_ID secrets")
+          elif result["status"] != "TEST_SENT":
+              raise SystemExit("TELEGRAM_TEST_DELIVERY_FAILED")
+          PY
