@@ -36,6 +36,13 @@ jobs:
             echo "::notice::Railway deployment skipped: required secret RAILWAY_TOKEN is not configured."
           fi
 
+      - name: Fail clearly when Railway deployment is blocked by a missing token
+        if: steps.token.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "::error::DEPLOYMENT_BLOCKED: RAILWAY_TOKEN is not configured; no deployment was attempted."
+          exit 1
+
       - name: Install Railway CLI
         if: steps.token.outputs.available == 'true'
         run: npm install --global @railway/cli
