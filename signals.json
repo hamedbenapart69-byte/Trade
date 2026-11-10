@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+  "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
   "provider": "multi-provider",
   "provider_sources": [
     "okx",
@@ -176,6 +176,68 @@
       "duplicates_skipped": 0,
       "ohlcv_unavailable": 0
     },
+    "phemex": {
+      "markets_total": 2069,
+      "eligible_before_limit": 0,
+      "selected": 0,
+      "target_remaining": 60,
+      "minimum_listing_age_days": 730,
+      "minimum_quote_volume_24h_usd": 10000000.0,
+      "whitelist_source": "CoinGecko top 1000",
+      "rejected": {
+        "inactive": 1746,
+        "not_swap": 176,
+        "not_linear": 8,
+        "wrong_quote": 10,
+        "wrong_settle": 0,
+        "not_contract": 0,
+        "not_crypto_whitelist": 51,
+        "blacklisted": 20,
+        "rwa_or_noncrypto_classification": 0,
+        "listing_time_missing": 0,
+        "history_too_short": 0,
+        "history_verified": 0,
+        "too_new": 0,
+        "volume_below_10m": 26,
+        "invalid_volume": 0,
+        "already_covered": 32
+      },
+      "rows_returned": 0,
+      "symbols_added": 0,
+      "duplicates_skipped": 0,
+      "ohlcv_unavailable": 0
+    },
+    "bingx": {
+      "markets_total": 3658,
+      "eligible_before_limit": 0,
+      "selected": 0,
+      "target_remaining": 60,
+      "minimum_listing_age_days": 730,
+      "minimum_quote_volume_24h_usd": 10000000.0,
+      "whitelist_source": "CoinGecko top 1000",
+      "rejected": {
+        "inactive": 1833,
+        "not_swap": 612,
+        "not_linear": 20,
+        "wrong_quote": 49,
+        "wrong_settle": 0,
+        "not_contract": 0,
+        "not_crypto_whitelist": 765,
+        "blacklisted": 0,
+        "rwa_or_noncrypto_classification": 0,
+        "listing_time_missing": 0,
+        "history_too_short": 0,
+        "history_verified": 0,
+        "too_new": 4,
+        "volume_below_10m": 337,
+        "invalid_volume": 0,
+        "already_covered": 38
+      },
+      "rows_returned": 0,
+      "symbols_added": 0,
+      "duplicates_skipped": 0,
+      "ohlcv_unavailable": 0
+    },
     "toobit": {
       "markets_total": 1310,
       "eligible_before_limit": 1,
@@ -219,11 +281,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2022.26,
-      "stop_loss": 2064.4496428571,
+      "entry": 2022.39,
+      "stop_loss": 2064.5796428571,
       "take_profit": [
-        1966.0071428571,
-        1909.7542857143
+        1966.1371428571,
+        1909.8842857143
       ],
       "ema20": 2092.2053204538,
       "ema50": 2134.825954068,
@@ -255,20 +317,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.364000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.970000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.9964% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2064.4496428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2064.5796428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -893,9 +955,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.9964% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 568,
+      "message_id_current": 596,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "BTC/USDT:USDT",
@@ -903,11 +965,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73005.5,
-      "stop_loss": 73935.5214285714,
+      "entry": 72992.3,
+      "stop_loss": 73922.3214285714,
       "take_profit": [
-        71765.4714285714,
-        70525.4428571429
+        71752.2714285714,
+        70512.2428571429
       ],
       "ema20": 74281.3443707261,
       "ema50": 74785.5462180194,
@@ -939,20 +1001,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.266000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.966000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6742% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73935.5214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73922.3214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -1577,9 +1639,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6742% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 569,
+      "message_id_current": 597,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
@@ -1587,11 +1649,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.06,
-      "stop_loss": 83.8246428571,
+      "entry": 82.21,
+      "stop_loss": 83.9746428571,
       "take_profit": [
-        79.7071428571,
-        77.3542857143
+        79.8571428571,
+        77.5042857143
       ],
       "ema20": 84.9383334696,
       "ema50": 86.4072598797,
@@ -1623,20 +1685,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.275000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.067000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.7000% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.8246428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9746428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -2261,9 +2323,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.7000% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 570,
+      "message_id_current": 598,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
@@ -2271,11 +2333,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2332e-06,
-      "stop_loss": 5.0256e-06,
+      "entry": 5.2358e-06,
+      "stop_loss": 5.0282e-06,
       "take_profit": [
-        5.51e-06,
-        5.7868e-06
+        5.5126e-06,
+        5.7894e-06
       ],
       "ema20": 5.2617e-06,
       "ema50": 5.1522e-06,
@@ -2307,20 +2369,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.372000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.078000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.1236% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0256e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0282e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -2945,9 +3007,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.1236% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 571,
+      "message_id_current": 599,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
@@ -2955,11 +3017,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.0458,
-      "stop_loss": 1.0686,
+      "entry": 1.0461,
+      "stop_loss": 1.0689,
       "take_profit": [
-        1.0154,
-        0.985
+        1.0157,
+        0.9853
       ],
       "ema20": 1.0793633043,
       "ema50": 1.1037434952,
@@ -2991,20 +3053,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.276000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.979000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.2089% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0686 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0689 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -3629,9 +3691,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.2089% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 572,
+      "message_id_current": 600,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
@@ -3639,11 +3701,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06714,
-      "stop_loss": 0.068415,
+      "entry": 0.0672,
+      "stop_loss": 0.068475,
       "take_profit": [
-        0.06544,
-        0.06374
+        0.0655,
+        0.0638
       ],
       "ema20": 0.0692110191,
       "ema50": 0.0697929655,
@@ -3675,20 +3737,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.276000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.083000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8338% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.068415 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.068475 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -4313,9 +4375,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8338% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 573,
+      "message_id_current": 601,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "NEAR/USDT:USDT",
@@ -4323,7 +4385,7 @@
       "data_provider": "okx",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 3.501,
+      "entry": 3.507,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 3.6067633441,
@@ -4356,13 +4418,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.364000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.971000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -4382,7 +4444,7 @@
       "data_provider": "okx",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 6.672,
+      "entry": 6.688,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 6.9450436322,
@@ -4415,13 +4477,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.369000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.066000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -4441,11 +4503,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.3044,
-      "stop_loss": 0.3130035714,
+      "entry": 0.3049,
+      "stop_loss": 0.3135035714,
       "take_profit": [
-        0.2929285714,
-        0.2814571429
+        0.2934285714,
+        0.2819571429
       ],
       "ema20": 0.3157470541,
       "ema50": 0.3192990378,
@@ -4477,20 +4539,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.367000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.971000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1124% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.3130035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.3135035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -5115,9 +5177,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1124% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 574,
+      "message_id_current": 602,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ARB/USDT:USDT",
@@ -5125,11 +5187,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.15675,
-      "stop_loss": 0.161805,
+      "entry": 0.15713,
+      "stop_loss": 0.162185,
       "take_profit": [
-        0.15001,
-        0.14327
+        0.15039,
+        0.14365
       ],
       "ema20": 0.167338302,
       "ema50": 0.1693509429,
@@ -5161,20 +5223,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.364000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.965000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1884% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.161805 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.162185 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -5799,9 +5861,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1884% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 575,
+      "message_id_current": 603,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "SUI/USDT:USDT",
@@ -5809,11 +5871,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.807,
-      "stop_loss": 0.8258357143,
+      "entry": 0.8079,
+      "stop_loss": 0.8267357143,
       "take_profit": [
-        0.7818857143,
-        0.7567714286
+        0.7827857143,
+        0.7576714286
       ],
       "ema20": 0.8340985925,
       "ema50": 0.839073922,
@@ -5845,20 +5907,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.274000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.072000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5930% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8258357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8267357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -6483,9 +6545,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5930% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 576,
+      "message_id_current": 604,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "LINK/USDT:USDT",
@@ -6493,11 +6555,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.166,
-      "stop_loss": 10.3853214286,
+      "entry": 10.182,
+      "stop_loss": 10.4013214286,
       "take_profit": [
-        9.8735714286,
-        9.5811428571
+        9.8895714286,
+        9.5971428571
       ],
       "ema20": 10.4899242363,
       "ema50": 10.5683085851,
@@ -6529,20 +6591,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.268000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.071000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.7417% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.3853214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4013214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -7167,9 +7229,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.7417% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 577,
+      "message_id_current": 605,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "AVAX/USDT:USDT",
@@ -7177,11 +7239,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 8.187,
-      "stop_loss": 7.9940357143,
+      "entry": 8.195,
+      "stop_loss": 8.0020357143,
       "take_profit": [
-        8.4442857143,
-        8.7015714286
+        8.4522857143,
+        8.7095714286
       ],
       "ema20": 8.3899995313,
       "ema50": 8.3306152502,
@@ -7213,20 +7275,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.268000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.966000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.7128% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 7.9940357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0020357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -7851,9 +7913,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.7128% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 578,
+      "message_id_current": 606,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "BNB/USDT:USDT",
@@ -7861,7 +7923,7 @@
       "data_provider": "okx",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 671.41,
+      "entry": 671.56,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 685.7903092433,
@@ -7894,13 +7956,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.353000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.068000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -7920,11 +7982,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 121.24,
-      "stop_loss": 124.6642857143,
+      "entry": 121.45,
+      "stop_loss": 124.8742857143,
       "take_profit": [
-        116.6742857143,
-        112.1085714286
+        116.8842857143,
+        112.3185714286
       ],
       "ema20": 126.6608771615,
       "ema50": 128.360033079,
@@ -7956,20 +8018,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.371000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.050000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3237% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 124.6642857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 124.8742857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -8594,9 +8656,68 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3237% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 579,
+      "message_id_current": 607,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
+    },
+    {
+      "symbol": "FIL/USDT:USDT",
+      "base": "FIL",
+      "data_provider": "okx",
+      "status": "NO_QUALIFIED_SETUP",
+      "side": null,
+      "entry": 0.7422,
+      "stop_loss": null,
+      "take_profit": [],
+      "ema20": 0.7608984641,
+      "ema50": 0.7641966747,
+      "atr14": 0.0113857143,
+      "confidence": "NOT_CALIBRATED",
+      "lfs1_proxy": {
+        "status": "NORMAL_PROXY",
+        "data_class": "PROXY",
+        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
+        "score": 0.616667,
+        "threshold": 0.9,
+        "atr_percentile": 0.722222,
+        "low_volume_percentile": 0.511111,
+        "volume_ratio_vs_rolling_median": 0.976609,
+        "lookback_bars": 69,
+        "lookback_hours": 69,
+        "calibration": "NOT_CALIBRATED",
+        "real_orderbook_used": false
+      },
+      "lfs_v2": {
+        "status": "UNAVAILABLE",
+        "data_class": "PARTIAL",
+        "missing_components": [
+          "LFS2",
+          "LFS3",
+          "LFS4",
+          "LFS5"
+        ],
+        "invalid_components": [],
+        "reason": "all_five_components_required_no_missing_to_zero"
+      },
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
+      "data_availability": {
+        "ohlcv": "OK",
+        "funding": "OK",
+        "open_interest": "OK"
+      },
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.075000+00:00",
+      "ticker_timestamp_source": "EXCHANGE",
+      "entry_price_quality": "EXCHANGE_TIMESTAMP",
+      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
+      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
+      "timeframe": "1H",
+      "hypothesis": null,
+      "falsification": null,
+      "chart_candles": [],
+      "reason": "EMA20/EMA50 distance is not greater than 0.5%",
+      "message_id_current": null,
+      "message_id_audience": null,
+      "published_at": null
     },
     {
       "symbol": "BCH/USDT:USDT",
@@ -8604,11 +8725,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 228.33,
-      "stop_loss": 232.7464285714,
+      "entry": 228.72,
+      "stop_loss": 233.1364285714,
       "take_profit": [
-        222.4414285714,
-        216.5528571429
+        222.8314285714,
+        216.9428571429
       ],
       "ema20": 235.953302005,
       "ema50": 239.4448161602,
@@ -8640,20 +8761,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.371000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.073000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.4582% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 232.7464285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 233.1364285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -9278,68 +9399,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.4582% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 580,
+      "message_id_current": 608,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
-    },
-    {
-      "symbol": "FIL/USDT:USDT",
-      "base": "FIL",
-      "data_provider": "okx",
-      "status": "NO_QUALIFIED_SETUP",
-      "side": null,
-      "entry": 0.7413,
-      "stop_loss": null,
-      "take_profit": [],
-      "ema20": 0.7608984641,
-      "ema50": 0.7641966747,
-      "atr14": 0.0113857143,
-      "confidence": "NOT_CALIBRATED",
-      "lfs1_proxy": {
-        "status": "NORMAL_PROXY",
-        "data_class": "PROXY",
-        "method": "ATR14_PERCENTILE_AND_INVERSE_24H_VOLUME_PERCENTILE",
-        "score": 0.616667,
-        "threshold": 0.9,
-        "atr_percentile": 0.722222,
-        "low_volume_percentile": 0.511111,
-        "volume_ratio_vs_rolling_median": 0.976609,
-        "lookback_bars": 69,
-        "lookback_hours": 69,
-        "calibration": "NOT_CALIBRATED",
-        "real_orderbook_used": false
-      },
-      "lfs_v2": {
-        "status": "UNAVAILABLE",
-        "data_class": "PARTIAL",
-        "missing_components": [
-          "LFS2",
-          "LFS3",
-          "LFS4",
-          "LFS5"
-        ],
-        "invalid_components": [],
-        "reason": "all_five_components_required_no_missing_to_zero"
-      },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
-      "data_availability": {
-        "ohlcv": "OK",
-        "funding": "OK",
-        "open_interest": "OK"
-      },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.173000+00:00",
-      "ticker_timestamp_source": "EXCHANGE",
-      "entry_price_quality": "EXCHANGE_TIMESTAMP",
-      "analysis_type": "EMA_TREND_CONTINUATION_MVP",
-      "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
-      "timeframe": "1H",
-      "hypothesis": null,
-      "falsification": null,
-      "chart_candles": [],
-      "reason": "EMA20/EMA50 distance is not greater than 0.5%",
-      "message_id_current": null,
-      "message_id_audience": null,
-      "published_at": null
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
@@ -9347,11 +9409,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3579,
-      "stop_loss": 0.3463821429,
+      "entry": 0.3588,
+      "stop_loss": 0.3472821429,
       "take_profit": [
-        0.3732571429,
-        0.3886142857
+        0.3741571429,
+        0.3895142857
       ],
       "ema20": 0.3699533443,
       "ema50": 0.3661384908,
@@ -9383,20 +9445,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.076000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.0419% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3463821429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3472821429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -10021,9 +10083,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.0419% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 581,
+      "message_id_current": 609,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ADA/USDT:USDT",
@@ -10064,13 +10126,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.366000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.969000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10090,11 +10152,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 7.73,
-      "stop_loss": 7.9811428571,
+      "entry": 7.742,
+      "stop_loss": 7.9931428571,
       "take_profit": [
-        7.3951428571,
-        7.0602857143
+        7.4071428571,
+        7.0722857143
       ],
       "ema20": 8.014654866,
       "ema50": 8.0655385981,
@@ -10126,20 +10188,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.978000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6309% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 7.9811428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 7.9931428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -10764,9 +10826,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6309% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 582,
+      "message_id_current": 610,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "LTC/USDT:USDT",
@@ -10774,7 +10836,7 @@
       "data_provider": "okx",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 49.75,
+      "entry": 49.82,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 51.0701239489,
@@ -10807,13 +10869,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.353000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.080000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10833,7 +10895,7 @@
       "data_provider": "okx",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 213.3,
+      "entry": 213.94,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 219.8613673781,
@@ -10866,13 +10928,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.365000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.968000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -10892,11 +10954,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.03718,
-      "stop_loss": 0.038155,
+      "entry": 0.03727,
+      "stop_loss": 0.038245,
       "take_profit": [
-        0.03588,
-        0.03458
+        0.03597,
+        0.03467
       ],
       "ema20": 0.0383132763,
       "ema50": 0.0385181436,
@@ -10928,20 +10990,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.278000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.076000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5319% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.038155 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.038245 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -11566,9 +11628,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5319% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 583,
+      "message_id_current": 611,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ZRO/USDT:USDT",
@@ -11576,11 +11638,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.4576,
-      "stop_loss": 1.5026107143,
+      "entry": 1.4591,
+      "stop_loss": 1.5041107143,
       "take_profit": [
-        1.3975857143,
-        1.3375714286
+        1.3990857143,
+        1.3390714286
       ],
       "ema20": 1.4997981893,
       "ema50": 1.5293054831,
@@ -11612,20 +11674,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.065000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.9295% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.5026107143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.5041107143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -12250,9 +12312,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.9295% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 584,
+      "message_id_current": 612,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DOT/USDT:USDT",
@@ -12260,11 +12322,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8345,
-      "stop_loss": 0.8530142857,
+      "entry": 0.8357,
+      "stop_loss": 0.8542142857,
       "take_profit": [
-        0.8098142857,
-        0.7851285714
+        0.8110142857,
+        0.7863285714
       ],
       "ema20": 0.8542070538,
       "ema50": 0.8655147932,
@@ -12296,20 +12358,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.172000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.073000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3065% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8530142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8542142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -12934,9 +12996,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3065% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 585,
+      "message_id_current": 613,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ENA/USDT:USDT",
@@ -12944,7 +13006,7 @@
       "data_provider": "bitget",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.14765,
+      "entry": 0.14795,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.1526875261,
@@ -12977,13 +13039,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:58.194000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:37.291000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -13003,11 +13065,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1012.41,
-      "stop_loss": 1060.8728571429,
+      "entry": 1014.42,
+      "stop_loss": 1062.8828571429,
       "take_profit": [
-        947.7928571429,
-        883.1757142857
+        949.8028571429,
+        885.1857142857
       ],
       "ema20": 1144.7028502288,
       "ema50": 1185.0379083777,
@@ -13039,20 +13101,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:55.996000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.883000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 3.4037% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1060.8728571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1062.8828571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -13677,9 +13739,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 3.4037% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 586,
+      "message_id_current": 614,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "QNT/USDT:USDT",
@@ -13687,11 +13749,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 176.61,
-      "stop_loss": 181.41,
+      "entry": 177.2,
+      "stop_loss": 182.0,
       "take_profit": [
-        170.21,
-        163.81
+        170.8,
+        164.4
       ],
       "ema20": 188.2851817358,
       "ema50": 192.6019753201,
@@ -13723,20 +13785,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.025000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.917000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.2413% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 181.41 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 182.0 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -14361,9 +14423,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.2413% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 587,
+      "message_id_current": 615,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XLM/USDT:USDT",
@@ -14371,11 +14433,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.142,
-      "stop_loss": 0.1448167857,
+      "entry": 0.14221,
+      "stop_loss": 0.1450267857,
       "take_profit": [
-        0.1382442857,
-        0.1344885714
+        0.1384542857,
+        0.1346985714
       ],
       "ema20": 0.1459658558,
       "ema50": 0.1473491988,
@@ -14407,20 +14469,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.052000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.944000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.9388% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1448167857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1450267857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -15045,9 +15107,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.9388% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 588,
+      "message_id_current": 616,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DASH/USDT:USDT",
@@ -15055,11 +15117,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 42.78,
-      "stop_loss": 44.1010714286,
+      "entry": 42.82,
+      "stop_loss": 44.1410714286,
       "take_profit": [
-        41.0185714286,
-        39.2571428571
+        41.0585714286,
+        39.2971428571
       ],
       "ema20": 45.924066633,
       "ema50": 46.3698005536,
@@ -15091,20 +15153,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.104000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.991000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.9613% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.1010714286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.1410714286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -15729,9 +15791,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.9613% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 589,
+      "message_id_current": 617,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "LIT/USDT:USDT",
@@ -15739,11 +15801,11 @@
       "data_provider": "mexc",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 3.3092,
-      "stop_loss": 3.2059357143,
+      "entry": 3.3179,
+      "stop_loss": 3.2146357143,
       "take_profit": [
-        3.4468857143,
-        3.5845714286
+        3.4555857143,
+        3.5932714286
       ],
       "ema20": 3.2384053948,
       "ema50": 3.2117945826,
@@ -15775,20 +15837,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.077000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.968000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8285% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 3.2059357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 3.2146357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -16413,9 +16475,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8285% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 590,
+      "message_id_current": 618,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
@@ -16423,11 +16485,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5574,
-      "stop_loss": 0.5708142857,
+      "entry": 0.5588,
+      "stop_loss": 0.5722142857,
       "take_profit": [
-        0.5395142857,
-        0.5216285714
+        0.5409142857,
+        0.5230285714
       ],
       "ema20": 0.5794615356,
       "ema50": 0.5835407778,
@@ -16459,20 +16521,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:04.936000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:43.769000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6991% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5708142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5722142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -17097,9 +17159,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6991% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 591,
+      "message_id_current": 619,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XMR/USDT:USDT",
@@ -17107,11 +17169,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 556.84,
-      "stop_loss": 570.7396428571,
+      "entry": 557.81,
+      "stop_loss": 571.7096428571,
       "take_profit": [
-        538.3071428571,
-        519.7742857143
+        539.2771428571,
+        520.7442857143
       ],
       "ema20": 564.9825080047,
       "ema50": 580.1531352355,
@@ -17143,20 +17205,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:05.511000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:44.304000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6149% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 570.7396428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 571.7096428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -17781,9 +17843,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6149% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 592,
+      "message_id_current": 620,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "JUP/USDT:USDT",
@@ -17791,11 +17853,11 @@
       "data_provider": "kucoinfutures",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.2511,
-      "stop_loss": 0.2446821429,
+      "entry": 0.2517,
+      "stop_loss": 0.2452821429,
       "take_profit": [
-        0.2596571429,
-        0.2682142857
+        0.2602571429,
+        0.2688142857
       ],
       "ema20": 0.2522355652,
       "ema50": 0.2471518973,
@@ -17827,20 +17889,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:06.087000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:44.851000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0569% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2446821429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2452821429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -18465,9 +18527,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0569% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 593,
+      "message_id_current": 621,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "TIA/USDT:USDT",
@@ -18475,7 +18537,7 @@
       "data_provider": "kucoinfutures",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.4158,
+      "entry": 0.4163,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.4297477995,
@@ -18508,13 +18570,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:06.732000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:45.407000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -18534,11 +18596,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.2509,
-      "stop_loss": 0.2565357143,
+      "entry": 0.2515,
+      "stop_loss": 0.2571357143,
       "take_profit": [
-        0.2433857143,
-        0.2358714286
+        0.2439857143,
+        0.2364714286
       ],
       "ema20": 0.2580916559,
       "ema50": 0.2595622842,
@@ -18570,20 +18632,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:07.278000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:45.947000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5666% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.2565357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.2571357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -19208,9 +19270,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5666% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 594,
+      "message_id_current": 622,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "PAXG/USDT:USDT",
@@ -19218,7 +19280,7 @@
       "data_provider": "kucoinfutures",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 4016.24,
+      "entry": 4015.48,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 4071.1319861466,
@@ -19251,13 +19313,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:07.871000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:46.503000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -19277,7 +19339,7 @@
       "data_provider": "kucoinfutures",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 1.539,
+      "entry": 1.543,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 1.5797375517,
@@ -19310,13 +19372,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:08.474000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:47.074000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -19336,7 +19398,7 @@
       "data_provider": "kucoinfutures",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.0966,
+      "entry": 0.0968,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.0998346679,
@@ -19369,13 +19431,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:09.060000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:47.621000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -19395,7 +19457,7 @@
       "data_provider": "kucoinfutures",
       "status": "NO_QUALIFIED_SETUP",
       "side": null,
-      "entry": 0.31778,
+      "entry": 0.31755,
       "stop_loss": null,
       "take_profit": [],
       "ema20": 0.3183837232,
@@ -19428,13 +19490,13 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:09.611000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:48.155000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
@@ -19454,11 +19516,11 @@
       "data_provider": "toobit",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.0004385,
-      "stop_loss": 0.0004177893,
+      "entry": 0.0004394,
+      "stop_loss": 0.0004186893,
       "take_profit": [
-        0.0004661143,
-        0.0004937286
+        0.0004670143,
+        0.0004946286
       ],
       "ema20": 0.0004396485,
       "ema50": 0.0004245714,
@@ -19490,20 +19552,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:16.985000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:59.072000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 3.5511% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.0004177893 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.0004186893 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -20128,9 +20190,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 3.5511% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 595,
+      "message_id_current": 623,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     }
   ],
   "trade_signals": [
@@ -20140,11 +20202,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 2022.26,
-      "stop_loss": 2064.4496428571,
+      "entry": 2022.39,
+      "stop_loss": 2064.5796428571,
       "take_profit": [
-        1966.0071428571,
-        1909.7542857143
+        1966.1371428571,
+        1909.8842857143
       ],
       "ema20": 2092.2053204538,
       "ema50": 2134.825954068,
@@ -20176,20 +20238,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.364000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.970000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.9964% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2064.4496428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 2064.5796428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -20814,9 +20876,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.9964% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 568,
+      "message_id_current": 596,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "BTC/USDT:USDT",
@@ -20824,11 +20886,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 73005.5,
-      "stop_loss": 73935.5214285714,
+      "entry": 72992.3,
+      "stop_loss": 73922.3214285714,
       "take_profit": [
-        71765.4714285714,
-        70525.4428571429
+        71752.2714285714,
+        70512.2428571429
       ],
       "ema20": 74281.3443707261,
       "ema50": 74785.5462180194,
@@ -20860,20 +20922,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.266000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.966000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6742% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73935.5214285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 73922.3214285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -21498,9 +21560,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6742% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 569,
+      "message_id_current": 597,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "SOL/USDT:USDT",
@@ -21508,11 +21570,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 82.06,
-      "stop_loss": 83.8246428571,
+      "entry": 82.21,
+      "stop_loss": 83.9746428571,
       "take_profit": [
-        79.7071428571,
-        77.3542857143
+        79.8571428571,
+        77.5042857143
       ],
       "ema20": 84.9383334696,
       "ema50": 86.4072598797,
@@ -21544,20 +21606,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.275000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.067000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.7000% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.8246428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 83.9746428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -22182,9 +22244,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.7000% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 570,
+      "message_id_current": 598,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "PEPE/USDT:USDT",
@@ -22192,11 +22254,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 5.2332e-06,
-      "stop_loss": 5.0256e-06,
+      "entry": 5.2358e-06,
+      "stop_loss": 5.0282e-06,
       "take_profit": [
-        5.51e-06,
-        5.7868e-06
+        5.5126e-06,
+        5.7894e-06
       ],
       "ema20": 5.2617e-06,
       "ema50": 5.1522e-06,
@@ -22228,20 +22290,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.372000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.078000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.1236% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0256e-06 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 5.0282e-06 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -22866,9 +22928,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.1236% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 571,
+      "message_id_current": 599,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XRP/USDT:USDT",
@@ -22876,11 +22938,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.0458,
-      "stop_loss": 1.0686,
+      "entry": 1.0461,
+      "stop_loss": 1.0689,
       "take_profit": [
-        1.0154,
-        0.985
+        1.0157,
+        0.9853
       ],
       "ema20": 1.0793633043,
       "ema50": 1.1037434952,
@@ -22912,20 +22974,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.276000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.979000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.2089% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0686 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.0689 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -23550,9 +23612,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.2089% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 572,
+      "message_id_current": 600,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DOGE/USDT:USDT",
@@ -23560,11 +23622,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.06714,
-      "stop_loss": 0.068415,
+      "entry": 0.0672,
+      "stop_loss": 0.068475,
       "take_profit": [
-        0.06544,
-        0.06374
+        0.0655,
+        0.0638
       ],
       "ema20": 0.0692110191,
       "ema50": 0.0697929655,
@@ -23596,20 +23658,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.276000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.083000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.8338% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.068415 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.068475 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -24234,9 +24296,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.8338% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 573,
+      "message_id_current": 601,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "WLD/USDT:USDT",
@@ -24244,11 +24306,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.3044,
-      "stop_loss": 0.3130035714,
+      "entry": 0.3049,
+      "stop_loss": 0.3135035714,
       "take_profit": [
-        0.2929285714,
-        0.2814571429
+        0.2934285714,
+        0.2819571429
       ],
       "ema20": 0.3157470541,
       "ema50": 0.3192990378,
@@ -24280,20 +24342,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.367000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.971000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1124% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.3130035714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.3135035714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -24918,9 +24980,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1124% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 574,
+      "message_id_current": 602,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ARB/USDT:USDT",
@@ -24928,11 +24990,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.15675,
-      "stop_loss": 0.161805,
+      "entry": 0.15713,
+      "stop_loss": 0.162185,
       "take_profit": [
-        0.15001,
-        0.14327
+        0.15039,
+        0.14365
       ],
       "ema20": 0.167338302,
       "ema50": 0.1693509429,
@@ -24964,20 +25026,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.364000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.965000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.1884% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.161805 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.162185 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -25602,9 +25664,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.1884% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 575,
+      "message_id_current": 603,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "SUI/USDT:USDT",
@@ -25612,11 +25674,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.807,
-      "stop_loss": 0.8258357143,
+      "entry": 0.8079,
+      "stop_loss": 0.8267357143,
       "take_profit": [
-        0.7818857143,
-        0.7567714286
+        0.7827857143,
+        0.7576714286
       ],
       "ema20": 0.8340985925,
       "ema50": 0.839073922,
@@ -25648,20 +25710,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.274000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.072000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5930% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8258357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8267357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -26286,9 +26348,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5930% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 576,
+      "message_id_current": 604,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "LINK/USDT:USDT",
@@ -26296,11 +26358,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 10.166,
-      "stop_loss": 10.3853214286,
+      "entry": 10.182,
+      "stop_loss": 10.4013214286,
       "take_profit": [
-        9.8735714286,
-        9.5811428571
+        9.8895714286,
+        9.5971428571
       ],
       "ema20": 10.4899242363,
       "ema50": 10.5683085851,
@@ -26332,20 +26394,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.268000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.071000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.7417% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.3853214286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 10.4013214286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -26970,9 +27032,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.7417% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 577,
+      "message_id_current": 605,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "AVAX/USDT:USDT",
@@ -26980,11 +27042,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 8.187,
-      "stop_loss": 7.9940357143,
+      "entry": 8.195,
+      "stop_loss": 8.0020357143,
       "take_profit": [
-        8.4442857143,
-        8.7015714286
+        8.4522857143,
+        8.7095714286
       ],
       "ema20": 8.3899995313,
       "ema50": 8.3306152502,
@@ -27016,20 +27078,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.268000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.966000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.7128% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 7.9940357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 8.0020357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -27654,9 +27716,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.7128% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 578,
+      "message_id_current": 606,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "AAVE/USDT:USDT",
@@ -27664,11 +27726,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 121.24,
-      "stop_loss": 124.6642857143,
+      "entry": 121.45,
+      "stop_loss": 124.8742857143,
       "take_profit": [
-        116.6742857143,
-        112.1085714286
+        116.8842857143,
+        112.3185714286
       ],
       "ema20": 126.6608771615,
       "ema50": 128.360033079,
@@ -27700,20 +27762,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.371000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.050000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3237% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 124.6642857143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 124.8742857143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -28338,9 +28400,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3237% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 579,
+      "message_id_current": 607,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "BCH/USDT:USDT",
@@ -28348,11 +28410,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 228.33,
-      "stop_loss": 232.7464285714,
+      "entry": 228.72,
+      "stop_loss": 233.1364285714,
       "take_profit": [
-        222.4414285714,
-        216.5528571429
+        222.8314285714,
+        216.9428571429
       ],
       "ema20": 235.953302005,
       "ema50": 239.4448161602,
@@ -28384,20 +28446,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.371000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.073000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.4582% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 232.7464285714 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 233.1364285714 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -29022,9 +29084,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.4582% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 580,
+      "message_id_current": 608,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ONDO/USDT:USDT",
@@ -29032,11 +29094,11 @@
       "data_provider": "okx",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.3579,
-      "stop_loss": 0.3463821429,
+      "entry": 0.3588,
+      "stop_loss": 0.3472821429,
       "take_profit": [
-        0.3732571429,
-        0.3886142857
+        0.3741571429,
+        0.3895142857
       ],
       "ema20": 0.3699533443,
       "ema50": 0.3661384908,
@@ -29068,20 +29130,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.076000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 1.0419% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3463821429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.3472821429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -29706,9 +29768,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 1.0419% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 581,
+      "message_id_current": 609,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "INJ/USDT:USDT",
@@ -29716,11 +29778,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 7.73,
-      "stop_loss": 7.9811428571,
+      "entry": 7.742,
+      "stop_loss": 7.9931428571,
       "take_profit": [
-        7.3951428571,
-        7.0602857143
+        7.4071428571,
+        7.0722857143
       ],
       "ema20": 8.014654866,
       "ema50": 8.0655385981,
@@ -29752,20 +29814,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:18.978000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6309% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 7.9811428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 7.9931428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -30390,9 +30452,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6309% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 582,
+      "message_id_current": 610,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "STRK/USDT:USDT",
@@ -30400,11 +30462,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.03718,
-      "stop_loss": 0.038155,
+      "entry": 0.03727,
+      "stop_loss": 0.038245,
       "take_profit": [
-        0.03588,
-        0.03458
+        0.03597,
+        0.03467
       ],
       "ema20": 0.0383132763,
       "ema50": 0.0385181436,
@@ -30436,20 +30498,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.278000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.076000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5319% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.038155 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.038245 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -31074,9 +31136,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5319% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 583,
+      "message_id_current": 611,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ZRO/USDT:USDT",
@@ -31084,11 +31146,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1.4576,
-      "stop_loss": 1.5026107143,
+      "entry": 1.4591,
+      "stop_loss": 1.5041107143,
       "take_profit": [
-        1.3975857143,
-        1.3375714286
+        1.3990857143,
+        1.3390714286
       ],
       "ema20": 1.4997981893,
       "ema50": 1.5293054831,
@@ -31120,20 +31182,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.273000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.065000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.9295% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.5026107143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1.5041107143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -31758,9 +31820,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.9295% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 584,
+      "message_id_current": 612,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DOT/USDT:USDT",
@@ -31768,11 +31830,11 @@
       "data_provider": "okx",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.8345,
-      "stop_loss": 0.8530142857,
+      "entry": 0.8357,
+      "stop_loss": 0.8542142857,
       "take_profit": [
-        0.8098142857,
-        0.7851285714
+        0.8110142857,
+        0.7863285714
       ],
       "ema20": 0.8542070538,
       "ema50": 0.8655147932,
@@ -31804,20 +31866,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:39.172000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:19.073000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 1.3065% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8530142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.8542142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -32442,9 +32504,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 1.3065% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 585,
+      "message_id_current": 613,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "ZEC/USDT:USDT",
@@ -32452,11 +32514,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 1012.41,
-      "stop_loss": 1060.8728571429,
+      "entry": 1014.42,
+      "stop_loss": 1062.8828571429,
       "take_profit": [
-        947.7928571429,
-        883.1757142857
+        949.8028571429,
+        885.1857142857
       ],
       "ema20": 1144.7028502288,
       "ema50": 1185.0379083777,
@@ -32488,20 +32550,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:55.996000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.883000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 3.4037% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1060.8728571429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 1062.8828571429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -33126,9 +33188,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 3.4037% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 586,
+      "message_id_current": 614,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "QNT/USDT:USDT",
@@ -33136,11 +33198,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 176.61,
-      "stop_loss": 181.41,
+      "entry": 177.2,
+      "stop_loss": 182.0,
       "take_profit": [
-        170.21,
-        163.81
+        170.8,
+        164.4
       ],
       "ema20": 188.2851817358,
       "ema50": 192.6019753201,
@@ -33172,20 +33234,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.025000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.917000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.2413% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 181.41 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 182.0 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -33810,9 +33872,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.2413% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 587,
+      "message_id_current": 615,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XLM/USDT:USDT",
@@ -33820,11 +33882,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.142,
-      "stop_loss": 0.1448167857,
+      "entry": 0.14221,
+      "stop_loss": 0.1450267857,
       "take_profit": [
-        0.1382442857,
-        0.1344885714
+        0.1384542857,
+        0.1346985714
       ],
       "ema20": 0.1459658558,
       "ema50": 0.1473491988,
@@ -33856,20 +33918,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.052000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.944000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.9388% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1448167857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.1450267857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -34494,9 +34556,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.9388% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 588,
+      "message_id_current": 616,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "DASH/USDT:USDT",
@@ -34504,11 +34566,11 @@
       "data_provider": "mexc",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 42.78,
-      "stop_loss": 44.1010714286,
+      "entry": 42.82,
+      "stop_loss": 44.1410714286,
       "take_profit": [
-        41.0185714286,
-        39.2571428571
+        41.0585714286,
+        39.2971428571
       ],
       "ema20": 45.924066633,
       "ema50": 46.3698005536,
@@ -34540,20 +34602,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.104000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.991000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.9613% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.1010714286 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 44.1410714286 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -35178,9 +35240,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.9613% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 589,
+      "message_id_current": 617,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "LIT/USDT:USDT",
@@ -35188,11 +35250,11 @@
       "data_provider": "mexc",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 3.3092,
-      "stop_loss": 3.2059357143,
+      "entry": 3.3179,
+      "stop_loss": 3.2146357143,
       "take_profit": [
-        3.4468857143,
-        3.5845714286
+        3.4555857143,
+        3.5932714286
       ],
       "ema20": 3.2384053948,
       "ema50": 3.2117945826,
@@ -35224,20 +35286,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:12:56.077000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:36.968000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 0.8285% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 3.2059357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 3.2146357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -35862,9 +35924,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 0.8285% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 590,
+      "message_id_current": 618,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "APT/USDT:USDT",
@@ -35872,11 +35934,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.5574,
-      "stop_loss": 0.5708142857,
+      "entry": 0.5588,
+      "stop_loss": 0.5722142857,
       "take_profit": [
-        0.5395142857,
-        0.5216285714
+        0.5409142857,
+        0.5230285714
       ],
       "ema20": 0.5794615356,
       "ema50": 0.5835407778,
@@ -35908,20 +35970,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:04.936000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:43.769000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.6991% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5708142857 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.5722142857 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -36546,9 +36608,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.6991% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 591,
+      "message_id_current": 619,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "XMR/USDT:USDT",
@@ -36556,11 +36618,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 556.84,
-      "stop_loss": 570.7396428571,
+      "entry": 557.81,
+      "stop_loss": 571.7096428571,
       "take_profit": [
-        538.3071428571,
-        519.7742857143
+        539.2771428571,
+        520.7442857143
       ],
       "ema20": 564.9825080047,
       "ema50": 580.1531352355,
@@ -36592,20 +36654,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:05.511000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:44.304000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 2.6149% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 570.7396428571 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 571.7096428571 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -37230,9 +37292,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 2.6149% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 592,
+      "message_id_current": 620,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "JUP/USDT:USDT",
@@ -37240,11 +37302,11 @@
       "data_provider": "kucoinfutures",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.2511,
-      "stop_loss": 0.2446821429,
+      "entry": 0.2517,
+      "stop_loss": 0.2452821429,
       "take_profit": [
-        0.2596571429,
-        0.2682142857
+        0.2602571429,
+        0.2688142857
       ],
       "ema20": 0.2522355652,
       "ema50": 0.2471518973,
@@ -37276,20 +37338,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:06.087000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:44.851000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 2.0569% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2446821429 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.2452821429 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -37914,9 +37976,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 2.0569% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 593,
+      "message_id_current": 621,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "CRV/USDT:USDT",
@@ -37924,11 +37986,11 @@
       "data_provider": "kucoinfutures",
       "status": "SELL_NOW",
       "side": "SELL",
-      "entry": 0.2509,
-      "stop_loss": 0.2565357143,
+      "entry": 0.2515,
+      "stop_loss": 0.2571357143,
       "take_profit": [
-        0.2433857143,
-        0.2358714286
+        0.2439857143,
+        0.2364714286
       ],
       "ema20": 0.2580916559,
       "ema50": 0.2595622842,
@@ -37960,20 +38022,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "OK"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:07.278000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:45.947000+00:00",
       "ticker_timestamp_source": "FETCH_TIME_PROXY",
       "entry_price_quality": "PROXY_FETCH_TIME",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 پایین EMA50 و فاصله نسبی 0.5666% است.",
-      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.2565357143 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H بالاتر از EMA50 یا فعال‌شدن حدضرر 0.2571357143 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -38598,9 +38660,9 @@
         }
       ],
       "reason": "EMA20 پایین‌تر از EMA50 است و فاصله آن‌ها 0.5666% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند. قیمت ورود با زمان دریافت API ثبت شده و PROXY است.",
-      "message_id_current": 594,
+      "message_id_current": 622,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     },
     {
       "symbol": "HOT/USDT:USDT",
@@ -38608,11 +38670,11 @@
       "data_provider": "toobit",
       "status": "BUY_NOW",
       "side": "BUY",
-      "entry": 0.0004385,
-      "stop_loss": 0.0004177893,
+      "entry": 0.0004394,
+      "stop_loss": 0.0004186893,
       "take_profit": [
-        0.0004661143,
-        0.0004937286
+        0.0004670143,
+        0.0004946286
       ],
       "ema20": 0.0004396485,
       "ema50": 0.0004245714,
@@ -38644,20 +38706,20 @@
         "invalid_components": [],
         "reason": "all_five_components_required_no_missing_to_zero"
       },
-      "generated_at_utc": "2026-11-10T17:13:19.186654+00:00",
+      "generated_at_utc": "2026-11-10T17:15:01.490866+00:00",
       "data_availability": {
         "ohlcv": "OK",
         "funding": "OK",
         "open_interest": "UNAVAILABLE"
       },
-      "ticker_timestamp_utc": "2026-11-10T17:13:16.985000+00:00",
+      "ticker_timestamp_utc": "2026-11-10T17:14:59.072000+00:00",
       "ticker_timestamp_source": "EXCHANGE",
       "entry_price_quality": "EXCHANGE_TIMESTAMP",
       "analysis_type": "EMA_TREND_CONTINUATION_MVP",
       "signal_id": "EMA_TREND_CONTINUATION_MVP:1H",
       "timeframe": "1H",
       "hypothesis": "ادامه حرکت در جهت روند 1H؛ EMA20 بالای EMA50 و فاصله نسبی 3.5511% است.",
-      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.0004177893 فرضیه را باطل می‌کند.",
+      "falsification": "بسته‌شدن کندل 1H پایین‌تر از EMA50 یا فعال‌شدن حدضرر 0.0004186893 فرضیه را باطل می‌کند.",
       "chart_candles": [
         {
           "timestamp": 1794081600000,
@@ -39282,9 +39344,9 @@
         }
       ],
       "reason": "EMA20 بالاتر از EMA50 است و فاصله آن‌ها 3.5511% است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند.",
-      "message_id_current": 595,
+      "message_id_current": 623,
       "message_id_audience": null,
-      "published_at": "2026-11-10T17:13:38.834325+00:00"
+      "published_at": "2026-11-10T17:15:21.250467+00:00"
     }
   ],
   "quality": {
@@ -39301,35 +39363,35 @@
     "binance": "ExchangeNotAvailable:binanceusdm GET https://fapi.binance.com/fapi/v1/exchangeInfo 451  {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location according to 'b. Eligibility' in https://"
   },
   "message_id_current": {
-    "ETH/USDT:USDT": 568,
-    "BTC/USDT:USDT": 569,
-    "SOL/USDT:USDT": 570,
-    "PEPE/USDT:USDT": 571,
-    "XRP/USDT:USDT": 572,
-    "DOGE/USDT:USDT": 573,
-    "WLD/USDT:USDT": 574,
-    "ARB/USDT:USDT": 575,
-    "SUI/USDT:USDT": 576,
-    "LINK/USDT:USDT": 577,
-    "AVAX/USDT:USDT": 578,
-    "AAVE/USDT:USDT": 579,
-    "BCH/USDT:USDT": 580,
-    "ONDO/USDT:USDT": 581,
-    "INJ/USDT:USDT": 582,
-    "STRK/USDT:USDT": 583,
-    "ZRO/USDT:USDT": 584,
-    "DOT/USDT:USDT": 585,
-    "ZEC/USDT:USDT": 586,
-    "QNT/USDT:USDT": 587,
-    "XLM/USDT:USDT": 588,
-    "DASH/USDT:USDT": 589,
-    "LIT/USDT:USDT": 590,
-    "APT/USDT:USDT": 591,
-    "XMR/USDT:USDT": 592,
-    "JUP/USDT:USDT": 593,
-    "CRV/USDT:USDT": 594,
-    "HOT/USDT:USDT": 595
+    "ETH/USDT:USDT": 596,
+    "BTC/USDT:USDT": 597,
+    "SOL/USDT:USDT": 598,
+    "PEPE/USDT:USDT": 599,
+    "XRP/USDT:USDT": 600,
+    "DOGE/USDT:USDT": 601,
+    "WLD/USDT:USDT": 602,
+    "ARB/USDT:USDT": 603,
+    "SUI/USDT:USDT": 604,
+    "LINK/USDT:USDT": 605,
+    "AVAX/USDT:USDT": 606,
+    "AAVE/USDT:USDT": 607,
+    "BCH/USDT:USDT": 608,
+    "ONDO/USDT:USDT": 609,
+    "INJ/USDT:USDT": 610,
+    "STRK/USDT:USDT": 611,
+    "ZRO/USDT:USDT": 612,
+    "DOT/USDT:USDT": 613,
+    "ZEC/USDT:USDT": 614,
+    "QNT/USDT:USDT": 615,
+    "XLM/USDT:USDT": 616,
+    "DASH/USDT:USDT": 617,
+    "LIT/USDT:USDT": 618,
+    "APT/USDT:USDT": 619,
+    "XMR/USDT:USDT": 620,
+    "JUP/USDT:USDT": 621,
+    "CRV/USDT:USDT": 622,
+    "HOT/USDT:USDT": 623
   },
   "message_id_audience": null,
-  "published_at": "2026-11-10T17:13:38.834325+00:00"
+  "published_at": "2026-11-10T17:15:21.250467+00:00"
 }
