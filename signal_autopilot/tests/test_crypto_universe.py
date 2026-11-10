@@ -176,5 +176,15 @@ class CryptoUniverseTests(unittest.TestCase):
         result = MarketDataFetcher._completed_ohlcv([recent, still_open, old], now)
         self.assertEqual([c[0] for c in result], [old[0], recent[0]])
 
+    def test_completed_ohlcv_uses_requested_4h_interval(self):
+        now = 1_800_000_000_000
+        old = [now - 8 * 3_600_000, 10, 11, 9, 10, 100]
+        recent = [now - 4 * 3_600_000, 10, 11, 9, 10, 100]
+        still_open = [now - 2 * 3_600_000, 10, 11, 9, 10, 100]
+        result = MarketDataFetcher._completed_ohlcv(
+            [recent, still_open, old], now, interval_ms=4 * 3_600_000
+        )
+        self.assertEqual([c[0] for c in result], [old[0], recent[0]])
+
 if __name__ == "__main__":
     unittest.main()
