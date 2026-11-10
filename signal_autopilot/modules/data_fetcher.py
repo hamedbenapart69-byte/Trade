@@ -225,13 +225,13 @@ class MarketDataFetcher:
         return accepted[:self.limit]
 
     @staticmethod
-    def _completed_ohlcv(candles, now_ms: int):
-        """مرتب‌سازی کندل‌ها و حذف کندل یک‌ساعتهٔ هنوز بسته‌نشده."""
+    def _completed_ohlcv(candles, now_ms: int, interval_ms: int = 3_600_000):
+        """مرتب‌سازی و حذف آخرین کندل بسته‌نشده با توجه به تایم‌فریم."""
         ordered = sorted(
             (c for c in candles if c[0] is not None),
             key=lambda candle: int(candle[0]),
         )
-        return [c for c in ordered if int(c[0]) + 3_600_000 <= now_ms]
+        return [c for c in ordered if int(c[0]) + interval_ms <= now_ms]
 
     def _fetch_from_provider(self, provider: str, whitelist: set[str]):
         exchange = self._new_exchange(provider)
@@ -255,11 +255,11 @@ class MarketDataFetcher:
             row = {
                 "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
                 "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
-                "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
+                "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None, "ohlcv_4h": None,
                 "funding_rate": None, "funding_timestamp_utc": None, "funding_interval_hours": None,
                 "open_interest": None, "open_interest_timestamp_utc": None,
-                "availability": {"ohlcv": "UNAVAILABLE", "funding": "UNAVAILABLE",
-                                 "open_interest": "UNAVAILABLE"}, "errors": [],
+                "availability": {"ohlcv": "UNAVAILABLE", "ohlcv_4h": "UNAVAILABLE",
+                                 "funding": "UNAVAILABLE", "open_interest": "UNAVAILABLE"}, "errors": [],
             }
             try:
                 candles = exchange.fetch_ohlcv(symbol, timeframe="1h", limit=210)
@@ -273,6 +273,18 @@ class MarketDataFetcher:
                     row["availability"]["ohlcv"] = "OK"
             except Exception as exc:
                 row["errors"].append("ohlcv:" + type(exc).__name__)
+            try:
+                candles_4h = exchange.fetch_ohlcv(symbol, timeframe="4h", limit=210)
+                completed_4h = self._completed_ohlcv(candles_4h, now_ms, interval_ms=14_400_000)
+                row["ohlcv_4h"] = [{
+                    "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
+                    "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
+                    "close": float(c[4]), "volume": float(c[5]),
+                } for c in completed_4h]
+                if len(row["ohlcv_4h"]) >= 200:
+                    row["availability"]["ohlcv_4h"] = "OK"
+            except Exception as exc:
+                row["errors"].append("ohlcv_4h:" + type(exc).__name__)
             try:
                 funding = exchange.fetch_funding_rate(symbol)
                 rate = funding.get("fundingRate")
