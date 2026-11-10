@@ -194,6 +194,17 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
             self.assertFalse((root / "signals.json").exists())
             self.assertTrue((root / "report.json").exists())
 
+    def test_p0_workflow_is_manual_data_only_and_does_not_publish_signals(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github" / "workflows" / "stage1b-scheduled.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("--data-only", workflow)
+        self.assertIn("--manifest", workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertNotIn("signals-publish", workflow)
+        self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
+
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
