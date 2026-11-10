@@ -119,7 +119,10 @@ class CryptoUniverseTests(unittest.TestCase):
 
     def test_debug_block_okx_forces_fallback_without_touching_okx(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        fallback_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(60)]
+        fallback_rows = [
+            {"symbol": f"BTC{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(60)
+        ]
 
         def fake_provider(provider, whitelist):
             if provider == "okx":
@@ -137,8 +140,14 @@ class CryptoUniverseTests(unittest.TestCase):
 
     def test_fallback_continues_after_bybit_block_and_selects_binance(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
-        okx_rows = [(20_000_000, f"BTC{i}/USDT:USDT", {}) for i in range(20)]
-        binance_rows = [(20_000_000, f"ETH{i}/USDT:USDT", {}) for i in range(60)]
+        okx_rows = [
+            {"symbol": f"BTC{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(20)
+        ]
+        binance_rows = [
+            {"symbol": f"ETH{i}/USDT:USDT", "availability": {"ohlcv": "OK", "ohlcv_4h": "OK"}}
+            for i in range(60)
+        ]
 
         def fake_provider(provider, whitelist):
             if provider == "okx":
