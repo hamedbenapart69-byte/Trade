@@ -8,6 +8,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 from math import isfinite
+import hashlib
+import json
 
 C10 = {
     "BUY_NOW", "SELL_NOW", "CONDITIONAL_BUY", "CONDITIONAL_SELL",
@@ -145,6 +147,18 @@ def _higher_low_or_lower_high(candles: list[dict[str, Any]], direction: str) -> 
     return max(float(c["high"]) for c in recent) < max(float(c["high"]) for c in previous)
 
 
+def _input_hash(row: dict[str, Any]) -> str:
+    """هش SHA-256 ورودی بازار برای بازتولیدپذیری و ممیزی."""
+    material = {
+        "symbol": row.get("symbol"), "timeframe": row.get("timeframe", "1H"),
+        "last": row.get("last"), "ticker_timestamp_utc": row.get("ticker_timestamp_utc"),
+        "ticker_timestamp_source": row.get("ticker_timestamp_source"),
+        "ohlcv": row.get("ohlcv") or [],
+    }
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _degraded(row: dict[str, Any], generated: str, reason: str) -> dict[str, Any]:
     return {
         "symbol": row.get("symbol"), "status": "MARKET_DATA_DEGRADED", "side": None,
@@ -155,7 +169,7 @@ def _degraded(row: dict[str, Any], generated: str, reason: str) -> dict[str, Any
         "ticker_timestamp_source": row.get("ticker_timestamp_source", "EXCHANGE"),
         "entry_price_quality": None, "analysis_type": "EMA_TREND_CONTINUATION_V2",
         "timeframe": row.get("timeframe", "1H"), "hypothesis": None, "falsification": None,
-        "chart_candles": [], "reason": reason,
+        "chart_candles": [], "input_hash": _input_hash(row), "reason": reason,
     }
 
 
@@ -192,7 +206,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         rsi_value = rsi(closes, 14)
         adx_value = adx(candles, 14)
         vol_ratio = volume_ratio(candles, 20)
-        if not fast or not slow or min(x for x in (atr_value, rsi_value, adx_value, vol_ratio) if x is not None) <= 0:
+        if not fast or not slow or any(x is None for x in (atr_value, rsi_value, adx_value, vol_ratio)) or atr_value <= 0:
             return _degraded(row, generated_at_utc, "Indicator calculation unavailable or invalid")
 
         ema20_value, ema50_value = fast[-1], slow[-1]
@@ -245,6 +259,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             "entry_price_quality": "PROXY_FETCH_TIME" if row.get("ticker_timestamp_source") == "FETCH_TIME_PROXY" else "EXCHANGE_TIMESTAMP",
             "analysis_type": "EMA_TREND_CONTINUATION_V2", "timeframe": row.get("timeframe", "1H"),
             "quality_gates": gates, "quality_metrics": metrics, "chart_candles": candles[-70:],
+            "input_hash": _input_hash(row),
         }
         if failed:
             return {
@@ -288,6 +303,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
         return {
             **base, "status": status, "stop_loss": round(stop, 10),
             "take_profit": [round(tp1, 10), round(tp2, 10)],
+            "evidence_candles": candles[-MIN_CANDLES:],
             "reason": reason,
             "hypothesis": (
                 f"ادامهٔ روند {row.get('timeframe', '1H')}؛ شیب هر دو EMA هم‌جهت است و "
@@ -312,6 +328,9 @@ def generate_signals(data: dict[str, Any]) -> dict[str, Any]:
     unscanned = max(requested - processed, 0)
 
     signals = [build_signal(row, generated) for row in rows]
+    for signal in signals:
+        signal["provider"] = data.get("provider", "unknown")
+        signal["signal_id"] = f"{generated}|{signal.get('symbol')}|EMA20_EMA50_ATR14_QUALITY_GATES_V2"
     if not signals:
         signals = [{
             "symbol": "MARKET", "status": "MARKET_DATA_DEGRADED", "side": None,
