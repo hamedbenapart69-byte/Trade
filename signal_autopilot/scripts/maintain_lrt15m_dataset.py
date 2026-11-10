@@ -68,11 +68,22 @@ def migrate_legacy_snapshots(storage_dir: Path, symbols: list[str]) -> dict[str,
         target = base_dir / f"{symbol}_15m.parquet"
         candidates = sorted(storage_dir.glob(f"{symbol}_15m_*.parquet"),
                             key=_legacy_end_date, reverse=True)
-        if not target.exists() and candidates:
-            shutil.copy2(candidates[0], target)
-            migrated.append(symbol)
-
         valid, rows, first_ms, last_ms, reason = _validate_baseline(target)
+        if not valid and candidates:
+            # اگر baseline خراب بود، آخرین snapshot معتبر را جایگزین کن.
+            candidate = candidates[0]
+            temporary = base_dir / f".{symbol}_15m_candidate.parquet"
+            shutil.copy2(candidate, temporary)
+            candidate_valid, candidate_rows, candidate_first, candidate_last, candidate_reason = _validate_baseline(temporary)
+            if candidate_valid:
+                temporary.replace(target)
+                migrated.append(symbol)
+                valid, rows, first_ms, last_ms, reason = (
+                    candidate_valid, candidate_rows, candidate_first, candidate_last, candidate_reason
+                )
+            else:
+                temporary.unlink(missing_ok=True)
+
         validation[symbol] = {
             "valid": valid, "rows": rows, "first_open_ms": first_ms,
             "last_open_ms": last_ms, "reason": reason,
@@ -258,6 +269,8 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
             tail_status[symbol] = statuses
             new_rows_by_symbol[symbol] = len(bars)
 
+    if compute_dir.exists():
+        shutil.rmtree(compute_dir)
     compute_dir.mkdir(parents=True, exist_ok=True)
     compute_results = {
         symbol: _compute_window(storage_dir, compute_dir, symbol,
