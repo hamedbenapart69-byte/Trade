@@ -86,8 +86,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Parquet reader
-        run: python -m pip install --upgrade pip pyarrow
+      - name: Install project dependencies and Parquet reader
+        run: python -m pip install --upgrade pip -r requirements.txt pyarrow
       - name: Fetch immutable market-data branch snapshot
         shell: bash
         run: |
