@@ -71,7 +71,7 @@ def validate_rows(rows: list[dict], symbol: str, kind: str, path: PurePosixPath)
     return timestamps
 
 
-def validate_artifact(artifact_dir: Path, expected_run_id: str) -> str:
+def validate_artifact(artifact_dir: Path, expected_run_id: str, expected_workflow_sha: str) -> str:
     root = artifact_dir.resolve()
     storage = root / "market-data/datasets/stage1b/lrt15m"
     manifest_path = root / "market-data/datasets/stage1b/manifest.json"
@@ -94,11 +94,13 @@ def validate_artifact(artifact_dir: Path, expected_run_id: str) -> str:
         raise ValueError("MANIFEST_SCHEMA_OR_DATASET_INVALID")
     if manifest.get("workflow_run_id") != str(expected_run_id):
         raise ValueError("WORKFLOW_RUN_ID_MISMATCH")
+    if manifest.get("workflow_commit") != expected_workflow_sha:
+        raise ValueError("WORKFLOW_COMMIT_MISMATCH")
     if manifest.get("signal_engine_executed") is not False:
         raise ValueError("P0_SIGNAL_ENGINE_MUST_REMAIN_DISABLED")
     if manifest.get("universe_count") != 27 or manifest.get("symbols_count") != 27:
         raise ValueError("MANIFEST_SYMBOL_COVERAGE_INVALID")
-    if not isinstance(symbols, list) or len(symbols) != 27 or len(set(symbols)) != 27:
+    if not isinstance(symbols, list) or len(symbols) != 27 or len(set(symbols)) != 27 or symbols != sorted(symbols):
         raise ValueError("MANIFEST_SYMBOL_LIST_INVALID")
     if any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in symbols):
         raise ValueError("MANIFEST_SYMBOL_NAME_INVALID")
@@ -114,6 +116,18 @@ def validate_artifact(artifact_dir: Path, expected_run_id: str) -> str:
         raise ValueError("DATA_REPORT_COMPLETENESS_INVALID")
     if not isinstance(report.get("symbols_fresh"), int) or not 0 <= report["symbols_fresh"] <= 27:
         raise ValueError("DATA_REPORT_FRESHNESS_INVALID")
+    report_symbols = report.get("symbols")
+    if not isinstance(report_symbols, list) or len(report_symbols) != 27:
+        raise ValueError("DATA_REPORT_SYMBOL_LIST_INVALID")
+    if {row.get("symbol") for row in report_symbols} != set(symbols):
+        raise ValueError("DATA_REPORT_SYMBOL_SET_MISMATCH")
+    complete_count = sum(1 for row in report_symbols if row.get("continuity") is True)
+    fresh_count = sum(1 for row in report_symbols if row.get("fresh") is True)
+    if complete_count != report["symbols_complete"] or fresh_count != report["symbols_fresh"]:
+        raise ValueError("DATA_REPORT_COUNT_MISMATCH")
+    expected_gate = "PASS" if complete_count == 27 and fresh_count == 27 else "DEGRADED"
+    if report["status"] != expected_gate:
+        raise ValueError("DATA_REPORT_GATE_LOGIC_MISMATCH")
 
     workflow_commit = manifest.get("workflow_commit", "")
     engine_commit = manifest.get("engine_commit", "")
@@ -159,6 +173,10 @@ def validate_artifact(artifact_dir: Path, expected_run_id: str) -> str:
             raise ValueError(f"FILE_ROW_COUNT_MISMATCH:{rel_text}")
         rows = table.to_pylist()
         timestamps = validate_rows(rows, symbol, kind, rel)
+        if not timestamps:
+            raise ValueError(f"EMPTY_MANIFEST_FILE:{rel_text}")
+        if item.get("first_open_ms") != timestamps[0] or item.get("last_open_ms") != timestamps[-1]:
+            raise ValueError(f"FILE_TIMESTAMP_RANGE_MISMATCH:{rel_text}")
         if kind == "BASELINE":
             if symbol in baseline_symbols or len(timestamps) != EXPECTED_ROWS:
                 raise ValueError(f"BASELINE_COVERAGE_INVALID:{symbol}")
@@ -198,8 +216,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-dir", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--workflow-sha", required=True)
     args = parser.parse_args()
-    validate_artifact(args.artifact_dir, args.run_id)
+    validate_artifact(args.artifact_dir, args.run_id, args.workflow_sha)
     return 0
 
 
