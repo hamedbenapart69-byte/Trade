@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: stage1b-lrt15m
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -56,11 +57,9 @@ jobs:
         run: |
           python -m unittest tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download -v
 
-      - name: Run live 27-symbol scan and Telegram delivery
+      - name: Run live 27-symbol scan (no delivery credentials)
         working-directory: signal_autopilot
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           LOG_LEVEL: INFO
         run: python main.py
 
