@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Trader_me Stage 1B LRT-15m Signal Bot"]
     types: [completed]
-    branches: [stage1b-lrt15m]
+    branches: [main, stage1b-lrt15m]
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'stage1b-lrt15m' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'stage1b-lrt15m') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
