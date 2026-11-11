@@ -69,6 +69,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trader-me-stage1-signal-bot-${{ github.run_id }}
-          path: signal_autopilot/artifacts/charts/
+          path: |
+            signal_autopilot/artifacts/charts/
+            signal_autopilot/artifacts/stage1_lrt_report.json
           if-no-files-found: ignore
           retention-days: 7
