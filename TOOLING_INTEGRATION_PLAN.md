@@ -51,13 +51,18 @@ Observed from the accessible `main` branch on 2026-11-11:
 - Root control plane: `app/main.py`, `app/store.py`, `app/workflow_schemas.py`, `app/signals.py`, `worker.py`.
 - The control plane uses FastAPI, SQLite, idempotency keys, audit events, a durable outbox, bounded leases, explicit reconciliation for unknown outcomes, separate operator/worker credentials, and a one-shot worker with a workflow allowlist.
 - The root `requirements.txt` is currently small: FastAPI, Uvicorn and HTTPX. `compose.yaml` runs the control-plane container and a named SQLite volume; it does not currently host Windmill, Prefect, Temporal, Feast or Langfuse.
-- The repository contains a guarded n8n adapter, but the README states that no live n8n instance/webhook has been configured. No Activepieces integration is visible in the current repository tree; any external Activepieces flow must be audited separately before claiming a migration target exists.
+- The repository contains a guarded n8n adapter, but the README states that no live n8n instance/webhook has been configured. Activepieces is not embedded in the Git repository, but a connected external Activepieces project was inspected on 2026-11-11: it contains six enabled flows and one disabled legacy futures flow. It is an external runtime/data silo and must be treated as part of the system inventory, not assumed to be absent.
 - Cloudflare Pages build/preview workflows exist, but no Cloudflare Workers application or Worker deployment source was found in the current main tree. Cloud Run is therefore not a direct replacement for a currently implemented Worker service.
 - The scanner is under `signal_autopilot/`, with separate dependencies including CCXT, HTTPX, PyArrow, python-telegram-bot, Matplotlib and websockets.
 - The V5 scanner is documented as read-only, using public market data, and does not place orders or connect to trading accounts. Current documented live data paths include public CoinGecko discovery and public exchange market data. No private exchange credentials or order endpoints are part of the intended system.
 - The historical 1h signal engine is marked research-only/quarantined in code. The V5 design document explicitly says a verified historical backtest/performance sample is not yet established.
+- The external Activepieces project contains a 49-step daily market/research scanner with JavaScript backtest blocks, plus scheduled CoinGecko derivatives, FRED macro, RSS news and DEX research flows, and a webhook-backed dashboard read API. The legacy Toobit 1h futures signal flow is disabled. This is not the same runtime as the current V5 OKX scanner in Trade; no automatic data bridge between them is verified.
 - The V5-specific workflow file on `main` is manual-dispatch-only, while other scheduled workflows exist in the repository. The README and workflow files therefore need a schedule-ownership reconciliation before any scheduler migration.
 - CI currently runs root tests, scanner tests, a fail-closed legacy-engine smoke test, JavaScript syntax validation, Compose validation, Docker build and a container health smoke test.
+
+**Activepieces research evidence (observed, not independently revalidated):** The connected external project completed a production run on 2026-11-11 04:40 UTC. Its final gate returned `BLOCKED`, `WAIT`, `REVIEW_REQUIRED`, and `trade_allowed=false`. In that run, the built-in 1h EMA20/EMA50 + RSI14 DEX-proxy backtest reported OOS return -15.28%, MaxDD 31.54%, PF 0.396 and 28 trades. The 4h Donchian/EMA DEX-pool proxy reported OOS return -5.80%, MaxDD 11.24%, PF 0.351 and 4 trades. The daily price-observation backtest had only 2 OOS trades, below its own minimum of 3. A separate four-hypothesis training-validation stage selected no candidate and therefore did not run its OOS selection test. These are run outputs from a single external workflow, not independent performance certification. Its own limitations state that hourly data comes from one WBTC DEX pool, daily observations are not OHLC candles, the 70/30 split is preliminary, and gas/liquidity/funding costs are incomplete.
+
+**Implication for Jesse/Nautilus:** The existing Activepieces JavaScript backtests must be included as a third comparator in any benchmark. The candidate engines must use the same immutable dataset and assumptions; do not compare a DEX WBTC proxy with consolidated futures data and call the result engine parity.
 
 **Important correction:** The current `main` branch does not establish that an active production backtest engine with a measured 100% drawdown exists. That claim must be tied to a specific engine, commit, dataset, configuration and report before any replacement decision. The V5 documentation instead records the historical backtest as unverified. NautilusTrader/Jesse are therefore benchmark candidates, not approved replacements.
 
@@ -71,6 +76,13 @@ Observed from the accessible `main` branch on 2026-11-11:
 - **Risks:** Native/Rust-oriented build and dependency footprint; exchange-specific instrument and fill semantics must be modelled; migration can create false confidence if the simulator does not reproduce the existing strategy's actual assumptions.
 - **Runtime/maintenance:** High relative to the current lightweight Python pipeline. CI build time and memory use need measurement.
 - **Decision:** Conditional benchmark only. No replacement until parity tests and OOS validation pass.
+
+### 3.1.1 Existing Activepieces simulator baseline
+
+- **Current state:** A 49-step external Activepieces research flow contains JavaScript implementations for a 1h EMA/RSI baseline, a 4h Donchian/EMA baseline and a multi-fold training-validation experiment.
+- **Observed run:** The most recent inspected run ended with `BLOCKED / WAIT / REVIEW_REQUIRED`, with trading permission false. The 1h and 4h OOS results were negative and the daily OOS sample did not meet its own minimum trade count.
+- **Data/model limits:** The current hourly backtest uses WBTC/USDT candles from one DEX pool, not consolidated BTC futures. Daily data is price observations, not daily OHLC. Costs omit some real-world execution effects. The multi-fold experiment did not select a candidate and did not run OOS.
+- **Decision:** Preserve this simulator as a frozen baseline for research. It is not approved for signal production or live trading. Benchmark Jesse and Nautilus against it only after dataset provenance and execution assumptions are normalized.
 
 ### 3.2 Jesse
 
