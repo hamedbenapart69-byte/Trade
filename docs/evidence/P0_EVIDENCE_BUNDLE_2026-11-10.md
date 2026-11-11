@@ -331,3 +331,74 @@ Flow:
 | P0 کلی | **BLOCKED / NOT PASS** |
 
 هیچ نتیجهٔ آزمایشی، Mock، Preview یا CI به‌عنوان شاهد اجرای زنده یا امنیت Production گزارش نشده است.
+
+
+---
+
+# الحاقیهٔ اجرای تدریجی P0 — 2026-11-11 (بازبینی پس از دستور ناظر)
+
+این بخش، وضعیت قبلی «هیچ PR ادغام نشد» را با وضعیت واقعی پس از اجرای مجاز ناظر جایگزین می‌کند.
+
+## 1. ادغام‌های انجام‌شده
+
+| PR | مقصد | Head SHA بررسی‌شده | Merge commit | نتیجه |
+|---:|---|---|---|---|
+| #73 | `stage1b-lrt15m` | `ad799fd8ba1822a935d19179dca3db95aabd7975` | `2cb201aa4d01527250872687ac0c0643421ebc32` | MERGED |
+| #74 | `main` | `93822b25aa47f1c1448fbbf8bd7928a05c6fce6a` | `e542a7e357b610be6f188fe51abb6fc72bb3470f` | MERGED |
+| #78 | `main` | `991dd55c1170e24cded79a957cd79ea7d2c60920` | `ac01c995b59f659e4fb7eefd5f829742c63ee6a1` | MERGED |
+| #80 | `stage1b-lrt15m` | `27ff2b600b61509a24e1a5b3d20e482b30c445f4` | `d309d2aff9aed4a9209af071407f1b9f1625b52b` | MERGED |
+| #76 | `main` | `66ddb4b710468982598258f63ae7d74ea38d2e98` | `45c7721bc62642ad18e18385e0cbb5853c7d8afc` | MERGED |
+| #77 | `main` | `e4a3996b62fb67673fd79f26385a348937634e42` | `225d5a5703c9c14fb802cc2a86f886feb546cb34` | MERGED |
+
+تمام Checkهای موجود روی head SHAهای بالا در زمان ادغام `completed/success` بودند. ادغام‌ها با روش squash و کنترل Expected Head SHA انجام شدند.
+
+### PR #79
+
+- Head: `4142a47bc8587ba0682edbf515a6601588fadaaf`
+- CI: 4/4 Check موفق (test×2، pytest، Cloudflare Pages)
+- تلاش Merge از ابزار GitHub به‌علت کنترل ایمنی پلتفرم پیش از اجرای درخواست مسدود شد: `couldn't determine the safety status of the request`.
+- وضعیت: **DEFERRED — TOOL SAFETY GATE**؛ هیچ merge commit ساخته نشد.
+- هیچ مسیر جایگزین برای دورزدن این کنترل استفاده نشد.
+
+## 2. Stage 0 — پذیرش ثبت منابع
+
+طبق دستور صریح ناظر، `docs/constitution/SOURCE_REGISTER.md` همراه نام فایل، تعداد صفحات و SHA-256 به‌عنوان ثبت رسمی منابع V9 برای Stage 0 پذیرفته شد.
+
+- Stage 0: **PASS — فقط در دامنهٔ Source Registration**.
+- تبدیل کامل PDFها به `V9.0.md` و `V9.1.md`: **DEFERRED**.
+- SHA-256 و تعداد صفحات در `docs/constitution/SOURCE_REGISTER.md` و `CONSTITUTION_VERSION.md` ثبت شده‌اند.
+- این پذیرش اداری، ادعای وجود متن کامل Markdown یا برابری معنایی آن با PDF نیست.
+
+## 3. Policy Guard
+
+در زمان این الحاقیه، Workflow جایگزین هنوز ساخته/اجرا نشده است. وضعیت Branch Protection ادمین همچنان **DEFERRED** است؛ Policy Guard فقط کنترل کارآگاهی و هشداردهنده است و به‌تنهایی PR requirement، approval یا جلوگیری از push مستقیم را enforce نمی‌کند.
+
+## 4. Telegram Secret Isolation
+
+PR #73 سطح مجوز نوشتن را کاهش داد و state persistence را به Artifact منتقل کرد؛ اما diff آن، متغیرهای `TELEGRAM_TOKEN` و `TELEGRAM_CHAT_ID` را از Job اسکن حذف نکرد. Workflow فعلی `.github/workflows/signal_bot.yml` همچنان این دو Secret را به همان Jobی می‌دهد که کد `stage1b-lrt15m` را اجرا می‌کند.
+
+بنابراین ادعای جداسازی Secret **PASS نیست**. اصلاح نیازمند انتقال ارسال به Workflow مورداعتماد روی main و حذف Secret از Job اسکن است. وضعیت فعلی: **OPEN / P0**.
+
+## 5. Activepieces Webhook Auth
+
+Flow `6oyZxg1YLVu0OpGzuDY8r` همچنان با `authType=none` فعال است. هیچ تغییر Header Auth، Secret امن سمت سرور، تست 401/200 یا Publish جدید انجام نشده است.
+
+وضعیت: **DEFERRED — NO SAFE SECRET DELIVERY PATH**. قراردادن API key در فایل JavaScript مرورگر یا در مخزن عمومی راه‌حل امن نیست.
+
+## 6. وضعیت نهایی اصلاح‌شده
+
+| الزام | وضعیت | توضیح |
+|---|---|---|
+| PRهای #73 و #74 | PASS | ادغام شدند؛ State Writer جدا شد. |
+| PR #78 | PASS | L2 collector و trusted persistence ادغام شدند. |
+| PR #79 | DEFERRED | CI موفق؛ Merge توسط safety gate مسدود شد. |
+| PR #80 | PASS | Diagnostics و traceability ادغام شدند. |
+| PRهای #76 و #77 | PASS | Freshness warning و daily report artifact ادغام شدند. |
+| Stage 0 | PASS | پذیرش رسمی Source Register با دستور ناظر؛ متن کامل Markdown معوق است. |
+| Policy Guard | PENDING | هنوز ایجاد و اجرا نشده است. |
+| Telegram Secret Isolation | OPEN / FAIL | Secret هنوز در Job اسکن وجود دارد. |
+| Activepieces Header Auth | DEFERRED / OPEN | هنوز authType=none است. |
+| Branch Protection ادمین | DEFERRED | API/connector write access ندارد. |
+| Cloudflare Production Deploy | DEFERRED | توکن افشاشده استفاده نشده؛ Production تغییر نکرده است. |
+
+**P0 کلی هنوز PASS نیست.** تعریف ناظر اجازه می‌دهد کنترل‌های واقعاً غیرقابل‌اجرا DEFERRED شوند، اما Telegram Secret Isolation و Webhook Auth هنوز صرفاً محدودیت ابزاری اثبات‌شده نیستند؛ آن‌ها کنترل‌های قابل‌اقدام اما اجرا‌نشده/فاقد مسیر امن هستند. تا اعمال و آزمون آن‌ها، بستن P0 ادعای زودهنگام خواهد بود.
