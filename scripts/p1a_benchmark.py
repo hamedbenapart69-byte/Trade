@@ -63,18 +63,21 @@ def main() -> int:
                                 "python_count": len(right.get("candles", []))})
     go_ok = sum(1 for x in go_map.values() if x.get("status") == "OK")
     py_ok = sum(1 for x in py_map.values() if x.get("status") == "OK")
-    speedup = (py_seconds / go_seconds) if go_seconds > 0 else None
+    go_collection_seconds = go.get("collection_elapsed_ms", 0) / 1000
+    py_collection_seconds = py.get("collection_elapsed_ms", 0) / 1000
+    speedup = (py_collection_seconds / go_collection_seconds) if go_collection_seconds > 0 else None
     report = {
         "schema_version": "1.0.0",
         "classification": "LIVE_PUBLIC_API_BENCHMARK_NOT_PRODUCTION_EVIDENCE",
         "scope": "15m OHLCV fetch for explicit symbols only; excludes universe discovery, CoinGecko whitelist/liquidity/listing filters, funding, open interest and strategy compute. This is not a full MarketDataFetcher equivalence test.",
         "symbols_requested": len(symbols),
         "shared_as_of_ms": as_of_ms,
-        "go": {"seconds": round(go_seconds, 6), "symbols_ok": go_ok,
+        "go": {"process_wall_seconds": round(go_seconds, 6), "collection_seconds": round(go_collection_seconds, 6), "symbols_ok": go_ok,
                "providers": sorted({x.get("provider") for x in go_map.values() if x.get("provider")})},
-        "python_ccxt_reference": {"seconds": round(py_seconds, 6), "symbols_ok": py_ok,
+        "python_ccxt_reference": {"process_wall_seconds": round(py_seconds, 6), "collection_seconds": round(py_collection_seconds, 6), "symbols_ok": py_ok,
                                   "ccxt_version": __import__("ccxt").__version__},
         "speedup_python_over_go": round(speedup, 4) if speedup is not None else None,
+        "timing_method": "collector_loop_only; excludes process startup and Python load_markets metadata setup",
         "equivalence": {"passed": len(divergences) == 0 and go_ok == py_ok,
                         "matched_symbols": len(symbols) - len(divergences),
                         "divergence_count": len(divergences), "divergences": divergences},
