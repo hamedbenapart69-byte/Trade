@@ -136,6 +136,23 @@ class MissingBaselineContractTests(unittest.TestCase):
         self.assertEqual(ephemeral, {})
 
 
+    def test_rejects_duplicate_timestamps_even_when_unique_coverage_looks_complete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            baseline = root / "BTCUSDT_15m.parquet"
+            timestamps = list(range(0, EXPECTED_ROWS * INTERVAL_MS, INTERVAL_MS))
+            write_timestamps(baseline, timestamps + [timestamps[-1]])
+
+            valid, rows, first_ms, last_ms, reason = _maintenance._validate_baseline(baseline)
+
+            self.assertFalse(valid)
+            self.assertEqual(rows, EXPECTED_ROWS + 1)
+            self.assertEqual(first_ms, timestamps[0])
+            self.assertEqual(last_ms, timestamps[-1])
+            self.assertIn("duplicates=1", reason)
+
+
+
 class MissingBaselineDatasetTests(unittest.TestCase):
     def test_missing_baselines_produce_degraded_report_without_worker_unpack_error(self):
         with tempfile.TemporaryDirectory() as tmp:
