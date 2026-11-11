@@ -54,9 +54,11 @@ def main() -> int:
         left, right = go_map.get(symbol), py_map.get(symbol)
         if left is None or right is None:
             divergences.append({"symbol": symbol, "reason": "MISSING_RESULT"})
-        elif left.get("status") != right.get("status") or left.get("provider") != right.get("provider"):
+        elif (left.get("status") != right.get("status") or left.get("provider") != right.get("provider")
+              or left.get("volume_unit") != right.get("volume_unit")):
             divergences.append({"symbol": symbol, "reason": "PROVIDER_OR_STATUS_MISMATCH",
-                                "go_provider": left.get("provider"), "python_provider": right.get("provider")})
+                                "go_provider": left.get("provider"), "python_provider": right.get("provider"),
+                                "go_volume_unit": left.get("volume_unit"), "python_volume_unit": right.get("volume_unit")})
         elif left.get("candles") != right.get("candles"):
             divergences.append({"symbol": symbol, "reason": "CANDLE_BYTE_VALUE_MISMATCH",
                                 "go_count": len(left.get("candles", [])),
