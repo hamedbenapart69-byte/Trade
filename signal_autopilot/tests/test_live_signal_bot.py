@@ -1,11 +1,12 @@
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from main import calculate_confluence, tenkan_kijun_cross
+from main import calculate_confluence, tenkan_kijun_cross, process_symbol, reason_distribution
 from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
@@ -18,6 +19,54 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LiveSignalBotTests(unittest.TestCase):
+    def test_reason_distribution_preserves_each_symbol_and_reason(self):
+        result = reason_distribution([
+            {"symbol": "BTCUSDT", "reason": "DIRECTION_CONFLICT"},
+            {"symbol": "ETHUSDT", "reason": "DIRECTION_CONFLICT"},
+            {"symbol": "SOLUSDT", "reason": "LFS_BELOW_THRESHOLD"},
+        ])
+        self.assertEqual(result, {
+            "DIRECTION_CONFLICT": {"count": 2, "symbols": ["BTCUSDT", "ETHUSDT"]},
+            "LFS_BELOW_THRESHOLD": {"count": 1, "symbols": ["SOLUSDT"]},
+        })
+
+    def test_direction_conflict_candidate_scores_survive_symbol_diagnostic(self):
+        candidates = [
+            {"direction": "BUY", "raw_score": 80, "tier_score": 80, "lfs_score": 0.35},
+            {"direction": "SELL", "raw_score": 80, "tier_score": 80, "lfs_score": 0.40},
+        ]
+
+        class FakeFetcher:
+            @staticmethod
+            def fetch_symbol(symbol):
+                return []
+
+        with patch("main.evaluate_stage1_symbol", return_value={
+            "symbol": "BTCUSDT",
+            "decision": "NO_TRADE",
+            "veto": "PASS",
+            "reason": "DIRECTION_CONFLICT",
+            "direction_candidates": candidates,
+            "data_sources": ["OKX_PUBLIC_SWAP_CANDLE"],
+            "cvd": {"source": "PROXY_OHLCV"},
+            "entry": 100.0,
+            "stop_loss": 98.0,
+            "take_profit": 104.0,
+            "rr": 2.0,
+            "hypothesis": "Test hypothesis",
+            "falsification": "Test invalidation",
+        }):
+            signal, reason, diagnostic = process_symbol("BTCUSDT", FakeFetcher())
+
+        self.assertIsNone(signal)
+        self.assertEqual(reason, "DIRECTION_CONFLICT")
+        self.assertEqual(diagnostic["direction_candidates"], candidates)
+        self.assertEqual(diagnostic["data_sources"], ["OKX_PUBLIC_SWAP_CANDLE"])
+        self.assertEqual(diagnostic["cvd"]["source"], "PROXY_OHLCV")
+        self.assertEqual(diagnostic["entry"], 100.0)
+        self.assertEqual(diagnostic["stop_loss"], 98.0)
+        self.assertEqual(diagnostic["take_profit"], 104.0)
+        self.assertEqual(diagnostic["rr"], 2.0)
     def test_open_candle_is_excluded_by_close_time_rule(self):
         now_ms = 1_800_000_000_000
         self.assertTrue(is_closed_candle(now_ms - 900_000, 900_000, now_ms))
