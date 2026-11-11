@@ -28,14 +28,14 @@ class Stage1bArtifactPathTests(unittest.TestCase):
 class Stage1bArtifactRowTests(unittest.TestCase):
     def test_rejects_duplicate_or_unsorted_timestamps(self):
         path = safe_manifest_path("live_tail/2026-11-11/BTCUSDT_15m.parquet")
-        row = {"open_time": 1_800_000_000_000, "open": 100.0, "high": 102.0,
+        row = {"open_time": 1_794_355_200_000, "open": 100.0, "high": 102.0,
                "low": 99.0, "close": 101.0, "volume": 10.0}
         with self.assertRaises(ValueError):
             validate_rows([row, row], "BTCUSDT", "LIVE_TAIL", path)
 
     def test_rejects_non_finite_ohlcv(self):
         path = safe_manifest_path("live_tail/2026-11-11/BTCUSDT_15m.parquet")
-        row = {"open_time": 1_800_000_000_000, "open": float("nan"), "high": 102.0,
+        row = {"open_time": 1_794_355_200_000, "open": float("nan"), "high": 102.0,
                "low": 99.0, "close": 101.0, "volume": 10.0}
         with self.assertRaises(ValueError):
             validate_rows([row], "BTCUSDT", "LIVE_TAIL", path)
