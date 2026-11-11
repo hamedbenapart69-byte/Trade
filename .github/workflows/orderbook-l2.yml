@@ -1,4 +1,5 @@
 name: Public L2 Order Book Collector
+
 on:
   schedule:
     - cron: "7 * * * *"
@@ -13,32 +14,46 @@ on:
         required: false
         default: "BTC,ETH,SOL,XRP,DOGE,ADA,LINK,LTC,BCH,AVAX"
   push:
-    branches: [main, feat/orderbook-l2-l1, fix/orderbook-l2-per-symbol-freshness, stabilization/v9-hardening]
+    branches: [main]
     paths:
       - ".github/workflows/orderbook-l2.yml"
       - "signal_autopilot/modules/orderbook_l2.py"
       - "signal_autopilot/scripts/collect_orderbook_l2.py"
       - "signal_autopilot/scripts/merge_orderbook_l2.py"
       - "signal_autopilot/requirements.txt"
+
 permissions:
-  contents: write
+  contents: read
+
 concurrency:
   group: public-l2-orderbook-collector
   cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   collect:
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout trusted default-branch collector
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: signal_autopilot/requirements.txt
+
       - name: Install public market-data dependencies
         working-directory: signal_autopilot
         run: pip install -r requirements.txt
+
       - name: Capture public order books
         working-directory: signal_autopilot
         env:
@@ -54,6 +69,7 @@ jobs:
           fi
           SYMBOLS="${{ inputs.symbols || 'BTC,ETH,SOL,XRP,DOGE,ADA,LINK,LTC,BCH,AVAX' }}"
           python scripts/collect_orderbook_l2.py --duration-seconds "$DURATION" --sample-interval-seconds 10 --symbols "$SYMBOLS"
+
       - name: Upload raw capture evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,44 +78,77 @@ jobs:
           path: signal_autopilot/data/orderbook_l2/
           if-no-files-found: warn
           retention-days: 30
-      - name: Persist Parquet to market-data branch
-        if: always()
+
+  persist:
+    needs: collect
+    if: ${{ github.ref == 'refs/heads/main' && needs.collect.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout trusted merge utility from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: trusted-tools
+          persist-credentials: false
+
+      - name: Checkout market-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: market-data
+          path: market-data
+          persist-credentials: true
+
+      - name: Download capture artifact from this run
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: orderbook-l2-capture-${{ github.run_id }}
+          path: incoming
+
+      - name: Merge validated Parquet capture into market-data
         shell: bash
         run: |
           set -euo pipefail
-          if ! find signal_autopilot/data/orderbook_l2 -name '*.parquet' -print -quit | grep -q .; then
+          if ! find incoming -name '*.parquet' -print -quit 2>/dev/null | grep -q .; then
             echo "No valid L2 snapshots; nothing to persist."
             exit 0
           fi
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin refs/heads/market-data:refs/remotes/origin/market-data
-          git worktree add /tmp/market-data refs/remotes/origin/market-data
-          python signal_autopilot/scripts/merge_orderbook_l2.py \
-            --source-dir signal_autopilot/data/orderbook_l2 \
-            --target-dir /tmp/market-data/orderbook_l2
-          if [ -f signal_autopilot/data/orderbook_l2/summary_latest.json ]; then
-            cp signal_autopilot/data/orderbook_l2/summary_latest.json /tmp/market-data/orderbook_l2/summary_latest.json
+          python -m pip install --disable-pip-version-check pyarrow
+          python trusted-tools/signal_autopilot/scripts/merge_orderbook_l2.py \
+            --source-dir incoming \
+            --target-dir market-data/orderbook_l2
+          if [ -f incoming/summary_latest.json ]; then
+            cp incoming/summary_latest.json market-data/orderbook_l2/summary_latest.json
           fi
-          git -C /tmp/market-data add orderbook_l2
-          if ! git -C /tmp/market-data diff --cached --quiet; then
-            git -C /tmp/market-data commit -m "data: append public L2 order-book samples"
-            # Stage 1b writes to the same branch; synchronize before every push.
-            for attempt in 1 2 3; do
-              git -C /tmp/market-data fetch origin +refs/heads/market-data:refs/remotes/origin/market-data
-              if ! git -C /tmp/market-data rebase refs/remotes/origin/market-data; then
-                git -C /tmp/market-data rebase --abort || true
-                echo "Rebase conflict on market-data; refusing a force push"
-                exit 1
-              fi
-              if git -C /tmp/market-data push origin HEAD:refs/heads/market-data; then
-                exit 0
-              fi
-              echo "market-data advanced during push (attempt $attempt/3); retrying"
-              sleep 2
-            done
-            echo "Could not update market-data after 3 synchronized push attempts"
-            exit 1
-          else
+
+      - name: Persist with synchronized non-force push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C market-data config user.name "github-actions[bot]"
+          git -C market-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C market-data add orderbook_l2
+          if git -C market-data diff --cached --quiet; then
             echo "No new Parquet rows."
+            exit 0
           fi
+          git -C market-data commit -m "data: append public L2 order-book samples"
+          for attempt in 1 2 3; do
+            git -C market-data fetch origin refs/heads/market-data:refs/remotes/origin/market-data
+            if ! git -C market-data rebase refs/remotes/origin/market-data; then
+              git -C market-data rebase --abort || true
+              echo "Rebase conflict on market-data; refusing a force push"
+              exit 1
+            fi
+            if git -C market-data push origin HEAD:refs/heads/market-data; then
+              exit 0
+            fi
+            echo "market-data advanced during push (attempt $attempt/3); retrying"
+            sleep 2
+          done
+          echo "Could not update market-data after 3 synchronized push attempts"
+          exit 1
