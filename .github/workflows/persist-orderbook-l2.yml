@@ -36,10 +36,10 @@ jobs:
         with:
           ref: market-data
           path: market-data
+          fetch-depth: 0
           persist-credentials: true
 
       - name: Download capture artifact from completed collector run
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: orderbook-l2-capture-${{ github.event.workflow_run.id }}
