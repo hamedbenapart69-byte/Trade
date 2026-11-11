@@ -135,6 +135,10 @@ Gate همچنان BLOCKED است: Funding history ناقص، DSR/PBO و مقای
 
 هیچ پیام واقعی در این مرحله ارسال نشده است. `TELEGRAM_TEST_CHAT_ID` و اجرای واقعی ارسال تأیید نشده‌اند. تابع تست به کانال اصلی fallback نمی‌کند.
 
+- [PR #69](https://github.com/hamedbenapart69-byte/Trade/pull/69) یک Workflow دستی با `workflow_dispatch` اضافه کرده است تا پیام وضعیت فقط به `TELEGRAM_TEST_CHAT_ID` ارسال شود.
+- این Workflow نه schedule دارد و نه push trigger؛ اگر Secret تست تنظیم نشده باشد، بدون ارسال پیام Skip می‌کند.
+- CI و Pytest مربوط به PR #69 هر دو PASS شدند. اجرای زنده هنوز انجام نشده است؛ برای آن باید Secret مخصوص کانال تست تنظیم و Workflow به‌صورت دستی اجرا شود.
+
 ## 5. Cloudflare Pages
 
 Cloudflare Pages Git integration برای چند PR Preview پاسخ موفق ثبت کرده است. نمونهٔ آخرین Preview:
