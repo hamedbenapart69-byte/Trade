@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: trader-me-stage1-signal-bot
@@ -84,23 +84,14 @@ jobs:
           LOG_LEVEL: INFO
         run: python main.py
 
-      - name: Persist open-signal state to signal-state branch
+      - name: Upload open-signal state for trusted persistence workflow
         if: always()
-        run: |
-          git fetch origin signal-state
-          git worktree add -B signal-state /tmp/signal-state origin/signal-state
-          mkdir -p /tmp/signal-state/signal_autopilot/state
-          cp signal_autopilot/state/open_signals.json /tmp/signal-state/signal_autopilot/state/open_signals.json
-          cd /tmp/signal-state
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add signal_autopilot/state/open_signals.json
-          if git diff --cached --quiet; then
-            echo "SIGNAL_STATE_UNCHANGED"
-          else
-            git commit -m "state: persist open signals [skip ci]"
-            git push origin HEAD:signal-state
-          fi
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1b-open-signal-state
+          path: signal_autopilot/state/open_signals.json
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Upload charts and run evidence
         if: always()
