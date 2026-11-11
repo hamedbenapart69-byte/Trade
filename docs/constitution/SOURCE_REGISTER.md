@@ -39,3 +39,10 @@
 ## معیار پذیرش
 
 Stage 0 در محدودهٔ «تعیین، تثبیت و ثبت منابع مرجع V9» طبق دستور صریح ناظر PASS است. تبدیل کامل Markdown به‌عنوان کار مستندسازی تکمیلی DEFERRED باقی می‌ماند و نباید به‌عنوان خروجی انجام‌شده ادعا شود.
+
+
+## Git merge evidence
+
+- PR #81 merged into `main` at `5dcb05e39f8164d805cf32d7b72c421b44cf075a`.
+- Stage 0 PASS scope: source registration and SHA-256 identification only.
+- Full Markdown transcriptions remain DEFERRED.
