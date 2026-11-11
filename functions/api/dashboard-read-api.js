@@ -18,7 +18,7 @@ function jsonResponse(status, body, headers = {}) {
 }
 
 /**
- * Server-side proxy for the Activepieces Dashboard Read API.
+ * Server-side proxy for the Activepieces Dashboard Read API.\n * Fail closed until both server-side environment variables are configured.
  *
  * Required Cloudflare Pages environment variables:
  * - ACTIVEPIECES_DASHBOARD_WEBHOOK_URL: exact published /sync webhook URL
