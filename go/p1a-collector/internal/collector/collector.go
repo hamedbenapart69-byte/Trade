@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"sort"
@@ -172,7 +173,7 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int, scan
 		if !ok { continue }
 		rows = append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
-	return normalize(rows, scanNow, limit), nil
+	return normalize(rows, scanNow, limit)
 }
 
 func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int, scanNow time.Time) ([]Candle, error) {
@@ -193,21 +194,49 @@ func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int, sc
 		if !ok {continue}
 		rows=append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
-	return normalize(rows,scanNow,limit),nil
+	return normalize(rows,scanNow,limit)
 }
 
-func normalize(rows []Candle, now time.Time, limit int) []Candle {
-	closedBefore := now.UTC().UnixMilli() / 900000 * 900000
-	unique:=map[int64]Candle{}
-	for _, row:=range rows {
-		if row.Timestamp < 0 || row.Timestamp+900000 > closedBefore {continue}
-		if row.Open<=0 || row.High<=0 || row.Low<=0 || row.Close<=0 || row.Volume<0 {continue}
-		if row.High < max(row.Open,row.Close,row.Low) || row.Low > min(row.Open,row.Close,row.High) {continue}
-		unique[row.Timestamp]=row
+func normalize(rows []Candle, now time.Time, limit int) ([]Candle, error) {
+	const interval int64 = 900000
+	closedBefore := now.UTC().UnixMilli() / interval * interval
+	unique := make(map[int64]Candle, len(rows))
+	for _, row := range rows {
+		if row.Timestamp < 0 || row.Timestamp%interval != 0 {
+			return nil, fmt.Errorf("INVALID_CANDLE_TIMESTAMP:%d", row.Timestamp)
+		}
+		if _, exists := unique[row.Timestamp]; exists {
+			return nil, fmt.Errorf("DUPLICATE_TIMESTAMP:%d", row.Timestamp)
+		}
+		values := []float64{row.Open, row.High, row.Low, row.Close, row.Volume}
+		for _, value := range values {
+			if math.IsNaN(value) || math.IsInf(value, 0) {
+				return nil, fmt.Errorf("NON_FINITE_CANDLE_VALUE:%d", row.Timestamp)
+			}
+		}
+		if row.Open <= 0 || row.High <= 0 || row.Low <= 0 || row.Close <= 0 || row.Volume < 0 {
+			return nil, fmt.Errorf("INVALID_CANDLE_VALUE:%d", row.Timestamp)
+		}
+		if row.High < max(row.Open, row.Close, row.Low) || row.Low > min(row.Open, row.Close, row.High) {
+			return nil, fmt.Errorf("INVALID_OHLC_RELATION:%d", row.Timestamp)
+		}
+		unique[row.Timestamp] = row
 	}
-	out:=make([]Candle,0,len(unique))
-	for _,row:=range unique {out=append(out,row)}
-	sort.Slice(out,func(i,j int)bool{return out[i].Timestamp<out[j].Timestamp})
-	if len(out)>limit {out=out[len(out)-limit:]}
-	return out
+	out := make([]Candle, 0, len(unique))
+	for ts, row := range unique {
+		if ts+interval <= closedBefore {
+			out = append(out, row)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Timestamp < out[j].Timestamp })
+	for i := 1; i < len(out); i++ {
+		delta := out[i].Timestamp - out[i-1].Timestamp
+		if delta != interval {
+			return nil, fmt.Errorf("DATA_GAP_OR_INTERVAL_ERROR:%d", delta)
+		}
+	}
+	if len(out) > limit {
+		out = out[len(out)-limit:]
+	}
+	return out, nil
 }
