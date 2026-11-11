@@ -49,6 +49,12 @@ class LiveSignalBotTests(unittest.TestCase):
             "direction_candidates": candidates,
             "data_sources": ["OKX_PUBLIC_SWAP_CANDLE"],
             "cvd": {"source": "PROXY_OHLCV"},
+            "entry": 100.0,
+            "stop_loss": 98.0,
+            "take_profit": 104.0,
+            "rr": 2.0,
+            "hypothesis": "Test hypothesis",
+            "falsification": "Test invalidation",
         }):
             signal, reason, diagnostic = process_symbol("BTCUSDT", FakeFetcher())
 
@@ -57,6 +63,10 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(diagnostic["direction_candidates"], candidates)
         self.assertEqual(diagnostic["data_sources"], ["OKX_PUBLIC_SWAP_CANDLE"])
         self.assertEqual(diagnostic["cvd"]["source"], "PROXY_OHLCV")
+        self.assertEqual(diagnostic["entry"], 100.0)
+        self.assertEqual(diagnostic["stop_loss"], 98.0)
+        self.assertEqual(diagnostic["take_profit"], 104.0)
+        self.assertEqual(diagnostic["rr"], 2.0)
     def test_open_candle_is_excluded_by_close_time_rule(self):
         now_ms = 1_800_000_000_000
         self.assertTrue(is_closed_candle(now_ms - 900_000, 900_000, now_ms))
