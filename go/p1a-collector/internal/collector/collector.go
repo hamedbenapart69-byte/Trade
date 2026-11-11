@@ -75,7 +75,8 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	if len(req.Symbols) == 0 { return Response{}, errors.New("symbols_required") }
 	if req.Timeframe == "" { req.Timeframe = "15m" }
 	if req.Timeframe != "15m" { return Response{}, errors.New("unsupported_timeframe") }
-	if req.Limit <= 0 || req.Limit > 300 { req.Limit = 100 }
+	if req.Limit <= 0 { req.Limit = 100 }
+	if req.Limit > 300 { return Response{}, errors.New("limit_exceeds_okx_max_300") }
 
 	symbols := make([]string, 0, len(req.Symbols))
 	seen := map[string]bool{}
@@ -123,6 +124,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, scanNow time.Time) SymbolResult {
 	out := SymbolResult{Symbol:symbol, Timeframe:"15m", DataClassification:"UNAVAILABLE", Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
 	for _, provider := range []string{"okx", "bybit"} {
+		if ctx.Err() != nil { out.Errors = append(out.Errors, "context:"+ctx.Err().Error()); return out }
 		var candles []Candle
 		var err error
 		if provider == "okx" { candles, err = c.fetchOKX(ctx, symbol, limit, scanNow) } else { candles, err = c.fetchBybit(ctx, symbol, limit, scanNow) }
@@ -168,7 +170,9 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int, scan
 	if payload.Code != "" && payload.Code != "0" { return nil, fmt.Errorf("provider_code_%s:%s", payload.Code, payload.Msg) }
 	rows := make([]Candle, 0, len(payload.Data))
 	for _, row := range payload.Data {
-		if len(row) < 6 { continue }
+		if len(row) < 9 { return nil, errors.New("MALFORMED_OKX_CANDLE_ROW") }
+		if row[8] == "0" { continue }
+		if row[8] != "1" { return nil, fmt.Errorf("INVALID_OKX_CONFIRM_FLAG:%s", row[8]) }
 		ts, e1 := strconv.ParseInt(row[0],10,64)
 		vals := make([]float64,5)
 		var parseErr error
