@@ -402,3 +402,138 @@ Flow `6oyZxg1YLVu0OpGzuDY8r` همچنان با `authType=none` فعال است. 
 | Cloudflare Production Deploy | DEFERRED | توکن افشاشده استفاده نشده؛ Production تغییر نکرده است. |
 
 **P0 کلی هنوز PASS نیست.** تعریف ناظر اجازه می‌دهد کنترل‌های واقعاً غیرقابل‌اجرا DEFERRED شوند، اما Telegram Secret Isolation و Webhook Auth هنوز صرفاً محدودیت ابزاری اثبات‌شده نیستند؛ آن‌ها کنترل‌های قابل‌اقدام اما اجرا‌نشده/فاقد مسیر امن هستند. تا اعمال و آزمون آن‌ها، بستن P0 ادعای زودهنگام خواهد بود.
+
+
+---
+
+# الحاقیهٔ نهایی اجرای کنترل‌های جایگزین P0 — 2026-11-11
+
+این الحاقیه وضعیت قبلی را پس از ادغام‌های جدید و کنترل‌های جایگزین به‌روز می‌کند. «PASS با موارد DEFERRED» مطابق تعریف جدید ناظر است و به معنی رفع کامل همهٔ ریسک‌های باقی‌مانده نیست.
+
+## 1. ادغام‌های نهایی و کنترل‌های امنیتی
+
+| PR | مقصد | Merge SHA | وضعیت |
+|---:|---|---|---|
+| #73 | `stage1b-lrt15m` | `2cb201aa4d01527250872687ac0c0643421ebc32` | MERGED |
+| #74 | `main` | `e542a7e357b610be6f188fe51abb6fc72bb3470f` | MERGED |
+| #78 | `main` | `ac01c995b59f659e4fb7eefd5f829742c63ee6a1` | MERGED |
+| #80 | `stage1b-lrt15m` | `d309d2aff9aed4a9209af071407f1b9f1625b52b` | MERGED |
+| #76 | `main` | `45c7721bc62642ad18e18385e0cbb5853c7d8afc` | MERGED |
+| #77 | `main` | `225d5a5703c9c14fb802cc2a86f886feb546cb34` | MERGED |
+| #81 | `main` | `5dcb05e39f8164d805cf32d7b72c421b44cf075a` | MERGED |
+| #82 | `main` | `84233d39c8c9bfd50a999a978a9d5edf2b57fa78` | MERGED |
+| #83 | `stage1b-lrt15m` | `c4d76d61fe57a27d1337ec20c1d5a9cdf52e6a0a` | MERGED |
+| #84 | `main` | `1f16b691e46f6cd03abe48fd3d02da2705c67976` | MERGED |
+| #86 | `main` | `6cd89d30705b596d35ad44a1ef41254518e4a8cb` | MERGED |
+| #87 | `main` | `ed10880bce65b7aaf676531cfa5458a942528498` | MERGED |
+
+## 2. Telegram Secret Isolation
+
+PR #83 removed `TELEGRAM_TOKEN` and `TELEGRAM_CHAT_ID` from the Stage1b branch scanner workflow and set `persist-credentials: false`. PR #84 applied the same change to the default-branch scheduled scanner workflow and added a trusted `workflow_run` notifier.
+
+Verified on both current refs:
+- `.github/workflows/signal_bot.yml` on `main`: no `secrets.TELEGRAM_TOKEN` or `secrets.TELEGRAM_CHAT_ID` references.
+- Same workflow on `stage1b-lrt15m`: no Telegram Secret references.
+- The only automated notification job now reads the report artifact as untrusted JSON, checks its schema/27-symbol coverage/numeric fields, and sends from code checked out from `main`.
+- Telegram credentials are injected only into the final send step in `.github/workflows/trusted-stage1b-telegram.yml`.
+- Manual `telegram_probe.yml` and `telegram-quarantine-test.yml` remain separate trusted-main, manual-only workflows.
+
+PR #84 CI: pytest, unit test suites and Cloudflare Pages checks all completed successfully. PR #83 CI checks all completed successfully.
+
+A live Stage1b scan triggered by the post-merge documentation-only commit `e58fd7839d8e2c1847e3fbad5540a73b8c6a6481` was running as Workflow Run `43040330207` at the time of this evidence update. Its unit tests and 27-symbol universe validation had passed; the live scan/notifier result is not claimed until the workflow_run notifier completes.
+
+## 3. Policy Guard — Detective Control
+
+PR #82 merged at `84233d39c8c9bfd50a999a978a9d5edf2b57fa78`.
+
+Workflow: `.github/workflows/policy-guard.yml`
+Script: `.github/scripts/policy_guard.py`
+Tests: `.github/scripts/test_policy_guard.py`
+
+Controls:
+- Secret-like path detection for `.env`, `*.env`, `*.pem`, and `secrets.*`.
+- Private-key marker scan of changed diff, with content suppressed from logs.
+- Warning on direct push to main that changes Telegram/Cloudflare workflow files.
+- Warning on main/stage1b branch drift.
+- Runs on pull_request to main and push to main, read-only permissions.
+
+Evidence:
+- PR #82 checks: Cloudflare Pages, Policy Guard, and both CI tests all PASS.
+- Main push run `43039679606`: completed success; `POLICY_GUARD=PASS`.
+- Main push run after PR #87, `43040244018`: completed success; `POLICY_GUARD=PASS`.
+- Branch drift warnings observed: first `main_only=53, stage1b_only=175`; latest `main_only=56, stage1b_only=175`.
+
+**Scope limitation:** Policy Guard is a detective control. It does not prevent direct push, enforce PR approval, or block a bypass. It is not equivalent to GitHub Branch Protection.
+
+## 4. Branch Protection و اختلاف شاخه‌ها
+
+- Admin Branch Protection API: HTTP 403 `Resource not accessible by integration`.
+- Connected GitHub tool supports Ruleset/Protection reads but not write/create operations.
+- Existing `protect-main` Ruleset still lacks Require PR and Require Approvals; bypass actors remain.
+- `stage1b-lrt15m` remains unprotected.
+- Branch drift is significant (56 commits main-only / 175 stage1b-only at latest check). No bulk merge/rebase was attempted.
+
+Status: **DEFERRED — INFRASTRUCTURE PERMISSION LIMIT**. Detective Policy Guard is the accepted compensating control, not a claim that admin protection is active.
+
+## 5. PR #79 and P0 data-only workflow
+
+PR #79 head `4142a47bc8587ba0682edbf515a6601588fadaaf` had all CI checks successful, but the GitHub merge action was blocked by the platform safety gate before a merge request executed. No bypass was attempted.
+
+Immediate write-permission risk was mitigated by PR #87, merged at `ed10880bce65b7aaf676531cfa5458a942528498`:
+- `.github/workflows/stage1b-scheduled.yml` now has `contents: read`.
+- All three checkouts use `persist-credentials: false`.
+- Direct commit/push to `market-data` was removed.
+- Data/manifest computation and artifact evidence remain; persistent Stage1b dataset writes are **DEFERRED** until a trusted writer is safely merged and verified.
+
+PR #78 also has real persistence evidence: Workflow Run `43037902245` completed successfully and merged 7,143 rows each for Bybit, KuCoin and OKX into three Order Book L2 Parquet files on `market-data`.
+
+## 6. Activepieces Dashboard Webhook Auth
+
+Flow ID: `6oyZxg1YLVu0OpGzuDY8r`.
+
+- Draft Trigger updated to Header Auth with header name `X-Api-Key` and a randomly generated value held only in Activepieces draft configuration.
+- `ap_read_step_settings`: draft trigger configuration valid.
+- `ap_validate_step_config`: `valid=true`, no errors.
+- Flow's Published version was not changed; it remains `authType=none` so the existing Bool dashboard is not broken before a server-side proxy exists.
+- PR #85 contains `functions/api/dashboard-read-api.js`, a server-side Cloudflare Pages proxy that reads the API key from server environment variables only. It does not contain the key.
+- PR #85 proxy unit tests, policy guard, CI and Cloudflare Preview checks all PASS after the test path correction in PR #86.
+- PR #85 remains open/unmerged. Cloudflare environment variables are not configured, the Bool dashboard has not been switched to the proxy, and no live 401/200 request against Activepieces was performed.
+
+Status: **DEFERRED — SAFE SERVER-SIDE SECRET DELIVERY / DEPLOYMENT NOT AVAILABLE**. Published webhook remains unauthenticated; this residual risk is explicit and not called fixed.
+
+## 7. Cloudflare
+
+- No Cloudflare Production deployment or environment-variable mutation was performed.
+- The previously disclosed Cloudflare token was not used.
+- Connected toolset has no Cloudflare Pages environment-secret write operation; the exposed token is not treated as safe for reuse.
+
+Status: **DEFERRED — NO SAFE DEPLOY CREDENTIAL PATH**.
+
+## 8. Stage 0 V9 Source Registration
+
+PR #81 merged. Per the explicit supervisor acceptance, Stage 0 is **PASS for source registration only**. Source filenames, 54/55 page counts, extracted-text counts and SHA-256 hashes are in `docs/constitution/SOURCE_REGISTER.md` and `CONSTITUTION_VERSION.md`.
+
+Full `V9.0.md` and `V9.1.md` transcriptions remain **DEFERRED**; no claim of full Markdown conversion is made.
+
+## 9. Connector-side direct-commit incident
+
+During proxy test setup, the GitHub `create_file` connector committed `tests/dashboard-read-api.test.mjs` directly to `main` at `3f776bde2bbfc0463866038c847860d848f92f16` instead of the intended feature branch. The file contained no credentials or production application code. Its import path was corrected via PR #86, and subsequent main pushes are monitored by Policy Guard. This direct-commit event occurred before Policy Guard was merged; it is recorded for audit transparency.
+
+## 10. P0 acceptance under the revised supervisor rule
+
+| الزام | وضعیت | توضیح |
+|---|---|---|
+| PRهای امنیتی #73/#74/#78/#80 | PASS | ادغام شدند؛ CI موفق. |
+| PRهای #76/#77 | PASS | ادغام شدند؛ CI موفق. |
+| Secret تلگرام از Scanner جدا شد | PASS | #83/#84 merged؛ دو Scanner workflow فاقد Secret هستند. |
+| Policy Guard | PASS | #82 merged؛ PR و push runs موفق؛ هشدار branch drift فعال. |
+| Stage 0 Source Register | PASS | #81 merged؛ دامنه فقط ثبت منبع و hash. |
+| PR #79 trusted P0 persistence | DEFERRED | Merge safety gate؛ PR #87 مسیر write را fail-closed کرد؛ persistence معوق. |
+| Branch Protection ادمین | DEFERRED | API 403 و نبود write operation؛ Policy Guard کنترل جایگزین کارآگاهی است. |
+| Activepieces Header Auth | DEFERRED | Draft معتبر؛ Published همچنان none؛ آزمون زنده 401/200 انجام نشده. |
+| Cloudflare Deploy | DEFERRED | محیط سرور و مسیر امن deploy در دسترس نیست؛ توکن افشاشده استفاده نشد. |
+| Full V9 Markdown | DEFERRED | طبق پذیرش ناظر برای Stage 0 لازم نیست؛ ثبت کامل متن همچنان کار تکمیلی است. |
+
+**P0 OPERATIONAL ACCEPTANCE: PASS WITH DEFERRED ITEMS**, بر اساس تعریف جدید ناظر که موارد غیرقابل‌اجرا را DEFERRED می‌پذیرد.
+
+این PASS اداری/عملیاتی به معنی امنیت کامل نیست: Webhook Published هنوز بدون احراز هویت است و persistence دیتاست Stage1b موقتاً متوقف شده است. این دو ریسک در جدول بالا DEFERRED و آشکار نگه داشته شده‌اند.
