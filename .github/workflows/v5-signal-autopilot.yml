@@ -30,7 +30,7 @@ jobs:
 
       - name: Restore persistent paper-trading state
         id: state
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: data/control.db
           key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
