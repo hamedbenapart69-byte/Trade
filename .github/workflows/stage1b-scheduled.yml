@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: stage1b-lrt15m-history
@@ -12,25 +12,31 @@ concurrency:
 
 jobs:
   stage1b-data:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    permissions:
+      contents: read
     steps:
       - name: Checkout Stage 1b data adapters
         uses: actions/checkout@v4
         with:
           ref: stage1b-lrt15m
+          persist-credentials: false
 
       - name: Checkout market-data storage
         uses: actions/checkout@v4
         with:
           ref: market-data
           path: market-data
+          persist-credentials: false
 
       - name: Checkout P0 maintenance tools
         uses: actions/checkout@v4
         with:
           ref: main
           path: stage1b-tools
+          persist-credentials: false
 
       - name: Capture immutable provenance
         shell: bash
@@ -83,7 +89,8 @@ jobs:
             --legacy-source-commit "$MARKET_DATA_SOURCE_SHA"
 
       - name: Verify SHA-256 manifest and P0 data-only boundary
-        if: always()
+        id: verifyP0
+        if: steps.maintain15m.outcome == 'success'
         run: |
           python - <<'PY'
           import json
@@ -120,40 +127,13 @@ jobs:
           print("P0_DATA_ONLY_MANIFEST=PASS")
           PY
 
-      - name: Upload P0 data evidence
-        if: always()
+      - name: Upload validated P0 dataset for trusted persistence
+        if: steps.maintain15m.outcome == 'success' && steps.verifyP0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: stage1b-p0-data-evidence
+          name: stage1b-p0-dataset-${{ github.run_id }}
           path: |
+            market-data/datasets/stage1b/
             signal_autopilot/data/stage1b_15m_data_report.json
-            market-data/datasets/stage1b/manifest.json
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Commit normalized 15m data and manifest
-        if: steps.maintain15m.outcome == 'success'
-        working-directory: market-data
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A datasets/stage1b/lrt15m datasets/stage1b/manifest.json
-          if ! git diff --cached --quiet; then
-            git commit -m "P0: normalize Stage 1b 15m data and publish SHA-256 manifest"
-            for attempt in 1 2 3; do
-              git fetch origin market-data
-              if ! git rebase FETCH_HEAD; then
-                git rebase --abort || true
-                echo "Rebase conflict on market-data; refusing a force push"
-                exit 1
-              fi
-              if git push origin HEAD:market-data; then
-                exit 0
-              fi
-              echo "market-data advanced during push (attempt $attempt/3); retrying"
-              sleep 2
-            done
-            echo "Could not update market-data after 3 synchronized push attempts"
-            exit 1
-          fi
+          if-no-files-found: error
+          retention-days: 2
