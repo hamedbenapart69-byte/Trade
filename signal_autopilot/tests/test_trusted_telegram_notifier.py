@@ -45,7 +45,7 @@ class TrustedNotifierTests(unittest.TestCase):
         self.assertIn("WATCHLIST فقط", message)
         self.assertIn("BTCUSDT | BUY", message)
         self.assertIn("Entry 100", message)
-        self.assertNotIn("BUY_NOW", message)
+        self.assertIn("BUY_NOW/SELL_NOW صادر نمی‌شود", message)
 
     def test_rejects_incomplete_universe(self):
         payload = report()
