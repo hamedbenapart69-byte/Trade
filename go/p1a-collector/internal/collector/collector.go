@@ -137,8 +137,7 @@ func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, sc
 			out.Errors = append(out.Errors, provider+":no_closed_candles")
 			continue
 		}
-		volumeUnit := "CONTRACTS"
-		if provider == "bybit" { volumeUnit = "BASE_ASSET" }
+		volumeUnit := "BASE_ASSET"
 		out.Provider, out.Status, out.DataClassification, out.VolumeUnit, out.Candles = provider, "OK", "REAL", volumeUnit, candles
 		return out // Never mix candles from different venues for one symbol.
 	}
@@ -179,11 +178,15 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int, scan
 		ts, err := strconv.ParseInt(row[0],10,64)
 		if err != nil { return nil, fmt.Errorf("INVALID_OKX_TIMESTAMP:%w", err) }
 		vals := make([]float64,5)
-		for i:=0; i<5; i++ {
+		for i:=0; i<4; i++ {
 			value, parseErr := strconv.ParseFloat(row[i+1],64)
 			if parseErr != nil { return nil, fmt.Errorf("INVALID_OKX_VALUE:%w", parseErr) }
 			vals[i] = value
 		}
+		// CCXT's OKX swap OHLCV volume is volCcy (base asset), not vol (contracts).
+		volume, parseErr := strconv.ParseFloat(row[6],64)
+		if parseErr != nil { return nil, fmt.Errorf("INVALID_OKX_BASE_VOLUME:%w", parseErr) }
+		vals[4] = volume
 		rows = append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
 	return normalize(rows, scanNow, limit)
