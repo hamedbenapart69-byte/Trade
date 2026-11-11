@@ -3,22 +3,22 @@
   "providers": {
     "okx": {
       "status": "PASS",
-      "rows": 591,
+      "rows": 51,
       "error": null
     },
     "bybit": {
       "status": "PASS",
-      "rows": 591,
+      "rows": 51,
       "error": null
     },
     "kucoin": {
       "status": "PASS",
-      "rows": 591,
+      "rows": 51,
       "error": null
     }
   },
-  "total_rows": 1773,
-  "captured_at_utc": "2026-11-11T13:09:06.630379+00:00",
+  "total_rows": 153,
+  "captured_at_utc": "2026-11-11T14:22:36.339204+00:00",
   "symbols": [
     "BTC",
     "ETH",
