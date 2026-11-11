@@ -110,7 +110,7 @@ func TestCollectorBoundsConcurrencyAcrossFortySymbols(t *testing.T) {
 	got, err := c.Collect(context.Background(), Request{Symbols:symbols, Limit:10})
 	if err != nil { t.Fatal(err) }
 	if len(got.Results) != 40 { t.Fatalf("expected 40 results, got %d", len(got.Results)) }
-	if maxActive.Load() < 2 || maxActive.Load() > 2 {
-		t.Fatalf("expected bounded concurrency of 2, observed %d", maxActive.Load())
+	if atomic.LoadInt32(&maxActive) < 2 || atomic.LoadInt32(&maxActive) > 2 {
+		t.Fatalf("expected bounded concurrency of 2, observed %d", atomic.LoadInt32(&maxActive))
 	}
 }
