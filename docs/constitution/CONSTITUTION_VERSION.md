@@ -1,10 +1,12 @@
 # Constitution Version Register
 
-## Status
+## Administrative Stage 0 Status
 
-**NOT COMPLETE — Stage 0 NOT PASS**
+**PASS — V9 Source Registration Acceptance**
 
-The complete Markdown transcriptions of V9.0 and V9.1 are not committed. This file records source integrity and the current evidence commits only; it must not be interpreted as an approved or complete constitution release.
+The project owner/senior supervisor explicitly accepted `SOURCE_REGISTER.md` with source filenames, page counts, and SHA-256 hashes as sufficient for Stage 0 source registration.
+
+This is a scoped PASS for identifying and freezing the authoritative V9.0/V9.1 sources. It does **not** claim that the full PDF contents have been transcribed into Markdown.
 
 ## Source PDF integrity
 
@@ -13,13 +15,27 @@ The complete Markdown transcriptions of V9.0 and V9.1 are not committed. This fi
 | `rules 1.pdf` — Master Source V9.0 | `1dbdbcca127bd368b025a554b205970b7221fe22f68139908402c8d04f1db2f3` | 54 |
 | `rules 1.1.pdf` — Source Addendum V9.1 | `862307dbc8cae72bfac03de24686f52c0a28d170afe26a69d4e27f22a21cf0a8` | 55 |
 
+## Text extraction
+
+- V9.0: 2,913 extracted lines; 4,954 words.
+- V9.1: 2,934 extracted lines; 5,181 words.
+
+## Deferred documentation
+
+- Full `V9.0.md` transcription: DEFERRED.
+- Full `V9.1.md` transcription: DEFERRED.
+- No claim of complete Markdown transcription or semantic parity is made.
+
 ## Git evidence
 
-- Base main commit: `3941d8b77b3172f0b3fe3372ba96521d580e3432`
-- Source register commit: `e943fa154f482dbbab547fd0eaaa2b0969a126cc`
-- P0 evidence addendum commit: `6052acf815e82bf97b9dbf6cf10bd4471005f5c9`
+- Original main base: `3941d8b77b3172f0b3fe3372ba96521d580e3432`
+- Initial source register commit: `e943fa154f482dbbab547fd0eaaa2b0969a126cc`
+- Initial P0 evidence addendum commit: `6052acf815e82bf97b9dbf6cf10bd4471005f5c9`
+- Stage 0 acceptance update: `d928f3e8d93d9c69a8937d28a3d2e9c573e1b86f`
 - Branch: `audit/p0-evidence-and-constitution-register-2026-11-11`
 
-## Release gate
+The final merged commit SHA will be added to this register after PR merge.
 
-This register must be replaced/updated only after both complete Markdown files are committed and independently checked against their 54- and 55-page PDF sources. The commit SHA of the completed source-document commit must then be added here. The current SHAs above do not identify a completed V9 Markdown source commit.
+## Release interpretation
+
+Stage 0 PASS is limited to source registration and version/hash identification. It is not a claim that later implementation stages, live delivery, or strategy validation have passed.
