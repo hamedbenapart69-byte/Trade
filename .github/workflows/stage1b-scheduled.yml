@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: stage1b-lrt15m-history
@@ -19,18 +19,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: stage1b-lrt15m
+          persist-credentials: false
 
-      - name: Checkout market-data storage
+      - name: Checkout market-data storage (read-only)
         uses: actions/checkout@v4
         with:
           ref: market-data
           path: market-data
+          persist-credentials: false
 
       - name: Checkout P0 maintenance tools
         uses: actions/checkout@v4
         with:
           ref: main
           path: stage1b-tools
+          persist-credentials: false
 
       - name: Capture immutable provenance
         shell: bash
@@ -131,29 +134,3 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commit normalized 15m data and manifest
-        if: steps.maintain15m.outcome == 'success'
-        working-directory: market-data
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A datasets/stage1b/lrt15m datasets/stage1b/manifest.json
-          if ! git diff --cached --quiet; then
-            git commit -m "P0: normalize Stage 1b 15m data and publish SHA-256 manifest"
-            for attempt in 1 2 3; do
-              git fetch origin market-data
-              if ! git rebase FETCH_HEAD; then
-                git rebase --abort || true
-                echo "Rebase conflict on market-data; refusing a force push"
-                exit 1
-              fi
-              if git push origin HEAD:market-data; then
-                exit 0
-              fi
-              echo "market-data advanced during push (attempt $attempt/3); retrying"
-              sleep 2
-            done
-            echo "Could not update market-data after 3 synchronized push attempts"
-            exit 1
-          fi
