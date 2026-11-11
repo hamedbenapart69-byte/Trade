@@ -161,7 +161,7 @@ The latest recorded state is **P0 operational PASS WITH DEFERRED ITEMS**, not se
 - Cloudflare production environment configuration/deploy: DEFERRED; the previously exposed Cloudflare token must not be reused.
 - Activepieces Published Dashboard Read API still reports authType=none; Draft Header Auth exists but is not published.
 - Stage1B durable persistence remains deferred; artifacts are temporary evidence, not a durable dataset store.
-- PR #85 proxy is not production-ready solely because its CI is green. Its current design relies on an Origin allowlist, which is not authentication by itself, and its workflow references a test file not present in the PR patch. These gaps must be resolved before merge/deploy.
+- PR #85 proxy is not production-ready solely because its CI is green. The test file exists on the base branch and the recorded proxy test job passed. However, the proxy currently relies on an Origin allowlist, which is not caller authentication because non-browser clients can forge the Origin header. The proxy therefore still needs a real access-control design before merge/deploy.
 - Telegram report delivery has one verified successful end-to-end instance (message_id=656). This proves delivery, not calibrated trading edge.
 
 P0 must not be described as fully secure until the Published webhook is protected and the dashboard's actual access path is tested. DEFERRED is an explicit status, not a pass for the underlying security control.
