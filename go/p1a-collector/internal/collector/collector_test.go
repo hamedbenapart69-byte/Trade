@@ -18,7 +18,7 @@ func TestCollectUsesOKXAndSortsClosedCandles(t *testing.T) {
 		if !strings.Contains(r.URL.Path, "/api/v5/market/candles") { t.Fatalf("unexpected path %s", r.URL.Path) }
 		w.Header().Set("Content-Type", "application/json")
 		// 12:00 is still open; 11:45 is closed.
-		_, _ = w.Write([]byte(`{"code":"0","data":[["1794398400000","3","4","2","3.5","10"],["1794397500000","2","3","1","2.5","9"]]}`))
+		_, _ = w.Write([]byte(`{"code":"0","data":[["1794398400000","3","4","2","3.5","10","10","10","0"],["1794397500000","2","3","1","2.5","9","9","9","1"]]}`))
 	}))
 	defer srv.Close()
 	c := New(Config{OKXBaseURL:srv.URL, BybitBaseURL:srv.URL, HTTPClient:srv.Client(), Workers:2, Now:func()time.Time{return now}})
@@ -34,7 +34,7 @@ func TestFallsBackPerSymbolWithoutMixing(t *testing.T) {
 	okx:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){okxCalls++;w.WriteHeader(451)}));defer okx.Close()
 	bybit:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
 		bybitCalls++;w.Header().Set("Content-Type","application/json")
-		_,_=w.Write([]byte(`{"retCode":0,"result":{"list":[["1794397500000","2","3","1","2.5","9"]]}}`))
+		_,_=w.Write([]byte(`{"retCode":0,"result":{"list":[["1794397500000","2","3","1","2.5","9","9","9","1"]]}}`))
 	}));defer bybit.Close()
 	c:=New(Config{OKXBaseURL:okx.URL,BybitBaseURL:bybit.URL,HTTPClient:bybit.Client(),Workers:1,Now:func()time.Time{return now}})
 	got,err:=c.Collect(context.Background(),Request{Symbols:[]string{"ETHUSDT"},Limit:100})
