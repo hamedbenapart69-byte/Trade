@@ -1,0 +1,102 @@
+name: Persist Public L2 Order Book Capture
+
+on:
+  workflow_run:
+    workflows: ["Public L2 Order Book Collector"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-l2-orderbook-persist
+  cancel-in-progress: false
+
+jobs:
+  persist:
+    # The trusted writer runs from the main branch and accepts only successful,
+    # same-repository captures. Feature-branch runs never receive write access.
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout trusted merge utility from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: trusted-tools
+          persist-credentials: false
+
+      - name: Checkout market-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: market-data
+          path: market-data
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download capture artifact from completed collector run
+        uses: actions/download-artifact@v4
+        with:
+          name: orderbook-l2-capture-${{ github.event.workflow_run.id }}
+          path: incoming
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Validate and merge Parquet capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d incoming ] || ! find incoming -name '*.parquet' -print -quit 2>/dev/null | grep -q .; then
+            echo "No valid L2 snapshots; nothing to persist."
+            exit 0
+          fi
+          if find incoming -type l -print -quit | grep -q .; then
+            echo "Refusing artifact containing symbolic links."
+            exit 1
+          fi
+          TOTAL_BYTES="$(du -sb incoming | cut -f1)"
+          if [ "$TOTAL_BYTES" -gt 100000000 ]; then
+            echo "Refusing oversized L2 artifact: $TOTAL_BYTES bytes"
+            exit 1
+          fi
+          python -m pip install --disable-pip-version-check pyarrow
+          python trusted-tools/signal_autopilot/scripts/merge_orderbook_l2.py \
+            --source-dir incoming \
+            --target-dir market-data/orderbook_l2
+          if [ -f incoming/summary_latest.json ]; then
+            cp incoming/summary_latest.json market-data/orderbook_l2/summary_latest.json
+          fi
+
+      - name: Persist with synchronized non-force push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C market-data config user.name "github-actions[bot]"
+          git -C market-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C market-data add orderbook_l2
+          if git -C market-data diff --cached --quiet; then
+            echo "No new Parquet rows."
+            exit 0
+          fi
+          git -C market-data commit -m "data: append public L2 order-book samples"
+          for attempt in 1 2 3; do
+            git -C market-data fetch origin refs/heads/market-data:refs/remotes/origin/market-data
+            if ! git -C market-data rebase refs/remotes/origin/market-data; then
+              git -C market-data rebase --abort || true
+              echo "Rebase conflict on market-data; refusing a force push"
+              exit 1
+            fi
+            if git -C market-data push origin HEAD:refs/heads/market-data; then
+              exit 0
+            fi
+            echo "market-data advanced during push (attempt $attempt/3); retrying"
+            sleep 2
+          done
+          echo "Could not update market-data after 3 synchronized push attempts"
+          exit 1
