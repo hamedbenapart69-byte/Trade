@@ -167,7 +167,7 @@ def audit(raw_dir: Path, canonical_dir: Path, report_path: Path,
         "raw_files_seen": len(raw_files),
         "overlap_rows_compared": global_overlap,
         "conflicting_ohlcv_rows": global_conflicts,
-        "canonical_files_match_newest_snapshot": sum(
+        "canonical_files_match_newest": sum(
             1 for item in results if item["canonical_matches_newest"]
         ),
         "results": results,
