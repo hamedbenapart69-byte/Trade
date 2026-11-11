@@ -20,7 +20,7 @@
           "symbol": {"type": "string", "pattern": "^[A-Z0-9]+USDT$"},
           "timeframe": {"const": "15m"},
           "data_classification": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
-          "volume_unit": {"enum": ["CONTRACTS", "BASE_ASSET", "UNAVAILABLE"]},
+          "volume_unit": {"enum": ["BASE_ASSET", "UNAVAILABLE"]},
           "provider": {"type": "string"},
           "status": {"enum": ["OK", "UNAVAILABLE"]},
           "candles": {
@@ -47,7 +47,7 @@
             "then": {
               "properties": {
                 "data_classification": {"const": "REAL"},
-                "volume_unit": {"enum": ["CONTRACTS", "BASE_ASSET"]},
+                "volume_unit": {"const": "BASE_ASSET"},
                 "provider": {"enum": ["okx", "bybit"]},
                 "candles": {"minItems": 1}
               }
