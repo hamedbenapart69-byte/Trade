@@ -57,6 +57,7 @@ Observed from the accessible `main` branch on 2026-11-11:
 - The V5 scanner is documented as read-only, using public market data, and does not place orders or connect to trading accounts. Current documented live data paths include public CoinGecko discovery and public exchange market data. No private exchange credentials or order endpoints are part of the intended system.
 - The historical 1h signal engine is marked research-only/quarantined in code. The V5 design document explicitly says a verified historical backtest/performance sample is not yet established.
 - The external Activepieces project contains a 49-step daily market/research scanner with JavaScript backtest blocks, plus scheduled CoinGecko derivatives, FRED macro, RSS news and DEX research flows, and a webhook-backed dashboard read API. The legacy Toobit 1h futures signal flow is disabled. This is not the same runtime as the current V5 OKX scanner in Trade; no automatic data bridge between them is verified.
+- A private Support-trade runtime audit found that the Activepieces dashboard webhook is configured without authentication. Detailed endpoint/security information is kept in the private audit; an authenticated server-side proxy is a prerequisite before the external dashboard data is treated as private or migrated.
 - The V5-specific workflow file on `main` is manual-dispatch-only, while other scheduled workflows exist in the repository. The README and workflow files therefore need a schedule-ownership reconciliation before any scheduler migration.
 - CI currently runs root tests, scanner tests, a fail-closed legacy-engine smoke test, JavaScript syntax validation, Compose validation, Docker build and a container health smoke test.
 
@@ -205,6 +206,7 @@ Observed from the accessible `main` branch on 2026-11-11:
 | Capability | Current implementation | Candidate | Phase | Migration rule |
 |---|---|---|---|---|
 | Scheduling/CI | GitHub Actions workflows | Keep GitHub Actions | P0/current | Audit trigger ownership and permissions before changing anything |
+| External research/collection workflows | Activepieces project, 6 enabled flows; separate Tables store | Keep temporarily, secure webhook, then versioned read-only export | P0 security / P2 migration | No bulk migration until field classification, access control and export contract PASS |
 | Approval/audit/outbox | FastAPI + SQLite + one-shot worker | Keep current control plane | P0/current | No orchestrator may bypass approval, allowlists or reconciliation |
 | 15m data validation | Existing Python validators/tests in scanner | GX Core additive suite | P0 pilot after approval | Compare against current checks; no silent replacement or data imputation |
 | Historical simulation | No verified current OOS performance baseline established in main | Jesse vs Nautilus | P1 research | Same immutable data, strategy rules, costs, fills and walk-forward windows |
