@@ -51,6 +51,8 @@ Observed from the accessible `main` branch on 2026-11-11:
 - Root control plane: `app/main.py`, `app/store.py`, `app/workflow_schemas.py`, `app/signals.py`, `worker.py`.
 - The control plane uses FastAPI, SQLite, idempotency keys, audit events, a durable outbox, bounded leases, explicit reconciliation for unknown outcomes, separate operator/worker credentials, and a one-shot worker with a workflow allowlist.
 - The root `requirements.txt` is currently small: FastAPI, Uvicorn and HTTPX. `compose.yaml` runs the control-plane container and a named SQLite volume; it does not currently host Windmill, Prefect, Temporal, Feast or Langfuse.
+- The repository contains a guarded n8n adapter, but the README states that no live n8n instance/webhook has been configured. No Activepieces integration is visible in the current repository tree; any external Activepieces flow must be audited separately before claiming a migration target exists.
+- Cloudflare Pages build/preview workflows exist, but no Cloudflare Workers application or Worker deployment source was found in the current main tree. Cloud Run is therefore not a direct replacement for a currently implemented Worker service.
 - The scanner is under `signal_autopilot/`, with separate dependencies including CCXT, HTTPX, PyArrow, python-telegram-bot, Matplotlib and websockets.
 - The V5 scanner is documented as read-only, using public market data, and does not place orders or connect to trading accounts. Current documented live data paths include public CoinGecko discovery and public exchange market data. No private exchange credentials or order endpoints are part of the intended system.
 - The historical 1h signal engine is marked research-only/quarantined in code. The V5 design document explicitly says a verified historical backtest/performance sample is not yet established.
@@ -204,7 +206,17 @@ Observed from the accessible `main` branch on 2026-11-11:
 | Security scanning | Existing CI and Support-trade secret-pattern checks | Native scanners + optional Snyk | P0 security track | Keep secret scanning independent of third-party quota |
 | Hosting | GitHub Actions/Pages and existing Railway preview | Keep current until secure hosting decision | P0 security track | Cloud Run is not accepted as a zero-cost replacement |
 
-## 5. Proposed implementation stages and gates
+## 5. Three-layer integration contract
+
+Every adopted tool must contribute to a complete stage, not a data-only addition:
+
+- **L1 Data:** source identity, timestamps, schema/version, provenance, immutable snapshot/checksum and explicit REAL/PROXY/UNAVAILABLE labels.
+- **L2 Compute:** deterministic validation, feature calculation or simulation with frozen configuration, bounded resources and reproducible run IDs.
+- **L3 Delivery:** inspectable report/artifact with PASS/FAIL, diagnostics, data coverage, assumptions and links to the exact source/run. Telegram remains reserved for actual signal notifications, not routine tool telemetry.
+
+A tool that only adds data or a dashboard without connecting to the other required layers is not an accepted integration.
+
+## 6. Proposed implementation stages and gates
 
 ### P0 — Baseline, audit and GX pilot design
 
