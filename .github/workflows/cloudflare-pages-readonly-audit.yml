@@ -1,0 +1,63 @@
+name: Cloudflare Pages read-only audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages-readonly-audit
+  cancel-in-progress: true
+
+jobs:
+  inspect-pages:
+    name: Inspect latest Pages deployments (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate required configuration
+        env:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN_READONLY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CF_ACCOUNT_ID" || { echo "::error::Missing repository variable CF_ACCOUNT_ID"; exit 1; }
+          test -n "$CF_PAGES_PROJECT" || { echo "::error::Missing repository variable CF_PAGES_PROJECT"; exit 1; }
+          test -n "$CF_API_TOKEN" || { echo "::error::Missing repository secret CF_API_TOKEN_READONLY"; exit 1; }
+
+      - name: Query Cloudflare Pages deployments
+        env:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN_READONLY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            --retry 2 --retry-delay 2 \
+            --header "Authorization: Bearer ${CF_API_TOKEN}" \
+            --header "Accept: application/json" \
+            "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${CF_PAGES_PROJECT}/deployments?per_page=5")"
+
+          if ! jq -e '.success == true and (.result | type == "array")' >/dev/null <<<"$response"; then
+            echo "::error::Cloudflare API did not return a successful deployment list."
+            jq -r '(.errors // [])[]? | .message // "Cloudflare API error"' <<<"$response" || true
+            exit 1
+          fi
+
+          {
+            echo "## Cloudflare Pages deployment audit"
+            echo
+            echo "Read-only query. No deployment, configuration, or account setting was changed."
+            echo
+            echo "| Environment | Latest stage | Status | Created | Deployment URL |"
+            echo "|---|---|---|---|---|"
+            jq -r '.result[] |
+              "| (.environment // "unknown") | (.latest_stage.name // "unknown") | (.latest_stage.status // "unknown") | (.created_on // "unknown") | (.url // "n/a") |"' <<<"$response"
+            echo
+            echo "_Source: Cloudflare Pages deployments API; latest five records returned._"
+          } >> "$GITHUB_STEP_SUMMARY"
