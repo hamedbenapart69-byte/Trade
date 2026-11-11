@@ -1,0 +1,83 @@
+name: P1-A Go Collector Prototype
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "go/p1a-collector/**"
+      - "scripts/p1a_*.py"
+      - ".github/workflows/p1a-go-collector.yml"
+  workflow_dispatch:
+    inputs:
+      run_live_benchmark:
+        description: "Run public exchange API benchmark (GitHub-hosted runner; not Iran connectivity proof)"
+        required: true
+        type: boolean
+        default: false
+      symbols:
+        description: "Comma-separated USDT perpetual symbols (empty uses the 40-symbol pilot set)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p1a-go-collector-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache-dependency-path: go/p1a-collector/go.mod
+      - name: Go unit tests
+        working-directory: go/p1a-collector
+        run: go test -race -count=1 ./...
+      - name: Go vet
+        working-directory: go/p1a-collector
+        run: go vet ./...
+
+  live-benchmark:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run_live_benchmark)
+    needs: go-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache-dependency-path: go/p1a-collector/go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Go collector
+        working-directory: go/p1a-collector
+        run: go build -trimpath -o ../../p1a-collector ./cmd/collector
+      - name: Install Python reference dependency
+        run: python -m pip install --disable-pip-version-check ccxt
+      - name: Validate benchmark scripts
+        run: python -m py_compile scripts/p1a_benchmark.py scripts/p1a_python_reference.py
+      - name: Run live equivalence and benchmark
+        env:
+          P1A_SYMBOLS: ${{ inputs.symbols }}
+        run: python scripts/p1a_benchmark.py --go-binary ./p1a-collector
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1a-go-collector-benchmark
+          path: p1a-benchmark.json
+          if-no-files-found: warn
+          retention-days: 7
