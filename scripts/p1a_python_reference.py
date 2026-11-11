@@ -46,6 +46,7 @@ def main() -> int:
         except Exception as exc:
             errors[name] = type(exc).__name__
     results = []
+    collection_started = time.perf_counter()
     for raw in symbols:
         item = {"symbol": raw, "timeframe": "15m", "provider": "",
                 "data_classification": "UNAVAILABLE", "status": "UNAVAILABLE",
@@ -96,6 +97,7 @@ def main() -> int:
             except Exception as exc:
                 item["errors"].append(name + ":" + str(exc))
         results.append(item)
+    collection_elapsed_ms = int((time.perf_counter() - collection_started) * 1000)
     for _, ex in providers:
         try:
             ex.close()
@@ -103,6 +105,7 @@ def main() -> int:
             pass
     json.dump({"schema_version": "1.0.0", "timeframe": "15m",
                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+               "collection_elapsed_ms": collection_elapsed_ms,
                "results": results, "provider_init_errors": errors},
               sys.stdout, separators=(",", ":"), allow_nan=False)
     sys.stdout.write("\n")
