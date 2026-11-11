@@ -546,8 +546,11 @@ During proxy test setup, the GitHub `create_file` connector committed `tests/das
 - PR #89 CI: Cloudflare Pages، Policy Guard و هر دو test check موفق.
 - Policy Guard در PR #89 آخرین اندازه‌گیری Branch Drift را `main_only=56` و `stage1b_only=176` گزارش کرد. پس از آن یک commit مستندسازی بی‌اثر در `stage1b-lrt15m` اضافه شده؛ شمارش فعلی مجدداً محاسبه نشده است.
 - Workflow Run `43040330207` قبل از اصلاح نام Workflow تمام شد و Notifier برای آن اجرا نشد؛ به همین دلیل به‌عنوان آزمون زندهٔ ارسال محسوب نمی‌شود.
-- Workflow Run جدید `43041231869` پس از ادغام PR #89 آغاز شده و در زمان این ثبت در مرحلهٔ اجرای اسکن 27 نماد بود. نتیجهٔ نهایی Notifier/Telegram تا تکمیل این Run هنوز تأیید نشده است.
-- وضعیت تحویل تلگرام: **کد و CI PASS؛ ارسال زنده هنوز UNVERIFIED/PENDING**.
+- Workflow Run اسکن واقعی Stage1B: `43041231869`، شاخهٔ `stage1b-lrt15m`، head `d5f424c31a2138b3c0dd78c30212050283ea841d`، نتیجهٔ نهایی `success`.
+- Trusted notifier run: `43041882994`، رویداد `workflow_run`، نتیجهٔ `success`.
+- لاگ Job: `TELEGRAM_DELIVERY=SUCCESS message_id=656` در 2026-11-11 14:47:35 UTC.
+- PR #90 برای ثبت این شاهد در 2026-11-11 با SHA ادغام `955780df6390e3796a659424b282564c976e53e4` در main ادغام شد.
+- وضعیت تحویل تلگرام: **LIVE DELIVERY VERIFIED — یک گزارش روزانه**. این نتیجه فقط تحویل را ثابت می‌کند؛ نه وجود BUY/SELL، edge آماری یا کالیبراسیون را.
 
 
 ## تکمیل شواهد پس از اصلاح trigger اعلان — 2026-11-11 14:47 UTC
@@ -560,3 +563,36 @@ During proxy test setup, the GitHub `create_file` connector committed `tests/das
 - چهار تست notifier موفق شدند: no-candidates daily report، incomplete universe rejection، non-finite levels rejection، و 27-symbol watchlist-only formatting.
 
 **نتیجه دقیق:** مسیر واقعی GitHub Actions → Artifact → Trusted notifier → Telegram اکنون یک ارسال موفق ثبت کرده است. این شاهد، تحویل یک گزارش روزانه را ثابت می‌کند؛ وجود سیگنال معاملاتی BUY/SELL را ثابت نمی‌کند. وضعیت سیگنال در این Run باید از خود گزارش artifact تفسیر شود و confidence همچنان تا کالیبراسیون NOT_CALIBRATED است.
+
+
+## 11. بازبینی نهایی پس از PR #90 — 2026-11-11
+
+### Telegram
+- PR #90 merged into main at `955780df6390e3796a659424b282564c976e53e4`.
+- Evidence: scan run `43041231869` and trusted notifier run `43041882994`, both successful.
+- Confirmed job output: `TELEGRAM_DELIVERY=SUCCESS message_id=656`.
+- Scope: one actual daily report delivery. No BUY/SELL trade signal or calibrated strategy edge is implied.
+
+### Activepieces Dashboard Read API
+- Flow `6oyZxg1YLVu0OpGzuDY8r` remains ENABLED and Published.
+- Draft trigger settings read as Header Auth with header name `X-Api-Key`; validation passed.
+- Published configuration remains `authType=none`; no 401/200 live test was executed.
+- PR #85 CI, Policy Guard and Dashboard Proxy Tests runs completed successfully. The latest GitHub PR metadata check at 2026-11-11 16:24 UTC reports `mergeable=true`; this metadata does not resolve the security flaw in Origin-only caller checks.
+- Security review found that its Origin allowlist is not caller authentication: non-browser clients can forge the Origin header. Do not merge or deploy this proxy as a security fix until a real access-control mechanism is designed and tested.
+- Cloudflare Pages production secrets/deploy remain deferred. The previously exposed Cloudflare token was not reused.
+- Result: **DEFERRED / OPEN HIGH RISK**. The Draft was not published to avoid breaking the current Bool dashboard.
+
+### PR #85 decision
+- Keep PR #85 open as research implementation, not production-ready.
+- Required before merge/deploy: implement actual caller authentication (not Origin-only checks), test unauthorized and authorized callers, verify proxy-to-Activepieces Header Auth, then switch the dashboard consumer and only afterwards publish Header Auth.
+- No Production mutation was performed.
+
+### P0 closeout decision
+**P0 OPERATIONAL ACCEPTANCE: PASS WITH DEFERRED ITEMS**, per the revised supervisor definition. This is not a statement of full security completion. Remaining explicit deferred items are:
+1. Admin Branch Protection write path.
+2. Cloudflare production environment configuration/deploy.
+3. Activepieces Published webhook authentication and live 401/200 verification.
+4. Bool dashboard migration to the authenticated proxy.
+5. Trusted Stage1B durable persistence; current artifact retention is temporary evidence, not durable dataset storage.
+
+The Telegram end-to-end report-delivery proof is complete. Trading performance remains UNCALIBRATED and is not part of this P0 acceptance.
