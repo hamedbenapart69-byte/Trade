@@ -21,14 +21,22 @@ def migrate_history_csv(old: str) -> str:
         return ""
     import io
     reader = csv.DictReader(io.StringIO(old))
-    if reader.fieldnames == FIELDS:
-        return old
     rows = list(reader)
+    needs_rewrite = (
+        reader.fieldnames != FIELDS
+        or any(not str(row.get("ev_status") or "").strip() for row in rows)
+    )
+    if not needs_rewrite:
+        return old
     output = io.StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=FIELDS)
     writer.writeheader()
     for row in rows:
-        writer.writerow({field: row.get(field, "") for field in FIELDS})
+        normalized = {field: row.get(field, "") for field in FIELDS}
+        # سوابق قدیمی فاقد EV status را به‌صورت صریح کالیبره‌نشده علامت می‌زنیم.
+        if not str(normalized.get("ev_status") or "").strip():
+            normalized["ev_status"] = "NOT_CALIBRATED"
+        writer.writerow(normalized)
     return output.getvalue()
 
 
@@ -61,7 +69,7 @@ def publish(payload):
             "status":s.get("status"),"side":s.get("side"),"tier":s.get("tier"),
             "provider":payload.get("provider"),"engine":payload.get("engine"),
             "reason":s.get("reason"),"confidence":s.get("confidence"),
-            "ev_net":s.get("ev_net"),"ev_status":s.get("ev_status"),"idempotency_key":key
+            "ev_net":s.get("ev_net"),"ev_status":s.get("ev_status") or "NOT_CALIBRATED","idempotency_key":key
         })
         added+=1
     if added or history_migrated:
