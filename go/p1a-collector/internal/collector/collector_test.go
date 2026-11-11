@@ -2,9 +2,12 @@ package collector
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -53,4 +56,61 @@ func TestNoDataIsExplicitlyUnavailable(t *testing.T) {
 	got,err:=c.Collect(context.Background(),Request{Symbols:[]string{"SOLUSDT"}})
 	if err!=nil {t.Fatal(err)}
 	if got.Results[0].Status!="UNAVAILABLE" || len(got.Results[0].Candles)!=0 {t.Fatalf("bad unavailable state: %+v",got.Results[0])}
+}
+
+func TestNormalizeRejectsDuplicateTimestamp(t *testing.T) {
+	now := time.Date(2026, 11, 11, 12, 7, 0, 0, time.UTC)
+	rows := []Candle{
+		{Timestamp:1794397500000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
+		{Timestamp:1794397500000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
+	}
+	if _, err := normalize(rows, now, 100); err == nil || !strings.Contains(err.Error(), "DUPLICATE_TIMESTAMP") {
+		t.Fatalf("expected duplicate timestamp rejection, got %v", err)
+	}
+}
+
+func TestNormalizeRejectsDataGap(t *testing.T) {
+	now := time.Date(2026, 11, 11, 12, 7, 0, 0, time.UTC)
+	rows := []Candle{
+		{Timestamp:1794396600000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
+		{Timestamp:1794398400000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
+	}
+	if _, err := normalize(rows, now, 100); err == nil || !strings.Contains(err.Error(), "DATA_GAP_OR_INTERVAL_ERROR") {
+		t.Fatalf("expected gap rejection, got %v", err)
+	}
+}
+
+func TestNormalizeRejectsNonFiniteValues(t *testing.T) {
+	now := time.Date(2026, 11, 11, 12, 7, 0, 0, time.UTC)
+	rows := []Candle{{Timestamp:1794397500000, Open:2, High:3, Low:1, Close:2.5, Volume:math.NaN()}}
+	if _, err := normalize(rows, now, 100); err == nil || !strings.Contains(err.Error(), "NON_FINITE_CANDLE_VALUE") {
+		t.Fatalf("expected non-finite rejection, got %v", err)
+	}
+}
+
+func TestCollectorBoundsConcurrencyAcrossFortySymbols(t *testing.T) {
+	var active int32
+	var maxActive int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		current := atomic.AddInt32(&active, 1)
+		for {
+			old := atomic.LoadInt32(&maxActive)
+			if current <= old || atomic.CompareAndSwapInt32(&maxActive, old, current) { break }
+		}
+		time.Sleep(10 * time.Millisecond)
+		atomic.AddInt32(&active, -1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"code":"0","data":[["1794397500000","2","3","1","2.5","9"]]}`))
+	}))
+	defer srv.Close()
+	symbols := make([]string, 40)
+	for i := range symbols { symbols[i] = fmt.Sprintf("COIN%dUSDT", i) }
+	now := time.Date(2026, 11, 11, 12, 7, 0, 0, time.UTC)
+	c := New(Config{OKXBaseURL:srv.URL, BybitBaseURL:srv.URL, HTTPClient:srv.Client(), Workers:2, Now:func()time.Time{return now}})
+	got, err := c.Collect(context.Background(), Request{Symbols:symbols, Limit:10})
+	if err != nil { t.Fatal(err) }
+	if len(got.Results) != 40 { t.Fatalf("expected 40 results, got %d", len(got.Results)) }
+	if maxActive.Load() < 2 || maxActive.Load() > 2 {
+		t.Fatalf("expected bounded concurrency of 2, observed %d", maxActive.Load())
+	}
 }
