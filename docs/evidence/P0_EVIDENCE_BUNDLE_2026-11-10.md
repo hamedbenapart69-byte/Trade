@@ -577,14 +577,14 @@ During proxy test setup, the GitHub `create_file` connector committed `tests/das
 - Flow `6oyZxg1YLVu0OpGzuDY8r` remains ENABLED and Published.
 - Draft trigger settings read as Header Auth with header name `X-Api-Key`; validation passed.
 - Published configuration remains `authType=none`; no 401/200 live test was executed.
-- PR #85 CI, Policy Guard and Dashboard Proxy Tests runs completed successfully, but the PR currently reports `mergeable=false`.
+- PR #85 CI, Policy Guard and Dashboard Proxy Tests runs completed successfully. The latest GitHub PR metadata check at 2026-11-11 16:24 UTC reports `mergeable=true`; this metadata does not resolve the security flaw in Origin-only caller checks.
 - Security review found that its Origin allowlist is not caller authentication: non-browser clients can forge the Origin header. Do not merge or deploy this proxy as a security fix until a real access-control mechanism is designed and tested.
 - Cloudflare Pages production secrets/deploy remain deferred. The previously exposed Cloudflare token was not reused.
 - Result: **DEFERRED / OPEN HIGH RISK**. The Draft was not published to avoid breaking the current Bool dashboard.
 
 ### PR #85 decision
 - Keep PR #85 open as research implementation, not production-ready.
-- Required before merge/deploy: resolve mergeability, implement actual caller authentication (not Origin-only checks), test unauthorized and authorized callers, verify proxy-to-Activepieces Header Auth, then switch the dashboard consumer and only afterwards publish Header Auth.
+- Required before merge/deploy: implement actual caller authentication (not Origin-only checks), test unauthorized and authorized callers, verify proxy-to-Activepieces Header Auth, then switch the dashboard consumer and only afterwards publish Header Auth.
 - No Production mutation was performed.
 
 ### P0 closeout decision
