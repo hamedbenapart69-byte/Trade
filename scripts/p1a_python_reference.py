@@ -49,7 +49,7 @@ def main() -> int:
     collection_started = time.perf_counter()
     for raw in symbols:
         item = {"symbol": raw, "timeframe": "15m", "provider": "",
-                "data_classification": "UNAVAILABLE", "status": "UNAVAILABLE",
+                "data_classification": "UNAVAILABLE", "volume_unit": "UNAVAILABLE", "status": "UNAVAILABLE",
                 "candles": [], "errors": []}
         for name, ex in providers:
             unified = canonical_symbol(ex, raw)
@@ -91,7 +91,7 @@ def main() -> int:
                         raise ValueError("DATA_GAP_OR_INTERVAL_ERROR")
                 candles = candles[-args.limit:]
                 if candles:
-                    item.update(provider=name, data_classification="REAL", status="OK", candles=candles)
+                    item.update(provider=name, data_classification="REAL", volume_unit=("CONTRACTS" if name == "okx" else "BASE_ASSET"), status="OK", candles=candles)
                     break
                 item["errors"].append(name + ":no_closed_candles")
             except Exception as exc:
