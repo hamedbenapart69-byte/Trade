@@ -173,12 +173,14 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int, scan
 		if len(row) < 9 { return nil, errors.New("MALFORMED_OKX_CANDLE_ROW") }
 		if row[8] == "0" { continue }
 		if row[8] != "1" { return nil, fmt.Errorf("INVALID_OKX_CONFIRM_FLAG:%s", row[8]) }
-		ts, e1 := strconv.ParseInt(row[0],10,64)
+		ts, err := strconv.ParseInt(row[0],10,64)
+		if err != nil { return nil, fmt.Errorf("INVALID_OKX_TIMESTAMP:%w", err) }
 		vals := make([]float64,5)
-		var parseErr error
-		ok := e1 == nil
-		for i:=0; i<5 && ok; i++ { vals[i], parseErr = strconv.ParseFloat(row[i+1],64); if parseErr != nil { ok=false } }
-		if !ok { continue }
+		for i:=0; i<5; i++ {
+			value, parseErr := strconv.ParseFloat(row[i+1],64)
+			if parseErr != nil { return nil, fmt.Errorf("INVALID_OKX_VALUE:%w", parseErr) }
+			vals[i] = value
+		}
 		rows = append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
 	return normalize(rows, scanNow, limit)
@@ -195,11 +197,15 @@ func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int, sc
 	if payload.RetCode != 0 { return nil, fmt.Errorf("provider_code_%d:%s",payload.RetCode,payload.RetMsg) }
 	rows := make([]Candle,0,len(payload.Result.List))
 	for _, row := range payload.Result.List {
-		if len(row) < 6 { continue }
-		ts,e1:=strconv.ParseInt(row[0],10,64)
-		vals:=make([]float64,5); var parseErr error; ok:=e1==nil
-		for i:=0;i<5 && ok;i++ { vals[i],parseErr=strconv.ParseFloat(row[i+1],64); if parseErr!=nil {ok=false} }
-		if !ok {continue}
+		if len(row) < 6 { return nil, errors.New("MALFORMED_BYBIT_CANDLE_ROW") }
+		ts, parseErr := strconv.ParseInt(row[0],10,64)
+		if parseErr != nil { return nil, fmt.Errorf("INVALID_BYBIT_TIMESTAMP:%w", parseErr) }
+		vals:=make([]float64,5)
+		for i:=0;i<5;i++ {
+			value, err := strconv.ParseFloat(row[i+1],64)
+			if err != nil { return nil, fmt.Errorf("INVALID_BYBIT_VALUE:%w", err) }
+			vals[i]=value
+		}
 		rows=append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
 	return normalize(rows,scanNow,limit)
