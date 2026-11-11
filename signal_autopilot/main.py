@@ -170,7 +170,8 @@ def process_symbol(
                 "lfs_coverage_pct", "lfs_status", "lfs_components", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
                 "zone_distance_pct", "rows_available", "stats_1h_rows_available",
-                "direction_candidates", "data_sources", "cvd",
+                "direction_candidates", "data_sources", "cvd", "entry", "stop_loss",
+                "take_profit", "rr", "hypothesis", "falsification",
             )
         }
         if result.get("decision") != "WATCHLIST":
