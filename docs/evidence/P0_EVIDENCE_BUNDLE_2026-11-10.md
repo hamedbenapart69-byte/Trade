@@ -548,3 +548,15 @@ During proxy test setup, the GitHub `create_file` connector committed `tests/das
 - Workflow Run `43040330207` قبل از اصلاح نام Workflow تمام شد و Notifier برای آن اجرا نشد؛ به همین دلیل به‌عنوان آزمون زندهٔ ارسال محسوب نمی‌شود.
 - Workflow Run جدید `43041231869` پس از ادغام PR #89 آغاز شده و در زمان این ثبت در مرحلهٔ اجرای اسکن 27 نماد بود. نتیجهٔ نهایی Notifier/Telegram تا تکمیل این Run هنوز تأیید نشده است.
 - وضعیت تحویل تلگرام: **کد و CI PASS؛ ارسال زنده هنوز UNVERIFIED/PENDING**.
+
+
+## تکمیل شواهد پس از اصلاح trigger اعلان — 2026-11-11 14:47 UTC
+
+- PR #89 merged into `main`; merge commit `73fddeebca0fd74b55fb282b892925c1dc3b119b`.
+- علت: Workflow زمان‌بندی‌شدهٔ شاخه main با نام `Trader_me Stage 1 Signal Bot` اجرا می‌شد، اما notifier فقط نام workflow شاخه Stage1B را listen می‌کرد. هر دو نام اکنون در trigger ثبت شده‌اند.
+- اسکن واقعی Stage1B: Run `43041231869`, branch `stage1b-lrt15m`, head `d5f424c31a2138b3c0dd78c30212050283ea841d`, conclusion `success`.
+- Trusted notifier: Run `43041882994`, event `workflow_run`, conclusion `success`.
+- Job log: `TELEGRAM_DELIVERY=SUCCESS message_id=656` در 2026-11-11 14:47:35 UTC.
+- چهار تست notifier موفق شدند: no-candidates daily report، incomplete universe rejection، non-finite levels rejection، و 27-symbol watchlist-only formatting.
+
+**نتیجه دقیق:** مسیر واقعی GitHub Actions → Artifact → Trusted notifier → Telegram اکنون یک ارسال موفق ثبت کرده است. این شاهد، تحویل یک گزارش روزانه را ثابت می‌کند؛ وجود سیگنال معاملاتی BUY/SELL را ثابت نمی‌کند. وضعیت سیگنال در این Run باید از خود گزارش artifact تفسیر شود و confidence همچنان تا کالیبراسیون NOT_CALIBRATED است.
