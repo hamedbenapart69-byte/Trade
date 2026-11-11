@@ -43,10 +43,11 @@ def main() -> int:
     parser.add_argument("--output", default="p1a-benchmark.json")
     args = parser.parse_args()
     symbols = sorted({x.strip().upper() for x in args.symbols.split(",") if x.strip()})
-    request = {"symbols": symbols, "timeframe": "15m", "limit": args.limit}
+    as_of_ms = int(time.time() * 1000)
+    request = {"symbols": symbols, "timeframe": "15m", "limit": args.limit, "as_of_ms": as_of_ms}
     go, go_seconds = run_json([args.go_binary], request)
     py, py_seconds = run_json([sys.executable, "scripts/p1a_python_reference.py",
-                               "--symbols", ",".join(symbols), "--limit", str(args.limit)])
+                               "--symbols", ",".join(symbols), "--limit", str(args.limit), "--as-of-ms", str(as_of_ms)])
     go_map, py_map = canonical(go), canonical(py)
     divergences = []
     for symbol in symbols:
@@ -66,8 +67,9 @@ def main() -> int:
     report = {
         "schema_version": "1.0.0",
         "classification": "LIVE_PUBLIC_API_BENCHMARK_NOT_PRODUCTION_EVIDENCE",
-        "scope": "15m OHLCV fetch for explicit symbols only; excludes universe discovery, funding, open interest and strategy compute",
+        "scope": "15m OHLCV fetch for explicit symbols only; excludes universe discovery, CoinGecko whitelist/liquidity/listing filters, funding, open interest and strategy compute. This is not a full MarketDataFetcher equivalence test.",
         "symbols_requested": len(symbols),
+        "shared_as_of_ms": as_of_ms,
         "go": {"seconds": round(go_seconds, 6), "symbols_ok": go_ok,
                "providers": sorted({x.get("provider") for x in go_map.values() if x.get("provider")})},
         "python_ccxt_reference": {"seconds": round(py_seconds, 6), "symbols_ok": py_ok,
@@ -78,7 +80,7 @@ def main() -> int:
                         "divergence_count": len(divergences), "divergences": divergences},
         "go_output_sha256": hashlib.sha256(json.dumps(go, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
         "python_output_sha256": hashlib.sha256(json.dumps(py, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
-        "decision": "RESEARCH_ONLY" if divergences or speedup is None or speedup < 5 else "SHADOW_ELIGIBLE_REVIEW_REQUIRED",
+        "decision": "RESEARCH_ONLY" if divergences or speedup is None or speedup < 5 else "MICROBENCHMARK_THRESHOLD_MET_FULL_PIPELINE_GATE_STILL_REQUIRED",
     }
     Path(args.output).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
