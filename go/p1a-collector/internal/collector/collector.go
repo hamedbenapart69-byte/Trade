@@ -46,6 +46,7 @@ type Response struct {
 	SchemaVersion string         `json:"schema_version"`
 	Timeframe     string         `json:"timeframe"`
 	GeneratedAt   string         `json:"generated_at_utc"`
+	CollectionElapsedMS int64 `json:"collection_elapsed_ms"`
 	Results       []SymbolResult `json:"results"`
 }
 
@@ -89,6 +90,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	}
 	sort.Strings(symbols)
 
+	started := time.Now()
 	scanNow := c.cfg.Now().UTC()
 	if req.AsOfMS > 0 { scanNow = time.UnixMilli(req.AsOfMS).UTC() }
 	type job struct{ index int; symbol string }
@@ -115,7 +117,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	}
 	close(jobs)
 	wg.Wait()
-	return Response{SchemaVersion:"1.0.0", Timeframe:"15m", GeneratedAt:scanNow.Format(time.RFC3339Nano), Results:results}, nil
+	return Response{SchemaVersion:"1.0.0", Timeframe:"15m", GeneratedAt:scanNow.Format(time.RFC3339Nano), CollectionElapsedMS:time.Since(started).Milliseconds(), Results:results}, nil
 }
 
 func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, scanNow time.Time) SymbolResult {
