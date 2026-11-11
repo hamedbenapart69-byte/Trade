@@ -70,7 +70,7 @@ func TestNormalizeRejectsDuplicateTimestamp(t *testing.T) {
 }
 
 func TestNormalizeRejectsDataGap(t *testing.T) {
-	now := time.Date(2026, 11, 11, 12, 7, 0, 0, time.UTC)
+	now := time.Date(2026, 11, 11, 12, 37, 0, 0, time.UTC)
 	rows := []Candle{
 		{Timestamp:1794396600000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
 		{Timestamp:1794398400000, Open:2, High:3, Low:1, Close:2.5, Volume:9},
