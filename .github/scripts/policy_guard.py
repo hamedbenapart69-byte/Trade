@@ -38,8 +38,15 @@ def changed_paths(base: str, head: str, event: str) -> list[str]:
     return run_git("diff", "--name-only", base, head).splitlines()
 
 
+def is_secret_path(path: str) -> bool:
+    name = PurePosixPath(path).name.lower()
+    if name == ".env.example":
+        return False
+    return bool(SECRET_NAME.search(name) or SECRET_NAME.search(path))
+
+
 def classify_paths(paths: list[str]) -> tuple[list[str], list[str]]:
-    secret_paths = [p for p in paths if SECRET_NAME.search(PurePosixPath(p).name) or SECRET_NAME.search(p)]
+    secret_paths = [p for p in paths if is_secret_path(p)]
     sensitive_workflows = [p for p in paths if SENSITIVE_WORKFLOW.search(p)]
     return secret_paths, sensitive_workflows
 
