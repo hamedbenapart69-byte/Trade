@@ -35,7 +35,7 @@ class HistoryCsvMigrationTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["symbol"], "BTC/USDT:USDT")
         self.assertEqual(rows[0]["idempotency_key"], "stable-key-1")
-        self.assertEqual(rows[0]["ev_status"], "")
+        self.assertEqual(rows[0]["ev_status"], "NOT_CALIBRATED")
 
     def test_migration_is_idempotent_for_current_schema(self):
         current = io.StringIO(newline="")
@@ -44,6 +44,17 @@ class HistoryCsvMigrationTests(unittest.TestCase):
         writer.writerow({"symbol": "ETH/USDT:USDT", "ev_status": "NOT_CALIBRATED"})
         value = current.getvalue()
         self.assertEqual(migrate_history_csv(value), value)
+
+
+    def test_normalizes_blank_ev_status_in_current_schema(self):
+        current = io.StringIO(newline="")
+        writer = csv.DictWriter(current, fieldnames=FIELDS)
+        writer.writeheader()
+        writer.writerow({"symbol": "ETH/USDT:USDT", "ev_status": ""})
+        migrated = migrate_history_csv(current.getvalue())
+        rows = list(csv.DictReader(io.StringIO(migrated)))
+        self.assertEqual(rows[0]["ev_status"], "NOT_CALIBRATED")
+
 
 
 if __name__ == "__main__":
