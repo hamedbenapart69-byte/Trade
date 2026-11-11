@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101923">
 <meta name="description" content="داشبورد خودکار سیگنال‌های معاملات آتی رمزارز، مبتنی بر داده عمومی و اعتبارسنجی‌شده">
-<title>Futures Signal Autopilot V5</title>
+<title>Futures Signal Autopilot V6</title>
 <style>
 :root{font-family:Tahoma,Arial,sans-serif;color:#edf3f8;background:#0b131c;color-scheme:dark;font-synthesis:none}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 88% 0%,#203b4b 0,transparent 42%),#0b131c}
@@ -21,14 +21,14 @@ button:disabled{opacity:.5;cursor:wait}.linkbtn.secondary{background:#1a2b38;col
 th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #293b49;white-space:nowrap}th{color:#9aabba;font-weight:600}
 .tag{display:inline-block;padding:4px 8px;border:1px solid #3a5260;border-radius:20px;font-size:.7rem}.tag.good{color:#8fe0bd;border-color:#28644f}.tag.warn{color:#ffd28a;border-color:#765b30}.tag.bad{color:#ffaaa4;border-color:#71413f}
 .empty{padding:18px;border:1px dashed #3b4c5a;border-radius:10px;color:#b4c4ce;text-align:center;font-size:.86rem;line-height:1.9}
-.msg{margin-top:11px;color:#c2d4df;font-size:.8rem;line-height:1.9}.foot{font-size:.74rem;color:#8193a2;line-height:1.95}
+.msg{margin-top:11px;color:#c2d4df;font-size:.8rem;line-height:1.9}.family-table{overflow-x:auto;margin-top:10px}.family-table table{width:100%;border-collapse:collapse;font-size:12px}.family-table th,.family-table td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.foot{font-size:.74rem;color:#8193a2;line-height:1.95}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.notice{padding:12px 14px;border:1px solid #765b30;background:#241e14;border-radius:11px;color:#f0d4a4;font-size:.82rem;line-height:1.9;margin-top:13px}
 @media(max-width:680px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}main{padding:16px 10px 32px}.panel{padding:13px}.brand{font-size:.98rem}.actions{width:100%}.actions button,.actions a{flex:1}}
 </style>
 </head>
 <body><main>
 <header class="head">
- <div><div class="brand">FUTURES SIGNAL AUTOPILOT <span class="version">V5</span></div>
+ <div><div class="brand">FUTURES SIGNAL AUTOPILOT <span class="version">V6</span></div>
  <div class="sub">پایش معاملات آتی رمزارز | دادهٔ عمومی | بدون اتصال حساب صرافی و بدون اجرای سفارش</div></div>
  <div class="actions"><span id="state" class="status">در حال دریافت آخرین اسکن...</span><button id="refresh">به‌روزرسانی داده</button>
  <a class="linkbtn secondary" href="https://github.com/hamedbenapart69-byte/Trade/actions/workflows/v5-signal-autopilot.yml" target="_blank" rel="noopener">اجرای اسکن تازه</a></div>
@@ -56,12 +56,12 @@ const fmt=v=>v===null||v===undefined?"—":typeof v==="number"?v.toLocaleString(
 const timeFa=v=>v?new Date(v).toLocaleString("fa-IR",{dateStyle:"short",timeStyle:"short"}):"—";
 function table(rows,watch=false){
  if(!rows?.length)return '<div class="empty">'+(watch?'در آخرین اسکن فرصت شرطی واجد شرایطی ثبت نشده است.':'در آخرین اسکن سیگنال فوری واجد شرایطی پیدا نشد.')+'</div>';
- const heads=watch?["نماد","تصمیم","جهت","شرط تأیید","سطح فعال‌سازی","امتیاز اطمینان (V5)","درجه داده"]:
- ["نماد","تصمیم","جهت","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک (USD)","درجه داده","امتیاز اطمینان (V5)"];
+ const heads=watch?["نماد","استراتژی","تصمیم","جهت","ورود برنامه‌ریزی‌شده","حد ضرر","هدف اول","شرط فعال‌سازی","سطح فعال‌سازی","اهرم","ریسک (USD)","امتیاز V6","درجه داده"]:
+ ["نماد","استراتژی","تصمیم","جهت","ورود","حد ضرر","هدف اول","حد ضرر %","اهرم","ریسک (USD)","درجه داده","امتیاز V6"];
  return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(x=>{
   const z=x.risk||{},e=x.entry_quality||{};
-  const cells=watch?[x.symbol,x.decision,x.direction,e.confirmation_required,e.trigger_level,x.confidence_v5,x.data_grade]:
-  [x.symbol,x.decision,x.direction,x.entry,x.stop_loss,x.take_profit,x.stop_pct,z.required_leverage,z.planned_loss_usd,x.data_grade,x.confidence_v5];
+  const cells=watch?[x.symbol,x.strategy_family,x.decision,x.direction,x.entry,x.stop_loss,x.take_profit,e.confirmation_required,e.trigger_level,z.required_leverage,z.planned_loss_usd,(x.confidence_v6??x.confidence_v5),x.data_grade]:
+  [x.symbol,x.strategy_family,x.decision,x.direction,x.entry,x.stop_loss,x.take_profit,x.stop_pct,z.required_leverage,z.planned_loss_usd,x.data_grade,(x.confidence_v6??x.confidence_v5)];
   return '<tr>'+cells.map((v,i)=>'<td>'+(i===2?'<span class="tag '+(watch?'warn':'good')+'">'+fmt(v)+'</span>':fmt(v))+'</td>').join('')+'</tr>';
  }).join('')+'</tbody></table></div>';
 }
@@ -81,7 +81,7 @@ function render(d){
  $("watchCount").textContent=fmt(watch.length);
  const c=d.coverage||{};
  const expanded=d.scan_mode==="EXPANDED_TOP_100"?" | فهرست اصلی: "+fmt(d.primary_shortlist_selected)+"/30 | گسترش بازار: "+fmt(d.expanded_discovery_selected)+"/"+fmt(d.expanded_discovery_target)+(d.extended_partial||Number(d.screened_assets)<Number(d.selected_assets)?" (پوشش ناقص)":""):"";
- $("coverage").textContent="پوشش: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+expanded+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/30":"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
+ $("coverage").textContent="کشف اولیه: "+fmt(d.discovered_assets)+" دارایی | قراردادهای واجد شرایط: "+fmt(d.eligible_assets)+" | بررسی‌شده: "+fmt(c.screened??d.screened_assets)+"/"+fmt(d.selected_assets)+expanded+(d.partial_scan?" | اسکن ناقص: "+fmt(d.screened_assets)+"/"+fmt(d.universe_requested||30):"")+" | دادهٔ ناکافی: "+fmt(c.insufficient_data)+" | ردشده: "+fmt(c.rejected)+" | شناسه: "+fmt(d.scan_id||"—");
  $("source").textContent="کشف بازار: "+fmt(d.source_status?.discovery)+" | دادهٔ قراردادهای آتی و کندل: "+fmt(d.source_status?.futures_ohlcv)+" | مرجع مستقل: "+fmt(d.source_status?.underlying_market_data);
  if(d.status!=="SCAN_COMPLETED"){
   $("notice").innerHTML='<div class="notice">اسکن قابل اتکایی برای انتشار موجود نیست. تا دریافت دادهٔ معتبر، هیچ سیگنال اجرایی منتشر نمی‌شود. '+esc(d.error||"")+'</div>';
@@ -93,7 +93,9 @@ function render(d){
  $("actionable").innerHTML=fresh?table(action):'<div class="empty">در حال حاضر سیگنال تازه و قابل استفاده برای ورود فوری نداریم. دادهٔ اسکن قبلی منقضی شده است.</div>';
  $("conditional").innerHTML=fresh?table(watch,true):'<div class="empty">فهرست شرطی آخرین اسکن نیز قدیمی است و باید دوباره ارزیابی شود.</div>';
  const p=d.performance||{};
- $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b><br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
+ const familyRows=Object.entries(p.by_strategy_family||{}).map(([name,v])=>'<tr><td>'+esc(name)+'</td><td>'+fmt(v.published)+'</td><td>'+fmt(v.closed)+'</td><td>'+fmt(v.win_rate_pct)+(v.win_rate_pct==null?'':'%')+'</td><td>'+fmt(v.expectancy_r)+'</td></tr>').join('');
+ const familyTable=familyRows?'<div class="family-table"><table><thead><tr><th>خانواده استراتژی</th><th>منتشرشده</th><th>بسته‌شده</th><th>نرخ برد</th><th>امید (R)</th></tr></thead><tbody>'+familyRows+'</tbody></table></div>':'<div class="foot">هنوز نمونه بسته‌شده‌ای برای مقایسه خانواده‌های استراتژی وجود ندارد.</div>';
+ $("performance").innerHTML='سیگنال‌های ثبت‌شده: <b>'+fmt(p.published_signals)+'</b><br>مشاهدات بسته‌شده: <b>'+fmt(p.closed_observations)+'</b><br>برد: <b>'+fmt(p.win_rate_pct)+(p.win_rate_pct==null?'':'%')+'</b><br>امید ریاضی (R): <b>'+fmt(p.expectancy_r)+'</b>'+familyTable+'<br><span class="foot">'+esc(p.mode||"")+' | '+esc(p.outcome_source||"")+'</span>';
  const g=d.publication_gate||{};
  $("validation").innerHTML='منبع زنده: <b>'+(g.source_verified?'تأیید شده':'تأیید نشده')+'</b><br>سیگنال فوری منتشرشده: <b>'+fmt(g.actionable_candidates_published)+'</b><br>فرصت شرطی منتشرشده: <b>'+fmt(g.conditional_candidates_published)+'</b><br>تداوم سابقهٔ کاغذی: <b>'+(d.paper_state_restored?'بازیابی شد':'از نو آغاز شده / بازیابی نشد')+'</b><br>دادهٔ ساختگی: خیر<br>اتصال حساب صرافی: خیر | اجرای سفارش: خیر';
 }

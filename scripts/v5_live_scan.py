@@ -28,7 +28,7 @@ def main() -> int:
         engine = FuturesSignalEngine(provider=provider)
         prior = evaluate_outcomes_with_provider(provider)
         result = engine.scan(extended=True, limit=100)
-        result["strategy_version"] = "V5_STRICT_V3_BASELINE"
+        result["strategy_version"] = "V6_ADAPTIVE_MULTI_PATTERN_WITH_V5_BASELINE"
         eligible = int(result.get("eligible_assets") or 0)
         selected = int(result.get("selected_assets") or 0)
         result["scan_mode"] = "EXPANDED_TOP_100"
@@ -53,6 +53,7 @@ def main() -> int:
         print(json.dumps({
             "status": result["status"],
             "scan_mode": result["scan_mode"],
+            "discovered_assets": result.get("discovered_assets"),
             "eligible_assets": eligible,
             "selected_assets": selected,
             "screened_assets": result.get("screened_assets"),

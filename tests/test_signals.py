@@ -260,7 +260,7 @@ class ConditionalOutcomeProvider:
 
 
 class V5PipelineTests(unittest.TestCase):
-    def test_end_to_end_fixture_rejects_non_qualifying_market_without_fake_signal(self):
+    def test_end_to_end_fixture_waits_when_no_strategy_pattern_qualifies(self):
         tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH");now=1793967960000
         os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"pipeline.db")
         try:
@@ -269,7 +269,7 @@ class V5PipelineTests(unittest.TestCase):
             result=engine.scan(limit=30)
             self.assertEqual(result["screened_assets"],1)
             self.assertTrue(result["partial_scan"])
-            self.assertEqual(result["other_candidates"][0]["decision"],"REJECT")
+            self.assertEqual(result["other_candidates"][0]["decision"],"WAIT")
             self.assertEqual(result["actionable"],[])
             self.assertFalse(result["source_status"]["account_connection"])
         finally:
@@ -538,6 +538,26 @@ class V5ProviderAttributionTests(unittest.TestCase):
             result=evaluate_outcomes_with_provider(provider)
             self.assertEqual(result["checked"],0)
             self.assertEqual(provider.calls,0)
+        finally:
+            if old is None:os.environ.pop("CONTROL_DB_PATH",None)
+            else:os.environ["CONTROL_DB_PATH"]=old
+            tmp.cleanup()
+
+    def test_v6_performance_breaks_outcomes_down_by_strategy_family(self):
+        tmp=tempfile.TemporaryDirectory();old=os.environ.get("CONTROL_DB_PATH")
+        os.environ["CONTROL_DB_PATH"]=str(Path(tmp.name)/"v6-family.db")
+        try:
+            store.init_db()
+            save_scan({"scan_id":"v6-family","scanned_at":"2026-11-08T00:00:00+00:00",
+              "strategy_version":"V6_ADAPTIVE_MULTI_PATTERN_WITH_V5_BASELINE",
+              "source_status":{"futures_ohlcv":"OKX public market-data API"},
+              "actionable":[{"symbol":"FILUSDT","direction":"SHORT","decision":"SELL_NOW",
+                "strategy_family":"TREND_PULLBACK","entry":0.78,"stop_loss":0.80,"take_profit":0.74,
+                "entry_observed_at_ms":1000,"confidence_v6":76,"confidence_v5":76,
+                "data_grade":"B","risk":{"planned_loss_usd":4.0}}],"conditional":[]})
+            report=performance()
+            self.assertEqual(report["by_strategy_family"]["TREND_PULLBACK"]["published"],1)
+            self.assertEqual(report["by_strategy_family"]["TREND_PULLBACK"]["closed"],0)
         finally:
             if old is None:os.environ.pop("CONTROL_DB_PATH",None)
             else:os.environ["CONTROL_DB_PATH"]=old
