@@ -537,3 +537,14 @@ During proxy test setup, the GitHub `create_file` connector committed `tests/das
 **P0 OPERATIONAL ACCEPTANCE: PASS WITH DEFERRED ITEMS**, بر اساس تعریف جدید ناظر که موارد غیرقابل‌اجرا را DEFERRED می‌پذیرد.
 
 این PASS اداری/عملیاتی به معنی امنیت کامل نیست: Webhook Published هنوز بدون احراز هویت است و persistence دیتاست Stage1b موقتاً متوقف شده است. این دو ریسک در جدول بالا DEFERRED و آشکار نگه داشته شده‌اند.
+
+
+## پیگیری پس از PR #88 — 2026-11-11
+
+- PR #89 در `main` ادغام شد: `73fddeebca0fd74b55fb282b892925c1dc3b119b`.
+- اصلاح: Trusted Telegram Notifier اکنون نام هر دو Workflow را گوش می‌دهد: `Trader_me Stage 1B LRT-15m Signal Bot` برای Push شاخهٔ Stage1B و `Trader_me Stage 1 Signal Bot` برای Schedule/Manual روی default branch.
+- PR #89 CI: Cloudflare Pages، Policy Guard و هر دو test check موفق.
+- Policy Guard در PR #89 آخرین اندازه‌گیری Branch Drift را `main_only=56` و `stage1b_only=176` گزارش کرد. پس از آن یک commit مستندسازی بی‌اثر در `stage1b-lrt15m` اضافه شده؛ شمارش فعلی مجدداً محاسبه نشده است.
+- Workflow Run `43040330207` قبل از اصلاح نام Workflow تمام شد و Notifier برای آن اجرا نشد؛ به همین دلیل به‌عنوان آزمون زندهٔ ارسال محسوب نمی‌شود.
+- Workflow Run جدید `43041231869` پس از ادغام PR #89 آغاز شده و در زمان این ثبت در مرحلهٔ اجرای اسکن 27 نماد بود. نتیجهٔ نهایی Notifier/Telegram تا تکمیل این Run هنوز تأیید نشده است.
+- وضعیت تحویل تلگرام: **کد و CI PASS؛ ارسال زنده هنوز UNVERIFIED/PENDING**.
