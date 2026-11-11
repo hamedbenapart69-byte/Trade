@@ -60,9 +60,7 @@ Observed from the accessible `main` branch on 2026-11-11:
 - The V5-specific workflow file on `main` is manual-dispatch-only, while other scheduled workflows exist in the repository. The README and workflow files therefore need a schedule-ownership reconciliation before any scheduler migration.
 - CI currently runs root tests, scanner tests, a fail-closed legacy-engine smoke test, JavaScript syntax validation, Compose validation, Docker build and a container health smoke test.
 
-**Activepieces research evidence (observed, not independently revalidated):** The connected external project completed a production run on 2026-11-11 04:40 UTC. Its final gate returned `BLOCKED`, `WAIT`, `REVIEW_REQUIRED`, and `trade_allowed=false`. In that run, the built-in 1h EMA20/EMA50 + RSI14 DEX-proxy backtest reported OOS return -15.28%, MaxDD 31.54%, PF 0.396 and 28 trades. The 4h Donchian/EMA DEX-pool proxy reported OOS return -5.80%, MaxDD 11.24%, PF 0.351 and 4 trades. The daily price-observation backtest had only 2 OOS trades, below its own minimum of 3. A separate four-hypothesis training-validation stage selected no candidate and therefore did not run its OOS selection test. These are run outputs from a single external workflow, not independent performance certification. Its own limitations state that hourly data comes from one WBTC DEX pool, daily observations are not OHLC candles, the 70/30 split is preliminary, and gas/liquidity/funding costs are incomplete.
-
-**Implication for Jesse/Nautilus:** The existing Activepieces JavaScript backtests must be included as a third comparator in any benchmark. The candidate engines must use the same immutable dataset and assumptions; do not compare a DEX WBTC proxy with consolidated futures data and call the result engine parity.
+**Activepieces research evidence (sanitized):** A connected external Activepieces project was inspected read-only. It contains six enabled data/research flows and one disabled legacy futures flow; its 49-step research scanner includes JavaScript backtest blocks. The latest inspected run completed technically but its final gate returned `BLOCKED / WAIT` with `trade_allowed=false`. Exact run identifiers, detailed metrics, data caveats and endpoint-security findings are retained in the private Support-trade audit document, not this public planning file.
 
 **Important correction:** The current `main` branch does not establish that an active production backtest engine with a measured 100% drawdown exists. That claim must be tied to a specific engine, commit, dataset, configuration and report before any replacement decision. The V5 documentation instead records the historical backtest as unverified. NautilusTrader/Jesse are therefore benchmark candidates, not approved replacements.
 
@@ -79,10 +77,9 @@ Observed from the accessible `main` branch on 2026-11-11:
 
 ### 3.1.1 Existing Activepieces simulator baseline
 
-- **Current state:** A 49-step external Activepieces research flow contains JavaScript implementations for a 1h EMA/RSI baseline, a 4h Donchian/EMA baseline and a multi-fold training-validation experiment.
-- **Observed run:** The most recent inspected run ended with `BLOCKED / WAIT / REVIEW_REQUIRED`, with trading permission false. The 1h and 4h OOS results were negative and the daily OOS sample did not meet its own minimum trade count.
-- **Data/model limits:** The current hourly backtest uses WBTC/USDT candles from one DEX pool, not consolidated BTC futures. Daily data is price observations, not daily OHLC. Costs omit some real-world execution effects. The multi-fold experiment did not select a candidate and did not run OOS.
-- **Decision:** Preserve this simulator as a frozen baseline for research. It is not approved for signal production or live trading. Benchmark Jesse and Nautilus against it only after dataset provenance and execution assumptions are normalized.
+- **Current state:** The connected external Activepieces project includes JavaScript backtest blocks inside a 49-step research flow.
+- **Decision:** Preserve the existing simulator as a third benchmark candidate. Do not compare Jesse and Nautilus against it until data provenance, timestamps, costs, execution assumptions and OOS windows are normalized.
+- **Evidence boundary:** Detailed run metrics and limitations are maintained in the private Support-trade audit, not this public plan.
 
 ### 3.2 Jesse
 
