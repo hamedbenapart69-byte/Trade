@@ -100,7 +100,7 @@ func TestCollectorBoundsConcurrencyAcrossFortySymbols(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		atomic.AddInt32(&active, -1)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":"0","data":[["1794397500000","2","3","1","2.5","9"]]}`))
+		_, _ = w.Write([]byte(`{"code":"0","data":[["1794397500000","2","3","1","2.5","9","9","9","1"]]}`))
 	}))
 	defer srv.Close()
 	symbols := make([]string, 40)
