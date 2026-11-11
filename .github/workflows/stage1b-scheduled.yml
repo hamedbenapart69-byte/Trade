@@ -133,7 +133,8 @@ jobs:
         with:
           name: stage1b-p0-dataset-${{ github.run_id }}
           path: |
-            market-data/datasets/stage1b/
+            market-data/datasets/stage1b/lrt15m/
+            market-data/datasets/stage1b/manifest.json
             signal_autopilot/data/stage1b_15m_data_report.json
           if-no-files-found: error
           retention-days: 2
