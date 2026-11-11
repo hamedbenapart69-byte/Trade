@@ -7,3 +7,5 @@ numpy>=1.26,<3
 pandas>=2.2,<3
 requests>=2.32,<3
 mplfinance>=0.12.10b0
+
+# Telegram delivery credentials are intentionally absent from this scanner environment.
