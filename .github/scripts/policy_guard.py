@@ -17,8 +17,8 @@ SECRET_NAME = re.compile(
     re.IGNORECASE,
 )
 PRIVATE_KEY = re.compile(
-    r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----|"
-    r"-----BEGIN PGP PRIVATE KEY BLOCK-----",
+    r"-{5}BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-{5}|"
+    r"-{5}BEGIN PGP PRIVATE KEY BLOCK-{5}",
     re.IGNORECASE,
 )
 
