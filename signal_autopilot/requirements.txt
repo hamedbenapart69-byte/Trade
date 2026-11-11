@@ -9,3 +9,5 @@ requests>=2.32,<3
 mplfinance>=0.12.10b0
 
 # Telegram delivery credentials are intentionally absent from this scanner environment.
+
+# Trusted workflow_run notifier subscription verified after PR #89.
