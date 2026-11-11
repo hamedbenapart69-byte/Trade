@@ -87,6 +87,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	}
 	sort.Strings(symbols)
 
+	scanNow := c.cfg.Now().UTC()
 	type job struct{ index int; symbol string }
 	jobs := make(chan job)
 	results := make([]SymbolResult, len(symbols))
@@ -98,7 +99,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
-				results[j.index] = c.collectOne(ctx, j.symbol, req.Limit)
+				results[j.index] = c.collectOne(ctx, j.symbol, req.Limit, scanNow)
 			}
 		}()
 	}
@@ -111,15 +112,15 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	}
 	close(jobs)
 	wg.Wait()
-	return Response{SchemaVersion:"1.0.0", Timeframe:"15m", GeneratedAt:c.cfg.Now().UTC().Format(time.RFC3339Nano), Results:results}, nil
+	return Response{SchemaVersion:"1.0.0", Timeframe:"15m", GeneratedAt:scanNow.Format(time.RFC3339Nano), Results:results}, nil
 }
 
-func (c *Collector) collectOne(ctx context.Context, symbol string, limit int) SymbolResult {
+func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, scanNow time.Time) SymbolResult {
 	out := SymbolResult{Symbol:symbol, Timeframe:"15m", DataClassification:"UNAVAILABLE", Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
 	for _, provider := range []string{"okx", "bybit"} {
 		var candles []Candle
 		var err error
-		if provider == "okx" { candles, err = c.fetchOKX(ctx, symbol, limit) } else { candles, err = c.fetchBybit(ctx, symbol, limit) }
+		if provider == "okx" { candles, err = c.fetchOKX(ctx, symbol, limit, scanNow) } else { candles, err = c.fetchBybit(ctx, symbol, limit, scanNow) }
 		if err != nil {
 			out.Errors = append(out.Errors, provider+":"+err.Error())
 			continue
@@ -150,7 +151,7 @@ func (c *Collector) getJSON(ctx context.Context, endpoint string, query url.Valu
 	return nil
 }
 
-func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int) ([]Candle, error) {
+func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int, scanNow time.Time) ([]Candle, error) {
 	var payload struct {
 		Code string `json:"code"`
 		Msg string `json:"msg"`
@@ -171,10 +172,10 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int) ([]C
 		if !ok { continue }
 		rows = append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
-	return normalize(rows, c.cfg.Now(), limit), nil
+	return normalize(rows, scanNow, limit), nil
 }
 
-func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int) ([]Candle, error) {
+func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int, scanNow time.Time) ([]Candle, error) {
 	var payload struct {
 		RetCode int `json:"retCode"`
 		RetMsg string `json:"retMsg"`
@@ -192,7 +193,7 @@ func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int) ([
 		if !ok {continue}
 		rows=append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
-	return normalize(rows,c.cfg.Now(),limit),nil
+	return normalize(rows,scanNow,limit),nil
 }
 
 func normalize(rows []Candle, now time.Time, limit int) []Candle {
