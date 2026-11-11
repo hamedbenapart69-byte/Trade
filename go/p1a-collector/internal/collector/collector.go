@@ -29,6 +29,7 @@ type SymbolResult struct {
 	Symbol   string   `json:"symbol"`
 	Timeframe string  `json:"timeframe"`
 	DataClassification string `json:"data_classification"`
+	VolumeUnit string `json:"volume_unit"`
 	Provider string   `json:"provider"`
 	Status   string   `json:"status"`
 	Candles  []Candle `json:"candles"`
@@ -122,7 +123,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 }
 
 func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, scanNow time.Time) SymbolResult {
-	out := SymbolResult{Symbol:symbol, Timeframe:"15m", DataClassification:"UNAVAILABLE", Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
+	out := SymbolResult{Symbol:symbol, Timeframe:"15m", DataClassification:"UNAVAILABLE", VolumeUnit:"UNAVAILABLE", Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
 	for _, provider := range []string{"okx", "bybit"} {
 		if ctx.Err() != nil { out.Errors = append(out.Errors, "context:"+ctx.Err().Error()); return out }
 		var candles []Candle
@@ -136,7 +137,9 @@ func (c *Collector) collectOne(ctx context.Context, symbol string, limit int, sc
 			out.Errors = append(out.Errors, provider+":no_closed_candles")
 			continue
 		}
-		out.Provider, out.Status, out.DataClassification, out.Candles = provider, "OK", "REAL", candles
+		volumeUnit := "CONTRACTS"
+		if provider == "bybit" { volumeUnit = "BASE_ASSET" }
+		out.Provider, out.Status, out.DataClassification, out.VolumeUnit, out.Candles = provider, "OK", "REAL", volumeUnit, candles
 		return out // Never mix candles from different venues for one symbol.
 	}
 	return out
