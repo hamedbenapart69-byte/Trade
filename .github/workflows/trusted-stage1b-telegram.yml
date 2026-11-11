@@ -1,0 +1,47 @@
+name: Trusted Stage 1B Telegram Notifier
+
+on:
+  workflow_run:
+    workflows: ["Trader_me Stage 1B LRT-15m Signal Bot"]
+    types: [completed]
+    branches: [stage1b-lrt15m]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trusted-stage1b-telegram-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'stage1b-lrt15m' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout trusted notifier from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Download report artifact from the completed scanner run
+        uses: actions/download-artifact@v4
+        with:
+          name: trader-me-stage1-signal-bot-${{ github.event.workflow_run.id }}
+          path: incoming
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Run trusted notifier unit tests
+        run: python -m unittest discover -s signal_autopilot/tests -p 'test_trusted_telegram_notifier.py' -v
+
+      - name: Validate untrusted report and send Telegram notification
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json
