@@ -34,6 +34,7 @@ jobs:
         with:
           ref: market-data
           path: market-data
+          fetch-depth: 0
           persist-credentials: true
 
       - name: Download completed P0 dataset artifact
@@ -53,11 +54,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OUTPUT="$(python trusted-tools/signal_autopilot/scripts/verify_stage1b_p0_artifact.py \\
-            --artifact-dir incoming \\
+          OUTPUT="$(python trusted-tools/signal_autopilot/scripts/verify_stage1b_p0_artifact.py \
+            --artifact-dir incoming \
             --run-id "${{ github.event.workflow_run.id }}")"
-          printf '%s\\n' "$OUTPUT"
-          SOURCE_SHA="$(printf '%s\\n' "$OUTPUT" | sed -n 's/^LEGACY_SOURCE_COMMIT=//p')"
+          printf '%s\n' "$OUTPUT"
+          SOURCE_SHA="$(printf '%s\n' "$OUTPUT" | sed -n 's/^LEGACY_SOURCE_COMMIT=//p')"
           if ! printf '%s' "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
             echo "P0_FAIL: validator did not return a valid source commit"
             exit 1
@@ -70,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           git -C market-data merge-base --is-ancestor "$SOURCE_SHA" HEAD
-          if ! git -C market-data diff --quiet "$SOURCE_SHA" HEAD -- \\
+          if ! git -C market-data diff --quiet "$SOURCE_SHA" HEAD -- \
             datasets/stage1b/lrt15m datasets/stage1b/manifest.json; then
             echo "P0_FAIL: Stage 1b dataset changed after collection; refusing stale overwrite"
             exit 1
