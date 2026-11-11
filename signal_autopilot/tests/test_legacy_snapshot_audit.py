@@ -53,7 +53,7 @@ class LegacySnapshotAuditTests(unittest.TestCase):
             self.assertEqual(report["raw_files_seen"], 2)
             self.assertEqual(report["overlap_rows_compared"], 2)
             self.assertEqual(report["conflicting_ohlcv_rows"], 0)
-            self.assertEqual(report["canonical_files_match_newest_snapshot"], 1)
+            self.assertEqual(report["canonical_files_match_newest"], 1)
 
     def test_conflicting_ohlcv_is_reported_as_fail(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -82,8 +82,14 @@ class LegacySnapshotAuditTests(unittest.TestCase):
             root = Path(temp)
             raw, canonical, _, _, _ = self._fixture(root)
             (raw / "BTCUSDT_15m_2024-11-09_2026-11-09.parquet").unlink()
-            with self.assertRaisesRegex(ValueError, "RAW_SYMBOL_COVERAGE"):
-                audit_module.audit(raw, canonical, root / "report.json", 1, "raw-sha", "canonical-sha")
+            report = audit_module.audit(
+                raw, canonical, root / "report.json", 1, "raw-sha", "canonical-sha"
+            )
+            self.assertEqual(report["status"], "FAIL")
+            self.assertTrue(any(
+                item["error"] == "EXPECTED_TWO_RAW_SNAPSHOTS:1"
+                for item in report["errors"]
+            ))
 
 
 if __name__ == "__main__":
