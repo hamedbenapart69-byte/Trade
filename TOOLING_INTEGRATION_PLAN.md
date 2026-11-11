@@ -263,7 +263,7 @@ Acceptance:
 - Langfuse and AgentOps compared on the same synthetic workload; choose at most one.
 - A trace records an action; it does not certify decision correctness.
 
-## 6. Risk assessment
+## 7. Risk assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
@@ -280,7 +280,7 @@ Acceptance:
 | AGPL obligations overlooked | Low-to-medium | Medium | License review before adopting Windmill |
 | Private repo becomes ineligible for a free review plan | High for CodeRabbit | Medium | Exclude CodeRabbit from baseline |
 
-## 7. Development environment proposal — not yet created
+## 8. Development environment proposal — not yet created
 
 The suggested `docker-compose.tools.yml` must not be created in this proposal stage.
 
@@ -293,11 +293,11 @@ Reason:
 
 If approved later, create a **separate optional development profile** for one selected tool only. Never auto-start it in production or CI. Keep all secrets in environment variables/secret stores and use synthetic data.
 
-## 8. Google Cloud Run manifest decision
+## 9. Google Cloud Run manifest decision
 
 Do not create `infra/cloudrun-service.yaml` in V1. The service is not approved for the strict zero-cost baseline because a Cloud Billing account is required even within the free tier and overages are billable. If the owner later explicitly approves billing exposure and proves account/network feasibility, a deployment manifest can be authored as a separate proposal.
 
-## 9. Security and operational constraints
+## 10. Security and operational constraints
 
 - No trading-account connections, exchange private API keys, order endpoints or order execution.
 - No paid provider or paid plan without explicit owner approval.
@@ -310,7 +310,7 @@ Do not create `infra/cloudrun-service.yaml` in V1. The service is not approved f
 - A tool's open-source license does not make its hosting, storage, network, backup and maintenance free.
 - Global availability does not prove usability from Iran; account eligibility, geo-blocks, payment and real network access must be verified separately.
 
-## 10. SLRP for this tooling track
+## 11. SLRP for this tooling track
 
 **Objective:** Select only tools that improve validated system quality without violating zero-cost, privacy or reliability constraints.
 
@@ -333,7 +333,7 @@ Do not create `infra/cloudrun-service.yaml` in V1. The service is not approved f
 
 **Budget:** Zero. No cloud resource, subscription, paid API, credit-based execution or external side effect is authorized by this plan.
 
-## 11. Approval boundary
+## 12. Approval boundary
 
 This PR contains documentation only.
 
@@ -347,7 +347,7 @@ Approval of this document may authorize a separate P0 implementation proposal fo
 - changing repository visibility;
 - enabling any live or production integration.
 
-## 12. Official references checked on 2026-11-11
+## 13. Official references checked on 2026-11-11
 
 - NautilusTrader license: https://github.com/nautechsystems/nautilus_trader and https://nautilustrader.io/legal/open-source-licensing/
 - Jesse repository/license: https://github.com/jesse-ai/jesse
