@@ -57,7 +57,7 @@ jobs:
             echo "| Environment | Latest stage | Status | Created | Deployment URL |"
             echo "|---|---|---|---|---|"
             jq -r '.result[] |
-              "| (.environment // "unknown") | (.latest_stage.name // "unknown") | (.latest_stage.status // "unknown") | (.created_on // "unknown") | (.url // "n/a") |"' <<<"$response"
+              "| \(.environment // "unknown") | \(.latest_stage.name // "unknown") | \(.latest_stage.status // "unknown") | \(.created_on // "unknown") | \(.url // "n/a") |"' <<<"$response"
             echo
             echo "_Source: Cloudflare Pages deployments API; latest five records returned._"
           } >> "$GITHUB_STEP_SUMMARY"
