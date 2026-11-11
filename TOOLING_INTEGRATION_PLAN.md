@@ -377,4 +377,44 @@ Approval of this document may authorize a separate P0 implementation proposal fo
 - CoinGlass API plans and permissions: https://docs.coinglass.com/reference/plans-and-permissions
 - Tardis.dev pricing: https://tardis.dev/
 
-**Final status:** V1 proposal drafted for owner review. No integration code or production change is included.
+## 14. TinyFish replacement — browserless, zero-cost operations
+
+**Decision:** TinyFish is excluded from this project. Its credit/wallet execution model is incompatible with the hard zero-cost rule. Do not create or fund a TinyFish wallet, and do not use its browser automation, profiles, monitors or runs for Trade.
+
+### Replacement components
+
+1. **GitHub repository operations:** use the already-connected GitHub integration for repository reads, branch/file/PR operations, reviews and CI evidence. It operates through the GitHub API and does not require a separate browser-agent runtime. It does not currently expose branch-ruleset administration in this integration, so branch protection remains an owner-operated GitHub UI step unless a separately reviewed native API workflow is approved.
+2. **Cloudflare Pages observation:** use the new manual-only workflow `.github/workflows/cloudflare-pages-readonly-audit.yml`. It calls the official Cloudflare Pages deployments API from a standard GitHub-hosted runner and reports the latest five deployments in the GitHub Actions job summary. It is read-only: no deploy, rollback, setting update, or account mutation.
+3. **Cloudflare account-level changes:** use the owner's normal Cloudflare dashboard session for actions not covered by the read-only API workflow. Do not pretend that this is autonomous browser automation. For any future API automation, require a separate narrowly scoped token and a reviewed PR; production writes remain blocked until the owner gives explicit approval.
+
+### Setup required once by the owner
+
+In the Trade repository settings, add:
+- Repository variable `CF_ACCOUNT_ID`: Cloudflare account ID.
+- Repository variable `CF_PAGES_PROJECT`: exact Pages project name.
+- Repository secret `CF_API_TOKEN_READONLY`: a Cloudflare API token scoped to **Pages Read** only, restricted to the required account where Cloudflare permits resource scoping.
+
+Create the token from the Cloudflare dashboard. Never paste it into chat, source files, workflow inputs, logs, or browser JavaScript. Do not use a Global API Key. If Cloudflare cannot scope the token to Pages Read for the intended account, stop and do not substitute a broader token.
+
+After adding the three values, run **Actions → Cloudflare Pages read-only audit → Run workflow**. Missing configuration or API denial must fail visibly; it must not fall back to a write-capable token.
+
+### Cost and Iran feasibility
+
+- Trade is currently a public GitHub repository. GitHub documents standard GitHub-hosted Actions runners as free for public repositories; do not change the repository to private without rechecking the applicable Actions allowance and cost exposure. [GitHub Actions billing](https://docs.github.com/en/actions/concepts/billing-and-usage)
+- Cloudflare Pages Free currently documents up to 500 builds/month and one concurrent build; static asset requests are free. Function invocations have separate Workers quotas and must not be assumed unlimited. [Pages limits](https://developers.cloudflare.com/pages/platform/limits/) [Pages Functions pricing](https://developers.cloudflare.com/pages/functions/pricing/)
+- The Pages deployments API requires a token with Pages Read or Pages Write permission. This workflow intentionally uses Pages Read only. [Cloudflare Pages API](https://developers.cloudflare.com/pages/configuration/api/)
+- Global plan availability does not establish reliable access from Iran. The owner's existing Cloudflare dashboard access is not independently verified by this workflow; actual API reachability must be confirmed by a successful run from the owner's account.
+
+### Acceptance and security boundary
+
+- Workflow trigger: `workflow_dispatch` only.
+- Workflow permission: `contents: read`.
+- No third-party GitHub Action, package installation, paid service, browser agent, or credit balance.
+- No secret is printed or uploaded as an artifact.
+- Successful API response and a valid deployment array are required; otherwise the run fails.
+- No production deployment or Cloudflare setting change is implemented.
+- GitHub branch protection, Cloudflare security settings, and production changes still require owner action/approval.
+
+**Current implementation status:** workflow file committed to the existing PR #75 branch. It is not yet configured or executed because the Cloudflare account ID, Pages project name and read-only API token have not been supplied as repository variables/secrets. Therefore runtime verification is **NOT RUN**, not PASS.
+
+**Final status:** V1 proposal updated with the browserless Cloudflare Pages audit workflow. Runtime verification remains pending owner configuration; no production change is included.
