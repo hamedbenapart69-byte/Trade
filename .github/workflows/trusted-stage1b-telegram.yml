@@ -2,7 +2,9 @@ name: Trusted Stage 1B Telegram Notifier
 
 on:
   workflow_run:
-    workflows: ["Trader_me Stage 1B LRT-15m Signal Bot"]
+    workflows:
+      - "Trader_me Stage 1B LRT-15m Signal Bot"
+      - "Trader_me Stage 1 Signal Bot"
     types: [completed]
     branches: [main, stage1b-lrt15m]
 
