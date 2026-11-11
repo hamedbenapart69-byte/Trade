@@ -45,7 +45,8 @@ def main() -> int:
             errors[name] = type(exc).__name__
     results = []
     for raw in symbols:
-        item = {"symbol": raw, "provider": "", "status": "UNAVAILABLE",
+        item = {"symbol": raw, "timeframe": "15m", "provider": "",
+                "data_classification": "UNAVAILABLE", "status": "UNAVAILABLE",
                 "candles": [], "errors": []}
         for name, ex in providers:
             unified = canonical_symbol(ex, raw)
@@ -72,7 +73,7 @@ def main() -> int:
                 candles.sort(key=lambda x: x["timestamp"])
                 candles = candles[-args.limit:]
                 if candles:
-                    item.update(provider=name, status="OK", candles=candles)
+                    item.update(provider=name, data_classification="REAL", status="OK", candles=candles)
                     break
                 item["errors"].append(name + ":no_closed_candles")
             except Exception as exc:
@@ -83,7 +84,7 @@ def main() -> int:
             ex.close()
         except Exception:
             pass
-    json.dump({"schema_version": "1.0.0",
+    json.dump({"schema_version": "1.0.0", "timeframe": "15m",
                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
                "results": results, "provider_init_errors": errors},
               sys.stdout, separators=(",", ":"), allow_nan=False)
