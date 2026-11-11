@@ -160,7 +160,7 @@ func (c *Collector) fetchOKX(ctx context.Context, symbol string, limit int) ([]C
 		ts, e1 := strconv.ParseInt(row[0],10,64)
 		vals := make([]float64,5)
 		ok := e1 == nil
-		for i:=0; i<5 && ok; i++ { vals[i], err = strconv.ParseFloat(row[i+1],64); if err != nil { ok=false } }
+		for i:=0; i<5 && ok; i++ { vals[i], parseErr = strconv.ParseFloat(row[i+1],64); if parseErr != nil { ok=false } }
 		if !ok { continue }
 		rows = append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
 	}
@@ -180,7 +180,7 @@ func (c *Collector) fetchBybit(ctx context.Context, symbol string, limit int) ([
 	for _, row := range payload.Result.List {
 		if len(row) < 6 { continue }
 		ts,e1:=strconv.ParseInt(row[0],10,64)
-		vals:=make([]float64,5); ok:=e1==nil
+		vals:=make([]float64,5); var parseErr error; ok:=e1==nil
 		for i:=0;i<5 && ok;i++ { vals[i],err=strconv.ParseFloat(row[i+1],64); if err!=nil {ok=false} }
 		if !ok {continue}
 		rows=append(rows,Candle{Timestamp:ts,Open:vals[0],High:vals[1],Low:vals[2],Close:vals[3],Volume:vals[4]})
