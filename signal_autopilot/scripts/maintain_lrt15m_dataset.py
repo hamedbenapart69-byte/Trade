@@ -58,13 +58,20 @@ def _validate_baseline(path: Path) -> tuple[bool, int, int | None, int | None, s
     if not path.exists():
         return False, 0, None, None, "BASELINE_MISSING"
     rows = _read_rows(path)
-    timestamps = sorted({int(row["open_time"]) for row in rows if row.get("open_time") is not None})
+    raw_timestamps = [
+        int(row["open_time"]) for row in rows if row.get("open_time") is not None
+    ]
+    timestamps = sorted(set(raw_timestamps))
     if not timestamps:
         return False, 0, None, None, "BASELINE_EMPTY"
+    duplicates = len(raw_timestamps) - len(timestamps)
     gaps = sum(1 for left, right in zip(timestamps, timestamps[1:]) if right - left != INTERVAL_MS)
-    complete = len(timestamps) == EXPECTED_ROWS and gaps == 0
-    reason = None if complete else f"BASELINE_INCOMPLETE:rows={len(timestamps)}:gaps={gaps}"
-    return complete, len(timestamps), timestamps[0], timestamps[-1], reason
+    complete = len(raw_timestamps) == EXPECTED_ROWS and duplicates == 0 and gaps == 0
+    reason = None if complete else (
+        f"BASELINE_INCOMPLETE:rows={len(raw_timestamps)}:"
+        f"unique={len(timestamps)}:duplicates={duplicates}:gaps={gaps}"
+    )
+    return complete, len(raw_timestamps), timestamps[0], timestamps[-1], reason
 
 
 def migrate_legacy_snapshots(storage_dir: Path, symbols: list[str]) -> dict[str, Any]:
