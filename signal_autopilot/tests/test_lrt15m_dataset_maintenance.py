@@ -1,4 +1,5 @@
 """آزمون‌های نگهداری افزایشی و تازگی دادهٔ LRT-15m."""
+import json
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -22,6 +23,7 @@ _merge_rows = _maintenance._merge_rows
 _tail_partition_path = _maintenance._tail_partition_path
 freshness_state = _maintenance.freshness_state
 migrate_legacy_snapshots = _maintenance.migrate_legacy_snapshots
+maintain_dataset = _maintenance.maintain_dataset
 _missing_baseline_result = _maintenance._missing_baseline_result
 
 
@@ -132,6 +134,52 @@ class MissingBaselineContractTests(unittest.TestCase):
         self.assertEqual(bars, {})
         self.assertEqual(status, {"status": "BASELINE_MISSING"})
         self.assertEqual(ephemeral, {})
+
+
+class MissingBaselineDatasetTests(unittest.TestCase):
+    def test_missing_baselines_produce_degraded_report_without_worker_unpack_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            symbols = [f"TEST{i}USDT" for i in range(27)]
+            universe_path = root / "universe.json"
+            universe_path.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
+
+            class EmptyDownloader:
+                async def run(self, *args, **kwargs):
+                    return None
+
+            class EmptyEngine:
+                @staticmethod
+                def run(*args, **kwargs):
+                    return {"signals": []}
+
+                @staticmethod
+                def _no_setup(symbol, reason, row_count):
+                    return {
+                        "symbol": symbol, "status": "NO_QUALIFIED_SETUP",
+                        "direction": None, "reason": reason,
+                    }
+
+            report_path = root / "report.json"
+            output_path = root / "signals.json"
+            now_ms = int(datetime(2026, 11, 11, 12, 5, tzinfo=timezone.utc).timestamp() * 1000)
+
+            report = maintain_dataset(
+                root / "storage", root / "compute", report_path, output_path,
+                universe_path, now_ms=now_ms, downloader=EmptyDownloader(),
+                engine=EmptyEngine(),
+            )
+
+            self.assertEqual(report["status"], "DEGRADED")
+            self.assertEqual(report["symbols_complete"], 0)
+            self.assertEqual(report["symbols_fresh"], 0)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(len(payload["signals"]), 27)
+            self.assertTrue(all(
+                item["status"] == "MARKET_DATA_DEGRADED"
+                and item["decision"] == "MARKET_DATA_DEGRADED"
+                for item in payload["signals"]
+            ))
 
 
 if __name__ == "__main__":
