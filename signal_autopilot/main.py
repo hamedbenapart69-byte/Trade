@@ -144,6 +144,18 @@ def _signal_id(symbol: str, direction: str, open_time: int) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+def reason_distribution(diagnostics: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """توزیع علت رد/عدم تولید سیگنال را بدون تغییر تصمیم موتور نگه می‌دارد."""
+    grouped: dict[str, list[str]] = {}
+    for row in diagnostics:
+        reason = str(row.get("reason") or row.get("decision") or "UNAVAILABLE")
+        grouped.setdefault(reason, []).append(str(row.get("symbol") or "UNKNOWN"))
+    return {
+        reason: {"count": len(symbols), "symbols": symbols}
+        for reason, symbols in sorted(grouped.items())
+    }
+
+
 def process_symbol(
     symbol: str, fetcher: LiveOHLCVFetcher
 ) -> tuple[dict[str, Any] | None, str, dict[str, Any]]:
@@ -157,7 +169,8 @@ def process_symbol(
                 "tier_score", "points", "components", "lfs_score", "lfs_source",
                 "lfs_coverage_pct", "lfs_status", "lfs_components", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
-                "zone_distance_pct", "rows_available",
+                "zone_distance_pct", "rows_available", "stats_1h_rows_available",
+                "direction_candidates", "data_sources", "cvd",
             )
         }
         if result.get("decision") != "WATCHLIST":
@@ -323,6 +336,7 @@ def main() -> int:
             key: {"count": len(value), "symbols": value}
             for key, value in sorted(veto_counts.items())
         },
+        "reason_distribution": reason_distribution(diagnostics),
         "symbols": diagnostics,
         "calibration": "UNCALIBRATED",
         "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
