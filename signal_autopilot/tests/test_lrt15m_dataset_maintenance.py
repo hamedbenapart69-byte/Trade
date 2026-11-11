@@ -204,6 +204,11 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         self.assertNotIn("push:", workflow)
         self.assertNotIn("signals-publish", workflow)
         self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
+        self.assertIn("permissions:\\n  contents: read", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertIn("persist-credentials: false", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertNotIn("git push", workflow)
 
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
