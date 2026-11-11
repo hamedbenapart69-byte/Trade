@@ -18,7 +18,7 @@ func TestCollectUsesOKXAndSortsClosedCandles(t *testing.T) {
 		if !strings.Contains(r.URL.Path, "/api/v5/market/candles") { t.Fatalf("unexpected path %s", r.URL.Path) }
 		w.Header().Set("Content-Type", "application/json")
 		// 12:00 is still open; 11:45 is closed.
-		_, _ = w.Write([]byte(`{"code":"0","data":[["1794398400000","3","4","2","3.5","10","10","10","0"],["1794397500000","2","3","1","2.5","9","9","9","1"]]}`))
+		_, _ = w.Write([]byte(`{"code":"0","data":[["1794398400000","3","4","2","3.5","100","10","1000","0"],["1794397500000","2","3","1","2.5","90","9","900","1"]]}`))
 	}))
 	defer srv.Close()
 	c := New(Config{OKXBaseURL:srv.URL, BybitBaseURL:srv.URL, HTTPClient:srv.Client(), Workers:2, Now:func()time.Time{return now}})
@@ -26,6 +26,7 @@ func TestCollectUsesOKXAndSortsClosedCandles(t *testing.T) {
 	if err!=nil {t.Fatal(err)}
 	if len(got.Results)!=1 || got.Results[0].Provider!="okx" || got.Results[0].Status!="OK" {t.Fatalf("unexpected result: %+v",got)}
 	if len(got.Results[0].Candles)!=1 {t.Fatalf("expected only one closed candle, got %d",len(got.Results[0].Candles))}
+	if got.Results[0].Candles[0].Volume != 9 || got.Results[0].VolumeUnit != "BASE_ASSET" { t.Fatalf("expected OKX base-asset volume=9, got volume=%v unit=%s", got.Results[0].Candles[0].Volume, got.Results[0].VolumeUnit) }
 }
 
 func TestFallsBackPerSymbolWithoutMixing(t *testing.T) {
