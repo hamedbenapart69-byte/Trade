@@ -56,7 +56,7 @@ jobs:
           set -euo pipefail
           OUTPUT="$(python trusted-tools/signal_autopilot/scripts/verify_stage1b_p0_artifact.py \
             --artifact-dir incoming \
-            --run-id "${{ github.event.workflow_run.id }}" \\
+            --run-id "${{ github.event.workflow_run.id }}" \
             --workflow-sha "${{ github.event.workflow_run.head_sha }}")"
           printf '%s\n' "$OUTPUT"
           SOURCE_SHA="$(printf '%s\n' "$OUTPUT" | sed -n 's/^LEGACY_SOURCE_COMMIT=//p')"
