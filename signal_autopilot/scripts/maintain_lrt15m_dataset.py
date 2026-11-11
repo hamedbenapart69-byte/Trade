@@ -278,7 +278,8 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     def collect_one(symbol: str):
         base_path = storage_dir / "base" / f"{symbol}_15m.parquet"
         if not base_path.exists():
-            return symbol, {}, {"status": "BASELINE_MISSING"}
+            # قرارداد worker چهار فیلد است؛ حتی با baseline مفقود باید گزارش DEGRADED ساخته شود.
+            return _missing_baseline_result(symbol)
         base_rows = _read_rows(base_path)
         tail_paths = sorted((storage_dir / "live_tail").glob(f"**/{symbol}_15m.parquet"))
         tail_rows = _merge_rows(*[_read_rows(path) for path in tail_paths]) if tail_paths else []
