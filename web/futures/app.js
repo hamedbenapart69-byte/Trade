@@ -4,6 +4,31 @@ const REPORT_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade
 const HISTORY_URL = "https://raw.githubusercontent.com/hamedbenapart69-byte/Trade/signals/lrt15m_history.csv";
 const LEGACY_STATUS_URL = "./system_status.json";
 const $ = (id) => document.getElementById(id);
+
+// طبق چرخهٔ اسکن چهار‌ساعته، گزارش قدیمی‌تر از چهار ساعت نباید تازه نمایش داده شود.
+const MAX_REPORT_AGE_MS = 4 * 60 * 60 * 1000;
+function reportFreshness(generatedAtUtc) {
+  const timestamp = Date.parse(generatedAtUtc || "");
+  if (!Number.isFinite(timestamp)) {
+    return { fresh: false, ageMs: null, reason: "INVALID_TIMESTAMP" };
+  }
+  const ageMs = Date.now() - timestamp;
+  if (ageMs < 0) {
+    return { fresh: false, ageMs, reason: "FUTURE_TIMESTAMP" };
+  }
+  return {
+    fresh: ageMs <= MAX_REPORT_AGE_MS,
+    ageMs,
+    reason: ageMs <= MAX_REPORT_AGE_MS ? null : "STALE_REPORT"
+  };
+}
+function reportAgeText(ageMs) {
+  if (!Number.isFinite(ageMs)) return "نامشخص";
+  const minutes = Math.floor(ageMs / 60000);
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return hours > 0 ? `${hours} ساعت و ${remainder} دقیقه` : `${minutes} دقیقه`;
+}
 const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[char]));
@@ -72,6 +97,7 @@ function render(report) {
   const generatedText = generated && !Number.isNaN(generated.getTime())
     ? generated.toLocaleString("fa-IR")
     : "نامشخص";
+  const freshness = reportFreshness(report.generated_at_utc);
 
   $("summary").innerHTML = [
     ["نمادهای بررسی‌شده", fmt(report.symbols_analyzed ?? rows.length)],
@@ -84,8 +110,17 @@ function render(report) {
 
   const calibrated = report.calibration_status === "CALIBRATED";
   const evReady = report.ev_status === "CALCULATED";
-  const noteClass = report.status === "PASS" ? "notice good" : "notice";
+  const noteClass = !freshness.fresh || dataGateStatus !== "PASS"
+    ? "notice error" : "notice good";
   const notices = [];
+  if (!freshness.fresh) {
+    const staleReason = freshness.reason === "STALE_REPORT"
+      ? "این گزارش بیش از چهار ساعت از زمان تولیدش گذشته است."
+      : freshness.reason === "FUTURE_TIMESTAMP"
+        ? "زمان تولید گزارش در آینده است و معتبر نیست."
+        : "زمان تولید گزارش معتبر نیست.";
+    notices.push(staleReason + " تا انتشار گزارش تازه، به وضعیت‌های آن به‌عنوان اطلاعات زنده اتکا نکنید.");
+  }
   if (dataGateStatus !== "PASS") notices.push("وضعیت دروازهٔ داده گزارش نشده یا PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
   if (!calibrated) notices.push("کالیبراسیون احتمال برد انجام نشده است؛ Tier A و اطمینان عددی صادر نمی‌شود.");
   if (!evReady) notices.push("EV محاسبه نشده است؛ تا ثبت احتمال کالیبره و هزینهٔ واقعی، معاملهٔ اجرایی مجاز نیست.");
@@ -96,6 +131,7 @@ function render(report) {
   $("notice").textContent = notices.join(" ");
 
   $("updated").textContent = "زمان تولید گزارش: " + generatedText +
+    " · سن گزارش: " + (freshness.ageMs === null ? "نامشخص" : reportAgeText(freshness.ageMs)) +
     " · " + (report.stage || "Stage 1b") + " · " + (report.engine || "LRT-15m");
 
   $("sources").textContent = (report.data_sources || []).map(sourceLabel).join("، ") +
@@ -169,7 +205,14 @@ async function loadReport() {
     const report = await response.json();
     render(report);
     const dataGateStatus = report.data_gate_status || "NOT_REPORTED";
-    setStatus(dataGateStatus === "PASS" ? "داده: PASS" : "دروازه داده: گزارش نشده", dataGateStatus === "PASS" ? "ok" : "muted");
+    const freshness = reportFreshness(report.generated_at_utc);
+    if (!freshness.fresh) {
+      setStatus("گزارش کهنه یا زمان نامعتبر", "bad");
+    } else if (dataGateStatus === "PASS") {
+      setStatus("داده: PASS", "ok");
+    } else {
+      setStatus("دروازه داده: PASS نیست", "muted");
+    }
     loadHistory();
   } catch (error) {
     $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
