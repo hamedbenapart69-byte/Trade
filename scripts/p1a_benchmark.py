@@ -38,7 +38,7 @@ def canonical(results: dict[str, Any]) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--go-binary", required=True)
-    parser.add_argument("--symbols", default=os.getenv("P1A_SYMBOLS", DEFAULT_SYMBOLS))
+    parser.add_argument("--symbols", default=os.getenv("P1A_SYMBOLS") or DEFAULT_SYMBOLS)
     parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--output", default="p1a-benchmark.json")
     args = parser.parse_args()
