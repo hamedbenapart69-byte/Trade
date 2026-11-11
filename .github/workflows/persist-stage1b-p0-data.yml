@@ -1,0 +1,127 @@
+name: Persist Stage 1b P0 Dataset
+
+on:
+  workflow_run:
+    workflows: ["Stage 1b - LRT 15m data maintenance (P0 data-only)"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage1b-p0-trusted-persistence
+  cancel-in-progress: false
+
+jobs:
+  persist:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout trusted validator from main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: trusted-tools
+          persist-credentials: false
+
+      - name: Checkout market-data branch
+        uses: actions/checkout@v4
+        with:
+          ref: market-data
+          path: market-data
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download completed P0 dataset artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: stage1b-p0-dataset-${{ github.event.workflow_run.id }}
+          path: incoming
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Install trusted Parquet validator runtime
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Validate artifact contents and provenance
+        id: validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUTPUT="$(python trusted-tools/signal_autopilot/scripts/verify_stage1b_p0_artifact.py \
+            --artifact-dir incoming \
+            --run-id "${{ github.event.workflow_run.id }}" \
+            --workflow-sha "${{ github.event.workflow_run.head_sha }}")"
+          printf '%s\n' "$OUTPUT"
+          SOURCE_SHA="$(printf '%s\n' "$OUTPUT" | sed -n 's/^LEGACY_SOURCE_COMMIT=//p')"
+          if ! printf '%s' "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "P0_FAIL: validator did not return a valid source commit"
+            exit 1
+          fi
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Verify source dataset has not changed since collection
+        env:
+          SOURCE_SHA: ${{ steps.validate.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          git -C market-data merge-base --is-ancestor "$SOURCE_SHA" HEAD
+          if ! git -C market-data diff --quiet "$SOURCE_SHA" HEAD -- \
+            datasets/stage1b/lrt15m datasets/stage1b/manifest.json; then
+            echo "P0_FAIL: Stage 1b dataset changed after collection; refusing stale overwrite"
+            exit 1
+          fi
+
+      - name: Copy validated dataset into market-data worktree
+        run: |
+          set -euo pipefail
+          mkdir -p market-data/datasets/stage1b
+          rm -rf market-data/datasets/stage1b/lrt15m
+          cp -a incoming/market-data/datasets/stage1b/lrt15m market-data/datasets/stage1b/lrt15m
+          cp incoming/market-data/datasets/stage1b/manifest.json market-data/datasets/stage1b/manifest.json
+          cp incoming/signal_autopilot/data/stage1b_15m_data_report.json market-data/datasets/stage1b/data_report.json
+
+      - name: Persist with synchronized non-force push
+        env:
+          SOURCE_SHA: ${{ steps.validate.outputs.source_sha }}
+        working-directory: market-data
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datasets/stage1b/lrt15m datasets/stage1b/manifest.json datasets/stage1b/data_report.json
+          if git diff --cached --quiet; then
+            echo "No new Stage 1b dataset rows."
+            exit 0
+          fi
+          git commit -m "P0: persist validated Stage 1b 15m dataset"
+          for attempt in 1 2 3; do
+            git fetch origin refs/heads/market-data:refs/remotes/origin/market-data
+            if ! git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/market-data; then
+              echo "P0_FAIL: source commit is no longer an ancestor of market-data"
+              exit 1
+            fi
+            if ! git diff --quiet "$SOURCE_SHA" refs/remotes/origin/market-data -- datasets/stage1b/lrt15m datasets/stage1b/manifest.json; then
+              echo "P0_FAIL: concurrent Stage 1b dataset update detected; refusing overwrite"
+              exit 1
+            fi
+            if ! git rebase refs/remotes/origin/market-data; then
+              git rebase --abort || true
+              echo "Rebase conflict on market-data; refusing a force push"
+              exit 1
+            fi
+            if git push origin HEAD:refs/heads/market-data; then
+              exit 0
+            fi
+            echo "market-data advanced during push (attempt $attempt/3); retrying"
+            sleep 2
+          done
+          echo "Could not update market-data after 3 synchronized push attempts"
+          exit 1
