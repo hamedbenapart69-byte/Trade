@@ -26,6 +26,8 @@ type Candle struct {
 
 type SymbolResult struct {
 	Symbol   string   `json:"symbol"`
+	Timeframe string  `json:"timeframe"`
+	DataClassification string `json:"data_classification"`
 	Provider string   `json:"provider"`
 	Status   string   `json:"status"`
 	Candles  []Candle `json:"candles"`
@@ -40,6 +42,7 @@ type Request struct {
 
 type Response struct {
 	SchemaVersion string         `json:"schema_version"`
+	Timeframe     string         `json:"timeframe"`
 	GeneratedAt   string         `json:"generated_at_utc"`
 	Results       []SymbolResult `json:"results"`
 }
@@ -108,11 +111,11 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	}
 	close(jobs)
 	wg.Wait()
-	return Response{SchemaVersion:"1.0.0", GeneratedAt:c.cfg.Now().UTC().Format(time.RFC3339Nano), Results:results}, nil
+	return Response{SchemaVersion:"1.0.0", Timeframe:"15m", GeneratedAt:c.cfg.Now().UTC().Format(time.RFC3339Nano), Results:results}, nil
 }
 
 func (c *Collector) collectOne(ctx context.Context, symbol string, limit int) SymbolResult {
-	out := SymbolResult{Symbol:symbol, Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
+	out := SymbolResult{Symbol:symbol, Timeframe:"15m", DataClassification:"UNAVAILABLE", Status:"UNAVAILABLE", Candles:[]Candle{}, Errors:[]string{}}
 	for _, provider := range []string{"okx", "bybit"} {
 		var candles []Candle
 		var err error
@@ -125,7 +128,7 @@ func (c *Collector) collectOne(ctx context.Context, symbol string, limit int) Sy
 			out.Errors = append(out.Errors, provider+":no_closed_candles")
 			continue
 		}
-		out.Provider, out.Status, out.Candles = provider, "OK", candles
+		out.Provider, out.Status, out.DataClassification, out.Candles = provider, "OK", "REAL", candles
 		return out // Never mix candles from different venues for one symbol.
 	}
 	return out
@@ -139,6 +142,9 @@ func (c *Collector) getJSON(ctx context.Context, endpoint string, query url.Valu
 	resp, err := c.cfg.HTTPClient.Do(req); if err != nil { return err }
 	defer resp.Body.Close()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20)); if err != nil { return err }
+	if resp.StatusCode == 451 { return errors.New("BLOCKED_REGION") }
+	if resp.StatusCode == 429 { return errors.New("RATE_LIMITED") }
+	if resp.StatusCode == 403 { return errors.New("FORBIDDEN") }
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 { return fmt.Errorf("http_status_%d", resp.StatusCode) }
 	if err := json.Unmarshal(body, target); err != nil { return fmt.Errorf("invalid_json:%w", err) }
 	return nil
