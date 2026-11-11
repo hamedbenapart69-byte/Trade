@@ -39,6 +39,7 @@ type Request struct {
 	Symbols   []string `json:"symbols"`
 	Timeframe string   `json:"timeframe"`
 	Limit     int      `json:"limit"`
+	AsOfMS    int64    `json:"as_of_ms,omitempty"`
 }
 
 type Response struct {
@@ -89,6 +90,7 @@ func (c *Collector) Collect(ctx context.Context, req Request) (Response, error) 
 	sort.Strings(symbols)
 
 	scanNow := c.cfg.Now().UTC()
+	if req.AsOfMS > 0 { scanNow = time.UnixMilli(req.AsOfMS).UTC() }
 	type job struct{ index int; symbol string }
 	jobs := make(chan job)
 	results := make([]SymbolResult, len(symbols))
