@@ -28,7 +28,7 @@ class OrderbookWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("ref: market-data", PERSIST)
 
     def test_persistence_uses_non_force_push(self):
-        self.assertIn("git push origin HEAD:refs/heads/market-data", PERSIST)
+        self.assertIn("git -C market-data push origin HEAD:refs/heads/market-data", PERSIST)
         self.assertNotIn("--force", PERSIST)
         self.assertIn("git rebase --abort", PERSIST)
 
