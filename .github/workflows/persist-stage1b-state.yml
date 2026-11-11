@@ -1,0 +1,98 @@
+name: Persist Stage 1B Signal State
+
+on:
+  workflow_run:
+    workflows: ["Trader_me Stage 1B LRT-15m Signal Bot"]
+    types: [completed]
+    branches: [stage1b-lrt15m]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage1b-signal-state-persist
+  cancel-in-progress: false
+
+jobs:
+  persist-state:
+    # This workflow runs from the protected default branch, not from the scanner branch.
+    # The artifact is treated as untrusted data: validate it and never execute it.
+    # Never persist a state artifact produced by a failed or cancelled scanner run.
+    # Also reject cross-repository runs; this writer trusts only the in-repository scanner.
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout the state-only branch
+        uses: actions/checkout@v4
+        with:
+          ref: signal-state
+          path: state-repo
+          persist-credentials: true
+
+      - name: Download state artifact from the completed scan
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: stage1b-open-signal-state
+          path: incoming
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Validate and persist only the state JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f incoming/open_signals.json ] || [ -L incoming/open_signals.json ]; then
+            echo "No regular state artifact was provided; persistence skipped."
+            exit 0
+          fi
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          source = Path("incoming/open_signals.json")
+          if source.stat().st_size > 2_000_000:
+              raise SystemExit("state_artifact_too_large")
+          payload = json.loads(source.read_text(encoding="utf-8"))
+          if not isinstance(payload, dict):
+              raise SystemExit("state_root_must_be_object")
+          if payload.get("schema_version") != 1:
+              raise SystemExit("unsupported_state_schema")
+          for key in ("open_signals", "closed_signals"):
+              value = payload.get(key)
+              if not isinstance(value, dict) or len(value) > 5000:
+                  raise SystemExit(f"invalid_{key}")
+              if any(not isinstance(k, str) or len(k) > 128 or not isinstance(v, dict)
+                     for k, v in value.items()):
+                  raise SystemExit(f"invalid_{key}_entry")
+          updated = payload.get("updated_at_utc")
+          if not isinstance(updated, str):
+              raise SystemExit("missing_updated_at_utc")
+          parsed = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+          if parsed.tzinfo is None:
+              raise SystemExit("updated_at_must_be_timezone_aware")
+          if parsed > datetime.now(timezone.utc).replace(microsecond=0):
+              raise SystemExit("updated_at_is_in_the_future")
+          target = Path("state-repo/signal_autopilot/state/open_signals.json")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("STATE_ARTIFACT_VALIDATED")
+          PY
+
+          cd state-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add signal_autopilot/state/open_signals.json
+          if git diff --cached --quiet; then
+            echo "SIGNAL_STATE_UNCHANGED"
+            exit 0
+          fi
+          git commit -m "state: persist validated Stage 1B open signals [skip ci]"
+          git push origin HEAD:signal-state
