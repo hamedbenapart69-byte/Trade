@@ -4,11 +4,12 @@
   "title": "P1-A Go Collector Response",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "timeframe", "generated_at_utc", "results"],
+  "required": ["schema_version", "timeframe", "generated_at_utc", "collection_elapsed_ms", "results"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "timeframe": {"const": "15m"},
     "generated_at_utc": {"type": "string", "format": "date-time"},
+    "collection_elapsed_ms": {"type": "integer", "minimum": 0},
     "results": {
       "type": "array",
       "items": {
