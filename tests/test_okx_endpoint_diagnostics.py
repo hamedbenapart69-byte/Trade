@@ -4,7 +4,7 @@ from unittest.mock import patch
 from scripts.test_okx_endpoints import (
     classify_endpoint_count,
     classify_oi_coverage,
-    test_oi_hourly_history,
+    test_oi_hourly_history as _test_oi_hourly_history,
 )
 
 
@@ -35,7 +35,7 @@ class OKXEndpointDiagnosticsTests(unittest.TestCase):
             ],
         ) as mocked:
             with patch("scripts.test_okx_endpoints.time.sleep"):
-                result = test_oi_hourly_history(
+                result = _test_oi_hourly_history(
                     "BTC", target_hours=150, limit=100, max_requests=25
                 )
         self.assertEqual(mocked.call_count, 2)
