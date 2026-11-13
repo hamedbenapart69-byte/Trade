@@ -18,17 +18,16 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("stage1b-open-signal-state", scanner)
         self.assertIn("stage1-research-state-${{ github.run_id }}", scanner)
 
-    def test_trusted_notifier_accepts_only_main_and_production_runs(self):
+    def test_trusted_notifier_accepts_only_production_runs(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
-        self.assertIn("branches: [main, production-v1]", notifier)
-        self.assertIn("head_branch == 'main'", notifier)
+        self.assertIn("branches: [production-v1]", notifier)
         self.assertIn("head_branch == 'production-v1'", notifier)
         self.assertIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
 
     def test_state_writer_persists_only_validated_state_artifacts(self):
         writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
-        self.assertIn("branches: [main, production-v1]", writer)
+        self.assertIn("branches: [production-v1]", writer)
         self.assertIn("signal-state", writer)
         self.assertIn("stage1-research-data", writer)
         self.assertIn("research_signals.json", writer)
@@ -48,6 +47,17 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("name: stage1-research-state-${{ github.event.workflow_run.id }}", writer)
         self.assertIn("run-id: ${{ github.event.workflow_run.id }}", writer)
 
+
+    def test_trusted_notifier_checks_out_only_production_branch(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn("Checkout trusted notifier from production-v1", notifier)
+        self.assertIn("ref: production-v1", notifier)
+        self.assertNotIn("ref: main", notifier)
+
+    def test_state_writer_rejects_main_branch_scanner_runs(self):
+        writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
+        self.assertIn("head_branch == 'production-v1'", writer)
+        self.assertNotIn("head_branch == 'main'", writer)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
