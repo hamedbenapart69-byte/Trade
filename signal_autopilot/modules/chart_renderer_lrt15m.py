@@ -71,8 +71,9 @@ def render_lrt15m_chart(
         if isinstance(value, (int, float)) and np.isfinite(value):
             ax.axhline(float(value), linestyle="--", linewidth=1.0, color=color, label=f"{label}: {value:.8g}")
 
+    test_prefix = "[FORMAT TEST - NOT A REAL SIGNAL] | " if signal.get("format_test") is True else ""
     ax.set_title(
-        f"{symbol} | 15m | Confluence {signal.get('confluence_score')} / 100 | "
+        f"{test_prefix}{symbol} | 15m | Confluence {signal.get('confluence_score')} / 100 | "
         f"UNCALIBRATED | CLOSED CANDLES"
     )
     ax.set_xlabel("۱۵ دقیقه‌ای بسته‌شده")
