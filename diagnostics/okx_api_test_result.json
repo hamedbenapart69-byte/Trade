@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-13T14:58:38.794864+00:00",
+  "generated_at_utc": "2026-11-13T20:27:24.001794+00:00",
   "base_url": "https://www.okx.com",
   "symbols": [
     "BTC",
@@ -35,9 +35,9 @@
         "record_count": 720,
         "coverage_hours": 720,
         "coverage_days": 30.0,
-        "oldest_timestamp": "1791990000000",
-        "newest_timestamp": "1794578400000",
-        "last_before_cursor": "1791990000000"
+        "oldest_timestamp": "1792011600000",
+        "newest_timestamp": "1794600000000",
+        "last_before_cursor": "1792011600000"
       },
       {
         "symbol": "ETH",
@@ -59,9 +59,9 @@
         "record_count": 720,
         "coverage_hours": 720,
         "coverage_days": 30.0,
-        "oldest_timestamp": "1791990000000",
-        "newest_timestamp": "1794578400000",
-        "last_before_cursor": "1791990000000"
+        "oldest_timestamp": "1792011600000",
+        "newest_timestamp": "1794600000000",
+        "last_before_cursor": "1792011600000"
       },
       {
         "symbol": "SOL",
@@ -83,9 +83,9 @@
         "record_count": 720,
         "coverage_hours": 720,
         "coverage_days": 30.0,
-        "oldest_timestamp": "1791990000000",
-        "newest_timestamp": "1794578400000",
-        "last_before_cursor": "1791990000000"
+        "oldest_timestamp": "1792011600000",
+        "newest_timestamp": "1794600000000",
+        "last_before_cursor": "1792011600000"
       },
       {
         "symbol": "RSR",
@@ -107,9 +107,9 @@
         "record_count": 720,
         "coverage_hours": 720,
         "coverage_days": 30.0,
-        "oldest_timestamp": "1791990000000",
-        "newest_timestamp": "1794578400000",
-        "last_before_cursor": "1791990000000"
+        "oldest_timestamp": "1792011600000",
+        "newest_timestamp": "1794600000000",
+        "last_before_cursor": "1792011600000"
       },
       {
         "symbol": "TAO",
@@ -131,9 +131,9 @@
         "record_count": 720,
         "coverage_hours": 720,
         "coverage_days": 30.0,
-        "oldest_timestamp": "1791990000000",
-        "newest_timestamp": "1794578400000",
-        "last_before_cursor": "1791990000000"
+        "oldest_timestamp": "1792011600000",
+        "newest_timestamp": "1794600000000",
+        "last_before_cursor": "1792011600000"
       }
     ],
     "all_symbols_have_90d_hourly_oi": false,
@@ -145,8 +145,8 @@
         "params": {
           "ccy": "BTC",
           "period": "1D",
-          "begin": "1785941910547",
-          "end": "1794581910547"
+          "begin": "1785961636833",
+          "end": "1794601636833"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -154,17 +154,17 @@
         "record_count": 100,
         "okx_message": "",
         "data_empty": false,
-        "first_timestamp": "1794499200000",
-        "last_timestamp": "1785945600000",
-        "oldest_timestamp": "1785945600000",
-        "newest_timestamp": "1794499200000",
+        "first_timestamp": "1794585600000",
+        "last_timestamp": "1786032000000",
+        "oldest_timestamp": "1786032000000",
+        "newest_timestamp": "1794585600000",
         "first_value": {
-          "oi": "3866452373.4788",
-          "volume": "7858106983.0125"
+          "oi": "3458826730.1744",
+          "volume": "12430307569.2851"
         },
         "last_value": {
-          "oi": "2565491757.2006",
-          "volume": "4957824046.9373"
+          "oi": "2603377750.9076",
+          "volume": "4495609313.0136"
         },
         "history_span_days": 99.0,
         "coverage_days": 99.0,
@@ -177,8 +177,8 @@
         "params": {
           "ccy": "ETH",
           "period": "1D",
-          "begin": "1785941912429",
-          "end": "1794581912429"
+          "begin": "1785961638463",
+          "end": "1794601638463"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -186,17 +186,17 @@
         "record_count": 100,
         "okx_message": "",
         "data_empty": false,
-        "first_timestamp": "1794499200000",
-        "last_timestamp": "1785945600000",
-        "oldest_timestamp": "1785945600000",
-        "newest_timestamp": "1794499200000",
+        "first_timestamp": "1794585600000",
+        "last_timestamp": "1786032000000",
+        "oldest_timestamp": "1786032000000",
+        "newest_timestamp": "1794585600000",
         "first_value": {
-          "oi": "1713487404.7235",
-          "volume": "6336105512.9619"
+          "oi": "1684606763.0645",
+          "volume": "8652863519.1061"
         },
         "last_value": {
-          "oi": "1574339826.1953",
-          "volume": "4835282206.6066"
+          "oi": "1520998130.2278",
+          "volume": "6368606453.2081"
         },
         "history_span_days": 99.0,
         "coverage_days": 99.0,
@@ -209,8 +209,8 @@
         "params": {
           "ccy": "SOL",
           "period": "1D",
-          "begin": "1785941914299",
-          "end": "1794581914299"
+          "begin": "1785961640093",
+          "end": "1794601640093"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -218,17 +218,17 @@
         "record_count": 100,
         "okx_message": "",
         "data_empty": false,
-        "first_timestamp": "1794499200000",
-        "last_timestamp": "1785945600000",
-        "oldest_timestamp": "1785945600000",
-        "newest_timestamp": "1794499200000",
+        "first_timestamp": "1794585600000",
+        "last_timestamp": "1786032000000",
+        "oldest_timestamp": "1786032000000",
+        "newest_timestamp": "1794585600000",
         "first_value": {
-          "oi": "349616177.8428",
-          "volume": "683783827.341"
+          "oi": "342361889.0446",
+          "volume": "1006325837.6496"
         },
         "last_value": {
-          "oi": "234383094.2795",
-          "volume": "436323019.575"
+          "oi": "234606961.258",
+          "volume": "436603991.6732"
         },
         "history_span_days": 99.0,
         "coverage_days": 99.0,
@@ -241,8 +241,8 @@
         "params": {
           "ccy": "RSR",
           "period": "1D",
-          "begin": "1785941916185",
-          "end": "1794581916185"
+          "begin": "1785961641752",
+          "end": "1794601641752"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -250,17 +250,17 @@
         "record_count": 100,
         "okx_message": "",
         "data_empty": false,
-        "first_timestamp": "1794499200000",
-        "last_timestamp": "1785945600000",
-        "oldest_timestamp": "1785945600000",
-        "newest_timestamp": "1794499200000",
+        "first_timestamp": "1794585600000",
+        "last_timestamp": "1786032000000",
+        "oldest_timestamp": "1786032000000",
+        "newest_timestamp": "1794585600000",
         "first_value": {
-          "oi": "728371.7082",
-          "volume": "1737752.4447"
+          "oi": "648844.0116",
+          "volume": "1542564.3031"
         },
         "last_value": {
-          "oi": "299893.9929",
-          "volume": "370546.4209"
+          "oi": "306859.8885",
+          "volume": "249309.1982"
         },
         "history_span_days": 99.0,
         "coverage_days": 99.0,
@@ -273,8 +273,8 @@
         "params": {
           "ccy": "TAO",
           "period": "1D",
-          "begin": "1785941918057",
-          "end": "1794581918057"
+          "begin": "1785961643368",
+          "end": "1794601643368"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -282,17 +282,17 @@
         "record_count": 100,
         "okx_message": "",
         "data_empty": false,
-        "first_timestamp": "1794499200000",
-        "last_timestamp": "1785945600000",
-        "oldest_timestamp": "1785945600000",
-        "newest_timestamp": "1794499200000",
+        "first_timestamp": "1794585600000",
+        "last_timestamp": "1786032000000",
+        "oldest_timestamp": "1786032000000",
+        "newest_timestamp": "1794585600000",
         "first_value": {
-          "oi": "17604212.0515",
-          "volume": "18272879.421"
+          "oi": "17254301.6656",
+          "volume": "18241919.4852"
         },
         "last_value": {
-          "oi": "11236729.929",
-          "volume": "18731005.967"
+          "oi": "10924119.2",
+          "volume": "10591758.766"
         },
         "history_span_days": 99.0,
         "coverage_days": 99.0,
@@ -322,17 +322,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 1,
-      "first_timestamp": "1794585600000",
-      "last_timestamp": "1794585600000",
-      "oldest_timestamp": "1794585600000",
-      "newest_timestamp": "1794585600000",
+      "first_timestamp": "1794614400000",
+      "last_timestamp": "1794614400000",
+      "oldest_timestamp": "1794614400000",
+      "newest_timestamp": "1794614400000",
       "first_value": {
-        "fundingRate": "-0.0000002324049934",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000757125917919",
+        "fundingTime": "1794614400000"
       },
       "last_value": {
-        "fundingRate": "-0.0000002324049934",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000757125917919",
+        "fundingTime": "1794614400000"
       }
     },
     {
@@ -350,17 +350,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "oi": "3465541262.4826",
-        "volume": "902019402.7006"
+        "oi": "3430897723.2026",
+        "volume": "88663390.2518"
       },
       "last_value": {
-        "oi": "3285571205.5827",
-        "volume": "856462060.487"
+        "oi": "3349269207.2573",
+        "volume": "153411612.2676"
       }
     },
     {
@@ -378,15 +378,15 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "ratio": "3.09"
+        "ratio": "3.2"
       },
       "last_value": {
-        "ratio": "1.62"
+        "ratio": "1.75"
       }
     },
     {
@@ -402,17 +402,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 1,
-      "first_timestamp": "1794585600000",
-      "last_timestamp": "1794585600000",
-      "oldest_timestamp": "1794585600000",
-      "newest_timestamp": "1794585600000",
+      "first_timestamp": "1794614400000",
+      "last_timestamp": "1794614400000",
+      "oldest_timestamp": "1794614400000",
+      "newest_timestamp": "1794614400000",
       "first_value": {
-        "fundingRate": "-0.0000426209686125",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000378830188802",
+        "fundingTime": "1794614400000"
       },
       "last_value": {
-        "fundingRate": "-0.0000426209686125",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000378830188802",
+        "fundingTime": "1794614400000"
       }
     },
     {
@@ -430,17 +430,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "oi": "1713297729.6423",
-        "volume": "624672075.1139"
+        "oi": "1691914857.8635",
+        "volume": "104184573.6757"
       },
       "last_value": {
-        "oi": "1803216466.9049",
-        "volume": "1069469935.865"
+        "oi": "1794700840.5844",
+        "volume": "529216811.2739"
       }
     },
     {
@@ -458,15 +458,15 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "ratio": "3.16"
+        "ratio": "3.48"
       },
       "last_value": {
-        "ratio": "2.44"
+        "ratio": "2.52"
       }
     },
     {
@@ -482,17 +482,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 1,
-      "first_timestamp": "1794585600000",
-      "last_timestamp": "1794585600000",
-      "oldest_timestamp": "1794585600000",
-      "newest_timestamp": "1794585600000",
+      "first_timestamp": "1794614400000",
+      "last_timestamp": "1794614400000",
+      "oldest_timestamp": "1794614400000",
+      "newest_timestamp": "1794614400000",
       "first_value": {
-        "fundingRate": "-0.0000262880658177",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0001000000000000",
+        "fundingTime": "1794614400000"
       },
       "last_value": {
-        "fundingRate": "-0.0000262880658177",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0001000000000000",
+        "fundingTime": "1794614400000"
       }
     },
     {
@@ -510,17 +510,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "oi": "349934045.892",
-        "volume": "97462256.3924"
+        "oi": "345151053.026",
+        "volume": "8840376.1562"
       },
       "last_value": {
-        "oi": "354837687.963",
-        "volume": "92058539.3978"
+        "oi": "360361585.7612",
+        "volume": "22891873.9398"
       }
     },
     {
@@ -538,15 +538,15 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "ratio": "3.02"
+        "ratio": "3.04"
       },
       "last_value": {
-        "ratio": "2.61"
+        "ratio": "2.66"
       }
     },
     {
@@ -562,17 +562,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 1,
-      "first_timestamp": "1794585600000",
-      "last_timestamp": "1794585600000",
-      "oldest_timestamp": "1794585600000",
-      "newest_timestamp": "1794585600000",
+      "first_timestamp": "1794614400000",
+      "last_timestamp": "1794614400000",
+      "oldest_timestamp": "1794614400000",
+      "newest_timestamp": "1794614400000",
       "first_value": {
-        "fundingRate": "0.0000494871161603",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000365513033708",
+        "fundingTime": "1794614400000"
       },
       "last_value": {
-        "fundingRate": "0.0000494871161603",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0000365513033708",
+        "fundingTime": "1794614400000"
       }
     },
     {
@@ -590,17 +590,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "oi": "651006.6926",
-        "volume": "104739.9484"
+        "oi": "654602.6032",
+        "volume": "45309.0005"
       },
       "last_value": {
-        "oi": "2205925.8717",
-        "volume": "455686.495"
+        "oi": "2142791.458",
+        "volume": "491851.8429"
       }
     },
     {
@@ -618,15 +618,15 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "ratio": "1.14"
+        "ratio": "1.22"
       },
       "last_value": {
-        "ratio": "3.7"
+        "ratio": "3.55"
       }
     },
     {
@@ -642,17 +642,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 1,
-      "first_timestamp": "1794585600000",
-      "last_timestamp": "1794585600000",
-      "oldest_timestamp": "1794585600000",
-      "newest_timestamp": "1794585600000",
+      "first_timestamp": "1794614400000",
+      "last_timestamp": "1794614400000",
+      "oldest_timestamp": "1794614400000",
+      "newest_timestamp": "1794614400000",
       "first_value": {
-        "fundingRate": "0.0000573815763679",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0001000000000000",
+        "fundingTime": "1794614400000"
       },
       "last_value": {
-        "fundingRate": "0.0000573815763679",
-        "fundingTime": "1794585600000"
+        "fundingRate": "0.0001000000000000",
+        "fundingTime": "1794614400000"
       }
     },
     {
@@ -670,17 +670,17 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "oi": "17575258.345",
-        "volume": "2221325.3151"
+        "oi": "17837674.5202",
+        "volume": "1393221.4147"
       },
       "last_value": {
-        "oi": "24967254.865",
-        "volume": "3843476.035"
+        "oi": "25034136.192",
+        "volume": "688742.991"
       }
     },
     {
@@ -698,15 +698,15 @@
       "status": "SUCCESS",
       "data_empty": false,
       "record_count": 720,
-      "first_timestamp": "1794578400000",
-      "last_timestamp": "1791990000000",
-      "oldest_timestamp": "1791990000000",
-      "newest_timestamp": "1794578400000",
+      "first_timestamp": "1794600000000",
+      "last_timestamp": "1792011600000",
+      "oldest_timestamp": "1792011600000",
+      "newest_timestamp": "1794600000000",
       "first_value": {
-        "ratio": "2.82"
+        "ratio": "2.6"
       },
       "last_value": {
-        "ratio": "2.46"
+        "ratio": "2.51"
       }
     }
   ]
