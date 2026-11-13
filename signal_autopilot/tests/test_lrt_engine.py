@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from modules.lrt15m_engine import evaluate_stage1_decision
+from modules.lrt15m_engine import analyze_symbol, evaluate_stage1_decision
 
 
 def components(count: int) -> dict[str, bool]:
@@ -24,6 +24,14 @@ class LRTStage1DecisionTests(unittest.TestCase):
             components=components(count),
             cvd_aligned=True,
         )
+
+    def test_legacy_analyze_symbol_is_deprecated(self):
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            "LEGACY - NOT USED IN PRODUCTION, ONLY FOR COMPARISON",
+        ):
+            result = analyze_symbol("BTCUSDT", [])
+        self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
 
     def test_5_of_5_components_produce_100_and_watchlist_tier_a(self):
         result = self.evaluate(5)

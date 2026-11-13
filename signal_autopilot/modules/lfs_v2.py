@@ -334,7 +334,7 @@ def calculate_lfs_v2(
 
     return {
         "symbol": symbol,
-        "lfs_score": round(_clip(score), 6),
+        "lfs_score": None if status == "INSUFFICIENT" else round(_clip(score), 6),
         "lfs_coverage_pct": round(coverage * 100.0, 2),
         "lfs_coverage": round(coverage, 4),
         "lfs_status": status,

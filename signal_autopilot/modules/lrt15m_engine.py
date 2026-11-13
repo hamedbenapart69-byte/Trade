@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+import functools
+import warnings
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -270,6 +272,21 @@ def _score(parts: dict[str, float]) -> float:
     return round(sum(parts[name] * weight for name, weight in LFS_WEIGHTS.items()), 4)
 
 
+def deprecated(func):
+    """Decorator سازگار با Python 3.11+ برای علامت‌گذاری مسیرهای قدیمی."""
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        warnings.warn(
+            "LEGACY - NOT USED IN PRODUCTION, ONLY FOR COMPARISON",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return func(*args, **kwargs)
+    return wrapper
+
+
+# LEGACY - NOT USED IN PRODUCTION, ONLY FOR COMPARISON
+@deprecated
 def analyze_symbol(symbol: str, rows: list[dict[str, Any]],
                    aggtrades: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     if len(rows) < 300:
@@ -560,6 +577,16 @@ def evaluate_stage1_symbol(
         base.update(lfs_data)
         base["lfs_source"] = "LFS_V2"
 
+        # پوشش ناکافی باید پیش از تبدیل امتیاز None و هر محاسبهٔ وابسته متوقف شود.
+        if lfs_data["lfs_status"] == "INSUFFICIENT":
+            return {
+                **base,
+                "veto": "LFS_INSUFFICIENT_COVERAGE",
+                "decision": "NO_TRADE",
+                "reason": "LFS_INSUFFICIENT_COVERAGE",
+                "lfs_score": None,
+            }
+
         if not _continuous_bars(bars_1h, 3_600_000, 80):
             return {**base, "reason": "DATA_INSUFFICIENT_1H"}
         bars_4h = _aggregate_hourly_to_4h(bars_1h)
@@ -621,9 +648,6 @@ def evaluate_stage1_symbol(
             decision = evaluate_stage1_decision(
                 True, False, float(lfs_data["lfs_score"]), cvd_source, components, cvd_aligned
             )
-            if lfs_data["lfs_status"] == "INSUFFICIENT":
-                decision = {"veto": "LFS_INSUFFICIENT_COVERAGE", "decision": "NO_TRADE",
-                            "score": None, "lfs_threshold": 0.30}
             record = {
                 **decision, "symbol": symbol, "direction": direction,
                 "lfs_score": lfs_data["lfs_score"], "lfs_source": "LFS_V2",

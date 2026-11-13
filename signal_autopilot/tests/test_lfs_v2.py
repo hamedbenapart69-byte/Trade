@@ -1,11 +1,13 @@
 import random
 import unittest
+from unittest.mock import patch
 
 from modules.lfs_v2 import (
     WEIGHTS, bb_squeeze_score, calculate_lfs_v2, empirical_percentile,
     funding_extreme_score, get_lfs_veto, normalize_lfs1, oi_drop_score,
     rank_time_series,
 )
+from modules.lrt15m_engine import evaluate_stage1_symbol
 
 
 def make_bars(count, interval_ms, base=100.0):
@@ -32,6 +34,13 @@ def oi_rows(hourly=False, change=-0.10):
             value = 1000.0 * (1.0 + change)
         rows.append([str(i * step), str(value), "0"])
     return rows
+
+
+class BarsWithMetrics(list):
+    def __init__(self, rows, stats_1h, okx_metrics=None):
+        super().__init__(rows)
+        self.stats_1h = stats_1h
+        self.okx_metrics = okx_metrics or {}
 
 
 class LFSV2UnitTests(unittest.TestCase):
@@ -79,14 +88,46 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertEqual(result["lfs_status"], "FULL")
         self.assertEqual(result["lfs_components"]["LFS2"]["status"], "UNAVAILABLE")
 
-    def test_lfs_v2_no_okx(self):
-        result = calculate_lfs_v2(
-            "BTCUSDT", self.bars_15m, self.bars_1h,
-            funding_rate=None, oi_1h=None, oi_1d=None, long_short_ratio=None,
-        )
+    def test_lfs_v2_insufficient(self):
+        """فقط LFS1 و LFS2 در دسترس‌اند: پوشش 0.25 + 0.20 = 0.45."""
+        with patch("modules.lfs_v2._hourly_bb_distribution", return_value=[]):
+            result = calculate_lfs_v2(
+                "BTCUSDT", self.bars_15m, self.bars_1h,
+                funding_rate=0.0003,
+                oi_1h=None, oi_1d=None, long_short_ratio=None,
+            )
+        self.assertIsNotNone(result["lfs_components"]["LFS1"]["score"])
+        self.assertIsNotNone(result["lfs_components"]["LFS2"]["score"])
         self.assertEqual(result["lfs_coverage_pct"], 45.0)
         self.assertEqual(result["lfs_status"], "PARTIAL_PROXY")
-        self.assertLessEqual(result["lfs_score"], 0.45)
+        self.assertGreaterEqual(result["lfs_coverage_pct"], 40.0)
+        self.assertLess(result["lfs_coverage_pct"], 80.0)
+
+    def test_lfs_v2_truly_insufficient(self):
+        """فقط LFS1 در دسترس است: پوشش 0.25 و امتیاز قابل استفاده ندارد."""
+        with patch("modules.lfs_v2._hourly_bb_distribution", return_value=[]):
+            result = calculate_lfs_v2(
+                "BTCUSDT", self.bars_15m, self.bars_1h,
+                funding_rate=None,
+                oi_1h=None, oi_1d=None, long_short_ratio=None,
+            )
+        self.assertIsNotNone(result["lfs_components"]["LFS1"]["score"])
+        self.assertTrue(all(
+            result["lfs_components"][name]["score"] is None
+            for name in ("LFS2", "LFS3", "LFS4", "LFS5")
+        ))
+        self.assertEqual(result["lfs_status"], "INSUFFICIENT")
+        self.assertIsNone(result["lfs_score"])
+        self.assertLess(result["lfs_coverage_pct"], 40.0)
+
+    def test_stage1_stops_safely_on_insufficient_lfs_v2(self):
+        rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
+        with patch("modules.lfs_v2._hourly_bb_distribution", return_value=[]):
+            result = evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["lfs_status"], "INSUFFICIENT")
+        self.assertIsNone(result["lfs_score"])
+        self.assertEqual(result["veto"], "LFS_INSUFFICIENT_COVERAGE")
+        self.assertEqual(result["decision"], "NO_TRADE")
 
     def test_lfs_v2_bounded(self):
         rng = random.Random(17)
