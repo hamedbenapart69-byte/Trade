@@ -18,6 +18,10 @@ class OKXEndpointDiagnosticsTests(unittest.TestCase):
         self.assertEqual(classify_endpoint_count(7), "MOSTLY_FAIL")
         self.assertEqual(classify_endpoint_count(0), "MOSTLY_FAIL")
 
+    def test_live_oi_probe_helper_is_not_collected_as_a_pytest_case(self):
+        self.assertTrue(callable(_test_oi_hourly_history))
+        self.assertFalse(getattr(_test_oi_hourly_history, "__test__", True))
+
     def test_oi_coverage_boundaries(self):
         self.assertEqual(classify_oi_coverage(2160, 2160), "FULL")
         self.assertEqual(classify_oi_coverage(720, 720), "PARTIAL")
