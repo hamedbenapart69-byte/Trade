@@ -21,7 +21,7 @@ def _normalize_chat_title(value: str) -> str:
 
 
 async def _verified_channel(bot: Bot, configured_chat_id: str):
-    """Fail closed: مقصد باید کانال عمومی مشخص و ربات ادمینِ مجاز به ارسال باشد."""
+    """Fail closed: کانال عمومی یا خصوصی باید با شناسه و عنوان دقیق تأیید شود و ربات مجوز ارسال داشته باشد."""
     chat_id = str(configured_chat_id or "").strip()
     if not chat_id.startswith("-100"):
         raise RuntimeError("TELEGRAM_TARGET_REJECTED_NOT_CHANNEL_ID")
@@ -31,8 +31,6 @@ async def _verified_channel(bot: Bot, configured_chat_id: str):
         raise RuntimeError("TELEGRAM_CHAT_ID_RESOLUTION_MISMATCH")
     if str(chat.type) != "channel":
         raise RuntimeError(f"TELEGRAM_TARGET_REJECTED_CHAT_TYPE:{chat.type}")
-    if not getattr(chat, "username", None):
-        raise RuntimeError("TELEGRAM_TARGET_NOT_PUBLIC_CHANNEL")
     expected = os.getenv("TELEGRAM_EXPECTED_CHANNEL_TITLE", EXPECTED_CHANNEL_TITLE_DEFAULT)
     if _normalize_chat_title(chat.title) != _normalize_chat_title(expected):
         raise RuntimeError(
@@ -158,7 +156,7 @@ async def _preflight(token: str, chat_id: str) -> tuple[bool, str]:
             chat, me = await _verified_channel(bot, chat_id)
         return True, (
             f"bot=@{me.username or me.id}; chat={chat.id}; type=channel; "
-            f"title={chat.title!r}; username=@{chat.username}; admin=administrator"
+            f"title={chat.title!r}; username=@{chat.username or 'NO_PUBLIC_USERNAME'}; admin=administrator"
         )
     except Exception as exc:
         LOG.exception("Telegram channel preflight failed.")
