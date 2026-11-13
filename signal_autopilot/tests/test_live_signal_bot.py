@@ -19,6 +19,35 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LiveSignalBotTests(unittest.TestCase):
+    def test_public_market_timeout_returns_unavailable_without_crashing(self):
+        class FailingFetcher:
+            @staticmethod
+            def fetch_symbol(symbol):
+                raise RuntimeError(
+                    "all_dual_timeframe_sources_failed|okx:ReadTimeout|fallback:NetworkError"
+                )
+
+        signal, reason, diagnostic = process_symbol("BTCUSDT", FailingFetcher())
+        self.assertIsNone(signal)
+        self.assertEqual(reason, "UNAVAILABLE")
+        self.assertEqual(diagnostic["veto"], "DATA_UNAVAILABLE")
+        self.assertEqual(diagnostic["lfs_status"], "UNAVAILABLE")
+        self.assertIn("ReadTimeout", diagnostic["reason"])
+
+    def test_production_and_research_thresholds_are_named_constants(self):
+        from modules.lrt15m_engine import (
+            MAX_ZONE_DISTANCE_PCT,
+            PRODUCTION_MODE_THRESHOLD,
+            RESEARCH_MODE_THRESHOLD,
+        )
+        self.assertEqual(PRODUCTION_MODE_THRESHOLD, 80)
+        self.assertEqual(RESEARCH_MODE_THRESHOLD, 60)
+        self.assertEqual(MAX_ZONE_DISTANCE_PCT, 0.80)
+
+    def test_lrt_v2_engine_has_no_legacy_analyze_symbol(self):
+        import modules.lrt15m_engine as engine
+        self.assertFalse(hasattr(engine, "analyze_symbol"))
+
     def test_reason_distribution_preserves_each_symbol_and_reason(self):
         result = reason_distribution([
             {"symbol": "BTCUSDT", "reason": "DIRECTION_CONFLICT"},
