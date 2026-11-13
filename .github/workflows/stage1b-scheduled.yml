@@ -18,7 +18,7 @@ jobs:
       - name: Checkout Stage 1b data adapters
         uses: actions/checkout@v4
         with:
-          ref: stage1b-lrt15m
+          ref: production-v1
           persist-credentials: false
 
       - name: Checkout market-data storage (read-only)
