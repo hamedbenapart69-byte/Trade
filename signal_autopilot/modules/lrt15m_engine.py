@@ -26,6 +26,8 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
+MIN_LFS_SCORE_REAL_CVD = 0.70
+MIN_LFS_SCORE_PROXY_CVD = 0.30
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 WATCHLIST_CONFLUENCE_THRESHOLD = 60  # آستانهٔ قدیمی Diagnostic؛ برای مقایسه دست‌نخورده می‌ماند.
