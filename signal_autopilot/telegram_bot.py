@@ -210,6 +210,8 @@ async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path:
                 if signal.get("format_test") is True else "2. CHART\n⚠️ تصویر نمودار ارسال نشد.",
             )
             LOG.info("TELEGRAM_CHART_FALLBACK_SENT: %s | message_id=%s", signal["signal_id"], fallback_message.message_id)
+            if signal.get("format_test") is True:
+                raise RuntimeError("TELEGRAM_FORMAT_TEST_CHART_DELIVERY_FAILED")
         await bot.send_message(chat_id=target_chat_id, text=body, disable_web_page_preview=True)
     if signal.get("format_test") is True:
         LOG.info("TELEGRAM_FORMAT_TEST_SENT: symbol=%s signal_id=%s message_id=%s", signal.get("symbol"), signal["signal_id"], header_message.message_id)
