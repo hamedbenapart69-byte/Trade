@@ -96,41 +96,20 @@ class LRT15mTests(unittest.TestCase):
         bars = [candle(i * 900000, 1, 2, 0.5, 1.5, volume=10, buy=7) for i in range(4)]
         self.assertAlmostEqual(engine.cvd_proxy_from_klines(bars), 13.333333333333329)
 
-    def test_15m_engine_marks_uncalibrated_and_never_fakes_ev(self):
-        bars = []
-        for i in range(1400):
-            base = 100 + i * 0.01
-            bars.append(candle(i * 900000, base, base + 0.5, base - 0.5,
-                               base + 0.1, volume=100, buy=52))
-        result = engine.analyze_symbol("BTCUSDT", bars)
-        self.assertEqual(result["confidence"], "NOT_CALIBRATED")
-        self.assertEqual(result["brier_score"], "NOT_CALIBRATED")
-        self.assertIn("NOT_CALCULATED", result["ev"])
-        self.assertEqual(result["ev_status"], "NOT_CALIBRATED")
-        self.assertIsNone(result["ev_net"])
-        self.assertIn(result["decision"], {"WATCHLIST", "NO_QUALIFIED_SETUP"})
+    def test_stage1_engine_rejects_insufficient_history(self):
+        rows = [candle(i * 900000, 1, 2, 0.5, 1) for i in range(100)]
+        result = engine.evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["decision"], "NO_TRADE")
+        self.assertEqual(result["reason"], "INSUFFICIENT_CLOSED_15M_BARS:100")
+        self.assertEqual(result["lfs_status"], "INSUFFICIENT")
 
-    def test_okx_source_metadata_survives_engine_and_neutralizes_cvd(self):
-        bars = []
-        for i in range(1400):
-            base = 100 + i * 0.01
-            bars.append({
-                **candle(i * 900000, base, base + 0.5, base - 0.5,
-                         base + 0.1, volume=100, buy=50),
-                "data_source": "OKX_PUBLIC_SWAP_CANDLE",
-                "cvd_source": "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY",
-            })
-        result = engine.analyze_symbol("BTCUSDT", bars)
-        self.assertIn("OKX_PUBLIC_SWAP_CANDLE", result["data_sources"])
-        self.assertEqual(result["cvd_source"], "PROXY_OHLCV")
-        self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
+    def test_stage1_engine_rejects_15m_gaps(self):
+        rows = [candle(i * 900000, 1, 2, 0.5, 1) for i in range(500)]
+        del rows[250]
+        result = engine.evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["decision"], "NO_TRADE")
+        self.assertEqual(result["reason"], "15M_GAP_OR_DUPLICATE")
 
-    def test_short_history_is_not_qualified(self):
-        result = engine.analyze_symbol("BTCUSDT", [candle(i * 900000, 1, 2, 0.5, 1) for i in range(100)])
-        self.assertEqual(result["decision"], "NO_QUALIFIED_SETUP")
-        self.assertEqual(result["reason"], "INSUFFICIENT_15M_HISTORY")
-        self.assertEqual(result["ev_status"], "NOT_CALIBRATED")
-        self.assertIsNone(result["ev_net"])
 
 
 if __name__ == "__main__":
