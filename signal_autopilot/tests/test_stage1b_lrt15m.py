@@ -104,7 +104,7 @@ class LRT15mTests(unittest.TestCase):
         self.assertEqual(result["lfs_status"], "INSUFFICIENT")
 
     def test_stage1_engine_rejects_15m_gaps(self):
-        rows = [candle(i * 900000, 1, 2, 0.5, 1) for i in range(500)]
+        rows = [candle(i * 900000, 1, 2, 0.5, 1) for i in range(501)]
         del rows[250]
         result = engine.evaluate_stage1_symbol("BTCUSDT", rows)
         self.assertEqual(result["decision"], "NO_TRADE")
