@@ -52,8 +52,13 @@ def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200
                         "low": float(c[3]), "close": float(c[4]), "volume": float(c[5]),
                     })
             rows.sort(key=lambda x: x["open_time"])
-            if rows:
+            if rows and rows[0]["open_time"] == int(since_ms):
+                if any(rows[i]["open_time"] - rows[i - 1]["open_time"] != INTERVAL_MS for i in range(1, len(rows))):
+                    errors.append(f"{provider}:CANDLE_GAP_DETECTED")
+                    continue
                 return rows, f"{provider.upper()}_PUBLIC_OHLCV"
+            if rows:
+                errors.append(f"{provider}:FIRST_REQUIRED_CANDLE_MISSING")
             errors.append(f"{provider}:NO_CLOSED_CANDLES")
         except Exception as exc:
             errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:100]}")
@@ -89,11 +94,12 @@ def _new_outcome(signal: dict[str, Any], now: datetime) -> dict[str, Any]:
     return {
         "signal_id": signal["signal_id"], "symbol": signal["symbol"],
         "direction": signal["direction"], "status": "ENTRY_PENDING_DATA",
-        "entry_contract": "NEXT_15M_CANDLE_OPEN",
+        "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
         "entry_reference": float(signal["entry_reference"]), "entry_actual": None,
-        "entry_time_utc": None, "stop_reference": float(signal["stop_reference"]),
+        "entry_time_utc": None, "entry_candle_ohlc": None,
+        "stop_reference": float(signal["stop_reference"]),
         "target_reference": float(signal["target_reference"]), "rr_actual": None,
-        "exit_price": None, "exit_time_utc": None, "pnl_pct_raw": None,
+        "exit_price": None, "exit_time_utc": None, "exit_candle_ohlc": None, "pnl_pct_raw": None,
         "fee_pct": "UNAVAILABLE", "slippage_pct": "UNAVAILABLE",
         "net_pnl_pct": "UNAVAILABLE", "data_source": "UNAVAILABLE",
         "last_checked_open_time": None, "last_checked_at_utc": now.isoformat(),
@@ -118,11 +124,35 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
     if signal.get("direction") not in {"BUY", "SELL"}: raise ValueError("invalid_direction")
     if outcome is None: outcome = _new_outcome(signal, now)
     if outcome.get("signal_id") != signal.get("signal_id"): raise ValueError("signal_id_mismatch")
-    if outcome.get("status") in TERMINAL: return outcome
-
     created = _parse_time(signal["created_at_utc"])
+    # Entry candle must open strictly after the signal became available, not merely
+    # after the candle used to calculate the signal. This prevents look-ahead fills.
+    created_ms = int(created.timestamp() * 1000)
+    first_open_after_signal = (created_ms // INTERVAL_MS + 1) * INTERVAL_MS
+    next_open = max(first_open_after_signal, int(signal["candle_open_time"]) + INTERVAL_MS)
+
+    # Invalidate any prior outcome whose simulated entry predates signal creation.
+    prior_entry_time = outcome.get("entry_time_utc")
+    if prior_entry_time and _parse_time(prior_entry_time) <= created:
+        outcome["invalidated_prior_entry"] = {
+            "status": outcome.get("status"),
+            "entry_actual": outcome.get("entry_actual"),
+            "entry_time_utc": prior_entry_time,
+            "exit_price": outcome.get("exit_price"),
+            "exit_time_utc": outcome.get("exit_time_utc"),
+            "pnl_pct_raw": outcome.get("pnl_pct_raw"),
+            "reason": "ENTRY_PRECEDES_SIGNAL_TIMESTAMP",
+        }
+        _event(outcome, "ENTRY_PENDING_DATA", now, "INVALIDATED_LOOKAHEAD_ENTRY")
+        for key in (
+            "entry_actual", "entry_time_utc", "entry_candle_ohlc", "rr_actual",
+            "exit_price", "exit_time_utc", "exit_candle_ohlc", "pnl_pct_raw",
+            "last_checked_open_time",
+        ):
+            outcome[key] = None
+
+    if outcome.get("status") in TERMINAL: return outcome
     expiry = created + MAX_HOLD
-    next_open = int(signal["candle_open_time"]) + INTERVAL_MS
     now_ms = int(now.timestamp() * 1000)
     outcome["last_checked_at_utc"] = now.isoformat()
     try:
@@ -154,6 +184,7 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
         outcome.update({
             "entry_actual": entry,
             "entry_time_utc": datetime.fromtimestamp(next_open / 1000, timezone.utc).isoformat(),
+            "entry_candle_ohlc": {k: next_candle[k] for k in ("open_time", "open", "high", "low", "close", "volume")},
             "rr_actual": abs(target - entry) / risk,
         })
         _event(outcome, "ACTIVE", now, "ENTRY_FILLED_AT_NEXT_15M_OPEN")
@@ -170,6 +201,7 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
         if status:
             _event(outcome, status, now, "PRICE_LEVEL_TOUCHED")
             outcome["exit_price"] = exit_price
+            outcome["exit_candle_ohlc"] = {k: candle[k] for k in ("open_time", "open", "high", "low", "close", "volume")}
             outcome["exit_time_utc"] = datetime.fromtimestamp((opened + INTERVAL_MS) / 1000, timezone.utc).isoformat()
             if status in {"TP_HIT", "SL_HIT"} and exit_price is not None:
                 outcome["pnl_pct_raw"] = round(_pnl_pct(str(signal["direction"]), entry, float(exit_price)), 8)
@@ -201,7 +233,7 @@ def update_outcomes(signals_path: Path, outcomes_path: Path, now: datetime | Non
             for s in source["signals"] if s.get("signal_id")]
     payload = {
         "schema_version": 1, "updated_at_utc": now.isoformat(),
-        "entry_contract": "NEXT_15M_CANDLE_OPEN",
+        "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
         "source_signals_count": len(source["signals"]), "outcomes_count": len(rows),
         "outcomes": rows,
     }

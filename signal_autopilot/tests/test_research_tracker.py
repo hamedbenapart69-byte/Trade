@@ -33,7 +33,7 @@ class ResearchTrackerTests(unittest.TestCase):
         r=update_one(signal(),None,fetcher_for([candle(ts,101,101.5,100.5,101.2)]),NOW)
         self.assertEqual(r["entry_reference"],100)
         self.assertEqual(r["entry_actual"],101)
-        self.assertEqual(r["entry_contract"],"NEXT_15M_CANDLE_OPEN")
+        self.assertEqual(r["entry_contract"],"FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP")
         self.assertEqual(r["status"],"ACTIVE")
 
     def test_tp_hit_sell(self):
@@ -94,6 +94,27 @@ class ResearchTrackerTests(unittest.TestCase):
         ts=CANDLE_OPEN+INTERVAL_MS
         r=update_one(signal(),None,fetcher_for([candle(ts,101,101.2,100.5,100.8)]),NOW)
         self.assertAlmostEqual(r["rr_actual"],5.0)
+
+
+    def test_invalidates_entry_that_predates_signal_creation(self):
+        s=signal()
+        s["created_at_utc"]="2026-11-13T19:20:00+00:00"
+        next_open=CANDLE_OPEN+2*INTERVAL_MS
+        old={
+            "signal_id":"signal-001","status":"TP_HIT","entry_actual":100.0,
+            "entry_time_utc":"2026-11-13T19:15:00+00:00","exit_price":96.0,
+            "exit_time_utc":"2026-11-13T19:30:00+00:00","pnl_pct_raw":4.0,
+            "history":[{"status":"TP_HIT"}],
+        }
+        def later_fetcher(symbol,since,now_ms,limit):
+            self.assertEqual(since,next_open)
+            return [candle(next_open,101.0,101.2,100.5,100.8)],"OKX_PUBLIC_OHLCV"
+        r=update_one(s,old,later_fetcher,NOW)
+        self.assertEqual(r["invalidated_prior_entry"]["reason"],"ENTRY_PRECEDES_SIGNAL_TIMESTAMP")
+        self.assertEqual(r["entry_time_utc"],"2026-11-13T19:30:00+00:00")
+        self.assertEqual(r["entry_actual"],101.0)
+        self.assertEqual(r["status"],"ACTIVE")
+        self.assertTrue(any(x["reason"]=="INVALIDATED_LOOKAHEAD_ENTRY" for x in r["history"]))
 
     def test_expiry_after_48_hours(self):
         ts=CANDLE_OPEN+INTERVAL_MS
