@@ -2,7 +2,7 @@ name: Trader_me Stage 1B LRT-15m Scanner (Channel Guarded)
 
 on:
   push:
-    branches: [stage1b-lrt15m]
+    branches: [production-v1]
     paths:
       - "config/universe.json"
       - "signal_autopilot/**"
@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: stage1b-lrt15m
+          ref: production-v1
           persist-credentials: false
 
       - name: Set up Python
