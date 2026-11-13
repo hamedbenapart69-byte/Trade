@@ -14,8 +14,6 @@ def validate_target(configured_chat_id: str, chat: Any, member: Any, expected_ti
         return False,f"REJECTED_NOT_CHANNEL_ID chat_id={actual_id}"
     if str(getattr(chat,"type",""))!="channel":
         return False,f"REJECTED_CHAT_TYPE type={getattr(chat,'type','UNAVAILABLE')}"
-    if not getattr(chat,"username",None):
-        return False,"REJECTED_NOT_PUBLIC_CHANNEL username_missing"
     if _norm(getattr(chat,"title",""))!=_norm(expected_title):
         return False,f"REJECTED_CHANNEL_TITLE expected={expected_title!r} actual={getattr(chat,'title',None)!r}"
     if str(getattr(member,"status",""))!="administrator":
@@ -25,12 +23,12 @@ def validate_target(configured_chat_id: str, chat: Any, member: Any, expected_ti
     if configured_chat_id.strip()!=actual_id:
         return False,f"CHAT_ID_RESOLUTION_MISMATCH configured={configured_chat_id!r} resolved={actual_id!r}"
     return True,(f"CHANNEL_VERIFIED chat_id={actual_id} type=channel title={chat.title!r} "
-                 f"username=@{chat.username} bot_status=administrator")
+                 f"username=@{getattr(chat, 'username', None) or 'NO_PUBLIC_USERNAME'} bot_status=administrator")
 
 async def run_check(send_test=True):
-    token=os.getenv("TELEGRAM_TOKEN","").strip()
-    chat_id=os.getenv("TELEGRAM_CHAT_ID","").strip()
-    expected=os.getenv("TELEGRAM_EXPECTED_CHANNEL_TITLE","God signals crypto furthers").strip()
+    token=os.environ.get("TELEGRAM_TOKEN","").strip()
+    chat_id=os.environ.get("TELEGRAM_CHAT_ID","").strip()
+    expected=os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE","God signals crypto furthers").strip()
     if not token or not chat_id:
         print("TELEGRAM_CHANNEL_CHECK=FAILED reason=TELEGRAM_TOKEN_OR_CHAT_ID_MISSING")
         return 2
@@ -63,7 +61,7 @@ async def run_check(send_test=True):
                 text="#TEST\nTelegram destination verification only.\nNo trading signal and no order execution.",
                 disable_web_page_preview=True,
             )
-            print(f"TELEGRAM_TEST_MESSAGE=SENT chat_id={chat.id} message_id={message.message_id} link=https://t.me/{chat.username}/{message.message_id}")
+            print(f"TELEGRAM_TEST_MESSAGE=SENT chat_id={chat.id} message_id={message.message_id} link={(('https://t.me/' + chat.username + '/' + str(message.message_id)) if chat.username else 'NO_PUBLIC_PERMALINK')}")
     return 0
 
 def main():

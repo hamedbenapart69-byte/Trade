@@ -31,6 +31,9 @@ class TelegramChannelTests(unittest.TestCase):
     def test_requires_post_permission(self):
         ok,detail=validate_target("-1001234567890",chat(),admin(can_post_messages=False),"God signals crypto furthers")
         self.assertFalse(ok); self.assertIn("BOT_ADMIN_CANNOT_POST_MESSAGES",detail)
+    def test_channel_without_public_username_is_still_a_channel(self):
+        ok,detail=validate_target("-1001234567890",chat(username=None),admin(),"God signals crypto furthers")
+        self.assertTrue(ok); self.assertIn("CHANNEL_VERIFIED",detail)
     def test_requires_exact_public_channel_title(self):
         ok,detail=validate_target("-1001234567890",chat(title="Different"),admin(),"God signals crypto furthers")
         self.assertFalse(ok); self.assertIn("REJECTED_CHANNEL_TITLE",detail)
