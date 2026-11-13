@@ -1,0 +1,78 @@
+name: Research Outcome Tracker
+
+on:
+  push:
+    branches: [production-v1]
+    paths:
+      - "signal_autopilot/modules/research_tracker.py"
+      - "signal_autopilot/tests/test_research_tracker.py"
+      - ".github/workflows/research_outcome_tracker.yml"
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-outcome-tracker
+  cancel-in-progress: false
+
+jobs:
+  track-outcomes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout tracker code
+        uses: actions/checkout@v4
+        with:
+          ref: production-v1
+          persist-credentials: false
+
+      - name: Checkout persistent research data branch
+        uses: actions/checkout@v4
+        with:
+          ref: stage1-research-data
+          path: research-state
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: signal_autopilot/requirements.txt
+
+      - name: Install public-data runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r signal_autopilot/requirements.txt
+
+      - name: Run tracker unit tests
+        run: |
+          PYTHONPATH=signal_autopilot python -m unittest signal_autopilot.tests.test_research_tracker -v
+
+      - name: Update research outcomes from public OHLCV only
+        run: |
+          python signal_autopilot/modules/research_tracker.py \
+            --signals research-state/signal_autopilot/state/research_signals.json \
+            --outcomes research-state/signal_autopilot/state/research_outcomes.json
+
+      - name: Upload outcome report
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-outcomes-${{ github.run_id }}
+          path: research-state/signal_autopilot/state/research_outcomes.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Persist outcomes to research branch
+        run: |
+          git -C research-state config user.name "github-actions[bot]"
+          git -C research-state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C research-state add signal_autopilot/state/research_outcomes.json
+          if git -C research-state diff --cached --quiet; then
+            echo "RESEARCH_OUTCOMES_UNCHANGED"
+          else
+            git -C research-state commit -m "data(research): update outcome labels"
+            git -C research-state push origin HEAD:stage1-research-data
+          fi
