@@ -49,5 +49,16 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("run-id: ${{ github.event.workflow_run.id }}", writer)
 
 
+    def test_arb_format_proof_is_explicitly_labelled_and_secret_backed(self):
+        workflow = (WORKFLOWS / "telegram-format-test.yml").read_text(encoding="utf-8")
+        script = (ROOT / "signal_autopilot" / "scripts" / "format_test_telegram.py").read_text(encoding="utf-8")
+        self.assertIn("branches: [production-v1]", workflow)
+        self.assertIn("TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}", workflow)
+        self.assertIn("TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}", workflow)
+        self.assertIn('TELEGRAM_EXPECTED_CHANNEL_TITLE: "God signals crypto furthers"', workflow)
+        self.assertIn('TELEGRAM_FORMAT_TEST_ENABLED: "true"', workflow)
+        self.assertIn("[FORMAT TEST - NOT A REAL SIGNAL]", script)
+        self.assertIn("send_signal_to_telegram(signal, chart_path, format_test=True)", script)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
