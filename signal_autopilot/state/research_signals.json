@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "signal_count": 14,
+  "signal_count": 15,
   "signals": [
     {
       "calibration_status": "UNCALIBRATED",
@@ -771,8 +771,63 @@
       "timeframe": "15m",
       "zone_distance_pct": 1.813796,
       "zone_type": "OB"
+    },
+    {
+      "calibration_status": "UNCALIBRATED",
+      "candle_open_time": 1794595500000,
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "components": {
+        "bias_1h": true,
+        "bias_4h": true,
+        "cross": true,
+        "sweep": false,
+        "sweep_candles_ago": 1,
+        "zone_reaction": false
+      },
+      "created_at_utc": "2026-11-13T19:13:31.129814+00:00",
+      "cvd": {
+        "delta": -1935919.38365513,
+        "source": "PROXY_OHLCV"
+      },
+      "data_sources": [
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "decision": "RESEARCH_WATCHLIST",
+      "direction": "SELL",
+      "entry_reference": 0.14487,
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "first_seen_utc": "2026-11-13T19:13:31.129814+00:00",
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "lfs_coverage_pct": 100.0,
+      "lfs_score": 0.324909,
+      "lfs_status": "FULL",
+      "mode": "RESEARCH",
+      "points": {
+        "bias_1h": 20,
+        "bias_4h": 20,
+        "sweep": 0,
+        "tenkan_kijun_cross_10": 20,
+        "zone_reaction": 0
+      },
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "raw_score": 60,
+      "rr_reference": 2.0,
+      "scan_count": 1,
+      "signal_id": "0f0e209e8d5c7c92",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "stop_reference": 0.14515,
+      "symbol": "ARBUSDT",
+      "target_reference": 0.14431,
+      "telegram_message_id": null,
+      "telegram_status": "NOT_ATTEMPTED",
+      "tier": null,
+      "tier_score": 60,
+      "timeframe": "15m",
+      "zone_distance_pct": 2.298613,
+      "zone_type": "OB"
     }
   ],
   "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
-  "updated_at_utc": "2026-11-13T18:43:35.163386+00:00"
+  "updated_at_utc": "2026-11-13T19:14:44.474961+00:00"
 }
