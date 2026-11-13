@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from modules.chart_renderer_lrt15m import render_lrt15m_chart
 from modules.live_data_adapter import LiveOHLCVFetcher
