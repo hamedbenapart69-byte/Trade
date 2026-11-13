@@ -3,7 +3,7 @@ import importlib.util, unittest, os
 from unittest.mock import AsyncMock, patch
 from pathlib import Path
 from types import SimpleNamespace
-from telegram_bot import _verified_channel
+from telegram_bot import _verified_channel, build_signal_messages
 ROOT=Path(__file__).resolve().parents[1]
 SCRIPT=ROOT/"scripts"/"test_telegram_channel.py"
 SPEC=importlib.util.spec_from_file_location("telegram_channel_check",SCRIPT)
@@ -40,6 +40,20 @@ class TelegramChannelTests(unittest.TestCase):
         ok,detail=validate_target("-1001234567890",chat(title="Different"),admin(),"God signals crypto furthers")
         self.assertFalse(ok); self.assertIn("REJECTED_CHANNEL_TITLE",detail)
 
+
+
+class TelegramFormatTests(unittest.TestCase):
+    def test_format_test_marker_is_present_in_header_caption_and_body(self):
+        signal = {
+            "symbol": "ARBUSDT", "direction": "SELL", "signal_id": "format-test-id",
+            "format_test": True, "confluence_score": 60,
+            "levels": {}, "confluence_components": {},
+        }
+        header, caption, body = build_signal_messages(signal)
+        marker = "[FORMAT TEST - NOT A REAL SIGNAL]"
+        self.assertTrue(header.startswith(marker))
+        self.assertTrue(caption.startswith(marker))
+        self.assertTrue(body.startswith(marker))
 
 
 class ProductionTelegramGuardTests(unittest.IsolatedAsyncioTestCase):
