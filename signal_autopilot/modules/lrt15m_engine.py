@@ -26,8 +26,6 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
-MIN_LFS_SCORE_REAL_CVD = 0.70
-MIN_LFS_SCORE_PROXY_CVD = 0.30
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 WATCHLIST_CONFLUENCE_THRESHOLD = 60  # آستانهٔ قدیمی Diagnostic؛ برای مقایسه دست‌نخورده می‌ماند.
@@ -297,23 +295,6 @@ def higher_timeframe_gate(direction: str, bias4: str, bias1: str) -> tuple[bool,
     if bias4 == expected and bias1 == expected:
         return True, "BIAS_CONFIRMED"
     return False, "WATCHLIST_HIGHER_TF_BIAS_INCOMPLETE"
-
-
-def _score(parts: dict[str, float]) -> float:
-    return round(sum(parts[name] * weight for name, weight in LFS_WEIGHTS.items()), 4)
-
-
-def deprecated(func):
-    """Decorator سازگار با Python 3.11+ برای علامت‌گذاری مسیرهای قدیمی."""
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        warnings.warn(
-            "LEGACY - NOT USED IN PRODUCTION, ONLY FOR COMPARISON",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return func(*args, **kwargs)
-    return wrapper
 
 
 def score_stage1_confluence(
@@ -652,7 +633,7 @@ def run(data_dir: Path, output_path: Path, universe_path: Path,
             trade_path = aggtrades_dir / f"{symbol}_aggtrades.parquet"
             if trade_path.exists():
                 trades = load_parquet(trade_path)
-        results.append(analyze_symbol(symbol, rows, trades))
+        results.append(evaluate_stage1_symbol(symbol, rows, trades))
     candidates = [x for x in results if x.get("direction") in ("BUY", "SELL")]
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
