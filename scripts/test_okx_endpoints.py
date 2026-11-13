@@ -278,6 +278,9 @@ def test_oi_hourly_history(
     return result
 
 
+# این تابع ابزار تشخیصی است، نه تست Pytest؛ فراخوانی مستقیم آن حفظ می‌شود.
+test_oi_hourly_history.__test__ = False
+
 def test_oi_daily_history(symbol: str) -> dict[str, Any]:
     """تست تکمیلی: آیا Rubik می‌دهد تاریخچهٔ روزانهٔ کافی برای رتبهٔ OI نودروزه؟"""
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)

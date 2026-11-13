@@ -11,6 +11,8 @@ on:
     branches: [main, production-v1]
     paths:
       - "pyproject.toml"
+      - "tests/**"
+      - "scripts/**"
       - "signal_autopilot/**"
       - ".github/workflows/pytest.yml"
   workflow_dispatch:
