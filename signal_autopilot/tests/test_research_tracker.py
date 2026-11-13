@@ -114,7 +114,7 @@ class ResearchTrackerTests(unittest.TestCase):
         self.assertEqual(r["entry_time_utc"],"2026-11-13T19:30:00+00:00")
         self.assertEqual(r["entry_actual"],101.0)
         self.assertEqual(r["status"],"ACTIVE")
-        self.assertTrue(any(x["reason"]=="INVALIDATED_LOOKAHEAD_ENTRY" for x in r["history"]))
+        self.assertTrue(any(x.get("reason")=="INVALIDATED_LOOKAHEAD_ENTRY" for x in r["history"]))
 
     def test_expiry_after_48_hours(self):
         ts=CANDLE_OPEN+INTERVAL_MS

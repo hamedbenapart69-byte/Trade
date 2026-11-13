@@ -210,6 +210,7 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
             exit_price = float(candle["close"])
             _event(outcome, "EXPIRED", now, "48H_HOLD_LIMIT_REACHED")
             outcome["exit_price"] = exit_price
+            outcome["exit_candle_ohlc"] = {k: candle[k] for k in ("open_time", "open", "high", "low", "close", "volume")}
             outcome["exit_time_utc"] = datetime.fromtimestamp((opened + INTERVAL_MS) / 1000, timezone.utc).isoformat()
             outcome["pnl_pct_raw"] = round(_pnl_pct(str(signal["direction"]), entry, exit_price), 8)
             return outcome
