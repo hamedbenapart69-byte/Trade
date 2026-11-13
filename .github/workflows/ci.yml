@@ -28,6 +28,16 @@ jobs:
             exit 1
           fi
           echo "PRODUCTION_SECURITY_STATIC_AUDIT=PASS"
+          if git grep -nE 'TODO|FIXME|@deprecated|analyze_symbol|lfs1_proxy|legacy\.signal_engine_1h' -- '*.py'; then
+            echo "PROJECT_PYTHON_DEBT_MARKER_FOUND"
+            exit 1
+          fi
+          echo "PROJECT_PYTHON_DEBT_AUDIT=PASS"
+          if git grep -nE '(-100[0-9]{10,}|[0-9]{8,12}:[A-Za-z0-9_-]{25,}|https?://t\.me/[A-Za-z0-9_]+|TELEGRAM_[A-Z0-9_]*(ID|CHAT)[A-Z0-9_]*[[:space:]]*[:=][[:space:]]*["\047]?-?[0-9]{8,12})' -- signal_autopilot/modules signal_autopilot/main.py signal_autopilot/telegram_bot.py signal_autopilot/scripts .github/workflows; then
+            echo "EMBEDDED_TELEGRAM_IDENTIFIER_FOUND"
+            exit 1
+          fi
+          echo "PROJECT_TELEGRAM_SECRET_AUDIT=PASS"
       - name: Run root unittest suite (require nonzero collection)
         run: |
           python - <<'PY'
