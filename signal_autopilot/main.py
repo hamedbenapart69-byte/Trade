@@ -14,17 +14,24 @@ from modules.signal_tracker import SignalTracker
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     WATCHLIST_CONFLUENCE_THRESHOLD,
+    PRODUCTION_MODE_THRESHOLD,
+    RESEARCH_MODE_THRESHOLD,
     aggregate_bars,
     evaluate_stage1_symbol,
     score_stage1_confluence,
     ichimoku,
 )
-from telegram_bot import send_signal_to_telegram, verify_telegram_connection
+from telegram_bot import (
+    send_signal_to_telegram,
+    send_research_signal_to_telegram,
+    verify_telegram_connection,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 UNIVERSE_PATH = ROOT / "config" / "universe.json"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts" / "charts"
 STATE_PATH = Path(__file__).resolve().parent / "state" / "open_signals.json"
+RESEARCH_STATE_PATH = Path(__file__).resolve().parent / "state" / "research_signals.json"
 
 LOG = logging.getLogger("trader_me.main")
 logging.basicConfig(
@@ -165,8 +172,8 @@ def process_symbol(
         diagnostic = {
             key: result.get(key)
             for key in (
-                "symbol", "direction", "veto", "decision", "tier", "raw_score",
-                "tier_score", "points", "components", "lfs_score", "lfs_source",
+                "symbol", "direction", "veto", "decision", "tier", "mode",
+                "research_decision", "raw_score", "tier_score", "points", "components", "lfs_score", "lfs_source",
                 "lfs_coverage_pct", "lfs_status", "lfs_components", "lfs_veto",
                 "lfs_threshold", "lfs_coverage", "data_windows", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
@@ -175,7 +182,43 @@ def process_symbol(
                 "take_profit", "rr", "hypothesis", "falsification",
             )
         }
-        if result.get("decision") != "WATCHLIST":
+        if result.get("decision") == "RESEARCH_WATCHLIST" and result.get("mode") == "RESEARCH":
+            created = datetime.now(timezone.utc).isoformat()
+            research_signal = {
+                "symbol": symbol,
+                "direction": result.get("direction"),
+                "timeframe": "15m",
+                "mode": "RESEARCH",
+                "decision": "RESEARCH_WATCHLIST",
+                "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+                "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+                "calibration_status": "UNCALIBRATED",
+                "raw_score": result.get("raw_score"),
+                "tier_score": result.get("tier_score"),
+                "tier": None,
+                "points": result.get("points") or {},
+                "components": result.get("components") or {},
+                "lfs_score": result.get("lfs_score"),
+                "lfs_status": result.get("lfs_status"),
+                "lfs_coverage_pct": result.get("lfs_coverage_pct"),
+                "cvd": result.get("cvd"),
+                "zone_type": result.get("zone_type"),
+                "zone_distance_pct": result.get("zone_distance_pct"),
+                "entry_reference": result.get("entry"),
+                "stop_reference": result.get("stop_loss"),
+                "target_reference": result.get("take_profit"),
+                "rr_reference": result.get("rr"),
+                "hypothesis": result.get("hypothesis"),
+                "falsification": result.get("falsification"),
+                "data_sources": result.get("data_sources", []),
+                "candle_open_time": int(rows[-1]["open_time"]),
+                "created_at_utc": created,
+                "signal_id": _signal_id(symbol, str(result.get("direction")), int(rows[-1]["open_time"])),
+            }
+            diagnostic["research_signal"] = research_signal
+            return None, "RESEARCH_CANDIDATE", diagnostic
+
+        if result.get("decision") != "WATCHLIST" or result.get("mode") != "PRODUCTION":
             return None, str(result.get("reason", result.get("decision", "NO_TRADE"))), diagnostic
 
         lfs_source = str(result.get("lfs_source", "UNAVAILABLE"))
@@ -206,6 +249,7 @@ def process_symbol(
             "engine": "LRT-15m + ICT + Ichimoku",
             "timeframe": "15m",
             "status": "WATCHLIST",
+            "mode": "PRODUCTION",
             "tier": result.get("tier"),
             "calibration_status": "UNCALIBRATED",
             "stage_label": "STAGE_1_UNCALIBRATED",
@@ -273,11 +317,48 @@ def process_symbol(
             "reason": f"{type(exc).__name__}:{str(exc)[:160]}",
         }
 
+
+def load_research_state(path: Path) -> dict[str, Any]:
+    """خواندن مخزن مستقل داده‌های پژوهشی با اعتبارسنجی حداقلی ساختار."""
+    if not path.exists():
+        return {
+            "schema_version": 1,
+            "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+            "updated_at_utc": None,
+            "signals": [],
+        }
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
+        raise ValueError("research_state_schema_invalid")
+    payload.setdefault("schema_version", 1)
+    payload.setdefault("stage_label", "STAGE_1_RESEARCH_UNCALIBRATED")
+    return payload
+
+
+def save_research_state(path: Path, payload: dict[str, Any]) -> None:
+    """ذخیرهٔ اتمی داده‌های پژوهشی برای انتقال به شاخهٔ مستقل."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
+    payload["signal_count"] = len(payload.get("signals", []))
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
 def main() -> int:
     symbols = load_universe()
     telegram_ready = verify_telegram_connection()
     fetcher = LiveOHLCVFetcher(limit=500, stats_limit=2500, fetch_stats=True)
     tracker = SignalTracker(STATE_PATH)
+    research_state = load_research_state(RESEARCH_STATE_PATH)
+    research_signals = research_state.setdefault("signals", [])
+    research_ids = {str(item.get("signal_id")) for item in research_signals}
+    research_candidates = 0
+    research_new_signals = 0
+    research_message_ids: list[dict[str, Any]] = []
 
     processed = 0
     skipped = 0
@@ -288,9 +369,50 @@ def main() -> int:
     try:
         for symbol in symbols:
             signal, reason, diagnostic = process_symbol(symbol, fetcher)
+            research_signal = diagnostic.pop("research_signal", None)
             diagnostics.append(diagnostic)
+
+            if research_signal:
+                research_candidates += 1
+                research_id = str(research_signal["signal_id"])
+                if research_id not in research_ids:
+                    research_record = {
+                        **research_signal,
+                        "collection_status": "PENDING_OUTCOME_LABEL",
+                        "telegram_status": "NOT_ATTEMPTED",
+                        "telegram_message_id": None,
+                        "first_seen_utc": research_signal["created_at_utc"],
+                        "scan_count": 1,
+                    }
+                    if telegram_ready:
+                        message_id = send_research_signal_to_telegram(research_signal)
+                        if isinstance(message_id, int) and message_id > 0:
+                            research_record["telegram_status"] = "SENT"
+                            research_record["telegram_message_id"] = message_id
+                            research_message_ids.append({
+                                "symbol": research_signal["symbol"],
+                                "signal_id": research_id,
+                                "message_id": message_id,
+                            })
+                        else:
+                            research_record["telegram_status"] = "FAILED_OR_SKIPPED"
+                    research_signals.append(research_record)
+                    research_ids.add(research_id)
+                    research_new_signals += 1
+                    LOG.info(
+                        "RESEARCH_SIGNAL_RECORDED symbol=%s id=%s tier=%s telegram=%s",
+                        symbol, research_id, research_signal.get("tier_score"),
+                        research_record["telegram_status"],
+                    )
+                else:
+                    for existing in research_signals:
+                        if str(existing.get("signal_id")) == research_id:
+                            existing["scan_count"] = int(existing.get("scan_count", 1)) + 1
+                            break
+
             if signal is None:
-                skipped += 1
+                if not research_signal:
+                    skipped += 1
                 LOG.info("SYMBOL_SKIPPED %s reason=%s", symbol, reason)
                 continue
 
@@ -319,6 +441,7 @@ def main() -> int:
         fetcher.close()
 
     tracker.save()
+    save_research_state(RESEARCH_STATE_PATH, research_state)
     REPORT_PATH = Path(__file__).resolve().parent / "artifacts" / "stage1_lrt_report.json"
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     veto_counts: dict[str, list[str]] = {}
@@ -433,6 +556,15 @@ def main() -> int:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "okx_api_distribution": okx_api_distribution,
         "stage": "STAGE_1_UNCALIBRATED",
+        "research_stage": "STAGE_1_RESEARCH_UNCALIBRATED",
+        "production_threshold": PRODUCTION_MODE_THRESHOLD,
+        "research_threshold": RESEARCH_MODE_THRESHOLD,
+        "production_watchlist_count": candidates,
+        "research_candidate_count": research_candidates,
+        "research_new_unique_count": research_new_signals,
+        "research_total_unique_count": len(research_signals),
+        "research_telegram_message_ids": research_message_ids,
+        "research_state_path": str(RESEARCH_STATE_PATH),
         "universe_count": len(symbols),
         "symbols_reported": len(diagnostics),
         "watchlist_count": candidates,
@@ -473,6 +605,11 @@ def main() -> int:
         "universe": len(symbols),
         "symbols_reported": len(diagnostics),
         "candidate_symbols": candidates,
+        "production_watchlist_count": candidates,
+        "research_candidate_count": research_candidates,
+        "research_new_unique_count": research_new_signals,
+        "research_total_unique_count": len(research_signals),
+        "research_telegram_message_ids": research_message_ids,
         "symbols_skipped": skipped,
         "telegram_preflight": telegram_ready,
         "telegram_signals_sent": sent,

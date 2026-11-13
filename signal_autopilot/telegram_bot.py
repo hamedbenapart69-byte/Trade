@@ -231,3 +231,81 @@ def send_test_message_to_telegram() -> tuple[int, str | None]:
     if not token or not chat_id:
         raise RuntimeError("TELEGRAM_TOKEN_OR_CHAT_ID_MISSING")
     return asyncio.run(_deliver_test_message(token, chat_id))
+
+def build_research_message(signal: dict[str, Any]) -> str:
+    """پیام پژوهشی؛ هرگز به‌عنوان سیگنال معاملاتی یا دستور ورود نمایش داده نمی‌شود."""
+    if signal.get("mode") != "RESEARCH" or signal.get("decision") != "RESEARCH_WATCHLIST":
+        raise ValueError("RESEARCH_MESSAGE_REQUIRES_RESEARCH_MODE")
+    labels = {
+        "bias_4h": "Bias4H",
+        "bias_1h": "Bias1H",
+        "sweep": "Sweep",
+        "zone_reaction": "Zone",
+        "tenkan_kijun_cross_10": "Cross",
+    }
+    points = signal.get("points") or {}
+    component_lines = [
+        f"  - {labels.get(name, name)}: {'✓' if int(value or 0) > 0 else '✗'} ({int(value or 0)})"
+        for name, value in points.items()
+    ]
+    return "\\n".join([
+        "🔬 STAGE 1 RESEARCH — NOT A TRADING SIGNAL",
+        "#RESEARCH_DATA_COLLECTION",
+        "",
+        "⚠️ این سیگنال برای جمع‌آوری داده است، نه معامله.",
+        "⚠️ سیستم هنوز کالیبره نشده (UNCALIBRATED).",
+        "⚠️ این خروجی ممکن است اشتباه باشد؛ هیچ اقدام معاملاتی بر اساس آن انجام ندهید.",
+        "",
+        f"📊 Symbol: {signal.get('symbol', 'UNAVAILABLE')}",
+        f"🎯 Direction: {signal.get('direction', 'UNAVAILABLE')}",
+        f"📈 Confluence: {signal.get('raw_score', '—')}/100 | Tier: {signal.get('tier_score', '—')} | RESEARCH_WATCHLIST",
+        "🔍 Components:",
+        *component_lines,
+        "",
+        "📋 هدف: جمع‌آوری داده برای ارزیابی و کالیبراسیون آتی",
+        "📅 حداقل 100 مشاهدهٔ یکتا؛ سپس برچسب‌گذاری نتایج و ارزیابی OOS لازم است.",
+        f"🆔 Research ID: {signal.get('signal_id', 'UNAVAILABLE')}",
+        f"🕒 UTC: {signal.get('created_at_utc', 'UNAVAILABLE')}",
+        "⛔ NOT A TRADING SIGNAL | NO ORDER EXECUTION",
+    ])
+
+
+async def _deliver_research(token: str, chat_id: str, signal: dict[str, Any]) -> int:
+    message_text = build_research_message(signal)
+    async with Bot(token=token) as bot:
+        message = await bot.send_message(
+            chat_id=chat_id,
+            text=message_text,
+            disable_web_page_preview=True,
+        )
+    LOG.info(
+        "TELEGRAM_RESEARCH_SENT symbol=%s signal_id=%s message_id=%s",
+        signal.get("symbol"), signal.get("signal_id"), message.message_id,
+    )
+    return int(message.message_id)
+
+
+def send_research_signal_to_telegram(signal_data: dict[str, Any]) -> int | None:
+    """ارسال فقط دادهٔ پژوهشی ۶۰ تا ۷۹؛ هرگز از مسیر WATCHLIST تولیدی استفاده نمی‌کند."""
+    if (
+        signal_data.get("mode") != "RESEARCH"
+        or signal_data.get("decision") != "RESEARCH_WATCHLIST"
+        or signal_data.get("stage_label") != "STAGE_1_RESEARCH_UNCALIBRATED"
+        or signal_data.get("calibration_status") != "UNCALIBRATED"
+    ):
+        LOG.error("TELEGRAM_RESEARCH_REJECTED_INVALID_LABEL: %s", signal_data.get("symbol"))
+        return False
+    score = signal_data.get("tier_score")
+    if not isinstance(score, (int, float)) or not 60 <= score < STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD:
+        LOG.error("TELEGRAM_RESEARCH_REJECTED_SCORE: %s score=%s", signal_data.get("symbol"), score)
+        return False
+    token = os.getenv("TELEGRAM_TOKEN", "").strip()
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        LOG.warning("TELEGRAM_RESEARCH_SKIPPED_NOT_CONFIGURED")
+        return False
+    try:
+        return asyncio.run(_deliver_research(token, chat_id, signal_data))
+    except Exception:
+        LOG.exception("TELEGRAM_RESEARCH_DELIVERY_FAILED: %s", signal_data.get("signal_id"))
+        return False

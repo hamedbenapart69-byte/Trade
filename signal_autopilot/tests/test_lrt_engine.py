@@ -45,10 +45,12 @@ class LRTStage1DecisionTests(unittest.TestCase):
         self.assertEqual(result["decision"], "WATCHLIST")
         self.assertEqual(result["tier"], "B")
 
-    def test_3_of_5_components_produce_60_and_monitoring(self):
+    def test_3_of_5_components_produce_60_and_research_watchlist(self):
         result = self.evaluate(3)
         self.assertEqual(result["raw_score"], 60)
-        self.assertEqual(result["decision"], "MONITORING")
+        self.assertEqual(result["decision"], "RESEARCH_WATCHLIST")
+        self.assertEqual(result["mode"], "RESEARCH")
+        self.assertIsNone(result["tier"])
 
     def test_2_of_5_components_produce_40_and_no_trade(self):
         result = self.evaluate(2)

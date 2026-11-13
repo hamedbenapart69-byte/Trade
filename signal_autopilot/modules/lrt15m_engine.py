@@ -33,7 +33,10 @@ MIN_LFS_SCORE_PROXY_CVD = 0.30
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 WATCHLIST_CONFLUENCE_THRESHOLD = 60  # آستانهٔ قدیمی Diagnostic؛ برای مقایسه دست‌نخورده می‌ماند.
-STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD = 80
+PRODUCTION_MODE_THRESHOLD = 80
+RESEARCH_MODE_THRESHOLD = 60
+# سازگاری نام ثابت قدیمی؛ آستانهٔ تولیدی بدون تغییر می‌ماند.
+STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD = PRODUCTION_MODE_THRESHOLD
 MONITORING_CONFLUENCE_THRESHOLD = 60
 ICHIMOKU_TENKAN = 9
 ICHIMOKU_KIJUN = 26
@@ -476,19 +479,22 @@ def score_stage1_confluence(
     # Tierها فقط روی مضرب‌های ۲۰ تصمیم می‌گیرند؛ امتیاز خام حفظ می‌شود.
     tier_score = (raw_score // 20) * 20
     if tier_score >= 100:
-        decision, tier = "WATCHLIST", "A"
-    elif tier_score >= STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD:
-        decision, tier = "WATCHLIST", "B"
-    elif tier_score >= MONITORING_CONFLUENCE_THRESHOLD:
-        decision, tier = "MONITORING", None
+        decision, tier, mode, research_decision = "WATCHLIST", "A", "PRODUCTION", None
+    elif tier_score >= PRODUCTION_MODE_THRESHOLD:
+        decision, tier, mode, research_decision = "WATCHLIST", "B", "PRODUCTION", None
+    elif tier_score >= RESEARCH_MODE_THRESHOLD:
+        # امتیاز ۶۰ تا ۷۹ فقط برای پژوهش است؛ وارد مسیر تولیدی نمی‌شود.
+        decision, tier, mode, research_decision = "RESEARCH_WATCHLIST", None, "RESEARCH", "RESEARCH_WATCHLIST"
     else:
-        decision, tier = "NO_TRADE", None
+        decision, tier, mode, research_decision = "NO_TRADE", None, "NONE", None
     return {
         "raw_score": raw_score,
         "tier_score": tier_score,
         "points": points,
         "decision": decision,
         "tier": tier,
+        "mode": mode,
+        "research_decision": research_decision,
     }
 
 
@@ -502,14 +508,16 @@ def evaluate_stage1_decision(
 ) -> dict[str, Any]:
     """سه Veto قطعی و سپس امتیازدهی؛ هیچ مسیر BUY_NOW/SELL_NOW ندارد."""
     if not data_valid:
-        return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "score": None}
+        return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     if inside_kumo:
-        return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "score": None}
+        return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     threshold = 0.30  # LFS_v2: آستانه برای FULL و PARTIAL_PROXY یکسان است.
     if float(lfs_score) < threshold:
         return {
             "veto": "LFS_BELOW_THRESHOLD",
             "decision": "NO_TRADE",
+            "mode": "NONE",
+            "research_decision": None,
             "score": None,
             "lfs_threshold": threshold,
         }
