@@ -43,7 +43,7 @@ jobs:
           echo "MARKET_DATA_SOURCE_SHA=$(git -C market-data rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
