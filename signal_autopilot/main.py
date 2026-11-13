@@ -556,6 +556,18 @@ def main() -> int:
             "reason": row.get("reason"),
         })
 
+    for row in diagnostics:
+        gate_record = {
+            key: row.get(key) for key in (
+                "symbol", "direction", "veto", "decision", "reason",
+                "higher_timeframe_bias", "components", "direction_candidates",
+                "points", "raw_score", "tier_score", "lfs_score",
+                "lfs_status", "lfs_coverage_pct", "zone_type",
+                "zone_distance_pct", "price_vs_kumo", "api_status",
+            )
+        }
+        LOG.info("SYMBOL_GATE_DIAGNOSTICS %s", json.dumps(gate_record, ensure_ascii=False, sort_keys=True))
+
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "okx_api_distribution": okx_api_distribution,
