@@ -1,4 +1,4 @@
-name: Trader_me Stage 1 Signal Bot
+name: Trader_me Stage 1B LRT-15m Signal Bot
 
 on:
   push:
@@ -24,11 +24,27 @@ jobs:
   live-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/signal_autopilot
     steps:
-      - name: Checkout repository
+      - name: Checkout the sole production code source
         uses: actions/checkout@v4
         with:
           ref: production-v1
+          persist-credentials: false
+
+      - name: Checkout persisted open-signal state (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: signal-state
+          path: persisted-open-state
+          persist-credentials: false
+
+      - name: Checkout persisted research state (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: stage1-research-data
+          path: persisted-research-state
           persist-credentials: false
 
       - name: Set up Python
@@ -48,30 +64,66 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          p = json.loads(Path("config/universe.json").read_text(encoding="utf-8"))
-          symbols = p["symbols"]
+          payload = json.loads(Path("config/universe.json").read_text(encoding="utf-8"))
+          symbols = payload["symbols"]
           assert len(symbols) == 27 and len(set(symbols)) == 27, symbols
-          print("UNIVERSE_VALIDATED", len(symbols), symbols)
+          print("UNIVERSE_VALIDATED", len(symbols))
           PY
 
-      - name: Run unit tests
+      - name: Run Stage 1B LFS v2 unit tests
         working-directory: signal_autopilot
         run: |
-          python -m unittest tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download -v
+          python -m unittest \
+            tests.test_imports \
+            tests.test_lrt_engine \
+            tests.test_live_signal_bot \
+            tests.test_stage1b_lrt15m \
+            tests.test_lrt15m_download \
+            tests.test_cvd_proxy_tracker \
+            tests.test_lfs_v2 \
+            tests.test_stage1_research_mode \
+            tests.test_research_tracker \
+            tests.test_telegram_channel_guard \
+            tests.test_trusted_telegram_notifier -v
 
-      - name: Run live 27-symbol scan (no delivery credentials)
+      - name: Restore persisted state snapshots
+        run: |
+          set -euo pipefail
+          install -D persisted-open-state/signal_autopilot/state/open_signals.json signal_autopilot/state/open_signals.json
+          install -D persisted-research-state/signal_autopilot/state/research_signals.json signal_autopilot/state/research_signals.json
+
+      - name: Run live 27-symbol LFS v2 scan (read-only, no Telegram credentials)
         working-directory: signal_autopilot
         env:
           LOG_LEVEL: INFO
         run: python main.py
 
-      - name: Upload charts and run evidence
+      - name: Upload open-signal state for trusted persistence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1b-open-signal-state
+          path: signal_autopilot/state/open_signals.json
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload report and diagnostics for trusted notifier
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trader-me-stage1-signal-bot-${{ github.run_id }}
           path: |
             signal_autopilot/artifacts/charts/
+            signal_autopilot/artifacts/diagnostics/gates_diagnostic.json
             signal_autopilot/artifacts/stage1_lrt_report.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
+
+      - name: Upload research state for trusted persistence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-research-state-${{ github.run_id }}
+          path: signal_autopilot/state/research_signals.json
+          if-no-files-found: error
+          retention-days: 30

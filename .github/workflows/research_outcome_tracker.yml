@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: research-outcome-tracker
+  group: research-state-writes
   cancel-in-progress: false
 
 jobs:
