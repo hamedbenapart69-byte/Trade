@@ -214,6 +214,29 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(exchange.calls, 5)
         self.assertEqual(rows[0]["cvd_source"], "UNAVAILABLE_NEUTRAL_PROXY")
 
+    def test_format_test_header_chart_and_body_all_have_exact_safety_label(self):
+        signal = {
+            "symbol": "ARBUSDT",
+            "direction": "SELL",
+            "engine": "LRT-15m",
+            "timeframe": "15m",
+            "signal_id": "historical-arb-format-test",
+            "format_test": True,
+            "confluence_score": 60,
+            "tier": "RESEARCH",
+            "confluence_components": {},
+            "ichimoku": {},
+            "levels": {},
+            "calibration": {},
+            "costs": {},
+            "risk_flags": ["FORMAT TEST ONLY"],
+        }
+        header, chart_caption, body = build_signal_messages(signal)
+        marker = "[FORMAT TEST - NOT A REAL SIGNAL]"
+        self.assertTrue(header.startswith(marker))
+        self.assertTrue(chart_caption.startswith(marker))
+        self.assertTrue(body.startswith(marker))
+
     def test_message_contains_nine_ordered_sections(self):
         signal = {
             "symbol": "BTCUSDT",
