@@ -2,7 +2,7 @@ name: Research Outcome Tracker
 
 on:
   push:
-    branches: [stage1b-lrt15m]
+    branches: [production-v1]
     paths:
       - "signal_autopilot/modules/research_tracker.py"
       - "signal_autopilot/tests/test_research_tracker.py"
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout tracker code
         uses: actions/checkout@v4
         with:
-          ref: stage1b-lrt15m
+          ref: production-v1
           persist-credentials: false
 
       - name: Checkout persistent research data branch
