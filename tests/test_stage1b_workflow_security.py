@@ -39,6 +39,15 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         tracker = (WORKFLOWS / "research_outcome_tracker.yml").read_text(encoding="utf-8")
         self.assertIn("group: research-state-writes", tracker)
 
+    def test_scanner_artifact_names_match_the_trusted_persistence_contract(self):
+        scanner = (WORKFLOWS / "signal_bot.yml").read_text(encoding="utf-8")
+        writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
+        self.assertIn("name: stage1b-open-signal-state", scanner)
+        self.assertIn("name: stage1b-open-signal-state", writer)
+        self.assertIn("name: stage1-research-state-${{ github.run_id }}", scanner)
+        self.assertIn("name: stage1-research-state-${{ github.event.workflow_run.id }}", writer)
+        self.assertIn("run-id: ${{ github.event.workflow_run.id }}", writer)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
