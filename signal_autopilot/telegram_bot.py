@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from telegram import Bot
-from modules.lrt15m_engine import STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD
+from modules.lrt15m_engine import (
+    PRODUCTION_MODE_THRESHOLD,
+    RESEARCH_MODE_THRESHOLD,
+)
 
 LOG = logging.getLogger("trader_me.telegram")
 
@@ -215,7 +218,7 @@ def send_signal_to_telegram(
         LOG.warning("TELEGRAM_REJECTED_CALIBRATION_STATE: %s", signal_data.get("symbol"))
         return False
     score = signal_data.get("confluence_score")
-    if not isinstance(score, (int, float)) or score < STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD:
+    if not isinstance(score, (int, float)) or score < PRODUCTION_MODE_THRESHOLD:
         LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_80: %s score=%s", signal_data.get("symbol"), score)
         return False
 
@@ -333,7 +336,7 @@ def send_research_signal_to_telegram(signal_data: dict[str, Any]) -> int | None:
         LOG.error("TELEGRAM_RESEARCH_REJECTED_INVALID_LABEL: %s", signal_data.get("symbol"))
         return False
     score = signal_data.get("tier_score")
-    if not isinstance(score, (int, float)) or not 60 <= score < STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD:
+    if not isinstance(score, (int, float)) or not RESEARCH_MODE_THRESHOLD <= score < PRODUCTION_MODE_THRESHOLD:
         LOG.error("TELEGRAM_RESEARCH_REJECTED_SCORE: %s score=%s", signal_data.get("symbol"), score)
         return False
     token = os.getenv("TELEGRAM_TOKEN", "").strip()
