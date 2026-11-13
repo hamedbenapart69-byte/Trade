@@ -15,6 +15,19 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: pip install -r signal_autopilot/requirements.txt
+      - name: Audit production code for legacy markers and embedded Telegram identifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nE 'TODO|FIXME|@deprecated|analyze_symbol' -- signal_autopilot/modules signal_autopilot/main.py signal_autopilot/telegram_bot.py; then
+            echo "PRODUCTION_CODE_DEBT_MARKER_FOUND"
+            exit 1
+          fi
+          if git grep -nE '(-100[0-9]{10,}|[0-9]{8,12}:[A-Za-z0-9_-]{25,}|https?://t\.me/[A-Za-z0-9_]+)' -- signal_autopilot/modules signal_autopilot/main.py signal_autopilot/telegram_bot.py signal_autopilot/scripts/format_test_telegram.py; then
+            echo "EMBEDDED_TELEGRAM_IDENTIFIER_FOUND"
+            exit 1
+          fi
+          echo "PRODUCTION_SECURITY_STATIC_AUDIT=PASS"
       - name: Run root unittest suite (require nonzero collection)
         run: |
           python - <<'PY'
@@ -51,19 +64,23 @@ jobs:
       - name: Validate futures dashboard JavaScript
         run: node --check web/futures/app.js
       - name: Validate Compose configuration
-        env:
-          CONTROL_API_TOKEN: ci-control-token-which-is-long-enough-123456
-          WORKER_API_TOKEN: ci-worker-token-which-is-long-enough-123456
-        run: docker compose config --quiet
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONTROL_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          WORKER_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          CONTROL_API_TOKEN="$CONTROL_API_TOKEN" WORKER_API_TOKEN="$WORKER_API_TOKEN" docker compose config --quiet
       - name: Build container image
         run: docker build -t trade-control-plane:ci .
       - name: Container health smoke test
         shell: bash
         run: |
           set -euo pipefail
+          CONTROL_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          WORKER_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
           docker run -d --name trade-control-plane-ci -p 127.0.0.1:8000:8000 \
-            -e CONTROL_API_TOKEN=ci-control-token-which-is-long-enough-123456 \
-            -e WORKER_API_TOKEN=ci-worker-token-which-is-long-enough-123456 \
+            -e CONTROL_API_TOKEN="$CONTROL_API_TOKEN" \
+            -e WORKER_API_TOKEN="$WORKER_API_TOKEN" \
             -e CONTROL_DB_PATH=/var/lib/control/control.db trade-control-plane:ci
           trap 'docker logs trade-control-plane-ci || true; docker rm -f trade-control-plane-ci >/dev/null 2>&1 || true' EXIT
           python - <<'PY'
