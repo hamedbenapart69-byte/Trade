@@ -70,6 +70,12 @@ class ProductionTelegramGuardTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(RuntimeError, "REJECTED_CHAT_TYPE"):
             await _verified_channel(bot, "-1001234567890")
 
+    async def test_production_guard_requires_expected_title_from_environment(self):
+        bot = self.make_bot(chat(username=None))
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "EXPECTED_CHANNEL_TITLE_MISSING"):
+                await _verified_channel(bot, "-1001234567890")
+
     async def test_production_guard_rejects_wrong_title(self):
         bot = self.make_bot(chat(title="Wrong channel", username=None))
         with self.assertRaisesRegex(RuntimeError, "TITLE_MISMATCH"):
