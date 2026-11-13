@@ -4,6 +4,7 @@ on:
     branches: [main, feat/telegram-dual-destination]
     paths:
       - "pyproject.toml"
+      - "tests/**"
       - "signal_autopilot/**"
       - ".github/workflows/pytest.yml"
   pull_request:
