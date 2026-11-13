@@ -1,0 +1,20 @@
+name: Stage 1b historical backfill (PAUSED)
+
+on:
+  # The previous workflow repeatedly downloaded the full 730-day archive
+  # on every push. Keep this workflow inert until incremental storage is ready.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paused:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain why historical backfill is paused
+        run: |
+          echo "STAGE1B_FULL_BACKFILL=PAUSED"
+          echo "REASON=Full 730-day snapshots must not be repeatedly appended to Git history."
+          echo "USE=.github/workflows/stage1b-scheduled.yml manual dispatch after dataset manifest validation."
+          echo "No data is downloaded, no signals are computed, and nothing is published."

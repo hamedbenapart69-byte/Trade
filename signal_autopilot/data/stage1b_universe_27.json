@@ -1,0 +1,43 @@
+{
+  "as_of_utc": "2026-11-09T06:13:33.345Z",
+  "source": "config/binance_perpetuals_snapshot.json",
+  "filters": {
+    "market": "Binance USDⓈ-M",
+    "contractType": "PERPETUAL",
+    "status": "TRADING",
+    "quoteAsset": "USDT",
+    "marginAsset": "USDT",
+    "quoteVolume24hUsdMin": 50000000,
+    "listingAgeDaysMin": 730
+  },
+  "count": 27,
+  "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "SOLUSDT",
+      "XRPUSDT",
+      "ADAUSDT",
+      "DOGEUSDT",
+      "AVAXUSDT",
+      "LINKUSDT",
+      "LTCUSDT",
+      "BCHUSDT",
+      "NEARUSDT",
+      "INJUSDT",
+      "UNIUSDT",
+      "FILUSDT",
+      "ARBUSDT",
+      "ENAUSDT",
+      "SUIUSDT",
+      "TAOUSDT",
+      "WLDUSDT",
+      "ZECUSDT",
+      "AAVEUSDT",
+      "QNTUSDT",
+      "RSRUSDT",
+      "ONEUSDT",
+      "HOTUSDT",
+      "1000PEPEUSDT"
+  ]
+}

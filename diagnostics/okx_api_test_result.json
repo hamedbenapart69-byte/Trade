@@ -1,0 +1,713 @@
+{
+  "generated_at_utc": "2026-11-13T14:58:38.794864+00:00",
+  "base_url": "https://www.okx.com",
+  "symbols": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "RSR",
+    "TAO"
+  ],
+  "endpoint_count": 3,
+  "combination_count": 15,
+  "success_count": 15,
+  "failure_count": 0,
+  "classification": "ALL_PASS",
+  "supplemental_checks": {
+    "oi_1h_90d_history": [
+      {
+        "symbol": "BTC",
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "BTC",
+          "period": "1H",
+          "limit": "100"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "PARTIAL",
+        "coverage_status": "PARTIAL",
+        "target_hours": 2160,
+        "limit_per_request": 100,
+        "max_requests": 25,
+        "requests_made": 2,
+        "record_count": 720,
+        "coverage_hours": 720,
+        "coverage_days": 30.0,
+        "oldest_timestamp": "1791990000000",
+        "newest_timestamp": "1794578400000",
+        "last_before_cursor": "1791990000000"
+      },
+      {
+        "symbol": "ETH",
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "ETH",
+          "period": "1H",
+          "limit": "100"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "PARTIAL",
+        "coverage_status": "PARTIAL",
+        "target_hours": 2160,
+        "limit_per_request": 100,
+        "max_requests": 25,
+        "requests_made": 2,
+        "record_count": 720,
+        "coverage_hours": 720,
+        "coverage_days": 30.0,
+        "oldest_timestamp": "1791990000000",
+        "newest_timestamp": "1794578400000",
+        "last_before_cursor": "1791990000000"
+      },
+      {
+        "symbol": "SOL",
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "SOL",
+          "period": "1H",
+          "limit": "100"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "PARTIAL",
+        "coverage_status": "PARTIAL",
+        "target_hours": 2160,
+        "limit_per_request": 100,
+        "max_requests": 25,
+        "requests_made": 2,
+        "record_count": 720,
+        "coverage_hours": 720,
+        "coverage_days": 30.0,
+        "oldest_timestamp": "1791990000000",
+        "newest_timestamp": "1794578400000",
+        "last_before_cursor": "1791990000000"
+      },
+      {
+        "symbol": "RSR",
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "RSR",
+          "period": "1H",
+          "limit": "100"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "PARTIAL",
+        "coverage_status": "PARTIAL",
+        "target_hours": 2160,
+        "limit_per_request": 100,
+        "max_requests": 25,
+        "requests_made": 2,
+        "record_count": 720,
+        "coverage_hours": 720,
+        "coverage_days": 30.0,
+        "oldest_timestamp": "1791990000000",
+        "newest_timestamp": "1794578400000",
+        "last_before_cursor": "1791990000000"
+      },
+      {
+        "symbol": "TAO",
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "TAO",
+          "period": "1H",
+          "limit": "100"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "PARTIAL",
+        "coverage_status": "PARTIAL",
+        "target_hours": 2160,
+        "limit_per_request": 100,
+        "max_requests": 25,
+        "requests_made": 2,
+        "record_count": 720,
+        "coverage_hours": 720,
+        "coverage_days": 30.0,
+        "oldest_timestamp": "1791990000000",
+        "newest_timestamp": "1794578400000",
+        "last_before_cursor": "1791990000000"
+      }
+    ],
+    "all_symbols_have_90d_hourly_oi": false,
+    "oi_1d_100d_history": [
+      {
+        "symbol": "BTC",
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "BTC",
+          "period": "1D",
+          "begin": "1785941910547",
+          "end": "1794581910547"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "SUCCESS_90D_HISTORY",
+        "record_count": 100,
+        "okx_message": "",
+        "data_empty": false,
+        "first_timestamp": "1794499200000",
+        "last_timestamp": "1785945600000",
+        "oldest_timestamp": "1785945600000",
+        "newest_timestamp": "1794499200000",
+        "first_value": {
+          "oi": "3866452373.4788",
+          "volume": "7858106983.0125"
+        },
+        "last_value": {
+          "oi": "2565491757.2006",
+          "volume": "4957824046.9373"
+        },
+        "history_span_days": 99.0,
+        "coverage_days": 99.0,
+        "coverage_status": "FULL"
+      },
+      {
+        "symbol": "ETH",
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "ETH",
+          "period": "1D",
+          "begin": "1785941912429",
+          "end": "1794581912429"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "SUCCESS_90D_HISTORY",
+        "record_count": 100,
+        "okx_message": "",
+        "data_empty": false,
+        "first_timestamp": "1794499200000",
+        "last_timestamp": "1785945600000",
+        "oldest_timestamp": "1785945600000",
+        "newest_timestamp": "1794499200000",
+        "first_value": {
+          "oi": "1713487404.7235",
+          "volume": "6336105512.9619"
+        },
+        "last_value": {
+          "oi": "1574339826.1953",
+          "volume": "4835282206.6066"
+        },
+        "history_span_days": 99.0,
+        "coverage_days": 99.0,
+        "coverage_status": "FULL"
+      },
+      {
+        "symbol": "SOL",
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "SOL",
+          "period": "1D",
+          "begin": "1785941914299",
+          "end": "1794581914299"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "SUCCESS_90D_HISTORY",
+        "record_count": 100,
+        "okx_message": "",
+        "data_empty": false,
+        "first_timestamp": "1794499200000",
+        "last_timestamp": "1785945600000",
+        "oldest_timestamp": "1785945600000",
+        "newest_timestamp": "1794499200000",
+        "first_value": {
+          "oi": "349616177.8428",
+          "volume": "683783827.341"
+        },
+        "last_value": {
+          "oi": "234383094.2795",
+          "volume": "436323019.575"
+        },
+        "history_span_days": 99.0,
+        "coverage_days": 99.0,
+        "coverage_status": "FULL"
+      },
+      {
+        "symbol": "RSR",
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "RSR",
+          "period": "1D",
+          "begin": "1785941916185",
+          "end": "1794581916185"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "SUCCESS_90D_HISTORY",
+        "record_count": 100,
+        "okx_message": "",
+        "data_empty": false,
+        "first_timestamp": "1794499200000",
+        "last_timestamp": "1785945600000",
+        "oldest_timestamp": "1785945600000",
+        "newest_timestamp": "1794499200000",
+        "first_value": {
+          "oi": "728371.7082",
+          "volume": "1737752.4447"
+        },
+        "last_value": {
+          "oi": "299893.9929",
+          "volume": "370546.4209"
+        },
+        "history_span_days": 99.0,
+        "coverage_days": 99.0,
+        "coverage_status": "FULL"
+      },
+      {
+        "symbol": "TAO",
+        "endpoint": "open_interest_volume_1D_100d_supplemental",
+        "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+        "params": {
+          "ccy": "TAO",
+          "period": "1D",
+          "begin": "1785941918057",
+          "end": "1794581918057"
+        },
+        "http_status": 200,
+        "okx_code": "0",
+        "status": "SUCCESS_90D_HISTORY",
+        "record_count": 100,
+        "okx_message": "",
+        "data_empty": false,
+        "first_timestamp": "1794499200000",
+        "last_timestamp": "1785945600000",
+        "oldest_timestamp": "1785945600000",
+        "newest_timestamp": "1794499200000",
+        "first_value": {
+          "oi": "17604212.0515",
+          "volume": "18272879.421"
+        },
+        "last_value": {
+          "oi": "11236729.929",
+          "volume": "18731005.967"
+        },
+        "history_span_days": 99.0,
+        "coverage_days": 99.0,
+        "coverage_status": "FULL"
+      }
+    ],
+    "all_symbols_have_90d_daily_oi": true,
+    "note": "Supplemental OI history checks; not included in the 15-combination endpoint gate count."
+  },
+  "gate_rules": {
+    "ALL_PASS": "success_count == 15; exit_code=0",
+    "HIGH_PASS": "13 <= success_count <= 14; exit_code=0",
+    "PARTIAL_PASS": "8 <= success_count <= 12; exit_code=0",
+    "MOSTLY_FAIL": "success_count < 8; exit_code=1"
+  },
+  "results": [
+    {
+      "symbol": "BTC",
+      "endpoint": "funding",
+      "path": "/api/v5/public/funding-rate",
+      "params": {
+        "instId": "BTC-USDT-SWAP"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 1,
+      "first_timestamp": "1794585600000",
+      "last_timestamp": "1794585600000",
+      "oldest_timestamp": "1794585600000",
+      "newest_timestamp": "1794585600000",
+      "first_value": {
+        "fundingRate": "-0.0000002324049934",
+        "fundingTime": "1794585600000"
+      },
+      "last_value": {
+        "fundingRate": "-0.0000002324049934",
+        "fundingTime": "1794585600000"
+      }
+    },
+    {
+      "symbol": "BTC",
+      "endpoint": "open_interest",
+      "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+      "params": {
+        "ccy": "BTC",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "oi": "3465541262.4826",
+        "volume": "902019402.7006"
+      },
+      "last_value": {
+        "oi": "3285571205.5827",
+        "volume": "856462060.487"
+      }
+    },
+    {
+      "symbol": "BTC",
+      "endpoint": "long_short_ratio",
+      "path": "/api/v5/rubik/stat/contracts/long-short-account-ratio",
+      "params": {
+        "ccy": "BTC",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "ratio": "3.09"
+      },
+      "last_value": {
+        "ratio": "1.62"
+      }
+    },
+    {
+      "symbol": "ETH",
+      "endpoint": "funding",
+      "path": "/api/v5/public/funding-rate",
+      "params": {
+        "instId": "ETH-USDT-SWAP"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 1,
+      "first_timestamp": "1794585600000",
+      "last_timestamp": "1794585600000",
+      "oldest_timestamp": "1794585600000",
+      "newest_timestamp": "1794585600000",
+      "first_value": {
+        "fundingRate": "-0.0000426209686125",
+        "fundingTime": "1794585600000"
+      },
+      "last_value": {
+        "fundingRate": "-0.0000426209686125",
+        "fundingTime": "1794585600000"
+      }
+    },
+    {
+      "symbol": "ETH",
+      "endpoint": "open_interest",
+      "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+      "params": {
+        "ccy": "ETH",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "oi": "1713297729.6423",
+        "volume": "624672075.1139"
+      },
+      "last_value": {
+        "oi": "1803216466.9049",
+        "volume": "1069469935.865"
+      }
+    },
+    {
+      "symbol": "ETH",
+      "endpoint": "long_short_ratio",
+      "path": "/api/v5/rubik/stat/contracts/long-short-account-ratio",
+      "params": {
+        "ccy": "ETH",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "ratio": "3.16"
+      },
+      "last_value": {
+        "ratio": "2.44"
+      }
+    },
+    {
+      "symbol": "SOL",
+      "endpoint": "funding",
+      "path": "/api/v5/public/funding-rate",
+      "params": {
+        "instId": "SOL-USDT-SWAP"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 1,
+      "first_timestamp": "1794585600000",
+      "last_timestamp": "1794585600000",
+      "oldest_timestamp": "1794585600000",
+      "newest_timestamp": "1794585600000",
+      "first_value": {
+        "fundingRate": "-0.0000262880658177",
+        "fundingTime": "1794585600000"
+      },
+      "last_value": {
+        "fundingRate": "-0.0000262880658177",
+        "fundingTime": "1794585600000"
+      }
+    },
+    {
+      "symbol": "SOL",
+      "endpoint": "open_interest",
+      "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+      "params": {
+        "ccy": "SOL",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "oi": "349934045.892",
+        "volume": "97462256.3924"
+      },
+      "last_value": {
+        "oi": "354837687.963",
+        "volume": "92058539.3978"
+      }
+    },
+    {
+      "symbol": "SOL",
+      "endpoint": "long_short_ratio",
+      "path": "/api/v5/rubik/stat/contracts/long-short-account-ratio",
+      "params": {
+        "ccy": "SOL",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "ratio": "3.02"
+      },
+      "last_value": {
+        "ratio": "2.61"
+      }
+    },
+    {
+      "symbol": "RSR",
+      "endpoint": "funding",
+      "path": "/api/v5/public/funding-rate",
+      "params": {
+        "instId": "RSR-USDT-SWAP"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 1,
+      "first_timestamp": "1794585600000",
+      "last_timestamp": "1794585600000",
+      "oldest_timestamp": "1794585600000",
+      "newest_timestamp": "1794585600000",
+      "first_value": {
+        "fundingRate": "0.0000494871161603",
+        "fundingTime": "1794585600000"
+      },
+      "last_value": {
+        "fundingRate": "0.0000494871161603",
+        "fundingTime": "1794585600000"
+      }
+    },
+    {
+      "symbol": "RSR",
+      "endpoint": "open_interest",
+      "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+      "params": {
+        "ccy": "RSR",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "oi": "651006.6926",
+        "volume": "104739.9484"
+      },
+      "last_value": {
+        "oi": "2205925.8717",
+        "volume": "455686.495"
+      }
+    },
+    {
+      "symbol": "RSR",
+      "endpoint": "long_short_ratio",
+      "path": "/api/v5/rubik/stat/contracts/long-short-account-ratio",
+      "params": {
+        "ccy": "RSR",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "ratio": "1.14"
+      },
+      "last_value": {
+        "ratio": "3.7"
+      }
+    },
+    {
+      "symbol": "TAO",
+      "endpoint": "funding",
+      "path": "/api/v5/public/funding-rate",
+      "params": {
+        "instId": "TAO-USDT-SWAP"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 1,
+      "first_timestamp": "1794585600000",
+      "last_timestamp": "1794585600000",
+      "oldest_timestamp": "1794585600000",
+      "newest_timestamp": "1794585600000",
+      "first_value": {
+        "fundingRate": "0.0000573815763679",
+        "fundingTime": "1794585600000"
+      },
+      "last_value": {
+        "fundingRate": "0.0000573815763679",
+        "fundingTime": "1794585600000"
+      }
+    },
+    {
+      "symbol": "TAO",
+      "endpoint": "open_interest",
+      "path": "/api/v5/rubik/stat/contracts/open-interest-volume",
+      "params": {
+        "ccy": "TAO",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "oi": "17575258.345",
+        "volume": "2221325.3151"
+      },
+      "last_value": {
+        "oi": "24967254.865",
+        "volume": "3843476.035"
+      }
+    },
+    {
+      "symbol": "TAO",
+      "endpoint": "long_short_ratio",
+      "path": "/api/v5/rubik/stat/contracts/long-short-account-ratio",
+      "params": {
+        "ccy": "TAO",
+        "period": "1H",
+        "limit": "30"
+      },
+      "http_status": 200,
+      "okx_code": "0",
+      "okx_message": "",
+      "status": "SUCCESS",
+      "data_empty": false,
+      "record_count": 720,
+      "first_timestamp": "1794578400000",
+      "last_timestamp": "1791990000000",
+      "oldest_timestamp": "1791990000000",
+      "newest_timestamp": "1794578400000",
+      "first_value": {
+        "ratio": "2.82"
+      },
+      "last_value": {
+        "ratio": "2.46"
+      }
+    }
+  ]
+}

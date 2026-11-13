@@ -8,17 +8,12 @@
       "MEXC_PUBLIC_CCXT",
       "KUCOIN_FUTURES_PUBLIC_CCXT",
       "GATEIO_PUBLIC_CCXT",
-      "PHEMEX_PUBLIC_CCXT",
-      "BINGX_PUBLIC_CCXT",
-      "WHITEBIT_PUBLIC_CCXT",
-      "XT_PUBLIC_CCXT",
-      "DEEPCOIN_PUBLIC_CCXT",
       "TOOBIT_PUBLIC_CCXT"
     ],
     "spot_fallback": null,
     "universe": {
       "policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
-      "whitelist_source": "COINGECKO_TOP_1000_UNIQUE_TICKERS",
+      "whitelist_source": "COINGECKO_TOP_200",
       "whitelist_count": 1000,
       "require_active": true,
       "require_swap": true,
@@ -28,7 +23,7 @@
       "settle": "USDT",
       "min_listing_age_days": 730,
       "min_quote_volume_24h_usd": 10000000,
-      "target_symbols": 100,
+      "target_symbols": 50,
       "blacklist_patterns": [
         "GOOGL",
         "NVDA",
@@ -59,25 +54,36 @@
         "EUR",
         "JPY",
         "GBP"
-      ]
+      ],
+      "minimum_qualifying_symbols": 40,
+      "candidate_scan_limit": 150
     },
     "historical_archive_candidate": "BINANCE_DATA_VISION",
-    "signal_timeframe": "1h"
+    "signal_timeframe": "1h",
+    "provider_strategy": {
+      "primary": "BINANCE_VISION_UM",
+      "klines": "BINANCE_VISION_DAILY_1H",
+      "trades": "BINANCE_VISION_DAILY_AGGTRADES",
+      "funding_primary": "BINANCE_FAPI",
+      "funding_fallback_on_451": "COINGECKO_DERIVATIVES",
+      "funding_last_resort": "KUCOIN_FUTURES_PROXY",
+      "target_symbols": 50,
+      "minimum_qualifying_symbols": 40,
+      "candidate_scan_limit": 150,
+      "minimum_24h_quote_volume_usd": 10000000,
+      "coverage_mode": "PER_SYMBOL"
+    }
   },
   "engine": {
-    "version": "EMA20_EMA50_ATR14_MVP",
+    "version": "STAGE1A_DATA_ONLY_UNCALIBRATED",
     "ema_fast": 20,
     "ema_slow": 50,
-    "funding_extreme_abs": 0.0005,
-    "lifecycle": "LEGACY_RESEARCH_ONLY",
-    "production_enabled": false
+    "funding_extreme_abs": 0.0005
   },
   "delivery": {
     "web_first": true,
-    "telegram_tier": "A",
-    "dashboard_url": "",
-    "hourly_signal_publishing": false,
-    "hourly_telegram_publishing": false
+    "telegram_tier": "DISABLED_STAGE1A",
+    "dashboard_url": ""
   },
   "trading": {
     "mode": "MANUAL_ONLY",

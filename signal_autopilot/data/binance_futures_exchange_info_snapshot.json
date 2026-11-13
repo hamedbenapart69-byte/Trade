@@ -1,0 +1,444 @@
+{
+  "source": "Binance USDⓈ-M Futures exchangeInfo via connected Binance public-data connector",
+  "captured_at_utc": "2026-11-09T06:13:33.347Z",
+  "server_time_ms": 1794204813347,
+  "requested_symbols": 62,
+  "matched_symbols": 62,
+  "unmatched_symbols": [],
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "onboardDate": 1567965300000,
+      "listing_date_utc": "2019-09-08",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "onboardDate": 1574840700000,
+      "listing_date_utc": "2019-11-27",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "BCHUSDT",
+      "onboardDate": 1576745700000,
+      "listing_date_utc": "2019-12-19",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "onboardDate": 1578298800000,
+      "listing_date_utc": "2020-01-06",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "LTCUSDT",
+      "onboardDate": 1578557100000,
+      "listing_date_utc": "2020-01-09",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "TRXUSDT",
+      "onboardDate": 1579075500000,
+      "listing_date_utc": "2020-01-15",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "onboardDate": 1579248000000,
+      "listing_date_utc": "2020-01-17",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "XLMUSDT",
+      "onboardDate": 1579507200000,
+      "listing_date_utc": "2020-01-20",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ADAUSDT",
+      "onboardDate": 1580457600000,
+      "listing_date_utc": "2020-01-31",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "XMRUSDT",
+      "onboardDate": 1580716800000,
+      "listing_date_utc": "2020-02-03",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "DASHUSDT",
+      "onboardDate": 1580803500000,
+      "listing_date_utc": "2020-02-04",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ZECUSDT",
+      "onboardDate": 1580889600000,
+      "listing_date_utc": "2020-02-05",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "onboardDate": 1581321600000,
+      "listing_date_utc": "2020-02-10",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "onboardDate": 1594371600000,
+      "listing_date_utc": "2020-07-10",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "onboardDate": 1598079600000,
+      "listing_date_utc": "2020-08-22",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "CRVUSDT",
+      "onboardDate": 1598943600000,
+      "listing_date_utc": "2020-09-01",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "SOLUSDT",
+      "onboardDate": 1600066800000,
+      "listing_date_utc": "2020-09-14",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "UNIUSDT",
+      "onboardDate": 1600412400000,
+      "listing_date_utc": "2020-09-18",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "onboardDate": 1600844400000,
+      "listing_date_utc": "2020-09-23",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "NEARUSDT",
+      "onboardDate": 1602748800000,
+      "listing_date_utc": "2020-10-15",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "onboardDate": 1602831600000,
+      "listing_date_utc": "2020-10-16",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "FILUSDT",
+      "onboardDate": 1602828000000,
+      "listing_date_utc": "2020-10-16",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "HBARUSDT",
+      "onboardDate": 1615964400000,
+      "listing_date_utc": "2021-03-17",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "OPUSDT",
+      "onboardDate": 1654066800000,
+      "listing_date_utc": "2022-06-01",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "INJUSDT",
+      "onboardDate": 1660633200000,
+      "listing_date_utc": "2022-08-16",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "APTUSDT",
+      "onboardDate": 1666076400000,
+      "listing_date_utc": "2022-10-18",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "QNTUSDT",
+      "onboardDate": 1666076400000,
+      "listing_date_utc": "2022-10-18",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "FETUSDT",
+      "onboardDate": 1673766000000,
+      "listing_date_utc": "2023-01-15",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "STXUSDT",
+      "onboardDate": 1676876400000,
+      "listing_date_utc": "2023-02-20",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "onboardDate": 1679554800000,
+      "listing_date_utc": "2023-03-23",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "onboardDate": 1683072000000,
+      "listing_date_utc": "2023-05-03",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "WLDUSDT",
+      "onboardDate": 1690200000000,
+      "listing_date_utc": "2023-07-24",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "TIAUSDT",
+      "onboardDate": 1698769800000,
+      "listing_date_utc": "2023-10-31",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "onboardDate": 1705755600000,
+      "listing_date_utc": "2024-01-20",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "STRKUSDT",
+      "onboardDate": 1708448400000,
+      "listing_date_utc": "2024-02-20",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ETHFIUSDT",
+      "onboardDate": 1710775800000,
+      "listing_date_utc": "2024-03-18",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ENAUSDT",
+      "onboardDate": 1712061000000,
+      "listing_date_utc": "2024-04-02",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "TAOUSDT",
+      "onboardDate": 1712845800000,
+      "listing_date_utc": "2024-04-11",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ZROUSDT",
+      "onboardDate": 1718893800000,
+      "listing_date_utc": "2024-06-20",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "AEROUSDT",
+      "onboardDate": 1733321700000,
+      "listing_date_utc": "2024-12-04",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "PENGUUSDT",
+      "onboardDate": 1734452100000,
+      "listing_date_utc": "2024-12-17",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "onboardDate": 1737205200000,
+      "listing_date_utc": "2025-01-18",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "VVVUSDT",
+      "onboardDate": 1738138500000,
+      "listing_date_utc": "2025-01-29",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "PAXGUSDT",
+      "onboardDate": 1743071400000,
+      "listing_date_utc": "2025-03-27",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "AIOTUSDT",
+      "onboardDate": 1746016200000,
+      "listing_date_utc": "2025-04-30",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "HYPEUSDT",
+      "onboardDate": 1748601000000,
+      "listing_date_utc": "2025-05-30",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ICNTUSDT",
+      "onboardDate": 1751547600000,
+      "listing_date_utc": "2025-07-03",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "PUMPUSDT",
+      "onboardDate": 1752132600000,
+      "listing_date_utc": "2025-07-10",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "USELESSUSDT",
+      "onboardDate": 1755260100000,
+      "listing_date_utc": "2025-08-15",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "XPLUSDT",
+      "onboardDate": 1755855000000,
+      "listing_date_utc": "2025-08-22",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "WLFIUSDT",
+      "onboardDate": 1755937800000,
+      "listing_date_utc": "2025-08-23",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "QUSDT",
+      "onboardDate": 1756798200000,
+      "listing_date_utc": "2025-09-02",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "ASTERUSDT",
+      "onboardDate": 1758283200000,
+      "listing_date_utc": "2025-09-19",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "AKEUSDT",
+      "onboardDate": 1758889800000,
+      "listing_date_utc": "2025-09-26",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "METUSDT",
+      "onboardDate": 1760185800000,
+      "listing_date_utc": "2025-10-11",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "JCTUSDT",
+      "onboardDate": 1762770600000,
+      "listing_date_utc": "2025-11-10",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "PIEVERSEUSDT",
+      "onboardDate": 1763119800000,
+      "listing_date_utc": "2025-11-14",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "LITUSDT",
+      "onboardDate": 1766511000000,
+      "listing_date_utc": "2025-12-23",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "XAUTUSDT",
+      "onboardDate": 1774533600000,
+      "listing_date_utc": "2026-03-26",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "BTWUSDT",
+      "onboardDate": 1780582500000,
+      "listing_date_utc": "2026-06-04",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "CAPUSDT",
+      "onboardDate": 1782560700000,
+      "listing_date_utc": "2026-06-27",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    },
+    {
+      "symbol": "PONSUSDT",
+      "onboardDate": 1788677100000,
+      "listing_date_utc": "2026-09-06",
+      "status": "TRADING",
+      "contractType": "PERPETUAL"
+    }
+  ]
+}
