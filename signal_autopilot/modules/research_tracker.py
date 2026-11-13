@@ -5,9 +5,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 import ccxt
-from modules.lrt15m_engine import PRODUCTION_MODE_THRESHOLD, RESEARCH_MODE_THRESHOLD
 
 LOG = logging.getLogger("research_tracker")
+PRODUCTION_MODE_THRESHOLD = 80
+RESEARCH_MODE_THRESHOLD = 60
 INTERVAL_MS = 900_000
 MAX_HOLD = timedelta(hours=48)
 PROVIDERS = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
