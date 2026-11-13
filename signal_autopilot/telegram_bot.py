@@ -69,13 +69,18 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
     costs = signal.get("costs", {})
     flags = signal.get("risk_flags", [])
 
+    format_test = signal.get("format_test") is True
+    format_test_prefix = "[FORMAT TEST - NOT A REAL SIGNAL]\n" if format_test else ""
     header = (
-        "1. HEADER\n"
+        format_test_prefix + "1. HEADER\n"
         f"⚠️ {symbol} | {direction} | {engine} | {timeframe}\n"
         "Calibration: UNCALIBRATED | Decision: WATCHLIST\n"
         "⚙️ STAGE_1_UNCALIBRATED | Veto: DATA/KUMO/LFS | WATCHLIST Tier A/B only"
     )
-    chart_caption = "2. CHART | کندل‌های بسته‌شدهٔ 15m + Kumo + Tenkan/Kijun + Entry/SL/TP"
+    chart_caption = (
+        ("[FORMAT TEST - NOT A REAL SIGNAL] | " if format_test else "")
+        + "2. CHART | کندل‌های بسته‌شدهٔ 15m + Kumo + Tenkan/Kijun + Entry/SL/TP"
+    )
 
     sections = [
         (
@@ -189,29 +194,50 @@ async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path:
         LOG.info("TELEGRAM_HEADER_MESSAGE_ID: %s | signal_id=%s", header_message.message_id, signal["signal_id"])
         try:
             with chart_path.open("rb") as image:
-                await bot.send_photo(
+                chart_message = await bot.send_photo(
                     chat_id=target_chat_id,
                     photo=BytesIO(image.read()),
                     caption=chart_caption,
                 )
-            LOG.info("TELEGRAM_CHART_SENT: %s", signal["signal_id"])
+            LOG.info("TELEGRAM_CHART_SENT: %s | message_id=%s", signal["signal_id"], chart_message.message_id)
         except Exception:
             LOG.exception("TELEGRAM_CHART_FAILED: %s", signal["signal_id"])
-            await bot.send_message(
+            fallback_message = await bot.send_message(
                 chat_id=target_chat_id,
-                text="2. CHART\n⚠️ تصویر نمودار ارسال نشد.",
+                text="[FORMAT TEST - NOT A REAL SIGNAL]\n2. CHART\n⚠️ تصویر نمودار ارسال نشد."
+                if signal.get("format_test") is True else "2. CHART\n⚠️ تصویر نمودار ارسال نشد.",
             )
+            LOG.info("TELEGRAM_CHART_FALLBACK_SENT: %s | message_id=%s", signal["signal_id"], fallback_message.message_id)
         await bot.send_message(chat_id=target_chat_id, text=body, disable_web_page_preview=True)
-    LOG.info("TELEGRAM_SIGNAL_SENT: %s | sections=9 | status=WATCHLIST | message_id=%s", signal["signal_id"], header_message.message_id)
+    if signal.get("format_test") is True:
+        LOG.info("TELEGRAM_FORMAT_TEST_SENT: symbol=%s signal_id=%s message_id=%s", signal.get("symbol"), signal["signal_id"], header_message.message_id)
+    else:
+        LOG.info("TELEGRAM_SIGNAL_SENT: %s | sections=9 | status=WATCHLIST | message_id=%s", signal["signal_id"], header_message.message_id)
     return int(header_message.message_id)
 
 
 def send_signal_to_telegram(
     signal_data: dict[str, Any],
     chart_path: str | Path,
+    *,
+    format_test: bool = False,
 ) -> int | None:
-    """ارسال فقط WATCHLIST با Confluence بالاتر از ۸۰؛ بدون اجرای سفارش."""
-    if signal_data.get("status") != "WATCHLIST":
+    """ارسال WATCHLIST؛ حالت format_test فقط برای آزمون صریح ARB و بدون سیگنال معاملاتی است."""
+    if format_test:
+        if os.getenv("TELEGRAM_FORMAT_TEST_ENABLED", "").strip().lower() != "true":
+            LOG.error("TELEGRAM_FORMAT_TEST_DISABLED")
+            return False
+        if (
+            signal_data.get("symbol") != "ARBUSDT"
+            or signal_data.get("mode") != "RESEARCH"
+            or signal_data.get("decision") != "RESEARCH_WATCHLIST"
+            or signal_data.get("calibration_status") != "UNCALIBRATED"
+            or not signal_data.get("signal_id")
+        ):
+            LOG.error("TELEGRAM_FORMAT_TEST_REJECTED_INVALID_RESEARCH_PAYLOAD")
+            return False
+        signal_data = {**signal_data, "format_test": True}
+    elif signal_data.get("status") != "WATCHLIST":
         LOG.warning("TELEGRAM_REJECTED_NON_WATCHLIST: %s", signal_data.get("symbol"))
         return False
     if signal_data.get("calibration_status") != "UNCALIBRATED":
