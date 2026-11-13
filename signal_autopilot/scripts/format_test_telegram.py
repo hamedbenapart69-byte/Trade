@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from modules.chart_renderer_lrt15m import render_lrt15m_chart
 from modules.live_data_adapter import LiveOHLCVFetcher
-from telegram_bot import send_signal_to_telegram
+from telegram_bot import build_signal_messages, send_signal_to_telegram
 
 
 def load_arb_research_record() -> dict:
@@ -82,6 +82,18 @@ def main() -> None:
     }
     chart_path = Path("artifacts/format_test/ARBUSDT_format_test.png")
     render_lrt15m_chart("ARBUSDT", list(candles), signal, chart_path)
+    if not chart_path.is_file() or chart_path.stat().st_size == 0:
+        raise RuntimeError("FORMAT_TEST_CHART_NOT_GENERATED")
+
+    format_signal = {**signal, "format_test": True}
+    header, chart_caption, body = build_signal_messages(format_signal)
+    required_header = "[FORMAT TEST - NOT A REAL SIGNAL]"
+    if not all(
+        section.startswith(required_header)
+        for section in (header, chart_caption, body)
+    ):
+        raise RuntimeError("FORMAT_TEST_LABEL_MISSING_FROM_MESSAGE_SECTIONS")
+
     message_id = send_signal_to_telegram(signal, chart_path, format_test=True)
     if not isinstance(message_id, int) or message_id <= 0:
         raise RuntimeError("TELEGRAM_FORMAT_TEST_NOT_SENT")

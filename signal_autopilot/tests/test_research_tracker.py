@@ -70,6 +70,23 @@ class ResearchTrackerTests(unittest.TestCase):
         r=update_one(signal(),None,fetcher_for([]),early)
         self.assertEqual(r["status"],"ENTRY_PENDING_DATA")
 
+    def test_gap_at_entry_keeps_signal_pending_without_fabricating_a_fill(self):
+        def gap_fetcher(*args):
+            raise RuntimeError("PUBLIC_OHLCV_UNAVAILABLE|okx:CANDLE_GAP_DETECTED")
+        r=update_one(signal(),None,gap_fetcher,NOW)
+        self.assertEqual(r["status"],"ENTRY_PENDING_DATA")
+        self.assertIsNone(r["entry_actual"])
+        self.assertEqual(r["entry_fill_status"],"PENDING")
+        self.assertIn("CANDLE_GAP_DETECTED",r["last_error"])
+
+    def test_later_candle_without_expected_entry_candle_stays_pending(self):
+        later_open=CANDLE_OPEN+2*INTERVAL_MS
+        rows=[candle(later_open,101,101.2,100.5,100.8)]
+        r=update_one(signal(),None,fetcher_for(rows),NOW)
+        self.assertEqual(r["status"],"ENTRY_PENDING_DATA")
+        self.assertIsNone(r["entry_actual"])
+        self.assertEqual(r["last_error"],"EXPECTED_ENTRY_CANDLE_MISSING_GAP_DETECTED")
+
     def test_all_providers_unavailable(self):
         def fail(*args): raise RuntimeError("providers unavailable")
         r=update_one(signal(),None,fail,NOW)

@@ -198,8 +198,14 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
         candles, source = fetcher(str(signal["symbol"]), next_open, now_ms, 200)
         outcome["data_source"], outcome["last_error"] = source, None
     except Exception as exc:
-        outcome["last_error"] = f"{type(exc).__name__}:{str(exc)[:240]}"
-        _event(outcome, "DATA_UNAVAILABLE", now, "ALL_PUBLIC_PROVIDERS_FAILED")
+        error_text = f"{type(exc).__name__}:{str(exc)[:240]}"
+        outcome["last_error"] = error_text
+        error_upper = error_text.upper()
+        gap_markers = ("CANDLE_GAP_DETECTED", "FIRST_REQUIRED_CANDLE_MISSING")
+        if outcome.get("entry_actual") is None and any(marker in error_upper for marker in gap_markers):
+            _event(outcome, "ENTRY_PENDING_DATA", now, "CANDLE_GAP_OR_INCOMPLETE_ENTRY_DATA")
+        else:
+            _event(outcome, "DATA_UNAVAILABLE", now, "ALL_PUBLIC_PROVIDERS_FAILED")
         return outcome
 
     candles = sorted([c for c in candles if int(c["open_time"]) >= next_open],
@@ -207,6 +213,11 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
     next_candle = next((c for c in candles if int(c["open_time"]) == next_open), None)
     if outcome.get("entry_actual") is None:
         if next_candle is None:
+            later_candles = [c for c in candles if int(c["open_time"]) > next_open]
+            if later_candles:
+                outcome["last_error"] = "EXPECTED_ENTRY_CANDLE_MISSING_GAP_DETECTED"
+                _event(outcome, "ENTRY_PENDING_DATA", now, "GAP_AT_EXPECTED_ENTRY_CANDLE")
+                return outcome
             status = "ENTRY_PENDING_DATA" if now_ms < next_open + INTERVAL_MS else "DATA_UNAVAILABLE"
             reason = "NEXT_CANDLE_NOT_CLOSED" if status == "ENTRY_PENDING_DATA" else "NEXT_CANDLE_MISSING_FROM_PUBLIC_DATA"
             _event(outcome, status, now, reason)

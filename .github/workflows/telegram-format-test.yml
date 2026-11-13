@@ -1,7 +1,7 @@
 name: ARB Telegram format proof (explicit test only)
 
 on:
-  push:
+  pull_request:
     branches: [production-v1]
     paths:
       - "signal_autopilot/scripts/format_test_telegram.py"
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout production-v1
         uses: actions/checkout@v4
         with:
-          ref: production-v1
+          ref: ${{ github.event.pull_request.head.sha || 'production-v1' }}
 
       - name: Restore persisted research observations
         run: git fetch --depth=1 origin stage1-research-data:refs/remotes/origin/stage1-research-data

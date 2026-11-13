@@ -16,6 +16,7 @@ from modules.lrt15m_engine import (
     WATCHLIST_CONFLUENCE_THRESHOLD,
     PRODUCTION_MODE_THRESHOLD,
     RESEARCH_MODE_THRESHOLD,
+    MAX_ZONE_DISTANCE_PCT,
     aggregate_bars,
     evaluate_stage1_symbol,
     score_stage1_confluence,
@@ -69,7 +70,7 @@ def calculate_confluence(
     zone_ok = bool(engine_result.get("zone_present")) or (
         engine_result.get("zone_type") not in {None, "NONE"}
         and isinstance(engine_result.get("zone_distance_pct"), (int, float))
-        and float(engine_result["zone_distance_pct"]) <= 0.80
+        and float(engine_result["zone_distance_pct"]) <= MAX_ZONE_DISTANCE_PCT
     )
     legacy_components = engine_result.get("components") or {}
     components = {
@@ -256,7 +257,7 @@ def process_symbol(
             "confluence_score": result.get("raw_score"),
             "confluence_tier_score": result.get("tier_score"),
             "confluence_components": points,
-            "stage1_threshold_label": "LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_80_B_60_MONITORING",
+            "stage1_threshold_label": f"LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
@@ -298,10 +299,26 @@ def process_symbol(
         return {**signal, "chart_path": str(chart_path)}, "CANDIDATE", diagnostic
     except Exception as exc:
         LOG.exception("%s processing failed; skipping symbol.", symbol)
-        return None, f"{type(exc).__name__}:{str(exc)[:160]}", {
+        error_text = f"{type(exc).__name__}:{str(exc)[:160]}"
+        error_lower = error_text.lower()
+        unavailable_markers = (
+            "all_dual_timeframe_sources_failed",
+            "all_15m_public_data_providers_failed",
+            "timeout",
+            "timed out",
+            "network",
+            "connection",
+            "exchangeunavailable",
+            "requesttimeout",
+        )
+        data_unavailable = any(marker in error_lower for marker in unavailable_markers)
+        veto = "DATA_UNAVAILABLE" if data_unavailable else "DATA_INSUFFICIENT"
+        lfs_status = "UNAVAILABLE" if data_unavailable else "INSUFFICIENT"
+        reason = f"UNAVAILABLE:{error_text}" if data_unavailable else error_text
+        return None, "UNAVAILABLE" if data_unavailable else error_text, {
             "symbol": symbol,
             "direction": None,
-            "veto": "DATA_INSUFFICIENT",
+            "veto": veto,
             "decision": "NO_TRADE",
             "tier": None,
             "raw_score": None,
@@ -311,10 +328,12 @@ def process_symbol(
             "lfs_score": None,
             "lfs_source": "LFS_V2",
             "lfs_coverage_pct": 0.0,
-            "lfs_status": "INSUFFICIENT",
+            "lfs_status": lfs_status,
             "lfs_components": {},
-            "lfs_veto": "DATA_INSUFFICIENT",
-            "reason": f"{type(exc).__name__}:{str(exc)[:160]}",
+            "lfs_veto": veto,
+            "api_status": {},
+            "data_sources": [],
+            "reason": reason,
         }
 
 
