@@ -51,6 +51,51 @@ class LFSV2UnitTests(unittest.TestCase):
     def test_lfs1_normalization(self):
         self.assertAlmostEqual(normalize_lfs1(0.05, 0.02, 0.10), 0.375)
 
+    def test_lfs1_current_uses_same_1h_distribution_as_history(self):
+        with patch(
+            "modules.lfs_v2._hourly_lfs1_distribution",
+            return_value=([0.10, 0.20, 0.30], 100.0),
+        ):
+            with patch(
+                "modules.lfs_v2._hourly_bb_distribution",
+                return_value=[0.01, 0.02, 0.03],
+            ):
+                result = calculate_lfs_v2(
+                    "BTCUSDT", self.bars_15m, self.bars_1h,
+                    funding_rate=0.0001,
+                    oi_1h=oi_rows(hourly=True, change=-0.10),
+                    oi_1d=oi_rows(hourly=False, change=0.02),
+                    long_short_ratio=1.2,
+                )
+        component = result["lfs_components"]["LFS1"]
+        self.assertAlmostEqual(component["value"], 0.30)
+        self.assertEqual(component["historical_timeframe"], "1H")
+        self.assertEqual(component["current_timeframe"], "1H")
+        self.assertEqual(component["history_observations"], 3)
+
+    def test_lfs4_current_uses_1h_not_15m_bars(self):
+        with patch(
+            "modules.lfs_v2._hourly_lfs1_distribution",
+            return_value=([0.10, 0.20, 0.30], 100.0),
+        ):
+            with patch(
+                "modules.lfs_v2._hourly_bb_distribution",
+                return_value=[0.01, 0.02, 0.03],
+            ):
+                with patch("modules.lfs_v2._bb_width_last", return_value=0.025) as bb_last:
+                    result = calculate_lfs_v2(
+                        "BTCUSDT", self.bars_15m, self.bars_1h,
+                        funding_rate=0.0001,
+                        oi_1h=oi_rows(hourly=True, change=-0.10),
+                        oi_1d=oi_rows(hourly=False, change=0.02),
+                        long_short_ratio=1.2,
+                    )
+        bb_last.assert_called_once_with(self.bars_1h)
+        component = result["lfs_components"]["LFS4"]
+        self.assertAlmostEqual(component["value"], 0.025)
+        self.assertEqual(component["historical_timeframe"], "1H")
+        self.assertEqual(component["current_timeframe"], "1H")
+
     def test_lfs2_extreme_funding(self):
         self.assertEqual(funding_extreme_score(0.0006), 1.0)
 

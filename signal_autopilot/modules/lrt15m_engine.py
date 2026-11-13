@@ -700,7 +700,14 @@ def evaluate_stage1_symbol(
             return {
                 **base, "veto": "PASS", "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
                 "direction_candidates": [
-                    {k: item.get(k) for k in ("direction", "raw_score", "tier_score", "lfs_score")}
+                    {
+                        k: item.get(k)
+                        for k in (
+                            "direction", "raw_score", "tier_score", "lfs_score",
+                            "veto", "decision", "components", "points", "zone_type",
+                            "zone_distance_pct", "higher_timeframe_bias", "cvd",
+                        )
+                    }
                     for item in candidates
                 ],
             }

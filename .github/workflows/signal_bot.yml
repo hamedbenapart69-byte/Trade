@@ -64,14 +64,12 @@ jobs:
           git fetch origin signal-state:refs/remotes/origin/signal-state
           git show origin/signal-state:signal_autopilot/state/open_signals.json > signal_autopilot/state/open_signals.json
 
-      - name: Diagnose every 27-symbol gate (read-only)
-        working-directory: signal_autopilot
-        run: python scripts/diagnose_gates.py --universe ../config/universe.json --output artifacts/diagnostics/gates_diagnostic.json
-
-      - name: Run live 27-symbol scan (no delivery credentials)
+      - name: Run live 27-symbol LFS_v2 scan with optional Telegram delivery
         working-directory: signal_autopilot
         env:
           LOG_LEVEL: INFO
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
       - name: Upload open-signal state for trusted persistence workflow

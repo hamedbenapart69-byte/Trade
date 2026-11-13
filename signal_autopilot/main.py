@@ -167,7 +167,8 @@ def process_symbol(
             for key in (
                 "symbol", "direction", "veto", "decision", "tier", "raw_score",
                 "tier_score", "points", "components", "lfs_score", "lfs_source",
-                "lfs_coverage_pct", "lfs_status", "lfs_components", "api_status",
+                "lfs_coverage_pct", "lfs_status", "lfs_components", "lfs_veto",
+                "lfs_threshold", "lfs_coverage", "data_windows", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
                 "zone_distance_pct", "rows_available", "stats_1h_rows_available",
                 "direction_candidates", "data_sources", "cvd", "entry", "stop_loss",
@@ -258,6 +259,17 @@ def process_symbol(
             "direction": None,
             "veto": "DATA_INSUFFICIENT",
             "decision": "NO_TRADE",
+            "tier": None,
+            "raw_score": None,
+            "tier_score": None,
+            "points": {},
+            "components": {},
+            "lfs_score": None,
+            "lfs_source": "LFS_V2",
+            "lfs_coverage_pct": 0.0,
+            "lfs_status": "INSUFFICIENT",
+            "lfs_components": {},
+            "lfs_veto": "DATA_INSUFFICIENT",
             "reason": f"{type(exc).__name__}:{str(exc)[:160]}",
         }
 
@@ -322,6 +334,101 @@ def main() -> int:
         }
         for key in api_keys
     }
+    lfs_scores = [
+        float(row["lfs_score"])
+        for row in diagnostics
+        if isinstance(row.get("lfs_score"), (int, float))
+    ]
+    lfs_ge_030 = sum(score >= 0.30 for score in lfs_scores)
+    lfs_lt_030 = sum(score < 0.30 for score in lfs_scores)
+    histogram_bins = [
+        (0.0, 0.1), (0.1, 0.2), (0.2, 0.3), (0.3, 0.4), (0.4, 0.5),
+        (0.5, 0.6), (0.6, 0.7), (0.7, 0.8), (0.8, 0.9), (0.9, 1.0000001),
+    ]
+    lfs_histogram = {
+        f"{lower:.1f}-{min(upper, 1.0):.1f}": sum(
+            lower <= score < upper for score in lfs_scores
+        )
+        for lower, upper in histogram_bins
+    }
+    lfs_veto_count = sum(str(row.get("veto", "")).startswith("LFS_") for row in diagnostics)
+    kumo_veto_count = sum("KUMO" in str(row.get("veto", "")) for row in diagnostics)
+    data_veto_count = sum(
+        str(row.get("veto", "")).startswith("DATA")
+        or str(row.get("reason", "")).startswith(("DATA_", "INSUFFICIENT_", "INVALID_"))
+        for row in diagnostics
+    )
+
+    confluence_options: list[dict[str, Any]] = []
+    symbols_with_3plus_confluence = set()
+    for row in diagnostics:
+        score = row.get("lfs_score")
+        if not isinstance(score, (int, float)) or float(score) < 0.30:
+            continue
+        options = row.get("direction_candidates") or [row]
+        for option in options:
+            components = option.get("components") or row.get("components") or {}
+            if not components:
+                continue
+            true_count = sum(
+                bool(components.get(key))
+                for key in ("bias_4h", "bias_1h", "sweep", "zone_reaction", "cross")
+            )
+            if true_count >= 3:
+                symbols_with_3plus_confluence.add(str(row.get("symbol")))
+            confluence_options.append({
+                "symbol": row.get("symbol"),
+                "direction": option.get("direction", row.get("direction")),
+                "lfs_score": score,
+                "lfs_status": row.get("lfs_status"),
+                "veto": option.get("veto", row.get("veto")),
+                "decision": option.get("decision", row.get("decision")),
+                "raw_score": option.get("raw_score", row.get("raw_score")),
+                "tier_score": option.get("tier_score", row.get("tier_score")),
+                "components": components,
+                "confluence_true_components": true_count,
+                "points": option.get("points", row.get("points")),
+                "zone_type": option.get("zone_type", row.get("zone_type")),
+                "zone_distance_pct": option.get("zone_distance_pct", row.get("zone_distance_pct")),
+            })
+    confluence_options.sort(
+        key=lambda item: (
+            int(item.get("tier_score") or 0),
+            int(item.get("raw_score") or 0),
+            float(item.get("lfs_score") or 0),
+        ),
+        reverse=True,
+    )
+    telegram_ids_by_symbol = {
+        item["symbol"]: item["message_id"] for item in telegram_message_ids
+    }
+    symbol_table = []
+    for row in diagnostics:
+        parts = row.get("lfs_components") or {}
+        components = row.get("components") or {}
+        symbol_table.append({
+            "symbol": row.get("symbol"),
+            "LFS1": (parts.get("LFS1") or {}).get("score"),
+            "LFS2": (parts.get("LFS2") or {}).get("score"),
+            "LFS3": (parts.get("LFS3") or {}).get("score"),
+            "LFS4": (parts.get("LFS4") or {}).get("score"),
+            "LFS5": (parts.get("LFS5") or {}).get("score"),
+            "coverage_pct": row.get("lfs_coverage_pct"),
+            "lfs_status": row.get("lfs_status"),
+            "lfs_score": row.get("lfs_score"),
+            "lfs_veto": row.get("lfs_veto"),
+            "veto": row.get("veto"),
+            "bias_4h": components.get("bias_4h"),
+            "bias_1h": components.get("bias_1h"),
+            "sweep": components.get("sweep"),
+            "zone": components.get("zone_reaction"),
+            "cross": components.get("cross"),
+            "confluence": row.get("raw_score"),
+            "tier": row.get("tier") or row.get("decision"),
+            "message_id": telegram_ids_by_symbol.get(row.get("symbol")),
+            "reason": row.get("reason"),
+        })
+
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "okx_api_distribution": okx_api_distribution,
@@ -329,6 +436,23 @@ def main() -> int:
         "universe_count": len(symbols),
         "symbols_reported": len(diagnostics),
         "watchlist_count": candidates,
+        "lfs_statistics": {
+            "symbols_with_numeric_lfs_score": len(lfs_scores),
+            "lfs_ge_0_30": lfs_ge_030,
+            "lfs_lt_0_30": lfs_lt_030,
+            "lfs_unavailable_or_insufficient": len(diagnostics) - len(lfs_scores),
+            "histogram_0_to_1_step_0_1": lfs_histogram,
+        },
+        "veto_counts_by_family": {
+            "lfs": lfs_veto_count,
+            "kumo": kumo_veto_count,
+            "data": data_veto_count,
+        },
+        "confluence_diagnostics": {
+            "lfs_ge_0_30_with_3plus_of_5_components": len(symbols_with_3plus_confluence),
+            "top_5": confluence_options[:5],
+        },
+        "symbol_table": symbol_table,
         "telegram_preflight": telegram_ready,
         "telegram_signals_sent": sent,
         "telegram_message_ids": telegram_message_ids,

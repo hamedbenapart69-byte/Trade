@@ -232,27 +232,24 @@ def calculate_lfs_v2(
         "long_short_ratio": long_short_ratio is not None,
     }
 
-    # LFS1: حجم ۲۴ساعتهٔ ۱۵m در برابر میانگین حجم ۲۴ساعتهٔ ۳۰ روز از 1H.
+    # LFS1: توزیع تاریخی و مقدار جاری هر دو از کندل 1H محاسبه می‌شوند.
+    # مقدار آخر history دقیقاً همان فرمول و sampling را دارد؛ ATR/حجم 15m با صدک 1H مخلوط نمی‌شود.
     lfs1_history, avg_30d_volume = _hourly_lfs1_distribution(bars_1h)
     p10, p90 = percentile(lfs1_history, 10), percentile(lfs1_history, 90)
-    atr15 = _atr_last(bars_15m)
-    try:
-        close15 = float(bars_15m[-1]["close"])
-        volume24_15 = sum(float(row["volume"]) for row in bars_15m[-96:])
-    except (IndexError, KeyError, TypeError, ValueError):
-        close15, volume24_15 = 0.0, 0.0
-    lfs1_current = (
-        (atr15 / close15) * (volume24_15 / avg_30d_volume)
-        if atr15 is not None and close15 > 0 and avg_30d_volume and avg_30d_volume > 0
-        and len(bars_15m) >= 96 else None
-    )
+    lfs1_current = lfs1_history[-1] if lfs1_history else None
     if lfs1_current is not None and p10 is not None and p90 is not None and p90 > p10:
         components["LFS1"] = _component(
             normalize_lfs1(lfs1_current, p10, p90), WEIGHTS["LFS1"], "PROXY",
             lfs1_current, p10=p10, p90=p90, average_30d_24h_volume=avg_30d_volume,
+            historical_timeframe="1H", current_timeframe="1H",
+            history_observations=len(lfs1_history),
         )
     else:
-        components["LFS1"] = _component(None, WEIGHTS["LFS1"], "UNAVAILABLE", lfs1_current)
+        components["LFS1"] = _component(
+            None, WEIGHTS["LFS1"], "UNAVAILABLE", lfs1_current,
+            historical_timeframe="1H", current_timeframe="1H",
+            history_observations=len(lfs1_history),
+        )
 
     # LFS2: Funding جاری OKX؛ نرخ ۰.۰۳٪ امتیاز کامل می‌گیرد.
     if funding_rate is not None and _finite(funding_rate) is not None:
@@ -292,17 +289,23 @@ def calculate_lfs_v2(
     else:
         components["LFS3"] = _component(None, WEIGHTS["LFS3"], "UNAVAILABLE")
 
-    # LFS4: BB width جاری 15m در برابر توزیع ۹۰روزهٔ 1H.
+    # LFS4: BB width تاریخی و جاری هر دو روی کندل 1H؛ تناوب محاسبه یکسان است.
     bb_history = _hourly_bb_distribution(bars_1h)
     p20, p50 = percentile(bb_history, 20), percentile(bb_history, 50)
-    current_width = _bb_width_last(bars_15m)
+    current_width = _bb_width_last(bars_1h)
     if current_width is not None and p20 is not None and p50 is not None:
         components["LFS4"] = _component(
             bb_squeeze_score(current_width, p20, p50), WEIGHTS["LFS4"], "REAL",
             current_width, p20=p20, p50=p50,
+            historical_timeframe="1H", current_timeframe="1H",
+            history_observations=len(bb_history),
         )
     else:
-        components["LFS4"] = _component(None, WEIGHTS["LFS4"], "UNAVAILABLE", current_width)
+        components["LFS4"] = _component(
+            None, WEIGHTS["LFS4"], "UNAVAILABLE", current_width,
+            historical_timeframe="1H", current_timeframe="1H",
+            history_observations=len(bb_history),
+        )
 
     # LFS5: افت/تغییر مطلق OI در ۲۴ ساعت؛ ۱۰٪ امتیاز کامل.
     oi_change = _oi_change_24h(oi_1h)
@@ -342,6 +345,17 @@ def calculate_lfs_v2(
         "lfs_veto": veto,
         "api_status": api_status,
         "lfs_threshold": 0.30,
+        "data_windows": {
+            "lfs1_price_ohlcv": "1H",
+            "lfs1_history_observations": len(lfs1_history),
+            "lfs1_current_observation": "latest_closed_1H",
+            "lfs4_price_ohlcv": "1H",
+            "lfs4_history_observations": len(bb_history),
+            "lfs4_current_observation": "latest_closed_1H",
+            "lfs3_oi_history": "1D",
+            "lfs3_oi_current_change": "24H",
+            "lfs5_oi_change": "24H_from_1H",
+        },
     }
 
 
