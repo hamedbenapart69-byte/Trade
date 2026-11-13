@@ -35,4 +35,4 @@ jobs:
       - name: Verify repository package import roots
         run: python -c "import app, app.integrations, app.workflow_schemas, modules.lrt15m_engine; print('REPOSITORY_IMPORT_PATHS_OK', app.__file__)"
       - name: Run requested pytest command
-        run: python -m pytest -v --tb=short
+        run: python -m pytest tests -v --tb=short
