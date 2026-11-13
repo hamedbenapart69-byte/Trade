@@ -13,6 +13,23 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
     }
 
 
+def create_mock_bars_with_sweep_at(candles_ago: int, total: int) -> list[dict]:
+    bars = [candle(i * 900000, 100, 102, 99, 101) for i in range(total)]
+    index = total - 1 - candles_ago
+    if index < 20:
+        raise ValueError("mock sweep needs 20 reference candles")
+    bars[index] = candle(index * 900000, 100, 102, 98, 100.5)
+    return bars
+
+
+def create_mock_bars_with_small_fvg(gap_atr: float) -> list[dict]:
+    bars = [candle(i * 900000, 100, 100.5, 99.5, 100) for i in range(20)]
+    bars[-3] = candle(17 * 900000, 100, 100, 99.8, 100)
+    bars[-2] = candle(18 * 900000, 100, 100.1, 99.9, 100)
+    bars[-1] = candle(19 * 900000, 100.1, 100.5, 100 + gap_atr, 100.3)
+    return bars
+
+
 class LRT15mTests(unittest.TestCase):
     def test_higher_timeframe_conflict_is_watchlist_not_trade(self):
         confirmed, state = engine.higher_timeframe_gate("BUY", "BEARISH", "BULLISH")
@@ -26,6 +43,26 @@ class LRT15mTests(unittest.TestCase):
 
     def test_lfs_weights_sum_to_one(self):
         self.assertAlmostEqual(sum(engine.LFS_WEIGHTS.values()), 1.0)
+
+    def test_detect_sweep_finds_historical_sweep(self):
+        """Sweep سه کندل قبل باید در پنجرهٔ جست‌وجو پیدا شود."""
+        bars = create_mock_bars_with_sweep_at(candles_ago=3, total=31)
+        result = engine.detect_sweep(bars, lookback=20, max_candles_ago=10)
+        self.assertTrue(result["bullish"])
+        self.assertEqual(result["candles_ago"], 3)
+
+    def test_detect_sweep_no_sweep_in_10_candles(self):
+        """Sweep پانزده کندل قبل نباید در پنجرهٔ ده‌کندلی پیدا شود."""
+        bars = create_mock_bars_with_sweep_at(candles_ago=15, total=36)
+        result = engine.detect_sweep(bars, lookback=20, max_candles_ago=10)
+        self.assertFalse(result["bullish"])
+        self.assertIsNone(result["candles_ago"])
+
+    def test_zone_distance_fvg_minimum_atr(self):
+        """FVG کوچک‌تر از ۰.۳ ATR نباید به‌عنوان Zone ثبت شود."""
+        bars = create_mock_bars_with_small_fvg(gap_atr=0.2)
+        result = engine.zone_distance(bars, "BUY", atr_value=1.0)
+        self.assertNotEqual(result["zone_type"], "FVG")
 
     def test_bullish_sweep_reclaims_prior_low(self):
         bars = [candle(i * 900000, 100, 102, 99, 101) for i in range(20)]

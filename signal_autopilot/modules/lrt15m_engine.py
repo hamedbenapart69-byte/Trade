@@ -107,19 +107,40 @@ def _merge_bucket(bucket: list[dict[str, Any]]) -> dict[str, float]:
     }
 
 
-def detect_sweep(bars: list[dict[str, Any]], lookback: int = 20) -> dict[str, Any]:
-    if len(bars) < lookback + 1:
-        return {"bullish": False, "bearish": False, "swept_low": None, "swept_high": None}
-    previous = bars[-lookback - 1:-1]
-    current = bars[-1]
-    prior_low = min(float(x["low"]) for x in previous)
-    prior_high = max(float(x["high"]) for x in previous)
-    return {
-        "bullish": float(current["low"]) < prior_low and float(current["close"]) > prior_low,
-        "bearish": float(current["high"]) > prior_high and float(current["close"]) < prior_high,
-        "swept_low": prior_low, "swept_high": prior_high,
+def detect_sweep(
+    bars: list[dict[str, Any]], lookback: int = 20, max_candles_ago: int = 10
+) -> dict[str, Any]:
+    """Sweep را در کندل جاری تا ۱۰ کندل بسته‌شدهٔ قبلی جست‌وجو می‌کند."""
+    empty = {
+        "bullish": False, "bearish": False, "candles_ago": None,
+        "swept_level": None, "sweep_type": None,
+        "swept_low": None, "swept_high": None,
     }
+    if lookback < 1 or max_candles_ago < 0 or len(bars) < lookback + 1:
+        return empty
 
+    for candles_ago in range(0, max_candles_ago + 1):
+        idx = len(bars) - 1 - candles_ago
+        if idx < lookback:
+            continue
+        previous = bars[idx - lookback:idx]
+        current = bars[idx]
+        prior_low = min(float(x["low"]) for x in previous)
+        prior_high = max(float(x["high"]) for x in previous)
+
+        if float(current["low"]) < prior_low and float(current["close"]) > prior_low:
+            return {
+                "bullish": True, "bearish": False, "candles_ago": candles_ago,
+                "swept_level": prior_low, "sweep_type": "BULLISH",
+                "swept_low": prior_low, "swept_high": None,
+            }
+        if float(current["high"]) > prior_high and float(current["close"]) < prior_high:
+            return {
+                "bullish": False, "bearish": True, "candles_ago": candles_ago,
+                "swept_level": prior_high, "sweep_type": "BEARISH",
+                "swept_low": None, "swept_high": prior_high,
+            }
+    return empty
 
 def detect_order_block(bars: list[dict[str, Any]], direction: str, atr_value: float | None) -> bool:
     if atr_value is None or len(bars) < 8:
@@ -180,7 +201,7 @@ def zone_distance(
     bars: list[dict[str, Any]], direction: str, atr_value: float | None
 ) -> dict[str, Any]:
     """نزدیک‌ترین فاصلهٔ قیمت بسته‌شده تا ناحیهٔ OB/FVG را به درصد برمی‌گرداند."""
-    if len(bars) < 8:
+    if len(bars) < 20:
         return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
     current = bars[-1]
     close = float(current["close"])
@@ -188,16 +209,26 @@ def zone_distance(
         return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
     zones: list[tuple[str, float, float]] = []
     displacement = 1.2 * atr_value if atr_value is not None else 0.0
-    for candle in bars[-8:-2]:
-        if direction == "BUY" and candle["close"] < candle["open"] and close > candle["high"] + displacement:
+    atr_threshold = 0.3 * atr_value if atr_value is not None else 0.0
+
+    # OB: بررسی ۱۸ کندل قبلی، با حفظ displacement برابر ۱.۲ ATR
+    for candle in bars[-20:-2]:
+        if direction == "BUY" and float(candle["close"]) < float(candle["open"]) and close > float(candle["high"]) + displacement:
             zones.append(("OB", float(candle["low"]), float(candle["high"])))
-        elif direction == "SELL" and candle["close"] > candle["open"] and close < candle["low"] - displacement:
+        elif direction == "SELL" and float(candle["close"]) > float(candle["open"]) and close < float(candle["low"]) - displacement:
             zones.append(("OB", float(candle["low"]), float(candle["high"])))
+
+    # FVG فقط با اندازهٔ شکاف بیش از ۰.۳ ATR ثبت می‌شود.
     left = bars[-3]
-    if direction == "BUY" and float(current["low"]) > float(left["high"]):
-        zones.append(("FVG", float(left["high"]), float(current["low"])))
-    elif direction == "SELL" and float(current["high"]) < float(left["low"]):
-        zones.append(("FVG", float(current["high"]), float(left["low"])))
+    if direction == "BUY":
+        gap = float(current["low"]) - float(left["high"])
+        if gap > atr_threshold:
+            zones.append(("FVG", float(left["high"]), float(current["low"])))
+    elif direction == "SELL":
+        gap = float(left["low"]) - float(current["high"])
+        if gap > atr_threshold:
+            zones.append(("FVG", float(current["high"]), float(left["low"])))
+
     if not zones:
         return {"zone_type": "NONE", "distance_pct": None, "within_limit": False}
     distances: list[tuple[float, str]] = []
@@ -215,7 +246,6 @@ def zone_distance(
         "distance_pct": round(distance, 6),
         "within_limit": distance <= MAX_ZONE_DISTANCE_PCT,
     }
-
 
 def cvd_delta_from_aggtrades(trades: list[dict[str, Any]]) -> float:
     """aggTrade: m=True یعنی خریدار maker و فروشنده aggressor است."""
@@ -447,7 +477,7 @@ def score_stage1_confluence(
     tier_score = (raw_score // 20) * 20
     if tier_score >= 100:
         decision, tier = "WATCHLIST", "A"
-    elif tier_score >= 80:
+    elif tier_score >= STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD:
         decision, tier = "WATCHLIST", "B"
     elif tier_score >= MONITORING_CONFLUENCE_THRESHOLD:
         decision, tier = "MONITORING", None
@@ -628,7 +658,7 @@ def evaluate_stage1_symbol(
             cvd_source = CVD_SOURCE
         cvd_sign = "BUY" if cvd_value > 0 else "SELL" if cvd_value < 0 else "NEUTRAL"
         atr_value = atr(bars)
-        sweep_data = detect_sweep(bars)
+        sweep_data = detect_sweep(bars, lookback=20, max_candles_ago=10)
         candidates, rejected_lfs = [], []
 
         for direction in ("BUY", "SELL"):
@@ -643,6 +673,7 @@ def evaluate_stage1_symbol(
             cvd_aligned = cvd_sign == direction
             components = {
                 "bias_4h": bias4_ok, "bias_1h": bias1_ok, "sweep": sweep_ok,
+                "sweep_candles_ago": sweep_data.get("candles_ago"),
                 "zone_reaction": zone_ok, "cross": cross_ok,
             }
             decision = evaluate_stage1_decision(
