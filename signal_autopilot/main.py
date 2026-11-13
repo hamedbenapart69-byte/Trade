@@ -342,7 +342,7 @@ def save_research_state(path: Path, payload: dict[str, Any]) -> None:
     payload["signal_count"] = len(payload.get("signals", []))
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\\n",
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     temporary.replace(path)
@@ -624,13 +624,13 @@ def main() -> int:
     summary_path = os.getenv("GITHUB_STEP_SUMMARY")
     if summary_path:
         with open(summary_path, "a", encoding="utf-8") as handle:
-            handle.write("## Stage 1 LRT: گزارش ۲۷ نماد\\n\\n")
-            handle.write("| شاخص | مقدار |\\n|---|---:|\\n")
+            handle.write("## Stage 1 LRT: گزارش ۲۷ نماد\n\n")
+            handle.write("| شاخص | مقدار |\n|---|---:|\n")
             for key, value in summary.items():
-                handle.write(f"| {key} | {json.dumps(value, ensure_ascii=False)} |\\n")
-            handle.write("\\n### Confluence و Veto به تفکیک نماد\\n\\n")
-            handle.write("| Symbol | Veto | Bias4H | Bias1H | Sweep | Zone | Cross | Total | Tier |\\n")
-            handle.write("|---|---|---|---|---|---|---|---:|---|\\n")
+                handle.write(f"| {key} | {json.dumps(value, ensure_ascii=False)} |\n")
+            handle.write("\n### Confluence و Veto به تفکیک نماد\n\n")
+            handle.write("| Symbol | Veto | Bias4H | Bias1H | Sweep | Zone | Cross | Total | Tier |\n")
+            handle.write("|---|---|---|---|---|---|---|---:|---|\n")
             for row in diagnostics:
                 components = row.get("components") or {}
                 points = row.get("points") or {}
@@ -640,15 +640,15 @@ def main() -> int:
                     f"| {row['symbol']} | {row.get('veto')} | "
                     f"{components.get('bias_4h', '—')} | {components.get('bias_1h', '—')} | "
                     f"{components.get('sweep', '—')} | {points.get('zone_reaction', '—')} | "
-                    f"{components.get('cross', '—')} | {total if total is not None else '—'} | {tier} |\\n"
+                    f"{components.get('cross', '—')} | {total if total is not None else '—'} | {tier} |\n"
                 )
             if candidates == 0:
-                handle.write("\\n### توزیع Veto Gateها\\n\\n")
-                handle.write("| Veto Gate | تعداد نماد رد شده | نمادهای رد شده |\\n|---|---:|---|\\n")
+                handle.write("\n### توزیع Veto Gateها\n\n")
+                handle.write("| Veto Gate | تعداد نماد رد شده | نمادهای رد شده |\n|---|---:|---|\n")
                 for gate, names in sorted(veto_counts.items()):
-                    handle.write(f"| {gate} | {len(names)} | {', '.join(names)} |\\n")
+                    handle.write(f"| {gate} | {len(names)} | {', '.join(names)} |\n")
                 if not veto_counts:
-                    handle.write("| بدون Veto؛ رد در Scoring | 0 | — |\\n")
+                    handle.write("| بدون Veto؛ رد در Scoring | 0 | — |\n")
 
     return 0 if len(diagnostics) == len(symbols) else 1
 

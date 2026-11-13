@@ -209,8 +209,8 @@ async def _deliver_test_message(token: str, chat_id: str) -> tuple[int, str | No
         message = await bot.send_message(
             chat_id=chat_id,
             text=(
-                "[TEST MODE] Trader_me Telegram delivery verification\\n"
-                "Transport test only; not a trading signal.\\n"
+                "[TEST MODE] Trader_me Telegram delivery verification\n"
+                "Transport test only; not a trading signal.\n"
                 "Stage 1B | LRT-15m"
             ),
             disable_web_page_preview=True,
@@ -248,7 +248,7 @@ def build_research_message(signal: dict[str, Any]) -> str:
         f"  - {labels.get(name, name)}: {'✓' if int(value or 0) > 0 else '✗'} ({int(value or 0)})"
         for name, value in points.items()
     ]
-    return "\\n".join([
+    return "\n".join([
         "🔬 STAGE 1 RESEARCH — NOT A TRADING SIGNAL",
         "#RESEARCH_DATA_COLLECTION",
         "",
