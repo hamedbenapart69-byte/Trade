@@ -15,26 +15,72 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: pip install -r signal_autopilot/requirements.txt
-      - run: python -m unittest discover -s tests -v
+      - name: Audit production code for legacy markers and embedded Telegram identifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nE 'TODO|FIXME|@deprecated|analyze_symbol' -- signal_autopilot/modules signal_autopilot/main.py signal_autopilot/telegram_bot.py; then
+            echo "PRODUCTION_CODE_DEBT_MARKER_FOUND"
+            exit 1
+          fi
+          if git grep -nE '(-100[0-9]{10,}|[0-9]{8,12}:[A-Za-z0-9_-]{25,}|https?://t\.me/[A-Za-z0-9_]+)' -- signal_autopilot/modules signal_autopilot/main.py signal_autopilot/telegram_bot.py signal_autopilot/scripts/format_test_telegram.py; then
+            echo "EMBEDDED_TELEGRAM_IDENTIFIER_FOUND"
+            exit 1
+          fi
+          echo "PRODUCTION_SECURITY_STATIC_AUDIT=PASS"
+      - name: Run root unittest suite (require nonzero collection)
+        run: |
+          python - <<'PY'
+          import unittest
+          suite = unittest.defaultTestLoader.discover("tests")
+          count = suite.countTestCases()
+          print(f"ROOT_TESTS_COLLECTED={count}")
+          if count == 0:
+              raise SystemExit("No root unittest tests were collected")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
       - name: Test futures signal pipeline
         working-directory: signal_autopilot
-        run: python -m unittest discover -s tests -v
+        run: |
+          python - <<'PY'
+          import unittest
+          suite = unittest.defaultTestLoader.discover("tests")
+          count = suite.countTestCases()
+          print(f"SIGNAL_AUTOPILOT_TESTS_COLLECTED={count}")
+          if count == 0:
+              raise SystemExit("No signal_autopilot unittest tests were collected")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
+      - name: Run quarantined legacy engine fail-closed smoke test
+        working-directory: signal_autopilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(python logic.py)"
+          printf '%s\n' "$output"
+          python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d["pipeline_status"] == "DISABLED_LEGACY_ENGINE"; assert d["market_scan"] == "DISABLED"; assert d["dashboard_publication"] == "DISABLED"; assert d["telegram_delivery"] == "DISABLED"; print("LEGACY_FAIL_CLOSED_SMOKE=PASS")' "$output"
       - name: Validate futures dashboard JavaScript
         run: node --check web/futures/app.js
       - name: Validate Compose configuration
-        env:
-          CONTROL_API_TOKEN: ci-control-token-which-is-long-enough-123456
-          WORKER_API_TOKEN: ci-worker-token-which-is-long-enough-123456
-        run: docker compose config --quiet
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONTROL_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          WORKER_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          CONTROL_API_TOKEN="$CONTROL_API_TOKEN" WORKER_API_TOKEN="$WORKER_API_TOKEN" docker compose config --quiet
       - name: Build container image
         run: docker build -t trade-control-plane:ci .
       - name: Container health smoke test
         shell: bash
         run: |
           set -euo pipefail
+          CONTROL_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          WORKER_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
           docker run -d --name trade-control-plane-ci -p 127.0.0.1:8000:8000 \
-            -e CONTROL_API_TOKEN=ci-control-token-which-is-long-enough-123456 \
-            -e WORKER_API_TOKEN=ci-worker-token-which-is-long-enough-123456 \
+            -e CONTROL_API_TOKEN="$CONTROL_API_TOKEN" \
+            -e WORKER_API_TOKEN="$WORKER_API_TOKEN" \
             -e CONTROL_DB_PATH=/var/lib/control/control.db trade-control-plane:ci
           trap 'docker logs trade-control-plane-ci || true; docker rm -f trade-control-plane-ci >/dev/null 2>&1 || true' EXIT
           python - <<'PY'
