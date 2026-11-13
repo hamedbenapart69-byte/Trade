@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "updated_at_utc": "2026-11-13T19:10:36.160156+00:00",
+  "updated_at_utc": "2026-11-13T20:03:23.516139+00:00",
   "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
-  "source_signals_count": 14,
-  "outcomes_count": 14,
+  "source_signals_count": 15,
+  "outcomes_count": 15,
   "outcomes": [
     {
       "signal_id": "a71df00f5e3be423",
@@ -1125,7 +1125,7 @@
       "signal_id": "ae33c1e01052964b",
       "symbol": "ARBUSDT",
       "direction": "SELL",
-      "status": "ACTIVE",
+      "status": "SL_HIT",
       "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
       "entry_reference": 0.14445,
       "entry_actual": 0.14459,
@@ -1143,16 +1143,23 @@
       "stop_reference": 0.14547,
       "target_reference": 0.14241,
       "rr_actual": 2.477272727272736,
-      "exit_price": null,
-      "exit_time_utc": null,
-      "exit_candle_ohlc": null,
-      "pnl_pct_raw": null,
+      "exit_price": 0.14547,
+      "exit_time_utc": "2026-11-13T19:15:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794596400000,
+        "open": 0.14488,
+        "high": 0.14548,
+        "low": 0.14444,
+        "close": 0.14541,
+        "volume": 1251318.0
+      },
+      "pnl_pct_raw": -0.60861747,
       "fee_pct": "UNAVAILABLE",
       "slippage_pct": "UNAVAILABLE",
       "net_pnl_pct": "UNAVAILABLE",
       "data_source": "OKX_PUBLIC_OHLCV",
-      "last_checked_open_time": 1794595500000,
-      "last_checked_at_utc": "2026-11-13T19:10:36.160156+00:00",
+      "last_checked_open_time": 1794596400000,
+      "last_checked_at_utc": "2026-11-13T20:03:23.516139+00:00",
       "last_error": null,
       "history": [
         {
@@ -1164,6 +1171,11 @@
           "status": "ACTIVE",
           "at_utc": "2026-11-13T19:10:36.160156+00:00",
           "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "SL_HIT",
+          "at_utc": "2026-11-13T20:03:23.516139+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
         }
       ]
     },
@@ -1222,6 +1234,52 @@
           "status": "SL_HIT",
           "at_utc": "2026-11-13T19:10:36.160156+00:00",
           "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "0f0e209e8d5c7c92",
+      "symbol": "ARBUSDT",
+      "direction": "SELL",
+      "status": "ENTRY_INVALIDATED_GAP",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 0.14487,
+      "entry_actual": 0.14541,
+      "entry_time_utc": "2026-11-13T19:15:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794597300000,
+        "open": 0.14541,
+        "high": 0.14627,
+        "low": 0.14529,
+        "close": 0.14581,
+        "volume": 1296626.0
+      },
+      "entry_fill_status": "NOT_FILLED",
+      "entry_invalidation_reason": "STOP_ALREADY_BREACHED_BEFORE_ENTRY",
+      "stop_reference": 0.14515,
+      "target_reference": 0.14431,
+      "rr_actual": null,
+      "exit_price": null,
+      "exit_time_utc": null,
+      "exit_candle_ohlc": null,
+      "pnl_pct_raw": null,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": null,
+      "last_checked_at_utc": "2026-11-13T20:03:23.516139+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-13T20:03:23.516139+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ENTRY_INVALIDATED_GAP",
+          "at_utc": "2026-11-13T20:03:23.516139+00:00",
+          "reason": "STOP_ALREADY_BREACHED_BEFORE_ENTRY"
         }
       ]
     }
