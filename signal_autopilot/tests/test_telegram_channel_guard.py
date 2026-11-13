@@ -57,6 +57,15 @@ class TelegramFormatTests(unittest.TestCase):
 
 
 class ProductionTelegramGuardTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.env_patcher = patch.dict(os.environ, {
+            "TELEGRAM_EXPECTED_CHANNEL_TITLE": "God signals crypto furthers"
+        })
+        self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+
     def make_bot(self, target=None, member=None):
         target = target or chat(username=None)
         member = member or admin()
