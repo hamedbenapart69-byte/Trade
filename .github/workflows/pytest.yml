@@ -5,6 +5,7 @@ on:
     paths:
       - "pyproject.toml"
       - "tests/**"
+      - "scripts/**"
       - "signal_autopilot/**"
       - ".github/workflows/pytest.yml"
   pull_request:
