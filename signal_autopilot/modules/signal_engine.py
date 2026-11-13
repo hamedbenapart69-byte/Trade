@@ -42,6 +42,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     availability = row.get("availability") or {}
     base: dict[str, Any] = {
         "symbol": row.get("symbol"),
+        "base": row.get("base"),
         "provider": row.get("provider", "unknown"),
         "data_provider": row.get("provider", "unknown"),
         "status": "MARKET_DATA_DEGRADED",
