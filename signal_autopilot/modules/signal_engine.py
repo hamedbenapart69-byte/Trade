@@ -43,6 +43,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
     base: dict[str, Any] = {
         "symbol": row.get("symbol"),
         "provider": row.get("provider", "unknown"),
+        "data_provider": row.get("provider", "unknown"),
         "status": "MARKET_DATA_DEGRADED",
         "side": None,
         "entry": None,
