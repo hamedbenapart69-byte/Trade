@@ -18,7 +18,7 @@ SYMBOLS = ("BTC", "ETH", "SOL", "RSR", "TAO")
 TIMEOUT_SECONDS = 20
 RETRIES = 2
 PAUSE_SECONDS = 0.20
-OUTPUT = Path("artifacts/okx_endpoints_test.json")
+OUTPUT = Path("diagnostics/okx_api_test_result.json")
 
 
 def _number(value: Any) -> float | None:
@@ -163,6 +163,121 @@ def test_one(symbol: str, endpoint: str) -> dict[str, Any]:
     return result
 
 
+
+def classify_endpoint_count(success_count: int) -> str:
+    """طبقه‌بندی دقیق ۱۵ ترکیب Endpoint طبق Gate فاز صفر."""
+    if success_count == 15:
+        return "ALL_PASS"
+    if 13 <= success_count <= 14:
+        return "HIGH_PASS"
+    if 8 <= success_count <= 12:
+        return "PARTIAL_PASS"
+    return "MOSTLY_FAIL"
+
+
+def classify_oi_coverage(record_count: int, coverage_hours: int,
+                          target_hours: int = 2160) -> str:
+    """FULL=۹۰ روز، PARTIAL=حداقل ۳۰ روز، در غیر این صورت INSUFFICIENT."""
+    if record_count >= target_hours and coverage_hours >= target_hours:
+        return "FULL"
+    partial_hours = 30 * 24
+    if record_count >= partial_hours and coverage_hours >= partial_hours:
+        return "PARTIAL"
+    return "INSUFFICIENT"
+
+
+def test_oi_hourly_history(
+    symbol: str,
+    target_hours: int = 2160,
+    limit: int = 100,
+    max_requests: int = 25,
+) -> dict[str, Any]:
+    """دریافت تاریخچهٔ OI ساعتی Rubik با صفحه‌بندی محدود و حذف رکورد تکراری."""
+    path = "/api/v5/rubik/stat/contracts/open-interest-volume"
+    records: dict[int, list[Any]] = {}
+    request_count = 0
+    last_http_status: int | None = None
+    last_okx_code: str | None = None
+    last_error: str | None = None
+    before: str | None = None
+    initial_params = {"ccy": symbol, "period": "1H", "limit": str(limit)}
+
+    while request_count < max_requests:
+        params = dict(initial_params)
+        if before is not None:
+            params["before"] = before
+        previous_count = len(records)
+        request_count += 1
+        http_status, payload, error = _get_json(path, params)
+        last_http_status = http_status
+        if error:
+            last_error = error
+            break
+        if http_status != 200 or not isinstance(payload, dict):
+            last_error = f"unexpected_http_or_payload:{http_status}"
+            break
+        last_okx_code = str(payload.get("code", "MISSING"))
+        if last_okx_code != "0":
+            last_error = f"okx_code_not_zero:{last_okx_code}:{str(payload.get('msg', ''))[:160]}"
+            break
+
+        page = payload.get("data")
+        if not isinstance(page, list) or not page:
+            break
+        for row in page:
+            valid, _, _ = _validate_rows("open_interest", [row])
+            if valid:
+                records[int(row[0])] = list(row)
+
+        # قرارداد Rubik: ادامهٔ صفحه‌بندی با timestamp آخرین رکورد همین صفحه.
+        next_before = str(page[-1][0]) if isinstance(page[-1], (list, tuple)) and page[-1] else None
+        if not records:
+            break
+        timestamps = sorted(records)
+        coverage_hours = int((timestamps[-1] - timestamps[0]) / 3_600_000) + 1
+        if len(records) >= target_hours and coverage_hours >= target_hours:
+            break
+        if len(page) < limit or len(records) == previous_count:
+            break
+        if next_before is None or next_before == before:
+            last_error = "pagination_cursor_stalled"
+            break
+        before = next_before
+        time.sleep(PAUSE_SECONDS)
+
+    timestamps = sorted(records)
+    record_count = len(timestamps)
+    coverage_hours = (
+        int((timestamps[-1] - timestamps[0]) / 3_600_000) + 1
+        if record_count >= 2 else record_count
+    )
+    coverage_days = round(coverage_hours / 24.0, 2)
+    coverage_status = classify_oi_coverage(record_count, coverage_hours, target_hours)
+    result: dict[str, Any] = {
+        "symbol": symbol,
+        "endpoint": "open_interest_volume_1H_90d",
+        "path": path,
+        "params": initial_params,
+        "http_status": last_http_status,
+        "okx_code": last_okx_code,
+        "status": coverage_status,
+        "coverage_status": coverage_status,
+        "target_hours": target_hours,
+        "limit_per_request": limit,
+        "max_requests": max_requests,
+        "requests_made": request_count,
+        "record_count": record_count,
+        "coverage_hours": coverage_hours,
+        "coverage_days": coverage_days,
+        "oldest_timestamp": str(timestamps[0]) if timestamps else None,
+        "newest_timestamp": str(timestamps[-1]) if timestamps else None,
+        "last_before_cursor": before,
+    }
+    if last_error:
+        result["error"] = last_error
+    return result
+
+
 def test_oi_daily_history(symbol: str) -> dict[str, Any]:
     """تست تکمیلی: آیا Rubik می‌دهد تاریخچهٔ روزانهٔ کافی برای رتبهٔ OI نودروزه؟"""
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
@@ -215,10 +330,16 @@ def test_oi_daily_history(symbol: str) -> dict[str, Any]:
     newest = int(result["newest_timestamp"])
     span_days = (newest - oldest) / (24 * 60 * 60 * 1000)
     result["history_span_days"] = round(span_days, 2)
-    # 90 daily OI changes require at least 91 daily observations.
+    result["coverage_days"] = round(span_days, 2)
+    # برای رتبهٔ روزانه، حداقل ۳۰ مشاهدهٔ روزانه لازم است؛ FULL یعنی ۹۰ روز کامل.
     if result["record_count"] >= 91 and span_days >= 89:
+        result["coverage_status"] = "FULL"
         result["status"] = "SUCCESS_90D_HISTORY"
+    elif result["record_count"] >= 30 and span_days >= 29:
+        result["coverage_status"] = "PARTIAL"
+        result["status"] = "PARTIAL_HISTORY"
     else:
+        result["coverage_status"] = "INSUFFICIENT"
         result["status"] = "INSUFFICIENT_HISTORY"
     return result
 
@@ -232,12 +353,16 @@ def main() -> int:
             time.sleep(PAUSE_SECONDS)
 
     success_count = sum(item["status"] == "SUCCESS" for item in results)
-    classification = "ALL_PASS" if success_count >= 13 else "PARTIAL_PASS" if success_count >= 8 else "MOSTLY_FAIL"
+    classification = classify_endpoint_count(success_count)
+    supplemental_oi_1h = []
     supplemental_oi_1d = []
     for symbol in SYMBOLS:
+        supplemental_oi_1h.append(test_oi_hourly_history(symbol))
+        time.sleep(0.5)
         supplemental_oi_1d.append(test_oi_daily_history(symbol))
         time.sleep(0.5)
-    supplemental_oi_1d_ready = all(item["status"] == "SUCCESS_90D_HISTORY" for item in supplemental_oi_1d)
+    supplemental_oi_1h_ready = all(item["coverage_status"] == "FULL" for item in supplemental_oi_1h)
+    supplemental_oi_1d_ready = all(item.get("coverage_status") == "FULL" for item in supplemental_oi_1d)
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "base_url": BASE_URL,
@@ -248,9 +373,11 @@ def main() -> int:
         "failure_count": len(results) - success_count,
         "classification": classification,
         "supplemental_checks": {
-            "oi_1d_90d_history": supplemental_oi_1d,
-            "all_symbols_have_90d_history": supplemental_oi_1d_ready,
-            "note": "Supplemental history check; not included in the 15-combination gate count.",
+            "oi_1h_90d_history": supplemental_oi_1h,
+            "all_symbols_have_90d_hourly_oi": supplemental_oi_1h_ready,
+            "oi_1d_100d_history": supplemental_oi_1d,
+            "all_symbols_have_90d_daily_oi": supplemental_oi_1d_ready,
+            "note": "Supplemental OI history checks; not included in the 15-combination endpoint gate count.",
         },
         "gate_rules": {
             "ALL_PASS": "success_count >= 13",
@@ -266,8 +393,9 @@ def main() -> int:
         f"- Classification: **{classification}**\n"
         f"- Successful combinations: **{success_count}/15**\n"
         f"- Failed combinations: **{len(results) - success_count}/15**\n"
-        f"- 90-day daily OI history ready: **{sum(item['status'] == 'SUCCESS_90D_HISTORY' for item in supplemental_oi_1d)}/5 symbols**\n"
-        "- Artifact: artifacts/okx_endpoints_test.json\n"
+        f"- 90-day hourly OI FULL: **{sum(item['coverage_status'] == 'FULL' for item in supplemental_oi_1h)}/5 symbols**\n"
+        f"- 90-day daily OI FULL: **{sum(item.get('coverage_status') == 'FULL' for item in supplemental_oi_1d)}/5 symbols**\n"
+        "- Artifact: diagnostics/okx_api_test_result.json\n"
     )
     summary_path = os.getenv("GITHUB_STEP_SUMMARY")
     if summary_path:
@@ -280,14 +408,18 @@ def main() -> int:
             f"| OKX={item['okx_code']} | records={item['record_count']} "
             f"| {item['status']} {item.get('error', '')}"
         )
+    for item in supplemental_oi_1h:
+        print(
+            f"{item['symbol']} | oi_1h_90d | records={item['record_count']} "
+            f"| coverage_days={item['coverage_days']} | {item['coverage_status']} {item.get('error', '')}"
+        )
     for item in supplemental_oi_1d:
         print(
-            f"{item['symbol']} | oi_1d_90d_supplemental | records={item['record_count']} "
-            f"| span_days={item.get('history_span_days')} | {item['status']} {item.get('error', '')}"
+            f"{item['symbol']} | oi_1d_100d_supplemental | records={item['record_count']} "
+            f"| coverage_days={item.get('coverage_days')} | {item.get('coverage_status')} {item.get('error', '')}"
         )
-    # MOSTLY_FAIL is a completed diagnostic result, not a script crash.
-    # The next phase is gated by the JSON classification, not this exit code.
-    return 0
+    # MOSTLY_FAIL یک Gate واقعی است: خروجی تشخیصی حفظ می‌شود اما workflow fail می‌شود.
+    return 1 if success_count < 8 else 0
 
 
 if __name__ == "__main__":

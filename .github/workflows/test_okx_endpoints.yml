@@ -7,9 +7,11 @@ on:
       - "scripts/test_okx_endpoints.py"
       - ".github/workflows/test_okx_endpoints.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: okx-endpoint-phase0
@@ -38,6 +40,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: okx-endpoints-phase0-${{ github.run_id }}
-          path: artifacts/okx_endpoints_test.json
+          path: diagnostics/okx_api_test_result.json
           if-no-files-found: error
           retention-days: 30
+
+      - name: Commit diagnostics JSON to feature branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT="diagnostics/okx_api_test_result.json"
+          if [[ ! -f "$REPORT" ]]; then
+            echo "Diagnostic JSON was not produced; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$REPORT"
+          if git diff --cached --quiet; then
+            echo "Diagnostic JSON unchanged; no commit required."
+            exit 0
+          fi
+          git commit -m "chore(diagnostics): update OKX API coverage report"
+          git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
+
