@@ -703,7 +703,7 @@
       "production_decision": "BELOW_PRODUCTION_THRESHOLD",
       "raw_score": 60,
       "rr_reference": 2.0,
-      "scan_count": 1,
+      "scan_count": 2,
       "signal_id": "ae33c1e01052964b",
       "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
       "stop_reference": 0.14547,
@@ -758,7 +758,7 @@
       "production_decision": "BELOW_PRODUCTION_THRESHOLD",
       "raw_score": 60,
       "rr_reference": 2.0,
-      "scan_count": 1,
+      "scan_count": 2,
       "signal_id": "ebdb84e2d88ee6e5",
       "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
       "stop_reference": 112.19,
@@ -774,5 +774,5 @@
     }
   ],
   "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
-  "updated_at_utc": "2026-11-13T18:34:37.520621+00:00"
+  "updated_at_utc": "2026-11-13T18:43:35.163386+00:00"
 }
