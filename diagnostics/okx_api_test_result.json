@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-13T14:58:03.547734+00:00",
+  "generated_at_utc": "2026-11-13T14:58:38.794864+00:00",
   "base_url": "https://www.okx.com",
   "symbols": [
     "BTC",
@@ -145,8 +145,8 @@
         "params": {
           "ccy": "BTC",
           "period": "1D",
-          "begin": "1785941876034",
-          "end": "1794581876034"
+          "begin": "1785941910547",
+          "end": "1794581910547"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -177,8 +177,8 @@
         "params": {
           "ccy": "ETH",
           "period": "1D",
-          "begin": "1785941877953",
-          "end": "1794581877953"
+          "begin": "1785941912429",
+          "end": "1794581912429"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -209,8 +209,8 @@
         "params": {
           "ccy": "SOL",
           "period": "1D",
-          "begin": "1785941879568",
-          "end": "1794581879568"
+          "begin": "1785941914299",
+          "end": "1794581914299"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -241,8 +241,8 @@
         "params": {
           "ccy": "RSR",
           "period": "1D",
-          "begin": "1785941881238",
-          "end": "1794581881238"
+          "begin": "1785941916185",
+          "end": "1794581916185"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -273,8 +273,8 @@
         "params": {
           "ccy": "TAO",
           "period": "1D",
-          "begin": "1785941882898",
-          "end": "1794581882898"
+          "begin": "1785941918057",
+          "end": "1794581918057"
         },
         "http_status": 200,
         "okx_code": "0",
@@ -303,9 +303,10 @@
     "note": "Supplemental OI history checks; not included in the 15-combination endpoint gate count."
   },
   "gate_rules": {
-    "ALL_PASS": "success_count >= 13",
-    "PARTIAL_PASS": "8 <= success_count <= 12",
-    "MOSTLY_FAIL": "success_count < 8; stop before LFS_v2 implementation"
+    "ALL_PASS": "success_count == 15; exit_code=0",
+    "HIGH_PASS": "13 <= success_count <= 14; exit_code=0",
+    "PARTIAL_PASS": "8 <= success_count <= 12; exit_code=0",
+    "MOSTLY_FAIL": "success_count < 8; exit_code=1"
   },
   "results": [
     {
@@ -326,11 +327,11 @@
       "oldest_timestamp": "1794585600000",
       "newest_timestamp": "1794585600000",
       "first_value": {
-        "fundingRate": "-0.0000001605888738",
+        "fundingRate": "-0.0000002324049934",
         "fundingTime": "1794585600000"
       },
       "last_value": {
-        "fundingRate": "-0.0000001605888738",
+        "fundingRate": "-0.0000002324049934",
         "fundingTime": "1794585600000"
       }
     },
@@ -382,7 +383,7 @@
       "oldest_timestamp": "1791990000000",
       "newest_timestamp": "1794578400000",
       "first_value": {
-        "ratio": "3.11"
+        "ratio": "3.09"
       },
       "last_value": {
         "ratio": "1.62"
@@ -406,11 +407,11 @@
       "oldest_timestamp": "1794585600000",
       "newest_timestamp": "1794585600000",
       "first_value": {
-        "fundingRate": "-0.0000431403832686",
+        "fundingRate": "-0.0000426209686125",
         "fundingTime": "1794585600000"
       },
       "last_value": {
-        "fundingRate": "-0.0000431403832686",
+        "fundingRate": "-0.0000426209686125",
         "fundingTime": "1794585600000"
       }
     },
@@ -486,11 +487,11 @@
       "oldest_timestamp": "1794585600000",
       "newest_timestamp": "1794585600000",
       "first_value": {
-        "fundingRate": "-0.0000270252704574",
+        "fundingRate": "-0.0000262880658177",
         "fundingTime": "1794585600000"
       },
       "last_value": {
-        "fundingRate": "-0.0000270252704574",
+        "fundingRate": "-0.0000262880658177",
         "fundingTime": "1794585600000"
       }
     },
@@ -542,7 +543,7 @@
       "oldest_timestamp": "1791990000000",
       "newest_timestamp": "1794578400000",
       "first_value": {
-        "ratio": "3.01"
+        "ratio": "3.02"
       },
       "last_value": {
         "ratio": "2.61"
@@ -566,11 +567,11 @@
       "oldest_timestamp": "1794585600000",
       "newest_timestamp": "1794585600000",
       "first_value": {
-        "fundingRate": "0.0000500000000000",
+        "fundingRate": "0.0000494871161603",
         "fundingTime": "1794585600000"
       },
       "last_value": {
-        "fundingRate": "0.0000500000000000",
+        "fundingRate": "0.0000494871161603",
         "fundingTime": "1794585600000"
       }
     },
@@ -646,11 +647,11 @@
       "oldest_timestamp": "1794585600000",
       "newest_timestamp": "1794585600000",
       "first_value": {
-        "fundingRate": "0.0000565577614589",
+        "fundingRate": "0.0000573815763679",
         "fundingTime": "1794585600000"
       },
       "last_value": {
-        "fundingRate": "0.0000565577614589",
+        "fundingRate": "0.0000573815763679",
         "fundingTime": "1794585600000"
       }
     },
@@ -702,7 +703,7 @@
       "oldest_timestamp": "1791990000000",
       "newest_timestamp": "1794578400000",
       "first_value": {
-        "ratio": "2.8"
+        "ratio": "2.82"
       },
       "last_value": {
         "ratio": "2.46"
