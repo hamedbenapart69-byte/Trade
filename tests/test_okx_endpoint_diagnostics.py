@@ -7,6 +7,8 @@ from scripts.test_okx_endpoints import (
     test_oi_hourly_history as _test_oi_hourly_history,
 )
 
+_test_oi_hourly_history.__test__ = False
+
 
 class OKXEndpointDiagnosticsTests(unittest.TestCase):
     def test_endpoint_gate_boundaries(self):
