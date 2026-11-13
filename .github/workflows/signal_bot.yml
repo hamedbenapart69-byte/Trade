@@ -1,4 +1,4 @@
-name: Trader_me Stage 1B LRT-15m Signal Bot
+name: Trader_me Stage 1B LRT-15m Scanner (Channel Guarded)
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
       - name: Run unit tests
         working-directory: signal_autopilot
         run: |
-          python -m unittest tests.test_lrt_engine tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download tests.test_cvd_proxy_tracker tests.test_lfs_v2 tests.test_stage1_research_mode -v
+          python -m unittest tests.test_lrt_engine tests.test_live_signal_bot tests.test_stage1b_lrt15m tests.test_lrt15m_download tests.test_cvd_proxy_tracker tests.test_lfs_v2 tests.test_stage1_research_mode tests.test_research_tracker tests.test_telegram_channel -v
 
       - name: Restore persisted open-signal state
         run: |
@@ -75,6 +75,7 @@ jobs:
           LOG_LEVEL: INFO
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_EXPECTED_CHANNEL_TITLE: "God signals crypto furthers"
         run: python main.py
 
       - name: Upload open-signal state for trusted persistence workflow

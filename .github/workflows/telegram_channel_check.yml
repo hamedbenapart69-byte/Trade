@@ -1,0 +1,39 @@
+name: Telegram Public Channel Verification
+
+on:
+  push:
+    branches: [stage1b-lrt15m]
+    paths:
+      - "signal_autopilot/scripts/test_telegram_channel.py"
+      - "signal_autopilot/tests/test_telegram_channel.py"
+      - ".github/workflows/telegram_channel_check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-channel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout guarded scanner branch
+        uses: actions/checkout@v4
+        with:
+          ref: stage1b-lrt15m
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Telegram client
+        run: pip install "python-telegram-bot>=20,<23"
+
+      - name: Verify getChat, bot admin status, and send #TEST only after all checks pass
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_EXPECTED_CHANNEL_TITLE: "God signals crypto furthers"
+        run: python signal_autopilot/scripts/test_telegram_channel.py

@@ -13,6 +13,40 @@ from modules.lrt15m_engine import STAGE1_WATCHLIST_CONFLUENCE_THRESHOLD
 
 LOG = logging.getLogger("trader_me.telegram")
 
+EXPECTED_CHANNEL_TITLE_DEFAULT = "God signals crypto furthers"
+
+
+def _normalize_chat_title(value: str) -> str:
+    return " ".join(str(value or "").split()).casefold()
+
+
+async def _verified_channel(bot: Bot, configured_chat_id: str):
+    """Fail closed: مقصد باید کانال عمومی مشخص و ربات ادمینِ مجاز به ارسال باشد."""
+    chat_id = str(configured_chat_id or "").strip()
+    if not chat_id.startswith("-100"):
+        raise RuntimeError("TELEGRAM_TARGET_REJECTED_NOT_CHANNEL_ID")
+    me = await bot.get_me()
+    chat = await bot.get_chat(chat_id=chat_id)
+    if str(chat.id) != chat_id:
+        raise RuntimeError("TELEGRAM_CHAT_ID_RESOLUTION_MISMATCH")
+    if str(chat.type) != "channel":
+        raise RuntimeError(f"TELEGRAM_TARGET_REJECTED_CHAT_TYPE:{chat.type}")
+    if not getattr(chat, "username", None):
+        raise RuntimeError("TELEGRAM_TARGET_NOT_PUBLIC_CHANNEL")
+    expected = os.getenv("TELEGRAM_EXPECTED_CHANNEL_TITLE", EXPECTED_CHANNEL_TITLE_DEFAULT)
+    if _normalize_chat_title(chat.title) != _normalize_chat_title(expected):
+        raise RuntimeError(
+            f"TELEGRAM_CHANNEL_TITLE_MISMATCH:expected={expected!r}:actual={chat.title!r}"
+        )
+    member = await bot.get_chat_member(chat_id=chat.id, user_id=me.id)
+    if str(member.status) != "administrator":
+        raise RuntimeError(f"TELEGRAM_BOT_NOT_CHANNEL_ADMIN:{member.status}")
+    if getattr(member, "can_post_messages", None) is not True:
+        raise RuntimeError("TELEGRAM_BOT_ADMIN_CANNOT_POST_MESSAGES")
+    return chat, me
+
+
+
 
 def _value(value: Any) -> str:
     if value is None:
@@ -121,12 +155,14 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
 async def _preflight(token: str, chat_id: str) -> tuple[bool, str]:
     try:
         async with Bot(token=token) as bot:
-            me = await bot.get_me()
-            chat = await bot.get_chat(chat_id=chat_id)
-        return True, f"bot=@{me.username or me.id}; chat={chat.id}"
+            chat, me = await _verified_channel(bot, chat_id)
+        return True, (
+            f"bot=@{me.username or me.id}; chat={chat.id}; type=channel; "
+            f"title={chat.title!r}; username=@{chat.username}; admin=administrator"
+        )
     except Exception as exc:
-        LOG.exception("Telegram preflight failed.")
-        return None, f"{type(exc).__name__}: {str(exc)[:180]}"
+        LOG.exception("Telegram channel preflight failed.")
+        return False, f"{type(exc).__name__}: {str(exc)[:180]}"
 
 
 def verify_telegram_connection() -> bool:
@@ -146,12 +182,14 @@ def verify_telegram_connection() -> bool:
 async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path: Path) -> int:
     header, chart_caption, body = build_signal_messages(signal)
     async with Bot(token=token) as bot:
-        header_message = await bot.send_message(chat_id=chat_id, text=header, disable_web_page_preview=True)
+        chat, _ = await _verified_channel(bot, chat_id)
+        target_chat_id = chat.id
+        header_message = await bot.send_message(chat_id=target_chat_id, text=header, disable_web_page_preview=True)
         LOG.info("TELEGRAM_HEADER_MESSAGE_ID: %s | signal_id=%s", header_message.message_id, signal["signal_id"])
         try:
             with chart_path.open("rb") as image:
                 await bot.send_photo(
-                    chat_id=chat_id,
+                    chat_id=target_chat_id,
                     photo=BytesIO(image.read()),
                     caption=chart_caption,
                 )
@@ -159,10 +197,10 @@ async def _deliver(token: str, chat_id: str, signal: dict[str, Any], chart_path:
         except Exception:
             LOG.exception("TELEGRAM_CHART_FAILED: %s", signal["signal_id"])
             await bot.send_message(
-                chat_id=chat_id,
+                chat_id=target_chat_id,
                 text="2. CHART\n⚠️ تصویر نمودار ارسال نشد.",
             )
-        await bot.send_message(chat_id=chat_id, text=body, disable_web_page_preview=True)
+        await bot.send_message(chat_id=target_chat_id, text=body, disable_web_page_preview=True)
     LOG.info("TELEGRAM_SIGNAL_SENT: %s | sections=9 | status=WATCHLIST | message_id=%s", signal["signal_id"], header_message.message_id)
     return int(header_message.message_id)
 
@@ -205,9 +243,9 @@ def send_signal_to_telegram(
 async def _deliver_test_message(token: str, chat_id: str) -> tuple[int, str | None]:
     """Send one explicit test message and return Telegram's real message_id."""
     async with Bot(token=token) as bot:
-        chat = await bot.get_chat(chat_id=chat_id)
+        chat, _ = await _verified_channel(bot, chat_id)
         message = await bot.send_message(
-            chat_id=chat_id,
+            chat_id=chat.id,
             text=(
                 "[TEST MODE] Trader_me Telegram delivery verification\n"
                 "Transport test only; not a trading signal.\n"
@@ -273,8 +311,9 @@ def build_research_message(signal: dict[str, Any]) -> str:
 async def _deliver_research(token: str, chat_id: str, signal: dict[str, Any]) -> int:
     message_text = build_research_message(signal)
     async with Bot(token=token) as bot:
+        chat, _ = await _verified_channel(bot, chat_id)
         message = await bot.send_message(
-            chat_id=chat_id,
+            chat_id=chat.id,
             text=message_text,
             disable_web_page_preview=True,
         )
