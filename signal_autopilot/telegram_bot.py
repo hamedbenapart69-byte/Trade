@@ -237,16 +237,17 @@ def send_signal_to_telegram(
             LOG.error("TELEGRAM_FORMAT_TEST_REJECTED_INVALID_RESEARCH_PAYLOAD")
             return False
         signal_data = {**signal_data, "format_test": True}
-    elif signal_data.get("status") != "WATCHLIST":
-        LOG.warning("TELEGRAM_REJECTED_NON_WATCHLIST: %s", signal_data.get("symbol"))
-        return False
-    if signal_data.get("calibration_status") != "UNCALIBRATED":
-        LOG.warning("TELEGRAM_REJECTED_CALIBRATION_STATE: %s", signal_data.get("symbol"))
-        return False
-    score = signal_data.get("confluence_score")
-    if not isinstance(score, (int, float)) or score < PRODUCTION_MODE_THRESHOLD:
-        LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_80: %s score=%s", signal_data.get("symbol"), score)
-        return False
+    else:
+        if signal_data.get("status") != "WATCHLIST":
+            LOG.warning("TELEGRAM_REJECTED_NON_WATCHLIST: %s", signal_data.get("symbol"))
+            return False
+        if signal_data.get("calibration_status") != "UNCALIBRATED":
+            LOG.warning("TELEGRAM_REJECTED_CALIBRATION_STATE: %s", signal_data.get("symbol"))
+            return False
+        score = signal_data.get("confluence_score")
+        if not isinstance(score, (int, float)) or score < PRODUCTION_MODE_THRESHOLD:
+            LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_80: %s score=%s", signal_data.get("symbol"), score)
+            return False
 
     token = os.getenv("TELEGRAM_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
@@ -264,7 +265,6 @@ def send_signal_to_telegram(
     except Exception:
         LOG.exception("TELEGRAM_DELIVERY_FAILED: %s", signal_data.get("signal_id"))
         return False
-
 
 
 async def _deliver_test_message(token: str, chat_id: str) -> tuple[int, str | None]:
