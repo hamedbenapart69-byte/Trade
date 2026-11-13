@@ -24,14 +24,14 @@ jobs:
       contents: write
     steps:
       - name: Checkout open-signal state branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signal-state
           path: state-repo
           persist-credentials: true
 
       - name: Checkout research-data branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: stage1-research-data
           path: research-repo

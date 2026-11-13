@@ -16,20 +16,20 @@ jobs:
     timeout-minutes: 360
     steps:
       - name: Checkout Stage 1b data adapters
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: production-v1
           persist-credentials: false
 
       - name: Checkout market-data storage (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: market-data
           path: market-data
           persist-credentials: false
 
       - name: Checkout P0 maintenance tools
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: stage1b-tools

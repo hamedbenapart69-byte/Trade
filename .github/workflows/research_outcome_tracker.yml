@@ -24,13 +24,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout tracker code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: production-v1
           persist-credentials: false
 
       - name: Checkout persistent research data branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: stage1-research-data
           path: research-state

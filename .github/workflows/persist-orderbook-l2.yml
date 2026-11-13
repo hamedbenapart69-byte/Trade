@@ -25,14 +25,14 @@ jobs:
       contents: write
     steps:
       - name: Checkout trusted merge utility from main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: trusted-tools
           persist-credentials: false
 
       - name: Checkout market-data branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: market-data
           path: market-data

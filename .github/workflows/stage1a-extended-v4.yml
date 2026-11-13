@@ -18,12 +18,12 @@ jobs:
     timeout-minutes: 360
     steps:
       - name: Checkout v4 implementation
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: stage1a-extended-v4
 
       - name: Checkout persistent market-data branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: market-data
           path: market-data
