@@ -16,8 +16,6 @@ from modules.lrt15m_engine import (
 
 LOG = logging.getLogger("trader_me.telegram")
 
-EXPECTED_CHANNEL_TITLE_DEFAULT = "God signals crypto furthers"
-
 
 def _normalize_chat_title(value: str) -> str:
     return " ".join(str(value or "").split()).casefold()
@@ -34,7 +32,9 @@ async def _verified_channel(bot: Bot, configured_chat_id: str):
         raise RuntimeError("TELEGRAM_CHAT_ID_RESOLUTION_MISMATCH")
     if str(chat.type) != "channel":
         raise RuntimeError(f"TELEGRAM_TARGET_REJECTED_CHAT_TYPE:{chat.type}")
-    expected = os.getenv("TELEGRAM_EXPECTED_CHANNEL_TITLE", EXPECTED_CHANNEL_TITLE_DEFAULT)
+    expected = os.getenv("TELEGRAM_EXPECTED_CHANNEL_TITLE", "").strip()
+    if not expected:
+        raise RuntimeError("TELEGRAM_EXPECTED_CHANNEL_TITLE_MISSING")
     if _normalize_chat_title(chat.title) != _normalize_chat_title(expected):
         raise RuntimeError(
             f"TELEGRAM_CHANNEL_TITLE_MISMATCH:expected={expected!r}:actual={chat.title!r}"
