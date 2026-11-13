@@ -78,7 +78,9 @@
     "version": "STAGE1A_DATA_ONLY_UNCALIBRATED",
     "ema_fast": 20,
     "ema_slow": 50,
-    "funding_extreme_abs": 0.0005
+    "funding_extreme_abs": 0.0005,
+    "lifecycle": "LEGACY_RESEARCH_ONLY",
+    "production_enabled": false
   },
   "delivery": {
     "web_first": true,
