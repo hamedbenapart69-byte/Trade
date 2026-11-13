@@ -380,9 +380,10 @@ def main() -> int:
             "note": "Supplemental OI history checks; not included in the 15-combination endpoint gate count.",
         },
         "gate_rules": {
-            "ALL_PASS": "success_count >= 13",
-            "PARTIAL_PASS": "8 <= success_count <= 12",
-            "MOSTLY_FAIL": "success_count < 8; stop before LFS_v2 implementation",
+            "ALL_PASS": "success_count == 15; exit_code=0",
+            "HIGH_PASS": "13 <= success_count <= 14; exit_code=0",
+            "PARTIAL_PASS": "8 <= success_count <= 12; exit_code=0",
+            "MOSTLY_FAIL": "success_count < 8; exit_code=1",
         },
         "results": results,
     }

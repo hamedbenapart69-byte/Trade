@@ -25,8 +25,8 @@ class OKXEndpointDiagnosticsTests(unittest.TestCase):
         self.assertEqual(classify_oi_coverage(2160, 2159), "PARTIAL")
 
     def test_hourly_oi_pagination_uses_last_record_as_before_cursor(self):
-        first = [[str(ts), "1000", "10"] for ts in range(300, 200, -1)]
-        second = [[str(ts), "1000", "10"] for ts in range(200, 100, -1)]
+        first = [[str(ts), "1000", "10"] for ts in (ts * 3_600_000 for ts in range(300, 200, -1))]
+        second = [[str(ts), "1000", "10"] for ts in (ts * 3_600_000 for ts in range(200, 100, -1))]
         with patch(
             "scripts.test_okx_endpoints._get_json",
             side_effect=[
