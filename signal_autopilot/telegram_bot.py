@@ -250,7 +250,7 @@ def send_signal_to_telegram(
             return False
         score = signal_data.get("confluence_score")
         if not isinstance(score, (int, float)) or score < PRODUCTION_MODE_THRESHOLD:
-            LOG.info("TELEGRAM_SKIPPED_CONFLUENCE_BELOW_80: %s score=%s", signal_data.get("symbol"), score)
+            LOG.info("TELEGRAM_SKIPPED_BELOW_PRODUCTION_THRESHOLD: %s score=%s", signal_data.get("symbol"), score)
             return False
 
     token = os.getenv("TELEGRAM_TOKEN", "").strip()
