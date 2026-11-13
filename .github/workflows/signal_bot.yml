@@ -5,7 +5,9 @@ on:
     branches: [production-v1]
     paths:
       - "config/universe.json"
-      - "signal_autopilot/**"
+      - "signal_autopilot/main.py"
+      - "signal_autopilot/modules/**"
+      - "signal_autopilot/telegram_bot.py"
       - ".github/workflows/signal_bot.yml"
   schedule:
     - cron: "0 */4 * * *"
