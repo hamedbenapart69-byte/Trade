@@ -106,7 +106,7 @@ class LiveSignalBotTests(unittest.TestCase):
 
     def test_zone_distance_uses_synthetic_fvg_and_080_percent_limit(self):
         from modules.lrt15m_engine import zone_distance
-        rows = [candle(i * 900000, 99.5, 100.0, 99.0, 99.5) for i in range(8)]
+        rows = [candle(i * 900000, 99.5, 100.0, 99.0, 99.5) for i in range(20)]
         rows[-1] = candle(7 * 900000, 100.25, 100.5, 100.2, 100.3)
         near = zone_distance(rows, "BUY", None)
         self.assertEqual(near["zone_type"], "FVG")
