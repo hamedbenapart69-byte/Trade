@@ -1,10 +1,14 @@
 """آزمون‌های اعتبارسنجی مقصد تلگرام."""
-import sys, unittest
+import importlib.util, unittest
 from pathlib import Path
 from types import SimpleNamespace
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT))
-from scripts.test_telegram_channel import validate_target
+SCRIPT=ROOT/"scripts"/"test_telegram_channel.py"
+SPEC=importlib.util.spec_from_file_location("telegram_channel_check",SCRIPT)
+MODULE=importlib.util.module_from_spec(SPEC)
+assert SPEC and SPEC.loader
+SPEC.loader.exec_module(MODULE)
+validate_target=MODULE.validate_target
 
 def chat(chat_id=-1001234567890,chat_type="channel",title="God signals crypto furthers",username="god_signals_crypto"):
     return SimpleNamespace(id=chat_id,type=chat_type,title=title,username=username)
