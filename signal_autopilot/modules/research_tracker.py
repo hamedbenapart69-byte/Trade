@@ -140,6 +140,7 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
     if signal.get("direction") not in {"BUY", "SELL"}: raise ValueError("invalid_direction")
     if outcome is None: outcome = _new_outcome(signal, now)
     if outcome.get("signal_id") != signal.get("signal_id"): raise ValueError("signal_id_mismatch")
+    outcome["entry_contract"] = "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP"
     created = _parse_time(signal["created_at_utc"])
     # Entry candle must open strictly after the signal became available, not merely
     # after the candle used to calculate the signal. This prevents look-ahead fills.
