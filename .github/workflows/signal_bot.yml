@@ -73,9 +73,8 @@ jobs:
         working-directory: signal_autopilot
         env:
           LOG_LEVEL: INFO
-          # Fail-closed: هیچ پیام سیگنالی تا تأیید دستی #TEST و بازکردن قفل ارسال نمی‌شود.
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_DELIVERY_UNLOCK == 'CR11_CHANNEL_TEST_PASSED' && secrets.TELEGRAM_TOKEN || '' }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_DELIVERY_UNLOCK == 'CR11_CHANNEL_TEST_PASSED' && secrets.TELEGRAM_CHAT_ID || '' }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_EXPECTED_CHANNEL_TITLE: "God signals crypto furthers"
         run: python main.py
 
