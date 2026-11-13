@@ -566,11 +566,28 @@ def evaluate_stage1_symbol(
                 rejected_lfs.append(record)
 
         if not candidates:
+            direction_diagnostics = [
+                {
+                    key: item.get(key) for key in (
+                        "direction", "veto", "decision", "reason", "components",
+                        "points", "raw_score", "tier_score", "lfs_score",
+                        "lfs_status", "higher_timeframe_bias", "zone_type",
+                        "zone_distance_pct", "price_vs_kumo",
+                    )
+                }
+                for item in rejected_lfs
+            ]
             if rejected_lfs:
                 best = max(rejected_lfs, key=lambda item: float(item["lfs_score"]))
-                return {**base, **best, "veto": best["veto"], "decision": "NO_TRADE",
-                        "reason": best.get("veto", "LFS_BELOW_THRESHOLD")}
-            return {**base, "reason": "NO_DIRECTION_CANDIDATE"}
+                return {
+                    **base, **best, "veto": best["veto"], "decision": "NO_TRADE",
+                    "reason": best.get("veto", "LFS_BELOW_THRESHOLD"),
+                    "direction_candidates": direction_diagnostics,
+                }
+            return {
+                **base, "reason": "NO_DIRECTION_CANDIDATE",
+                "direction_candidates": direction_diagnostics,
+            }
         candidates.sort(key=lambda item: (
             int(item.get("tier_score") or 0), int(item.get("raw_score") or 0),
             float(item.get("lfs_score") or 0),
