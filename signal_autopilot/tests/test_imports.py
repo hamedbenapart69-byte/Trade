@@ -9,6 +9,7 @@ class ModuleImportTests(unittest.TestCase):
         from modules.lrt15m_engine import evaluate_stage1_symbol, detect_sweep, run
         from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
         from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
+        import websockets
 
         self.assertTrue(callable(evaluate_stage1_symbol))
         self.assertTrue(callable(detect_sweep))
@@ -17,6 +18,7 @@ class ModuleImportTests(unittest.TestCase):
         self.assertTrue(callable(calculate_cvd_proxy))
         self.assertTrue(callable(LiveOHLCVFetcher))
         self.assertTrue(callable(is_closed_candle))
+        self.assertTrue(callable(websockets.connect))
 
 
 if __name__ == "__main__":

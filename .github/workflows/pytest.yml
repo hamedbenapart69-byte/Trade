@@ -19,6 +19,8 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/signal_autopilot
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,5 +32,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r signal_autopilot/requirements.txt
           python -m pip install pytest
+      - name: Verify repository package import roots
+        run: python -c "import app, app.integrations, app.workflow_schemas, modules.lrt15m_engine; print('REPOSITORY_IMPORT_PATHS_OK', app.__file__)"
       - name: Run requested pytest command
         run: python -m pytest -v --tb=short
