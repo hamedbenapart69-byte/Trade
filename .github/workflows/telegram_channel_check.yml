@@ -2,7 +2,7 @@ name: Telegram Public Channel Verification
 
 on:
   push:
-    branches: [stage1b-lrt15m]
+    branches: [production-v1]
     paths:
       - "signal_autopilot/scripts/test_telegram_channel.py"
       - "signal_autopilot/tests/test_telegram_channel_guard.py"
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout guarded scanner branch
         uses: actions/checkout@v4
         with:
-          ref: stage1b-lrt15m
+          ref: production-v1
           persist-credentials: false
 
       - name: Set up Python
