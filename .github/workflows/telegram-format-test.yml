@@ -1,0 +1,51 @@
+name: ARB Telegram format proof (explicit test only)
+
+on:
+  push:
+    branches: [production-v1]
+    paths:
+      - "signal_autopilot/scripts/format_test_telegram.py"
+      - ".github/workflows/telegram-format-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout production-v1
+        uses: actions/checkout@v4
+        with:
+          ref: production-v1
+
+      - name: Restore persisted research observations
+        run: git fetch --depth=1 origin stage1-research-data:refs/remotes/origin/stage1-research-data
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install read-only market and Telegram runtime
+        run: python -m pip install -r signal_autopilot/requirements.txt
+
+      - name: Send ARB format test with live closed-candle chart
+        working-directory: signal_autopilot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_EXPECTED_CHANNEL_TITLE: "God signals crypto furthers"
+          TELEGRAM_FORMAT_TEST_ENABLED: "true"
+        run: python scripts/format_test_telegram.py
+
+      - name: Upload generated format-test chart
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arb-telegram-format-test-chart
+          path: signal_autopilot/artifacts/format_test/ARBUSDT_format_test.png
+          if-no-files-found: error
+          retention-days: 7
