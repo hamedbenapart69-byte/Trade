@@ -155,6 +155,8 @@ def build_signal_messages(signal: dict[str, Any]) -> tuple[str, str, str]:
         ),
     ]
     body = "\n\n".join(f"{title}\n{text}" for title, text in sections)
+    if format_test:
+        body = "[FORMAT TEST - NOT A REAL SIGNAL]\n" + body
     return header, chart_caption, body
 
 
