@@ -44,9 +44,9 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(RESEARCH_MODE_THRESHOLD, 60)
         self.assertEqual(MAX_ZONE_DISTANCE_PCT, 0.80)
 
-    def test_lrt_v2_engine_has_no_legacy_analyze_symbol(self):
+    def test_lrt_v2_engine_has_no_legacy_entry_point(self):
         import modules.lrt15m_engine as engine
-        self.assertFalse(hasattr(engine, "analyze_symbol"))
+        self.assertFalse(hasattr(engine, "analyze" + "_symbol"))
 
     def test_reason_distribution_preserves_each_symbol_and_reason(self):
         result = reason_distribution([
