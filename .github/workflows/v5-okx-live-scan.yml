@@ -14,7 +14,7 @@ jobs:
       V5_DATA_PROVIDER: okx
       CONTROL_DB_PATH: ./data/control.db
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

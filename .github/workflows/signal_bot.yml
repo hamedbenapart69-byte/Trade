@@ -28,20 +28,20 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/signal_autopilot
     steps:
       - name: Checkout the sole production code source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: production-v1
           persist-credentials: false
 
       - name: Checkout persisted open-signal state (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signal-state
           path: persisted-open-state
           persist-credentials: false
 
       - name: Checkout persisted research state (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: stage1-research-data
           path: persisted-research-state
