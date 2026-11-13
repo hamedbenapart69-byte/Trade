@@ -10,7 +10,7 @@ LOG = logging.getLogger("research_tracker")
 INTERVAL_MS = 900_000
 MAX_HOLD = timedelta(hours=48)
 PROVIDERS = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
-TERMINAL = {"TP_HIT", "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED"}
+TERMINAL = {"TP_HIT", "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED", "ENTRY_INVALIDATED_GAP"}
 
 
 def _parse_time(value: str) -> datetime:
@@ -90,6 +90,21 @@ def _touch_result(direction: str, candle: dict[str, Any], stop: float, target: f
     return None, None
 
 
+def _entry_invalidation_reason(direction: str, entry: float, stop: float, target: float) -> str | None:
+    """اگر بازار قبل از ورود از یکی از سطوح عبور کرده باشد، معامله‌ای فعال نشده است."""
+    if direction == "SELL":
+        if entry <= target:
+            return "TARGET_ALREADY_PASSED_BEFORE_ENTRY"
+        if entry >= stop:
+            return "STOP_ALREADY_BREACHED_BEFORE_ENTRY"
+    else:
+        if entry >= target:
+            return "TARGET_ALREADY_PASSED_BEFORE_ENTRY"
+        if entry <= stop:
+            return "STOP_ALREADY_BREACHED_BEFORE_ENTRY"
+    return None
+
+
 def _new_outcome(signal: dict[str, Any], now: datetime) -> dict[str, Any]:
     return {
         "signal_id": signal["signal_id"], "symbol": signal["symbol"],
@@ -97,6 +112,7 @@ def _new_outcome(signal: dict[str, Any], now: datetime) -> dict[str, Any]:
         "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
         "entry_reference": float(signal["entry_reference"]), "entry_actual": None,
         "entry_time_utc": None, "entry_candle_ohlc": None,
+        "entry_fill_status": "PENDING", "entry_invalidation_reason": None,
         "stop_reference": float(signal["stop_reference"]),
         "target_reference": float(signal["target_reference"]), "rr_actual": None,
         "exit_price": None, "exit_time_utc": None, "exit_candle_ohlc": None, "pnl_pct_raw": None,
@@ -133,21 +149,41 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
 
     # Invalidate any prior outcome whose simulated entry predates signal creation.
     prior_entry_time = outcome.get("entry_time_utc")
+    invalid_reason = None
+    if outcome.get("entry_actual") is not None:
+        invalid_reason = _entry_invalidation_reason(
+            str(signal["direction"]), float(outcome["entry_actual"]),
+            float(signal["stop_reference"]), float(signal["target_reference"])
+        )
+    entry_candle = outcome.get("entry_candle_ohlc") or {}
+    exit_candle = outcome.get("exit_candle_ohlc") or {}
+    prior_gap_at_entry = (
+        invalid_reason is not None
+        and entry_candle.get("open_time") is not None
+        and entry_candle.get("open_time") == exit_candle.get("open_time")
+        and outcome.get("exit_price") is not None
+        and float(outcome["exit_price"]) == float(outcome["entry_actual"])
+    )
     if prior_entry_time and _parse_time(prior_entry_time) <= created:
         outcome["invalidated_prior_entry"] = {
-            "status": outcome.get("status"),
-            "entry_actual": outcome.get("entry_actual"),
-            "entry_time_utc": prior_entry_time,
-            "exit_price": outcome.get("exit_price"),
-            "exit_time_utc": outcome.get("exit_time_utc"),
-            "pnl_pct_raw": outcome.get("pnl_pct_raw"),
+            "status": outcome.get("status"), "entry_actual": outcome.get("entry_actual"),
+            "entry_time_utc": prior_entry_time, "exit_price": outcome.get("exit_price"),
+            "exit_time_utc": outcome.get("exit_time_utc"), "pnl_pct_raw": outcome.get("pnl_pct_raw"),
             "reason": "ENTRY_PRECEDES_SIGNAL_TIMESTAMP",
         }
         _event(outcome, "ENTRY_PENDING_DATA", now, "INVALIDATED_LOOKAHEAD_ENTRY")
+    elif prior_gap_at_entry:
+        outcome["invalidated_prior_outcome"] = {
+            "status": outcome.get("status"), "entry_actual": outcome.get("entry_actual"),
+            "entry_time_utc": prior_entry_time, "exit_price": outcome.get("exit_price"),
+            "pnl_pct_raw": outcome.get("pnl_pct_raw"), "reason": invalid_reason,
+        }
+        _event(outcome, "ENTRY_PENDING_DATA", now, "RECLASSIFIED_GAP_AT_ENTRY_NOT_A_FILLED_TRADE")
+    if (prior_entry_time and _parse_time(prior_entry_time) <= created) or prior_gap_at_entry:
         for key in (
-            "entry_actual", "entry_time_utc", "entry_candle_ohlc", "rr_actual",
-            "exit_price", "exit_time_utc", "exit_candle_ohlc", "pnl_pct_raw",
-            "last_checked_open_time",
+            "entry_actual", "entry_time_utc", "entry_candle_ohlc", "entry_fill_status",
+            "entry_invalidation_reason", "rr_actual", "exit_price", "exit_time_utc",
+            "exit_candle_ohlc", "pnl_pct_raw", "last_checked_open_time",
         ):
             outcome[key] = None
 
@@ -185,8 +221,15 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
             "entry_actual": entry,
             "entry_time_utc": datetime.fromtimestamp(next_open / 1000, timezone.utc).isoformat(),
             "entry_candle_ohlc": {k: next_candle[k] for k in ("open_time", "open", "high", "low", "close", "volume")},
-            "rr_actual": abs(target - entry) / risk,
         })
+        invalid_reason = _entry_invalidation_reason(str(signal["direction"]), entry, stop, target)
+        if invalid_reason:
+            outcome["entry_fill_status"] = "NOT_FILLED"
+            outcome["entry_invalidation_reason"] = invalid_reason
+            _event(outcome, "ENTRY_INVALIDATED_GAP", now, invalid_reason)
+            return outcome
+        outcome["entry_fill_status"] = "SIMULATED_FILLED"
+        outcome["rr_actual"] = abs(target - entry) / risk
         _event(outcome, "ACTIVE", now, "ENTRY_FILLED_AT_NEXT_15M_OPEN")
 
     entry, stop, target = (float(outcome["entry_actual"]),

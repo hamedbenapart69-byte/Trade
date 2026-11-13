@@ -74,11 +74,36 @@ class ResearchTrackerTests(unittest.TestCase):
         self.assertAlmostEqual(_pnl_pct("SELL",100,98),2)
         self.assertAlmostEqual(_pnl_pct("BUY",100,102),2)
 
-    def test_gap_through_stop_uses_open(self):
+    def test_gap_through_stop_after_entry_uses_open(self):
         ts=CANDLE_OPEN+INTERVAL_MS
-        r=update_one(signal(),None,fetcher_for([candle(ts,103,104,102.5,103.5)]),NOW)
+        rows=[candle(ts,101,101.2,100.5,100.8),
+              candle(ts+INTERVAL_MS,103,104,102.5,103.5)]
+        r=update_one(signal(),None,fetcher_for(rows),NOW)
         self.assertEqual(r["status"],"SL_HIT")
         self.assertEqual(r["exit_price"],103)
+
+    def test_target_already_passed_at_entry_is_not_a_win(self):
+        ts=CANDLE_OPEN+INTERVAL_MS
+        r=update_one(signal(),None,fetcher_for([candle(ts,95,95.5,94.5,95.2)]),NOW)
+        self.assertEqual(r["status"],"ENTRY_INVALIDATED_GAP")
+        self.assertEqual(r["entry_fill_status"],"NOT_FILLED")
+        self.assertEqual(r["entry_invalidation_reason"],"TARGET_ALREADY_PASSED_BEFORE_ENTRY")
+        self.assertIsNone(r["pnl_pct_raw"])
+        self.assertIsNone(r["rr_actual"])
+
+    def test_old_tp_at_entry_gap_is_reclassified_as_missed_entry(self):
+        ts=CANDLE_OPEN+INTERVAL_MS
+        old={
+            "signal_id":"signal-001","status":"TP_HIT","entry_actual":95.0,
+            "entry_time_utc":"2026-11-13T19:15:00+00:00",
+            "entry_candle_ohlc":{"open_time":ts,"open":95.0,"high":95.5,"low":94.5,"close":95.2},
+            "exit_candle_ohlc":{"open_time":ts,"open":95.0,"high":95.5,"low":94.5,"close":95.2},
+            "exit_price":95.0,"pnl_pct_raw":0.0,"history":[{"status":"TP_HIT"}],
+        }
+        r=update_one(signal(),old,fetcher_for([candle(ts,95,95.5,94.5,95.2)]),NOW)
+        self.assertEqual(r["status"],"ENTRY_INVALIDATED_GAP")
+        self.assertEqual(r["invalidated_prior_outcome"]["status"],"TP_HIT")
+        self.assertEqual(r["entry_fill_status"],"NOT_FILLED")
 
     def test_wrong_signal_id_rejected(self):
         with self.assertRaisesRegex(ValueError,"signal_id_mismatch"):
