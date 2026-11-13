@@ -1,14 +1,14 @@
 name: Pytest
 on:
   push:
-    branches: [main, feat/telegram-dual-destination]
+    branches: [main, production-v1, feat/telegram-dual-destination]
     paths:
       - "pyproject.toml"
       - "tests/**"
       - "signal_autopilot/**"
       - ".github/workflows/pytest.yml"
   pull_request:
-    branches: [main]
+    branches: [main, production-v1]
     paths:
       - "pyproject.toml"
       - "signal_autopilot/**"
