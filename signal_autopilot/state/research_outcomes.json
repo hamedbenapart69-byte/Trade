@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at_utc": "2026-11-14T07:22:06.712046+00:00",
+  "updated_at_utc": "2026-11-14T14:24:24.994080+00:00",
   "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
   "source_signals_count": 23,
   "outcomes_count": 23,
