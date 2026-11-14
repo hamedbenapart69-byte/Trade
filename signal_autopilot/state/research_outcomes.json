@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "updated_at_utc": "2026-11-14T14:24:24.994080+00:00",
+  "updated_at_utc": "2026-11-14T19:23:00.453733+00:00",
   "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
-  "source_signals_count": 23,
-  "outcomes_count": 23,
+  "source_signals_count": 31,
+  "outcomes_count": 31,
   "outcomes": [
     {
       "signal_id": "a71df00f5e3be423",
@@ -1672,6 +1672,470 @@
           "status": "ENTRY_INVALIDATED_GAP",
           "at_utc": "2026-11-14T07:22:06.712046+00:00",
           "reason": "STOP_ALREADY_BREACHED_BEFORE_ENTRY"
+        }
+      ]
+    },
+    {
+      "signal_id": "901e69b7c9ead029",
+      "symbol": "BTCUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 66001.6,
+      "entry_actual": 65894.4,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 65894.4,
+        "high": 66030.0,
+        "low": 65525.2,
+        "close": 65593.6,
+        "volume": 3482.9045
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 66349.8,
+      "target_reference": 65305.20000000001,
+      "rr_actual": 1.2938076416336655,
+      "exit_price": 65305.20000000001,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 65593.6,
+        "high": 65758.1,
+        "low": 65122.0,
+        "close": 65188.3,
+        "volume": 6023.6446
+      },
+      "pnl_pct_raw": 0.89415793,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "747fa01ac1da8a81",
+      "symbol": "ETHUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 1853.28,
+      "entry_actual": 1852.98,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 1852.98,
+        "high": 1857.93,
+        "low": 1832.0,
+        "close": 1842.51,
+        "volume": 114874.24
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 1862.28,
+      "target_reference": 1835.28,
+      "rr_actual": 1.9032258064516272,
+      "exit_price": 1835.28,
+      "exit_time_utc": "2026-11-14T15:15:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 1852.98,
+        "high": 1857.93,
+        "low": 1832.0,
+        "close": 1842.51,
+        "volume": 114874.24
+      },
+      "pnl_pct_raw": 0.95521808,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794668400000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "88fec17f888543d2",
+      "symbol": "BNBUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 599.79,
+      "entry_actual": 599.42,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 599.42,
+        "high": 601.16,
+        "low": 596.23,
+        "close": 597.4,
+        "volume": 1480.36
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 602.2,
+      "target_reference": 594.9699999999998,
+      "rr_actual": 1.6007194244604392,
+      "exit_price": 594.9699999999998,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 597.44,
+        "high": 598.7,
+        "low": 593.15,
+        "close": 595.21,
+        "volume": 2941.4
+      },
+      "pnl_pct_raw": 0.7423843,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "c7bc88991555962e",
+      "symbol": "SOLUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 74.03,
+      "entry_actual": 74.04,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 74.04,
+        "high": 74.27,
+        "low": 73.81,
+        "close": 74.01,
+        "volume": 199346.9
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 74.42,
+      "target_reference": 73.25,
+      "rr_actual": 2.078947368421094,
+      "exit_price": 73.25,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 74.02,
+        "high": 74.26,
+        "low": 73.21,
+        "close": 73.6,
+        "volume": 524480.42
+      },
+      "pnl_pct_raw": 1.06699082,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "bd4dddca4324e36b",
+      "symbol": "XRPUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 0.983,
+      "entry_actual": 0.9816,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 0.9816,
+        "high": 0.9843,
+        "low": 0.9785,
+        "close": 0.9823,
+        "volume": 3547013.0
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 0.9851,
+      "target_reference": 0.9788,
+      "rr_actual": 0.800000000000019,
+      "exit_price": 0.9788,
+      "exit_time_utc": "2026-11-14T15:15:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 0.9816,
+        "high": 0.9843,
+        "low": 0.9785,
+        "close": 0.9823,
+        "volume": 3547013.0
+      },
+      "pnl_pct_raw": 0.28524857,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794668400000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "bd770b8ec46d9fa7",
+      "symbol": "DOGEUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 0.06133,
+      "entry_actual": 0.06129,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 0.06129,
+        "high": 0.06149,
+        "low": 0.06104,
+        "close": 0.06121,
+        "volume": 41440890.0
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 0.06155,
+      "target_reference": 0.06089000000000001,
+      "rr_actual": 1.538461538461483,
+      "exit_price": 0.06089000000000001,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 0.06121,
+        "high": 0.06137,
+        "low": 0.0604,
+        "close": 0.06068,
+        "volume": 163827820.0
+      },
+      "pnl_pct_raw": 0.65263501,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "6d3cfaaf54810a31",
+      "symbol": "RSRUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 0.001396,
+      "entry_actual": 0.001397,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 0.001397,
+        "high": 0.001398,
+        "low": 0.001389,
+        "close": 0.00139,
+        "volume": 12059200.0
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 0.001401,
+      "target_reference": 0.0013860000000000005,
+      "rr_actual": 2.749999999999959,
+      "exit_price": 0.0013860000000000005,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 0.001391,
+        "high": 0.001393,
+        "low": 0.001375,
+        "close": 0.001376,
+        "volume": 21711400.0
+      },
+      "pnl_pct_raw": 0.78740157,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
+        }
+      ]
+    },
+    {
+      "signal_id": "2ca5138d386abbc5",
+      "symbol": "ONEUSDT",
+      "direction": "SELL",
+      "status": "TP_HIT",
+      "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
+      "entry_reference": 0.0013126,
+      "entry_actual": 0.0013057,
+      "entry_time_utc": "2026-11-14T15:00:00+00:00",
+      "entry_candle_ohlc": {
+        "open_time": 1794668400000,
+        "open": 0.0013057,
+        "high": 0.0013084,
+        "low": 0.0012983,
+        "close": 0.0013016,
+        "volume": 55909200.0
+      },
+      "entry_fill_status": "SIMULATED_FILLED",
+      "entry_invalidation_reason": null,
+      "stop_reference": 0.0013228,
+      "target_reference": 0.0012921999999999996,
+      "rr_actual": 0.7894736842105357,
+      "exit_price": 0.0012921999999999996,
+      "exit_time_utc": "2026-11-14T15:30:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794669300000,
+        "open": 0.0013016,
+        "high": 0.0013031,
+        "low": 0.0012864,
+        "close": 0.0012948,
+        "volume": 86402000.0
+      },
+      "pnl_pct_raw": 1.03392816,
+      "fee_pct": "UNAVAILABLE",
+      "slippage_pct": "UNAVAILABLE",
+      "net_pnl_pct": "UNAVAILABLE",
+      "data_source": "OKX_PUBLIC_OHLCV",
+      "last_checked_open_time": 1794669300000,
+      "last_checked_at_utc": "2026-11-14T19:23:00.453733+00:00",
+      "last_error": null,
+      "history": [
+        {
+          "status": "ENTRY_PENDING_DATA",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "WAITING_FOR_NEXT_CLOSED_15M_CANDLE"
+        },
+        {
+          "status": "ACTIVE",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "TP_HIT",
+          "at_utc": "2026-11-14T19:23:00.453733+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
         }
       ]
     }
