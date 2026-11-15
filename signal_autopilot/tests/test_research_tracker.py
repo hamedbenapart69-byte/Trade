@@ -37,6 +37,7 @@ class ResearchTrackerTests(unittest.TestCase):
                 "BTC/USDT:USDT": {
                     "active": True, "swap": True, "linear": True,
                     "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
                 }
             }
 
