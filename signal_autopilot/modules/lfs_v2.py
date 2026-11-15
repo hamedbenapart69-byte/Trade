@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 WEIGHTS = {"LFS1": 0.25, "LFS2": 0.20, "LFS3": 0.20, "LFS4": 0.20, "LFS5": 0.15}
 FUNDING_EXTREME_RATE = 0.0003  # 0.03%
+LFS_V2_MIN_SCORE = 0.30  # آستانهٔ ثابت Stage 1B؛ تغییر آن نیازمند نسخه و آزمون مستقل است.
 HOURS_90D = 90 * 24
 HOURS_30D = 30 * 24
 
@@ -374,7 +375,7 @@ def calculate_lfs_v2(
         status = "INSUFFICIENT"
     if status == "INSUFFICIENT":
         veto = "LFS_INSUFFICIENT_COVERAGE"
-    elif score < 0.30:
+    elif score < LFS_V2_MIN_SCORE:
         veto = "LFS_BELOW_THRESHOLD"
     else:
         veto = "PASS"
@@ -388,7 +389,7 @@ def calculate_lfs_v2(
         "lfs_components": components,
         "lfs_veto": veto,
         "api_status": api_status,
-        "lfs_threshold": 0.30,
+        "lfs_threshold": LFS_V2_MIN_SCORE,
         "data_windows": {
             "lfs1_price_ohlcv": "1H",
             "lfs1_history_observations": len(lfs1_history),
@@ -417,4 +418,4 @@ def calculate_lfs_v2(
 def get_lfs_veto(lfs_score: float, coverage_pct: float = 100.0) -> str:
     if float(coverage_pct) < 40.0:
         return "LFS_INSUFFICIENT_COVERAGE"
-    return "PASS" if float(lfs_score) >= 0.30 else "LFS_BELOW_THRESHOLD"
+    return "PASS" if float(lfs_score) >= LFS_V2_MIN_SCORE else "LFS_BELOW_THRESHOLD"
