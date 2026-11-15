@@ -210,6 +210,13 @@ class TrustedNotifierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "WATCHLIST_FALSIFICATION_MISSING"):
             MODULE.candidate_rows(payload)
 
+    def test_rejects_proxy_watchlist_with_relaxed_real_cvd_threshold(self):
+        payload = report()
+        payload["symbols"][0]["lfs_threshold"] = 0.30
+        payload["symbols"][0]["lfs_threshold_reason"] = "REAL_CVD_FULL_LFS"
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH"):
+            MODULE.candidate_rows(payload)
+
     def test_rejects_watchlist_below_effective_lfs_threshold(self):
         payload = report()
         payload["symbols"][0]["lfs_score"] = 0.65
