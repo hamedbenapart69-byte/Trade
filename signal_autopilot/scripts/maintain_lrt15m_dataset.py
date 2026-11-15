@@ -360,6 +360,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
         shutil.rmtree(compute_dir)
     compute_dir.mkdir(parents=True, exist_ok=True)
     ephemeral_root = compute_dir / "ephemeral_tail"
+    ephemeral_root.mkdir(parents=True, exist_ok=True)
     for symbol, rows in ephemeral_by_symbol.items():
         by_day: dict[str, list[dict[str, Any]]] = {}
         for row in rows:
