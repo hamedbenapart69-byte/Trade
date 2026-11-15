@@ -46,7 +46,9 @@ class SignalTracker:
         )
         # یک شناسهٔ سیگنال نمایندهٔ یک setup مشخص است؛ تکرار اسکن نباید
         # زمان ایجاد یا سطوح مرجع آن را جابه‌جا کند و نتیجهٔ Shadow را بازنویسی کند.
-        record = {**signal, **previous}
+        # Snapshot اولیه کامل و تغییرناپذیر است؛ کلیدهای تازهٔ نسخه‌های بعدی
+        # نباید بی‌صدا به سیگنال تاریخی الصاق شوند.
+        record = dict(previous) if previous else dict(signal)
         record.update({
             "tracker_status": "OPEN",
             "created_at_utc": previous.get("created_at_utc") or first_seen,
