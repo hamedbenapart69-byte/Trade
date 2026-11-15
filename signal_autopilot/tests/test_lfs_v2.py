@@ -8,7 +8,8 @@ from modules.lfs_v2 import (
     rank_time_series,
 )
 from modules.lrt15m_engine import (
-    MIN_LFS_SCORE_REAL_CVD, MIN_LFS_SCORE_PROXY_CVD, evaluate_stage1_symbol,
+    MIN_LFS_SCORE_REAL_CVD, MIN_LFS_SCORE_PROXY_CVD,
+    evaluate_stage1_decision, evaluate_stage1_symbol,
 )
 
 
@@ -259,12 +260,38 @@ class LFSV2UnitTests(unittest.TestCase):
                     self.assertGreaterEqual(component["score"], 0.0)
                     self.assertLessEqual(component["score"], 1.0)
 
-    def test_stage1_lfs_threshold_has_one_canonical_constant(self):
+    def test_base_and_effective_lfs_thresholds_are_separate_and_proxy_is_stricter(self):
         self.assertEqual(LFS_V2_MIN_SCORE, 0.30)
-        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, LFS_V2_MIN_SCORE)
-        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, LFS_V2_MIN_SCORE)
+        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.30)
+        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.70)
+        self.assertGreater(MIN_LFS_SCORE_PROXY_CVD, MIN_LFS_SCORE_REAL_CVD)
         self.assertEqual(get_lfs_veto(LFS_V2_MIN_SCORE, 100.0), "PASS")
         self.assertEqual(get_lfs_veto(LFS_V2_MIN_SCORE - 1e-6, 100.0), "LFS_BELOW_THRESHOLD")
+
+    def test_effective_lfs_gate_is_stricter_for_proxy_or_partial_data(self):
+        components = {
+            "bias_4h": True, "bias_1h": True, "sweep": True,
+            "zone_reaction": True, "cross": True,
+        }
+        real_full = evaluate_stage1_decision(
+            True, False, 0.50, "AGGTRADES_REAL", components, True, lfs_status="FULL"
+        )
+        proxy_full = evaluate_stage1_decision(
+            True, False, 0.50, "KLINE_TAKER_BUY_PROXY", components, False, lfs_status="FULL"
+        )
+        real_partial = evaluate_stage1_decision(
+            True, False, 0.50, "AGGTRADES_REAL", components, True, lfs_status="PARTIAL_PROXY"
+        )
+        proxy_at_threshold = evaluate_stage1_decision(
+            True, False, 0.70, "KLINE_TAKER_BUY_PROXY", components, False, lfs_status="FULL"
+        )
+        self.assertEqual(real_full["veto"], "PASS")
+        self.assertEqual(real_full["lfs_threshold"], 0.30)
+        self.assertEqual(proxy_full["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(proxy_full["lfs_threshold"], 0.70)
+        self.assertEqual(real_partial["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(real_partial["lfs_threshold"], 0.70)
+        self.assertEqual(proxy_at_threshold["veto"], "PASS")
 
     def test_lfs_v2_veto(self):
         self.assertEqual(get_lfs_veto(0.25, 100.0), "LFS_BELOW_THRESHOLD")
