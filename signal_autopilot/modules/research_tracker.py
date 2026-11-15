@@ -1,6 +1,6 @@
 """ردیاب نتایج Stage 1؛ OHLCV عمومی، ورود در Open کندل بعد و بدون سفارش."""
 from __future__ import annotations
-import argparse, json, logging, math
+import argparse, json, logging, math, os, tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -87,10 +87,7 @@ def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200
             if exchange is not None:
                 try: exchange.close()
                 except Exception: pass
-    if empty_providers and not any(
-        marker in "|".join(errors)
-        for marker in ("CANDLE_GAP_DETECTED", "FIRST_REQUIRED_CANDLE_MISSING")
-    ):
+    if empty_providers and not errors:
         return [], "PUBLIC_OHLCV_NO_CLOSED_CANDLES"
     raise RuntimeError("PUBLIC_OHLCV_UNAVAILABLE|" + "|".join(errors))
 
@@ -304,27 +301,61 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
 
 def update_outcomes(signals_path: Path, outcomes_path: Path, now: datetime | None = None,
                     fetcher: Callable = fetch_public_ohlcv) -> dict[str, Any]:
-    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise ValueError("TRACKER_NOW_TIMEZONE_REQUIRED")
+    now = now.astimezone(timezone.utc)
     source = json.loads(signals_path.read_text(encoding="utf-8"))
     if not isinstance(source, dict) or not isinstance(source.get("signals"), list):
         raise ValueError("INVALID_RESEARCH_SIGNALS_SCHEMA")
+
+    source_rows = source["signals"]
+    source_ids: list[str] = []
+    for signal in source_rows:
+        if not isinstance(signal, dict) or not str(signal.get("signal_id") or "").strip():
+            raise ValueError("INVALID_RESEARCH_SIGNAL_RECORD")
+        source_ids.append(str(signal["signal_id"]).strip())
+    if len(source_ids) != len(set(source_ids)):
+        raise ValueError("DUPLICATE_RESEARCH_SIGNAL_ID")
+
     previous = json.loads(outcomes_path.read_text(encoding="utf-8")) if outcomes_path.exists() else {"outcomes": []}
-    existing = {x["signal_id"]: x for x in previous.get("outcomes", [])
-                if isinstance(x, dict) and x.get("signal_id")}
-    rows = [update_one(s, existing.get(s.get("signal_id")), fetcher, now)
-            for s in source["signals"] if s.get("signal_id")]
+    if not isinstance(previous, dict) or not isinstance(previous.get("outcomes"), list):
+        raise ValueError("INVALID_RESEARCH_OUTCOME_STATE_SCHEMA")
+    previous_rows = previous["outcomes"]
+    if any(not isinstance(row, dict) or not str(row.get("signal_id") or "").strip() for row in previous_rows):
+        raise ValueError("INVALID_RESEARCH_OUTCOME_RECORD")
+    previous_ids = [str(row["signal_id"]).strip() for row in previous_rows]
+    if len(previous_ids) != len(set(previous_ids)):
+        raise ValueError("DUPLICATE_RESEARCH_OUTCOME_ID")
+    if set(previous_ids) - set(source_ids):
+        raise ValueError("RESEARCH_SIGNAL_HISTORY_REGRESSION")
+
+    existing = {row["signal_id"]: row for row in previous_rows}
+    rows = [update_one(signal, existing.get(signal["signal_id"]), fetcher, now)
+            for signal in source_rows]
     payload = {
         "schema_version": 1, "updated_at_utc": now.isoformat(),
         "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
-        "source_signals_count": len(source["signals"]), "outcomes_count": len(rows),
+        "source_signals_count": len(source_rows), "outcomes_count": len(rows),
         "outcomes": rows,
     }
     outcomes_path.parent.mkdir(parents=True, exist_ok=True)
-    outcomes_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{outcomes_path.name}.", suffix=".tmp", dir=str(outcomes_path.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, outcomes_path)
+    finally:
+        if os.path.exists(temporary_name):
+            os.unlink(temporary_name)
     counts = {}
     for row in rows: counts[row["status"]] = counts.get(row["status"], 0) + 1
     return {"counts": counts, "outcomes": rows, "path": str(outcomes_path)}
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
