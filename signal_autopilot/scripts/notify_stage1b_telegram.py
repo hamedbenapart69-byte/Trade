@@ -288,10 +288,10 @@ def main() -> int:
         os.environ.get("TELEGRAM_TOKEN", ""),
         os.environ.get("TELEGRAM_CHAT_ID", ""),
     )
-    if args.validate_only:
-        print("REPORT_VALIDATION=PASS")
-        return 0
     messages = build_messages(payload, dashboard_url)
+    if args.validate_only:
+        print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
+        return 0
     for message in messages:
         send_message(token, chat_id, message)
     return 0
