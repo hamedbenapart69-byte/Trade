@@ -185,7 +185,15 @@ def _oi_points(rows: Any) -> list[tuple[int, float]]:
     if not isinstance(rows, (list, tuple)):
         return []
     points = [point for row in rows if (point := _parse_oi_point(row)) is not None]
-    return sorted({timestamp: value for timestamp, value in points}.items())
+    if not points:
+        return []
+    by_timestamp: dict[int, float] = {}
+    for timestamp, value in points:
+        # رکورد تکراری نباید با انتخاب «آخرین مقدار» بی‌صدا به دادهٔ معتبر تبدیل شود.
+        if timestamp in by_timestamp:
+            return []
+        by_timestamp[timestamp] = value
+    return sorted(by_timestamp.items())
 
 
 def _fresh_oi_points(rows: Any, as_of_time_ms: int, max_age_ms: int) -> list[tuple[int, float]]:
