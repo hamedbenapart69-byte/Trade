@@ -517,6 +517,9 @@ def evaluate_stage1_symbol(
             funding_received_at_ms=okx_metrics.get("funding_received_at_ms"),
             long_short_ratio_timestamp_ms=okx_metrics.get("long_short_ratio_timestamp_ms"),
         )
+        lfs_data["derivatives_source"] = str(
+            okx_metrics.get("derivatives_source") or "UNAVAILABLE"
+        )
         base.update(lfs_data)
         base["lfs_source"] = "LFS_V2"
 
@@ -610,6 +613,7 @@ def evaluate_stage1_symbol(
                 "data_sources": sorted(
                     {str(x.get("data_source", "UNAVAILABLE")) for x in bars}
                     | {str(x.get("data_source", "UNAVAILABLE")) for x in bars_1h}
+                    | {str(lfs_data.get("derivatives_source", "UNAVAILABLE"))}
                 ),
                 "rows_available": len(bars), "stats_1h_rows_available": len(bars_1h),
             }
