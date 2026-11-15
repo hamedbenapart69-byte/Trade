@@ -208,6 +208,18 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         threshold_reason = row.get("lfs_threshold_reason")
         if not isinstance(threshold_reason, str) or not threshold_reason.strip():
             raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISSING")
+        expected_threshold = (
+            0.30 if cvd.get("source") == "AGGTRADES_REAL" and row.get("lfs_status") == "FULL"
+            else 0.70
+        )
+        expected_reason = (
+            "REAL_CVD_FULL_LFS"
+            if expected_threshold == 0.30 else "PROXY_OR_PARTIAL_DATA"
+        )
+        if not math.isclose(lfs_threshold, expected_threshold, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
+        if threshold_reason != expected_reason:
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISMATCH")
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
