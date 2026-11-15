@@ -21,7 +21,7 @@ def report():
         for i in range(27)
     ]
     rows[0] = {
-        "symbol": "BTCUSDT", "decision": "WATCHLIST", "veto": "PASS",
+        "symbol": "BTCUSDT", "mode": "PRODUCTION", "decision": "WATCHLIST", "veto": "PASS",
         "direction": "BUY", "entry": 100.0, "stop_loss": 98.0,
         "take_profit": 104.0, "rr": 2.0,
     }
@@ -96,6 +96,24 @@ class TrustedNotifierTests(unittest.TestCase):
     def test_rejects_non_finite_levels(self):
         payload = report()
         payload["symbols"][0]["entry"] = float("nan")
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LEVELS_INVALID"):
+            MODULE.candidate_rows(payload)
+
+    def test_rejects_directionally_inverted_levels(self):
+        payload = report()
+        payload["symbols"][0]["stop_loss"] = 101.0
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LEVEL_DIRECTION_INVALID"):
+            MODULE.candidate_rows(payload)
+
+    def test_rejects_declared_risk_reward_mismatch(self):
+        payload = report()
+        payload["symbols"][0]["rr"] = 3.0
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_RR_MISMATCH"):
+            MODULE.candidate_rows(payload)
+
+    def test_research_mode_is_never_sent_as_production_watchlist(self):
+        payload = report()
+        payload["symbols"][0]["mode"] = "RESEARCH"
         self.assertEqual(MODULE.candidate_rows(payload), [])
 
     def test_validate_only_never_sends_telegram(self):
