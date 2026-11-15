@@ -13,6 +13,29 @@ from modules.signal_tracker import SignalTracker
 
 
 class SignalTrackerSnapshotTests(unittest.TestCase):
+    def test_load_rejects_open_closed_id_overlap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "open_signals.json"
+            row = {"signal_id": "duplicate-1"}
+            path.write_text(json.dumps({
+                "schema_version": 1,
+                "open_signals": {"duplicate-1": row},
+                "closed_signals": {"duplicate-1": row},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "signal_state_open_closed_id_overlap"):
+                SignalTracker(path)
+
+    def test_load_rejects_record_key_identity_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "open_signals.json"
+            path.write_text(json.dumps({
+                "schema_version": 1,
+                "open_signals": {"key-1": {"signal_id": "different-id"}},
+                "closed_signals": {},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "signal_state_record_invalid"):
+                SignalTracker(path)
+
     def test_closed_signal_id_cannot_be_reopened(self):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = SignalTracker(Path(tmp) / "open_signals.json")
