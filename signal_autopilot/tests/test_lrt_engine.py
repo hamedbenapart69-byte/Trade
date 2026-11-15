@@ -55,6 +55,22 @@ class LRTStage1DecisionTests(unittest.TestCase):
         self.assertEqual(result["decision"], "NO_TRADE")
         self.assertIsNone(result["score"])
 
+    def test_invalid_lfs_score_and_coverage_fail_closed(self):
+        for value in (float("nan"), float("inf"), None, True):
+            with self.subTest(value=value):
+                result = evaluate_stage1_decision(
+                    True, False, value, "AGGTRADES_REAL", components(5), True,
+                    lfs_status="FULL",
+                )
+                self.assertEqual(result["decision"], "NO_TRADE")
+                self.assertEqual(result["veto"], "LFS_INVALID_SCORE")
+        insufficient = evaluate_stage1_decision(
+            True, False, 0.95, "AGGTRADES_REAL", components(5), True,
+            lfs_status="INSUFFICIENT",
+        )
+        self.assertEqual(insufficient["veto"], "LFS_INSUFFICIENT_COVERAGE")
+        self.assertEqual(insufficient["decision"], "NO_TRADE")
+
     def test_proxy_or_partial_data_requires_stricter_lfs_threshold(self):
         proxy_below = evaluate_stage1_decision(
             True, False, 0.35, "PROXY_OHLCV", components(3), False, lfs_status="FULL"
