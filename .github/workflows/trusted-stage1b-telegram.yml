@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows:
       - "Trader_me Stage 1B LRT-15m Signal Bot"
-      - "Trader_me Stage 1 Signal Bot"
     types: [completed]
     branches: [main, production-v1]
 
