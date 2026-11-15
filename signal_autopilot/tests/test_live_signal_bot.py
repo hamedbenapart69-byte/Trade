@@ -21,6 +21,42 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LiveSignalBotTests(unittest.TestCase):
+    def test_okx_funding_source_timestamp_is_not_replaced_by_receive_time(self):
+        class FakeResponse:
+            def __init__(self, data):
+                self.payload = {"code": "0", "data": data}
+            def raise_for_status(self):
+                return None
+            def json(self):
+                return self.payload
+
+        source_ts = 1_800_000_000_000
+        settlement_ts = source_ts + 8 * 60 * 60 * 1000
+        responses = [
+            FakeResponse([{
+                "fundingRate": "0.0001",
+                "ts": str(source_ts),
+                "fundingTime": str(settlement_ts),
+            }]),
+            FakeResponse([]),
+            FakeResponse([]),
+            FakeResponse([[source_ts, "1.2"]]),
+        ]
+
+        class FakeClient:
+            def get(self, *args, **kwargs):
+                return responses.pop(0)
+
+        fetcher = LiveOHLCVFetcher.__new__(LiveOHLCVFetcher)
+        fetcher.client = FakeClient()
+        metrics = fetcher._okx_metrics("BTCUSDT", source_ts)
+
+        self.assertEqual(metrics["funding_timestamp_ms"], source_ts)
+        self.assertEqual(metrics["funding_settlement_time_ms"], settlement_ts)
+        self.assertIsInstance(metrics["funding_received_at_ms"], int)
+        self.assertNotEqual(metrics["funding_received_at_ms"], source_ts)
+        self.assertEqual(metrics["long_short_ratio_timestamp_ms"], source_ts)
+
     def test_report_json_writer_is_atomic_and_preserves_previous_file_on_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "stage1_lrt_report.json"
