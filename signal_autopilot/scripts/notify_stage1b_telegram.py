@@ -161,10 +161,18 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         cvd = cvd if isinstance(cvd, dict) else {}
         lfs_score = finite_number(row.get("lfs_score"))
         lfs_coverage = finite_number(row.get("lfs_coverage_pct"))
-        if lfs_score is not None and not 0 <= lfs_score <= 1:
-            raise ValueError("WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
-        if lfs_coverage is not None and not 0 <= lfs_coverage <= 100:
-            raise ValueError("WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
+        lfs_threshold = finite_number(row.get("lfs_threshold"))
+        if lfs_score is None or not 0 <= lfs_score <= 1:
+            raise ValueError("WATCHLIST_LFS_SCORE_INVALID")
+        if lfs_coverage is None or not 0 <= lfs_coverage <= 100:
+            raise ValueError("WATCHLIST_LFS_COVERAGE_INVALID")
+        if lfs_threshold is None or not 0 <= lfs_threshold <= 1:
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_INVALID")
+        if row.get("lfs_veto") != "PASS" or lfs_score < lfs_threshold:
+            raise ValueError("WATCHLIST_LFS_GATE_MISMATCH")
+        threshold_reason = row.get("lfs_threshold_reason")
+        if not isinstance(threshold_reason, str) or not threshold_reason.strip():
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISSING")
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
@@ -179,6 +187,9 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "lfs_score": lfs_score,
             "lfs_status": str(row.get("lfs_status") or "UNAVAILABLE"),
             "lfs_coverage_pct": lfs_coverage,
+            "lfs_veto": "PASS",
+            "lfs_threshold": lfs_threshold,
+            "lfs_threshold_reason": threshold_reason,
         })
     return candidates
 
@@ -213,7 +224,7 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
             f"TP1: {item['target1']:.10g} | TP2: {item['target2']:.10g} | R:R(TP2): {item['rr']:.3g}",
             "Confidence: NOT_CALIBRATED",
             f"CVD: {item['cvd_source']}",
-            f"LFS: {item['lfs_score'] if item['lfs_score'] is not None else 'UNAVAILABLE'} | status={item['lfs_status']} | coverage={item['lfs_coverage_pct'] if item['lfs_coverage_pct'] is not None else 'UNAVAILABLE'}",
+            f"LFS: {item['lfs_score']:.3f} | status={item['lfs_status']} | coverage={item['lfs_coverage_pct']:.1f}% | gate={item['lfs_veto']} | threshold={item['lfs_threshold']:.2f} ({item['lfs_threshold_reason']})",
             f"Hypothesis: {item['hypothesis']}",
             f"Falsification: {item['falsification']}",
         ])
