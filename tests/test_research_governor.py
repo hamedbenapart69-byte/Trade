@@ -11,8 +11,8 @@ def stage(**overrides):
             {"metric": "required_tests_passed", "operator": ">=", "target": 1},
         ],
         "acceptance_results": [
-            {"metric": "coverage_pct", "actual": 99.5},
-            {"metric": "required_tests_passed", "actual": 13},
+            {"metric": "coverage_pct", "actual": 99.5, "evidence": ["artifact://metrics/coverage.json"]},
+            {"metric": "required_tests_passed", "actual": 13, "evidence": ["artifact://ci/tests.json"]},
         ],
         "criteria_frozen": True,
         "layers": {"L1_DATA": True, "L2_COMPUTE": True, "L3_DELIVERY": True},
@@ -95,11 +95,22 @@ class ResearchGovernorTests(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertIn("hard_gates", result["reason"])
 
+    def test_pass_without_per_metric_evidence_is_blocked(self):
+        result = evaluate_stage(stage(
+            acceptance_results=[
+                {"metric": "coverage_pct", "actual": 99.5},
+                {"metric": "required_tests_passed", "actual": 13, "evidence": ["ci://tests"]},
+            ],
+            versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
+        ), unattended_authorized=True)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertIn("acceptance_result_evidence:coverage_pct", result["reason"])
+
     def test_pass_claim_with_failed_numeric_acceptance_is_blocked(self):
         result = evaluate_stage(stage(
             acceptance_results=[
-                {"metric": "coverage_pct", "actual": 98.0},
-                {"metric": "required_tests_passed", "actual": 13},
+                {"metric": "coverage_pct", "actual": 98.0, "evidence": ["artifact://metrics/coverage.json"]},
+                {"metric": "required_tests_passed", "actual": 13, "evidence": ["artifact://ci/tests.json"]},
             ],
             versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
         ), unattended_authorized=True)
