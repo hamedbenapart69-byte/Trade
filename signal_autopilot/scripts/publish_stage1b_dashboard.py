@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 EXPECTED_UNIVERSE_SIZE = 27
-MAX_REPORT_AGE = timedelta(hours=6)
+MAX_REPORT_AGE = timedelta(hours=4)
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 MAX_REPORT_BYTES = 5_000_000
 MAX_HISTORY_ROWS = 80_000
