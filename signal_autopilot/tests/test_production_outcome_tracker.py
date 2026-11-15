@@ -39,6 +39,9 @@ def signal(signal_id="prod-1", tracker_status="OPEN", direction="BUY"):
         "lfs_score": 0.72,
         "lfs_status": "FULL",
         "lfs_coverage_pct": 100.0,
+        "lfs_veto": "PASS",
+        "lfs_threshold": 0.70,
+        "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
         "cvd": {"source": "PROXY_OHLCV"},
         "tracker_status": tracker_status,
     }
@@ -196,6 +199,27 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
                     now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
                     fetcher=lambda *args: ([], "UNUSED"),
                 )
+
+    def test_legacy_watchlist_without_effective_lfs_metadata_is_excluded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_path = root / "open_signals.json"
+            outcomes_path = root / "production_outcomes.json"
+            legacy = signal()
+            for field in ("lfs_veto", "lfs_threshold", "lfs_threshold_reason"):
+                legacy.pop(field)
+            write_state(state_path, {"legacy-1": legacy})
+            result = update_production_outcomes(
+                state_path, outcomes_path,
+                now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                fetcher=lambda *args: (_ for _ in ()).throw(AssertionError("legacy signal must not be evaluated")),
+            )
+            payload = json.loads(outcomes_path.read_text(encoding="utf-8"))
+            self.assertEqual(result["source_signals_count"], 0)
+            self.assertEqual(result["outcomes_count"], 0)
+            self.assertEqual(result["excluded_legacy_signals_count"], 1)
+            self.assertEqual(payload["excluded_legacy_signals"][0]["status"], "EXCLUDED_LEGACY_POLICY_UNVERIFIED")
+            self.assertIn("lfs_threshold", payload["excluded_legacy_signals"][0]["missing_fields"])
 
     def test_rejects_stale_or_future_dated_source_state(self):
         with tempfile.TemporaryDirectory() as tmp:
