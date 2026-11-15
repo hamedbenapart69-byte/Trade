@@ -175,7 +175,8 @@ class LiveSignalBotTests(unittest.TestCase):
             RuntimeError("okx_rest_unavailable")
         )
         fetcher._ccxt_timeframe = fake_ccxt
-        fetcher._okx_metrics = lambda symbol, now_ms: {
+        metrics_calls = []
+        fetcher._okx_metrics = lambda symbol, now_ms: metrics_calls.append((symbol, now_ms)) or {
             "funding_rate": None, "oi_1h": None, "oi_1d": None,
             "long_short_ratio": None,
         }
@@ -187,6 +188,9 @@ class LiveSignalBotTests(unittest.TestCase):
             ("15m", ("bybit",)),
         ])
         self.assertEqual(bundle.stats_1h[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
+        self.assertEqual(metrics_calls, [])
+        self.assertEqual(bundle.okx_metrics["derivatives_source"], "UNAVAILABLE_CROSS_VENUE_MIX")
+        self.assertIsNone(bundle.okx_metrics["funding_rate"])
         self.assertEqual(bundle[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
 
     def test_open_candle_is_excluded_by_close_time_rule(self):
