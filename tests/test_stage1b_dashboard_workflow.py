@@ -18,6 +18,7 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("ref: signals", content)
         self.assertIn("persist-credentials: false", content)
         self.assertIn("contents: write", content)
+        self.assertIn('python-version: "3.11"', content)
 
     def test_publisher_downloads_scanner_artifact_and_writes_only_lrt_files(self):
         content = WORKFLOW.read_text(encoding="utf-8")
