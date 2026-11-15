@@ -15,6 +15,8 @@ class ProductionShadowOutcomeWorkflowTests(unittest.TestCase):
         self.assertIn("branches: [main]", content)
         self.assertIn("github.event.workflow_run.conclusion == 'success'", content)
         self.assertIn("workflow_dispatch:", content)
+        self.assertIn("github.ref == 'refs/heads/main'", content)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", content)
 
     def test_uses_production_code_and_signal_state_branch(self):
         content = WORKFLOW.read_text(encoding="utf-8")
