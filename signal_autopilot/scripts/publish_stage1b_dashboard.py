@@ -180,6 +180,7 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "lfs_coverage_pct": source_row.get("lfs_coverage_pct"),
             "entry": source_row.get("entry"),
             "stop_loss": source_row.get("stop_loss"),
+            "take_profit_1": source_row.get("take_profit_1"),
             "take_profit": source_row.get("take_profit"),
             "rr": source_row.get("rr"),
             "hypothesis": source_row.get("hypothesis"),
