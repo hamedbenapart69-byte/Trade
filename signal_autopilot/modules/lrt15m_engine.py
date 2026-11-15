@@ -449,6 +449,13 @@ def evaluate_stage1_symbol(
         if not bars_1h:
             bars_1h = aggregate_bars(bars, 4)  # سازگاری قدیمی؛ برای LFS تاریخچه کافی نیست.
 
+        # کل پنجرهٔ تاریخی LFS باید پیوسته باشد؛ بررسی فقط ۸۰ کندل آخر
+        # برای صدک‌های ۹۰روزه کافی نیست و شکاف‌های قدیمی را پنهان می‌کند.
+        if len(bars_1h) > 1 and not _continuous_bars(
+            bars_1h, 3_600_000, len(bars_1h)
+        ):
+            return {**base, "reason": "DATA_INSUFFICIENT_1H_HISTORY_GAP"}
+
         lfs_data = calculate_lfs_v2(
             symbol, bars, bars_1h,
             funding_rate=okx_metrics.get("funding_rate"),
