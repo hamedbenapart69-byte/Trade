@@ -15,6 +15,8 @@ from modules.lfs_v2 import LFS_V2_MIN_SCORE
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     WATCHLIST_CONFLUENCE_THRESHOLD,
+    MIN_LFS_SCORE_REAL_CVD,
+    MIN_LFS_SCORE_PROXY_CVD,
     PRODUCTION_MODE_THRESHOLD,
     RESEARCH_MODE_THRESHOLD,
     MAX_ZONE_DISTANCE_PCT,
@@ -263,7 +265,7 @@ def process_symbol(
             "confluence_score": result.get("raw_score"),
             "confluence_tier_score": result.get("tier_score"),
             "confluence_components": points,
-            "stage1_threshold_label": f"LFS_V2_BASE_{LFS_V2_MIN_SCORE:.2f}|CVD_REAL_FULL_LFS_{0.30:.2f}|CVD_PROXY_OR_PARTIAL_{0.70:.2f}|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
+            "stage1_threshold_label": f"LFS_V2_BASE_{LFS_V2_MIN_SCORE:.2f}|CVD_REAL_FULL_LFS_{MIN_LFS_SCORE_REAL_CVD:.2f}|CVD_PROXY_OR_PARTIAL_{MIN_LFS_SCORE_PROXY_CVD:.2f}|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
