@@ -158,6 +158,24 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_COUNT_MISMATCH"):
                 publish_dashboard(report_path, universe_path, root)
 
+    def test_rejects_watchlist_with_inverted_stop_direction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["stop_loss"] = 99.0
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_watchlist_with_risk_reward_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["rr"] = 3.0
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_RR_MISMATCH"):
+                publish_dashboard(report_path, universe_path, root)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
