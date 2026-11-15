@@ -125,7 +125,10 @@ class LiveSignalBotTests(unittest.TestCase):
             RuntimeError("okx_rest_unavailable")
         )
         fetcher._ccxt_timeframe = fake_ccxt
-        fetcher._okx_metrics = lambda symbol, now_ms: {}
+        fetcher._okx_metrics = lambda symbol, now_ms: {
+            "funding_rate": None, "oi_1h": None, "oi_1d": None,
+            "long_short_ratio": None,
+        }
         bundle = fetcher.fetch_symbol("BTCUSDT")
 
         self.assertEqual(calls, [
