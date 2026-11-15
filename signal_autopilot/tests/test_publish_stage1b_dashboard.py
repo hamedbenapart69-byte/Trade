@@ -187,6 +187,15 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID"):
                 publish_dashboard(report_path, universe_path, root)
 
+    def test_rejects_watchlist_with_placeholder_hypothesis(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["hypothesis"] = "UNAVAILABLE"
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_HYPOTHESIS_MISSING"):
+                publish_dashboard(report_path, universe_path, root)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
