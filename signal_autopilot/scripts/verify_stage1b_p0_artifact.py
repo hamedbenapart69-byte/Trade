@@ -92,7 +92,7 @@ def validate_report_freshness(
     max_age_minutes: int = 30,
     expected_rows: int = EXPECTED_ROWS,
 ) -> None:
-    """Recompute C10 data status from Parquet timestamps, not artifact claims."""
+    """Recompute freshness from validated Parquet evidence, not artifact claims."""
     if type(max_age_minutes) is not int or max_age_minutes <= 0:
         raise ValueError("DATA_REPORT_MAX_AGE_POLICY_INVALID")
     if type(expected_rows) is not int or expected_rows <= 0:
@@ -105,11 +105,16 @@ def validate_report_freshness(
     if report_age_minutes > max_age_minutes:
         raise ValueError("DATA_REPORT_TIMESTAMP_STALE")
 
-    closed_end_ms = (completed_ms // INTERVAL_MS) * INTERVAL_MS
+    closed_end_ms = _parse_utc_ms(
+        report.get("end_date_exclusive_utc"), "DATA_REPORT_WINDOW_END"
+    )
+    if closed_end_ms % INTERVAL_MS:
+        raise ValueError("DATA_REPORT_WINDOW_END_ALIGNMENT")
+    if closed_end_ms > (completed_ms // INTERVAL_MS) * INTERVAL_MS:
+        raise ValueError("DATA_REPORT_WINDOW_END_FROM_FUTURE")
+    if generated_ms < closed_end_ms or generated_ms >= closed_end_ms + INTERVAL_MS:
+        raise ValueError("DATA_REPORT_WINDOW_GENERATION_TIME_MISMATCH")
     window_start_ms = closed_end_ms - expected_rows * INTERVAL_MS
-    expected_end_iso = datetime.fromtimestamp(
-        closed_end_ms / 1000, timezone.utc
-    ).isoformat()
     expected_start_date = datetime.fromtimestamp(
         window_start_ms / 1000, timezone.utc
     ).date().isoformat()
@@ -117,8 +122,6 @@ def validate_report_freshness(
         raise ValueError("DATA_REPORT_INTERVAL_INVALID")
     if report.get("start_date_utc") != expected_start_date:
         raise ValueError("DATA_REPORT_WINDOW_START_MISMATCH")
-    if report.get("end_date_exclusive_utc") != expected_end_iso:
-        raise ValueError("DATA_REPORT_WINDOW_END_MISMATCH")
 
     report_rows = report.get("symbols")
     if not isinstance(report_rows, list) or len(report_rows) != len(symbols):
@@ -146,15 +149,23 @@ def validate_report_freshness(
         )
         last_open_ms = actual[-1] if actual else None
         first_open_ms = actual[0] if actual else None
-        age_minutes = (
-            round((completed_ms - (last_open_ms + INTERVAL_MS)) / 60_000, 2)
+        age_at_generation = (
+            round((generated_ms - (last_open_ms + INTERVAL_MS)) / 60_000, 2)
             if last_open_ms is not None else None
         )
-        fresh = bool(
-            continuity and age_minutes is not None
-            and -1 <= age_minutes <= max_age_minutes
+        age_at_completion = (
+            (completed_ms - (last_open_ms + INTERVAL_MS)) / 60_000
+            if last_open_ms is not None else None
         )
-        expected_reason = None if fresh else (
+        fresh_at_generation = bool(
+            continuity and age_at_generation is not None
+            and -1 <= age_at_generation <= max_age_minutes
+        )
+        fresh_at_completion = bool(
+            continuity and age_at_completion is not None
+            and -1 <= age_at_completion <= max_age_minutes
+        )
+        expected_reason = None if fresh_at_generation else (
             "BASELINE_MISSING_OR_INCOMPLETE" if not continuity
             else "LATEST_15M_CANDLE_STALE"
         )
@@ -165,23 +176,25 @@ def validate_report_freshness(
             or row.get("continuity") is not continuity
             or row.get("first_open_ms") != first_open_ms
             or row.get("last_open_ms") != last_open_ms
-            or row.get("fresh") is not fresh
+            or row.get("fresh") is not fresh_at_generation
             or row.get("reason") != expected_reason
         ):
             raise ValueError(f"DATA_REPORT_SYMBOL_FRESHNESS_MISMATCH:{symbol}")
         reported_age = row.get("age_minutes")
-        if age_minutes is None:
+        if age_at_generation is None:
             if reported_age is not None:
                 raise ValueError(f"DATA_REPORT_SYMBOL_AGE_MISMATCH:{symbol}")
         elif (
             isinstance(reported_age, bool)
             or not isinstance(reported_age, (int, float))
             or not math.isfinite(float(reported_age))
-            or abs(float(reported_age) - age_minutes) > 0.02
+            or abs(float(reported_age) - age_at_generation) > 0.02
         ):
             raise ValueError(f"DATA_REPORT_SYMBOL_AGE_MISMATCH:{symbol}")
+        if fresh_at_generation and not fresh_at_completion:
+            raise ValueError(f"DATA_REPORT_STALE_BEFORE_PERSISTENCE:{symbol}")
         complete_count += int(continuity)
-        fresh_count += int(fresh)
+        fresh_count += int(fresh_at_generation)
 
     if (
         type(report.get("symbols_complete")) is not int
@@ -208,6 +221,7 @@ def validate_artifact(
     storage = root / "market-data/datasets/stage1b/lrt15m"
     manifest_path = root / "market-data/datasets/stage1b/manifest.json"
     report_path = root / "signal_autopilot/data/stage1b_15m_data_report.json"
+    ephemeral_root = root / "signal_autopilot/data/stage1b_compute/ephemeral_tail"
     if not storage.is_dir() or not manifest_path.is_file() or not report_path.is_file():
         raise ValueError("ARTIFACT_REQUIRED_PATH_MISSING")
 
@@ -318,6 +332,64 @@ def validate_artifact(
         raise ValueError("LIVE_TAIL_COUNT_MISMATCH")
     if manifest.get("rows_total") != rows_total:
         raise ValueError("MANIFEST_TOTAL_ROWS_MISMATCH")
+
+    ephemeral_files = manifest.get("ephemeral_evidence_files")
+    if not isinstance(ephemeral_files, list):
+        raise ValueError("EPHEMERAL_EVIDENCE_LIST_INVALID")
+    if manifest.get("ephemeral_evidence_files_count") != len(ephemeral_files):
+        raise ValueError("EPHEMERAL_EVIDENCE_COUNT_INVALID")
+    actual_ephemeral = {
+        path.relative_to(ephemeral_root).as_posix()
+        for path in ephemeral_root.rglob("*") if path.is_file()
+    } if ephemeral_root.exists() else set()
+    listed_ephemeral: set[str] = set()
+    ephemeral_rows_total = 0
+    ephemeral_canonical_items: list[dict] = []
+    for item in ephemeral_files:
+        rel = safe_manifest_path(str(item.get("path", "")))
+        rel_text = rel.as_posix()
+        if rel.parts[0] != "live_tail" or len(rel.parts) != 3:
+            raise ValueError(f"EPHEMERAL_PATH_INVALID:{rel_text}")
+        if rel_text in listed_ephemeral:
+            raise ValueError(f"EPHEMERAL_DUPLICATE_PATH:{rel_text}")
+        listed_ephemeral.add(rel_text)
+        symbol = item.get("symbol")
+        if symbol not in timestamps_by_symbol or rel.name != f"{symbol}_15m.parquet":
+            raise ValueError(f"EPHEMERAL_SYMBOL_PATH_MISMATCH:{rel_text}")
+        if item.get("kind") != "EPHEMERAL_TAIL":
+            raise ValueError(f"EPHEMERAL_KIND_INVALID:{rel_text}")
+        path = ephemeral_root.joinpath(*rel.parts)
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"EPHEMERAL_FILE_MISSING_OR_LINK:{rel_text}")
+        if path.stat().st_size != item.get("size_bytes"):
+            raise ValueError(f"EPHEMERAL_FILE_SIZE_MISMATCH:{rel_text}")
+        if sha256_file(path) != item.get("sha256"):
+            raise ValueError(f"EPHEMERAL_FILE_SHA256_MISMATCH:{rel_text}")
+        table = pq.read_table(path)
+        if table.num_rows != item.get("rows"):
+            raise ValueError(f"EPHEMERAL_ROW_COUNT_MISMATCH:{rel_text}")
+        rows = table.to_pylist()
+        timestamps = validate_rows(rows, symbol, "LIVE_TAIL", rel)
+        if not timestamps:
+            raise ValueError(f"EPHEMERAL_FILE_EMPTY:{rel_text}")
+        if item.get("first_open_ms") != timestamps[0] or item.get("last_open_ms") != timestamps[-1]:
+            raise ValueError(f"EPHEMERAL_TIMESTAMP_RANGE_MISMATCH:{rel_text}")
+        if timestamps_by_symbol[symbol].intersection(timestamps):
+            raise ValueError(f"EPHEMERAL_STORAGE_TIMESTAMP_OVERLAP:{symbol}")
+        timestamps_by_symbol[symbol].update(timestamps)
+        ephemeral_rows_total += len(timestamps)
+        ephemeral_canonical_items.append(item)
+
+    if actual_ephemeral != listed_ephemeral:
+        raise ValueError("EPHEMERAL_UNMANIFESTED_OR_MISSING_FILES")
+    if manifest.get("ephemeral_evidence_rows_total") != ephemeral_rows_total:
+        raise ValueError("EPHEMERAL_TOTAL_ROWS_MISMATCH")
+    ephemeral_canonical_items.sort(key=lambda item: (item["symbol"], item["path"]))
+    ephemeral_canonical = json.dumps(
+        ephemeral_canonical_items, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if hashlib.sha256(ephemeral_canonical).hexdigest() != manifest.get("ephemeral_evidence_sha256"):
+        raise ValueError("EPHEMERAL_AGGREGATE_SHA256_MISMATCH")
 
     completed_ms = _parse_utc_ms(workflow_completed_at, "WORKFLOW_COMPLETED_AT")
     validate_report_freshness(report, symbols, timestamps_by_symbol, completed_ms)
