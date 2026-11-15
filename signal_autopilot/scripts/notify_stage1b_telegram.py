@@ -305,13 +305,13 @@ def main() -> int:
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
     dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
-    token, chat_id, expected_title = validate_telegram_config(
+    token, chat_id, _ = validate_telegram_config(
         os.environ.get("TELEGRAM_TOKEN", ""),
         os.environ.get("TELEGRAM_CHAT_ID", ""),
         os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
     )
-    verify_telegram_destination()
     messages = build_messages(payload, dashboard_url)
+    verify_telegram_destination()
     if args.validate_only:
         print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
         return 0
