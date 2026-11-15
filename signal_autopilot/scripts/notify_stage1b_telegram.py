@@ -157,6 +157,10 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError("WATCHLIST_FALSIFICATION_MISSING")
         if len(hypothesis) > 700 or len(falsification) > 700:
             raise ValueError("WATCHLIST_THESIS_TOO_LONG")
+        cvd = row.get("cvd")
+        cvd = cvd if isinstance(cvd, dict) else {}
+        lfs_score = finite_number(row.get("lfs_score"))
+        lfs_coverage = finite_number(row.get("lfs_coverage_pct"))
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
@@ -167,6 +171,10 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "rr": rr,
             "hypothesis": hypothesis.strip(),
             "falsification": falsification.strip(),
+            "cvd_source": str(cvd.get("source") or "UNAVAILABLE"),
+            "lfs_score": lfs_score,
+            "lfs_status": str(row.get("lfs_status") or "UNAVAILABLE"),
+            "lfs_coverage_pct": lfs_coverage,
         })
     return candidates
 
@@ -181,6 +189,7 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
         "پوشش: 27/27 نماد",
         "کالیبراسیون: NOT_CALIBRATED",
         "EV: NOT_CALCULATED",
+        "Data Gate: NOT_REPORTED",
         "سیاست: WATCHLIST فقط؛ BUY_NOW/SELL_NOW صادر نمی‌شود.",
         f"نامزدهای زیرنظر: {len(candidates)}",
         f"داشبورد: {dashboard}",
@@ -199,6 +208,8 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
             f"Entry: {item['entry']:.10g} | SL: {item['stop']:.10g}",
             f"TP1: {item['target1']:.10g} | TP2: {item['target2']:.10g} | R:R(TP2): {item['rr']:.3g}",
             "Confidence: NOT_CALIBRATED",
+            f"CVD: {item['cvd_source']}",
+            f"LFS: {item['lfs_score'] if item['lfs_score'] is not None else 'UNAVAILABLE'} | status={item['lfs_status']} | coverage={item['lfs_coverage_pct'] if item['lfs_coverage_pct'] is not None else 'UNAVAILABLE'}",
             f"Hypothesis: {item['hypothesis']}",
             f"Falsification: {item['falsification']}",
         ])
