@@ -54,7 +54,7 @@ class TrustedNotifierTests(unittest.TestCase):
     def test_validates_exact_universe_and_formats_watchlist_only(self):
         checked = validate_in_temp(report())
         messages = MODULE.build_messages(checked, "https://trade.example.pages.dev")
-        message = "\\n".join(messages)
+        message = "\n".join(messages)
         self.assertIn("NOT_CALIBRATED", message)
         self.assertIn("WATCHLIST فقط", message)
         self.assertIn("BTCUSDT | BUY", message)
@@ -99,7 +99,7 @@ class TrustedNotifierTests(unittest.TestCase):
             {"symbol": f"COIN{i}USDT", "decision": "NO_TRADE", "veto": "PASS"}
             for i in range(27)
         ]
-        message = "\\n".join(MODULE.build_messages(payload, "https://trade.example.pages.dev"))
+        message = "\n".join(MODULE.build_messages(payload, "https://trade.example.pages.dev"))
         self.assertIn("نامزدهای زیرنظر: 0", message)
         self.assertIn("هیچ موقعیت WATCHLIST", message)
 
