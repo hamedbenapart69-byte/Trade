@@ -142,12 +142,14 @@ def _adapt_record(
     lfs_threshold = record.get("lfs_threshold")
     lfs_veto = record.get("lfs_veto")
     lfs_threshold_reason = record.get("lfs_threshold_reason")
+    lfs_threshold_method = record.get("lfs_threshold_method")
     lfs_status = record.get("lfs_status")
     cvd_record = record.get("cvd") if isinstance(record.get("cvd"), dict) else {}
     cvd_source = str(cvd_record.get("source") or "UNAVAILABLE")
     # سیگنال‌های قدیمی فاقد threshold مؤثر، نمونهٔ معتبرِ عبورکرده از Gate فعلی نیستند.
     if any(value is None for value in (
-        lfs_score, lfs_coverage, lfs_threshold, lfs_veto, lfs_threshold_reason, lfs_status
+        lfs_score, lfs_coverage, lfs_threshold, lfs_veto, lfs_threshold_reason,
+        lfs_threshold_method, lfs_status
     )):
         return None
     if isinstance(lfs_score, bool) or not isinstance(lfs_score, (int, float)) or not math.isfinite(float(lfs_score)) or not 0 <= float(lfs_score) <= 1:
@@ -172,6 +174,8 @@ def _adapt_record(
         raise ValueError("PRODUCTION_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
     if lfs_threshold_reason != expected_reason:
         raise ValueError("PRODUCTION_LFS_THRESHOLD_REASON_MISMATCH")
+    if lfs_threshold_method != "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D":
+        raise ValueError("PRODUCTION_LFS_THRESHOLD_METHOD_UNVERIFIED")
 
     return {
         "signal_id": signal_id,
@@ -198,6 +202,7 @@ def _adapt_record(
         "lfs_veto": lfs_veto,
         "lfs_threshold": lfs_threshold,
         "lfs_threshold_reason": lfs_threshold_reason,
+        "lfs_threshold_method": lfs_threshold_method,
         "cvd_source": cvd_source,
     }
 
@@ -246,7 +251,7 @@ def _legacy_policy_exclusions(state: dict[str, Any]) -> list[dict[str, str]]:
                 continue
             required = (
                 "lfs_score", "lfs_coverage_pct", "lfs_threshold",
-                "lfs_veto", "lfs_threshold_reason", "lfs_status",
+                "lfs_veto", "lfs_threshold_reason", "lfs_threshold_method", "lfs_status",
             )
             missing = [field for field in required if record.get(field) is None]
             if missing:
