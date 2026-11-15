@@ -5,15 +5,19 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from modules.chart_renderer_lrt15m import render_lrt15m_chart
 from modules.signal_tracker import SignalTracker
+from modules.lfs_v2 import LFS_V2_MIN_SCORE
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     WATCHLIST_CONFLUENCE_THRESHOLD,
+    MIN_LFS_SCORE_REAL_CVD,
+    MIN_LFS_SCORE_PROXY_CVD,
     PRODUCTION_MODE_THRESHOLD,
     RESEARCH_MODE_THRESHOLD,
     MAX_ZONE_DISTANCE_PCT,
@@ -39,6 +43,31 @@ logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """Persist JSON atomically so artifact readers never observe partial output."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, path)
+        directory_fd = os.open(str(path.parent), os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except Exception:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def load_universe() -> list[str]:
@@ -176,13 +205,23 @@ def process_symbol(
                 "symbol", "direction", "veto", "decision", "tier", "mode",
                 "research_decision", "raw_score", "tier_score", "points", "components", "lfs_score", "lfs_source",
                 "lfs_coverage_pct", "lfs_status", "lfs_components", "lfs_veto",
-                "lfs_threshold", "lfs_coverage", "data_windows", "api_status",
+                "lfs_threshold", "lfs_threshold_reason", "lfs_threshold_method",
+                "lfs_coverage", "data_windows", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
                 "zone_distance_pct", "rows_available", "stats_1h_rows_available",
                 "direction_candidates", "data_sources", "cvd", "entry", "stop_loss",
                 "take_profit", "rr", "hypothesis", "falsification",
             )
         }
+        if rows:
+            diagnostic["last_closed_candle_utc"] = datetime.fromtimestamp(
+                int(rows[-1]["open_time"]) / 1000, timezone.utc
+            ).isoformat()
+        if result.get("decision") == "WATCHLIST" and result.get("mode") == "PRODUCTION":
+            entry = float(result["entry"])
+            stop = float(result["stop_loss"])
+            sign = 1 if result["direction"] == "BUY" else -1
+            diagnostic["take_profit_1"] = entry + sign * abs(entry - stop)
         if result.get("decision") == "RESEARCH_WATCHLIST" and result.get("mode") == "RESEARCH":
             created = datetime.now(timezone.utc).isoformat()
             research_signal = {
@@ -257,7 +296,7 @@ def process_symbol(
             "confluence_score": result.get("raw_score"),
             "confluence_tier_score": result.get("tier_score"),
             "confluence_components": points,
-            "stage1_threshold_label": f"LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
+            "stage1_threshold_label": f"LFS_V2_BASE_{LFS_V2_MIN_SCORE:.2f}|CVD_REAL_FULL_LFS_{MIN_LFS_SCORE_REAL_CVD:.2f}|CVD_PROXY_OR_PARTIAL_{MIN_LFS_SCORE_PROXY_CVD:.2f}|THRESHOLD_METHOD_FIXED_STAGE1B_NOT_ROLLING_90D|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
@@ -286,6 +325,10 @@ def process_symbol(
             "lfs_score": result.get("lfs_score"),
             "lfs_coverage_pct": result.get("lfs_coverage_pct"),
             "lfs_status": result.get("lfs_status"),
+            "lfs_veto": result.get("lfs_veto"),
+            "lfs_threshold": result.get("lfs_threshold"),
+            "lfs_threshold_reason": result.get("lfs_threshold_reason"),
+            "lfs_threshold_method": result.get("lfs_threshold_method"),
             "lfs_components": result.get("lfs_components"),
             "api_status": result.get("api_status"),
             "cvd": result.get("cvd"),
@@ -338,7 +381,7 @@ def process_symbol(
 
 
 def load_research_state(path: Path) -> dict[str, Any]:
-    """خواندن مخزن مستقل داده‌های پژوهشی با اعتبارسنجی حداقلی ساختار."""
+    """خواندن مخزن پژوهشی با اعتبارسنجی ساختار و یکتایی شناسه‌ها."""
     if not path.exists():
         return {
             "schema_version": 1,
@@ -346,25 +389,36 @@ def load_research_state(path: Path) -> dict[str, Any]:
             "updated_at_utc": None,
             "signals": [],
         }
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 10_000_000:
+        raise ValueError("research_state_file_invalid")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
+    if (
+        not isinstance(payload, dict)
+        or isinstance(payload.get("schema_version", 1), bool)
+        or payload.get("schema_version", 1) != 1
+        or not isinstance(payload.get("signals"), list)
+    ):
         raise ValueError("research_state_schema_invalid")
+    seen_ids: set[str] = set()
+    for row in payload["signals"]:
+        if not isinstance(row, dict):
+            raise ValueError("research_state_record_invalid")
+        signal_id = str(row.get("signal_id") or "").strip()
+        if not signal_id or signal_id in seen_ids:
+            raise ValueError("research_state_signal_id_missing_or_duplicate")
+        seen_ids.add(signal_id)
     payload.setdefault("schema_version", 1)
     payload.setdefault("stage_label", "STAGE_1_RESEARCH_UNCALIBRATED")
     return payload
 
 
 def save_research_state(path: Path, payload: dict[str, Any]) -> None:
-    """ذخیرهٔ اتمی داده‌های پژوهشی برای انتقال به شاخهٔ مستقل."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """ذخیرهٔ اتمی داده‌های پژوهشی با fsync و جایگزینی امن."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
+        raise ValueError("research_state_schema_invalid")
     payload["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
-    payload["signal_count"] = len(payload.get("signals", []))
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+    payload["signal_count"] = len(payload["signals"])
+    _atomic_write_json(path, payload)
 
 
 def main() -> int:
@@ -481,8 +535,8 @@ def main() -> int:
         for row in diagnostics
         if isinstance(row.get("lfs_score"), (int, float))
     ]
-    lfs_ge_030 = sum(score >= 0.30 for score in lfs_scores)
-    lfs_lt_030 = sum(score < 0.30 for score in lfs_scores)
+    lfs_ge_030 = sum(score >= LFS_V2_MIN_SCORE for score in lfs_scores)
+    lfs_lt_030 = sum(score < LFS_V2_MIN_SCORE for score in lfs_scores)
     histogram_bins = [
         (0.0, 0.1), (0.1, 0.2), (0.2, 0.3), (0.3, 0.4), (0.4, 0.5),
         (0.5, 0.6), (0.6, 0.7), (0.7, 0.8), (0.8, 0.9), (0.9, 1.0000001),
@@ -505,7 +559,7 @@ def main() -> int:
     symbols_with_3plus_confluence = set()
     for row in diagnostics:
         score = row.get("lfs_score")
-        if not isinstance(score, (int, float)) or float(score) < 0.30:
+        if not isinstance(score, (int, float)) or float(score) < LFS_V2_MIN_SCORE:
             continue
         options = row.get("direction_candidates") or [row]
         for option in options:
@@ -559,6 +613,8 @@ def main() -> int:
             "lfs_status": row.get("lfs_status"),
             "lfs_score": row.get("lfs_score"),
             "lfs_veto": row.get("lfs_veto"),
+            "lfs_threshold": row.get("lfs_threshold"),
+            "lfs_threshold_reason": row.get("lfs_threshold_reason"),
             "veto": row.get("veto"),
             "bias_4h": components.get("bias_4h"),
             "bias_1h": components.get("bias_1h"),
@@ -581,7 +637,8 @@ def main() -> int:
                 "symbol", "direction", "veto", "decision", "reason",
                 "higher_timeframe_bias", "components", "direction_candidates",
                 "points", "raw_score", "tier_score", "lfs_score",
-                "lfs_status", "lfs_coverage_pct", "zone_type",
+                "lfs_status", "lfs_coverage_pct", "lfs_veto",
+                "lfs_threshold", "lfs_threshold_reason", "zone_type",
                 "zone_distance_pct", "price_vs_kumo", "api_status",
             )
         }
@@ -634,7 +691,7 @@ def main() -> int:
         "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
         "spread": {"value": 0.0008, "source": "PROXY", "limit": None},
     }
-    REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write_json(REPORT_PATH, report)
 
     summary = {
         "universe": len(symbols),

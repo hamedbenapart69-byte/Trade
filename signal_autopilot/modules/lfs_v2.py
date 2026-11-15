@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 WEIGHTS = {"LFS1": 0.25, "LFS2": 0.20, "LFS3": 0.20, "LFS4": 0.20, "LFS5": 0.15}
 FUNDING_EXTREME_RATE = 0.0003  # 0.03%
+LFS_V2_MIN_SCORE = 0.30  # آستانهٔ ثابت Stage 1B؛ تغییر آن نیازمند نسخه و آزمون مستقل است.
 HOURS_90D = 90 * 24
 HOURS_30D = 30 * 24
 
@@ -15,6 +16,8 @@ def _clip(value: float, lower: float = 0.0, upper: float = 1.0) -> float:
 
 
 def _finite(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
     try:
         result = float(value)
     except (TypeError, ValueError):
@@ -44,8 +47,30 @@ def normalize_lfs1(current: float, p10: float, p90: float) -> float:
     return _clip((float(current) - float(p10)) / (float(p90) - float(p10)))
 
 
-def funding_extreme_score(funding_rate: float) -> float:
-    return _clip(abs(float(funding_rate)) / FUNDING_EXTREME_RATE)
+REFERENCE_FUNDING_INTERVAL_MS = 8 * 60 * 60 * 1000
+
+
+def normalize_funding_rate_8h(
+    funding_rate: float, funding_interval_ms: int | None
+) -> float | None:
+    """نرخ هر دوره را به معادل ۸ساعته تبدیل می‌کند؛ بازهٔ نامعتبر را نمی‌پذیرد."""
+    rate = _finite(funding_rate)
+    if isinstance(funding_interval_ms, bool) or not isinstance(funding_interval_ms, int):
+        return None
+    if funding_interval_ms <= 0 or rate is None:
+        return None
+    normalized = rate * REFERENCE_FUNDING_INTERVAL_MS / funding_interval_ms
+    return normalized if math.isfinite(normalized) else None
+
+
+def funding_extreme_score(
+    funding_rate: float, funding_interval_ms: int | None
+) -> float | None:
+    """امتیاز شدت Funding پس از نرمال‌سازی به دورهٔ مرجع ۸ساعته."""
+    normalized = normalize_funding_rate_8h(funding_rate, funding_interval_ms)
+    if normalized is None:
+        return None
+    return _clip(abs(normalized) / FUNDING_EXTREME_RATE)
 
 
 def empirical_percentile(current: float, history: Iterable[float]) -> float | None:
@@ -182,7 +207,35 @@ def _oi_points(rows: Any) -> list[tuple[int, float]]:
     if not isinstance(rows, (list, tuple)):
         return []
     points = [point for row in rows if (point := _parse_oi_point(row)) is not None]
-    return sorted({timestamp: value for timestamp, value in points}.items())
+    if not points:
+        return []
+    by_timestamp: dict[int, float] = {}
+    for timestamp, value in points:
+        # رکورد تکراری نباید با انتخاب «آخرین مقدار» بی‌صدا به دادهٔ معتبر تبدیل شود.
+        if timestamp in by_timestamp:
+            return []
+        by_timestamp[timestamp] = value
+    return sorted(by_timestamp.items())
+
+
+def _fresh_oi_points(rows: Any, as_of_time_ms: int, max_age_ms: int) -> list[tuple[int, float]]:
+    points = _oi_points(rows)
+    if not points:
+        return []
+    latest_ts = points[-1][0]
+    if latest_ts > as_of_time_ms + 5 * 60 * 1000:
+        return []
+    if as_of_time_ms - latest_ts > max_age_ms:
+        return []
+    return [(timestamp, value) for timestamp, value in points if timestamp <= as_of_time_ms + 5 * 60 * 1000]
+
+
+def _timestamp_is_fresh(timestamp_ms: Any, as_of_time_ms: int, max_age_ms: int) -> bool:
+    if isinstance(timestamp_ms, bool) or not isinstance(timestamp_ms, (int, float)):
+        return False
+    timestamp = int(timestamp_ms)
+    age = as_of_time_ms - timestamp
+    return -5 * 60 * 1000 <= age <= max_age_ms
 
 
 def _oi_change_24h(rows: Any) -> float | None:
@@ -222,14 +275,43 @@ def calculate_lfs_v2(
     oi_1h: Any = None,
     oi_1d: Any = None,
     long_short_ratio: float | None = None,
+    as_of_time_ms: int | None = None,
+    funding_timestamp_ms: int | None = None,
+    funding_received_at_ms: int | None = None,
+    funding_interval_ms: int | None = None,
+    long_short_ratio_timestamp_ms: int | None = None,
 ) -> dict[str, Any]:
     """محاسبهٔ پنج مؤلفه با وزن ثابت؛ وزن دادهٔ UNAVAILABLE حذف یا بازتوزیع نمی‌شود."""
     components: dict[str, dict[str, Any]] = {}
+    if as_of_time_ms is None:
+        oi_1h_points = _oi_points(oi_1h)
+        oi_1d_points = _oi_points(oi_1d)
+        funding_fresh = (
+            _finite(funding_rate) is not None
+            and normalize_funding_rate_8h(float(funding_rate), funding_interval_ms) is not None
+        )
+        ratio_fresh = _finite(long_short_ratio) is not None and float(long_short_ratio) > 0
+    else:
+        oi_1h_points = _fresh_oi_points(oi_1h, as_of_time_ms, 3 * 60 * 60 * 1000)
+        oi_1d_points = _fresh_oi_points(oi_1d, as_of_time_ms, 30 * 60 * 60 * 1000)
+        funding_fresh = (
+            _finite(funding_rate) is not None
+            and normalize_funding_rate_8h(float(funding_rate), funding_interval_ms) is not None
+            and _timestamp_is_fresh(funding_timestamp_ms, as_of_time_ms, 5 * 60 * 1000)
+            and _timestamp_is_fresh(funding_received_at_ms, as_of_time_ms, 5 * 60 * 1000)
+        )
+        ratio_fresh = (
+            _finite(long_short_ratio) is not None
+            and float(long_short_ratio) > 0
+            and _timestamp_is_fresh(long_short_ratio_timestamp_ms, as_of_time_ms, 2 * 60 * 60 * 1000)
+        )
+    oi_1h_effective = oi_1h_points
+    oi_1d_effective = oi_1d_points
     api_status = {
-        "funding": funding_rate is not None,
-        "oi_1h": bool(_oi_points(oi_1h)),
-        "oi_1d": bool(_oi_points(oi_1d)),
-        "long_short_ratio": long_short_ratio is not None,
+        "funding": funding_fresh,
+        "oi_1h": bool(oi_1h_points),
+        "oi_1d": bool(oi_1d_points),
+        "long_short_ratio": ratio_fresh,
     }
 
     # LFS1: توزیع تاریخی و مقدار جاری هر دو از کندل 1H محاسبه می‌شوند.
@@ -252,26 +334,32 @@ def calculate_lfs_v2(
         )
 
     # LFS2: Funding جاری OKX؛ نرخ ۰.۰۳٪ امتیاز کامل می‌گیرد.
-    if funding_rate is not None and _finite(funding_rate) is not None:
+    if funding_fresh:
         funding = float(funding_rate)
+        normalized_funding = normalize_funding_rate_8h(funding, funding_interval_ms)
         components["LFS2"] = _component(
-            funding_extreme_score(funding), WEIGHTS["LFS2"], "REAL", funding,
+            funding_extreme_score(funding, funding_interval_ms), WEIGHTS["LFS2"], "REAL", funding,
             threshold=FUNDING_EXTREME_RATE,
+            score_method="FIXED_8H_NORMALIZED_REFERENCE_NOT_HISTORICAL_PERCENTILE",
+            normalized_8h_rate=normalized_funding,
+            funding_interval_ms=funding_interval_ms,
+            source_timestamp_ms=funding_timestamp_ms,
+            received_timestamp_ms=funding_received_at_ms,
         )
     else:
         funding = None
         components["LFS2"] = _component(None, WEIGHTS["LFS2"], "UNAVAILABLE")
 
     # LFS3: نسبت لانگ/شورت؛ در نبود آن، رتبهٔ زمانی OI با علامت Funding.
-    if long_short_ratio is not None and _finite(long_short_ratio) is not None and float(long_short_ratio) > 0:
+    if ratio_fresh:
         ratio = float(long_short_ratio)
         ratio_score = _clip((ratio - 1.0) / 0.5)
         components["LFS3"] = _component(
             ratio_score, WEIGHTS["LFS3"], "PROXY", ratio, source="OKX_LONG_SHORT_RATIO",
         )
     elif funding is not None:
-        current_oi_change = _oi_change_24h(oi_1h)
-        history_oi_changes = _daily_oi_changes(oi_1d)
+        current_oi_change = _oi_change_24h(oi_1h_effective)
+        history_oi_changes = _daily_oi_changes(oi_1d_effective)
         rank = (
             rank_time_series(current_oi_change, history_oi_changes)
             if current_oi_change is not None and len(history_oi_changes) >= 30 else None
@@ -308,7 +396,7 @@ def calculate_lfs_v2(
         )
 
     # LFS5: افت/تغییر مطلق OI در ۲۴ ساعت؛ ۱۰٪ امتیاز کامل.
-    oi_change = _oi_change_24h(oi_1h)
+    oi_change = _oi_change_24h(oi_1h_effective)
     if oi_change is not None:
         components["LFS5"] = _component(
             oi_drop_score(oi_change), WEIGHTS["LFS5"], "REAL", oi_change,
@@ -330,7 +418,7 @@ def calculate_lfs_v2(
         status = "INSUFFICIENT"
     if status == "INSUFFICIENT":
         veto = "LFS_INSUFFICIENT_COVERAGE"
-    elif score < 0.30:
+    elif score < LFS_V2_MIN_SCORE:
         veto = "LFS_BELOW_THRESHOLD"
     else:
         veto = "PASS"
@@ -344,7 +432,7 @@ def calculate_lfs_v2(
         "lfs_components": components,
         "lfs_veto": veto,
         "api_status": api_status,
-        "lfs_threshold": 0.30,
+        "lfs_threshold": LFS_V2_MIN_SCORE,
         "data_windows": {
             "lfs1_price_ohlcv": "1H",
             "lfs1_history_observations": len(lfs1_history),
@@ -355,6 +443,20 @@ def calculate_lfs_v2(
             "lfs3_oi_history": "1D",
             "lfs3_oi_current_change": "24H",
             "lfs5_oi_change": "24H_from_1H",
+            "derivatives_as_of_time_ms": as_of_time_ms,
+            "funding_timestamp_ms": funding_timestamp_ms,
+            "funding_received_at_ms": funding_received_at_ms,
+            "funding_interval_ms": funding_interval_ms,
+            "funding_normalization": "8H_EQUIVALENT",
+            "long_short_ratio_timestamp_ms": long_short_ratio_timestamp_ms,
+            "oi_1h_latest_timestamp_ms": oi_1h_points[-1][0] if oi_1h_points else None,
+            "oi_1d_latest_timestamp_ms": oi_1d_points[-1][0] if oi_1d_points else None,
+            "freshness_limits_ms": {
+                "funding": 5 * 60 * 1000,
+                "long_short_ratio": 2 * 60 * 60 * 1000,
+                "oi_1h": 3 * 60 * 60 * 1000,
+                "oi_1d": 30 * 60 * 60 * 1000,
+            },
         },
     }
 
@@ -362,4 +464,4 @@ def calculate_lfs_v2(
 def get_lfs_veto(lfs_score: float, coverage_pct: float = 100.0) -> str:
     if float(coverage_pct) < 40.0:
         return "LFS_INSUFFICIENT_COVERAGE"
-    return "PASS" if float(lfs_score) >= 0.30 else "LFS_BELOW_THRESHOLD"
+    return "PASS" if float(lfs_score) >= LFS_V2_MIN_SCORE else "LFS_BELOW_THRESHOLD"

@@ -7,16 +7,21 @@ import json
 import math
 import os
 import re
-import sys
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import Any
 
 SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
 MAX_REPORT_BYTES = 2_000_000
 MAX_MESSAGE_LENGTH = 3900
+MAX_REPORT_AGE = timedelta(hours=4)
+MAX_FUTURE_SKEW = timedelta(minutes=5)
+MAX_CLOSED_CANDLE_AGE = timedelta(minutes=30)
+CANDLE_INTERVAL = timedelta(minutes=15)
+EXPECTED_UNIVERSE_SIZE = 27
 
 
 def finite_number(value: Any) -> float | None:
@@ -26,7 +31,30 @@ def finite_number(value: Any) -> float | None:
     return result if math.isfinite(result) else None
 
 
-def validate_report(path: Path) -> dict[str, Any]:
+def load_expected_universe(path: Path) -> set[str]:
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("UNIVERSE_NOT_REGULAR_FILE")
+    if path.stat().st_size > 100_000:
+        raise ValueError("UNIVERSE_TOO_LARGE")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("UNIVERSE_ROOT_NOT_OBJECT")
+    symbols = payload.get("symbols")
+    if not isinstance(symbols, list) or len(symbols) != EXPECTED_UNIVERSE_SIZE:
+        raise ValueError("UNIVERSE_DEFINITION_INVALID")
+    if any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in symbols):
+        raise ValueError("UNIVERSE_SYMBOL_INVALID")
+    expected = set(symbols)
+    if len(expected) != EXPECTED_UNIVERSE_SIZE:
+        raise ValueError("UNIVERSE_SYMBOL_DUPLICATE")
+    return expected
+
+
+def validate_report(
+    path: Path,
+    universe_path: Path,
+    now: datetime | None = None,
+) -> dict[str, Any]:
     if path.is_symlink() or not path.is_file():
         raise ValueError("REPORT_NOT_REGULAR_FILE")
     if path.stat().st_size > MAX_REPORT_BYTES:
@@ -40,11 +68,16 @@ def validate_report(path: Path) -> dict[str, Any]:
         raise ValueError("UNEXPECTED_CALIBRATION_STATE")
     if payload.get("decision_policy") != "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW":
         raise ValueError("UNEXPECTED_DECISION_POLICY")
-    if payload.get("universe_count") != 27 or payload.get("symbols_reported") != 27:
-        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+
+    expected_symbols = load_expected_universe(universe_path)
     rows = payload.get("symbols")
-    if not isinstance(rows, list) or len(rows) != 27:
+    if payload.get("universe_count") != len(expected_symbols):
+        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+    if payload.get("symbols_reported") != len(expected_symbols):
+        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+    if not isinstance(rows, list) or len(rows) != len(expected_symbols):
         raise ValueError("SYMBOL_ROWS_INVALID")
+
     seen: set[str] = set()
     for row in rows:
         if not isinstance(row, dict):
@@ -53,68 +86,255 @@ def validate_report(path: Path) -> dict[str, Any]:
         if not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) or symbol in seen:
             raise ValueError("SYMBOL_ID_INVALID_OR_DUPLICATE")
         seen.add(symbol)
+    if seen != expected_symbols:
+        missing = sorted(expected_symbols - seen)
+        unexpected = sorted(seen - expected_symbols)
+        raise ValueError(
+            f"UNIVERSE_SYMBOL_SET_MISMATCH:missing={','.join(missing)}:"
+            f"unexpected={','.join(unexpected)}"
+        )
+
     generated = payload.get("generated_at_utc")
     if not isinstance(generated, str):
         raise ValueError("REPORT_TIMESTAMP_MISSING")
-    parsed = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+    try:
+        parsed = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("REPORT_TIMESTAMP_INVALID") from exc
     if parsed.tzinfo is None:
         raise ValueError("REPORT_TIMESTAMP_NOT_TIMEZONE_AWARE")
+    reference_now = now or datetime.now(timezone.utc)
+    if reference_now.tzinfo is None:
+        raise ValueError("VALIDATION_CLOCK_NOT_TIMEZONE_AWARE")
+    parsed = parsed.astimezone(timezone.utc)
+    age = reference_now.astimezone(timezone.utc) - parsed
+    if age > MAX_REPORT_AGE:
+        raise ValueError("REPORT_STALE")
+    if age < -MAX_FUTURE_SKEW:
+        raise ValueError("REPORT_TIMESTAMP_TOO_FAR_IN_FUTURE")
+
+    watchlist_rows = [
+        row for row in rows
+        if row.get("mode") == "PRODUCTION" and row.get("decision") == "WATCHLIST"
+    ]
+    if payload.get("production_watchlist_count") != len(watchlist_rows):
+        raise ValueError("PRODUCTION_WATCHLIST_COUNT_MISMATCH")
+    forbidden_decisions = {"BUY_NOW", "SELL_NOW", "CONDITIONAL_BUY", "CONDITIONAL_SELL"}
+    if any(
+        row.get("mode") == "PRODUCTION" and row.get("decision") in forbidden_decisions
+        for row in rows
+    ):
+        raise ValueError("PRODUCTION_EXECUTABLE_DECISION_FORBIDDEN")
+    for row in watchlist_rows:
+        candle_raw = row.get("last_closed_candle_utc")
+        if not isinstance(candle_raw, str):
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_MISSING")
+        try:
+            candle_open = datetime.fromisoformat(candle_raw.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_INVALID") from exc
+        if candle_open.tzinfo is None:
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_NOT_TIMEZONE_AWARE")
+        candle_close = candle_open.astimezone(timezone.utc) + CANDLE_INTERVAL
+        if candle_close > parsed:
+            raise ValueError("WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME")
+        if parsed - candle_close > MAX_CLOSED_CANDLE_AGE:
+            raise ValueError("WATCHLIST_CANDLE_STALE")
     return payload
+
+
+def validate_dashboard_url(value: str) -> str:
+    url = value.strip()
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("DASHBOARD_URL_UNAVAILABLE_OR_INVALID")
+    return url.rstrip("/")
 
 
 def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     for row in payload["symbols"]:
-        if row.get("decision") != "WATCHLIST" or row.get("veto") != "PASS":
+        if row.get("mode") != "PRODUCTION":
             continue
-        if row.get("direction") not in {"BUY", "SELL"}:
+        if row.get("decision") != "WATCHLIST":
             continue
+        if row.get("veto") != "PASS":
+            raise ValueError("WATCHLIST_VETO_NOT_PASS")
+        direction = row.get("direction")
+        if direction not in {"BUY", "SELL"}:
+            raise ValueError("WATCHLIST_DIRECTION_INVALID")
         entry = finite_number(row.get("entry"))
         stop = finite_number(row.get("stop_loss"))
-        target = finite_number(row.get("take_profit"))
+        target1 = finite_number(row.get("take_profit_1"))
+        target2 = finite_number(row.get("take_profit"))
         rr = finite_number(row.get("rr"))
-        if entry is None or stop is None or target is None or rr is None or min(entry, stop, target) <= 0 or rr <= 0:
-            continue
+        if any(value is None for value in (entry, stop, target1, target2, rr)) or min(entry, stop, target1, target2) <= 0 or rr <= 0:
+            raise ValueError("WATCHLIST_LEVELS_INVALID")
+        risk, reward1, reward2 = (
+            (entry - stop, target1 - entry, target2 - entry)
+            if direction == "BUY"
+            else (stop - entry, entry - target1, entry - target2)
+        )
+        if risk <= 0 or reward1 <= 0 or reward2 <= reward1:
+            raise ValueError("WATCHLIST_LEVEL_DIRECTION_INVALID")
+        computed_rr = reward2 / risk
+        if not math.isclose(rr, computed_rr, rel_tol=0.10, abs_tol=0.05):
+            raise ValueError("WATCHLIST_RR_MISMATCH")
+        hypothesis = row.get("hypothesis")
+        falsification = row.get("falsification")
+        if not isinstance(hypothesis, str) or hypothesis.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
+            raise ValueError("WATCHLIST_HYPOTHESIS_MISSING")
+        if not isinstance(falsification, str) or falsification.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
+            raise ValueError("WATCHLIST_FALSIFICATION_MISSING")
+        if len(hypothesis) > 700 or len(falsification) > 700:
+            raise ValueError("WATCHLIST_THESIS_TOO_LONG")
+        cvd = row.get("cvd")
+        cvd = cvd if isinstance(cvd, dict) else {}
+        lfs_score = finite_number(row.get("lfs_score"))
+        lfs_coverage = finite_number(row.get("lfs_coverage_pct"))
+        lfs_threshold = finite_number(row.get("lfs_threshold"))
+        if lfs_score is None:
+            raise ValueError("WATCHLIST_LFS_SCORE_INVALID")
+        if not 0 <= lfs_score <= 1:
+            raise ValueError("WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
+        if lfs_coverage is None:
+            raise ValueError("WATCHLIST_LFS_COVERAGE_INVALID")
+        if not 0 <= lfs_coverage <= 100:
+            raise ValueError("WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
+        if lfs_threshold is None or not 0 <= lfs_threshold <= 1:
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_INVALID")
+        if row.get("lfs_veto") != "PASS" or lfs_score < lfs_threshold:
+            raise ValueError("WATCHLIST_LFS_GATE_MISMATCH")
+        threshold_reason = row.get("lfs_threshold_reason")
+        if not isinstance(threshold_reason, str) or not threshold_reason.strip():
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISSING")
+        expected_threshold = (
+            0.30 if cvd.get("source") == "AGGTRADES_REAL" and row.get("lfs_status") == "FULL"
+            else 0.70
+        )
+        expected_reason = (
+            "REAL_CVD_FULL_LFS"
+            if expected_threshold == 0.30 else "PROXY_OR_PARTIAL_DATA"
+        )
+        if not math.isclose(lfs_threshold, expected_threshold, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
+        if threshold_reason != expected_reason:
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISMATCH")
+        threshold_method = row.get("lfs_threshold_method")
+        if threshold_method != "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D":
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED")
         candidates.append({
             "symbol": row["symbol"],
-            "direction": row["direction"],
+            "direction": direction,
             "entry": entry,
             "stop": stop,
-            "target": target,
+            "target1": target1,
+            "target2": target2,
             "rr": rr,
+            "hypothesis": hypothesis.strip(),
+            "falsification": falsification.strip(),
+            "cvd_source": str(cvd.get("source") or "UNAVAILABLE"),
+            "lfs_score": lfs_score,
+            "lfs_status": str(row.get("lfs_status") or "UNAVAILABLE"),
+            "lfs_coverage_pct": lfs_coverage,
+            "lfs_veto": "PASS",
+            "lfs_threshold": lfs_threshold,
+            "lfs_threshold_reason": threshold_reason,
+            "lfs_threshold_method": threshold_method,
         })
     return candidates
 
 
-def build_message(payload: dict[str, Any]) -> str:
+def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
+    dashboard = validate_dashboard_url(dashboard_url)
     candidates = candidate_rows(payload)
     timestamp = payload["generated_at_utc"].replace("T", " ").replace("+00:00", " UTC").replace("Z", " UTC")
-    lines = [
+    header = [
         "گزارش اسکن Stage 1B | LRT-15m",
         f"زمان تولید: {timestamp}",
         "پوشش: 27/27 نماد",
-        "وضعیت کالیبراسیون: NOT_CALIBRATED",
+        "کالیبراسیون: NOT_CALIBRATED",
+        "EV: NOT_CALCULATED",
+        "Data Gate: NOT_REPORTED",
         "سیاست: WATCHLIST فقط؛ BUY_NOW/SELL_NOW صادر نمی‌شود.",
         f"نامزدهای زیرنظر: {len(candidates)}",
+        f"داشبورد: {dashboard}",
     ]
-    for item in candidates:
-        lines.append(
-            f"{item['symbol']} | {item['direction']} | "
-            f"Entry {item['entry']:.10g} | SL {item['stop']:.10g} | "
-            f"TP2 {item['target']:.10g} | R:R {item['rr']:.3g}"
-        )
     if not candidates:
-        lines.append("هیچ موقعیت WATCHLIST واجد شرایطی در این اسکن ثبت نشد.")
-    lines.append("این گزارش اعلان پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.")
-    message = "\n".join(lines)
-    if len(message) > MAX_MESSAGE_LENGTH:
-        raise ValueError("TELEGRAM_MESSAGE_TOO_LONG")
-    return message
+        return ["\n".join(header + [
+            "هیچ موقعیت WATCHLIST واجد شرایطی در این اسکن ثبت نشد.",
+            "این گزارش اعلان پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.",
+        ])]
+
+    messages: list[str] = []
+    current = list(header)
+    for item in candidates:
+        block = "\n".join([
+            f"{item['symbol']} | {item['direction']}",
+            f"Entry: {item['entry']:.10g} | SL: {item['stop']:.10g}",
+            f"TP1: {item['target1']:.10g} | TP2: {item['target2']:.10g} | R:R(TP2): {item['rr']:.3g}",
+            "Confidence: NOT_CALIBRATED",
+            f"CVD: {item['cvd_source']}",
+            f"LFS: {item['lfs_score']:.3f} | status={item['lfs_status']} | coverage={item['lfs_coverage_pct']:.1f}% | gate={item['lfs_veto']} | threshold={item['lfs_threshold']:.2f} ({item['lfs_threshold_reason']})",
+            f"LFS threshold method: {item['lfs_threshold_method']}",
+            f"Hypothesis: {item['hypothesis']}",
+            f"Falsification: {item['falsification']}",
+        ])
+        if len("\n".join(current + [block])) > MAX_MESSAGE_LENGTH:
+            messages.append("\n".join(current))
+            current = [
+                "گزارش اسکن Stage 1B | LRT-15m (ادامه)",
+                f"زمان تولید: {timestamp}",
+                f"داشبورد: {dashboard}",
+            ]
+        if len("\n".join(current + [block])) > MAX_MESSAGE_LENGTH:
+            raise ValueError("TELEGRAM_CANDIDATE_BLOCK_TOO_LONG")
+        current.append(block)
+    current.append("این گزارش WATCHLIST پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.")
+    if len("\n".join(current)) > MAX_MESSAGE_LENGTH:
+        footer = current.pop()
+        messages.append("\n".join(current))
+        messages.append("\n".join([
+            "گزارش اسکن Stage 1B | LRT-15m (پایان)",
+            f"داشبورد: {dashboard}",
+            footer,
+        ]))
+    else:
+        messages.append("\n".join(current))
+    return messages
+
+
+def validate_telegram_config(
+    token: str,
+    chat_id: str,
+    expected_channel_title: str,
+) -> tuple[str, str, str]:
+    token = token.strip()
+    chat_id = chat_id.strip()
+    expected_title = expected_channel_title.strip()
+    if not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]+", token):
+        raise ValueError("TELEGRAM_TOKEN_INVALID_OR_MISSING")
+    if not re.fullmatch(r"-100[0-9]+", chat_id):
+        raise ValueError("TELEGRAM_CHAT_ID_INVALID_OR_MISSING")
+    if not expected_title:
+        raise ValueError("TELEGRAM_EXPECTED_CHANNEL_TITLE_MISSING")
+    return token, chat_id, expected_title
+
+
+def verify_telegram_destination() -> None:
+    import sys
+    package_root = str(Path(__file__).resolve().parents[1])
+    if package_root not in sys.path:
+        sys.path.insert(0, package_root)
+    from telegram_bot import verify_telegram_connection
+    if not verify_telegram_connection():
+        raise RuntimeError("TELEGRAM_DESTINATION_PREFLIGHT_FAILED")
 
 
 def send_message(token: str, chat_id: str, message: str) -> None:
-    if not token or not chat_id:
-        raise RuntimeError("TELEGRAM_CREDENTIALS_MISSING")
+    token, chat_id, _ = validate_telegram_config(
+        token, chat_id, os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", "")
+    )
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     body = json.dumps({
         "chat_id": chat_id,
@@ -136,23 +356,61 @@ def send_message(token: str, chat_id: str, message: str) -> None:
         raise RuntimeError(f"TELEGRAM_NETWORK_ERROR:{type(exc.reason).__name__}") from None
     if not isinstance(result, dict) or result.get("ok") is not True:
         raise RuntimeError("TELEGRAM_API_REJECTED_MESSAGE")
-    message_id = (result.get("result") or {}).get("message_id")
-    if not isinstance(message_id, int):
-        raise RuntimeError("TELEGRAM_MESSAGE_ID_MISSING")
-    print(f"TELEGRAM_DELIVERY=SUCCESS message_id={message_id}")
+    message_result = result.get("result")
+    if not isinstance(message_result, dict):
+        raise RuntimeError("TELEGRAM_MESSAGE_RESULT_INVALID")
+    message_id = message_result.get("message_id")
+    chat = message_result.get("chat")
+    if type(message_id) is not int or not isinstance(chat, dict):
+        raise RuntimeError("TELEGRAM_MESSAGE_RESULT_INVALID")
+    configured_chat = chat_id.strip()
+    if configured_chat.startswith("@"):
+        returned_username = str(chat.get("username") or "").lower()
+        if returned_username != configured_chat[1:].lower():
+            raise RuntimeError("TELEGRAM_DESTINATION_MISMATCH")
+    elif str(chat.get("id")) != configured_chat:
+        raise RuntimeError("TELEGRAM_DESTINATION_MISMATCH")
+    if chat.get("type") not in {"private", "group", "supergroup", "channel"}:
+        raise RuntimeError("TELEGRAM_CHAT_TYPE_INVALID")
+    print(f"TELEGRAM_DELIVERY=SUCCESS message_id={message_id} chat_id={chat.get('id')}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--universe", type=Path)
+    parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument("--verify-destination-only", action="store_true")
     args = parser.parse_args()
-    payload = validate_report(args.report)
-    message = build_message(payload)
-    send_message(
+
+    if args.verify_destination_only:
+        token, chat_id, _ = validate_telegram_config(
+            os.environ.get("TELEGRAM_TOKEN", ""),
+            os.environ.get("TELEGRAM_CHAT_ID", ""),
+            os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
+        )
+        verify_telegram_destination()
+        print("TELEGRAM_DESTINATION=VERIFIED")
+        return 0
+
+    if args.report is None or args.universe is None:
+        parser.error("--report and --universe are required unless --verify-destination-only is used")
+
+    payload = validate_report(args.report, args.universe)
+    dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
+    messages = build_messages(payload, dashboard_url)
+    # اعتبارسنجی محلی باید مستقل از Secret و شبکهٔ تلگرام باشد.
+    if args.validate_only:
+        print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
+        return 0
+    token, chat_id, _ = validate_telegram_config(
         os.environ.get("TELEGRAM_TOKEN", ""),
         os.environ.get("TELEGRAM_CHAT_ID", ""),
-        message,
+        os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
     )
+    verify_telegram_destination()
+    for message in messages:
+        send_message(token, chat_id, message)
     return 0
 
 

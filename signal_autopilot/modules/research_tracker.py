@@ -1,6 +1,6 @@
 """ردیاب نتایج Stage 1؛ OHLCV عمومی، ورود در Open کندل بعد و بدون سفارش."""
 from __future__ import annotations
-import argparse, json, logging
+import argparse, json, logging, math, os, tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -11,7 +11,7 @@ PRODUCTION_MODE_THRESHOLD = 80
 RESEARCH_MODE_THRESHOLD = 60
 INTERVAL_MS = 900_000
 MAX_HOLD = timedelta(hours=48)
-PROVIDERS = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
+PROVIDERS = ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget")
 TERMINAL = {"TP_HIT", "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED", "ENTRY_INVALIDATED_GAP"}
 
 
@@ -36,6 +36,7 @@ def _market_symbol(exchange: Any, symbol: str) -> str:
 def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200):
     """دریافت کندل بسته‌شده از زنجیرهٔ عمومی OKX سپس fallback."""
     errors = []
+    empty_providers: list[str] = []
     for provider in PROVIDERS:
         exchange = None
         try:
@@ -48,26 +49,46 @@ def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200
             raw = exchange.fetch_ohlcv(market, timeframe="15m", since=int(since_ms), limit=int(limit))
             rows = []
             for c in raw or []:
-                if len(c) >= 6 and int(c[0]) >= since_ms and int(c[0]) + INTERVAL_MS <= now_ms:
-                    rows.append({
-                        "open_time": int(c[0]), "open": float(c[1]), "high": float(c[2]),
-                        "low": float(c[3]), "close": float(c[4]), "volume": float(c[5]),
-                    })
+                if not isinstance(c, (list, tuple)) or len(c) < 6:
+                    raise ValueError("INVALID_CANDLE_SCHEMA")
+                open_time = int(c[0])
+                if open_time < since_ms or open_time + INTERVAL_MS > now_ms:
+                    continue
+                if open_time % INTERVAL_MS:
+                    raise ValueError("INVALID_CANDLE_TIMESTAMP_ALIGNMENT")
+                bar = {
+                    "open_time": open_time, "open": float(c[1]), "high": float(c[2]),
+                    "low": float(c[3]), "close": float(c[4]), "volume": float(c[5]),
+                }
+                prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+                if (
+                    not all(math.isfinite(value) for value in prices)
+                    or min(bar["open"], bar["high"], bar["low"], bar["close"]) <= 0
+                    or bar["volume"] < 0
+                    or bar["high"] < max(bar["open"], bar["close"])
+                    or bar["low"] > min(bar["open"], bar["close"])
+                    or bar["high"] < bar["low"]
+                ):
+                    raise ValueError("INVALID_OHLCV_VALUES")
+                rows.append(bar)
             rows.sort(key=lambda x: x["open_time"])
-            if rows and rows[0]["open_time"] == int(since_ms):
+            if not rows:
+                empty_providers.append(provider)
+                continue
+            if rows[0]["open_time"] == int(since_ms):
                 if any(rows[i]["open_time"] - rows[i - 1]["open_time"] != INTERVAL_MS for i in range(1, len(rows))):
                     errors.append(f"{provider}:CANDLE_GAP_DETECTED")
                     continue
                 return rows, f"{provider.upper()}_PUBLIC_OHLCV"
-            if rows:
-                errors.append(f"{provider}:FIRST_REQUIRED_CANDLE_MISSING")
-            errors.append(f"{provider}:NO_CLOSED_CANDLES")
+            errors.append(f"{provider}:FIRST_REQUIRED_CANDLE_MISSING")
         except Exception as exc:
             errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:100]}")
         finally:
             if exchange is not None:
                 try: exchange.close()
                 except Exception: pass
+    if empty_providers and not errors:
+        return [], "PUBLIC_OHLCV_NO_CLOSED_CANDLES"
     raise RuntimeError("PUBLIC_OHLCV_UNAVAILABLE|" + "|".join(errors))
 
 
@@ -280,27 +301,61 @@ def update_one(signal: dict[str, Any], outcome: dict[str, Any] | None,
 
 def update_outcomes(signals_path: Path, outcomes_path: Path, now: datetime | None = None,
                     fetcher: Callable = fetch_public_ohlcv) -> dict[str, Any]:
-    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise ValueError("TRACKER_NOW_TIMEZONE_REQUIRED")
+    now = now.astimezone(timezone.utc)
     source = json.loads(signals_path.read_text(encoding="utf-8"))
     if not isinstance(source, dict) or not isinstance(source.get("signals"), list):
         raise ValueError("INVALID_RESEARCH_SIGNALS_SCHEMA")
+
+    source_rows = source["signals"]
+    source_ids: list[str] = []
+    for signal in source_rows:
+        if not isinstance(signal, dict) or not str(signal.get("signal_id") or "").strip():
+            raise ValueError("INVALID_RESEARCH_SIGNAL_RECORD")
+        source_ids.append(str(signal["signal_id"]).strip())
+    if len(source_ids) != len(set(source_ids)):
+        raise ValueError("DUPLICATE_RESEARCH_SIGNAL_ID")
+
     previous = json.loads(outcomes_path.read_text(encoding="utf-8")) if outcomes_path.exists() else {"outcomes": []}
-    existing = {x["signal_id"]: x for x in previous.get("outcomes", [])
-                if isinstance(x, dict) and x.get("signal_id")}
-    rows = [update_one(s, existing.get(s.get("signal_id")), fetcher, now)
-            for s in source["signals"] if s.get("signal_id")]
+    if not isinstance(previous, dict) or not isinstance(previous.get("outcomes"), list):
+        raise ValueError("INVALID_RESEARCH_OUTCOME_STATE_SCHEMA")
+    previous_rows = previous["outcomes"]
+    if any(not isinstance(row, dict) or not str(row.get("signal_id") or "").strip() for row in previous_rows):
+        raise ValueError("INVALID_RESEARCH_OUTCOME_RECORD")
+    previous_ids = [str(row["signal_id"]).strip() for row in previous_rows]
+    if len(previous_ids) != len(set(previous_ids)):
+        raise ValueError("DUPLICATE_RESEARCH_OUTCOME_ID")
+    if set(previous_ids) - set(source_ids):
+        raise ValueError("RESEARCH_SIGNAL_HISTORY_REGRESSION")
+
+    existing = {row["signal_id"]: row for row in previous_rows}
+    rows = [update_one(signal, existing.get(signal["signal_id"]), fetcher, now)
+            for signal in source_rows]
     payload = {
         "schema_version": 1, "updated_at_utc": now.isoformat(),
         "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
-        "source_signals_count": len(source["signals"]), "outcomes_count": len(rows),
+        "source_signals_count": len(source_rows), "outcomes_count": len(rows),
         "outcomes": rows,
     }
     outcomes_path.parent.mkdir(parents=True, exist_ok=True)
-    outcomes_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{outcomes_path.name}.", suffix=".tmp", dir=str(outcomes_path.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, outcomes_path)
+    finally:
+        if os.path.exists(temporary_name):
+            os.unlink(temporary_name)
     counts = {}
     for row in rows: counts[row["status"]] = counts.get(row["status"], 0) + 1
     return {"counts": counts, "outcomes": rows, "path": str(outcomes_path)}
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()

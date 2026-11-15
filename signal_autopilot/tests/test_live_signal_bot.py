@@ -1,4 +1,6 @@
+import json
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -6,7 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from main import calculate_confluence, tenkan_kijun_cross, process_symbol, reason_distribution
+from main import (
+    _atomic_write_json, calculate_confluence, tenkan_kijun_cross,
+    process_symbol, reason_distribution, load_research_state, save_research_state,
+)
 from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
@@ -19,6 +24,77 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LiveSignalBotTests(unittest.TestCase):
+    def test_okx_funding_source_timestamp_is_not_replaced_by_receive_time(self):
+        class FakeResponse:
+            def __init__(self, data):
+                self.payload = {"code": "0", "data": data}
+            def raise_for_status(self):
+                return None
+            def json(self):
+                return self.payload
+
+        source_ts = 1_800_000_000_000
+        settlement_ts = source_ts + 8 * 60 * 60 * 1000
+        next_settlement_ts = settlement_ts + 4 * 60 * 60 * 1000
+        responses = [
+            FakeResponse([{
+                "fundingRate": "0.0001",
+                "ts": str(source_ts),
+                "fundingTime": str(settlement_ts),
+                "nextFundingTime": str(next_settlement_ts),
+            }]),
+            FakeResponse([]),
+            FakeResponse([]),
+            FakeResponse([[source_ts, "1.2"]]),
+        ]
+
+        class FakeClient:
+            def get(self, *args, **kwargs):
+                return responses.pop(0)
+
+        fetcher = LiveOHLCVFetcher.__new__(LiveOHLCVFetcher)
+        fetcher.client = FakeClient()
+        metrics = fetcher._okx_metrics("BTCUSDT", source_ts)
+
+        self.assertEqual(metrics["funding_timestamp_ms"], source_ts)
+        self.assertEqual(metrics["funding_settlement_time_ms"], settlement_ts)
+        self.assertEqual(metrics["funding_next_settlement_time_ms"], next_settlement_ts)
+        self.assertEqual(metrics["funding_interval_ms"], 4 * 60 * 60 * 1000)
+        self.assertIsInstance(metrics["funding_received_at_ms"], int)
+        self.assertNotEqual(metrics["funding_received_at_ms"], source_ts)
+        self.assertEqual(metrics["long_short_ratio_timestamp_ms"], source_ts)
+
+    def test_report_json_writer_is_atomic_and_preserves_previous_file_on_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "stage1_lrt_report.json"
+            _atomic_write_json(path, {"version": 1})
+            with self.assertRaises(TypeError):
+                _atomic_write_json(path, {"invalid": object()})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 1})
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+            _atomic_write_json(path, {"version": 2})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 2})
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
+    def test_research_state_rejects_duplicate_signal_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "research_signals.json"
+            row = {"signal_id": "duplicate-1"}
+            path.write_text(json.dumps({"schema_version": 1, "signals": [row, row]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "research_state_signal_id_missing_or_duplicate"):
+                load_research_state(path)
+
+    def test_research_state_persistence_is_atomic_and_counts_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "research_signals.json"
+            payload = {"schema_version": 1, "signals": [{"signal_id": "r-1"}]}
+            save_research_state(path, payload)
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["signal_count"], 1)
+            self.assertEqual(saved["signals"][0]["signal_id"], "r-1")
+            self.assertTrue(saved["updated_at_utc"])
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
     def test_public_market_timeout_returns_unavailable_without_crashing(self):
         class FailingFetcher:
             @staticmethod
@@ -96,6 +172,53 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(diagnostic["stop_loss"], 98.0)
         self.assertEqual(diagnostic["take_profit"], 104.0)
         self.assertEqual(diagnostic["rr"], 2.0)
+    def test_freshness_guard_rejects_stale_and_future_closed_candles(self):
+        interval = 900_000
+        now_ms = 1_800_000_000_000
+        expected = (now_ms // interval) * interval - interval
+        stale = [{"open_time": expected - 2 * interval}]
+        future = [{"open_time": expected + interval}]
+        with self.assertRaisesRegex(ValueError, "15M_CANDLES_STALE"):
+            LiveOHLCVFetcher._assert_fresh_closed_bars(stale, interval, now_ms, "15M")
+        with self.assertRaisesRegex(ValueError, "15M_CANDLE_FUTURE_DATED"):
+            LiveOHLCVFetcher._assert_fresh_closed_bars(future, interval, now_ms, "15M")
+
+    def test_dual_timeframe_fallback_uses_one_exchange_for_both_frames(self):
+        fetcher = LiveOHLCVFetcher.__new__(LiveOHLCVFetcher)
+        fetcher.fetch_stats = True
+        fetcher.stats_limit = 2500
+        fetcher.limit = 500
+        fetcher.provider_names = ("okx", "bybit")
+        calls = []
+
+        def fake_ccxt(symbol, timeframe, limit, now_ms, providers=None):
+            calls.append((timeframe, providers))
+            if providers == ("okx",):
+                raise RuntimeError("okx_public_data_unavailable")
+            return [{"open_time": 0, "data_source": "CCXT_BYBIT_PUBLIC_OHLCV"}]
+
+        fetcher._okx_candles = lambda symbol, timeframe, limit, now_ms: (_ for _ in ()).throw(
+            RuntimeError("okx_rest_unavailable")
+        )
+        fetcher._ccxt_timeframe = fake_ccxt
+        metrics_calls = []
+        fetcher._okx_metrics = lambda symbol, now_ms: metrics_calls.append((symbol, now_ms)) or {
+            "funding_rate": None, "oi_1h": None, "oi_1d": None,
+            "long_short_ratio": None,
+        }
+        bundle = fetcher.fetch_symbol("BTCUSDT")
+
+        self.assertEqual(calls, [
+            ("1h", ("okx",)),
+            ("1h", ("bybit",)),
+            ("15m", ("bybit",)),
+        ])
+        self.assertEqual(bundle.stats_1h[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
+        self.assertEqual(metrics_calls, [])
+        self.assertEqual(bundle.okx_metrics["derivatives_source"], "UNAVAILABLE_CROSS_VENUE_MIX")
+        self.assertIsNone(bundle.okx_metrics["funding_rate"])
+        self.assertEqual(bundle[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
+
     def test_open_candle_is_excluded_by_close_time_rule(self):
         now_ms = 1_800_000_000_000
         self.assertTrue(is_closed_candle(now_ms - 900_000, 900_000, now_ms))
@@ -146,10 +269,11 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertFalse(far["within_limit"])
         self.assertGreater(far["distance_pct"], 0.80)
 
-    def test_proxy_lfs_threshold_is_030_and_real_threshold_is_unchanged(self):
+    def test_proxy_lfs_threshold_is_stricter_than_real_threshold(self):
         from modules.lrt15m_engine import MIN_LFS_SCORE_PROXY_CVD, MIN_LFS_SCORE_REAL_CVD
-        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.30)
-        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.70)
+        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.70)
+        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.30)
+        self.assertGreater(MIN_LFS_SCORE_PROXY_CVD, MIN_LFS_SCORE_REAL_CVD)
 
     def test_watchlist_and_monitoring_thresholds_are_separate(self):
         from modules.lrt15m_engine import (

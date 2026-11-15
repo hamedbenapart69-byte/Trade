@@ -2,9 +2,13 @@
 import sys, unittest
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import json
+import tempfile
+from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one
+import modules.research_tracker as research_tracker_module
+from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one, update_outcomes, fetch_public_ohlcv
 from modules.lrt15m_engine import PRODUCTION_MODE_THRESHOLD, RESEARCH_MODE_THRESHOLD
 
 NOW = datetime(2026, 11, 13, 20, 0, tzinfo=timezone.utc)
@@ -29,6 +33,139 @@ def fetcher_for(rows, source="OKX_PUBLIC_OHLCV"):
     return fetcher
 
 class ResearchTrackerTests(unittest.TestCase):
+    def test_public_fetcher_returns_empty_for_not_yet_closed_entry_candle(self):
+        class EmptyExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
+                }
+            }
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return []
+
+            def close(self):
+                return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 60_000
+        exchange = EmptyExchange()
+        with patch.object(research_tracker_module, "PROVIDERS", ("okx",)), \
+             patch.object(research_tracker_module.ccxt, "okx", return_value=exchange):
+            rows, source = fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+        self.assertEqual(rows, [])
+        self.assertEqual(source, "PUBLIC_OHLCV_NO_CLOSED_CANDLES")
+
+    def test_empty_provider_does_not_hide_failure_of_other_providers(self):
+        class EmptyExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
+                }
+            }
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return []
+
+            def close(self):
+                return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 2 * INTERVAL_MS
+        with (
+            patch.object(research_tracker_module, "PROVIDERS", ("okx", "bybit")),
+            patch.object(research_tracker_module.ccxt, "okx", return_value=EmptyExchange()),
+            patch.object(research_tracker_module.ccxt, "bybit", side_effect=RuntimeError("network down")),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "PUBLIC_OHLCV_UNAVAILABLE"):
+                fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+
+    def test_research_outcome_history_cannot_shrink_silently(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            signals_path.write_text(json.dumps({"signals": []}), encoding="utf-8")
+            outcomes_path.write_text(json.dumps({"outcomes": [{"signal_id": "historical-1"}]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "RESEARCH_SIGNAL_HISTORY_REGRESSION"):
+                update_outcomes(
+                    signals_path, outcomes_path,
+                    now=NOW, fetcher=lambda *args: ([], "UNUSED"),
+                )
+
+    def test_research_outcome_rejects_duplicate_source_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            row = signal()
+            signals_path.write_text(json.dumps({"signals": [row, row]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "DUPLICATE_RESEARCH_SIGNAL_ID"):
+                update_outcomes(signals_path, outcomes_path, now=NOW)
+
+    def test_research_outcome_requires_timezone_aware_clock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            signals_path.write_text(json.dumps({"signals": []}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "TRACKER_NOW_TIMEZONE_REQUIRED"):
+                update_outcomes(signals_path, outcomes_path, now=datetime(2026, 11, 13, 20, 0))
+
+    def test_public_fetcher_rejects_nonfinite_and_malformed_ohlcv(self):
+        class FakeExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
+                }
+            }
+
+            def __init__(self, raw):
+                self.raw = raw
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return [self.raw]
+
+            def close(self):
+                return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 2 * INTERVAL_MS
+        invalid_rows = [
+            [since, 100.0, float("nan"), 99.0, 100.0, 1.0],
+            [since, 100.0, 99.0, 98.0, 101.0, 1.0],
+            [since, 100.0, 102.0, 99.0, 101.0, -1.0],
+            [since + 1, 100.0, 102.0, 99.0, 101.0, 1.0],
+        ]
+        for raw in invalid_rows:
+            with self.subTest(raw=raw):
+                exchange = FakeExchange(raw)
+                with patch.object(research_tracker_module, "PROVIDERS", ("okx",)), \
+                     patch.object(research_tracker_module.ccxt, "okx", return_value=exchange):
+                    with self.assertRaisesRegex(RuntimeError, "INVALID_"):
+                        fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+
+    def test_public_fetcher_fallback_chain_includes_binance(self):
+        self.assertEqual(
+            research_tracker_module.PROVIDERS,
+            ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget"),
+        )
+
     def test_tracker_thresholds_match_engine_contract(self):
         self.assertEqual(TRACKER_PRODUCTION_THRESHOLD, PRODUCTION_MODE_THRESHOLD)
         self.assertEqual(TRACKER_RESEARCH_THRESHOLD, RESEARCH_MODE_THRESHOLD)

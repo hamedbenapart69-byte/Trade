@@ -55,22 +55,48 @@ class LRTStage1DecisionTests(unittest.TestCase):
         self.assertEqual(result["decision"], "NO_TRADE")
         self.assertIsNone(result["score"])
 
-    def test_lfs_v2_uses_fixed_threshold_for_proxy_and_real_sources(self):
-        proxy = evaluate_stage1_decision(
-            True, False, 0.35, "PROXY_OHLCV", components(3), False
+    def test_invalid_lfs_score_and_coverage_fail_closed(self):
+        for value in (float("nan"), float("inf"), None, True):
+            with self.subTest(value=value):
+                result = evaluate_stage1_decision(
+                    True, False, value, "AGGTRADES_REAL", components(5), True,
+                    lfs_status="FULL",
+                )
+                self.assertEqual(result["decision"], "NO_TRADE")
+                self.assertEqual(result["veto"], "LFS_INVALID_SCORE")
+        insufficient = evaluate_stage1_decision(
+            True, False, 0.95, "AGGTRADES_REAL", components(5), True,
+            lfs_status="INSUFFICIENT",
         )
-        real = evaluate_stage1_decision(
-            True, False, 0.65, "AGGTRADES_REAL", components(3), True
+        self.assertEqual(insufficient["veto"], "LFS_INSUFFICIENT_COVERAGE")
+        self.assertEqual(insufficient["decision"], "NO_TRADE")
+
+    def test_proxy_or_partial_data_requires_stricter_lfs_threshold(self):
+        proxy_below = evaluate_stage1_decision(
+            True, False, 0.35, "PROXY_OHLCV", components(3), False, lfs_status="FULL"
         )
-        below = evaluate_stage1_decision(
-            True, False, 0.25, "AGGTRADES_REAL", components(3), True
+        proxy_pass = evaluate_stage1_decision(
+            True, False, 0.75, "PROXY_OHLCV", components(3), False, lfs_status="FULL"
         )
-        self.assertEqual(proxy["veto"], "PASS")
-        self.assertEqual(real["veto"], "PASS")
-        self.assertEqual(proxy["lfs_threshold"], 0.30)
-        self.assertEqual(real["lfs_threshold"], 0.30)
-        self.assertEqual(below["veto"], "LFS_BELOW_THRESHOLD")
-        self.assertEqual(below["lfs_threshold"], 0.30)
+        real_full = evaluate_stage1_decision(
+            True, False, 0.35, "AGGTRADES_REAL", components(3), True, lfs_status="FULL"
+        )
+        real_partial = evaluate_stage1_decision(
+            True, False, 0.65, "AGGTRADES_REAL", components(3), True, lfs_status="PARTIAL_PROXY"
+        )
+        below_real = evaluate_stage1_decision(
+            True, False, 0.25, "AGGTRADES_REAL", components(3), True, lfs_status="FULL"
+        )
+        self.assertEqual(proxy_below["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(proxy_below["lfs_threshold"], 0.70)
+        self.assertEqual(proxy_pass["veto"], "PASS")
+        self.assertEqual(proxy_pass["lfs_threshold_method"], "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D")
+        self.assertEqual(real_full["veto"], "PASS")
+        self.assertEqual(real_full["lfs_threshold"], 0.30)
+        self.assertEqual(real_partial["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(real_partial["lfs_threshold"], 0.70)
+        self.assertEqual(below_real["veto"], "LFS_BELOW_THRESHOLD")
+        self.assertEqual(below_real["lfs_threshold"], 0.30)
 
 
 if __name__ == "__main__":
