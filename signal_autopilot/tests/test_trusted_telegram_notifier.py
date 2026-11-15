@@ -116,6 +116,12 @@ class TrustedNotifierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "WATCHLIST_LEVEL_DIRECTION_INVALID"):
             MODULE.candidate_rows(payload)
 
+    def test_rejects_watchlist_with_non_pass_veto(self):
+        payload = report()
+        payload["symbols"][0]["veto"] = "DATA_UNAVAILABLE"
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_VETO_NOT_PASS"):
+            MODULE.candidate_rows(payload)
+
     def test_rejects_declared_risk_reward_mismatch(self):
         payload = report()
         payload["symbols"][0]["rr"] = 3.0
