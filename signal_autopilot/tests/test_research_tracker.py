@@ -70,15 +70,23 @@ class ResearchTrackerTests(unittest.TestCase):
                     "symbol": "BTC/USDT:USDT",
                 }
             }
-            def load_markets(self): return self.markets
-            def fetch_ohlcv(self, *args, **kwargs): return []
-            def close(self): return None
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return []
+
+            def close(self):
+                return None
 
         since = CANDLE_OPEN + INTERVAL_MS
         now_ms = since + 2 * INTERVAL_MS
-        with patch.object(research_tracker_module, "PROVIDERS", ("okx", "bybit")), \\
-             patch.object(research_tracker_module.ccxt, "okx", return_value=EmptyExchange()), \\
-             patch.object(research_tracker_module.ccxt, "bybit", side_effect=RuntimeError("network down")):
+        with (
+            patch.object(research_tracker_module, "PROVIDERS", ("okx", "bybit")),
+            patch.object(research_tracker_module.ccxt, "okx", return_value=EmptyExchange()),
+            patch.object(research_tracker_module.ccxt, "bybit", side_effect=RuntimeError("network down")),
+        ):
             with self.assertRaisesRegex(RuntimeError, "PUBLIC_OHLCV_UNAVAILABLE"):
                 fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
 
