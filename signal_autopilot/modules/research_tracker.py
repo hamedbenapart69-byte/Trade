@@ -36,6 +36,7 @@ def _market_symbol(exchange: Any, symbol: str) -> str:
 def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200):
     """دریافت کندل بسته‌شده از زنجیرهٔ عمومی OKX سپس fallback."""
     errors = []
+    empty_providers: list[str] = []
     for provider in PROVIDERS:
         exchange = None
         try:
@@ -71,20 +72,26 @@ def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200
                     raise ValueError("INVALID_OHLCV_VALUES")
                 rows.append(bar)
             rows.sort(key=lambda x: x["open_time"])
-            if rows and rows[0]["open_time"] == int(since_ms):
+            if not rows:
+                empty_providers.append(provider)
+                continue
+            if rows[0]["open_time"] == int(since_ms):
                 if any(rows[i]["open_time"] - rows[i - 1]["open_time"] != INTERVAL_MS for i in range(1, len(rows))):
                     errors.append(f"{provider}:CANDLE_GAP_DETECTED")
                     continue
                 return rows, f"{provider.upper()}_PUBLIC_OHLCV"
-            if rows:
-                errors.append(f"{provider}:FIRST_REQUIRED_CANDLE_MISSING")
-            errors.append(f"{provider}:NO_CLOSED_CANDLES")
+            errors.append(f"{provider}:FIRST_REQUIRED_CANDLE_MISSING")
         except Exception as exc:
             errors.append(f"{provider}:{type(exc).__name__}:{str(exc)[:100]}")
         finally:
             if exchange is not None:
                 try: exchange.close()
                 except Exception: pass
+    if empty_providers and not any(
+        marker in "|".join(errors)
+        for marker in ("CANDLE_GAP_DETECTED", "FIRST_REQUIRED_CANDLE_MISSING")
+    ):
+        return [], "PUBLIC_OHLCV_NO_CLOSED_CANDLES"
     raise RuntimeError("PUBLIC_OHLCV_UNAVAILABLE|" + "|".join(errors))
 
 
