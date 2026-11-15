@@ -196,6 +196,15 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_HYPOTHESIS_MISSING"):
                 publish_dashboard(report_path, universe_path, root)
 
+    def test_rejects_out_of_range_lfs_values(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["lfs_score"] = 1.2
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_SCORE_OUT_OF_RANGE"):
+                publish_dashboard(report_path, universe_path, root)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
