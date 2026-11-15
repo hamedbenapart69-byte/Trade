@@ -644,7 +644,10 @@ def evaluate_stage1_symbol(
             and candidates[0].get("raw_score") == candidates[1].get("raw_score")
         ):
             return {
-                **base, "veto": "PASS", "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
+                **base, "veto": "PASS", "lfs_veto": "PASS",
+                "lfs_threshold": candidates[0].get("lfs_threshold"),
+                "lfs_threshold_reason": candidates[0].get("lfs_threshold_reason"),
+                "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
                 "direction_candidates": [
                     {
                         k: item.get(k)
