@@ -10,6 +10,7 @@ import re
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import Any
 
@@ -111,6 +112,14 @@ def validate_report(
     return payload
 
 
+def validate_dashboard_url(value: str) -> str:
+    url = value.strip()
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("DASHBOARD_URL_UNAVAILABLE_OR_INVALID")
+    return url.rstrip("/")
+
+
 def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     for row in payload["symbols"]:
@@ -123,56 +132,96 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError("WATCHLIST_DIRECTION_INVALID")
         entry = finite_number(row.get("entry"))
         stop = finite_number(row.get("stop_loss"))
-        target = finite_number(row.get("take_profit"))
+        target1 = finite_number(row.get("take_profit_1"))
+        target2 = finite_number(row.get("take_profit"))
         rr = finite_number(row.get("rr"))
-        if entry is None or stop is None or target is None or rr is None or min(entry, stop, target) <= 0 or rr <= 0:
+        if any(value is None for value in (entry, stop, target1, target2, rr)) or min(entry, stop, target1, target2) <= 0 or rr <= 0:
             raise ValueError("WATCHLIST_LEVELS_INVALID")
-        if direction == "BUY":
-            risk = entry - stop
-            reward = target - entry
-        else:
-            risk = stop - entry
-            reward = entry - target
-        if risk <= 0 or reward <= 0:
+        risk, reward1, reward2 = (
+            (entry - stop, target1 - entry, target2 - entry)
+            if direction == "BUY"
+            else (stop - entry, entry - target1, entry - target2)
+        )
+        if risk <= 0 or reward1 <= 0 or reward2 <= reward1:
             raise ValueError("WATCHLIST_LEVEL_DIRECTION_INVALID")
-        computed_rr = reward / risk
+        computed_rr = reward2 / risk
         if not math.isclose(rr, computed_rr, rel_tol=0.10, abs_tol=0.05):
             raise ValueError("WATCHLIST_RR_MISMATCH")
+        hypothesis = row.get("hypothesis")
+        falsification = row.get("falsification")
+        if not isinstance(hypothesis, str) or not hypothesis.strip():
+            raise ValueError("WATCHLIST_HYPOTHESIS_MISSING")
+        if not isinstance(falsification, str) or not falsification.strip():
+            raise ValueError("WATCHLIST_FALSIFICATION_MISSING")
+        if len(hypothesis) > 700 or len(falsification) > 700:
+            raise ValueError("WATCHLIST_THESIS_TOO_LONG")
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
             "entry": entry,
             "stop": stop,
-            "target": target,
+            "target1": target1,
+            "target2": target2,
             "rr": rr,
+            "hypothesis": hypothesis.strip(),
+            "falsification": falsification.strip(),
         })
     return candidates
 
 
-def build_message(payload: dict[str, Any]) -> str:
+def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
+    dashboard = validate_dashboard_url(dashboard_url)
     candidates = candidate_rows(payload)
     timestamp = payload["generated_at_utc"].replace("T", " ").replace("+00:00", " UTC").replace("Z", " UTC")
-    lines = [
+    header = [
         "گزارش اسکن Stage 1B | LRT-15m",
         f"زمان تولید: {timestamp}",
         "پوشش: 27/27 نماد",
-        "وضعیت کالیبراسیون: NOT_CALIBRATED",
+        "کالیبراسیون: NOT_CALIBRATED",
+        "EV: NOT_CALCULATED",
         "سیاست: WATCHLIST فقط؛ BUY_NOW/SELL_NOW صادر نمی‌شود.",
         f"نامزدهای زیرنظر: {len(candidates)}",
+        f"داشبورد: {dashboard}",
     ]
-    for item in candidates:
-        lines.append(
-            f"{item['symbol']} | {item['direction']} | "
-            f"Entry {item['entry']:.10g} | SL {item['stop']:.10g} | "
-            f"TP2 {item['target']:.10g} | R:R {item['rr']:.3g}"
-        )
     if not candidates:
-        lines.append("هیچ موقعیت WATCHLIST واجد شرایطی در این اسکن ثبت نشد.")
-    lines.append("این گزارش اعلان پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.")
-    message = "\n".join(lines)
-    if len(message) > MAX_MESSAGE_LENGTH:
-        raise ValueError("TELEGRAM_MESSAGE_TOO_LONG")
-    return message
+        return ["\n".join(header + [
+            "هیچ موقعیت WATCHLIST واجد شرایطی در این اسکن ثبت نشد.",
+            "این گزارش اعلان پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.",
+        ])]
+
+    messages: list[str] = []
+    current = list(header)
+    for item in candidates:
+        block = "\n".join([
+            f"{item['symbol']} | {item['direction']}",
+            f"Entry: {item['entry']:.10g} | SL: {item['stop']:.10g}",
+            f"TP1: {item['target1']:.10g} | TP2: {item['target2']:.10g} | R:R(TP2): {item['rr']:.3g}",
+            "Confidence: NOT_CALIBRATED",
+            f"Hypothesis: {item['hypothesis']}",
+            f"Falsification: {item['falsification']}",
+        ])
+        if len("\n".join(current + [block])) > MAX_MESSAGE_LENGTH:
+            messages.append("\n".join(current))
+            current = [
+                "گزارش اسکن Stage 1B | LRT-15m (ادامه)",
+                f"زمان تولید: {timestamp}",
+                f"داشبورد: {dashboard}",
+            ]
+        if len("\n".join(current + [block])) > MAX_MESSAGE_LENGTH:
+            raise ValueError("TELEGRAM_CANDIDATE_BLOCK_TOO_LONG")
+        current.append(block)
+    current.append("این گزارش WATCHLIST پژوهشی است؛ سفارش یا اجرای معامله انجام نمی‌شود.")
+    if len("\n".join(current)) > MAX_MESSAGE_LENGTH:
+        footer = current.pop()
+        messages.append("\n".join(current))
+        messages.append("\n".join([
+            "گزارش اسکن Stage 1B | LRT-15m (پایان)",
+            f"داشبورد: {dashboard}",
+            footer,
+        ]))
+    else:
+        messages.append("\n".join(current))
+    return messages
 
 
 def send_message(token: str, chat_id: str, message: str) -> None:
@@ -212,15 +261,17 @@ def main() -> int:
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
+    dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
     if args.validate_only:
         print("REPORT_VALIDATION=PASS")
         return 0
-    message = build_message(payload)
-    send_message(
-        os.environ.get("TELEGRAM_TOKEN", ""),
-        os.environ.get("TELEGRAM_CHAT_ID", ""),
-        message,
-    )
+    messages = build_messages(payload, dashboard_url)
+    for message in messages:
+        send_message(
+            os.environ.get("TELEGRAM_TOKEN", ""),
+            os.environ.get("TELEGRAM_CHAT_ID", ""),
+            message,
+        )
     return 0
 
 
