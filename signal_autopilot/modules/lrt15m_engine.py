@@ -27,9 +27,9 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
-# نام‌های قدیمی برای سازگاری؛ در LFS_v2 آستانه بر اساس منبع CVD تغییر نمی‌کند.
-MIN_LFS_SCORE_REAL_CVD = LFS_V2_MIN_SCORE
-MIN_LFS_SCORE_PROXY_CVD = LFS_V2_MIN_SCORE
+# دادهٔ Proxy باید آستانهٔ سخت‌گیرانه‌تری از CVD واقعی داشته باشد.
+MIN_LFS_SCORE_REAL_CVD = 0.30
+MIN_LFS_SCORE_PROXY_CVD = 0.70
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 PRODUCTION_MODE_THRESHOLD = 80
@@ -350,24 +350,32 @@ def evaluate_stage1_decision(
     cvd_source: str,
     components: dict[str, bool],
     cvd_aligned: bool = False,
+    lfs_status: str = "FULL",
 ) -> dict[str, Any]:
     """سه Veto قطعی و سپس امتیازدهی؛ هیچ مسیر BUY_NOW/SELL_NOW ندارد."""
     if not data_valid:
         return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     if inside_kumo:
         return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
-    threshold = LFS_V2_MIN_SCORE  # آستانهٔ نسخهٔ LFS_v2 برای همهٔ وضعیت‌های پوشش ثابت است.
+    real_cvd_and_full_lfs = cvd_source == "AGGTRADES_REAL" and lfs_status == "FULL"
+    threshold = MIN_LFS_SCORE_REAL_CVD if real_cvd_and_full_lfs else MIN_LFS_SCORE_PROXY_CVD
+    threshold_reason = "REAL_CVD_FULL_LFS" if real_cvd_and_full_lfs else "PROXY_OR_PARTIAL_DATA"
     if float(lfs_score) < threshold:
         return {
             "veto": "LFS_BELOW_THRESHOLD",
+            "lfs_veto": "LFS_BELOW_THRESHOLD",
             "decision": "NO_TRADE",
             "mode": "NONE",
             "research_decision": None,
             "score": None,
             "lfs_threshold": threshold,
+            "lfs_threshold_reason": threshold_reason,
         }
     scored = score_stage1_confluence(components, cvd_source, cvd_aligned)
-    return {"veto": "PASS", **scored, "lfs_threshold": threshold}
+    return {
+        "veto": "PASS", "lfs_veto": "PASS", **scored,
+        "lfs_threshold": threshold, "lfs_threshold_reason": threshold_reason,
+    }
 
 
 def _aggregate_hourly_to_4h(bars_1h: list[dict[str, Any]]) -> list[dict[str, float]]:
@@ -563,11 +571,15 @@ def evaluate_stage1_symbol(
                 "zone_reaction": zone_ok, "cross": cross_ok,
             }
             decision = evaluate_stage1_decision(
-                True, False, float(lfs_data["lfs_score"]), cvd_source, components, cvd_aligned
+                True, False, float(lfs_data["lfs_score"]), cvd_source, components,
+                cvd_aligned, lfs_status=str(lfs_data["lfs_status"]),
             )
             record = {
                 **decision, "symbol": symbol, "direction": direction,
                 "lfs_score": lfs_data["lfs_score"], "lfs_source": "LFS_V2",
+                "lfs_veto": decision.get("lfs_veto", lfs_data.get("lfs_veto")),
+                "lfs_threshold": decision.get("lfs_threshold"),
+                "lfs_threshold_reason": decision.get("lfs_threshold_reason"),
                 "lfs_coverage_pct": lfs_data["lfs_coverage_pct"],
                 "lfs_status": lfs_data["lfs_status"],
                 "lfs_components": lfs_data["lfs_components"],
