@@ -96,6 +96,46 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertEqual(diagnostic["stop_loss"], 98.0)
         self.assertEqual(diagnostic["take_profit"], 104.0)
         self.assertEqual(diagnostic["rr"], 2.0)
+    def test_freshness_guard_rejects_stale_and_future_closed_candles(self):
+        interval = 900_000
+        now_ms = 1_800_000_000_000
+        expected = (now_ms // interval) * interval - interval
+        stale = [{"open_time": expected - 2 * interval}]
+        future = [{"open_time": expected + interval}]
+        with self.assertRaisesRegex(ValueError, "15M_CANDLES_STALE"):
+            LiveOHLCVFetcher._assert_fresh_closed_bars(stale, interval, now_ms, "15M")
+        with self.assertRaisesRegex(ValueError, "15M_CANDLE_FUTURE_DATED"):
+            LiveOHLCVFetcher._assert_fresh_closed_bars(future, interval, now_ms, "15M")
+
+    def test_dual_timeframe_fallback_uses_one_exchange_for_both_frames(self):
+        fetcher = LiveOHLCVFetcher.__new__(LiveOHLCVFetcher)
+        fetcher.fetch_stats = True
+        fetcher.stats_limit = 2500
+        fetcher.limit = 500
+        fetcher.provider_names = ("okx", "bybit")
+        calls = []
+
+        def fake_ccxt(symbol, timeframe, limit, now_ms, providers=None):
+            calls.append((timeframe, providers))
+            if providers == ("okx",):
+                raise RuntimeError("okx_public_data_unavailable")
+            return [{"open_time": 0, "data_source": "CCXT_BYBIT_PUBLIC_OHLCV"}]
+
+        fetcher._okx_candles = lambda symbol, timeframe, limit, now_ms: (_ for _ in ()).throw(
+            RuntimeError("okx_rest_unavailable")
+        )
+        fetcher._ccxt_timeframe = fake_ccxt
+        fetcher._okx_metrics = lambda symbol, now_ms: {}
+        bundle = fetcher.fetch_symbol("BTCUSDT")
+
+        self.assertEqual(calls, [
+            ("1h", ("okx",)),
+            ("1h", ("bybit",)),
+            ("15m", ("bybit",)),
+        ])
+        self.assertEqual(bundle.stats_1h[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
+        self.assertEqual(bundle[0]["data_source"], "CCXT_BYBIT_PUBLIC_OHLCV")
+
     def test_open_candle_is_excluded_by_close_time_rule(self):
         now_ms = 1_800_000_000_000
         self.assertTrue(is_closed_candle(now_ms - 900_000, 900_000, now_ms))
