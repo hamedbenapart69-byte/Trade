@@ -30,6 +30,7 @@ TIER_A_BRIER_MAX = 0.25
 # دادهٔ Proxy باید آستانهٔ سخت‌گیرانه‌تری از CVD واقعی داشته باشد.
 MIN_LFS_SCORE_REAL_CVD = 0.30
 MIN_LFS_SCORE_PROXY_CVD = 0.70
+LFS_THRESHOLD_METHOD = "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D"
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 PRODUCTION_MODE_THRESHOLD = 80
@@ -365,6 +366,7 @@ def evaluate_stage1_decision(
             "mode": "NONE",
             "research_decision": None,
             "score": None,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
         }
     if isinstance(lfs_score, bool) or not isinstance(lfs_score, (int, float)) or not math.isfinite(float(lfs_score)):
         return {
@@ -374,6 +376,7 @@ def evaluate_stage1_decision(
             "mode": "NONE",
             "research_decision": None,
             "score": None,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
         }
     real_cvd_and_full_lfs = cvd_source == "AGGTRADES_REAL" and lfs_status == "FULL"
     threshold = MIN_LFS_SCORE_REAL_CVD if real_cvd_and_full_lfs else MIN_LFS_SCORE_PROXY_CVD
@@ -388,11 +391,14 @@ def evaluate_stage1_decision(
             "score": None,
             "lfs_threshold": threshold,
             "lfs_threshold_reason": threshold_reason,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
         }
     scored = score_stage1_confluence(components, cvd_source, cvd_aligned)
     return {
         "veto": "PASS", "lfs_veto": "PASS", **scored,
-        "lfs_threshold": threshold, "lfs_threshold_reason": threshold_reason,
+        "lfs_threshold": threshold,
+        "lfs_threshold_reason": threshold_reason,
+        "lfs_threshold_method": LFS_THRESHOLD_METHOD,
     }
 
 
