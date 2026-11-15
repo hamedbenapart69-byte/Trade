@@ -32,6 +32,30 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("ref: production-v1", notifier)
         self.assertNotIn("ref: main", notifier)
 
+
+    def test_trusted_notifier_uses_serialized_durable_at_most_once_delivery(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn("group: trusted-stage1b-telegram-delivery", notifier)
+        self.assertNotIn("group: trusted-stage1b-telegram-${{ github.event.workflow_run.id }}", notifier)
+        self.assertIn("ref: telegram-delivery-state", notifier)
+        self.assertIn("contents: write", notifier)
+        self.assertIn("DELIVERY_ALREADY_CLAIMED", notifier)
+        self.assertIn('claimed=false', notifier)
+        self.assertIn('claimed=true', notifier)
+        self.assertIn('DELIVERY_UNCONFIRMED', notifier)
+        self.assertLess(
+            notifier.index("Validate report before claiming delivery"),
+            notifier.index("Claim this scanner run before Telegram delivery"),
+        )
+        self.assertLess(
+            notifier.index("Claim this scanner run before Telegram delivery"),
+            notifier.index("Send validated Stage 1B report to Telegram"),
+        )
+        self.assertLess(
+            notifier.index("Send validated Stage 1B report to Telegram"),
+            notifier.index("Finalize durable delivery state"),
+        )
+
     def test_state_writer_persists_only_validated_state_artifacts(self):
         writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
         self.assertIn("branches: [main, production-v1]", writer)
