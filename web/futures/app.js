@@ -57,9 +57,20 @@ const cvdLabel = (value) => ({
   MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی MEXC",
   OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی OKX Spot"
 }[value] || value || "—");
-const fmt = (value) => Number.isFinite(Number(value))
-  ? Number(value).toLocaleString("fa-IR")
-  : "—";
+const fmt = (value) => value === null || value === undefined || value === ""
+  ? "—"
+  : Number.isFinite(Number(value))
+    ? Number(value).toLocaleString("fa-IR", { maximumFractionDigits: 2 })
+    : "—";
+const fmtPrice = (value) => value === null || value === undefined || value === ""
+  ? "—"
+  : Number.isFinite(Number(value))
+    ? Number(value).toLocaleString("fa-IR", { maximumFractionDigits: 10 })
+    : "—";
+const directionLabel = (value) => ({
+  BUY: "خرید",
+  SELL: "فروش"
+}[value] || "—");
 
 function setStatus(text, kind) {
   const el = $("status");
@@ -148,8 +159,9 @@ function render(report) {
   }
 
   $("signals").innerHTML = '<div class="table-wrap"><table><thead><tr>' +
-    "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>سوگیری ۴ساعته</th>" +
-    "<th>سوگیری ۱ساعته</th><th>منبع CVD</th><th>تعداد کندل</th><th>اطمینان</th>" +
+    "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>جهت</th><th>سطوح مرجع</th>" +
+    "<th>سوگیری ۴ساعته</th><th>سوگیری ۱ساعته</th><th>منبع CVD</th><th>تعداد کندل</th>" +
+    "<th>اطمینان</th><th>فرضیه و شرط ابطال</th>" +
     "</tr></thead><tbody>" +
     rows.map((item) => {
       const decision = item.decision || "MARKET_DATA_DEGRADED";
@@ -157,15 +169,32 @@ function render(report) {
         ? "buy" : decision === "SELL_NOW" || decision === "CONDITIONAL_SELL"
           ? "sell" : "wait";
       const bias = item.higher_timeframe_bias || {};
+      const levels = decision === "WATCHLIST"
+        ? '<div class="levels-cell">' +
+          "<div>Entry: " + fmtPrice(item.entry) + "</div>" +
+          "<div>SL: " + fmtPrice(item.stop_loss) + "</div>" +
+          "<div>TP1: " + fmtPrice(item.take_profit_1) + "</div>" +
+          "<div>TP2: " + fmtPrice(item.take_profit) + "</div>" +
+          "</div>"
+        : "—";
+      const thesis = item.hypothesis || item.falsification
+        ? '<details class="thesis-details"><summary>مشاهده</summary>' +
+          "<div><strong>فرضیه:</strong> " + esc(item.hypothesis || "UNAVAILABLE") + "</div>" +
+          "<div><strong>ابطال:</strong> " + esc(item.falsification || "UNAVAILABLE") + "</div>" +
+          "</details>"
+        : "—";
       return "<tr>" +
         '<td dir="ltr">' + esc(item.symbol) + "</td>" +
         '<td><span class="tag ' + css + '">' + esc(labels[decision] || decision) + "</span></td>" +
         "<td>" + esc(item.tier || "—") + "</td>" +
+        "<td>" + directionLabel(item.direction) + "</td>" +
+        "<td>" + levels + "</td>" +
         "<td>" + esc(direction(bias['4h_kumo'])) + "</td>" +
         "<td>" + esc(direction(bias['1h_kijun'])) + "</td>" +
         "<td>" + esc(cvdLabel(item.cvd_source || (item.cvd && item.cvd.source))) + "</td>" +
         "<td>" + fmt(item.rows_available) + "</td>" +
         "<td>" + esc(item.confidence || "NOT_CALIBRATED") + "</td>" +
+        "<td>" + thesis + "</td>" +
         "</tr>";
     }).join("") +
     "</tbody></table></div>";
