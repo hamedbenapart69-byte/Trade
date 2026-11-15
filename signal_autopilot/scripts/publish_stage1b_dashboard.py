@@ -22,7 +22,7 @@ SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
 HISTORY_FIELDS = (
     "generated_at_utc", "symbol", "decision", "htf_4h_kumo",
     "htf_1h_kijun", "confidence", "lfs_score", "lfs_status",
-    "mode", "veto", "reason",
+    "lfs_threshold_method", "mode", "veto", "reason",
 )
 
 
@@ -173,6 +173,8 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
     if row["lfs_threshold_reason"] != expected_reason:
         raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_REASON_MISMATCH")
+    if row.get("lfs_threshold_method") != "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D":
+        raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED")
     for field in ("hypothesis", "falsification"):
         value = row.get(field)
         if not isinstance(value, str) or value.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
@@ -227,6 +229,7 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "lfs_veto": source_row.get("lfs_veto"),
             "lfs_threshold": source_row.get("lfs_threshold"),
             "lfs_threshold_reason": source_row.get("lfs_threshold_reason"),
+            "lfs_threshold_method": source_row.get("lfs_threshold_method"),
             "entry": source_row.get("entry"),
             "stop_loss": source_row.get("stop_loss"),
             "take_profit_1": source_row.get("take_profit_1"),
@@ -288,6 +291,7 @@ def _history_rows(report: dict[str, Any]) -> list[dict[str, str]]:
             "confidence": "NOT_CALIBRATED",
             "lfs_score": "" if item.get("lfs_score") is None else str(item["lfs_score"]),
             "lfs_status": str(item.get("lfs_status") or "UNAVAILABLE"),
+            "lfs_threshold_method": str(item.get("lfs_threshold_method") or "UNAVAILABLE"),
             "mode": str(item.get("mode") or "UNAVAILABLE"),
             "veto": str(item.get("veto") or "UNAVAILABLE"),
             "reason": str(item.get("reason") or "UNAVAILABLE").replace(",", ";").replace("\r", " ").replace("\n", " "),
