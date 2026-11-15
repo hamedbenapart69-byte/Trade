@@ -183,6 +183,11 @@ def process_symbol(
                 "take_profit", "rr", "hypothesis", "falsification",
             )
         }
+        if result.get("decision") == "WATCHLIST" and result.get("mode") == "PRODUCTION":
+            entry = float(result["entry"])
+            stop = float(result["stop_loss"])
+            sign = 1 if result["direction"] == "BUY" else -1
+            diagnostic["take_profit_1"] = entry + sign * abs(entry - stop)
         if result.get("decision") == "RESEARCH_WATCHLIST" and result.get("mode") == "RESEARCH":
             created = datetime.now(timezone.utc).isoformat()
             research_signal = {
