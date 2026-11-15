@@ -28,6 +28,10 @@ def report():
         "take_profit_1": 102.0, "take_profit": 104.0, "rr": 2.0,
         "hypothesis": "Liquidity sweep and reclaim support a mean-reversion move.",
         "falsification": "A 15m close below the stop invalidates the setup.",
+        "cvd": {"source": "PROXY_OHLCV"},
+        "lfs_score": 0.72,
+        "lfs_status": "FULL",
+        "lfs_coverage_pct": 100.0,
     }
     return {
         "stage": "STAGE_1_UNCALIBRATED",
@@ -63,6 +67,8 @@ class TrustedNotifierTests(unittest.TestCase):
         self.assertIn("TP1: 102", message)
         self.assertIn("TP2: 104", message)
         self.assertIn("Confidence: NOT_CALIBRATED", message)
+        self.assertIn("CVD: PROXY_OHLCV", message)
+        self.assertIn("LFS: 0.72 | status=FULL | coverage=100.0", message)
         self.assertIn("Hypothesis:", message)
         self.assertIn("Falsification:", message)
         self.assertIn("https://trade.example.pages.dev", message)
