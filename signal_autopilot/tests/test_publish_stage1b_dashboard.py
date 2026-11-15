@@ -84,6 +84,8 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             self.assertEqual(len(dashboard["signals"]), 27)
             self.assertEqual(dashboard["signals"][0]["decision"], "WATCHLIST")
             self.assertEqual(dashboard["signals"][0]["take_profit_1"], 99.0)
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold"], 0.70)
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold_reason"], "PROXY_OR_PARTIAL_DATA")
             self.assertEqual(dashboard["signals"][1]["decision"], "NO_QUALIFIED_SETUP")
             self.assertEqual(dashboard["data_gate_status"], "NOT_REPORTED")
             self.assertEqual(dashboard["calibration_status"], "UNCALIBRATED")
