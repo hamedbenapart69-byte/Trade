@@ -15,6 +15,8 @@ def _clip(value: float, lower: float = 0.0, upper: float = 1.0) -> float:
 
 
 def _finite(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
     try:
         result = float(value)
     except (TypeError, ValueError):
