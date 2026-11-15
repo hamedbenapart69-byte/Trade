@@ -242,6 +242,16 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "research_candidate": source_row.get("mode") == "RESEARCH",
         })
 
+    degraded_count = sum(row["decision"] == "MARKET_DATA_DEGRADED" for row in rows)
+    source_report_status = str(source.get("report_status") or "").strip()
+    report_status = source_report_status or (
+        "MARKET_DATA_DEGRADED" if degraded_count else "NORMAL"
+    )
+    source_data_gate = str(source.get("data_gate_status") or "").strip()
+    data_gate_status = source_data_gate or (
+        "FAIL" if degraded_count else "NOT_REPORTED"
+    )
+
     return {
         "generated_at_utc": source["generated_at_utc"],
         "stage": source["stage"],
@@ -249,10 +259,11 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
         "universe_count": EXPECTED_UNIVERSE_SIZE,
         "symbols_analyzed": len(rows),
         "candidate_setups": sum(row["decision"] == "WATCHLIST" for row in rows),
+        "market_data_degraded_count": degraded_count,
         "calibration_status": "UNCALIBRATED",
         "ev_status": "NOT_CALCULATED",
-        "data_gate_status": str(source.get("data_gate_status") or "NOT_REPORTED"),
-        "report_status": str(source.get("report_status") or "NORMAL"),
+        "data_gate_status": data_gate_status,
+        "report_status": report_status,
         "failure_reason": source.get("failure_reason"),
         "upstream_run_id": source.get("upstream_run_id"),
         "upstream_conclusion": source.get("upstream_conclusion"),
