@@ -357,6 +357,24 @@ def evaluate_stage1_decision(
         return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     if inside_kumo:
         return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
+    if lfs_status not in {"FULL", "PARTIAL_PROXY"}:
+        return {
+            "veto": "LFS_INSUFFICIENT_COVERAGE",
+            "lfs_veto": "LFS_INSUFFICIENT_COVERAGE",
+            "decision": "NO_TRADE",
+            "mode": "NONE",
+            "research_decision": None,
+            "score": None,
+        }
+    if isinstance(lfs_score, bool) or not isinstance(lfs_score, (int, float)) or not math.isfinite(float(lfs_score)):
+        return {
+            "veto": "LFS_INVALID_SCORE",
+            "lfs_veto": "LFS_INVALID_SCORE",
+            "decision": "NO_TRADE",
+            "mode": "NONE",
+            "research_decision": None,
+            "score": None,
+        }
     real_cvd_and_full_lfs = cvd_source == "AGGTRADES_REAL" and lfs_status == "FULL"
     threshold = MIN_LFS_SCORE_REAL_CVD if real_cvd_and_full_lfs else MIN_LFS_SCORE_PROXY_CVD
     threshold_reason = "REAL_CVD_FULL_LFS" if real_cvd_and_full_lfs else "PROXY_OR_PARTIAL_DATA"
