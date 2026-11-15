@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -44,8 +45,22 @@ def validate_stage(stage: Mapping[str, Any]) -> None:
     if not _nonempty(stage.get("stage_id")):
         raise PlanValidationError("stage_id_required")
     criteria = stage.get("acceptance_criteria")
-    if not isinstance(criteria, list) or not criteria or not all(_nonempty(x) for x in criteria):
+    if not isinstance(criteria, list) or not criteria:
         raise PlanValidationError("numeric_acceptance_criteria_must_be_registered")
+    seen_metrics: set[str] = set()
+    for criterion in criteria:
+        if not isinstance(criterion, dict):
+            raise PlanValidationError("acceptance_criteria_must_be_structured_numeric_rules")
+        metric = criterion.get("metric")
+        operator = criterion.get("operator")
+        target = criterion.get("target")
+        if not _nonempty(metric) or metric in seen_metrics:
+            raise PlanValidationError("acceptance_metric_must_be_nonempty_and_unique")
+        if operator not in {">=", ">", "<=", "<", "==", "!="}:
+            raise PlanValidationError(f"unsupported_acceptance_operator:{metric}")
+        if isinstance(target, bool) or not isinstance(target, (int, float)) or not math.isfinite(float(target)):
+            raise PlanValidationError(f"acceptance_target_must_be_finite_number:{metric}")
+        seen_metrics.add(metric)
     if stage.get("criteria_frozen") is not True:
         raise PlanValidationError("acceptance_criteria_must_be_frozen_before_trial")
     versions = stage.get("versions")
@@ -80,7 +95,7 @@ def validate_stage(stage: Mapping[str, Any]) -> None:
             raise PlanValidationError("no_version_may_follow_a_PASS")
 
 
-def _decision(action: str, reason: str, stage_id: str, version: str | None = None) -> dict[str, Any]:
+def _base_decision(action: str, reason: str, stage_id: str, version: str | None = None) -> dict[str, Any]:
     return {
         "decision": action,
         "reason": reason,
@@ -102,18 +117,24 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
     gates_pass = stage.get("hard_gates_passed") is True
     evidence = stage.get("stage_evidence")
     stage_evidence_ok = isinstance(evidence, list) and bool(evidence) and all(_nonempty(x) for x in evidence)
+    results = stage.get("acceptance_results")
+    result_map = {}
+    if isinstance(results, list):
+        for item in results:
+            if isinstance(item, dict) and _nonempty(item.get("metric")):
+                result_map[item["metric"]] = item.get("actual")
 
     if stage.get("approval_required") is True:
-        return _decision("HUMAN_APPROVAL_REQUIRED", "stage_explicitly_requires_approval", stage_id)
+        return _base_decision("HUMAN_APPROVAL_REQUIRED", "stage_explicitly_requires_approval", stage_id)
     if not unattended_authorized:
-        return _decision("HUMAN_APPROVAL_REQUIRED", "unattended_progression_not_authorized", stage_id)
+        return _base_decision("HUMAN_APPROVAL_REQUIRED", "unattended_progression_not_authorized", stage_id)
 
     latest = versions[-1]
     latest_version = str(latest["version"])
     status = latest["status"]
 
     if status == "RUNNING":
-        return _decision("WAIT_FOR_CURRENT_TRIAL", "trial_is_already_running", stage_id, latest_version)
+        return _base_decision("WAIT_FOR_CURRENT_TRIAL", "trial_is_already_running", stage_id, latest_version)
 
     if status == "PASS":
         missing = []
@@ -123,21 +144,42 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
             missing.append("hard_gates")
         if not stage_evidence_ok:
             missing.append("stage_evidence")
+        criteria_failed = []
+        for criterion in stage["acceptance_criteria"]:
+            metric = criterion["metric"]
+            actual = result_map.get(metric)
+            if isinstance(actual, bool) or not isinstance(actual, (int, float)) or not math.isfinite(float(actual)):
+                missing.append("acceptance_result:" + metric)
+                continue
+            target = criterion["target"]
+            operator = criterion["operator"]
+            passed = {
+                ">=": actual >= target,
+                ">": actual > target,
+                "<=": actual <= target,
+                "<": actual < target,
+                "==": actual == target,
+                "!=": actual != target,
+            }[operator]
+            if not passed:
+                criteria_failed.append(metric)
         if missing:
-            return _decision("BLOCKED", "stage_PASS_claim_missing:" + ",".join(missing), stage_id, latest_version)
+            return _base_decision("BLOCKED", "stage_PASS_claim_missing:" + ",".join(missing), stage_id, latest_version)
+        if criteria_failed:
+            return _base_decision("BLOCKED", "stage_PASS_claim_but_numeric_acceptance_failed:" + ",".join(criteria_failed), stage_id, latest_version)
         next_task = stage.get("next_task")
         if not isinstance(next_task, dict):
-            return _decision("STAGE_PASS_NO_NEXT_TASK", "stage_passed_no_registered_next_task", stage_id, latest_version)
+            return _base_decision("STAGE_PASS_NO_NEXT_TASK", "stage_passed_no_registered_next_task", stage_id, latest_version)
         task_type = next_task.get("type")
         if task_type in PROHIBITED_TASK_TYPES:
-            return _decision("PROHIBITED", "manual_trading_only_boundary", stage_id, latest_version)
+            return _base_decision("PROHIBITED", "manual_trading_only_boundary", stage_id, latest_version)
         if task_type in APPROVAL_TASK_TYPES or next_task.get("approval_required") is True:
-            return _decision("HUMAN_APPROVAL_REQUIRED", "next_task_is_approval_gated", stage_id, latest_version)
+            return _base_decision("HUMAN_APPROVAL_REQUIRED", "next_task_is_approval_gated", stage_id, latest_version)
         if task_type not in REVERSIBLE_TASK_TYPES:
-            return _decision("BLOCKED", "next_task_type_not_allowlisted", stage_id, latest_version)
+            return _base_decision("BLOCKED", "next_task_type_not_allowlisted", stage_id, latest_version)
         if not _nonempty(next_task.get("task_id")):
-            return _decision("BLOCKED", "next_task_id_missing", stage_id, latest_version)
-        result = _decision(
+            return _base_decision("BLOCKED", "next_task_id_missing", stage_id, latest_version)
+        result = _base_decision(
             "AUTO_CONTINUE",
             "stage_PASS_and_next_task_is_pre_registered_reversible_work",
             stage_id,
@@ -148,26 +190,16 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
 
     if status == "FAIL":
         if len(versions) >= 3:
-            return _decision("INNOVATION_PROTOCOL", "three_registered_versions_failed", stage_id, latest_version)
+            return _base_decision("INNOVATION_PROTOCOL", "three_registered_versions_failed", stage_id, latest_version)
         next_version = f"v{len(versions) + 1}"
-        return _decision(
-            "PREPARE_NEXT_VERSION",
-            "previous_version_FAILED_with_diagnosis_and_evidence",
-            stage_id,
-            next_version,
-        )
+        return _base_decision("PREPARE_NEXT_VERSION", "previous_version_FAILED_with_diagnosis_and_evidence", stage_id, next_version)
 
     if status == "NOT_RUN":
         if latest_version == "v1":
-            return _decision("RUN_V1", "first_registered_trial_ready", stage_id, "v1")
-        return _decision(
-            "RUN_" + latest_version.upper(),
-            "previous_version_FAILED_with_diagnosis_and_specific_reason",
-            stage_id,
-            latest_version,
-        )
+            return _base_decision("RUN_V1", "first_registered_trial_ready", stage_id, "v1")
+        return _base_decision("RUN_" + latest_version.upper(), "previous_version_FAILED_with_diagnosis_and_specific_reason", stage_id, latest_version)
 
-    return _decision("BLOCKED", "unrecognized_stage_state", stage_id, latest_version)
+    return _base_decision("BLOCKED", "unrecognized_stage_state", stage_id, latest_version)
 
 
 def evaluate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
