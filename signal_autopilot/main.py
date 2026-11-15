@@ -263,7 +263,7 @@ def process_symbol(
             "confluence_score": result.get("raw_score"),
             "confluence_tier_score": result.get("tier_score"),
             "confluence_components": points,
-            "stage1_threshold_label": f"LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
+            "stage1_threshold_label": f"LFS_V2_{LFS_V2_MIN_SCORE:.2f}_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_{PRODUCTION_MODE_THRESHOLD}_B_{RESEARCH_MODE_THRESHOLD}_MONITORING",
             "signal_id": _signal_id(symbol, result["direction"], int(rows[-1]["open_time"])),
             "created_at_utc": created,
             "ichimoku": ichimoku_data,
