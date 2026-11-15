@@ -179,13 +179,17 @@ def process_symbol(
                 "symbol", "direction", "veto", "decision", "tier", "mode",
                 "research_decision", "raw_score", "tier_score", "points", "components", "lfs_score", "lfs_source",
                 "lfs_coverage_pct", "lfs_status", "lfs_components", "lfs_veto",
-                "lfs_threshold", "lfs_coverage", "data_windows", "api_status",
+                "lfs_threshold", "lfs_threshold_reason", "lfs_coverage", "data_windows", "api_status",
                 "reason", "higher_timeframe_bias", "price_vs_kumo", "zone_type",
                 "zone_distance_pct", "rows_available", "stats_1h_rows_available",
                 "direction_candidates", "data_sources", "cvd", "entry", "stop_loss",
                 "take_profit", "rr", "hypothesis", "falsification",
             )
         }
+        if rows:
+            diagnostic["last_closed_candle_utc"] = datetime.fromtimestamp(
+                int(rows[-1]["open_time"]) / 1000, timezone.utc
+            ).isoformat()
         if result.get("decision") == "WATCHLIST" and result.get("mode") == "PRODUCTION":
             entry = float(result["entry"])
             stop = float(result["stop_loss"])
@@ -294,6 +298,9 @@ def process_symbol(
             "lfs_score": result.get("lfs_score"),
             "lfs_coverage_pct": result.get("lfs_coverage_pct"),
             "lfs_status": result.get("lfs_status"),
+            "lfs_veto": result.get("lfs_veto"),
+            "lfs_threshold": result.get("lfs_threshold"),
+            "lfs_threshold_reason": result.get("lfs_threshold_reason"),
             "lfs_components": result.get("lfs_components"),
             "api_status": result.get("api_status"),
             "cvd": result.get("cvd"),
