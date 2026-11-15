@@ -1,6 +1,6 @@
 """ردیاب نتایج Stage 1؛ OHLCV عمومی، ورود در Open کندل بعد و بدون سفارش."""
 from __future__ import annotations
-import argparse, json, logging
+import argparse, json, logging, math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -11,7 +11,7 @@ PRODUCTION_MODE_THRESHOLD = 80
 RESEARCH_MODE_THRESHOLD = 60
 INTERVAL_MS = 900_000
 MAX_HOLD = timedelta(hours=48)
-PROVIDERS = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
+PROVIDERS = ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget")
 TERMINAL = {"TP_HIT", "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED", "ENTRY_INVALIDATED_GAP"}
 
 
@@ -48,11 +48,28 @@ def fetch_public_ohlcv(symbol: str, since_ms: int, now_ms: int, limit: int = 200
             raw = exchange.fetch_ohlcv(market, timeframe="15m", since=int(since_ms), limit=int(limit))
             rows = []
             for c in raw or []:
-                if len(c) >= 6 and int(c[0]) >= since_ms and int(c[0]) + INTERVAL_MS <= now_ms:
-                    rows.append({
-                        "open_time": int(c[0]), "open": float(c[1]), "high": float(c[2]),
-                        "low": float(c[3]), "close": float(c[4]), "volume": float(c[5]),
-                    })
+                if not isinstance(c, (list, tuple)) or len(c) < 6:
+                    raise ValueError("INVALID_CANDLE_SCHEMA")
+                open_time = int(c[0])
+                if open_time < since_ms or open_time + INTERVAL_MS > now_ms:
+                    continue
+                if open_time % INTERVAL_MS:
+                    raise ValueError("INVALID_CANDLE_TIMESTAMP_ALIGNMENT")
+                bar = {
+                    "open_time": open_time, "open": float(c[1]), "high": float(c[2]),
+                    "low": float(c[3]), "close": float(c[4]), "volume": float(c[5]),
+                }
+                prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+                if (
+                    not all(math.isfinite(value) for value in prices)
+                    or min(bar["open"], bar["high"], bar["low"], bar["close"]) <= 0
+                    or bar["volume"] < 0
+                    or bar["high"] < max(bar["open"], bar["close"])
+                    or bar["low"] > min(bar["open"], bar["close"])
+                    or bar["high"] < bar["low"]
+                ):
+                    raise ValueError("INVALID_OHLCV_VALUES")
+                rows.append(bar)
             rows.sort(key=lambda x: x["open_time"])
             if rows and rows[0]["open_time"] == int(since_ms):
                 if any(rows[i]["open_time"] - rows[i - 1]["open_time"] != INTERVAL_MS for i in range(1, len(rows))):
