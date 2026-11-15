@@ -172,32 +172,32 @@ class TrustedNotifierTests(unittest.TestCase):
 
     def test_telegram_config_rejects_missing_or_malformed_credentials(self):
         with self.assertRaisesRegex(ValueError, "TELEGRAM_TOKEN_INVALID_OR_MISSING"):
-            MODULE.validate_telegram_config("", "-1001234567890")
+            MODULE.validate_telegram_config("", "-1001234567890", "Trade Alerts")
         with self.assertRaisesRegex(ValueError, "TELEGRAM_CHAT_ID_INVALID_OR_MISSING"):
-            MODULE.validate_telegram_config("12345:abcdefghijklmnopqrstuvwxyz", "not-a-chat")
+            MODULE.validate_telegram_config("12345:abcdefghijklmnopqrstuvwxyz", "not-a-chat", "Trade Alerts")
 
     def test_telegram_delivery_confirms_returned_chat_id(self):
         response = {
             "ok": True,
             "result": {
                 "message_id": 42,
-                "chat": {"id": 123456, "type": "supergroup"},
+                "chat": {"id": -1001234567890, "type": "channel"},
             },
         }
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
-            MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "123456", "test message")
+            MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "-1001234567890", "test message")
 
     def test_telegram_delivery_rejects_destination_mismatch(self):
         response = {
             "ok": True,
             "result": {
                 "message_id": 42,
-                "chat": {"id": 999999, "type": "supergroup"},
+                "chat": {"id": 999999, "type": "channel"},
             },
         }
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
             with self.assertRaisesRegex(RuntimeError, "TELEGRAM_DESTINATION_MISMATCH"):
-                MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "123456", "test message")
+                MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "-1001234567890", "test message")
 
     def test_validate_only_never_sends_telegram(self):
         payload = report()
@@ -214,7 +214,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "notify_stage1b_telegram.py", "--report", str(report_path),
                 "--universe", str(universe_path), "--validate-only",
             ]
-            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev", "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz", "TELEGRAM_CHAT_ID": "-1001234567890"}), patch.object(MODULE, "send_message") as sender:
+            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev", "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz", "TELEGRAM_CHAT_ID": "-1001234567890", "TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts"}), patch.object(MODULE, "verify_telegram_destination"), patch.object(MODULE, "send_message") as sender:
                 self.assertEqual(MODULE.main(), 0)
                 sender.assert_not_called()
 
