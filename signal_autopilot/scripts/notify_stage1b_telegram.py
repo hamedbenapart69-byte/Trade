@@ -224,11 +224,18 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
     return messages
 
 
-def send_message(token: str, chat_id: str, message: str) -> None:
+def validate_telegram_config(token: str, chat_id: str) -> tuple[str, str]:
     token = token.strip()
     chat_id = chat_id.strip()
-    if not token or not chat_id:
-        raise RuntimeError("TELEGRAM_CREDENTIALS_MISSING")
+    if not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]+", token):
+        raise ValueError("TELEGRAM_TOKEN_INVALID_OR_MISSING")
+    if not (re.fullmatch(r"-?[0-9]+", chat_id) or re.fullmatch(r"@[A-Za-z0-9_]{5,32}", chat_id)):
+        raise ValueError("TELEGRAM_CHAT_ID_INVALID_OR_MISSING")
+    return token, chat_id
+
+
+def send_message(token: str, chat_id: str, message: str) -> None:
+    token, chat_id = validate_telegram_config(token, chat_id)
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     body = json.dumps({
         "chat_id": chat_id,
@@ -277,16 +284,16 @@ def main() -> int:
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
     dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
+    token, chat_id = validate_telegram_config(
+        os.environ.get("TELEGRAM_TOKEN", ""),
+        os.environ.get("TELEGRAM_CHAT_ID", ""),
+    )
     if args.validate_only:
         print("REPORT_VALIDATION=PASS")
         return 0
     messages = build_messages(payload, dashboard_url)
     for message in messages:
-        send_message(
-            os.environ.get("TELEGRAM_TOKEN", ""),
-            os.environ.get("TELEGRAM_CHAT_ID", ""),
-            message,
-        )
+        send_message(token, chat_id, message)
     return 0
 
 
