@@ -24,15 +24,17 @@ def make_bars(count, interval_ms, base=100.0):
     return rows
 
 
-def oi_rows(hourly=False, change=-0.10):
+def oi_rows(hourly=False, change=-0.10, end_ts_ms=None):
     step = 3_600_000 if hourly else 86_400_000
     count = 25 if hourly else 91
+    end_ts_ms = 0 if end_ts_ms is None else int(end_ts_ms)
+    start_ts_ms = end_ts_ms - (count - 1) * step
     rows = []
     for i in range(count):
         value = 1000.0
         if i == count - 1:
             value = 1000.0 * (1.0 + change)
-        rows.append([str(i * step), str(value), "0"])
+        rows.append([str(start_ts_ms + i * step), str(value), "0"])
     return rows
 
 
@@ -203,6 +205,38 @@ class LFSV2UnitTests(unittest.TestCase):
         )
         self.assertFalse(result["api_status"]["funding"])
         self.assertFalse(result["api_status"]["long_short_ratio"])
+
+    def test_live_derivative_components_require_fresh_source_timestamps(self):
+        as_of = self.bars_1h[-1]["open_time"] + 3_600_000
+        fresh = calculate_lfs_v2(
+            "BTCUSDT", self.bars_15m, self.bars_1h,
+            funding_rate=0.0001,
+            oi_1h=oi_rows(hourly=True, change=-0.10, end_ts_ms=as_of),
+            oi_1d=oi_rows(hourly=False, change=0.02, end_ts_ms=as_of),
+            long_short_ratio=1.2,
+            as_of_time_ms=as_of,
+            funding_received_at_ms=as_of,
+            long_short_ratio_timestamp_ms=as_of,
+        )
+        self.assertTrue(all(fresh["api_status"][key] for key in (
+            "funding", "oi_1h", "oi_1d", "long_short_ratio"
+        )))
+
+        stale = calculate_lfs_v2(
+            "BTCUSDT", self.bars_15m, self.bars_1h,
+            funding_rate=0.0001,
+            oi_1h=oi_rows(hourly=True, change=-0.10),
+            oi_1d=oi_rows(hourly=False, change=0.02),
+            long_short_ratio=1.2,
+            as_of_time_ms=as_of,
+            funding_received_at_ms=as_of - 10 * 60 * 1000,
+            long_short_ratio_timestamp_ms=as_of - 3 * 60 * 60 * 1000,
+        )
+        self.assertFalse(any(stale["api_status"].values()))
+        self.assertEqual(stale["lfs_components"]["LFS2"]["status"], "UNAVAILABLE")
+        self.assertEqual(stale["lfs_components"]["LFS3"]["status"], "UNAVAILABLE")
+        self.assertEqual(stale["lfs_components"]["LFS5"]["status"], "UNAVAILABLE")
+        self.assertEqual(stale["lfs_status"], "PARTIAL_PROXY")
 
     def test_lfs_v2_bounded(self):
         rng = random.Random(17)
