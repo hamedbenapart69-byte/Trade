@@ -1,4 +1,4 @@
-""""Unit tests for trusted Stage 1B Telegram report delivery."""
+"""Unit tests for trusted Stage 1B Telegram report delivery."""
 import importlib.util
 import json
 from datetime import datetime, timedelta, timezone
@@ -34,16 +34,14 @@ def report():
     }
 
 
-def validate_in_temp(payload, now=None):
+def validate_in_temp(payload, now=None, universe_symbols=None):
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         report_path = root / "report.json"
         universe_path = root / "universe.json"
         report_path.write_text(json.dumps(payload), encoding="utf-8")
-        universe_path.write_text(
-            json.dumps({"symbols": [row["symbol"] for row in payload["symbols"]]}),
-            encoding="utf-8",
-        )
+        symbols = universe_symbols or [row["symbol"] for row in payload["symbols"]]
+        universe_path.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
         return MODULE.validate_report(report_path, universe_path, now=now)
 
 
@@ -65,9 +63,10 @@ class TrustedNotifierTests(unittest.TestCase):
 
     def test_rejects_wrong_symbol_set_even_when_count_is_27(self):
         payload = report()
+        expected_symbols = [row["symbol"] for row in payload["symbols"]]
         payload["symbols"][-1]["symbol"] = "NOTINUNIVERSE"
         with self.assertRaisesRegex(ValueError, "UNIVERSE_SYMBOL_SET_MISMATCH"):
-            validate_in_temp(payload)
+            validate_in_temp(payload, universe_symbols=expected_symbols)
 
     def test_rejects_stale_report(self):
         payload = report()
