@@ -35,11 +35,13 @@ class LiveSignalBotTests(unittest.TestCase):
 
         source_ts = 1_800_000_000_000
         settlement_ts = source_ts + 8 * 60 * 60 * 1000
+        next_settlement_ts = settlement_ts + 4 * 60 * 60 * 1000
         responses = [
             FakeResponse([{
                 "fundingRate": "0.0001",
                 "ts": str(source_ts),
                 "fundingTime": str(settlement_ts),
+                "nextFundingTime": str(next_settlement_ts),
             }]),
             FakeResponse([]),
             FakeResponse([]),
@@ -56,6 +58,8 @@ class LiveSignalBotTests(unittest.TestCase):
 
         self.assertEqual(metrics["funding_timestamp_ms"], source_ts)
         self.assertEqual(metrics["funding_settlement_time_ms"], settlement_ts)
+        self.assertEqual(metrics["funding_next_settlement_time_ms"], next_settlement_ts)
+        self.assertEqual(metrics["funding_interval_ms"], 4 * 60 * 60 * 1000)
         self.assertIsInstance(metrics["funding_received_at_ms"], int)
         self.assertNotEqual(metrics["funding_received_at_ms"], source_ts)
         self.assertEqual(metrics["long_short_ratio_timestamp_ms"], source_ts)
