@@ -306,8 +306,10 @@ class LiveOHLCVFetcher:
         base = symbol[:-4] if symbol.upper().endswith("USDT") else symbol.upper()
         inst_id = f"{base}-USDT-SWAP"
         metrics: dict[str, Any] = {
-            "funding_rate": None, "oi_1h": None, "oi_1d": None,
-            "long_short_ratio": None, "errors": {},
+            "funding_rate": None, "funding_received_at_ms": None,
+            "oi_1h": None, "oi_1d": None,
+            "long_short_ratio": None, "long_short_ratio_timestamp_ms": None,
+            "received_at_ms": now_ms, "errors": {},
         }
 
         def get(path: str, params: dict[str, str], key: str):
@@ -322,6 +324,7 @@ class LiveOHLCVFetcher:
             data = get("/api/v5/public/funding-rate", {"instId": inst_id}, "funding")
             if data:
                 metrics["funding_rate"] = float(data[0]["fundingRate"])
+                metrics["funding_received_at_ms"] = now_ms
         except Exception as exc:
             metrics["errors"]["funding"] = f"{type(exc).__name__}:{str(exc)[:120]}"
 
@@ -345,6 +348,7 @@ class LiveOHLCVFetcher:
             data = get("/api/v5/rubik/stat/contracts/long-short-account-ratio",
                        {"ccy": base, "period": "1H"}, "long_short")
             if data:
+                metrics["long_short_ratio_timestamp_ms"] = int(data[0][0])
                 metrics["long_short_ratio"] = float(data[0][1])
         except Exception as exc:
             metrics["errors"]["long_short_ratio"] = f"{type(exc).__name__}:{str(exc)[:120]}"
