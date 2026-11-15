@@ -165,6 +165,13 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertIsNone(result["lfs_score"])
         self.assertLess(result["lfs_coverage_pct"], 40.0)
 
+    def test_stage1_rejects_gaps_in_full_historical_1h_lfs_window(self):
+        rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
+        rows.stats_1h[500]["open_time"] += 3_600_000
+        result = evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["decision"], "NO_TRADE")
+        self.assertEqual(result["reason"], "DATA_INSUFFICIENT_1H_HISTORY_GAP")
+
     def test_stage1_stops_safely_on_insufficient_lfs_v2(self):
         rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
         with patch("modules.lfs_v2._hourly_bb_distribution", return_value=[]):
