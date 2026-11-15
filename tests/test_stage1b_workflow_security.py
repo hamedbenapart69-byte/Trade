@@ -32,6 +32,17 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("ref: production-v1", notifier)
         self.assertNotIn("ref: main", notifier)
 
+    def test_trusted_notifier_only_follows_stage1b_scanner(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn('"Trader_me Stage 1B LRT-15m Signal Bot"', notifier)
+        self.assertNotIn('"Trader_me Stage 1 Signal Bot"', notifier)
+
+    def test_live_scanner_never_receives_telegram_secrets(self):
+        scanner = (WORKFLOWS / "signal_bot.yml").read_text(encoding="utf-8")
+        self.assertIn("read-only, no Telegram credentials", scanner)
+        self.assertNotIn("secrets.TELEGRAM_TOKEN", scanner)
+        self.assertNotIn("secrets.TELEGRAM_CHAT_ID", scanner)
+
 
     def test_trusted_notifier_uses_serialized_durable_at_most_once_delivery(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
