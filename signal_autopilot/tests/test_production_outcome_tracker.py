@@ -98,6 +98,17 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "LAST_CLOSED_CANDLE_NOT_15M_ALIGNED"):
             _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
 
+    def test_rejects_candle_that_was_not_closed_when_signal_was_created(self):
+        row = signal()
+        row["last_closed_candle_utc"] = "2026-11-14T14:45:00+00:00"
+        with self.assertRaisesRegex(ValueError, "LAST_CLOSED_CANDLE_NOT_CLOSED_AT_SIGNAL_TIME"):
+            _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
+
+    def test_rejects_tracker_bucket_status_mismatch(self):
+        row = signal("prod-1", "CLOSED")
+        with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_TRACKER_STATUS_MISMATCH"):
+            _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
+
     def test_rejects_risk_reward_mismatch(self):
         row = signal()
         row["levels"]["rr"] = 4.0
@@ -156,6 +167,21 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
                 update_production_outcomes(
                     state_path,
                     outcomes_path,
+                    now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                    fetcher=lambda *args: ([], "UNUSED"),
+                )
+
+    def test_rejects_signal_timestamp_after_state_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_path = root / "open_signals.json"
+            outcomes_path = root / "production_outcomes.json"
+            row = signal()
+            row["created_at_utc"] = "2026-11-14T15:30:00+00:00"
+            write_state(state_path, {"prod-1": row})
+            with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_FUTURE_DATED"):
+                update_production_outcomes(
+                    state_path, outcomes_path,
                     now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
                     fetcher=lambda *args: ([], "UNUSED"),
                 )
