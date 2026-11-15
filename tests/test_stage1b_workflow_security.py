@@ -44,6 +44,8 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertNotIn("secrets.TELEGRAM_CHAT_ID", scanner)
         self.assertIn('python-version: "3.11"', scanner)
         self.assertIn('python-version: "3.11"', notifier)
+        persistence = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
+        self.assertIn('python-version: "3.11"', persistence)
 
 
     def test_trusted_notifier_uses_serialized_durable_at_most_once_delivery(self):
