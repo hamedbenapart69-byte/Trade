@@ -413,7 +413,25 @@ class LiveOHLCVFetcher:
                     )
             else:
                 raise RuntimeError("all_dual_timeframe_sources_failed|" + "|".join(errors))
-        metrics = self._okx_metrics(symbol, now_ms)
+        # دادهٔ مشتقات OKX فقط کنار کندل OKX مصرف می‌شود. ترکیب بی‌بررسی
+        # کندل Bybit/Binance با Funding/OI/LSR صرافی دیگر ممنوع است.
+        if source == "OKX_PUBLIC_SWAP_CANDLE" or source.startswith("CCXT_OKX_"):
+            metrics = self._okx_metrics(symbol, now_ms)
+            metrics["derivatives_source"] = "OKX_PUBLIC_SWAP"
+        else:
+            metrics = {
+                "funding_rate": None,
+                "funding_timestamp_ms": None,
+                "funding_received_at_ms": None,
+                "funding_settlement_time_ms": None,
+                "oi_1h": None,
+                "oi_1d": None,
+                "long_short_ratio": None,
+                "long_short_ratio_timestamp_ms": None,
+                "as_of_time_ms": now_ms,
+                "derivatives_source": "UNAVAILABLE_CROSS_VENUE_MIX",
+                "errors": {"derivatives": "CROSS_VENUE_DERIVATIVES_DISABLED"},
+            }
         LOG.info(
             "%s dual_timeframe source=%s bars_1h=%d bars_15m=%d okx_funding=%s okx_oi_1h=%s okx_oi_1d=%s okx_lsr=%s",
             symbol, source, len(stats_1h), len(live_15m),
