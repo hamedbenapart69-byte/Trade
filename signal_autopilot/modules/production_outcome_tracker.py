@@ -147,6 +147,21 @@ def _adapt_record(
         if isinstance(lfs_coverage, bool) or not isinstance(lfs_coverage, (int, float)) or not math.isfinite(float(lfs_coverage)) or not 0 <= float(lfs_coverage) <= 100:
             raise ValueError("PRODUCTION_LFS_COVERAGE_INVALID")
         lfs_coverage = float(lfs_coverage)
+    lfs_threshold = record.get("lfs_threshold")
+    if lfs_threshold is not None:
+        if isinstance(lfs_threshold, bool) or not isinstance(lfs_threshold, (int, float)) or not math.isfinite(float(lfs_threshold)) or not 0 <= float(lfs_threshold) <= 1:
+            raise ValueError("PRODUCTION_LFS_THRESHOLD_INVALID")
+        lfs_threshold = float(lfs_threshold)
+        if lfs_score is not None and lfs_score < lfs_threshold:
+            raise ValueError("PRODUCTION_LFS_GATE_MISMATCH")
+    lfs_veto = record.get("lfs_veto")
+    if lfs_veto is not None and lfs_veto != "PASS":
+        raise ValueError("PRODUCTION_LFS_VETO_NOT_PASS")
+    lfs_threshold_reason = record.get("lfs_threshold_reason")
+    if lfs_threshold_reason is not None and (
+        not isinstance(lfs_threshold_reason, str) or not lfs_threshold_reason.strip()
+    ):
+        raise ValueError("PRODUCTION_LFS_THRESHOLD_REASON_INVALID")
 
     return {
         "signal_id": signal_id,
@@ -170,6 +185,9 @@ def _adapt_record(
         "lfs_score": lfs_score,
         "lfs_status": record.get("lfs_status") or "UNAVAILABLE",
         "lfs_coverage_pct": lfs_coverage,
+        "lfs_veto": lfs_veto,
+        "lfs_threshold": lfs_threshold,
+        "lfs_threshold_reason": lfs_threshold_reason,
         "cvd_source": (record.get("cvd") or {}).get("source", "UNAVAILABLE")
         if isinstance(record.get("cvd"), dict) else "UNAVAILABLE",
     }
