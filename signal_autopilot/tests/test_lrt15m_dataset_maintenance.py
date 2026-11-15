@@ -230,11 +230,21 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
                 report_path = root / "data_report.json"
                 report_path.write_text(json.dumps({"status": "DEGRADED"}), encoding="utf-8")
 
+                ephemeral_dir = root / "compute" / "ephemeral_tail"
+                ephemeral_ts = int(datetime(2026, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000)
+                write_timestamps(
+                    ephemeral_dir / "live_tail" / "2026-01-01" / "COIN00USDT_15m.parquet",
+                    [ephemeral_ts],
+                )
                 manifest = build_dataset_manifest(
                     storage, report_path, root / "manifest.json",
                     "workflow-sha", "engine-sha", "12345", "legacy-sha",
+                    ephemeral_dir,
                 )
                 self.assertEqual(manifest["symbols_count"], 27)
+                self.assertEqual(manifest["ephemeral_evidence_files_count"], 1)
+                self.assertEqual(manifest["ephemeral_evidence_rows_total"], 1)
+                self.assertEqual(len(manifest["ephemeral_evidence_sha256"]), 64)
                 self.assertEqual(manifest["baseline_files_count"], 27)
                 self.assertEqual(manifest["live_tail_files_count"], 1)
                 self.assertEqual(len(manifest["dataset_sha256"]), 64)
