@@ -1,0 +1,32 @@
+name: Audit Public Data Sources
+
+on:
+  push:
+    branches:
+      - audit/repo-truth-v1
+    paths:
+      - "scripts/audit_public_data_sources.py"
+      - ".github/workflows/audit-data-sources.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-endpoint-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Probe public data endpoints and Binance Vision archives
+        run: python scripts/audit_public_data_sources.py | tee audit-public-data-sources.json
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-public-data-sources
+          path: audit-public-data-sources.json
+          if-no-files-found: warn
+          retention-days: 30
