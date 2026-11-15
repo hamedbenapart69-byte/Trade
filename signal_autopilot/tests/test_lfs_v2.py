@@ -243,6 +243,22 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertEqual(stale["lfs_components"]["LFS5"]["status"], "UNAVAILABLE")
         self.assertEqual(stale["lfs_status"], "PARTIAL_PROXY")
 
+    def test_duplicate_open_interest_timestamps_are_rejected(self):
+        as_of = self.bars_1h[-1]["open_time"] + 3_600_000
+        rows = oi_rows(hourly=True, change=-0.10, end_ts_ms=as_of)
+        rows.append(list(rows[-1]))
+        result = calculate_lfs_v2(
+            "BTCUSDT", self.bars_15m, self.bars_1h,
+            funding_rate=0.0001,
+            oi_1h=rows,
+            oi_1d=oi_rows(hourly=False, change=0.02, end_ts_ms=as_of),
+            as_of_time_ms=as_of,
+            funding_timestamp_ms=as_of,
+            funding_received_at_ms=as_of,
+        )
+        self.assertFalse(result["api_status"]["oi_1h"])
+        self.assertEqual(result["lfs_components"]["LFS5"]["status"], "UNAVAILABLE")
+
     def test_fresh_receive_does_not_make_stale_funding_source_fresh(self):
         as_of = self.bars_1h[-1]["open_time"] + 3_600_000
         result = calculate_lfs_v2(
