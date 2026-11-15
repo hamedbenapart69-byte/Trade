@@ -218,6 +218,7 @@ class LFSV2UnitTests(unittest.TestCase):
             oi_1d=oi_rows(hourly=False, change=0.02, end_ts_ms=as_of),
             long_short_ratio=1.2,
             as_of_time_ms=as_of,
+            funding_timestamp_ms=as_of,
             funding_received_at_ms=as_of,
             long_short_ratio_timestamp_ms=as_of,
         )
@@ -232,7 +233,8 @@ class LFSV2UnitTests(unittest.TestCase):
             oi_1d=oi_rows(hourly=False, change=0.02),
             long_short_ratio=1.2,
             as_of_time_ms=as_of,
-            funding_received_at_ms=as_of - 10 * 60 * 1000,
+            funding_timestamp_ms=as_of - 10 * 60 * 1000,
+            funding_received_at_ms=as_of,
             long_short_ratio_timestamp_ms=as_of - 3 * 60 * 60 * 1000,
         )
         self.assertFalse(any(stale["api_status"].values()))
@@ -240,6 +242,18 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertEqual(stale["lfs_components"]["LFS3"]["status"], "UNAVAILABLE")
         self.assertEqual(stale["lfs_components"]["LFS5"]["status"], "UNAVAILABLE")
         self.assertEqual(stale["lfs_status"], "PARTIAL_PROXY")
+
+    def test_fresh_receive_does_not_make_stale_funding_source_fresh(self):
+        as_of = self.bars_1h[-1]["open_time"] + 3_600_000
+        result = calculate_lfs_v2(
+            "BTCUSDT", self.bars_15m, self.bars_1h,
+            funding_rate=0.0001,
+            as_of_time_ms=as_of,
+            funding_timestamp_ms=as_of - 10 * 60 * 1000,
+            funding_received_at_ms=as_of,
+        )
+        self.assertFalse(result["api_status"]["funding"])
+        self.assertEqual(result["lfs_components"]["LFS2"]["status"], "UNAVAILABLE")
 
     def test_lfs_v2_bounded(self):
         rng = random.Random(17)
