@@ -36,6 +36,8 @@ class SignalTracker:
         signal_id = str(signal.get("signal_id", "")).strip()
         if not signal_id:
             raise ValueError("signal_id_required")
+        if signal_id in self.state.get("closed_signals", {}):
+            raise ValueError("signal_id_already_closed")
         previous = self.state["open_signals"].get(signal_id, {})
         observed_at = _now()
         first_seen = (
