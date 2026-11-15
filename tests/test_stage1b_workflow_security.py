@@ -39,10 +39,11 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertNotIn("group: trusted-stage1b-telegram-${{ github.event.workflow_run.id }}", notifier)
         self.assertIn("ref: telegram-delivery-state", notifier)
         self.assertIn("contents: write", notifier)
-        self.assertIn("DELIVERY_ALREADY_CLAIMED", notifier)
         self.assertIn('claimed=false', notifier)
         self.assertIn('claimed=true', notifier)
-        self.assertIn('DELIVERY_UNCONFIRMED', notifier)
+        self.assertIn("telegram_delivery_ledger.py claim", notifier)
+        self.assertIn("telegram_delivery_ledger.py finalize", notifier)
+        self.assertIn("--validate-only", notifier)
         self.assertLess(
             notifier.index("Validate report before claiming delivery"),
             notifier.index("Claim this scanner run before Telegram delivery"),
