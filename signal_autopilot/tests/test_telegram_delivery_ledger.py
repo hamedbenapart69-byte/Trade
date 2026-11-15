@@ -4,6 +4,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 import unittest
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from scripts.telegram_delivery_ledger import claim_delivery, finalize_delivery
 
