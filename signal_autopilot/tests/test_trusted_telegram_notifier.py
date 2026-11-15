@@ -186,6 +186,17 @@ class TrustedNotifierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
             MODULE.validate_dashboard_url("http://example.com")
 
+    def test_verify_destination_only_runs_without_report_artifact(self):
+        args = ["notify_stage1b_telegram.py", "--verify-destination-only"]
+        env = {
+            "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz",
+            "TELEGRAM_CHAT_ID": "-1001234567890",
+            "TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts",
+        }
+        with patch.object(sys, "argv", args), patch.dict(os.environ, env, clear=True), patch.object(MODULE, "verify_telegram_destination") as verify:
+            self.assertEqual(MODULE.main(), 0)
+            verify.assert_called_once()
+
     def test_telegram_config_rejects_missing_or_malformed_credentials(self):
         with self.assertRaisesRegex(ValueError, "TELEGRAM_TOKEN_INVALID_OR_MISSING"):
             MODULE.validate_telegram_config("", "-1001234567890", "Trade Alerts")
