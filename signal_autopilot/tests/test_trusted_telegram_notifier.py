@@ -1,6 +1,7 @@
-"""Unit tests for trusted Stage 1B Telegram report delivery."""
+""""Unit tests for trusted Stage 1B Telegram report delivery."""
 import importlib.util
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import tempfile
 import unittest
@@ -28,18 +29,27 @@ def report():
         "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
         "universe_count": 27,
         "symbols_reported": 27,
-        "generated_at_utc": "2026-11-11T12:00:00+00:00",
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "symbols": rows,
     }
 
 
+def validate_in_temp(payload, now=None):
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        report_path = root / "report.json"
+        universe_path = root / "universe.json"
+        report_path.write_text(json.dumps(payload), encoding="utf-8")
+        universe_path.write_text(
+            json.dumps({"symbols": [row["symbol"] for row in payload["symbols"]]}),
+            encoding="utf-8",
+        )
+        return MODULE.validate_report(report_path, universe_path, now=now)
+
+
 class TrustedNotifierTests(unittest.TestCase):
-    def test_validates_27_symbols_and_formats_watchlist_only(self):
-        payload = report()
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "report.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
-            checked = MODULE.validate_report(path)
+    def test_validates_exact_universe_and_formats_watchlist_only(self):
+        checked = validate_in_temp(report())
         message = MODULE.build_message(checked)
         self.assertIn("NOT_CALIBRATED", message)
         self.assertIn("WATCHLIST فقط", message)
@@ -50,11 +60,26 @@ class TrustedNotifierTests(unittest.TestCase):
     def test_rejects_incomplete_universe(self):
         payload = report()
         payload["symbols"].pop()
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "report.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "UNIVERSE_COVERAGE_INVALID|SYMBOL_ROWS_INVALID"):
-                MODULE.validate_report(path)
+        with self.assertRaisesRegex(ValueError, "UNIVERSE_COVERAGE_INVALID|SYMBOL_ROWS_INVALID"):
+            validate_in_temp(payload)
+
+    def test_rejects_wrong_symbol_set_even_when_count_is_27(self):
+        payload = report()
+        payload["symbols"][-1]["symbol"] = "NOTINUNIVERSE"
+        with self.assertRaisesRegex(ValueError, "UNIVERSE_SYMBOL_SET_MISMATCH"):
+            validate_in_temp(payload)
+
+    def test_rejects_stale_report(self):
+        payload = report()
+        payload["generated_at_utc"] = (datetime.now(timezone.utc) - timedelta(hours=7)).isoformat()
+        with self.assertRaisesRegex(ValueError, "REPORT_STALE"):
+            validate_in_temp(payload)
+
+    def test_rejects_timestamp_too_far_in_future(self):
+        payload = report()
+        payload["generated_at_utc"] = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+        with self.assertRaisesRegex(ValueError, "REPORT_TIMESTAMP_TOO_FAR_IN_FUTURE"):
+            validate_in_temp(payload)
 
     def test_no_candidates_still_produces_daily_report(self):
         payload = report()
