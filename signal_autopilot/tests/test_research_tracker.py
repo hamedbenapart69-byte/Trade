@@ -31,6 +31,33 @@ def fetcher_for(rows, source="OKX_PUBLIC_OHLCV"):
     return fetcher
 
 class ResearchTrackerTests(unittest.TestCase):
+    def test_public_fetcher_returns_empty_for_not_yet_closed_entry_candle(self):
+        class EmptyExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                }
+            }
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return []
+
+            def close(self):
+                return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 60_000
+        exchange = EmptyExchange()
+        with patch.object(research_tracker_module, "PROVIDERS", ("okx",)), \
+             patch.object(research_tracker_module.ccxt, "okx", return_value=exchange):
+            rows, source = fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+        self.assertEqual(rows, [])
+        self.assertEqual(source, "PUBLIC_OHLCV_NO_CLOSED_CANDLES")
+
     def test_public_fetcher_rejects_nonfinite_and_malformed_ohlcv(self):
         class FakeExchange:
             markets = {
