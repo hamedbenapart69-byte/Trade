@@ -6,7 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "publish-stage1b-dashboard.yml"
 APP = ROOT / "web" / "futures" / "app.js"
-PAGE = ROOT / "web" / "futures" / "index.html"
+APP = ROOT / "web" / "futures" / "app.js"
 
 
 class Stage1BDashboardWorkflowTests(unittest.TestCase):
@@ -35,9 +35,15 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("NOT_CALIBRATED", app)
 
     def test_dashboard_summary_does_not_call_watchlist_a_qualified_trade(self):
-        page = PAGE.read_text(encoding="utf-8")
-        self.assertIn("نامزدهای زیرنظر", page)
-        self.assertNotIn("موقعیت‌های واجد شرایط", page)
+        app = APP.read_text(encoding="utf-8")
+        self.assertIn("نامزدهای زیرنظر", app)
+        self.assertNotIn("موقعیت‌های واجد شرایط", app)
+
+    def test_stale_reports_do_not_show_old_candidates_as_current(self):
+        app = APP.read_text(encoding="utf-8")
+        self.assertIn("if (!freshness.fresh)", app)
+        self.assertIn("وضعیت‌های قبلی برای ورود جدید نمایش داده نمی‌شوند", app)
+        self.assertIn("freshness.fresh ? fmt(report.candidate_setups", app)
 
 
 if __name__ == "__main__":
