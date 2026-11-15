@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -429,7 +430,18 @@ def evaluate_stage1_symbol(
                 bar[key] = int(value) if key == "open_time" else (
                     str(value) if key in {"data_source", "cvd_source"} else float(value)
                 )
-            if bar["high"] < bar["low"] or bar["close"] <= 0 or bar["open"] <= 0:
+            prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+            if (
+                not all(math.isfinite(value) for value in prices)
+                or bar["open_time"] <= 0
+                or bar["open_time"] % 900_000 != 0
+                or bar["open"] <= 0
+                or bar["close"] <= 0
+                or bar["volume"] < 0
+                or bar["high"] < max(bar["open"], bar["close"])
+                or bar["low"] > min(bar["open"], bar["close"])
+                or bar["high"] < bar["low"]
+            ):
                 return {**base, "reason": "INVALID_OHLC"}
             bars.append(bar)
         bars.sort(key=lambda item: item["open_time"])
@@ -443,8 +455,20 @@ def evaluate_stage1_symbol(
                 "high": float(row["high"]), "low": float(row["low"]),
                 "close": float(row["close"]), "volume": float(row["volume"]),
             }
-            if bar["high"] >= bar["low"] and bar["close"] > 0 and bar["open"] > 0:
-                bars_1h.append(bar)
+            prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+            if (
+                not all(math.isfinite(value) for value in prices)
+                or bar["open_time"] <= 0
+                or bar["open_time"] % 3_600_000 != 0
+                or bar["open"] <= 0
+                or bar["close"] <= 0
+                or bar["volume"] < 0
+                or bar["high"] < max(bar["open"], bar["close"])
+                or bar["low"] > min(bar["open"], bar["close"])
+                or bar["high"] < bar["low"]
+            ):
+                return {**base, "reason": "DATA_INSUFFICIENT_1H_INVALID_OHLC"}
+            bars_1h.append(bar)
         bars_1h.sort(key=lambda item: item["open_time"])
         if not bars_1h:
             bars_1h = aggregate_bars(bars, 4)  # سازگاری قدیمی؛ برای LFS تاریخچه کافی نیست.
