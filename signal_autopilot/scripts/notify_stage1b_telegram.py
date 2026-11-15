@@ -161,6 +161,10 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         cvd = cvd if isinstance(cvd, dict) else {}
         lfs_score = finite_number(row.get("lfs_score"))
         lfs_coverage = finite_number(row.get("lfs_coverage_pct"))
+        if lfs_score is not None and not 0 <= lfs_score <= 1:
+            raise ValueError("WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
+        if lfs_coverage is not None and not 0 <= lfs_coverage <= 100:
+            raise ValueError("WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
