@@ -6,7 +6,14 @@ from app.research_governor import PlanValidationError, evaluate_plan, evaluate_s
 def stage(**overrides):
     value = {
         "stage_id": "stage-0",
-        "acceptance_criteria": ["coverage >= 99%", "all required tests pass"],
+        "acceptance_criteria": [
+            {"metric": "coverage_pct", "operator": ">=", "target": 99.0},
+            {"metric": "required_tests_passed", "operator": ">=", "target": 1},
+        ],
+        "acceptance_results": [
+            {"metric": "coverage_pct", "actual": 99.5},
+            {"metric": "required_tests_passed", "actual": 13},
+        ],
         "criteria_frozen": True,
         "layers": {"L1_DATA": True, "L2_COMPUTE": True, "L3_DELIVERY": True},
         "hard_gates_passed": True,
@@ -62,6 +69,17 @@ class ResearchGovernorTests(unittest.TestCase):
             versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
         ), unattended_authorized=True)
         self.assertEqual(result["decision"], "BLOCKED")
+
+    def test_pass_claim_with_failed_numeric_acceptance_is_blocked(self):
+        result = evaluate_stage(stage(
+            acceptance_results=[
+                {"metric": "coverage_pct", "actual": 98.0},
+                {"metric": "required_tests_passed", "actual": 13},
+            ],
+            versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
+        ), unattended_authorized=True)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertIn("coverage_pct", result["reason"])
 
     def test_pass_cannot_auto_continue_to_merge_or_deploy(self):
         for task_type in ("merge", "production_deploy", "threshold_change"):
