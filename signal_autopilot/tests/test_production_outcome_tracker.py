@@ -104,6 +104,17 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "LAST_CLOSED_CANDLE_NOT_CLOSED_AT_SIGNAL_TIME"):
             _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
 
+    def test_rejects_watchlist_that_does_not_clear_effective_lfs_gate(self):
+        row = signal()
+        row.update({
+            "lfs_score": 0.50,
+            "lfs_veto": "PASS",
+            "lfs_threshold": 0.70,
+            "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+        })
+        with self.assertRaisesRegex(ValueError, "PRODUCTION_LFS_GATE_MISMATCH"):
+            _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
+
     def test_rejects_tracker_bucket_status_mismatch(self):
         row = signal("prod-1", "CLOSED")
         with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_TRACKER_STATUS_MISMATCH"):
