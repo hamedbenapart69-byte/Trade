@@ -53,7 +53,8 @@ def _adapt_record(
     record: dict[str, Any],
     tracker_status: str,
 ) -> dict[str, Any] | None:
-    if record.get("mode") != "PRODUCTION" or record.get("decision") != "WATCHLIST":
+    decision = record.get("decision") or record.get("status")
+    if record.get("mode") != "PRODUCTION" or decision != "WATCHLIST":
         return None
     if str(record.get("signal_id") or signal_id) != signal_id:
         raise ValueError("PRODUCTION_SIGNAL_ID_MISMATCH")
@@ -61,9 +62,11 @@ def _adapt_record(
     if direction not in {"BUY", "SELL"}:
         raise ValueError("PRODUCTION_SIGNAL_DIRECTION_INVALID")
 
-    entry = _finite_number(record.get("entry"), "ENTRY_REFERENCE")
-    stop = _finite_number(record.get("stop_loss"), "STOP_REFERENCE")
-    target = _finite_number(record.get("take_profit"), "TP2_REFERENCE")
+    levels = record.get("levels")
+    levels = levels if isinstance(levels, dict) else {}
+    entry = _finite_number(record.get("entry", levels.get("entry")), "ENTRY_REFERENCE")
+    stop = _finite_number(record.get("stop_loss", levels.get("stop_loss")), "STOP_REFERENCE")
+    target = _finite_number(record.get("take_profit", levels.get("tp2")), "TP2_REFERENCE")
     if direction == "BUY" and not stop < entry < target:
         raise ValueError("PRODUCTION_SIGNAL_LEVEL_ORDER_INVALID")
     if direction == "SELL" and not target < entry < stop:
@@ -77,7 +80,7 @@ def _adapt_record(
     if candle_time > created:
         raise ValueError("LAST_CLOSED_CANDLE_AFTER_SIGNAL_TIME")
 
-    tp1_raw = record.get("take_profit_1")
+    tp1_raw = record.get("take_profit_1", levels.get("tp1"))
     tp1 = None
     if tp1_raw is not None:
         tp1 = _finite_number(tp1_raw, "TP1_REFERENCE")
@@ -102,6 +105,7 @@ def _adapt_record(
         "source_decision": "WATCHLIST",
         "source_tracker_status": tracker_status,
         "tp1_reference": tp1,
+        "rr_reference": levels.get("rr", record.get("rr")),
         "hypothesis": str(record.get("hypothesis") or "UNAVAILABLE"),
         "falsification": str(record.get("falsification") or "UNAVAILABLE"),
         "lfs_score": record.get("lfs_score"),
