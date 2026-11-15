@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: write
+      actions: read
       contents: write
     steps:
       - name: Checkout trusted validator from main
@@ -133,9 +133,16 @@ jobs:
           done
           echo "Could not update market-data after 3 synchronized push attempts"
           exit 1
-
+  
+  cleanup-artifacts:
+    if: always()
+    needs: persist
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
       - name: Prune older Stage 1b P0 artifacts to stay within free storage
-        if: always()
         uses: actions/github-script@v8
         with:
           script: |
