@@ -114,7 +114,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
     def test_rejects_stale_report(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            report, symbols = make_report(datetime.now(timezone.utc) - timedelta(hours=7))
+            report, symbols = make_report(datetime.now(timezone.utc) - timedelta(hours=4, minutes=1))
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "REPORT_STALE"):
                 publish_dashboard(report_path, universe_path, root)
