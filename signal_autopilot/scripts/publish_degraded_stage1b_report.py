@@ -72,6 +72,7 @@ def build_degraded_source(
         "symbols_reported": len(rows),
         "symbols": rows,
         "calibration": "UNCALIBRATED",
+        "ev_status": "NOT_CALCULATED",
         "decision_policy": DECISION_POLICY,
         "data_gate_status": "NOT_REPORTED",
         "report_status": "MARKET_DATA_DEGRADED",
