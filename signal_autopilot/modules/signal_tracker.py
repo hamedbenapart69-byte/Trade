@@ -37,11 +37,23 @@ class SignalTracker:
         if not signal_id:
             raise ValueError("signal_id_required")
         previous = self.state["open_signals"].get(signal_id, {})
-        record = {**previous, **signal,
-                  "tracker_status": "OPEN",
-                  "first_seen_utc": previous.get("first_seen_utc", _now()),
-                  "last_seen_utc": _now(),
-                  "updates": int(previous.get("updates", 0)) + 1}
+        observed_at = _now()
+        first_seen = (
+            previous.get("first_seen_utc")
+            or previous.get("created_at_utc")
+            or signal.get("created_at_utc")
+            or observed_at
+        )
+        # یک شناسهٔ سیگنال نمایندهٔ یک setup مشخص است؛ تکرار اسکن نباید
+        # زمان ایجاد یا سطوح مرجع آن را جابه‌جا کند و نتیجهٔ Shadow را بازنویسی کند.
+        record = {**signal, **previous}
+        record.update({
+            "tracker_status": "OPEN",
+            "created_at_utc": previous.get("created_at_utc") or first_seen,
+            "first_seen_utc": first_seen,
+            "last_seen_utc": observed_at,
+            "updates": int(previous.get("updates", 0)) + 1,
+        })
         self.state["open_signals"][signal_id] = record
         self.save()
         return record
