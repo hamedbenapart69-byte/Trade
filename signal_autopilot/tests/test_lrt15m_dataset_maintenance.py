@@ -202,6 +202,7 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         self.assertIn("--data-only", workflow)
         self.assertIn("--manifest", workflow)
         self.assertIn("ephemeral_tail/", workflow)
+        self.assertIn("retention-days: 1", workflow)
         self.assertNotIn("push:", workflow)
         self.assertNotIn("signals-publish", workflow)
         self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
@@ -210,6 +211,16 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         self.assertEqual(workflow.count("persist-credentials: false"), 3)
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertNotIn("git push", workflow)
+
+    def test_trusted_writer_prunes_prior_artifacts_without_touching_newer_runs(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
+        self.assertIn("actions: write", workflow)
+        self.assertIn("actions/github-script@v8", workflow)
+        self.assertIn("listArtifactsForRepo", workflow)
+        self.assertIn("deleteArtifact", workflow)
+        self.assertIn("sourceRunId < currentRunId", workflow)
+        self.assertIn('artifact.name.startsWith("stage1b-p0-dataset-")', workflow)
 
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
