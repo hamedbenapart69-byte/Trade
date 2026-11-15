@@ -48,7 +48,9 @@ class SignalTracker:
         # زمان ایجاد یا سطوح مرجع آن را جابه‌جا کند و نتیجهٔ Shadow را بازنویسی کند.
         # Snapshot اولیه کامل و تغییرناپذیر است؛ کلیدهای تازهٔ نسخه‌های بعدی
         # نباید بی‌صدا به سیگنال تاریخی الصاق شوند.
-        record = dict(previous) if previous else dict(signal)
+        # مقادیر ثبت‌شده تغییرناپذیرند؛ فقط فیلدهایی که در snapshot اولیه وجود نداشته‌اند
+        # می‌توانند یک‌بار تکمیل شوند. اسکن بعدی حق بازنویسی مقادیر قبلی را ندارد.
+        record = {**signal, **previous}
         record.update({
             "tracker_status": "OPEN",
             "created_at_utc": previous.get("created_at_utc") or first_seen,
