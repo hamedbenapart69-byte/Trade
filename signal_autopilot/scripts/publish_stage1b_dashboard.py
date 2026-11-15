@@ -132,6 +132,12 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID")
     if abs(rr - reward2 / risk) > max(0.05, abs(rr) * 0.10):
         raise ValueError("REPORT_WATCHLIST_RR_MISMATCH")
+    lfs_score = _finite_number(row.get("lfs_score"))
+    lfs_coverage = _finite_number(row.get("lfs_coverage_pct"))
+    if lfs_score is not None and not 0 <= lfs_score <= 1:
+        raise ValueError("REPORT_WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
+    if lfs_coverage is not None and not 0 <= lfs_coverage <= 100:
+        raise ValueError("REPORT_WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
     for field in ("hypothesis", "falsification"):
         value = row.get(field)
         if not isinstance(value, str) or value.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
