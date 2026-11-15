@@ -17,7 +17,8 @@ class ResearchOutcomeEventTriggerTests(unittest.TestCase):
 
     def test_schedule_uses_off_peak_minutes_and_keeps_manual_fallback(self):
         content = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('cron: "7,22,37,52 * * * *"', content)
+        self.assertIn('cron: "7 */4 * * *"', content)
+        self.assertNotIn('cron: "7,22,37,52 * * * *"', content)
         self.assertIn("workflow_dispatch:", content)
         self.assertIn("group: research-state-writes", content)
         self.assertIn('python-version: "3.11"', content)
