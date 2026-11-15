@@ -160,7 +160,7 @@ function render(report) {
 
   $("signals").innerHTML = '<div class="table-wrap"><table><thead><tr>' +
     "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>جهت</th><th>سطوح مرجع</th>" +
-    "<th>سوگیری ۴ساعته</th><th>سوگیری ۱ساعته</th><th>منبع CVD</th><th>تعداد کندل</th>" +
+    "<th>سوگیری ۴ساعته</th><th>سوگیری ۱ساعته</th><th>LFS</th><th>منبع CVD</th><th>تعداد کندل</th>" +
     "<th>اطمینان</th><th>فرضیه و شرط ابطال</th>" +
     "</tr></thead><tbody>" +
     rows.map((item) => {
@@ -191,6 +191,7 @@ function render(report) {
         "<td>" + levels + "</td>" +
         "<td>" + esc(direction(bias['4h_kumo'])) + "</td>" +
         "<td>" + esc(direction(bias['1h_kijun'])) + "</td>" +
+        "<td>" + fmt(item.lfs_score) + " / " + esc(item.lfs_status || "UNAVAILABLE") + " / " + fmt(item.lfs_coverage_pct) + "%</td>" +
         "<td>" + esc(cvdLabel(item.cvd_source || (item.cvd && item.cvd.source))) + "</td>" +
         "<td>" + fmt(item.rows_available) + "</td>" +
         "<td>" + esc(item.confidence || "NOT_CALIBRATED") + "</td>" +
