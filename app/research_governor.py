@@ -40,8 +40,23 @@ def _evidence_ok(version: Mapping[str, Any]) -> bool:
     return isinstance(evidence, list) and bool(evidence) and all(_nonempty(x) for x in evidence)
 
 
+def _finite_number(value: Any) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except (OverflowError, ValueError):
+        return False
+
+
+def _evidence_list_ok(value: Any) -> bool:
+    return isinstance(value, list) and bool(value) and all(_nonempty(item) for item in value)
+
+
 def validate_stage(stage: Mapping[str, Any]) -> None:
     """Validate pre-registered acceptance, layer and SLRP version contracts."""
+    if not isinstance(stage, Mapping):
+        raise PlanValidationError("stage_must_be_an_object")
     if not _nonempty(stage.get("stage_id")):
         raise PlanValidationError("stage_id_required")
     criteria = stage.get("acceptance_criteria")
@@ -58,7 +73,7 @@ def validate_stage(stage: Mapping[str, Any]) -> None:
             raise PlanValidationError("acceptance_metric_must_be_nonempty_and_unique")
         if operator not in {">=", ">", "<=", "<", "==", "!="}:
             raise PlanValidationError(f"unsupported_acceptance_operator:{metric}")
-        if isinstance(target, bool) or not isinstance(target, (int, float)) or not math.isfinite(float(target)):
+        if not _finite_number(target):
             raise PlanValidationError(f"acceptance_target_must_be_finite_number:{metric}")
         seen_metrics.add(metric)
     if stage.get("criteria_frozen") is not True:
@@ -111,18 +126,24 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
     stage_id = str(stage["stage_id"])
     versions = stage["versions"]
     layers = stage.get("layers", {})
-    layers_pass = isinstance(layers, dict) and all(
-        layers.get(key) is True for key in ("L1_DATA", "L2_COMPUTE", "L3_DELIVERY")
+    layer_evidence = stage.get("layer_evidence", {})
+    required_layers = ("L1_DATA", "L2_COMPUTE", "L3_DELIVERY")
+    layers_pass = (
+        isinstance(layers, dict)
+        and isinstance(layer_evidence, dict)
+        and all(layers.get(key) is True and _evidence_list_ok(layer_evidence.get(key)) for key in required_layers)
     )
-    gates_pass = stage.get("hard_gates_passed") is True
-    evidence = stage.get("stage_evidence")
-    stage_evidence_ok = isinstance(evidence, list) and bool(evidence) and all(_nonempty(x) for x in evidence)
+    gates_pass = stage.get("hard_gates_passed") is True and _evidence_list_ok(stage.get("hard_gate_evidence"))
+    stage_evidence_ok = _evidence_list_ok(stage.get("stage_evidence"))
     results = stage.get("acceptance_results")
     result_map = {}
     if isinstance(results, list):
         for item in results:
             if isinstance(item, dict) and _nonempty(item.get("metric")):
-                result_map[item["metric"]] = item.get("actual")
+                metric = item["metric"]
+                if metric in result_map:
+                    return _base_decision("BLOCKED", "duplicate_acceptance_result:" + metric, stage_id, str(versions[-1].get("version")))
+                result_map[metric] = item.get("actual")
 
     if stage.get("approval_required") is True:
         return _base_decision("HUMAN_APPROVAL_REQUIRED", "stage_explicitly_requires_approval", stage_id)
@@ -148,7 +169,7 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
         for criterion in stage["acceptance_criteria"]:
             metric = criterion["metric"]
             actual = result_map.get(metric)
-            if isinstance(actual, bool) or not isinstance(actual, (int, float)) or not math.isfinite(float(actual)):
+            if not _finite_number(actual):
                 missing.append("acceptance_result:" + metric)
                 continue
             target = criterion["target"]
@@ -204,6 +225,8 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
 
 def evaluate_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
     """Evaluate a single current stage from a versioned orchestration plan."""
+    if not isinstance(plan, Mapping):
+        raise PlanValidationError("plan_must_be_an_object")
     if plan.get("schema_version") != 1:
         raise PlanValidationError("unsupported_schema_version")
     authorization = plan.get("owner_authorization")
