@@ -103,6 +103,36 @@ def _decision(row: dict[str, Any]) -> str:
     return "NO_QUALIFIED_SETUP"
 
 
+def _finite_number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if number == number and abs(number) != float("inf") else None
+
+
+def _validate_watchlist_levels(row: dict[str, Any]) -> None:
+    if _decision(row) != "WATCHLIST":
+        return
+    direction = row.get("direction")
+    if direction not in {"BUY", "SELL"}:
+        raise ValueError("REPORT_WATCHLIST_DIRECTION_INVALID")
+    entry = _finite_number(row.get("entry"))
+    stop = _finite_number(row.get("stop_loss"))
+    target = _finite_number(row.get("take_profit"))
+    rr = _finite_number(row.get("rr"))
+    if entry is None or stop is None or target is None or rr is None or min(entry, stop, target) <= 0 or rr <= 0:
+        raise ValueError("REPORT_WATCHLIST_LEVELS_INVALID")
+    risk, reward = (
+        (entry - stop, target - entry)
+        if direction == "BUY"
+        else (stop - entry, entry - target)
+    )
+    if risk <= 0 or reward <= 0:
+        raise ValueError("REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID")
+    if abs(rr - reward / risk) > max(0.05, abs(rr) * 0.10):
+        raise ValueError("REPORT_WATCHLIST_RR_MISMATCH")
+
+
 def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
     source_rows = source["symbols"]
     declared_candidates = source.get("production_watchlist_count")
@@ -111,6 +141,8 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
     )
     if isinstance(declared_candidates, bool) or declared_candidates != computed_candidates:
         raise ValueError("REPORT_WATCHLIST_COUNT_MISMATCH")
+    for row in source_rows:
+        _validate_watchlist_levels(row)
     rows: list[dict[str, Any]] = []
     data_sources: set[str] = set()
     cvd_sources: set[str] = set()
