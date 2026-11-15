@@ -7,16 +7,18 @@ import json
 import math
 import os
 import re
-import sys
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
 MAX_REPORT_BYTES = 2_000_000
 MAX_MESSAGE_LENGTH = 3900
+MAX_REPORT_AGE = timedelta(hours=6)
+MAX_FUTURE_SKEW = timedelta(minutes=5)
+EXPECTED_UNIVERSE_SIZE = 27
 
 
 def finite_number(value: Any) -> float | None:
@@ -26,7 +28,30 @@ def finite_number(value: Any) -> float | None:
     return result if math.isfinite(result) else None
 
 
-def validate_report(path: Path) -> dict[str, Any]:
+def load_expected_universe(path: Path) -> set[str]:
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("UNIVERSE_NOT_REGULAR_FILE")
+    if path.stat().st_size > 100_000:
+        raise ValueError("UNIVERSE_TOO_LARGE")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("UNIVERSE_ROOT_NOT_OBJECT")
+    symbols = payload.get("symbols")
+    if not isinstance(symbols, list) or len(symbols) != EXPECTED_UNIVERSE_SIZE:
+        raise ValueError("UNIVERSE_DEFINITION_INVALID")
+    if any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in symbols):
+        raise ValueError("UNIVERSE_SYMBOL_INVALID")
+    expected = set(symbols)
+    if len(expected) != EXPECTED_UNIVERSE_SIZE:
+        raise ValueError("UNIVERSE_SYMBOL_DUPLICATE")
+    return expected
+
+
+def validate_report(
+    path: Path,
+    universe_path: Path,
+    now: datetime | None = None,
+) -> dict[str, Any]:
     if path.is_symlink() or not path.is_file():
         raise ValueError("REPORT_NOT_REGULAR_FILE")
     if path.stat().st_size > MAX_REPORT_BYTES:
@@ -40,11 +65,16 @@ def validate_report(path: Path) -> dict[str, Any]:
         raise ValueError("UNEXPECTED_CALIBRATION_STATE")
     if payload.get("decision_policy") != "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW":
         raise ValueError("UNEXPECTED_DECISION_POLICY")
-    if payload.get("universe_count") != 27 or payload.get("symbols_reported") != 27:
-        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+
+    expected_symbols = load_expected_universe(universe_path)
     rows = payload.get("symbols")
-    if not isinstance(rows, list) or len(rows) != 27:
+    if payload.get("universe_count") != len(expected_symbols):
+        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+    if payload.get("symbols_reported") != len(expected_symbols):
+        raise ValueError("UNIVERSE_COVERAGE_INVALID")
+    if not isinstance(rows, list) or len(rows) != len(expected_symbols):
         raise ValueError("SYMBOL_ROWS_INVALID")
+
     seen: set[str] = set()
     for row in rows:
         if not isinstance(row, dict):
@@ -53,12 +83,31 @@ def validate_report(path: Path) -> dict[str, Any]:
         if not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) or symbol in seen:
             raise ValueError("SYMBOL_ID_INVALID_OR_DUPLICATE")
         seen.add(symbol)
+    if seen != expected_symbols:
+        missing = sorted(expected_symbols - seen)
+        unexpected = sorted(seen - expected_symbols)
+        raise ValueError(
+            f"UNIVERSE_SYMBOL_SET_MISMATCH:missing={','.join(missing)}:"
+            f"unexpected={','.join(unexpected)}"
+        )
+
     generated = payload.get("generated_at_utc")
     if not isinstance(generated, str):
         raise ValueError("REPORT_TIMESTAMP_MISSING")
-    parsed = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+    try:
+        parsed = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("REPORT_TIMESTAMP_INVALID") from exc
     if parsed.tzinfo is None:
         raise ValueError("REPORT_TIMESTAMP_NOT_TIMEZONE_AWARE")
+    reference_now = now or datetime.now(timezone.utc)
+    if reference_now.tzinfo is None:
+        raise ValueError("VALIDATION_CLOCK_NOT_TIMEZONE_AWARE")
+    age = reference_now.astimezone(timezone.utc) - parsed.astimezone(timezone.utc)
+    if age > MAX_REPORT_AGE:
+        raise ValueError("REPORT_STALE")
+    if age < -MAX_FUTURE_SKEW:
+        raise ValueError("REPORT_TIMESTAMP_TOO_FAR_IN_FUTURE")
     return payload
 
 
@@ -145,8 +194,9 @@ def send_message(token: str, chat_id: str, message: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--universe", type=Path, required=True)
     args = parser.parse_args()
-    payload = validate_report(args.report)
+    payload = validate_report(args.report, args.universe)
     message = build_message(payload)
     send_message(
         os.environ.get("TELEGRAM_TOKEN", ""),
