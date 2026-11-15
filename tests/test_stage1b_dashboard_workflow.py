@@ -60,6 +60,11 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("ابطال:", app)
         self.assertIn("const fmtPrice", app)
 
+    def test_dashboard_exposes_effective_lfs_threshold(self):
+        app = APP.read_text(encoding="utf-8")
+        self.assertIn("item.lfs_threshold", app)
+        self.assertIn("item.lfs_threshold_reason", app)
+
     def test_dashboard_freshness_matches_publisher_clock_skew_and_caches_history(self):
         app = APP.read_text(encoding="utf-8")
         self.assertIn("MAX_FUTURE_SKEW_MS = 5 * 60 * 1000", app)
