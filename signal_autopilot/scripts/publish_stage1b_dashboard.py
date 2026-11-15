@@ -160,6 +160,19 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_LFS_GATE_MISMATCH")
     if not isinstance(row.get("lfs_threshold_reason"), str) or not row["lfs_threshold_reason"].strip():
         raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_REASON_MISSING")
+    cvd = row.get("cvd") if isinstance(row.get("cvd"), dict) else {}
+    expected_threshold = (
+        0.30 if cvd.get("source") == "AGGTRADES_REAL" and row.get("lfs_status") == "FULL"
+        else 0.70
+    )
+    expected_reason = (
+        "REAL_CVD_FULL_LFS" if expected_threshold == 0.30
+        else "PROXY_OR_PARTIAL_DATA"
+    )
+    if abs(lfs_threshold - expected_threshold) > 1e-9:
+        raise ValueError("REPORT_WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
+    if row["lfs_threshold_reason"] != expected_reason:
+        raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_REASON_MISMATCH")
     for field in ("hypothesis", "falsification"):
         value = row.get(field)
         if not isinstance(value, str) or value.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
