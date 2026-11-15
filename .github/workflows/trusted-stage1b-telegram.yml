@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
+    if: \${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -40,11 +40,11 @@ jobs:
       - name: Download report artifact from the completed scanner run
         uses: actions/download-artifact@v4
         with:
-          name: trader-me-stage1-signal-bot-${{ github.event.workflow_run.id }}
+          name: trader-me-stage1-signal-bot-\${{ github.event.workflow_run.id }}
           path: incoming
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
+          github-token: \${{ github.token }}
+          repository: \${{ github.repository }}
+          run-id: \${{ github.event.workflow_run.id }}
 
       - name: Run trusted notifier unit tests
         run: python -m unittest discover -s signal_autopilot/tests -p 'test_trusted_telegram_notifier.py' -v
@@ -56,7 +56,7 @@ jobs:
         id: claim
         shell: bash
         env:
-          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_ID: \${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -88,56 +88,13 @@ jobs:
           temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           temporary.replace(path)
           PY
-          if grep -q '^claimed=false          git -C delivery-state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
-          git -C delivery-state commit -m "delivery: claim Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
-          git -C delivery-state push origin HEAD:telegram-delivery-state
-          echo "claimed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Send validated Stage 1B report to Telegram
-        id: telegram
-        if: steps.claim.outputs.claimed == 'true'
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json
-
-      - name: Finalize durable delivery state
-        if: always() && steps.claim.outputs.claimed == 'true'
-        shell: bash
-        env:
-          RUN_ID: ${{ github.event.workflow_run.id }}
-          TELEGRAM_OUTCOME: ${{ steps.telegram.outcome }}
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          path = Path("delivery-state/signal_autopilot/state/telegram_deliveries.json")
-          payload = json.loads(path.read_text(encoding="utf-8"))
-          run_id = str(os.environ["RUN_ID"])
-          record = payload["deliveries"].get(run_id)
-          if not isinstance(record, dict) or record.get("status") != "CLAIMED":
-              raise SystemExit("DELIVERY_CLAIM_STATE_MISMATCH")
-          record["status"] = "SENT" if os.environ.get("TELEGRAM_OUTCOME") == "success" else "DELIVERY_UNCONFIRMED"
-          record["finalized_at_utc"] = datetime.now(timezone.utc).isoformat()
-          temporary = path.with_suffix(".tmp")
-          temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          temporary.replace(path)
-          PY
-          git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
-          git -C delivery-state commit -m "delivery: finalize Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
-          git -C delivery-state push origin HEAD:telegram-delivery-state
- "$GITHUB_OUTPUT"; then
+          if grep -q "^claimed=false$" "$GITHUB_OUTPUT"; then
             exit 0
           fi
           git -C delivery-state config user.name "github-actions[bot]"
           git -C delivery-state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
-          git -C delivery-state commit -m "delivery: claim Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
+          git -C delivery-state commit -m "delivery: claim Stage 1B run \${{ github.event.workflow_run.id }} [skip ci]"
           git -C delivery-state push origin HEAD:telegram-delivery-state
           echo "claimed=true" >> "$GITHUB_OUTPUT"
 
@@ -145,16 +102,16 @@ jobs:
         id: telegram
         if: steps.claim.outputs.claimed == 'true'
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN: \${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
         run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json
 
       - name: Finalize durable delivery state
         if: always() && steps.claim.outputs.claimed == 'true'
         shell: bash
         env:
-          RUN_ID: ${{ github.event.workflow_run.id }}
-          TELEGRAM_OUTCOME: ${{ steps.telegram.outcome }}
+          RUN_ID: \${{ github.event.workflow_run.id }}
+          TELEGRAM_OUTCOME: \${{ steps.telegram.outcome }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -176,5 +133,5 @@ jobs:
           temporary.replace(path)
           PY
           git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
-          git -C delivery-state commit -m "delivery: finalize Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
+          git -C delivery-state commit -m "delivery: finalize Stage 1B run \${{ github.event.workflow_run.id }} [skip ci]"
           git -C delivery-state push origin HEAD:telegram-delivery-state
