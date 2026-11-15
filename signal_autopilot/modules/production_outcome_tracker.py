@@ -7,13 +7,14 @@ research-signal tracker.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import math
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,6 +26,26 @@ from modules.research_tracker import fetch_public_ohlcv, update_outcomes
 
 INTERVAL_MS = 15 * 60 * 1000
 EVALUATION_KIND = "PRODUCTION_WATCHLIST_SHADOW"
+MAX_STATE_AGE = timedelta(hours=4)
+MAX_FUTURE_CLOCK_SKEW = timedelta(minutes=5)
+
+
+def _validate_state_freshness(state: dict[str, Any], now: datetime) -> None:
+    if now.tzinfo is None:
+        raise ValueError("TRACKER_NOW_TIMEZONE_REQUIRED")
+    updated = _parse_utc(state.get("updated_at_utc"), "STATE_UPDATED_AT")
+    age = now.astimezone(timezone.utc) - updated
+    if age < -MAX_FUTURE_CLOCK_SKEW:
+        raise ValueError("PRODUCTION_SIGNAL_STATE_FUTURE_DATED")
+    if age > MAX_STATE_AGE:
+        raise ValueError(f"PRODUCTION_SIGNAL_STATE_STALE:age_seconds={int(age.total_seconds())}")
+
+
+def _snapshot_fingerprint(signal: dict[str, Any]) -> str:
+    # وضعیت OPEN/CLOSED قابل تغییر است؛ تمام شواهد و سطوح خود سیگنال ثابت می‌مانند.
+    snapshot = {key: value for key, value in signal.items() if key != "source_tracker_status"}
+    canonical = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _parse_utc(value: object, field: str) -> datetime:
@@ -110,9 +131,24 @@ def _adapt_record(
         if direction == "SELL" and not target < tp1 < entry:
             raise ValueError("PRODUCTION_TP1_ORDER_INVALID")
 
+    symbol = str(record.get("symbol") or "").strip().upper()
+    if not symbol.endswith("USDT") or "/" in symbol or ":" in symbol:
+        raise ValueError("PRODUCTION_SIGNAL_SYMBOL_INVALID")
+
+    lfs_score = record.get("lfs_score")
+    if lfs_score is not None:
+        if isinstance(lfs_score, bool) or not isinstance(lfs_score, (int, float)) or not math.isfinite(float(lfs_score)) or not 0 <= float(lfs_score) <= 1:
+            raise ValueError("PRODUCTION_LFS_SCORE_INVALID")
+        lfs_score = float(lfs_score)
+    lfs_coverage = record.get("lfs_coverage_pct")
+    if lfs_coverage is not None:
+        if isinstance(lfs_coverage, bool) or not isinstance(lfs_coverage, (int, float)) or not math.isfinite(float(lfs_coverage)) or not 0 <= float(lfs_coverage) <= 100:
+            raise ValueError("PRODUCTION_LFS_COVERAGE_INVALID")
+        lfs_coverage = float(lfs_coverage)
+
     return {
         "signal_id": signal_id,
-        "symbol": str(record.get("symbol") or "").strip(),
+        "symbol": symbol,
         "direction": direction,
         "created_at_utc": created.isoformat(),
         "candle_open_time": candle_open_ms,
@@ -126,12 +162,12 @@ def _adapt_record(
         "source_decision": "WATCHLIST",
         "source_tracker_status": tracker_status,
         "tp1_reference": tp1,
-        "rr_reference": levels.get("rr", record.get("rr")),
+        "rr_reference": float(rr_raw) if rr_raw is not None else None,
         "hypothesis": str(record.get("hypothesis") or "UNAVAILABLE"),
         "falsification": str(record.get("falsification") or "UNAVAILABLE"),
-        "lfs_score": record.get("lfs_score"),
+        "lfs_score": lfs_score,
         "lfs_status": record.get("lfs_status") or "UNAVAILABLE",
-        "lfs_coverage_pct": record.get("lfs_coverage_pct"),
+        "lfs_coverage_pct": lfs_coverage,
         "cvd_source": (record.get("cvd") or {}).get("source", "UNAVAILABLE")
         if isinstance(record.get("cvd"), dict) else "UNAVAILABLE",
     }
@@ -185,8 +221,14 @@ def update_production_outcomes(
     now: datetime | None = None,
     fetcher: Callable = fetch_public_ohlcv,
 ) -> dict[str, Any]:
-    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise ValueError("TRACKER_NOW_TIMEZONE_REQUIRED")
+    now = now.astimezone(timezone.utc)
     state = json.loads(state_path.read_text(encoding="utf-8"))
+    if not isinstance(state, dict):
+        raise ValueError("PRODUCTION_SIGNAL_STATE_SCHEMA_INVALID")
+    _validate_state_freshness(state, now)
     signals = _collect_signals(state)
     signal_ids = {row["signal_id"] for row in signals}
 
@@ -231,6 +273,18 @@ def update_production_outcomes(
 
     for outcome in rows:
         source = by_id[outcome["signal_id"]]
+        fingerprint = _snapshot_fingerprint(source)
+        previous_fingerprint = outcome.get("source_snapshot_fingerprint")
+        if previous_fingerprint and previous_fingerprint != fingerprint:
+            raise ValueError(f"PRODUCTION_SIGNAL_SNAPSHOT_MUTATED:{outcome['signal_id']}")
+        # فایل‌های قدیمی فاقد fingerprint هستند؛ حداقل سطوح مرجع ثبت‌شده را
+        # با منبع فعلی تطبیق می‌دهیم تا migration بی‌صدا دادهٔ تاریخی را عوض نکند.
+        for field in ("symbol", "direction", "entry_reference", "stop_reference", "target_reference"):
+            previous_value = outcome.get(field)
+            current_value = source.get(field)
+            if previous_value is not None and previous_value != current_value:
+                raise ValueError(f"PRODUCTION_SIGNAL_REFERENCE_MUTATED:{outcome['signal_id']}:{field}")
+        outcome["source_snapshot_fingerprint"] = fingerprint
         for key in (
             "evaluation_kind", "execution_status", "source_mode", "source_decision",
             "source_tracker_status", "tp1_reference", "hypothesis", "falsification",
