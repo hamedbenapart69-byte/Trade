@@ -205,7 +205,7 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
             root = Path(tmp)
             state_path = root / "open_signals.json"
             outcomes_path = root / "production_outcomes.json"
-            legacy = signal()
+            legacy = signal(signal_id="legacy-1")
             for field in ("lfs_veto", "lfs_threshold", "lfs_threshold_reason"):
                 legacy.pop(field)
             write_state(state_path, {"legacy-1": legacy})
