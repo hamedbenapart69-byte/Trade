@@ -119,6 +119,8 @@ def _adapt_record(
         raise ValueError("LAST_CLOSED_CANDLE_NOT_15M_ALIGNED")
     if candle_time > created:
         raise ValueError("LAST_CLOSED_CANDLE_AFTER_SIGNAL_TIME")
+    if candle_open_ms + INTERVAL_MS > int(created.timestamp() * 1000):
+        raise ValueError("LAST_CLOSED_CANDLE_NOT_CLOSED_AT_SIGNAL_TIME")
 
     tp1_raw = record.get("take_profit_1")
     if tp1_raw is None:
@@ -188,6 +190,9 @@ def _collect_signals(state: dict[str, Any]) -> list[dict[str, Any]]:
             signal_id = str(raw_id).strip()
             if not signal_id or not isinstance(record, dict):
                 raise ValueError("PRODUCTION_SIGNAL_RECORD_INVALID")
+            recorded_tracker_status = record.get("tracker_status")
+            if recorded_tracker_status is not None and recorded_tracker_status != tracker_status:
+                raise ValueError("PRODUCTION_SIGNAL_TRACKER_STATUS_MISMATCH")
             item = _adapt_record(signal_id, record, tracker_status)
             if item is None:
                 continue
@@ -230,6 +235,13 @@ def update_production_outcomes(
         raise ValueError("PRODUCTION_SIGNAL_STATE_SCHEMA_INVALID")
     _validate_state_freshness(state, now)
     signals = _collect_signals(state)
+    state_updated = _parse_utc(state.get("updated_at_utc"), "STATE_UPDATED_AT")
+    for signal in signals:
+        created = _parse_utc(signal.get("created_at_utc"), "SIGNAL_CREATED_AT")
+        if created > now + MAX_FUTURE_CLOCK_SKEW:
+            raise ValueError(f"PRODUCTION_SIGNAL_FUTURE_DATED:{signal['signal_id']}")
+        if created > state_updated:
+            raise ValueError(f"PRODUCTION_SIGNAL_AFTER_STATE_SNAPSHOT:{signal['signal_id']}")
     signal_ids = {row["signal_id"] for row in signals}
 
     previous_payload: dict[str, Any] = {"outcomes": []}
