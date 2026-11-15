@@ -320,16 +320,17 @@ def main() -> int:
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
     dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
+    messages = build_messages(payload, dashboard_url)
+    # اعتبارسنجی محلی باید مستقل از Secret و شبکهٔ تلگرام باشد.
+    if args.validate_only:
+        print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
+        return 0
     token, chat_id, _ = validate_telegram_config(
         os.environ.get("TELEGRAM_TOKEN", ""),
         os.environ.get("TELEGRAM_CHAT_ID", ""),
         os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
     )
-    messages = build_messages(payload, dashboard_url)
     verify_telegram_destination()
-    if args.validate_only:
-        print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
-        return 0
     for message in messages:
         send_message(token, chat_id, message)
     return 0
