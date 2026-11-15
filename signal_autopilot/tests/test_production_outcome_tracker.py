@@ -86,12 +86,18 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
 
     def test_rejects_invalid_level_order_and_unaligned_candle(self):
         row = signal()
-        row["stop_loss"] = 101.0
+        row["levels"]["stop_loss"] = 101.0
         with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_LEVEL_ORDER_INVALID"):
             _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
         row = signal()
         row["last_closed_candle_utc"] = "2026-11-14T14:31:00+00:00"
         with self.assertRaisesRegex(ValueError, "LAST_CLOSED_CANDLE_NOT_15M_ALIGNED"):
+            _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
+
+    def test_rejects_risk_reward_mismatch(self):
+        row = signal()
+        row["levels"]["rr"] = 4.0
+        with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_RR_MISMATCH"):
             _collect_signals({"open_signals": {"prod-1": row}, "closed_signals": {}})
 
     def test_writes_separate_shadow_outcomes_without_claiming_execution(self):
