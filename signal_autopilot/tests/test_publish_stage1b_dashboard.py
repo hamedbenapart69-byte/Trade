@@ -221,6 +221,16 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_HYPOTHESIS_MISSING"):
                 publish_dashboard(report_path, universe_path, root)
 
+    def test_rejects_proxy_watchlist_with_relaxed_real_cvd_threshold(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["lfs_threshold"] = 0.30
+            report["symbols"][0]["lfs_threshold_reason"] = "REAL_CVD_FULL_LFS"
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH"):
+                publish_dashboard(report_path, universe_path, root)
+
     def test_rejects_watchlist_below_effective_lfs_threshold(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
