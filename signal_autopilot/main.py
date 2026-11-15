@@ -591,7 +591,8 @@ def main() -> int:
                 "symbol", "direction", "veto", "decision", "reason",
                 "higher_timeframe_bias", "components", "direction_candidates",
                 "points", "raw_score", "tier_score", "lfs_score",
-                "lfs_status", "lfs_coverage_pct", "zone_type",
+                "lfs_status", "lfs_coverage_pct", "lfs_veto",
+                "lfs_threshold", "lfs_threshold_reason", "zone_type",
                 "zone_distance_pct", "price_vs_kumo", "api_status",
             )
         }
