@@ -36,6 +36,11 @@ jobs:
           path: delivery-state
           persist-credentials: true
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Download report artifact from the completed scanner run
         uses: actions/download-artifact@v4
         with:
