@@ -36,6 +36,11 @@ jobs:
           path: signals-repo
           persist-credentials: true
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Download Stage 1B report from completed scanner run
         uses: actions/download-artifact@v4
         with:
