@@ -127,8 +127,135 @@
       "timeframe": "15m",
       "tracker_status": "OPEN",
       "updates": 1
+    },
+    "c59c73223108c032": {
+      "api_status": {
+        "funding": true,
+        "long_short_ratio": true,
+        "oi_1d": true,
+        "oi_1h": true
+      },
+      "calibration": {
+        "coverage_per_symbol": "500/500 closed 15m + 2500/2500 closed 1H candles",
+        "lfs_coverage_pct": 100.0,
+        "lfs_source": "LFS_V2",
+        "lfs_status": "FULL"
+      },
+      "calibration_status": "UNCALIBRATED",
+      "confluence_components": {
+        "bias_1h": 20,
+        "bias_4h": 20,
+        "sweep": 20,
+        "tenkan_kijun_cross_10": 20,
+        "zone_reaction": 0
+      },
+      "confluence_score": 80,
+      "confluence_tier_score": 80,
+      "costs": {
+        "fee_pct": null,
+        "slippage_pct": null,
+        "spread_pct": 0.0008,
+        "spread_source": "PROXY"
+      },
+      "created_at_utc": "2026-11-15T15:31:30.629605+00:00",
+      "cvd": {
+        "delta": -843.32614177,
+        "source": "PROXY_OHLCV"
+      },
+      "data_sources": [
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "direction": "SELL",
+      "engine": "LRT-15m + ICT + Ichimoku",
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "first_seen_utc": "2026-11-15T15:31:30.996147+00:00",
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "ichimoku": {
+        "bias": "4H Kumo=BEARISH | 1H Kijun=BEARISH",
+        "chikou": "NOT_USED_AS_STAGE_1_GATE",
+        "price_vs_kumo": "BELOW_KUMO",
+        "tenkan_kijun": "SEE_CONFLUENCE_BREAKDOWN"
+      },
+      "last_closed_candle_utc": "2026-11-15T15:15:00+00:00",
+      "last_seen_utc": "2026-11-15T15:31:30.996172+00:00",
+      "levels": {
+        "entry": 190.46,
+        "rr": 2.0,
+        "stop_loss": 191.03,
+        "tp1": 189.89000000000001,
+        "tp2": 189.32000000000002,
+        "tp3": 188.75000000000003
+      },
+      "lfs_components": {
+        "LFS1": {
+          "average_30d_24h_volume": 83546.03645833372,
+          "current_timeframe": "1H",
+          "historical_timeframe": "1H",
+          "history_observations": 2160,
+          "p10": 0.006078563764582438,
+          "p90": 0.05297529170253992,
+          "score": 0.4508805531638155,
+          "status": "PROXY",
+          "value": 0.02722338639882167,
+          "weight": 0.25
+        },
+        "LFS2": {
+          "score": 0.4184911286933334,
+          "status": "REAL",
+          "threshold": 0.0003,
+          "value": -0.000125547338608,
+          "weight": 0.2
+        },
+        "LFS3": {
+          "score": 1.0,
+          "source": "OKX_LONG_SHORT_RATIO",
+          "status": "PROXY",
+          "value": 2.46,
+          "weight": 0.2
+        },
+        "LFS4": {
+          "current_timeframe": "1H",
+          "historical_timeframe": "1H",
+          "history_observations": 2160,
+          "p20": 0.030860408975242545,
+          "p50": 0.0515053146460053,
+          "score": 0.0,
+          "status": "REAL",
+          "value": 0.09036017880425147,
+          "weight": 0.2
+        },
+        "LFS5": {
+          "oi_change_24h": -0.06804084324155915,
+          "oi_now": 15116633.036,
+          "score": 0.6804084324155915,
+          "status": "REAL",
+          "value": -0.06804084324155915,
+          "weight": 0.15
+        }
+      },
+      "lfs_coverage_pct": 100.0,
+      "lfs_score": 0.49848,
+      "lfs_status": "FULL",
+      "mode": "PRODUCTION",
+      "risk_flags": [
+        "STAGE_1_UNCALIBRATED: confidence و EV کالیبره نشده‌اند.",
+        "SPREAD_SOURCE=PROXY: مقدار 0.0008 (0.08%) طبق مصوبه؛ Bid/Ask واقعی متصل نیست.",
+        "SPREAD_LIMIT_UNCONFIGURED: سقف عددی مصوب ارائه نشده؛ هیچ ادعای RISK_FLAG_SPREAD_HIGH نمی‌شود.",
+        "COSTS_INCOMPLETE: Fee و Slippage کامل محاسبه نشده‌اند.",
+        "سطوح Entry/SL/TP مرجع تحلیلی‌اند و بک‌تست/تأیید نشده‌اند."
+      ],
+      "signal_id": "c59c73223108c032",
+      "stage1_threshold_label": "LFS_V2_0.30_FULL_AND_PARTIAL_PROXY|CONFLUENCE_100_A_80_B_60_MONITORING",
+      "stage_label": "STAGE_1_UNCALIBRATED",
+      "status": "WATCHLIST",
+      "symbol": "TAOUSDT",
+      "tier": "B",
+      "timeframe": "15m",
+      "tracker_status": "OPEN",
+      "updates": 1
     }
   },
   "schema_version": 1,
-  "updated_at_utc": "2026-11-15T05:40:04.297290+00:00"
+  "updated_at_utc": "2026-11-15T15:32:23.561132+00:00"
 }
