@@ -1,5 +1,7 @@
 """Unit tests for the trusted Stage 1b artifact validator."""
 import importlib.util
+import json
+import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,7 +14,26 @@ _SPEC.loader.exec_module(_VALIDATOR)
 safe_manifest_path = _VALIDATOR.safe_manifest_path
 validate_rows = _VALIDATOR.validate_rows
 validate_report_freshness = _VALIDATOR.validate_report_freshness
+validate_universe_symbols = _VALIDATOR.validate_universe_symbols
 INTERVAL_MS = _VALIDATOR.INTERVAL_MS
+
+
+class Stage1bTrustedUniverseTests(unittest.TestCase):
+    def test_manifest_must_match_canonical_main_universe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "universe.json"
+            symbols = [f"COIN{i:02d}USDT" for i in range(27)]
+            path.write_text(json.dumps({"count": 27, "symbols": symbols}), encoding="utf-8")
+            self.assertEqual(validate_universe_symbols(path, sorted(symbols)), sorted(symbols))
+
+    def test_rejects_universe_substitution_even_with_27_valid_symbols(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "universe.json"
+            symbols = [f"COIN{i:02d}USDT" for i in range(27)]
+            path.write_text(json.dumps({"count": 27, "symbols": symbols}), encoding="utf-8")
+            altered = sorted(symbols[:-1] + ["EVILUSDT"])
+            with self.assertRaisesRegex(ValueError, "MANIFEST_SYMBOL_SET_DIFFERS_FROM_TRUSTED_UNIVERSE"):
+                validate_universe_symbols(path, altered)
 
 
 class Stage1bArtifactPathTests(unittest.TestCase):
