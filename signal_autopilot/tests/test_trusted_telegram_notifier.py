@@ -179,7 +179,7 @@ class TrustedNotifierTests(unittest.TestCase):
             },
         }
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
-            MODULE.send_message("test-token", "123456", "test message")
+            MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "123456", "test message")
 
     def test_telegram_delivery_rejects_destination_mismatch(self):
         response = {
@@ -191,7 +191,7 @@ class TrustedNotifierTests(unittest.TestCase):
         }
         with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
             with self.assertRaisesRegex(RuntimeError, "TELEGRAM_DESTINATION_MISMATCH"):
-                MODULE.send_message("test-token", "123456", "test message")
+                MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "123456", "test message")
 
     def test_validate_only_never_sends_telegram(self):
         payload = report()
