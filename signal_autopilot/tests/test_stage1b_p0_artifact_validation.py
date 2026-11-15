@@ -116,6 +116,16 @@ class Stage1bReportFreshnessTests(unittest.TestCase):
         report = self.make_report(generated, completed, timestamps)
         validate_report_freshness(report, ["BTCUSDT"], {"BTCUSDT": timestamps}, completed, expected_rows=4)
 
+    def test_rejects_future_market_candles_even_if_report_omits_them(self):
+        completed = 5 * INTERVAL_MS + 5 * 60_000
+        generated = completed
+        closed_end = (completed // INTERVAL_MS) * INTERVAL_MS
+        timestamps = set(range(closed_end - 4 * INTERVAL_MS, closed_end, INTERVAL_MS))
+        timestamps.add(closed_end)
+        report = self.make_report(generated, completed, timestamps, closed_end_ms=closed_end)
+        with self.assertRaisesRegex(ValueError, "DATASET_CONTAINS_FUTURE_CANDLE"):
+            validate_report_freshness(report, ["BTCUSDT"], {"BTCUSDT": timestamps}, completed, expected_rows=4)
+
     def test_rejects_report_timestamp_older_than_publication_window(self):
         completed = 5 * INTERVAL_MS + 31 * 60_000
         generated = completed - 31 * 60_000
