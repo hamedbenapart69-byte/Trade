@@ -165,6 +165,20 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertIsNone(result["lfs_score"])
         self.assertLess(result["lfs_coverage_pct"], 40.0)
 
+    def test_stage1_rejects_nonfinite_15m_ohlcv(self):
+        rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
+        rows[100]["close"] = float("nan")
+        result = evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["decision"], "NO_TRADE")
+        self.assertEqual(result["reason"], "INVALID_OHLC")
+
+    def test_stage1_rejects_nonfinite_1h_ohlcv(self):
+        rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
+        rows.stats_1h[100]["close"] = float("inf")
+        result = evaluate_stage1_symbol("BTCUSDT", rows)
+        self.assertEqual(result["decision"], "NO_TRADE")
+        self.assertEqual(result["reason"], "DATA_INSUFFICIENT_1H_INVALID_OHLC")
+
     def test_stage1_rejects_gaps_in_full_historical_1h_lfs_window(self):
         rows = BarsWithMetrics(self.bars_15m, self.bars_1h)
         rows.stats_1h[500]["open_time"] += 3_600_000
