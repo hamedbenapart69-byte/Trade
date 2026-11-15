@@ -1,0 +1,53 @@
+"""آزمون‌های ثبات snapshot سیگنال در اسکن‌های تکراری."""
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from modules.signal_tracker import SignalTracker
+
+
+class SignalTrackerSnapshotTests(unittest.TestCase):
+    def test_repeated_upsert_preserves_first_signal_timestamp_and_levels(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tracker = SignalTracker(Path(tmp) / "open_signals.json")
+            first = {
+                "signal_id": "stable-1",
+                "symbol": "BTCUSDT",
+                "direction": "BUY",
+                "mode": "PRODUCTION",
+                "status": "WATCHLIST",
+                "created_at_utc": "2026-11-15T10:00:00+00:00",
+                "last_closed_candle_utc": "2026-11-15T09:45:00+00:00",
+                "levels": {"entry": 100.0, "stop_loss": 98.0, "tp2": 104.0},
+            }
+            with patch("modules.signal_tracker._now", side_effect=[
+                "2026-11-15T10:00:01+00:00",
+                "2026-11-15T10:00:02+00:00",
+                "2026-11-15T10:15:01+00:00",
+                "2026-11-15T10:15:02+00:00",
+            ]):
+                first_record = tracker.upsert(first)
+                second = {
+                    **first,
+                    "created_at_utc": "2026-11-15T10:15:00+00:00",
+                    "levels": {"entry": 101.0, "stop_loss": 99.0, "tp2": 105.0},
+                    "lfs_score": 0.55,
+                }
+                second_record = tracker.upsert(second)
+
+            self.assertEqual(second_record["created_at_utc"], "2026-11-15T10:00:00+00:00")
+            self.assertEqual(second_record["first_seen_utc"], first_record["first_seen_utc"])
+            self.assertEqual(second_record["levels"], first["levels"])
+            self.assertEqual(second_record["last_closed_candle_utc"], first["last_closed_candle_utc"])
+            self.assertEqual(second_record["lfs_score"], 0.55)
+            self.assertEqual(second_record["updates"], 2)
+            self.assertEqual(second_record["last_seen_utc"], "2026-11-15T10:15:01+00:00")
+
+            saved = json.loads((Path(tmp) / "open_signals.json").read_text(encoding="utf-8"))
+            self.assertEqual(saved["open_signals"]["stable-1"]["created_at_utc"], first["created_at_utc"])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
