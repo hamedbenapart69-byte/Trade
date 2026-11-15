@@ -1,6 +1,8 @@
 """Unit tests for trusted Stage 1B Telegram report delivery."""
 import importlib.util
 import json
+import sys
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import tempfile
@@ -95,6 +97,25 @@ class TrustedNotifierTests(unittest.TestCase):
         payload = report()
         payload["symbols"][0]["entry"] = float("nan")
         self.assertEqual(MODULE.candidate_rows(payload), [])
+
+    def test_validate_only_never_sends_telegram(self):
+        payload = report()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report_path = root / "report.json"
+            universe_path = root / "universe.json"
+            report_path.write_text(json.dumps(payload), encoding="utf-8")
+            universe_path.write_text(
+                json.dumps({"symbols": [row["symbol"] for row in payload["symbols"]]}),
+                encoding="utf-8",
+            )
+            args = [
+                "notify_stage1b_telegram.py", "--report", str(report_path),
+                "--universe", str(universe_path), "--validate-only",
+            ]
+            with patch.object(sys, "argv", args), patch.object(MODULE, "send_message") as sender:
+                self.assertEqual(MODULE.main(), 0)
+                sender.assert_not_called()
 
 
 if __name__ == "__main__":
