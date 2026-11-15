@@ -195,6 +195,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "lfs_veto": "PASS",
                 "lfs_threshold": 0.70,
                 "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+                "lfs_threshold_method": "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D",
                 "hypothesis": long_text,
                 "falsification": long_text,
             })
