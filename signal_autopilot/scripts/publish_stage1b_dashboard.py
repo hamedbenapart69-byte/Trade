@@ -105,6 +105,12 @@ def _decision(row: dict[str, Any]) -> str:
 
 def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
     source_rows = source["symbols"]
+    declared_candidates = source.get("production_watchlist_count")
+    computed_candidates = sum(
+        _decision(row) == "WATCHLIST" for row in source_rows
+    )
+    if isinstance(declared_candidates, bool) or declared_candidates != computed_candidates:
+        raise ValueError("REPORT_WATCHLIST_COUNT_MISMATCH")
     rows: list[dict[str, Any]] = []
     data_sources: set[str] = set()
     cvd_sources: set[str] = set()
@@ -249,6 +255,8 @@ def publish_dashboard(
     dashboard = build_dashboard_report(source)
     report_target = output / "lrt15m_signals.json"
     history_target = output / "lrt15m_history.csv"
+    if report_target.is_symlink() or history_target.is_symlink():
+        raise ValueError("DASHBOARD_OUTPUT_SYMLINK_REJECTED")
 
     if report_target.exists():
         existing = json.loads(report_target.read_text(encoding="utf-8"))
