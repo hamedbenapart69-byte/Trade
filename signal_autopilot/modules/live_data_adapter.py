@@ -306,7 +306,8 @@ class LiveOHLCVFetcher:
         base = symbol[:-4] if symbol.upper().endswith("USDT") else symbol.upper()
         inst_id = f"{base}-USDT-SWAP"
         metrics: dict[str, Any] = {
-            "funding_rate": None, "funding_received_at_ms": None,
+            "funding_rate": None, "funding_timestamp_ms": None,
+            "funding_received_at_ms": None, "funding_settlement_time_ms": None,
             "oi_1h": None, "oi_1d": None,
             "long_short_ratio": None, "long_short_ratio_timestamp_ms": None,
             "as_of_time_ms": now_ms, "errors": {},
@@ -323,7 +324,16 @@ class LiveOHLCVFetcher:
         try:
             data = get("/api/v5/public/funding-rate", {"instId": inst_id}, "funding")
             if data:
-                metrics["funding_rate"] = float(data[0]["fundingRate"])
+                funding_row = data[0]
+                metrics["funding_rate"] = float(funding_row["fundingRate"])
+                # ts زمان به‌روزرسانی داده در OKX است؛ زمان دریافت محلی جدا ثبت می‌شود.
+                # fundingTime زمان تسویه است و نباید به‌عنوان زمان انتشار داده استفاده شود.
+                source_ts = funding_row.get("ts")
+                if source_ts is not None:
+                    metrics["funding_timestamp_ms"] = int(source_ts)
+                settlement_ts = funding_row.get("fundingTime")
+                if settlement_ts is not None:
+                    metrics["funding_settlement_time_ms"] = int(settlement_ts)
                 metrics["funding_received_at_ms"] = int(datetime.now(timezone.utc).timestamp() * 1000)
         except Exception as exc:
             metrics["errors"]["funding"] = f"{type(exc).__name__}:{str(exc)[:120]}"
