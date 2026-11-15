@@ -184,23 +184,23 @@ def _collect_signals(state: dict[str, Any]) -> list[dict[str, Any]]:
         raise ValueError("PRODUCTION_CLOSED_STATE_SCHEMA_INVALID")
 
     adapted: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    seen_source_ids: set[str] = set()
     for tracker_status, rows in (("OPEN", open_rows), ("CLOSED", closed_rows)):
         for raw_id, record in rows.items():
             signal_id = str(raw_id).strip()
             if not signal_id or not isinstance(record, dict):
                 raise ValueError("PRODUCTION_SIGNAL_RECORD_INVALID")
+            if signal_id in seen_source_ids:
+                raise ValueError("PRODUCTION_SIGNAL_ID_DUPLICATE")
+            seen_source_ids.add(signal_id)
             recorded_tracker_status = record.get("tracker_status")
             if recorded_tracker_status is not None and recorded_tracker_status != tracker_status:
                 raise ValueError("PRODUCTION_SIGNAL_TRACKER_STATUS_MISMATCH")
             item = _adapt_record(signal_id, record, tracker_status)
             if item is None:
                 continue
-            if signal_id in seen:
-                raise ValueError("PRODUCTION_SIGNAL_ID_DUPLICATE")
             if not item["symbol"]:
                 raise ValueError("PRODUCTION_SIGNAL_SYMBOL_MISSING")
-            seen.add(signal_id)
             adapted.append(item)
     return sorted(adapted, key=lambda row: (row["created_at_utc"], row["signal_id"]))
 
