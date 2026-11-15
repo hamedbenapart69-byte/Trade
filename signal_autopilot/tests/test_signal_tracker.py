@@ -1,9 +1,13 @@
 """آزمون‌های ثبات snapshot سیگنال در اسکن‌های تکراری."""
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from modules.signal_tracker import SignalTracker
 
