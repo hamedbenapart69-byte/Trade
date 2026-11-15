@@ -26,6 +26,12 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
 
+    def test_trusted_notifier_checks_out_production_code(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn("Checkout trusted notifier from production-v1", notifier)
+        self.assertIn("ref: production-v1", notifier)
+        self.assertNotIn("ref: main", notifier)
+
     def test_state_writer_persists_only_validated_state_artifacts(self):
         writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
         self.assertIn("branches: [main, production-v1]", writer)
