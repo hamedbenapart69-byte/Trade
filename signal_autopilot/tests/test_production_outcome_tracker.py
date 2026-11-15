@@ -23,13 +23,15 @@ def signal(signal_id="prod-1", tracker_status="OPEN", direction="BUY"):
         "signal_id": signal_id,
         "symbol": "BTCUSDT",
         "mode": "PRODUCTION",
-        "decision": "WATCHLIST",
+        "status": "WATCHLIST",
         "direction": direction,
-        "entry": entry,
-        "stop_loss": stop,
-        "take_profit_1": tp1,
-        "take_profit": tp2,
-        "rr": 2.0,
+        "levels": {
+            "entry": entry,
+            "stop_loss": stop,
+            "tp1": tp1,
+            "tp2": tp2,
+            "rr": 2.0,
+        },
         "created_at_utc": "2026-11-14T14:55:00+00:00",
         "last_closed_candle_utc": "2026-11-14T14:30:00+00:00",
         "hypothesis": "Liquidity sweep and reclaim support a mean-reversion move.",
@@ -67,7 +69,7 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
         research = signal("research-1")
         research["mode"] = "RESEARCH"
         no_setup = signal("prod-2")
-        no_setup["decision"] = "NO_QUALIFIED_SETUP"
+        no_setup["status"] = "NO_QUALIFIED_SETUP"
         rows = _collect_signals({
             "open_signals": {"research-1": research, "prod-2": no_setup},
             "closed_signals": {},
