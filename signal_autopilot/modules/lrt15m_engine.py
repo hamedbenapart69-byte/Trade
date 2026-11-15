@@ -433,7 +433,7 @@ def evaluate_stage1_symbol(
             prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
             if (
                 not all(math.isfinite(value) for value in prices)
-                or bar["open_time"] <= 0
+                or bar["open_time"] < 0
                 or bar["open_time"] % 900_000 != 0
                 or bar["open"] <= 0
                 or bar["close"] <= 0
@@ -458,7 +458,7 @@ def evaluate_stage1_symbol(
             prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
             if (
                 not all(math.isfinite(value) for value in prices)
-                or bar["open_time"] <= 0
+                or bar["open_time"] < 0
                 or bar["open_time"] % 3_600_000 != 0
                 or bar["open"] <= 0
                 or bar["close"] <= 0
