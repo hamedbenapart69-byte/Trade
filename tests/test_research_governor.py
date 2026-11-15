@@ -16,7 +16,13 @@ def stage(**overrides):
         ],
         "criteria_frozen": True,
         "layers": {"L1_DATA": True, "L2_COMPUTE": True, "L3_DELIVERY": True},
+        "layer_evidence": {
+            "L1_DATA": ["artifact://data/manifest.json"],
+            "L2_COMPUTE": ["artifact://compute/report.json"],
+            "L3_DELIVERY": ["artifact://delivery/smoke.json"],
+        },
         "hard_gates_passed": True,
+        "hard_gate_evidence": ["artifact://gates/evaluation.json"],
         "stage_evidence": ["artifact://stage-0/report.json"],
         "versions": [{"version": "v1", "status": "NOT_RUN"}],
         "next_task": {"task_id": "stage-1-design-review", "type": "documentation"},
@@ -69,6 +75,25 @@ class ResearchGovernorTests(unittest.TestCase):
             versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
         ), unattended_authorized=True)
         self.assertEqual(result["decision"], "BLOCKED")
+
+    def test_pass_without_delivery_layer_evidence_is_blocked(self):
+        result = evaluate_stage(stage(
+            layer_evidence={
+                "L1_DATA": ["data"],
+                "L2_COMPUTE": ["compute"],
+                "L3_DELIVERY": [],
+            },
+            versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
+        ), unattended_authorized=True)
+        self.assertEqual(result["decision"], "BLOCKED")
+
+    def test_pass_without_hard_gate_evidence_is_blocked(self):
+        result = evaluate_stage(stage(
+            hard_gate_evidence=[],
+            versions=[{"version": "v1", "status": "PASS", "evidence": ["report"]}],
+        ), unattended_authorized=True)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertIn("hard_gates", result["reason"])
 
     def test_pass_claim_with_failed_numeric_acceptance_is_blocked(self):
         result = evaluate_stage(stage(
