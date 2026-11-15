@@ -71,7 +71,139 @@ def validate_rows(rows: list[dict], symbol: str, kind: str, path: PurePosixPath)
     return timestamps
 
 
-def validate_artifact(artifact_dir: Path, expected_run_id: str, expected_workflow_sha: str) -> str:
+def _parse_utc_ms(value: object, label: str) -> int:
+    if not isinstance(value, str):
+        raise ValueError(f"{label}_MISSING_OR_INVALID")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"{label}_INVALID") from exc
+    if parsed.tzinfo is None:
+        raise ValueError(f"{label}_TIMEZONE_MISSING")
+    return int(parsed.astimezone(timezone.utc).timestamp() * 1000)
+
+
+def validate_report_freshness(
+    report: dict,
+    symbols: list[str],
+    timestamps_by_symbol: dict[str, set[int]],
+    workflow_completed_at_ms: int,
+    *,
+    max_age_minutes: int = 30,
+    expected_rows: int = EXPECTED_ROWS,
+) -> None:
+    """Recompute C10 data status from Parquet timestamps, not artifact claims."""
+    if type(max_age_minutes) is not int or max_age_minutes <= 0:
+        raise ValueError("DATA_REPORT_MAX_AGE_POLICY_INVALID")
+    if type(expected_rows) is not int or expected_rows <= 0:
+        raise ValueError("DATA_REPORT_EXPECTED_ROWS_POLICY_INVALID")
+    completed_ms = int(workflow_completed_at_ms)
+    generated_ms = _parse_utc_ms(report.get("generated_at_utc"), "DATA_REPORT_GENERATED_AT")
+    report_age_minutes = (completed_ms - generated_ms) / 60_000
+    if report_age_minutes < -5:
+        raise ValueError("DATA_REPORT_TIMESTAMP_FROM_FUTURE")
+    if report_age_minutes > max_age_minutes:
+        raise ValueError("DATA_REPORT_TIMESTAMP_STALE")
+
+    closed_end_ms = (completed_ms // INTERVAL_MS) * INTERVAL_MS
+    window_start_ms = closed_end_ms - expected_rows * INTERVAL_MS
+    expected_end_iso = datetime.fromtimestamp(
+        closed_end_ms / 1000, timezone.utc
+    ).isoformat()
+    expected_start_date = datetime.fromtimestamp(
+        window_start_ms / 1000, timezone.utc
+    ).date().isoformat()
+    if report.get("interval") != "15m":
+        raise ValueError("DATA_REPORT_INTERVAL_INVALID")
+    if report.get("start_date_utc") != expected_start_date:
+        raise ValueError("DATA_REPORT_WINDOW_START_MISMATCH")
+    if report.get("end_date_exclusive_utc") != expected_end_iso:
+        raise ValueError("DATA_REPORT_WINDOW_END_MISMATCH")
+
+    report_rows = report.get("symbols")
+    if not isinstance(report_rows, list) or len(report_rows) != len(symbols):
+        raise ValueError("DATA_REPORT_SYMBOL_LIST_INVALID")
+    by_symbol = {
+        row.get("symbol"): row for row in report_rows if isinstance(row, dict)
+    }
+    if len(by_symbol) != len(symbols) or set(by_symbol) != set(symbols):
+        raise ValueError("DATA_REPORT_SYMBOL_SET_MISMATCH")
+
+    complete_count = 0
+    fresh_count = 0
+    for symbol in symbols:
+        actual = sorted(
+            timestamp for timestamp in timestamps_by_symbol.get(symbol, set())
+            if window_start_ms <= timestamp < closed_end_ms
+        )
+        rows_count = len(actual)
+        continuity = (
+            rows_count == expected_rows
+            and all(
+                right - left == INTERVAL_MS
+                for left, right in zip(actual, actual[1:])
+            )
+        )
+        last_open_ms = actual[-1] if actual else None
+        first_open_ms = actual[0] if actual else None
+        age_minutes = (
+            round((completed_ms - (last_open_ms + INTERVAL_MS)) / 60_000, 2)
+            if last_open_ms is not None else None
+        )
+        fresh = bool(
+            continuity and age_minutes is not None
+            and -1 <= age_minutes <= max_age_minutes
+        )
+        expected_reason = None if fresh else (
+            "BASELINE_MISSING_OR_INCOMPLETE" if not continuity
+            else "LATEST_15M_CANDLE_STALE"
+        )
+        row = by_symbol[symbol]
+        if (
+            row.get("rows") != rows_count
+            or row.get("expected_rows") != expected_rows
+            or row.get("continuity") is not continuity
+            or row.get("first_open_ms") != first_open_ms
+            or row.get("last_open_ms") != last_open_ms
+            or row.get("fresh") is not fresh
+            or row.get("reason") != expected_reason
+        ):
+            raise ValueError(f"DATA_REPORT_SYMBOL_FRESHNESS_MISMATCH:{symbol}")
+        reported_age = row.get("age_minutes")
+        if age_minutes is None:
+            if reported_age is not None:
+                raise ValueError(f"DATA_REPORT_SYMBOL_AGE_MISMATCH:{symbol}")
+        elif (
+            isinstance(reported_age, bool)
+            or not isinstance(reported_age, (int, float))
+            or not math.isfinite(float(reported_age))
+            or abs(float(reported_age) - age_minutes) > 0.02
+        ):
+            raise ValueError(f"DATA_REPORT_SYMBOL_AGE_MISMATCH:{symbol}")
+        complete_count += int(continuity)
+        fresh_count += int(fresh)
+
+    if (
+        type(report.get("symbols_complete")) is not int
+        or report.get("symbols_complete") != complete_count
+        or type(report.get("symbols_fresh")) is not int
+        or report.get("symbols_fresh") != fresh_count
+    ):
+        raise ValueError("DATA_REPORT_COUNT_MISMATCH")
+    expected_status = (
+        "PASS" if complete_count == len(symbols) and fresh_count == len(symbols)
+        else "DEGRADED"
+    )
+    if report.get("status") != expected_status:
+        raise ValueError("DATA_REPORT_GATE_LOGIC_MISMATCH")
+
+
+def validate_artifact(
+    artifact_dir: Path,
+    expected_run_id: str,
+    expected_workflow_sha: str,
+    workflow_completed_at: str,
+) -> str:
     root = artifact_dir.resolve()
     storage = root / "market-data/datasets/stage1b/lrt15m"
     manifest_path = root / "market-data/datasets/stage1b/manifest.json"
@@ -116,18 +248,6 @@ def validate_artifact(artifact_dir: Path, expected_run_id: str, expected_workflo
         raise ValueError("DATA_REPORT_COMPLETENESS_INVALID")
     if not isinstance(report.get("symbols_fresh"), int) or not 0 <= report["symbols_fresh"] <= 27:
         raise ValueError("DATA_REPORT_FRESHNESS_INVALID")
-    report_symbols = report.get("symbols")
-    if not isinstance(report_symbols, list) or len(report_symbols) != 27:
-        raise ValueError("DATA_REPORT_SYMBOL_LIST_INVALID")
-    if {row.get("symbol") for row in report_symbols} != set(symbols):
-        raise ValueError("DATA_REPORT_SYMBOL_SET_MISMATCH")
-    complete_count = sum(1 for row in report_symbols if row.get("continuity") is True)
-    fresh_count = sum(1 for row in report_symbols if row.get("fresh") is True)
-    if complete_count != report["symbols_complete"] or fresh_count != report["symbols_fresh"]:
-        raise ValueError("DATA_REPORT_COUNT_MISMATCH")
-    expected_gate = "PASS" if complete_count == 27 and fresh_count == 27 else "DEGRADED"
-    if report["status"] != expected_gate:
-        raise ValueError("DATA_REPORT_GATE_LOGIC_MISMATCH")
 
     workflow_commit = manifest.get("workflow_commit", "")
     engine_commit = manifest.get("engine_commit", "")
@@ -199,6 +319,9 @@ def validate_artifact(artifact_dir: Path, expected_run_id: str, expected_workflo
     if manifest.get("rows_total") != rows_total:
         raise ValueError("MANIFEST_TOTAL_ROWS_MISMATCH")
 
+    completed_ms = _parse_utc_ms(workflow_completed_at, "WORKFLOW_COMPLETED_AT")
+    validate_report_freshness(report, symbols, timestamps_by_symbol, completed_ms)
+
     ordered_files = sorted(files, key=lambda item: (item["symbol"], item["kind"], item["path"]))
     canonical = json.dumps(ordered_files, sort_keys=True, separators=(",", ":")).encode("utf-8")
     aggregate = hashlib.sha256(canonical).hexdigest()
@@ -217,8 +340,12 @@ def main() -> int:
     parser.add_argument("--artifact-dir", type=Path, required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--workflow-sha", required=True)
+    parser.add_argument("--workflow-completed-at", required=True)
     args = parser.parse_args()
-    validate_artifact(args.artifact_dir, args.run_id, args.workflow_sha)
+    validate_artifact(
+        args.artifact_dir, args.run_id, args.workflow_sha,
+        args.workflow_completed_at,
+    )
     return 0
 
 
