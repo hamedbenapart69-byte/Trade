@@ -261,5 +261,33 @@ class PublishStage1BDashboardTests(unittest.TestCase):
                 publish_dashboard(report_path, universe_path, root)
 
 
+    def test_rejects_different_snapshot_with_same_generation_timestamp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report_path, universe_path = write_inputs(root, report, symbols)
+            publish_dashboard(report_path, universe_path, root)
+            report["symbols"][1]["reason"] = "CHANGED_WITHOUT_NEW_TIMESTAMP"
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "SAME_TIMESTAMP_REPORT_CONFLICT"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_conflicting_history_row_for_same_signal_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report_path, universe_path = write_inputs(root, report, symbols)
+            publish_dashboard(report_path, universe_path, root)
+            history_path = root / "lrt15m_history.csv"
+            with history_path.open("r", encoding="utf-8", newline="") as stream:
+                rows = list(csv.DictReader(stream))
+            rows[0]["reason"] = "CORRUPTED_OR_CONFLICTING_HISTORY"
+            with history_path.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=HISTORY_FIELDS)
+                writer.writeheader()
+                writer.writerows(rows)
+            with self.assertRaisesRegex(ValueError, "HISTORY_KEY_CONFLICT"):
+                publish_dashboard(report_path, universe_path, root)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
