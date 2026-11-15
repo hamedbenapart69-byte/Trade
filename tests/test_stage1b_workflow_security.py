@@ -31,6 +31,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("Checkout trusted notifier from production-v1", notifier)
         self.assertIn("ref: production-v1", notifier)
         self.assertNotIn("ref: main", notifier)
+        self.assertIn('python-version: "3.11"', notifier)
 
     def test_trusted_notifier_only_follows_stage1b_scanner(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
