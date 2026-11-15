@@ -2,9 +2,11 @@
 import sys, unittest
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one
+import modules.research_tracker as research_tracker_module
+from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one, fetch_public_ohlcv
 from modules.lrt15m_engine import PRODUCTION_MODE_THRESHOLD, RESEARCH_MODE_THRESHOLD
 
 NOW = datetime(2026, 11, 13, 20, 0, tzinfo=timezone.utc)
@@ -29,6 +31,49 @@ def fetcher_for(rows, source="OKX_PUBLIC_OHLCV"):
     return fetcher
 
 class ResearchTrackerTests(unittest.TestCase):
+    def test_public_fetcher_rejects_nonfinite_and_malformed_ohlcv(self):
+        class FakeExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                }
+            }
+
+            def __init__(self, raw):
+                self.raw = raw
+
+            def load_markets(self):
+                return self.markets
+
+            def fetch_ohlcv(self, *args, **kwargs):
+                return [self.raw]
+
+            def close(self):
+                return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 2 * INTERVAL_MS
+        invalid_rows = [
+            [since, 100.0, float("nan"), 99.0, 100.0, 1.0],
+            [since, 100.0, 99.0, 98.0, 101.0, 1.0],
+            [since, 100.0, 102.0, 99.0, 101.0, -1.0],
+            [since + 1, 100.0, 102.0, 99.0, 101.0, 1.0],
+        ]
+        for raw in invalid_rows:
+            with self.subTest(raw=raw):
+                exchange = FakeExchange(raw)
+                with patch.object(research_tracker_module, "PROVIDERS", ("okx",)), \
+                     patch.object(research_tracker_module.ccxt, "okx", return_value=exchange):
+                    with self.assertRaisesRegex(RuntimeError, "INVALID_"):
+                        fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+
+    def test_public_fetcher_fallback_chain_includes_binance(self):
+        self.assertEqual(
+            research_tracker_module.PROVIDERS,
+            ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget"),
+        )
+
     def test_tracker_thresholds_match_engine_contract(self):
         self.assertEqual(TRACKER_PRODUCTION_THRESHOLD, PRODUCTION_MODE_THRESHOLD)
         self.assertEqual(TRACKER_RESEARCH_THRESHOLD, RESEARCH_MODE_THRESHOLD)
