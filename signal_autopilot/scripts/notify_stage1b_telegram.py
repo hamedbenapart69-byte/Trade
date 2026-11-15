@@ -162,10 +162,14 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         lfs_score = finite_number(row.get("lfs_score"))
         lfs_coverage = finite_number(row.get("lfs_coverage_pct"))
         lfs_threshold = finite_number(row.get("lfs_threshold"))
-        if lfs_score is None or not 0 <= lfs_score <= 1:
+        if lfs_score is None:
             raise ValueError("WATCHLIST_LFS_SCORE_INVALID")
-        if lfs_coverage is None or not 0 <= lfs_coverage <= 100:
+        if not 0 <= lfs_score <= 1:
+            raise ValueError("WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
+        if lfs_coverage is None:
             raise ValueError("WATCHLIST_LFS_COVERAGE_INVALID")
+        if not 0 <= lfs_coverage <= 100:
+            raise ValueError("WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
         if lfs_threshold is None or not 0 <= lfs_threshold <= 1:
             raise ValueError("WATCHLIST_LFS_THRESHOLD_INVALID")
         if row.get("lfs_veto") != "PASS" or lfs_score < lfs_threshold:
