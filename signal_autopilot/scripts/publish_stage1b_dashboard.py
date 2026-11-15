@@ -204,7 +204,7 @@ def _history_rows(report: dict[str, Any]) -> list[dict[str, str]]:
             "lfs_status": str(item.get("lfs_status") or "UNAVAILABLE"),
             "mode": str(item.get("mode") or "UNAVAILABLE"),
             "veto": str(item.get("veto") or "UNAVAILABLE"),
-            "reason": str(item.get("reason") or "UNAVAILABLE").replace(",", ";"),
+            "reason": str(item.get("reason") or "UNAVAILABLE").replace(",", ";").replace("\\r", " ").replace("\\n", " "),
         })
     return rows
 
