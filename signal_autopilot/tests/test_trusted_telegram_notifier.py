@@ -57,9 +57,10 @@ class TrustedNotifierTests(unittest.TestCase):
 
     def test_rejects_incomplete_universe(self):
         payload = report()
+        expected_symbols = [row["symbol"] for row in payload["symbols"]]
         payload["symbols"].pop()
         with self.assertRaisesRegex(ValueError, "UNIVERSE_COVERAGE_INVALID|SYMBOL_ROWS_INVALID"):
-            validate_in_temp(payload)
+            validate_in_temp(payload, universe_symbols=expected_symbols)
 
     def test_rejects_wrong_symbol_set_even_when_count_is_27(self):
         payload = report()
