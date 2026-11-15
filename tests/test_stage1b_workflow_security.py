@@ -25,6 +25,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("head_branch == 'production-v1'", notifier)
         self.assertIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
+        self.assertIn("vars.DASHBOARD_URL", notifier)
 
     def test_trusted_notifier_checks_out_production_code(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
