@@ -225,6 +225,8 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
 
 
 def send_message(token: str, chat_id: str, message: str) -> None:
+    token = token.strip()
+    chat_id = chat_id.strip()
     if not token or not chat_id:
         raise RuntimeError("TELEGRAM_CREDENTIALS_MISSING")
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -248,10 +250,23 @@ def send_message(token: str, chat_id: str, message: str) -> None:
         raise RuntimeError(f"TELEGRAM_NETWORK_ERROR:{type(exc.reason).__name__}") from None
     if not isinstance(result, dict) or result.get("ok") is not True:
         raise RuntimeError("TELEGRAM_API_REJECTED_MESSAGE")
-    message_id = (result.get("result") or {}).get("message_id")
-    if not isinstance(message_id, int):
-        raise RuntimeError("TELEGRAM_MESSAGE_ID_MISSING")
-    print(f"TELEGRAM_DELIVERY=SUCCESS message_id={message_id}")
+    message_result = result.get("result")
+    if not isinstance(message_result, dict):
+        raise RuntimeError("TELEGRAM_MESSAGE_RESULT_INVALID")
+    message_id = message_result.get("message_id")
+    chat = message_result.get("chat")
+    if type(message_id) is not int or not isinstance(chat, dict):
+        raise RuntimeError("TELEGRAM_MESSAGE_RESULT_INVALID")
+    configured_chat = chat_id.strip()
+    if configured_chat.startswith("@"):
+        returned_username = str(chat.get("username") or "").lower()
+        if returned_username != configured_chat[1:].lower():
+            raise RuntimeError("TELEGRAM_DESTINATION_MISMATCH")
+    elif str(chat.get("id")) != configured_chat:
+        raise RuntimeError("TELEGRAM_DESTINATION_MISMATCH")
+    if chat.get("type") not in {"private", "group", "supergroup", "channel"}:
+        raise RuntimeError("TELEGRAM_CHAT_TYPE_INVALID")
+    print(f"TELEGRAM_DELIVERY=SUCCESS message_id={message_id} chat_id={chat.get('id')}")
 
 
 def main() -> int:
