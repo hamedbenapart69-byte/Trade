@@ -220,6 +220,9 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError("WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH")
         if threshold_reason != expected_reason:
             raise ValueError("WATCHLIST_LFS_THRESHOLD_REASON_MISMATCH")
+        threshold_method = row.get("lfs_threshold_method")
+        if threshold_method != "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D":
+            raise ValueError("WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED")
         candidates.append({
             "symbol": row["symbol"],
             "direction": direction,
@@ -237,6 +240,7 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "lfs_veto": "PASS",
             "lfs_threshold": lfs_threshold,
             "lfs_threshold_reason": threshold_reason,
+            "lfs_threshold_method": threshold_method,
         })
     return candidates
 
@@ -272,6 +276,7 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
             "Confidence: NOT_CALIBRATED",
             f"CVD: {item['cvd_source']}",
             f"LFS: {item['lfs_score']:.3f} | status={item['lfs_status']} | coverage={item['lfs_coverage_pct']:.1f}% | gate={item['lfs_veto']} | threshold={item['lfs_threshold']:.2f} ({item['lfs_threshold_reason']})",
+            f"LFS threshold method: {item['lfs_threshold_method']}",
             f"Hypothesis: {item['hypothesis']}",
             f"Falsification: {item['falsification']}",
         ])
