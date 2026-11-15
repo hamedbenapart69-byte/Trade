@@ -18,6 +18,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 def report():
+    generated = datetime.now(timezone.utc)
     rows = [
         {"symbol": f"COIN{i}USDT", "decision": "NO_TRADE", "veto": "PASS"}
         for i in range(27)
@@ -35,6 +36,7 @@ def report():
         "lfs_veto": "PASS",
         "lfs_threshold": 0.70,
         "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+        "last_closed_candle_utc": (generated - timedelta(minutes=15)).isoformat(),
     }
     return {
         "stage": "STAGE_1_UNCALIBRATED",
@@ -42,7 +44,8 @@ def report():
         "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
         "universe_count": 27,
         "symbols_reported": 27,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "production_watchlist_count": 1,
+        "generated_at_utc": generated.isoformat(),
         "symbols": rows,
     }
 
@@ -77,6 +80,32 @@ class TrustedNotifierTests(unittest.TestCase):
         self.assertIn("https://trade.example.pages.dev", message)
         self.assertIn("BUY_NOW/SELL_NOW صادر نمی‌شود", message)
 
+    def test_rejects_production_watchlist_count_mismatch(self):
+        payload = report()
+        payload["production_watchlist_count"] = 0
+        with self.assertRaisesRegex(ValueError, "PRODUCTION_WATCHLIST_COUNT_MISMATCH"):
+            validate_in_temp(payload)
+
+    def test_rejects_executable_production_decisions(self):
+        payload = report()
+        payload["symbols"][0]["decision"] = "BUY_NOW"
+        with self.assertRaisesRegex(ValueError, "PRODUCTION_EXECUTABLE_DECISION_FORBIDDEN"):
+            validate_in_temp(payload)
+
+    def test_rejects_stale_or_unclosed_watchlist_candle(self):
+        payload = report()
+        payload["symbols"][0]["last_closed_candle_utc"] = (
+            datetime.now(timezone.utc) - timedelta(minutes=46)
+        ).isoformat()
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_CANDLE_STALE"):
+            validate_in_temp(payload)
+        payload = report()
+        payload["symbols"][0]["last_closed_candle_utc"] = (
+            datetime.now(timezone.utc) - timedelta(minutes=10)
+        ).isoformat()
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME"):
+            validate_in_temp(payload)
+
     def test_rejects_incomplete_universe(self):
         payload = report()
         expected_symbols = [row["symbol"] for row in payload["symbols"]]
@@ -109,6 +138,7 @@ class TrustedNotifierTests(unittest.TestCase):
             {"symbol": f"COIN{i}USDT", "decision": "NO_TRADE", "veto": "PASS"}
             for i in range(27)
         ]
+        payload["production_watchlist_count"] = 0
         message = "\n".join(MODULE.build_messages(payload, "https://trade.example.pages.dev"))
         self.assertIn("نامزدهای زیرنظر: 0", message)
         self.assertIn("هیچ موقعیت WATCHLIST", message)
