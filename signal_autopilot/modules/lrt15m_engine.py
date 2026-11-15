@@ -16,7 +16,7 @@ if str(_package_root) not in sys.path:
     sys.path.insert(0, str(_package_root))
 
 from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
-from modules.lfs_v2 import calculate_lfs_v2
+from modules.lfs_v2 import LFS_V2_MIN_SCORE, calculate_lfs_v2
 
 
 LFS_WEIGHTS = {
@@ -27,8 +27,9 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
-MIN_LFS_SCORE_REAL_CVD = 0.70
-MIN_LFS_SCORE_PROXY_CVD = 0.30
+# نام‌های قدیمی برای سازگاری؛ در LFS_v2 آستانه بر اساس منبع CVD تغییر نمی‌کند.
+MIN_LFS_SCORE_REAL_CVD = LFS_V2_MIN_SCORE
+MIN_LFS_SCORE_PROXY_CVD = LFS_V2_MIN_SCORE
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 PRODUCTION_MODE_THRESHOLD = 80
@@ -355,7 +356,7 @@ def evaluate_stage1_decision(
         return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     if inside_kumo:
         return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
-    threshold = 0.30  # LFS_v2: آستانه برای FULL و PARTIAL_PROXY یکسان است.
+    threshold = LFS_V2_MIN_SCORE  # آستانهٔ نسخهٔ LFS_v2 برای همهٔ وضعیت‌های پوشش ثابت است.
     if float(lfs_score) < threshold:
         return {
             "veto": "LFS_BELOW_THRESHOLD",
