@@ -58,7 +58,8 @@ jobs:
             --artifact-dir incoming \
             --run-id "${{ github.event.workflow_run.id }}" \
             --workflow-sha "${{ github.event.workflow_run.head_sha }}" \
-            --workflow-completed-at "${{ github.event.workflow_run.updated_at }}")"
+            --workflow-completed-at "${{ github.event.workflow_run.updated_at }}" \
+            --universe-path trusted-tools/signal_autopilot/data/stage1b_universe_27.json)"
           printf '%s\n' "$OUTPUT"
           SOURCE_SHA="$(printf '%s\n' "$OUTPUT" | sed -n 's/^LEGACY_SOURCE_COMMIT=//p')"
           if ! printf '%s' "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
