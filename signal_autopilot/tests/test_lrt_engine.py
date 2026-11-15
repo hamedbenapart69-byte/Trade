@@ -90,6 +90,7 @@ class LRTStage1DecisionTests(unittest.TestCase):
         self.assertEqual(proxy_below["veto"], "LFS_BELOW_THRESHOLD")
         self.assertEqual(proxy_below["lfs_threshold"], 0.70)
         self.assertEqual(proxy_pass["veto"], "PASS")
+        self.assertEqual(proxy_pass["lfs_threshold_method"], "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D")
         self.assertEqual(real_full["veto"], "PASS")
         self.assertEqual(real_full["lfs_threshold"], 0.30)
         self.assertEqual(real_partial["veto"], "LFS_BELOW_THRESHOLD")
