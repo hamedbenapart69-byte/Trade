@@ -14,6 +14,8 @@ from typing import Any
 EXPECTED_UNIVERSE_SIZE = 27
 MAX_REPORT_AGE = timedelta(hours=4)
 MAX_FUTURE_SKEW = timedelta(minutes=5)
+MAX_CLOSED_CANDLE_AGE = timedelta(minutes=30)
+CANDLE_INTERVAL = timedelta(minutes=15)
 MAX_REPORT_BYTES = 5_000_000
 MAX_HISTORY_ROWS = 80_000
 SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
@@ -88,6 +90,15 @@ def _load_report(path: Path, expected: set[str], now: datetime) -> dict[str, Any
         raise ValueError("REPORT_STALE")
     if age < -MAX_FUTURE_SKEW:
         raise ValueError("REPORT_TIMESTAMP_TOO_FAR_IN_FUTURE")
+    for row in rows:
+        if _decision(row) != "WATCHLIST":
+            continue
+        candle_open = _parse_utc(row.get("last_closed_candle_utc"), "WATCHLIST_CANDLE_TIMESTAMP")
+        candle_close = candle_open + CANDLE_INTERVAL
+        if candle_close > generated + MAX_FUTURE_SKEW:
+            raise ValueError("WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME")
+        if generated - candle_close > MAX_CLOSED_CANDLE_AGE:
+            raise ValueError("WATCHLIST_CANDLE_STALE")
     return report
 
 
