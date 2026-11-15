@@ -397,6 +397,17 @@ def calculate_lfs_v2(
             "lfs3_oi_history": "1D",
             "lfs3_oi_current_change": "24H",
             "lfs5_oi_change": "24H_from_1H",
+            "derivatives_as_of_time_ms": as_of_time_ms,
+            "funding_received_at_ms": funding_received_at_ms,
+            "long_short_ratio_timestamp_ms": long_short_ratio_timestamp_ms,
+            "oi_1h_latest_timestamp_ms": oi_1h_points[-1][0] if oi_1h_points else None,
+            "oi_1d_latest_timestamp_ms": oi_1d_points[-1][0] if oi_1d_points else None,
+            "freshness_limits_ms": {
+                "funding": 5 * 60 * 1000,
+                "long_short_ratio": 2 * 60 * 60 * 1000,
+                "oi_1h": 3 * 60 * 60 * 1000,
+                "oi_1d": 30 * 60 * 60 * 1000,
+            },
         },
     }
 
