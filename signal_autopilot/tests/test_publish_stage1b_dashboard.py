@@ -32,9 +32,12 @@ def make_report(now=None):
             "cvd": {"source": "PROXY_OHLCV"},
             "rows_available": 500,
             "stats_1h_rows_available": 2500,
-            "lfs_score": 0.41,
+            "lfs_score": 0.75,
             "lfs_status": "FULL",
             "lfs_coverage_pct": 100.0,
+            "lfs_veto": "PASS",
+            "lfs_threshold": 0.70,
+            "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
             "entry": 100.0 if index == 0 else None,
             "stop_loss": 101.0 if index == 0 else None,
             "take_profit_1": 99.0 if index == 0 else None,
@@ -216,13 +219,22 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_HYPOTHESIS_MISSING"):
                 publish_dashboard(report_path, universe_path, root)
 
+    def test_rejects_watchlist_below_effective_lfs_threshold(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["lfs_score"] = 0.65
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_GATE_MISMATCH"):
+                publish_dashboard(report_path, universe_path, root)
+
     def test_rejects_out_of_range_lfs_values(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report, symbols = make_report()
             report["symbols"][0]["lfs_score"] = 1.2
             report_path, universe_path = write_inputs(root, report, symbols)
-            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_SCORE_OUT_OF_RANGE"):
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_SCORE_INVALID"):
                 publish_dashboard(report_path, universe_path, root)
 
 
