@@ -127,6 +127,27 @@ class TrustedNotifierTests(unittest.TestCase):
         payload["symbols"][0]["mode"] = "RESEARCH"
         self.assertEqual(MODULE.candidate_rows(payload), [])
 
+    def test_large_candidate_set_is_split_under_telegram_limit(self):
+        payload = report()
+        long_text = "x" * 600
+        for row in payload["symbols"]:
+            row.update({
+                "mode": "PRODUCTION",
+                "decision": "WATCHLIST",
+                "veto": "PASS",
+                "direction": "BUY",
+                "entry": 100.0,
+                "stop_loss": 98.0,
+                "take_profit_1": 102.0,
+                "take_profit": 104.0,
+                "rr": 2.0,
+                "hypothesis": long_text,
+                "falsification": long_text,
+            })
+        messages = MODULE.build_messages(payload, "https://trade.example.pages.dev")
+        self.assertGreater(len(messages), 1)
+        self.assertTrue(all(len(message) <= MODULE.MAX_MESSAGE_LENGTH for message in messages))
+
     def test_rejects_placeholder_hypothesis_and_falsification(self):
         payload = report()
         payload["symbols"][0]["hypothesis"] = "UNAVAILABLE"
