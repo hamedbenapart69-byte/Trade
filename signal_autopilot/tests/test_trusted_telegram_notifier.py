@@ -32,6 +32,9 @@ def report():
         "lfs_score": 0.72,
         "lfs_status": "FULL",
         "lfs_coverage_pct": 100.0,
+        "lfs_veto": "PASS",
+        "lfs_threshold": 0.70,
+        "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
     }
     return {
         "stage": "STAGE_1_UNCALIBRATED",
@@ -68,7 +71,7 @@ class TrustedNotifierTests(unittest.TestCase):
         self.assertIn("TP2: 104", message)
         self.assertIn("Confidence: NOT_CALIBRATED", message)
         self.assertIn("CVD: PROXY_OHLCV", message)
-        self.assertIn("LFS: 0.72 | status=FULL | coverage=100.0", message)
+        self.assertIn("LFS: 0.720 | status=FULL | coverage=100.0% | gate=PASS | threshold=0.70 (PROXY_OR_PARTIAL_DATA)", message)
         self.assertIn("Hypothesis:", message)
         self.assertIn("Falsification:", message)
         self.assertIn("https://trade.example.pages.dev", message)
@@ -153,6 +156,12 @@ class TrustedNotifierTests(unittest.TestCase):
                 "take_profit_1": 102.0,
                 "take_profit": 104.0,
                 "rr": 2.0,
+                "lfs_score": 0.72,
+                "lfs_status": "FULL",
+                "lfs_coverage_pct": 100.0,
+                "lfs_veto": "PASS",
+                "lfs_threshold": 0.70,
+                "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
                 "hypothesis": long_text,
                 "falsification": long_text,
             })
@@ -168,6 +177,12 @@ class TrustedNotifierTests(unittest.TestCase):
         payload = report()
         payload["symbols"][0]["falsification"] = "N/A"
         with self.assertRaisesRegex(ValueError, "WATCHLIST_FALSIFICATION_MISSING"):
+            MODULE.candidate_rows(payload)
+
+    def test_rejects_watchlist_below_effective_lfs_threshold(self):
+        payload = report()
+        payload["symbols"][0]["lfs_score"] = 0.65
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LFS_GATE_MISMATCH"):
             MODULE.candidate_rows(payload)
 
     def test_rejects_lfs_score_or_coverage_outside_valid_range(self):
