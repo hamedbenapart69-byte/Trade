@@ -232,6 +232,34 @@ def _collect_signals(state: dict[str, Any]) -> list[dict[str, Any]]:
     return sorted(adapted, key=lambda row: (row["created_at_utc"], row["signal_id"]))
 
 
+def _legacy_policy_exclusions(state: dict[str, Any]) -> list[dict[str, str]]:
+    exclusions: list[dict[str, str]] = []
+    for collection in ("open_signals", "closed_signals"):
+        records = state.get(collection, {})
+        if not isinstance(records, dict):
+            continue
+        for signal_id, record in records.items():
+            if not isinstance(record, dict):
+                continue
+            decision = record.get("decision") or record.get("status")
+            if record.get("mode") != "PRODUCTION" or decision != "WATCHLIST":
+                continue
+            required = (
+                "lfs_score", "lfs_coverage_pct", "lfs_threshold",
+                "lfs_veto", "lfs_threshold_reason", "lfs_status",
+            )
+            missing = [field for field in required if record.get(field) is None]
+            if missing:
+                exclusions.append({
+                    "signal_id": str(signal_id),
+                    "symbol": str(record.get("symbol") or "UNAVAILABLE"),
+                    "status": "EXCLUDED_LEGACY_POLICY_UNVERIFIED",
+                    "reason": "MISSING_EFFECTIVE_LFS_GATE_METADATA",
+                    "missing_fields": ",".join(missing),
+                })
+    return sorted(exclusions, key=lambda row: row["signal_id"])
+
+
 def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=".production_outcomes.", suffix=".tmp", dir=str(path.parent))
@@ -262,6 +290,7 @@ def update_production_outcomes(
         raise ValueError("PRODUCTION_SIGNAL_STATE_SCHEMA_INVALID")
     _validate_state_freshness(state, now)
     signals = _collect_signals(state)
+    legacy_exclusions = _legacy_policy_exclusions(state)
     state_updated = _parse_utc(state.get("updated_at_utc"), "STATE_UPDATED_AT")
     for signal in signals:
         created = _parse_utc(signal.get("created_at_utc"), "SIGNAL_CREATED_AT")
@@ -349,6 +378,8 @@ def update_production_outcomes(
         "source_state": "signal-state/signal_autopilot/state/open_signals.json",
         "source_signals_count": len(signals),
         "outcomes_count": len(rows),
+        "excluded_legacy_signals_count": len(legacy_exclusions),
+        "excluded_legacy_signals": legacy_exclusions,
         "counts": counts,
         "outcomes": rows,
     })
@@ -356,6 +387,7 @@ def update_production_outcomes(
     return {
         "source_signals_count": len(signals),
         "outcomes_count": len(rows),
+        "excluded_legacy_signals_count": len(legacy_exclusions),
         "counts": counts,
         "path": str(outcomes_path),
     }
