@@ -64,9 +64,18 @@ def _adapt_record(
 
     levels = record.get("levels")
     levels = levels if isinstance(levels, dict) else {}
-    entry = _finite_number(record.get("entry", levels.get("entry")), "ENTRY_REFERENCE")
-    stop = _finite_number(record.get("stop_loss", levels.get("stop_loss")), "STOP_REFERENCE")
-    target = _finite_number(record.get("take_profit", levels.get("tp2")), "TP2_REFERENCE")
+    entry_raw = record.get("entry")
+    stop_raw = record.get("stop_loss")
+    target_raw = record.get("take_profit")
+    if entry_raw is None:
+        entry_raw = levels.get("entry")
+    if stop_raw is None:
+        stop_raw = levels.get("stop_loss")
+    if target_raw is None:
+        target_raw = levels.get("tp2")
+    entry = _finite_number(entry_raw, "ENTRY_REFERENCE")
+    stop = _finite_number(stop_raw, "STOP_REFERENCE")
+    target = _finite_number(target_raw, "TP2_REFERENCE")
     if direction == "BUY" and not stop < entry < target:
         raise ValueError("PRODUCTION_SIGNAL_LEVEL_ORDER_INVALID")
     if direction == "SELL" and not target < entry < stop:
@@ -80,7 +89,9 @@ def _adapt_record(
     if candle_time > created:
         raise ValueError("LAST_CLOSED_CANDLE_AFTER_SIGNAL_TIME")
 
-    tp1_raw = record.get("take_profit_1", levels.get("tp1"))
+    tp1_raw = record.get("take_profit_1")
+    if tp1_raw is None:
+        tp1_raw = levels.get("tp1")
     tp1 = None
     if tp1_raw is not None:
         tp1 = _finite_number(tp1_raw, "TP1_REFERENCE")
