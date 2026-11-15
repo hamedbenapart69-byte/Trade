@@ -145,10 +145,17 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_RR_MISMATCH")
     lfs_score = _finite_number(row.get("lfs_score"))
     lfs_coverage = _finite_number(row.get("lfs_coverage_pct"))
-    if lfs_score is not None and not 0 <= lfs_score <= 1:
-        raise ValueError("REPORT_WATCHLIST_LFS_SCORE_OUT_OF_RANGE")
-    if lfs_coverage is not None and not 0 <= lfs_coverage <= 100:
-        raise ValueError("REPORT_WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE")
+    lfs_threshold = _finite_number(row.get("lfs_threshold"))
+    if lfs_score is None or not 0 <= lfs_score <= 1:
+        raise ValueError("REPORT_WATCHLIST_LFS_SCORE_INVALID")
+    if lfs_coverage is None or not 0 <= lfs_coverage <= 100:
+        raise ValueError("REPORT_WATCHLIST_LFS_COVERAGE_INVALID")
+    if lfs_threshold is None or not 0 <= lfs_threshold <= 1:
+        raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_INVALID")
+    if row.get("lfs_veto") != "PASS" or lfs_score < lfs_threshold:
+        raise ValueError("REPORT_WATCHLIST_LFS_GATE_MISMATCH")
+    if not isinstance(row.get("lfs_threshold_reason"), str) or not row["lfs_threshold_reason"].strip():
+        raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_REASON_MISSING")
     for field in ("hypothesis", "falsification"):
         value = row.get(field)
         if not isinstance(value, str) or value.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
@@ -200,6 +207,9 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "lfs_score": source_row.get("lfs_score"),
             "lfs_status": source_row.get("lfs_status") or "UNAVAILABLE",
             "lfs_coverage_pct": source_row.get("lfs_coverage_pct"),
+            "lfs_veto": source_row.get("lfs_veto"),
+            "lfs_threshold": source_row.get("lfs_threshold"),
+            "lfs_threshold_reason": source_row.get("lfs_threshold_reason"),
             "entry": source_row.get("entry"),
             "stop_loss": source_row.get("stop_loss"),
             "take_profit_1": source_row.get("take_profit_1"),
