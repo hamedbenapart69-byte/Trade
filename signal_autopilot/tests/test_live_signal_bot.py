@@ -1,4 +1,6 @@
+import json
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -6,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from main import calculate_confluence, tenkan_kijun_cross, process_symbol, reason_distribution
+from main import _atomic_write_json, calculate_confluence, tenkan_kijun_cross, process_symbol, reason_distribution
 from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
@@ -19,6 +21,18 @@ def candle(ts, open_, high, low, close, volume=100.0, buy=55.0):
 
 
 class LiveSignalBotTests(unittest.TestCase):
+    def test_report_json_writer_is_atomic_and_preserves_previous_file_on_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "stage1_lrt_report.json"
+            _atomic_write_json(path, {"version": 1})
+            with self.assertRaises(TypeError):
+                _atomic_write_json(path, {"invalid": object()})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 1})
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+            _atomic_write_json(path, {"version": 2})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 2})
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
     def test_public_market_timeout_returns_unavailable_without_crashing(self):
         class FailingFetcher:
             @staticmethod
