@@ -92,7 +92,7 @@ class LFSV2UnitTests(unittest.TestCase):
                     result = calculate_lfs_v2(
                         "BTCUSDT", self.bars_15m, self.bars_1h,
                         funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+                        funding_interval_ms=8 * 60 * 60 * 1000,
                         oi_1h=oi_rows(hourly=True, change=-0.10),
                         oi_1d=oi_rows(hourly=False, change=0.02),
                         long_short_ratio=1.2,
@@ -143,7 +143,7 @@ class LFSV2UnitTests(unittest.TestCase):
         result = calculate_lfs_v2(
             "BTCUSDT", self.bars_15m, self.bars_1h,
             funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+            funding_interval_ms=8 * 60 * 60 * 1000,
             oi_1h=oi_rows(hourly=True, change=-0.10),
             oi_1d=oi_rows(hourly=False, change=0.02),
             long_short_ratio=1.2,
@@ -169,7 +169,7 @@ class LFSV2UnitTests(unittest.TestCase):
             result = calculate_lfs_v2(
                 "BTCUSDT", self.bars_15m, self.bars_1h,
                 funding_rate=0.0003,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+                funding_interval_ms=8 * 60 * 60 * 1000,
                 oi_1h=None, oi_1d=None, long_short_ratio=None,
             )
         self.assertIsNotNone(result["lfs_components"]["LFS1"]["score"])
@@ -240,7 +240,7 @@ class LFSV2UnitTests(unittest.TestCase):
         fresh = calculate_lfs_v2(
             "BTCUSDT", self.bars_15m, self.bars_1h,
             funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+            funding_interval_ms=8 * 60 * 60 * 1000,
             oi_1h=oi_rows(hourly=True, change=-0.10, end_ts_ms=as_of),
             oi_1d=oi_rows(hourly=False, change=0.02, end_ts_ms=as_of),
             long_short_ratio=1.2,
@@ -256,7 +256,7 @@ class LFSV2UnitTests(unittest.TestCase):
         stale = calculate_lfs_v2(
             "BTCUSDT", self.bars_15m, self.bars_1h,
             funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+            funding_interval_ms=8 * 60 * 60 * 1000,
             oi_1h=oi_rows(hourly=True, change=-0.10),
             oi_1d=oi_rows(hourly=False, change=0.02),
             long_short_ratio=1.2,
@@ -278,7 +278,7 @@ class LFSV2UnitTests(unittest.TestCase):
         result = calculate_lfs_v2(
             "BTCUSDT", self.bars_15m, self.bars_1h,
             funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+            funding_interval_ms=8 * 60 * 60 * 1000,
             oi_1h=rows,
             oi_1d=oi_rows(hourly=False, change=0.02, end_ts_ms=as_of),
             as_of_time_ms=as_of,
@@ -293,7 +293,7 @@ class LFSV2UnitTests(unittest.TestCase):
         result = calculate_lfs_v2(
             "BTCUSDT", self.bars_15m, self.bars_1h,
             funding_rate=0.0001,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+            funding_interval_ms=8 * 60 * 60 * 1000,
             as_of_time_ms=as_of,
             funding_timestamp_ms=as_of - 10 * 60 * 1000,
             funding_received_at_ms=as_of,
@@ -309,7 +309,7 @@ class LFSV2UnitTests(unittest.TestCase):
             result = calculate_lfs_v2(
                 "ETHUSDT", self.bars_15m, self.bars_1h,
                 funding_rate=funding,
-                    funding_interval_ms=8 * 60 * 60 * 1000,
+                funding_interval_ms=8 * 60 * 60 * 1000,
                 oi_1h=oi_rows(hourly=True, change=rng.uniform(-2.0, 2.0)),
                 oi_1d=oi_rows(hourly=False, change=rng.uniform(-2.0, 2.0)),
                 long_short_ratio=ratio,
