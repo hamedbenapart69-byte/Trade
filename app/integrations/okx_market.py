@@ -64,7 +64,7 @@ class OkxPublicMarketData:
     def discover(self):
         try:
             response = self.client.get("https://api.coingecko.com/api/v3/coins/markets",
-                params={"vs_currency":"usd","order":"market_cap_desc","per_page":100,"page":1,"sparkline":"false"},
+                params={"vs_currency":"usd","order":"market_cap_desc","per_page":250,"page":1,"sparkline":"false"},
                 headers={"Accept":"application/json","User-Agent":"FuturesSignalAutopilot/5.0"})
             response.raise_for_status()
             rows = response.json()

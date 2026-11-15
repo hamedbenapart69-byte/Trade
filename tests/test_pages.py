@@ -12,7 +12,7 @@ from scripts.v5_live_scan import classify_scan
 def source():
     return {
         "status":"SCAN_COMPLETED","scan_id":"unit-test","scanned_at":"2026-11-07T10:00:00+00:00",
-        "universe_requested":100,"scan_mode":"EXPANDED_TOP_100","primary_shortlist_target":30,
+        "universe_requested":100,"discovered_assets":250,"scan_mode":"EXPANDED_TOP_100","primary_shortlist_target":30,
         "primary_shortlist_selected":30,"expanded_discovery_target":70,"expanded_discovery_selected":10,
         "extended_partial":False,"eligible_assets":40,"selected_assets":40,"screened_assets":40,
         "coverage":{"total_candidates":30,"screened":30,"insufficient_data":0,"rejected":30,"wait":0},
@@ -21,10 +21,10 @@ def source():
           "account_connection":False,"exchange_api_credentials":False,"order_execution":False},
         "validation_context":{"fixture_data":False,"account_connection":False,"order_execution":False},
         "actionable":[{
-          "symbol":"BTC-USDT-SWAP","decision":"BUY_NOW","direction":"LONG","entry":100.0,"stop_loss":98.5,
+          "symbol":"BTC-USDT-SWAP","strategy_family":"V3_STRICT_BASELINE","decision":"BUY_NOW","direction":"LONG","entry":100.0,"stop_loss":98.5,
           "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-30_000,
           "take_profit":103.0,"stop_pct":1.5,"confidence_v5":75,"data_grade":"B","self_audit_passed":True,
-          "self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},
+          "self_audit":{**{key:True for key in REQUIRED_AUDIT_CHECKS},"v3_baseline_passed":True,"v3_funding_threshold_passed":True,"strategy_family":"V3_STRICT_BASELINE"},
           "entry_quality":{"entry_ok":True,"chase":False},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
@@ -39,6 +39,17 @@ class PagesPayloadTests(unittest.TestCase):
         self.assertEqual(payload["status"],"SCAN_COMPLETED")
         self.assertEqual(len(payload["actionable"]),1)
         self.assertTrue(payload["publication_gate"]["source_verified"])
+
+    def test_adaptive_strategy_can_pass_publication_without_v3_baseline(self):
+        raw=source()
+        item=raw["actionable"][0]
+        item["strategy_family"]="TREND_PULLBACK"
+        item["self_audit"]["strategy_family"]="TREND_PULLBACK"
+        item["self_audit"]["v3_baseline_passed"]=False
+        item["self_audit"]["v3_funding_threshold_passed"]=False
+        payload=build_payload(raw)
+        self.assertEqual(len(payload["actionable"]),1)
+        self.assertEqual(payload["actionable"][0]["strategy_family"],"TREND_PULLBACK")
 
     def test_drops_actionable_signal_if_a_v5_risk_gate_fails(self):
         raw=source()
@@ -55,10 +66,10 @@ class PagesPayloadTests(unittest.TestCase):
         raw=source()
         raw["actionable"]=[]
         raw["conditional"]=[{
-          "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "symbol":"BTC-USDT-SWAP","strategy_family":"V3_STRICT_BASELINE","decision":"CONDITIONAL_BUY","direction":"LONG",
           "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-16*60_000,
           "confidence_v5":65,"data_grade":"B","self_audit_passed":True,
-          "self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
+          "self_audit":{**{key:True for key in REQUIRED_AUDIT_CHECKS},"v3_baseline_passed":True,"v3_funding_threshold_passed":True,"strategy_family":"V3_STRICT_BASELINE"},"stop_pct":1.5,
           "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
@@ -101,9 +112,9 @@ class PagesPayloadTests(unittest.TestCase):
         raw=source()
         raw["actionable"]=[]
         raw["conditional"]=[{
-          "symbol":"BTC-USDT-SWAP","decision":"CONDITIONAL_BUY","direction":"LONG",
+          "symbol":"BTC-USDT-SWAP","strategy_family":"V3_STRICT_BASELINE","decision":"CONDITIONAL_BUY","direction":"LONG",
           "entry_observed_at_ms":int(datetime.now(timezone.utc).timestamp()*1000)-30_000,
-          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{key:True for key in REQUIRED_AUDIT_CHECKS},"stop_pct":1.5,
+          "confidence_v5":65,"data_grade":"B","self_audit_passed":True,"self_audit":{**{key:True for key in REQUIRED_AUDIT_CHECKS},"v3_baseline_passed":True,"v3_funding_threshold_passed":True,"strategy_family":"V3_STRICT_BASELINE"},"stop_pct":1.5,
           "entry_quality":{"confirmation_required":"15m close above trigger","trigger_level":101.0},
           "risk":{"valid":True,"contract_spec_verified":True,"planned_loss_usd":4.0,
             "required_leverage":1.33,"reward_to_risk":2.0}
@@ -157,6 +168,7 @@ class PagesPayloadTests(unittest.TestCase):
     def test_payload_exposes_primary_and_expanded_market_coverage(self):
         payload=build_payload(source())
         self.assertEqual(payload["scan_mode"],"EXPANDED_TOP_100")
+        self.assertEqual(payload["discovered_assets"],250)
         self.assertEqual(payload["primary_shortlist_selected"],30)
         self.assertEqual(payload["expanded_discovery_selected"],10)
         self.assertIn("CoinGecko public spot",payload["source_status"]["underlying_market_data"])

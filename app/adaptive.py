@@ -1,0 +1,182 @@
+"""Adaptive multi-pattern signal qualification (V6).
+
+This module supplements, rather than mutates, the frozen V3/V5 baseline.
+It identifies trend pullbacks, range reversals, confirmed breakouts and
+liquidity-sweep reversals from completed OHLCV candles. Scores are ranking
+scores, never probabilities of profit.
+"""
+from __future__ import annotations
+
+
+def adaptive_setup(
+    candles_1h,
+    candles_15m,
+    tech: dict,
+    trends: dict,
+    regime: str,
+    structure_long: dict,
+    structure_short: dict,
+    ema20_15m: float,
+    atr15m: float,
+    funding_8h: float,
+) -> dict | None:
+    if len(candles_1h) < 30 or len(candles_15m) < 3 or not atr15m or atr15m <= 0:
+        return None
+
+    close = float(tech["close"])
+    ema20 = float(tech["ema20"])
+    ema50 = float(tech["ema50"])
+    rsi = float(tech["rsi"])
+    volume = float(tech["volume_ratio"])
+    adx = float(tech.get("adx") or 0)
+    macd_now = tech.get("macd_histogram")
+    macd_prev = tech.get("macd_histogram_previous")
+    obv_delta = float(tech.get("obv_change_10") or 0)
+    mfi_value = float(tech.get("mfi") or 50)
+    last15, prev15 = candles_15m[-1], candles_15m[-2]
+    confirm_long = last15.close > prev15.close and last15.close >= ema20_15m
+    confirm_short = last15.close < prev15.close and last15.close <= ema20_15m
+    retest_confirm_long = ema20 - 0.5 * atr15m <= last15.low <= ema20 + 0.25 * atr15m and last15.close >= ema20_15m
+    retest_confirm_short = ema20 - 0.25 * atr15m <= last15.high <= ema20 + 0.5 * atr15m and last15.close <= ema20_15m
+    distance_ema_atr = abs(close - ema20) / max(float(tech.get("atr14") or 0), 1e-12)
+    prior = candles_1h[-21:-1]
+    prior_high = max(x.high for x in prior)
+    prior_low = min(x.low for x in prior)
+    breakout_long = close > prior_high and volume >= 1.15 and adx >= 18
+    breakout_short = close < prior_low and volume >= 1.15 and adx >= 18
+    breakout_retest_long = breakout_long and prior_high - 0.5 * atr15m <= last15.low <= prior_high + 0.25 * atr15m and last15.close > prior_high
+    breakout_retest_short = breakout_short and prior_low - 0.25 * atr15m <= last15.high <= prior_low + 0.5 * atr15m and last15.close < prior_low
+    breakout_confirmed_long = breakout_long and last15.close > prior_high
+    breakout_confirmed_short = breakout_short and last15.close < prior_low
+
+    candidates = []
+    for direction in ("LONG", "SHORT"):
+        aligned4h = trends.get("4h") == ("UP" if direction == "LONG" else "DOWN")
+        aligned1d = trends.get("1d") == ("BULLISH" if direction == "LONG" else "BEARISH")
+        aligned1h = trends.get("1h") == ("UP" if direction == "LONG" else "DOWN")
+        opposite4h = trends.get("4h") == ("DOWN" if direction == "LONG" else "UP")
+        opposite1d = trends.get("1d") == ("BEARISH" if direction == "LONG" else "BULLISH")
+        ema_aligned = (ema20 > ema50 and close > ema50) if direction == "LONG" else (ema20 < ema50 and close < ema50)
+        momentum_aligned = (macd_now is not None and macd_prev is not None and macd_now > 0 and macd_now >= macd_prev) if direction == "LONG" else (macd_now is not None and macd_prev is not None and macd_now < 0 and macd_now <= macd_prev)
+        flow_aligned = (obv_delta > 0 and mfi_value >= 50) if direction == "LONG" else (obv_delta < 0 and mfi_value <= 50)
+        rsi_ok = 38 <= rsi <= 68 if direction == "LONG" else 32 <= rsi <= 62
+        pullback = distance_ema_atr <= 1.75 and aligned4h and aligned1d and aligned1h and ema_aligned
+        breakout = breakout_long if direction == "LONG" else breakout_short
+        breakout_retest = breakout_retest_long if direction == "LONG" else breakout_retest_short
+        breakout_confirmed = breakout_confirmed_long if direction == "LONG" else breakout_confirmed_short
+        structure = structure_long if direction == "LONG" else structure_short
+        sweep = bool(structure.get("liquidity_sweep_aligned"))
+        sweep_confirm = confirm_long if direction == "LONG" else confirm_short
+        range_reversal = (
+            regime == "RANGING"
+            and ((direction == "LONG" and rsi <= 38 and tech.get("bb_position") in {"lower_band", "lower_half"})
+                 or (direction == "SHORT" and rsi >= 62 and tech.get("bb_position") in {"upper_band", "upper_half"}))
+        )
+        if direction == "LONG":
+            ema15_confirm = retest_confirm_long if pullback else confirm_long
+        else:
+            ema15_confirm = retest_confirm_short if pullback else confirm_short
+
+        score = 0
+        evidence = []
+        if aligned4h:
+            score += 18; evidence.append("4H trend aligned")
+        if aligned1d:
+            score += 12; evidence.append("1D regime aligned")
+        if aligned1h:
+            score += 8; evidence.append("1H trend aligned")
+        if ema_aligned:
+            score += 10; evidence.append("EMA structure aligned")
+        if momentum_aligned:
+            score += 7; evidence.append("MACD momentum aligned")
+        if rsi_ok:
+            score += 5; evidence.append("RSI in directional operating band")
+        elif pullback:
+            score -= 6; evidence.append("momentum stretched; wait for RSI reset before entry")
+        if adx >= 18:
+            score += 6; evidence.append("trend strength confirmed")
+        if adx >= 25:
+            score += 3
+        if volume >= 0.9:
+            score += 5; evidence.append("volume not materially below baseline")
+        if volume >= 1.3:
+            score += 4; evidence.append("volume expansion")
+        if flow_aligned:
+            score += 5; evidence.append("OBV and MFI aligned")
+        if structure.get("classification") == ("BULLISH" if direction == "LONG" else "BEARISH"):
+            score += 8; evidence.append("4H swing structure aligned")
+        if sweep and sweep_confirm:
+            score += 13; evidence.append("liquidity sweep with 15m reversal confirmation")
+        if structure.get("fvg_aligned"):
+            score += 4; evidence.append("unmitigated aligned fair-value gap")
+        if structure.get("order_block_aligned"):
+            score += 4; evidence.append("unmitigated aligned order block")
+        if breakout:
+            score += 14; evidence.append("20-bar range breakout with volume and ADX")
+        if ema15_confirm:
+            score += 8; evidence.append("15m directional close confirmed")
+        if abs(last15.close - ema20_15m) <= 1.5 * atr15m:
+            score += 3; evidence.append("15m entry distance acceptable")
+        if range_reversal:
+            score += 12; evidence.append("range-edge mean-reversion setup")
+            if (direction == "LONG" and rsi <= 30) or (direction == "SHORT" and rsi >= 70):
+                score += 7; evidence.append("range momentum is statistically stretched")
+            if tech.get("stoch_rsi") is not None and ((direction == "LONG" and tech["stoch_rsi"] <= 25) or (direction == "SHORT" and tech["stoch_rsi"] >= 75)):
+                score += 6; evidence.append("stochastic RSI confirms range-edge exhaustion")
+        if opposite4h:
+            score -= 18; evidence.append("4H trend conflict")
+        if opposite1d:
+            score -= 12; evidence.append("1D regime conflict")
+        if abs(funding_8h) >= 0.0005:
+            score -= 5; evidence.append("funding elevated; entry needs stronger confirmation")
+        score = max(0, min(100, score))
+
+        if sweep and sweep_confirm:
+            family = "LIQUIDITY_SWEEP_REVERSAL"
+        elif breakout_retest:
+            family = "BREAKOUT_RETEST"
+        elif breakout:
+            family = "BREAKOUT_CONFIRMATION"
+        elif range_reversal:
+            family = "RANGE_MEAN_REVERSION"
+        elif pullback:
+            family = "TREND_PULLBACK"
+        else:
+            family = None
+
+        if family and score >= 52:
+            if pullback and not rsi_ok:
+                confirmation = "wait for RSI to recover into the directional band, then a completed 15m retest/rejection of 1H EMA20"
+            elif pullback and not ema15_confirm:
+                confirmation = "wait for price to retest 1H EMA20, then a completed 15m rejection in the trend direction"
+            elif breakout and not breakout_confirmed:
+                confirmation = "wait for a completed 15m close beyond the 20-bar breakout level"
+            elif not (ema15_confirm or (sweep and sweep_confirm) or breakout_confirmed):
+                confirmation = "wait for a completed 15m candle to confirm the direction at/through EMA20"
+            else:
+                confirmation = None
+            pattern_confirmed = bool(
+                (pullback and rsi_ok and ema15_confirm)
+                or (sweep and sweep_confirm)
+                or breakout_confirmed
+                or (range_reversal and ema15_confirm)
+            )
+            trigger_level = prior_high if direction == "LONG" and breakout else prior_low if direction == "SHORT" and breakout else ema20 if pullback else ema20_15m
+            trigger_mode = "retest_rejection" if pullback or breakout_retest else "close_direction"
+            candidates.append({
+                "direction": direction,
+                "strategy_family": family,
+                "strategy_score": score,
+                "strategy_evidence": evidence,
+                "pattern_confirmed": pattern_confirmed,
+                "confirmation_required": confirmation,
+                "trigger_level": float(trigger_level),
+                "trigger_mode": trigger_mode,
+            })
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: (x["strategy_score"], x["pattern_confirmed"]), reverse=True)
+    if len(candidates) > 1 and candidates[0]["strategy_score"] - candidates[1]["strategy_score"] < 8:
+        return None
+    return candidates[0]

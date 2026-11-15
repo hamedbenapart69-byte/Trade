@@ -10,6 +10,21 @@ class OkxAdapterTests(unittest.TestCase):
         client=httpx.Client(transport=httpx.MockTransport(handler))
         return OkxPublicMarketData(client=client)
 
+    def test_coingecko_discovery_requests_250_market_assets(self):
+        def handler(request):
+            self.assertEqual(request.url.host,"api.coingecko.com")
+            self.assertEqual(request.url.path,"/api/v3/coins/markets")
+            self.assertEqual(request.url.params.get("per_page"),"250")
+            return httpx.Response(200,json=[{"id":"bitcoin","symbol":"btc","name":"Bitcoin",
+                "total_volume":1000,"market_cap_rank":1,"current_price":50000,"market_cap":1000000}])
+        p=self.make_provider(handler)
+        try:
+            rows=p.discover()
+            self.assertEqual(len(rows),1)
+            self.assertEqual(rows[0]["symbol"],"BTC")
+        finally:
+            p.close()
+
     def test_linear_usdt_swap_contract_metadata_is_normalized(self):
         def handler(request):
             self.assertEqual(request.url.path,"/api/v5/public/instruments")

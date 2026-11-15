@@ -22,9 +22,9 @@ REQUIRED_AUDIT_CHECKS = (
     "mark_price_valid", "index_price_valid", "last_trade_price_valid",
     "live_price_and_derivatives_timestamps_fresh",
     "ohlcv_15m_validated", "ohlcv_1h_validated", "ohlcv_4h_validated", "ohlcv_1d_validated",
-    "completed_candles_only", "v3_baseline_passed",
-    "funding_rate_verified", "funding_interval_verified", "funding_threshold_passed",
-    "current_open_interest_verified","positioning_timestamp_verified_if_used","smart_money_timestamp_verified_if_used", "multi_timeframe_checked", "market_structure_checked","market_regime_classified",
+    "completed_candles_only",
+    "funding_rate_verified", "funding_interval_verified", "funding_safety_limit_passed",
+    "current_open_interest_verified","positioning_timestamp_verified_if_used","smart_money_timestamp_verified_if_used", "multi_timeframe_checked", "market_structure_checked", "minimum_2R_room_before_nearest_structure", "market_regime_classified",
     "volume_and_momentum_checked", "anti_chase_checked",
     "stop_distance_0_5_to_3_pct", "planned_loss_at_most_4_usd",
     "isolated_margin_is_manual_assumption_only", "leverage_at_most_5x",
@@ -34,9 +34,18 @@ REQUIRED_AUDIT_CHECKS = (
 
 def _valid_self_audit(item: dict) -> bool:
     audit = item.get("self_audit")
+    if not isinstance(audit, dict):
+        return False
+    family = item.get("strategy_family") or audit.get("strategy_family")
+    baseline_ok = (
+        family == "V3_STRICT_BASELINE" and audit.get("v3_baseline_passed") is True and audit.get("v3_funding_threshold_passed") is True
+    ) or (
+        family in {"TREND_PULLBACK", "BREAKOUT_RETEST", "BREAKOUT_CONFIRMATION", "LIQUIDITY_SWEEP_REVERSAL", "RANGE_MEAN_REVERSION"}
+        and audit.get("v3_baseline_passed") is False
+    )
     return bool(
         item.get("self_audit_passed") is True
-        and isinstance(audit, dict)
+        and baseline_ok
         and all(audit.get(key) is True for key in REQUIRED_AUDIT_CHECKS)
     )
 
@@ -70,7 +79,7 @@ def _valid_actionable(item: dict, source_ok: bool, now_ms: int) -> bool:
     stop = item.get("stop_loss")
     target = item.get("take_profit")
     stop_pct = _num(item.get("stop_pct"))
-    confidence = _num(item.get("confidence_v5"))
+    confidence = _num(item.get("confidence_v6", item.get("confidence_v5")))
     planned_loss = _num(risk.get("planned_loss_usd"))
     leverage = _num(risk.get("required_leverage"))
     rr = _num(risk.get("reward_to_risk"))
@@ -97,7 +106,7 @@ def _valid_actionable(item: dict, source_ok: bool, now_ms: int) -> bool:
 def _valid_conditional(item: dict, source_ok: bool, now_ms: int) -> bool:
     entry = item.get("entry_quality") or {}
     risk = item.get("risk") or {}
-    score = _num(item.get("confidence_v5"))
+    score = _num(item.get("confidence_v6", item.get("confidence_v5")))
     trigger = _num(entry.get("trigger_level"))
     stop_pct = _num(item.get("stop_pct"))
     planned_loss = _num(risk.get("planned_loss_usd"))
@@ -113,6 +122,7 @@ def _valid_conditional(item: dict, source_ok: bool, now_ms: int) -> bool:
         and _valid_self_audit(item)
         and isinstance(entry.get("confirmation_required"), str)
         and entry.get("confirmation_required").strip()
+        and entry.get("trigger_mode", "close_direction") in {"close_direction", "close_above", "close_below", "retest_rejection"}
         and trigger is not None and trigger > 0
         and risk.get("valid") is True
         and risk.get("contract_spec_verified") is True
@@ -156,7 +166,7 @@ def build_payload(raw: dict) -> dict:
                 unique[key] = item
         return list(unique.values())
     def action_rank(item):
-        score = _num(item.get("confidence_v5")) or 0
+        score = _num(item.get("confidence_v6", item.get("confidence_v5"))) or 0
         rr = _num((item.get("risk") or {}).get("reward_to_risk")) or 0
         mtf = _num((item.get("v5_score_components") or {}).get("multi_timeframe")) or 0
         entry_ok = (item.get("entry_quality") or {}).get("entry_ok") is True
@@ -164,7 +174,7 @@ def build_payload(raw: dict) -> dict:
         return (-score, 0 if item.get("data_grade") == "A" else 1, not entry_ok, -rr, -mtf, not independent)
     actionable = sorted(dedupe(actionable_candidates), key=action_rank)[:10]
     conditional = sorted(dedupe(conditional_candidates),
-        key=lambda x: -(_num(x.get("confidence_v5")) or 0))
+        key=lambda x: -(_num(x.get("confidence_v6", x.get("confidence_v5"))) or 0))
     return {
         "schema_version": 1,
         "status": status,
@@ -173,6 +183,7 @@ def build_payload(raw: dict) -> dict:
         "published_at": generated,
         "paper_state_restored": os.getenv("V5_STATE_RESTORED", "false").lower() == "true",
         "universe_requested": raw.get("universe_requested"),
+        "discovered_assets": raw.get("discovered_assets"),
         "scan_mode": raw.get("scan_mode"),
         "primary_shortlist_target": raw.get("primary_shortlist_target"),
         "primary_shortlist_selected": raw.get("primary_shortlist_selected"),
