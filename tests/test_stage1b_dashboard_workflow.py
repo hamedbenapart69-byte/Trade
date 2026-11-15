@@ -60,6 +60,15 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("ابطال:", app)
         self.assertIn("const fmtPrice", app)
 
+    def test_dashboard_freshness_matches_publisher_clock_skew_and_caches_history(self):
+        app = APP.read_text(encoding="utf-8")
+        self.assertIn("MAX_FUTURE_SKEW_MS = 5 * 60 * 1000", app)
+        self.assertIn("ageMs < -MAX_FUTURE_SKEW_MS", app)
+        self.assertIn("Math.max(0, ageMs)", app)
+        self.assertIn("historyLoaded && !force", app)
+        self.assertIn("reportLoading", app)
+        self.assertIn("loadReport(true)", app)
+
     def test_dashboard_summary_does_not_call_watchlist_a_qualified_trade(self):
         app = APP.read_text(encoding="utf-8")
         self.assertIn("نامزدهای زیرنظر", app)
