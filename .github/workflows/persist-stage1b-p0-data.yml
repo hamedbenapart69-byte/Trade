@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: read
+      actions: write
       contents: write
     steps:
       - name: Checkout trusted validator from main
@@ -127,3 +127,31 @@ jobs:
           done
           echo "Could not update market-data after 3 synchronized push attempts"
           exit 1
+
+      - name: Prune older Stage 1b P0 artifacts to stay within free storage
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const currentRunId = Number(context.payload.workflow_run.id);
+            const artifacts = await github.paginate(
+              github.rest.actions.listArtifactsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+            let deleted = 0;
+            for (const artifact of artifacts) {
+              const sourceRunId = Number(artifact.workflow_run?.id || 0);
+              if (
+                artifact.name.startsWith("stage1b-p0-dataset-") &&
+                sourceRunId > 0 &&
+                sourceRunId < currentRunId
+              ) {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+                deleted += 1;
+              }
+            }
+            core.info(`Deleted ${deleted} older Stage 1b P0 artifacts; retained current and newer runs.`);
