@@ -2,11 +2,13 @@
 import sys, unittest
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+import json
+import tempfile
 from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import modules.research_tracker as research_tracker_module
-from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one, fetch_public_ohlcv
+from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one, update_outcomes, fetch_public_ohlcv
 from modules.lrt15m_engine import PRODUCTION_MODE_THRESHOLD, RESEARCH_MODE_THRESHOLD
 
 NOW = datetime(2026, 11, 13, 20, 0, tzinfo=timezone.utc)
@@ -58,6 +60,59 @@ class ResearchTrackerTests(unittest.TestCase):
             rows, source = fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
         self.assertEqual(rows, [])
         self.assertEqual(source, "PUBLIC_OHLCV_NO_CLOSED_CANDLES")
+
+    def test_empty_provider_does_not_hide_failure_of_other_providers(self):
+        class EmptyExchange:
+            markets = {
+                "BTC/USDT:USDT": {
+                    "active": True, "swap": True, "linear": True,
+                    "base": "BTC", "quote": "USDT", "settle": "USDT",
+                    "symbol": "BTC/USDT:USDT",
+                }
+            }
+            def load_markets(self): return self.markets
+            def fetch_ohlcv(self, *args, **kwargs): return []
+            def close(self): return None
+
+        since = CANDLE_OPEN + INTERVAL_MS
+        now_ms = since + 2 * INTERVAL_MS
+        with patch.object(research_tracker_module, "PROVIDERS", ("okx", "bybit")), \\
+             patch.object(research_tracker_module.ccxt, "okx", return_value=EmptyExchange()), \\
+             patch.object(research_tracker_module.ccxt, "bybit", side_effect=RuntimeError("network down")):
+            with self.assertRaisesRegex(RuntimeError, "PUBLIC_OHLCV_UNAVAILABLE"):
+                fetch_public_ohlcv("BTCUSDT", since, now_ms, 200)
+
+    def test_research_outcome_history_cannot_shrink_silently(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            signals_path.write_text(json.dumps({"signals": []}), encoding="utf-8")
+            outcomes_path.write_text(json.dumps({"outcomes": [{"signal_id": "historical-1"}]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "RESEARCH_SIGNAL_HISTORY_REGRESSION"):
+                update_outcomes(
+                    signals_path, outcomes_path,
+                    now=NOW, fetcher=lambda *args: ([], "UNUSED"),
+                )
+
+    def test_research_outcome_rejects_duplicate_source_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            row = signal()
+            signals_path.write_text(json.dumps({"signals": [row, row]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "DUPLICATE_RESEARCH_SIGNAL_ID"):
+                update_outcomes(signals_path, outcomes_path, now=NOW)
+
+    def test_research_outcome_requires_timezone_aware_clock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            signals_path = root / "signals.json"
+            outcomes_path = root / "outcomes.json"
+            signals_path.write_text(json.dumps({"signals": []}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "TRACKER_NOW_TIMEZONE_REQUIRED"):
+                update_outcomes(signals_path, outcomes_path, now=datetime(2026, 11, 13, 20, 0))
 
     def test_public_fetcher_rejects_nonfinite_and_malformed_ohlcv(self):
         class FakeExchange:
