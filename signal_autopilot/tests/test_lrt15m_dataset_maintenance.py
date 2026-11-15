@@ -222,12 +222,9 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
                 symbols = [f"COIN{i:02d}USDT" for i in range(27)]
                 for symbol in symbols:
                     write_timestamps(base / f"{symbol}_15m.parquet", [0, INTERVAL_MS])
-                tail_row = {
-                    "open_time": 2 * INTERVAL_MS, "open": 101.0, "high": 103.0,
-                    "low": 100.0, "close": 102.0, "volume": 5.0,
-                }
+                tail_ts = int(datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000)
                 write_timestamps(storage / "live_tail" / "2026-01-01" / "COIN00USDT_15m.parquet",
-                                 [2 * INTERVAL_MS])
+                                 [tail_ts])
                 report_path = root / "data_report.json"
                 report_path.write_text(json.dumps({"status": "DEGRADED"}), encoding="utf-8")
 
