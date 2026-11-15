@@ -13,6 +13,31 @@ from modules.signal_tracker import SignalTracker
 
 
 class SignalTrackerSnapshotTests(unittest.TestCase):
+    def test_closed_signal_id_cannot_be_reopened(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tracker = SignalTracker(Path(tmp) / "open_signals.json")
+            tracker.upsert({
+                "signal_id": "closed-once",
+                "symbol": "BTCUSDT",
+                "direction": "BUY",
+                "mode": "PRODUCTION",
+                "status": "WATCHLIST",
+                "created_at_utc": "2026-11-15T10:00:00+00:00",
+            })
+            self.assertTrue(tracker.close("closed-once", "TEST_CLOSE"))
+            with self.assertRaisesRegex(ValueError, "signal_id_already_closed"):
+                tracker.upsert({
+                    "signal_id": "closed-once",
+                    "symbol": "BTCUSDT",
+                    "direction": "BUY",
+                    "mode": "PRODUCTION",
+                    "status": "WATCHLIST",
+                    "created_at_utc": "2026-11-15T10:15:00+00:00",
+                })
+            state = tracker.snapshot()
+            self.assertNotIn("closed-once", state["open_signals"])
+            self.assertIn("closed-once", state["closed_signals"])
+
     def test_repeated_upsert_preserves_first_signal_timestamp_and_levels(self):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = SignalTracker(Path(tmp) / "open_signals.json")
