@@ -15,7 +15,7 @@ EXPECTED_UNIVERSE_SIZE = 27
 MAX_REPORT_AGE = timedelta(hours=6)
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 MAX_REPORT_BYTES = 5_000_000
-MAX_HISTORY_ROWS = 200_000
+MAX_HISTORY_ROWS = 80_000
 SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
 HISTORY_FIELDS = (
     "generated_at_utc", "symbol", "decision", "htf_4h_kumo",
