@@ -120,6 +120,13 @@ def validate_report_freshness(
     ).date().isoformat()
     if report.get("interval") != "15m":
         raise ValueError("DATA_REPORT_INTERVAL_INVALID")
+    if (
+        report.get("universe_count") != len(symbols)
+        or report.get("symbols_processed") != len(symbols)
+    ):
+        raise ValueError("DATA_REPORT_UNIVERSE_COUNT_MISMATCH")
+    if report.get("signal_engine_executed") is not False:
+        raise ValueError("DATA_REPORT_SIGNAL_ENGINE_EXECUTION_FORBIDDEN")
     if report.get("start_date_utc") != expected_start_date:
         raise ValueError("DATA_REPORT_WINDOW_START_MISMATCH")
 
