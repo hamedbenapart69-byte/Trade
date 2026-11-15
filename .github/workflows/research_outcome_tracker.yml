@@ -8,7 +8,7 @@ on:
       - "signal_autopilot/tests/test_research_tracker.py"
       - ".github/workflows/research_outcome_tracker.yml"
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: "7 */4 * * *"
   workflow_run:
     workflows:
       - "Persist Stage 1B Scanner State"
