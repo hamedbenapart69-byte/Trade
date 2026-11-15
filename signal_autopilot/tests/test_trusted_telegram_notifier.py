@@ -230,8 +230,9 @@ class TrustedNotifierTests(unittest.TestCase):
                 "notify_stage1b_telegram.py", "--report", str(report_path),
                 "--universe", str(universe_path), "--validate-only",
             ]
-            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev", "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz", "TELEGRAM_CHAT_ID": "-1001234567890", "TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts"}), patch.object(MODULE, "verify_telegram_destination"), patch.object(MODULE, "send_message") as sender:
+            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev"}, clear=True), patch.object(MODULE, "verify_telegram_destination") as verify, patch.object(MODULE, "send_message") as sender:
                 self.assertEqual(MODULE.main(), 0)
+                verify.assert_not_called()
                 sender.assert_not_called()
 
 
