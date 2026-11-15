@@ -170,6 +170,16 @@ class TrustedNotifierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "WATCHLIST_FALSIFICATION_MISSING"):
             MODULE.candidate_rows(payload)
 
+    def test_rejects_lfs_score_or_coverage_outside_valid_range(self):
+        payload = report()
+        payload["symbols"][0]["lfs_score"] = 1.2
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LFS_SCORE_OUT_OF_RANGE"):
+            MODULE.candidate_rows(payload)
+        payload = report()
+        payload["symbols"][0]["lfs_coverage_pct"] = 101.0
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LFS_COVERAGE_OUT_OF_RANGE"):
+            MODULE.candidate_rows(payload)
+
     def test_dashboard_url_must_be_https_and_configured(self):
         with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
             MODULE.validate_dashboard_url("")
