@@ -126,6 +126,16 @@ class TrustedNotifierTests(unittest.TestCase):
         payload["symbols"][0]["mode"] = "RESEARCH"
         self.assertEqual(MODULE.candidate_rows(payload), [])
 
+    def test_rejects_placeholder_hypothesis_and_falsification(self):
+        payload = report()
+        payload["symbols"][0]["hypothesis"] = "UNAVAILABLE"
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_HYPOTHESIS_MISSING"):
+            MODULE.candidate_rows(payload)
+        payload = report()
+        payload["symbols"][0]["falsification"] = "N/A"
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_FALSIFICATION_MISSING"):
+            MODULE.candidate_rows(payload)
+
     def test_dashboard_url_must_be_https_and_configured(self):
         with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
             MODULE.validate_dashboard_url("")
