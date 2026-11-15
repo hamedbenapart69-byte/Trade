@@ -29,6 +29,16 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("contents: write", content)
         self.assertIn('python-version: "3.11"', content)
 
+    def test_failed_scanner_publishes_explicit_degraded_dashboard(self):
+        content = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("publish-degraded-report:", content)
+        self.assertIn('contains(fromJSON(\'["failure","timed_out","startup_failure"]\')', content)
+        self.assertIn("publish_degraded_stage1b_report.py", content)
+        self.assertIn("--generated-at", content)
+        self.assertIn("--run-id", content)
+        self.assertIn("--conclusion", content)
+        self.assertIn("Persist only LRT dashboard files", content)
+
     def test_publisher_downloads_scanner_artifact_and_writes_only_lrt_files(self):
         content = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("trader-me-stage1-signal-bot-${{ github.event.workflow_run.id }}", content)
