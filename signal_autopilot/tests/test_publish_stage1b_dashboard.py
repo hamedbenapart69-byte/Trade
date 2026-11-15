@@ -128,7 +128,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             root = Path(tmp)
             now = datetime.now(timezone.utc)
             report, symbols = make_report(now)
-            report["symbols"][0]["last_closed_candle_utc"] = (now - timedelta(minutes=45)).isoformat()
+            report["symbols"][0]["last_closed_candle_utc"] = (now - timedelta(minutes=46)).isoformat()
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "WATCHLIST_CANDLE_STALE"):
                 publish_dashboard(report_path, universe_path, root)
