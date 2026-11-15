@@ -81,11 +81,23 @@ jobs:
               raise SystemExit("PRODUCTION_OUTCOME_ID_INVALID")
           if set(outcome_ids) != source_ids:
               raise SystemExit("PRODUCTION_OUTCOME_COVERAGE_MISMATCH")
+          excluded = outcomes_payload.get("excluded_legacy_signals")
+          excluded_count = outcomes_payload.get("excluded_legacy_signals_count")
+          if not isinstance(excluded, list) or excluded_count != len(excluded):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_SCHEMA_INVALID")
+          excluded_ids = [str(row.get("signal_id") or "") for row in excluded if isinstance(row, dict)]
+          if len(excluded_ids) != len(excluded) or len(set(excluded_ids)) != len(excluded_ids):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_ID_INVALID")
+          if set(excluded_ids) & source_ids:
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_OVERLAP")
+          if any(row.get("status") != "EXCLUDED_LEGACY_POLICY_UNVERIFIED" for row in excluded):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_STATUS_INVALID")
           if any(row.get("execution_status") != "NOT_EXECUTED" for row in outcomes):
               raise SystemExit("PRODUCTION_OUTCOME_EXECUTION_LABEL_INVALID")
           if any(row.get("statistics_status") != "NOT_CALCULATED" for row in outcomes):
               raise SystemExit("PRODUCTION_OUTCOME_STATISTICS_LABEL_INVALID")
           print(f"PRODUCTION_SHADOW_COVERAGE={len(outcome_ids)}/{len(source_ids)}")
+          print(f"PRODUCTION_LEGACY_POLICY_EXCLUDED={len(excluded)}")
           print("PRODUCTION_SHADOW_NON_EXECUTION_VALIDATED=PASS")
           PY
 
