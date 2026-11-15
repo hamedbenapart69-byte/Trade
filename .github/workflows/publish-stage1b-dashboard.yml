@@ -1,0 +1,69 @@
+name: Publish Stage 1B LRT Dashboard
+
+on:
+  workflow_run:
+    workflows:
+      - "Trader_me Stage 1B LRT-15m Signal Bot"
+    types: [completed]
+    branches: [main, production-v1]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage1b-dashboard-publication
+  cancel-in-progress: false
+
+jobs:
+  publish-dashboard:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout trusted publisher from production-v1
+        uses: actions/checkout@v4
+        with:
+          ref: production-v1
+          persist-credentials: false
+
+      - name: Checkout data-only signals branch
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-repo
+          persist-credentials: true
+
+      - name: Download Stage 1B report from completed scanner run
+        uses: actions/download-artifact@v4
+        with:
+          name: trader-me-stage1-signal-bot-${{ github.event.workflow_run.id }}
+          path: incoming
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Run dashboard publisher unit tests
+        run: python -m unittest discover -s signal_autopilot/tests -p 'test_publish_stage1b_dashboard.py' -v
+
+      - name: Validate and publish LRT dashboard snapshot and history
+        run: |
+          python signal_autopilot/scripts/publish_stage1b_dashboard.py \
+            --report incoming/stage1_lrt_report.json \
+            --universe config/universe.json \
+            --output-dir signals-repo
+
+      - name: Persist only LRT dashboard files
+        run: |
+          set -euo pipefail
+          git -C signals-repo config user.name "github-actions[bot]"
+          git -C signals-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C signals-repo add lrt15m_signals.json lrt15m_history.csv
+          if git -C signals-repo diff --cached --quiet; then
+            echo "LRT_DASHBOARD_UNCHANGED"
+          else
+            git -C signals-repo commit -m "dashboard: publish validated Stage 1B LRT report [skip ci]"
+            git -C signals-repo push origin HEAD:signals
+          fi
