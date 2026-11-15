@@ -379,7 +379,7 @@ def process_symbol(
 
 
 def load_research_state(path: Path) -> dict[str, Any]:
-    """خواندن مخزن مستقل داده‌های پژوهشی با اعتبارسنجی حداقلی ساختار."""
+    """خواندن مخزن پژوهشی با اعتبارسنجی ساختار و یکتایی شناسه‌ها."""
     if not path.exists():
         return {
             "schema_version": 1,
@@ -387,25 +387,36 @@ def load_research_state(path: Path) -> dict[str, Any]:
             "updated_at_utc": None,
             "signals": [],
         }
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 10_000_000:
+        raise ValueError("research_state_file_invalid")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
+    if (
+        not isinstance(payload, dict)
+        or isinstance(payload.get("schema_version", 1), bool)
+        or payload.get("schema_version", 1) != 1
+        or not isinstance(payload.get("signals"), list)
+    ):
         raise ValueError("research_state_schema_invalid")
+    seen_ids: set[str] = set()
+    for row in payload["signals"]:
+        if not isinstance(row, dict):
+            raise ValueError("research_state_record_invalid")
+        signal_id = str(row.get("signal_id") or "").strip()
+        if not signal_id or signal_id in seen_ids:
+            raise ValueError("research_state_signal_id_missing_or_duplicate")
+        seen_ids.add(signal_id)
     payload.setdefault("schema_version", 1)
     payload.setdefault("stage_label", "STAGE_1_RESEARCH_UNCALIBRATED")
     return payload
 
 
 def save_research_state(path: Path, payload: dict[str, Any]) -> None:
-    """ذخیرهٔ اتمی داده‌های پژوهشی برای انتقال به شاخهٔ مستقل."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """ذخیرهٔ اتمی داده‌های پژوهشی با fsync و جایگزینی امن."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
+        raise ValueError("research_state_schema_invalid")
     payload["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
-    payload["signal_count"] = len(payload.get("signals", []))
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+    payload["signal_count"] = len(payload["signals"])
+    _atomic_write_json(path, payload)
 
 
 def main() -> int:
