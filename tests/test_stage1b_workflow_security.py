@@ -32,6 +32,11 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertNotIn("secrets.TELEGRAM_CHAT_ID", preflight)
         self.assertNotIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", preflight)
         self.assertIn("vars.DASHBOARD_URL", preflight)
+        destination_check = notifier.split("name: Verify Telegram destination before claiming delivery", 1)[1].split("name: Claim this scanner run", 1)[0]
+        self.assertIn("secrets.TELEGRAM_TOKEN", destination_check)
+        self.assertIn("secrets.TELEGRAM_CHAT_ID", destination_check)
+        self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", destination_check)
+        self.assertIn("--verify-destination-only", destination_check)
         self.assertIn("pip install -r signal_autopilot/requirements.txt", notifier)
     def test_trusted_notifier_checks_out_production_code(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
