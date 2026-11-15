@@ -137,6 +137,7 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
     stage_evidence_ok = _evidence_list_ok(stage.get("stage_evidence"))
     results = stage.get("acceptance_results")
     result_map = {}
+    result_evidence = {}
     if isinstance(results, list):
         for item in results:
             if isinstance(item, dict) and _nonempty(item.get("metric")):
@@ -144,6 +145,7 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
                 if metric in result_map:
                     return _base_decision("BLOCKED", "duplicate_acceptance_result:" + metric, stage_id, str(versions[-1].get("version")))
                 result_map[metric] = item.get("actual")
+                result_evidence[metric] = item.get("evidence")
 
     if stage.get("approval_required") is True:
         return _base_decision("HUMAN_APPROVAL_REQUIRED", "stage_explicitly_requires_approval", stage_id)
@@ -172,6 +174,8 @@ def evaluate_stage(stage: Mapping[str, Any], *, unattended_authorized: bool) -> 
             if not _finite_number(actual):
                 missing.append("acceptance_result:" + metric)
                 continue
+            if not _evidence_list_ok(result_evidence.get(metric)):
+                missing.append("acceptance_result_evidence:" + metric)
             target = criterion["target"]
             operator = criterion["operator"]
             passed = {
