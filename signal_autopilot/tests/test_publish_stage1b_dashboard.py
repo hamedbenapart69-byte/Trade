@@ -43,7 +43,7 @@ def make_report(now=None):
             "hypothesis": "test hypothesis" if index == 0 else None,
             "falsification": "test falsification" if index == 0 else None,
             "data_sources": ["OKX_PUBLIC_SWAP_CANDLE"],
-            "last_closed_candle_utc": now.isoformat(),
+            "last_closed_candle_utc": (now - timedelta(minutes=15)).isoformat(),
         })
     return {
         "generated_at_utc": now.isoformat(),
@@ -111,6 +111,26 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             report["symbols"][-1]["symbol"] = "NOTINUNIVERSE"
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "REPORT_UNIVERSE_SET_MISMATCH"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_watchlist_candle_not_closed_at_report_time(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            now = datetime.now(timezone.utc)
+            report, symbols = make_report(now)
+            report["symbols"][0]["last_closed_candle_utc"] = (now - timedelta(minutes=10)).isoformat()
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_stale_watchlist_candle_even_when_report_is_fresh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            now = datetime.now(timezone.utc)
+            report, symbols = make_report(now)
+            report["symbols"][0]["last_closed_candle_utc"] = (now - timedelta(minutes=45)).isoformat()
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "WATCHLIST_CANDLE_STALE"):
                 publish_dashboard(report_path, universe_path, root)
 
     def test_rejects_stale_report(self):
