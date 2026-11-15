@@ -195,8 +195,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--universe", type=Path, required=True)
+    parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
+    if args.validate_only:
+        print("REPORT_VALIDATION=PASS")
+        return 0
     message = build_message(payload)
     send_message(
         os.environ.get("TELEGRAM_TOKEN", ""),
