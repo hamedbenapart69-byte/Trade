@@ -226,18 +226,37 @@ def build_messages(payload: dict[str, Any], dashboard_url: str) -> list[str]:
     return messages
 
 
-def validate_telegram_config(token: str, chat_id: str) -> tuple[str, str]:
+def validate_telegram_config(
+    token: str,
+    chat_id: str,
+    expected_channel_title: str,
+) -> tuple[str, str, str]:
     token = token.strip()
     chat_id = chat_id.strip()
+    expected_title = expected_channel_title.strip()
     if not re.fullmatch(r"[0-9]+:[A-Za-z0-9_-]+", token):
         raise ValueError("TELEGRAM_TOKEN_INVALID_OR_MISSING")
-    if not (re.fullmatch(r"-?[0-9]+", chat_id) or re.fullmatch(r"@[A-Za-z0-9_]{5,32}", chat_id)):
+    if not re.fullmatch(r"-100[0-9]+", chat_id):
         raise ValueError("TELEGRAM_CHAT_ID_INVALID_OR_MISSING")
-    return token, chat_id
+    if not expected_title:
+        raise ValueError("TELEGRAM_EXPECTED_CHANNEL_TITLE_MISSING")
+    return token, chat_id, expected_title
+
+
+def verify_telegram_destination() -> None:
+    import sys
+    package_root = str(Path(__file__).resolve().parents[1])
+    if package_root not in sys.path:
+        sys.path.insert(0, package_root)
+    from telegram_bot import verify_telegram_connection
+    if not verify_telegram_connection():
+        raise RuntimeError("TELEGRAM_DESTINATION_PREFLIGHT_FAILED")
 
 
 def send_message(token: str, chat_id: str, message: str) -> None:
-    token, chat_id = validate_telegram_config(token, chat_id)
+    token, chat_id, _ = validate_telegram_config(
+        token, chat_id, os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", "")
+    )
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     body = json.dumps({
         "chat_id": chat_id,
@@ -286,10 +305,12 @@ def main() -> int:
     args = parser.parse_args()
     payload = validate_report(args.report, args.universe)
     dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
-    token, chat_id = validate_telegram_config(
+    token, chat_id, expected_title = validate_telegram_config(
         os.environ.get("TELEGRAM_TOKEN", ""),
         os.environ.get("TELEGRAM_CHAT_ID", ""),
+        os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
     )
+    verify_telegram_destination()
     messages = build_messages(payload, dashboard_url)
     if args.validate_only:
         print(f"REPORT_VALIDATION=PASS messages={len(messages)}")
