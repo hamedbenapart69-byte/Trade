@@ -69,6 +69,16 @@ class DegradedStage1BReportTests(unittest.TestCase):
                     "failure",
                 )
 
+    def test_cancelled_scanner_run_is_published_as_degraded(self):
+        source = build_degraded_source(
+            UNIVERSE,
+            "2026-11-15T05:00:00+00:00",
+            "cancelled-run",
+            "cancelled",
+        )
+        self.assertEqual(source["report_status"], "MARKET_DATA_DEGRADED")
+        self.assertEqual(source["upstream_conclusion"], "cancelled")
+
     def test_rejects_non_failure_conclusion(self):
         with self.assertRaisesRegex(ValueError, "SCANNER_FAILURE_CONCLUSION_INVALID"):
             build_degraded_source(
