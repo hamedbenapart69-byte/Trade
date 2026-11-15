@@ -7,19 +7,24 @@ const $ = (id) => document.getElementById(id);
 
 // طبق چرخهٔ اسکن چهار‌ساعته، گزارش قدیمی‌تر از چهار ساعت نباید تازه نمایش داده شود.
 const MAX_REPORT_AGE_MS = 4 * 60 * 60 * 1000;
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
+let reportLoading = false;
+let historyLoading = false;
+let historyLoaded = false;
 function reportFreshness(generatedAtUtc) {
   const timestamp = Date.parse(generatedAtUtc || "");
   if (!Number.isFinite(timestamp)) {
     return { fresh: false, ageMs: null, reason: "INVALID_TIMESTAMP" };
   }
   const ageMs = Date.now() - timestamp;
-  if (ageMs < 0) {
+  if (ageMs < -MAX_FUTURE_SKEW_MS) {
     return { fresh: false, ageMs, reason: "FUTURE_TIMESTAMP" };
   }
+  const fresh = ageMs <= MAX_REPORT_AGE_MS;
   return {
-    fresh: ageMs <= MAX_REPORT_AGE_MS,
-    ageMs,
-    reason: ageMs <= MAX_REPORT_AGE_MS ? null : "STALE_REPORT"
+    fresh,
+    ageMs: Math.max(0, ageMs),
+    reason: fresh ? null : "STALE_REPORT"
   };
 }
 function reportAgeText(ageMs) {
@@ -207,8 +212,10 @@ function render(report) {
     "</tbody></table></div>";
 }
 
-async function loadHistory() {
+async function loadHistory(force = false) {
   const target = $("history");
+  if (historyLoading || (historyLoaded && !force)) return;
+  historyLoading = true;
   try {
     const response = await fetch(HISTORY_URL + "?v=" + Date.now(), { cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
@@ -232,12 +239,18 @@ async function loadHistory() {
         "<td>" + esc(row.confidence || "NOT_CALIBRATED") + "</td>" +
         "</tr>").join("") +
       "</tbody></table></div>";
+    historyLoaded = true;
   } catch (error) {
     target.innerHTML = '<p class="empty">تاریخچهٔ اسکن هنوز منتشر نشده است.</p>';
+    historyLoaded = true;
+  } finally {
+    historyLoading = false;
   }
 }
 
-async function loadReport() {
+async function loadReport(forceHistory = false) {
+  if (reportLoading) return;
+  reportLoading = true;
   $("refresh").disabled = true;
   setStatus("در حال دریافت…", "muted");
   try {
@@ -256,17 +269,18 @@ async function loadReport() {
     } else {
       setStatus("دروازه داده: PASS نیست", "muted");
     }
-    loadHistory();
+    loadHistory(forceHistory);
   } catch (error) {
     $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
     $("notice").textContent = "داده دریافت نشد؛ هیچ سیگنال قدیمی یا ساختگی جایگزین نمی‌شود.";
     setStatus("عدم دسترسی به داده", "bad");
   } finally {
+    reportLoading = false;
     $("refresh").disabled = false;
   }
 }
 
-$("refresh").addEventListener("click", loadReport);
+$("refresh").addEventListener("click", () => loadReport(true));
 loadLegacyEngineStatus();
-loadReport();
-window.setInterval(loadReport, 60000);
+loadReport(false);
+window.setInterval(() => loadReport(false), 60000);
