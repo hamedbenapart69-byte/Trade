@@ -314,10 +314,25 @@ def send_message(token: str, chat_id: str, message: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--report", type=Path, required=True)
-    parser.add_argument("--universe", type=Path, required=True)
+    parser.add_argument("--report", type=Path)
+    parser.add_argument("--universe", type=Path)
     parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument("--verify-destination-only", action="store_true")
     args = parser.parse_args()
+
+    if args.verify_destination_only:
+        token, chat_id, _ = validate_telegram_config(
+            os.environ.get("TELEGRAM_TOKEN", ""),
+            os.environ.get("TELEGRAM_CHAT_ID", ""),
+            os.environ.get("TELEGRAM_EXPECTED_CHANNEL_TITLE", ""),
+        )
+        verify_telegram_destination()
+        print("TELEGRAM_DESTINATION=VERIFIED")
+        return 0
+
+    if args.report is None or args.universe is None:
+        parser.error("--report and --universe are required unless --verify-destination-only is used")
+
     payload = validate_report(args.report, args.universe)
     dashboard_url = validate_dashboard_url(os.environ.get("DASHBOARD_URL", ""))
     messages = build_messages(payload, dashboard_url)
