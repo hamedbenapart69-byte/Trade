@@ -80,6 +80,16 @@ def _adapt_record(
         raise ValueError("PRODUCTION_SIGNAL_LEVEL_ORDER_INVALID")
     if direction == "SELL" and not target < entry < stop:
         raise ValueError("PRODUCTION_SIGNAL_LEVEL_ORDER_INVALID")
+    rr_raw = levels.get("rr", record.get("rr"))
+    if rr_raw is not None:
+        rr = _finite_number(rr_raw, "RR_REFERENCE")
+        risk, reward = (
+            (entry - stop, target - entry)
+            if direction == "BUY"
+            else (stop - entry, entry - target)
+        )
+        if not math.isclose(rr, reward / risk, rel_tol=0.10, abs_tol=0.05):
+            raise ValueError("PRODUCTION_SIGNAL_RR_MISMATCH")
 
     created = _parse_utc(record.get("created_at_utc"), "CREATED_AT")
     candle_time = _parse_utc(record.get("last_closed_candle_utc"), "LAST_CLOSED_CANDLE")
