@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: trusted-stage1b-telegram-${{ github.event.workflow_run.id }}
+  group: trusted-stage1b-telegram-delivery
   cancel-in-progress: false
 
 jobs:
@@ -22,13 +22,20 @@ jobs:
     timeout-minutes: 5
     permissions:
       actions: read
-      contents: read
+      contents: write
     steps:
       - name: Checkout trusted notifier from production-v1
         uses: actions/checkout@v4
         with:
           ref: production-v1
           persist-credentials: false
+
+      - name: Checkout durable Telegram delivery ledger
+        uses: actions/checkout@v4
+        with:
+          ref: telegram-delivery-state
+          path: delivery-state
+          persist-credentials: true
 
       - name: Download report artifact from the completed scanner run
         uses: actions/download-artifact@v4
@@ -42,8 +49,86 @@ jobs:
       - name: Run trusted notifier unit tests
         run: python -m unittest discover -s signal_autopilot/tests -p 'test_trusted_telegram_notifier.py' -v
 
-      - name: Validate untrusted report and send Telegram notification
+      - name: Validate report before claiming delivery
+        run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json --validate-only
+
+      - name: Claim this scanner run before Telegram delivery
+        id: claim
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("delivery-state/signal_autopilot/state/telegram_deliveries.json")
+          if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
+              raise SystemExit("DELIVERY_LEDGER_INVALID")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+              raise SystemExit("DELIVERY_LEDGER_SCHEMA_INVALID")
+          deliveries = payload.get("deliveries")
+          if not isinstance(deliveries, dict):
+              raise SystemExit("DELIVERY_LEDGER_ENTRIES_INVALID")
+          run_id = str(os.environ["RUN_ID"])
+          if run_id in deliveries:
+              print("DELIVERY_ALREADY_CLAIMED; suppressing duplicate send")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+                  out.write("claimed=false\n")
+              raise SystemExit(0)
+          deliveries[run_id] = {
+              "status": "CLAIMED",
+              "claimed_at_utc": datetime.now(timezone.utc).isoformat(),
+          }
+          temporary = path.with_suffix(".tmp")
+          temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          temporary.replace(path)
+          PY
+          git -C delivery-state config user.name "github-actions[bot]"
+          git -C delivery-state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
+          git -C delivery-state commit -m "delivery: claim Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
+          git -C delivery-state push origin HEAD:telegram-delivery-state
+          echo "claimed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Send validated Stage 1B report to Telegram
+        id: telegram
+        if: steps.claim.outputs.claimed == 'true'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json
+
+      - name: Finalize durable delivery state
+        if: always() && steps.claim.outputs.claimed == 'true'
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          TELEGRAM_OUTCOME: ${{ steps.telegram.outcome }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("delivery-state/signal_autopilot/state/telegram_deliveries.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          run_id = str(os.environ["RUN_ID"])
+          record = payload["deliveries"].get(run_id)
+          if not isinstance(record, dict) or record.get("status") != "CLAIMED":
+              raise SystemExit("DELIVERY_CLAIM_STATE_MISMATCH")
+          record["status"] = "SENT" if os.environ.get("TELEGRAM_OUTCOME") == "success" else "DELIVERY_UNCONFIRMED"
+          record["finalized_at_utc"] = datetime.now(timezone.utc).isoformat()
+          temporary = path.with_suffix(".tmp")
+          temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          temporary.replace(path)
+          PY
+          git -C delivery-state add signal_autopilot/state/telegram_deliveries.json
+          git -C delivery-state commit -m "delivery: finalize Stage 1B run ${{ github.event.workflow_run.id }} [skip ci]"
+          git -C delivery-state push origin HEAD:telegram-delivery-state
