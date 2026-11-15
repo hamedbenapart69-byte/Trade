@@ -18,6 +18,10 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         failure_job = workflow.split("publish-degraded-report:", 1)[1]
         self.assertNotIn("actions/download-artifact", failure_job)
         self.assertIn("timed_out", failure_job)
+        self.assertIn("--generated-at", failure_job)
+        self.assertIn("--run-id", failure_job)
+        self.assertIn("--conclusion", failure_job)
+        self.assertIn("Persist only LRT dashboard files", failure_job)
 
     def test_publisher_runs_only_after_successful_scanner_and_uses_trusted_code(self):
         content = WORKFLOW.read_text(encoding="utf-8")
@@ -28,16 +32,6 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", content)
         self.assertIn("contents: write", content)
         self.assertIn('python-version: "3.11"', content)
-
-    def test_failed_scanner_publishes_explicit_degraded_dashboard(self):
-        content = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("publish-degraded-report:", content)
-        self.assertIn('contains(fromJSON(\'["failure","timed_out","startup_failure"]\')', content)
-        self.assertIn("publish_degraded_stage1b_report.py", content)
-        self.assertIn("--generated-at", content)
-        self.assertIn("--run-id", content)
-        self.assertIn("--conclusion", content)
-        self.assertIn("Persist only LRT dashboard files", content)
 
     def test_publisher_downloads_scanner_artifact_and_writes_only_lrt_files(self):
         content = WORKFLOW.read_text(encoding="utf-8")
