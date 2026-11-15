@@ -38,8 +38,11 @@ class Stage1bArtifactPathTests(unittest.TestCase):
 
 class Stage1bReportFreshnessTests(unittest.TestCase):
     @staticmethod
-    def make_report(generated_ms, completed_ms, timestamps, expected_rows=4):
-        closed_end_ms = (completed_ms // INTERVAL_MS) * INTERVAL_MS
+    def make_report(generated_ms, completed_ms, timestamps, expected_rows=4, closed_end_ms=None):
+        closed_end_ms = (
+            (completed_ms // INTERVAL_MS) * INTERVAL_MS
+            if closed_end_ms is None else closed_end_ms
+        )
         window_start_ms = closed_end_ms - expected_rows * INTERVAL_MS
         actual = sorted(timestamps)
         continuity = (
@@ -76,11 +79,15 @@ class Stage1bReportFreshnessTests(unittest.TestCase):
         validate_report_freshness(report, ["BTCUSDT"], {"BTCUSDT": timestamps}, completed, expected_rows=4)
 
     def test_rejects_artifact_claiming_pass_with_stale_candles(self):
-        completed = 5 * INTERVAL_MS + 31 * 60_000
+        completed = 5 * INTERVAL_MS + 5 * 60_000
         generated = completed
-        closed_end = (completed // INTERVAL_MS) * INTERVAL_MS
-        timestamps = set(range(closed_end - 4 * INTERVAL_MS, closed_end, INTERVAL_MS))
-        report = self.make_report(generated, completed, timestamps)
+        closed_end = 5 * INTERVAL_MS
+        timestamps = {
+            closed_end - 4 * INTERVAL_MS,
+            closed_end - 3 * INTERVAL_MS,
+            closed_end - 2 * INTERVAL_MS,
+        }
+        report = self.make_report(generated, completed, timestamps, closed_end_ms=closed_end)
         report["symbols"][0]["fresh"] = True
         report["symbols"][0]["reason"] = None
         report["symbols_fresh"] = 1
@@ -93,7 +100,7 @@ class Stage1bReportFreshnessTests(unittest.TestCase):
         generated = 5 * INTERVAL_MS + 5 * 60_000
         closed_end = 5 * INTERVAL_MS
         timestamps = set(range(closed_end - 4 * INTERVAL_MS, closed_end, INTERVAL_MS))
-        report = self.make_report(generated, completed, timestamps)
+        report = self.make_report(generated, completed, timestamps, closed_end_ms=closed_end)
         with self.assertRaisesRegex(ValueError, "DATA_REPORT_STALE_BEFORE_PERSISTENCE"):
             validate_report_freshness(report, ["BTCUSDT"], {"BTCUSDT": timestamps}, completed, expected_rows=4)
 
@@ -112,9 +119,9 @@ class Stage1bReportFreshnessTests(unittest.TestCase):
     def test_rejects_report_timestamp_older_than_publication_window(self):
         completed = 5 * INTERVAL_MS + 31 * 60_000
         generated = completed - 31 * 60_000
-        closed_end = (completed // INTERVAL_MS) * INTERVAL_MS
+        closed_end = 5 * INTERVAL_MS
         timestamps = set(range(closed_end - 4 * INTERVAL_MS, closed_end, INTERVAL_MS))
-        report = self.make_report(generated, completed, timestamps)
+        report = self.make_report(generated, completed, timestamps, closed_end_ms=closed_end)
         with self.assertRaisesRegex(ValueError, "DATA_REPORT_TIMESTAMP_STALE"):
             validate_report_freshness(report, ["BTCUSDT"], {"BTCUSDT": timestamps}, completed, expected_rows=4)
 
