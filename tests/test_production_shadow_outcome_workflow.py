@@ -26,6 +26,12 @@ class ProductionShadowOutcomeWorkflowTests(unittest.TestCase):
         self.assertIn("signal-state/signal_autopilot/state/production_outcomes.json", content)
         self.assertIn('python-version: "3.11"', content)
 
+    def test_validates_explicit_legacy_policy_exclusions(self):
+        content = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("PRODUCTION_LEGACY_EXCLUSION_SCHEMA_INVALID", content)
+        self.assertIn("EXCLUDED_LEGACY_POLICY_UNVERIFIED", content)
+        self.assertIn("PRODUCTION_LEGACY_POLICY_EXCLUDED", content)
+
     def test_is_public_data_only_and_never_executes_orders(self):
         content = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("public OHLCV only", content)
