@@ -8,7 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from main import _atomic_write_json, calculate_confluence, tenkan_kijun_cross, process_symbol, reason_distribution
+from main import (
+    _atomic_write_json, calculate_confluence, tenkan_kijun_cross,
+    process_symbol, reason_distribution, load_research_state, save_research_state,
+)
 from modules.live_data_adapter import LiveOHLCVFetcher, is_closed_candle
 from telegram_bot import build_signal_messages
 
@@ -67,6 +70,25 @@ class LiveSignalBotTests(unittest.TestCase):
             self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
             _atomic_write_json(path, {"version": 2})
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 2})
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
+    def test_research_state_rejects_duplicate_signal_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "research_signals.json"
+            row = {"signal_id": "duplicate-1"}
+            path.write_text(json.dumps({"schema_version": 1, "signals": [row, row]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "research_state_signal_id_missing_or_duplicate"):
+                load_research_state(path)
+
+    def test_research_state_persistence_is_atomic_and_counts_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "research_signals.json"
+            payload = {"schema_version": 1, "signals": [{"signal_id": "r-1"}]}
+            save_research_state(path, payload)
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["signal_count"], 1)
+            self.assertEqual(saved["signals"][0]["signal_id"], "r-1")
+            self.assertTrue(saved["updated_at_utc"])
             self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
 
     def test_public_market_timeout_returns_unavailable_without_crashing(self):
