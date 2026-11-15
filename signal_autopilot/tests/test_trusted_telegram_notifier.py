@@ -215,6 +215,18 @@ class TrustedNotifierTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "TELEGRAM_DESTINATION_MISMATCH"):
                 MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "-1001234567890", "test message")
 
+    def test_destination_preflight_verifies_channel_without_sending(self):
+        args = ["notify_stage1b_telegram.py", "--verify-destination-only"]
+        environment = {
+            "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz",
+            "TELEGRAM_CHAT_ID": "-1001234567890",
+            "TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts",
+        }
+        with patch.object(sys, "argv", args), patch.dict(os.environ, environment, clear=True), patch.object(MODULE, "verify_telegram_destination") as verify, patch.object(MODULE, "send_message") as sender:
+            self.assertEqual(MODULE.main(), 0)
+            verify.assert_called_once()
+            sender.assert_not_called()
+
     def test_validate_only_never_sends_telegram(self):
         payload = report()
         with tempfile.TemporaryDirectory() as tmp:
