@@ -308,6 +308,7 @@ class LiveOHLCVFetcher:
         metrics: dict[str, Any] = {
             "funding_rate": None, "funding_timestamp_ms": None,
             "funding_received_at_ms": None, "funding_settlement_time_ms": None,
+            "funding_next_settlement_time_ms": None, "funding_interval_ms": None,
             "oi_1h": None, "oi_1d": None,
             "long_short_ratio": None, "long_short_ratio_timestamp_ms": None,
             "as_of_time_ms": now_ms, "errors": {},
@@ -332,8 +333,15 @@ class LiveOHLCVFetcher:
                 if source_ts is not None:
                     metrics["funding_timestamp_ms"] = int(source_ts)
                 settlement_ts = funding_row.get("fundingTime")
+                next_settlement_ts = funding_row.get("nextFundingTime")
                 if settlement_ts is not None:
                     metrics["funding_settlement_time_ms"] = int(settlement_ts)
+                if next_settlement_ts is not None:
+                    metrics["funding_next_settlement_time_ms"] = int(next_settlement_ts)
+                if settlement_ts is not None and next_settlement_ts is not None:
+                    interval_ms = int(next_settlement_ts) - int(settlement_ts)
+                    if interval_ms > 0:
+                        metrics["funding_interval_ms"] = interval_ms
                 metrics["funding_received_at_ms"] = int(datetime.now(timezone.utc).timestamp() * 1000)
         except Exception as exc:
             metrics["errors"]["funding"] = f"{type(exc).__name__}:{str(exc)[:120]}"
@@ -424,6 +432,8 @@ class LiveOHLCVFetcher:
                 "funding_timestamp_ms": None,
                 "funding_received_at_ms": None,
                 "funding_settlement_time_ms": None,
+                "funding_next_settlement_time_ms": None,
+                "funding_interval_ms": None,
                 "oi_1h": None,
                 "oi_1d": None,
                 "long_short_ratio": None,
