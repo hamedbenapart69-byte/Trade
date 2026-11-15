@@ -189,10 +189,11 @@ class LiveSignalBotTests(unittest.TestCase):
         self.assertFalse(far["within_limit"])
         self.assertGreater(far["distance_pct"], 0.80)
 
-    def test_proxy_lfs_threshold_is_030_and_real_threshold_is_unchanged(self):
+    def test_proxy_lfs_threshold_is_stricter_than_real_threshold(self):
         from modules.lrt15m_engine import MIN_LFS_SCORE_PROXY_CVD, MIN_LFS_SCORE_REAL_CVD
-        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.30)
-        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.70)
+        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, 0.70)
+        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, 0.30)
+        self.assertGreater(MIN_LFS_SCORE_PROXY_CVD, MIN_LFS_SCORE_REAL_CVD)
 
     def test_watchlist_and_monitoring_thresholds_are_separate(self):
         from modules.lrt15m_engine import (
