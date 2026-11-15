@@ -6,10 +6,19 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "publish-stage1b-dashboard.yml"
 APP = ROOT / "web" / "futures" / "app.js"
-APP = ROOT / "web" / "futures" / "app.js"
 
 
 class Stage1BDashboardWorkflowTests(unittest.TestCase):
+    def test_scanner_failure_publishes_explicit_degraded_snapshot(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("publish-degraded-report:", workflow)
+        self.assertIn("publish_degraded_stage1b_report.py", workflow)
+        self.assertIn("MARKET_DATA_DEGRADED", workflow)
+        self.assertIn("github.event.workflow_run.updated_at", workflow)
+        failure_job = workflow.split("publish-degraded-report:", 1)[1]
+        self.assertNotIn("actions/download-artifact", failure_job)
+        self.assertIn("timed_out", failure_job)
+
     def test_publisher_runs_only_after_successful_scanner_and_uses_trusted_code(self):
         content = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('"Trader_me Stage 1B LRT-15m Signal Bot"', content)
