@@ -37,6 +37,7 @@ def make_report(now=None):
             "lfs_coverage_pct": 100.0,
             "entry": 100.0 if index == 0 else None,
             "stop_loss": 101.0 if index == 0 else None,
+            "take_profit_1": 99.0 if index == 0 else None,
             "take_profit": 98.0 if index == 0 else None,
             "rr": 2.0 if index == 0 else None,
             "hypothesis": "test hypothesis" if index == 0 else None,
@@ -174,6 +175,15 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             report["symbols"][0]["rr"] = 3.0
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_RR_MISMATCH"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_watchlist_with_misordered_tp1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["take_profit_1"] = 97.0
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID"):
                 publish_dashboard(report_path, universe_path, root)
 
 
