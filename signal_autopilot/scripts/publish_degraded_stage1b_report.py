@@ -16,7 +16,7 @@ if SCRIPT_ROOT not in sys.path:
 from publish_stage1b_dashboard import _load_universe, publish_dashboard
 
 DECISION_POLICY = "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW"
-ALLOWED_FAILURES = {"failure", "timed_out", "startup_failure"}
+ALLOWED_FAILURES = {"failure", "timed_out", "startup_failure", "cancelled"}
 
 
 def build_degraded_source(
