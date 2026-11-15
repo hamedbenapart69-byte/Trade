@@ -227,8 +227,8 @@ def validate_universe_symbols(universe_path: Path, manifest_symbols: list[str]) 
         or universe.get("count") != 27
         or not isinstance(expected, list)
         or len(expected) != 27
-        or len(set(expected)) != 27
         or any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in expected)
+        or len(set(expected)) != 27
     ):
         raise ValueError("TRUSTED_UNIVERSE_SCHEMA_INVALID")
     canonical = sorted(expected)
