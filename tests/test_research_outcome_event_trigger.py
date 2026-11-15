@@ -18,7 +18,7 @@ class ResearchOutcomeEventTriggerTests(unittest.TestCase):
         self.assertIn("github.event.workflow_run.head_branch == 'main'", content)
         self.assertIn("github.event_name == 'workflow_dispatch'", content)
         self.assertIn("github.ref == 'refs/heads/production-v1'", content)
-        self.assertIn("permissions:\\n      contents: write", content)
+        self.assertIn("permissions:\n      contents: write", content)
 
     def test_schedule_uses_off_peak_minutes_and_keeps_manual_fallback(self):
         content = WORKFLOW.read_text(encoding="utf-8")
