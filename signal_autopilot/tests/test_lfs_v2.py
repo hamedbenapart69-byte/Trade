@@ -3,11 +3,13 @@ import unittest
 from unittest.mock import patch
 
 from modules.lfs_v2 import (
-    WEIGHTS, bb_squeeze_score, calculate_lfs_v2, empirical_percentile,
+    LFS_V2_MIN_SCORE, WEIGHTS, bb_squeeze_score, calculate_lfs_v2, empirical_percentile,
     funding_extreme_score, get_lfs_veto, normalize_lfs1, oi_drop_score,
     rank_time_series,
 )
-from modules.lrt15m_engine import evaluate_stage1_symbol
+from modules.lrt15m_engine import (
+    MIN_LFS_SCORE_REAL_CVD, MIN_LFS_SCORE_PROXY_CVD, evaluate_stage1_symbol,
+)
 
 
 def make_bars(count, interval_ms, base=100.0):
@@ -256,6 +258,13 @@ class LFSV2UnitTests(unittest.TestCase):
                 if component["score"] is not None:
                     self.assertGreaterEqual(component["score"], 0.0)
                     self.assertLessEqual(component["score"], 1.0)
+
+    def test_stage1_lfs_threshold_has_one_canonical_constant(self):
+        self.assertEqual(LFS_V2_MIN_SCORE, 0.30)
+        self.assertEqual(MIN_LFS_SCORE_REAL_CVD, LFS_V2_MIN_SCORE)
+        self.assertEqual(MIN_LFS_SCORE_PROXY_CVD, LFS_V2_MIN_SCORE)
+        self.assertEqual(get_lfs_veto(LFS_V2_MIN_SCORE, 100.0), "PASS")
+        self.assertEqual(get_lfs_veto(LFS_V2_MIN_SCORE - 1e-6, 100.0), "LFS_BELOW_THRESHOLD")
 
     def test_lfs_v2_veto(self):
         self.assertEqual(get_lfs_veto(0.25, 100.0), "LFS_BELOW_THRESHOLD")
