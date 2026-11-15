@@ -202,7 +202,7 @@ function render(report) {
         "<td>" + levels + "</td>" +
         "<td>" + esc(direction(bias['4h_kumo'])) + "</td>" +
         "<td>" + esc(direction(bias['1h_kijun'])) + "</td>" +
-        "<td>" + fmt(item.lfs_score) + " / " + esc(item.lfs_status || "UNAVAILABLE") + " / " + fmt(item.lfs_coverage_pct) + "% / حد: " + fmt(item.lfs_threshold) + " / " + esc(item.lfs_threshold_reason || "UNAVAILABLE") + "</td>" +
+        "<td>" + fmt(item.lfs_score) + " / " + esc(item.lfs_status || "UNAVAILABLE") + " / " + fmt(item.lfs_coverage_pct) + "% / حد: " + fmt(item.lfs_threshold) + " / " + esc(item.lfs_threshold_reason || "UNAVAILABLE") + " / روش: " + esc(item.lfs_threshold_method || "UNAVAILABLE") + "</td>" +
         "<td>" + esc(cvdLabel(item.cvd_source || (item.cvd && item.cvd.source))) + "</td>" +
         "<td>" + fmt(item.rows_available) + "</td>" +
         "<td>" + esc(item.confidence || "NOT_CALIBRATED") + "</td>" +
