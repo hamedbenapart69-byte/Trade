@@ -27,7 +27,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
         self.assertIn("vars.DASHBOARD_URL", notifier)
         self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", notifier)
-        preflight = notifier.split("name: Validate report before claiming delivery", 1)[1].split("name: Verify Telegram destination before claiming delivery", 1)[0]
+        preflight = notifier.split("name: Validate report before claiming delivery", 1)[1].split("name: Detect optional Telegram configuration", 1)[0]
         self.assertNotIn("secrets.TELEGRAM_TOKEN", preflight)
         self.assertNotIn("secrets.TELEGRAM_CHAT_ID", preflight)
         self.assertNotIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", preflight)
@@ -38,6 +38,14 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", destination_check)
         self.assertIn("--verify-destination-only", destination_check)
         self.assertIn("pip install -r signal_autopilot/requirements.txt", notifier)
+    def test_missing_telegram_credentials_are_silently_skipped(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        optional = notifier.split("name: Detect optional Telegram configuration", 1)[1].split("name: Verify Telegram destination", 1)[0]
+        self.assertIn("enabled=false", optional)
+        self.assertIn("SKIPPED_MISSING_CONFIGURATION", optional)
+        self.assertIn("if: steps.telegram-config.outputs.enabled == 'true'", notifier)
+        self.assertIn("id: telegram-config", notifier)
+
     def test_trusted_notifier_checks_out_production_code(self):
         notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
         self.assertIn("Checkout trusted notifier from production-v1", notifier)
