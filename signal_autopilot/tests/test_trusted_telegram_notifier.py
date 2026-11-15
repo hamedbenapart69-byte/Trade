@@ -36,6 +36,7 @@ def report():
         "lfs_veto": "PASS",
         "lfs_threshold": 0.70,
         "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+        "lfs_threshold_method": "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D",
         "last_closed_candle_utc": (generated - timedelta(minutes=15)).isoformat(),
     }
     return {
@@ -75,6 +76,7 @@ class TrustedNotifierTests(unittest.TestCase):
         self.assertIn("Confidence: NOT_CALIBRATED", message)
         self.assertIn("CVD: PROXY_OHLCV", message)
         self.assertIn("LFS: 0.720 | status=FULL | coverage=100.0% | gate=PASS | threshold=0.70 (PROXY_OR_PARTIAL_DATA)", message)
+        self.assertIn("LFS threshold method: FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D", message)
         self.assertIn("Hypothesis:", message)
         self.assertIn("Falsification:", message)
         self.assertIn("https://trade.example.pages.dev", message)
@@ -208,6 +210,12 @@ class TrustedNotifierTests(unittest.TestCase):
         payload = report()
         payload["symbols"][0]["falsification"] = "N/A"
         with self.assertRaisesRegex(ValueError, "WATCHLIST_FALSIFICATION_MISSING"):
+            MODULE.candidate_rows(payload)
+
+    def test_rejects_unverified_lfs_threshold_method(self):
+        payload = report()
+        payload["symbols"][0]["lfs_threshold_method"] = "ROLLING_90D_80TH_PERCENTILE"
+        with self.assertRaisesRegex(ValueError, "WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED"):
             MODULE.candidate_rows(payload)
 
     def test_rejects_proxy_watchlist_with_relaxed_real_cvd_threshold(self):
