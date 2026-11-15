@@ -36,8 +36,10 @@ class SignalTrackerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "state" / "open_signals.json"
             tracker = SignalTracker(path)
-            tracker.upsert({"signal_id": "abc123", "symbol": "BTCUSDT"})
-            tracker.upsert({"signal_id": "abc123", "direction": "BUY"})
+            # Snapshot اولیه باید فیلدهای سیاستی را کامل داشته باشد.
+            tracker.upsert({"signal_id": "abc123", "symbol": "BTCUSDT", "direction": "BUY"})
+            # اسکن بعدی نباید snapshot اولیه را با جهت متفاوت بازنویسی کند.
+            tracker.upsert({"signal_id": "abc123", "direction": "SELL"})
             saved = json.loads(path.read_text(encoding="utf-8"))
             record = saved["open_signals"]["abc123"]
             self.assertEqual(record["symbol"], "BTCUSDT")
