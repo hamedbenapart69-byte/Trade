@@ -100,8 +100,8 @@ function render(report) {
   const freshness = reportFreshness(report.generated_at_utc);
 
   $("summary").innerHTML = [
-    ["نمادهای بررسی‌شده", fmt(report.symbols_analyzed ?? rows.length)],
-    ["موقعیت‌های واجد شرایط", fmt(report.candidate_setups ?? 0)],
+    ["نمادهای بررسی‌شده", freshness.fresh ? fmt(report.symbols_analyzed ?? rows.length) : "—"],
+    ["نامزدهای زیرنظر", freshness.fresh ? fmt(report.candidate_setups ?? 0) : "—"],
     ["وضعیت کالیبراسیون", esc(report.calibration_status || "نامشخص")],
     ["وضعیت EV", esc(report.ev_status || "نامشخص")]
   ].map(([label, value]) =>
@@ -136,6 +136,11 @@ function render(report) {
 
   $("sources").textContent = (report.data_sources || []).map(sourceLabel).join("، ") +
     " · CVD: " + (report.cvd_sources || []).map(cvdLabel).join("، ");
+
+  if (!freshness.fresh) {
+    $("signals").innerHTML = '<p class="empty">گزارش قدیمی یا زمان آن نامعتبر است؛ وضعیت‌های قبلی برای ورود جدید نمایش داده نمی‌شوند.</p>';
+    return;
+  }
 
   if (!rows.length) {
     $("signals").innerHTML = '<p class="empty">گزارش نمادها خالی است؛ دادهٔ نمونه نمایش داده نمی‌شود.</p>';
