@@ -42,6 +42,7 @@ def signal(signal_id="prod-1", tracker_status="OPEN", direction="BUY"):
         "lfs_veto": "PASS",
         "lfs_threshold": 0.70,
         "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+        "lfs_threshold_method": "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D",
         "cvd": {"source": "PROXY_OHLCV"},
         "tracker_status": tracker_status,
     }
@@ -206,7 +207,7 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
             state_path = root / "open_signals.json"
             outcomes_path = root / "production_outcomes.json"
             legacy = signal(signal_id="legacy-1")
-            for field in ("lfs_veto", "lfs_threshold", "lfs_threshold_reason"):
+            for field in ("lfs_veto", "lfs_threshold", "lfs_threshold_reason", "lfs_threshold_method"):
                 legacy.pop(field)
             write_state(state_path, {"legacy-1": legacy})
             result = update_production_outcomes(
