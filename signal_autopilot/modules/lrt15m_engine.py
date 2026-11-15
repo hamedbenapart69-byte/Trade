@@ -485,7 +485,7 @@ def evaluate_stage1_symbol(
             funding_rate=okx_metrics.get("funding_rate"),
             oi_1h=okx_metrics.get("oi_1h"), oi_1d=okx_metrics.get("oi_1d"),
             long_short_ratio=okx_metrics.get("long_short_ratio"),
-            as_of_time_ms=okx_metrics.get("received_at_ms"),
+            as_of_time_ms=okx_metrics.get("as_of_time_ms"),
             funding_received_at_ms=okx_metrics.get("funding_received_at_ms"),
             long_short_ratio_timestamp_ms=okx_metrics.get("long_short_ratio_timestamp_ms"),
         )
