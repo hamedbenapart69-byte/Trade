@@ -73,7 +73,7 @@ class TrustedNotifierTests(unittest.TestCase):
 
     def test_rejects_stale_report(self):
         payload = report()
-        payload["generated_at_utc"] = (datetime.now(timezone.utc) - timedelta(hours=7)).isoformat()
+        payload["generated_at_utc"] = (datetime.now(timezone.utc) - timedelta(hours=4, minutes=1)).isoformat()
         with self.assertRaisesRegex(ValueError, "REPORT_STALE"):
             validate_in_temp(payload)
 
