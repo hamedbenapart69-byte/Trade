@@ -1,5 +1,6 @@
 """Unit tests for trusted Stage 1B Telegram report delivery."""
 import importlib.util
+import io
 import json
 import os
 import sys
@@ -141,6 +142,29 @@ class TrustedNotifierTests(unittest.TestCase):
             MODULE.validate_dashboard_url("")
         with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
             MODULE.validate_dashboard_url("http://example.com")
+
+    def test_telegram_delivery_confirms_returned_chat_id(self):
+        response = {
+            "ok": True,
+            "result": {
+                "message_id": 42,
+                "chat": {"id": 123456, "type": "supergroup"},
+            },
+        }
+        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
+            MODULE.send_message("test-token", "123456", "test message")
+
+    def test_telegram_delivery_rejects_destination_mismatch(self):
+        response = {
+            "ok": True,
+            "result": {
+                "message_id": 42,
+                "chat": {"id": 999999, "type": "supergroup"},
+            },
+        }
+        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
+            with self.assertRaisesRegex(RuntimeError, "TELEGRAM_DESTINATION_MISMATCH"):
+                MODULE.send_message("test-token", "123456", "test message")
 
     def test_validate_only_never_sends_telegram(self):
         payload = report()
