@@ -114,19 +114,33 @@ def validate_report(
 def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     for row in payload["symbols"]:
+        if row.get("mode") != "PRODUCTION":
+            continue
         if row.get("decision") != "WATCHLIST" or row.get("veto") != "PASS":
             continue
-        if row.get("direction") not in {"BUY", "SELL"}:
-            continue
+        direction = row.get("direction")
+        if direction not in {"BUY", "SELL"}:
+            raise ValueError("WATCHLIST_DIRECTION_INVALID")
         entry = finite_number(row.get("entry"))
         stop = finite_number(row.get("stop_loss"))
         target = finite_number(row.get("take_profit"))
         rr = finite_number(row.get("rr"))
         if entry is None or stop is None or target is None or rr is None or min(entry, stop, target) <= 0 or rr <= 0:
-            continue
+            raise ValueError("WATCHLIST_LEVELS_INVALID")
+        if direction == "BUY":
+            risk = entry - stop
+            reward = target - entry
+        else:
+            risk = stop - entry
+            reward = entry - target
+        if risk <= 0 or reward <= 0:
+            raise ValueError("WATCHLIST_LEVEL_DIRECTION_INVALID")
+        computed_rr = reward / risk
+        if not math.isclose(rr, computed_rr, rel_tol=0.10, abs_tol=0.05):
+            raise ValueError("WATCHLIST_RR_MISMATCH")
         candidates.append({
             "symbol": row["symbol"],
-            "direction": row["direction"],
+            "direction": direction,
             "entry": entry,
             "stop": stop,
             "target": target,
