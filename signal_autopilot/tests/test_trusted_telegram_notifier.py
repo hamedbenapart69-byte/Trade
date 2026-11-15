@@ -143,6 +143,12 @@ class TrustedNotifierTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
             MODULE.validate_dashboard_url("http://example.com")
 
+    def test_telegram_config_rejects_missing_or_malformed_credentials(self):
+        with self.assertRaisesRegex(ValueError, "TELEGRAM_TOKEN_INVALID_OR_MISSING"):
+            MODULE.validate_telegram_config("", "-1001234567890")
+        with self.assertRaisesRegex(ValueError, "TELEGRAM_CHAT_ID_INVALID_OR_MISSING"):
+            MODULE.validate_telegram_config("12345:abcdefghijklmnopqrstuvwxyz", "not-a-chat")
+
     def test_telegram_delivery_confirms_returned_chat_id(self):
         response = {
             "ok": True,
@@ -181,7 +187,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "notify_stage1b_telegram.py", "--report", str(report_path),
                 "--universe", str(universe_path), "--validate-only",
             ]
-            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev"}), patch.object(MODULE, "send_message") as sender:
+            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev", "TELEGRAM_TOKEN": "12345:abcdefghijklmnopqrstuvwxyz", "TELEGRAM_CHAT_ID": "-1001234567890"}), patch.object(MODULE, "send_message") as sender:
                 self.assertEqual(MODULE.main(), 0)
                 sender.assert_not_called()
 
