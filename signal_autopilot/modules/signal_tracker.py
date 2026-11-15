@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+MAX_STATE_BYTES = 10_000_000
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -22,14 +24,35 @@ class SignalTracker:
     def _load(self) -> dict[str, Any]:
         if not self.path.exists():
             return {"schema_version": 1, "updated_at_utc": _now(), "open_signals": {}, "closed_signals": {}}
+        if self.path.is_symlink() or not self.path.is_file():
+            raise ValueError("signal_state_not_regular_file")
+        if self.path.stat().st_size > MAX_STATE_BYTES:
+            raise ValueError("signal_state_too_large")
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"signal_state_unreadable:{self.path}") from exc
-        if not isinstance(data, dict) or not isinstance(data.get("open_signals"), dict):
+        if (
+            not isinstance(data, dict)
+            or isinstance(data.get("schema_version"), bool)
+            or data.get("schema_version", 1) != 1
+            or not isinstance(data.get("open_signals"), dict)
+        ):
             raise ValueError("signal_state_schema_invalid")
-        data.setdefault("schema_version", 1)
         data.setdefault("closed_signals", {})
+        if not isinstance(data["closed_signals"], dict):
+            raise ValueError("signal_state_closed_schema_invalid")
+        open_rows, closed_rows = data["open_signals"], data["closed_signals"]
+        if set(open_rows) & set(closed_rows):
+            raise ValueError("signal_state_open_closed_id_overlap")
+        for collection in (open_rows, closed_rows):
+            for signal_id, record in collection.items():
+                if (
+                    not isinstance(signal_id, str) or not signal_id.strip()
+                    or not isinstance(record, dict)
+                    or record.get("signal_id") != signal_id
+                ):
+                    raise ValueError("signal_state_record_invalid")
         return data
 
     def upsert(self, signal: dict[str, Any]) -> dict[str, Any]:
