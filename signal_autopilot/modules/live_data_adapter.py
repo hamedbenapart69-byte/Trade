@@ -44,7 +44,7 @@ class OHLCVBundle(list):
 
 
 class LiveOHLCVFetcher:
-    """دریافت ۱۵m از Binance Futures عمومی؛ در خطا fallback به صرافی‌های عمومی CCXT."""
+    """دریافت OHLCV عمومی ۱۵m و ۱H با fallback بین صرافی‌ها؛ بدون کلید حساب."""
 
     def __init__(self, limit: int = 500, stats_limit: int = 2500, fetch_stats: bool = False, timeout: float = 25.0):
         self.limit = max(int(limit), 1)
