@@ -521,6 +521,7 @@ def evaluate_stage1_symbol(
             as_of_time_ms=okx_metrics.get("as_of_time_ms"),
             funding_timestamp_ms=okx_metrics.get("funding_timestamp_ms"),
             funding_received_at_ms=okx_metrics.get("funding_received_at_ms"),
+            funding_interval_ms=okx_metrics.get("funding_interval_ms"),
             long_short_ratio_timestamp_ms=okx_metrics.get("long_short_ratio_timestamp_ms"),
         )
         lfs_data["derivatives_source"] = str(
