@@ -42,6 +42,8 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("read-only, no Telegram credentials", scanner)
         self.assertNotIn("secrets.TELEGRAM_TOKEN", scanner)
         self.assertNotIn("secrets.TELEGRAM_CHAT_ID", scanner)
+        self.assertIn('python-version: "3.11"', scanner)
+        self.assertIn('python-version: "3.11"', notifier)
 
 
     def test_trusted_notifier_uses_serialized_durable_at_most_once_delivery(self):
