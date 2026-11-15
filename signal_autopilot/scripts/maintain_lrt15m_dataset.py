@@ -276,6 +276,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
                      now_ms: int | None = None, max_age_minutes: int = DEFAULT_MAX_AGE_MINUTES,
                      downloader: Any | None = None, engine: Any | None = None,
                      data_only: bool = False) -> dict[str, Any]:
+    fixed_clock = now_ms is not None
     now_ms = utc_now_ms() if now_ms is None else int(now_ms)
     downloader = downloader or _load_downloader()
     if not data_only and engine is None:
@@ -358,6 +359,24 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
     if compute_dir.exists():
         shutil.rmtree(compute_dir)
     compute_dir.mkdir(parents=True, exist_ok=True)
+    ephemeral_root = compute_dir / "ephemeral_tail"
+    ephemeral_root.mkdir(parents=True, exist_ok=True)
+    for symbol, rows in ephemeral_by_symbol.items():
+        by_day: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            timestamp = int(row["open_time"])
+            day = datetime.fromtimestamp(timestamp / 1000, timezone.utc).strftime("%Y-%m-%d")
+            by_day.setdefault(day, []).append(row)
+        for day, day_rows in by_day.items():
+            target = ephemeral_root / "live_tail" / day / f"{symbol}_15m.parquet"
+            _write_rows(target, sorted(day_rows, key=lambda row: int(row["open_time"])))
+
+    # زمان گزارش در انتهای جمع‌آوری ثبت می‌شود؛ اجرای طولانی نباید با ساعت شروع PASS بگیرد.
+    if not fixed_clock:
+        now_ms = utc_now_ms()
+        closed_end_ms = (now_ms // INTERVAL_MS) * INTERVAL_MS
+        window_start_ms = closed_end_ms - WINDOW_MS
+
     compute_results = {
         symbol: _compute_window(storage_dir, compute_dir, symbol,
                                 window_start_ms, closed_end_ms,
@@ -486,7 +505,8 @@ def _sha256_file(path: Path) -> str:
 
 def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: Path,
                            workflow_commit: str, engine_commit: str,
-                           workflow_run_id: str, legacy_source_commit: str) -> dict[str, Any]:
+                           workflow_run_id: str, legacy_source_commit: str,
+                           ephemeral_dir: Path | None = None) -> dict[str, Any]:
     """Manifest مستقل از خروجی استراتژی؛ فقط دادهٔ فعال baseline و tail را هش می‌کند."""
     base_dir = storage_dir / "base"
     base_files = sorted(base_dir.glob("*_15m.parquet"))
@@ -517,6 +537,13 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
         rows = _read_rows(path)
         if not rows:
             raise ValueError(f"MANIFEST_EMPTY_TAIL:{path}")
+        relative_tail = path.relative_to(tail_root)
+        if len(relative_tail.parts) != 2:
+            raise ValueError(f"MANIFEST_TAIL_PATH_INVALID:{path}")
+        try:
+            date.fromisoformat(relative_tail.parts[0])
+        except ValueError as exc:
+            raise ValueError(f"MANIFEST_TAIL_DAY_INVALID:{path}") from exc
         symbol = path.name.removesuffix("_15m.parquet")
         if symbol not in timestamps_by_symbol:
             raise ValueError(f"MANIFEST_UNKNOWN_TAIL_SYMBOL:{symbol}")
@@ -527,6 +554,12 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
             raise ValueError(f"MANIFEST_TAIL_DUPLICATE_TIMESTAMP:{path}")
         if any(ts % INTERVAL_MS for ts in timestamps):
             raise ValueError(f"MANIFEST_TAIL_ALIGNMENT:{path}")
+        partition_day = relative_tail.parts[0]
+        if any(
+            datetime.fromtimestamp(ts / 1000, timezone.utc).strftime("%Y-%m-%d") != partition_day
+            for ts in timestamps
+        ):
+            raise ValueError(f"MANIFEST_TAIL_PARTITION_DATE_MISMATCH:{path}")
         overlap = timestamps_by_symbol[symbol].intersection(timestamps)
         if overlap:
             raise ValueError(f"MANIFEST_CROSS_FILE_DUPLICATE:{symbol}:{min(overlap)}")
@@ -540,8 +573,51 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
         })
 
     data_report = json.loads(report_path.read_text(encoding="utf-8"))
+    ephemeral_dir = ephemeral_dir or (storage_dir.parent / "stage1b_compute" / "ephemeral_tail")
+    ephemeral_files: list[dict[str, Any]] = []
+    ephemeral_timestamps_by_symbol: dict[str, set[int]] = {symbol: set() for symbol in symbols}
+    if ephemeral_dir.exists():
+        for path in sorted(ephemeral_dir.glob("live_tail/*/*.parquet")):
+            rows = _read_rows(path)
+            if not rows:
+                raise ValueError(f"MANIFEST_EMPTY_EPHEMERAL_TAIL:{path}")
+            symbol = path.name.removesuffix("_15m.parquet")
+            if symbol not in ephemeral_timestamps_by_symbol:
+                raise ValueError(f"MANIFEST_UNKNOWN_EPHEMERAL_SYMBOL:{symbol}")
+            timestamps = [int(row["open_time"]) for row in rows if row.get("open_time") is not None]
+            if len(timestamps) != len(rows) or timestamps != sorted(timestamps):
+                raise ValueError(f"MANIFEST_EPHEMERAL_TIMESTAMP_ORDER:{path}")
+            if len(timestamps) != len(set(timestamps)):
+                raise ValueError(f"MANIFEST_EPHEMERAL_DUPLICATE_TIMESTAMP:{path}")
+            if any(ts % INTERVAL_MS for ts in timestamps):
+                raise ValueError(f"MANIFEST_EPHEMERAL_ALIGNMENT:{path}")
+            if timestamps_by_symbol[symbol].intersection(timestamps):
+                raise ValueError(f"MANIFEST_EPHEMERAL_STORAGE_OVERLAP:{symbol}")
+            for row in rows:
+                try:
+                    values = [float(row[field]) for field in ("open", "high", "low", "close", "volume")]
+                except (KeyError, TypeError, ValueError, OverflowError) as exc:
+                    raise ValueError(f"MANIFEST_EPHEMERAL_OHLCV_INVALID:{path}") from exc
+                if not all(math.isfinite(value) for value in values):
+                    raise ValueError(f"MANIFEST_EPHEMERAL_OHLCV_NONFINITE:{path}")
+                opn, high, low, close, volume = values
+                if min(opn, high, low, close) <= 0 or volume < 0 or high < max(opn, close, low) or low > min(opn, close, high):
+                    raise ValueError(f"MANIFEST_EPHEMERAL_OHLCV_RANGE:{path}")
+            timestamps_by_symbol[symbol].update(timestamps)
+            ephemeral_timestamps_by_symbol[symbol].update(timestamps)
+            ephemeral_files.append({
+                "path": path.relative_to(ephemeral_dir).as_posix(),
+                "symbol": symbol, "kind": "EPHEMERAL_TAIL",
+                "rows": len(rows), "size_bytes": path.stat().st_size,
+                "first_open_ms": min(timestamps), "last_open_ms": max(timestamps),
+                "sha256": _sha256_file(path),
+            })
     files.sort(key=lambda item: (item["symbol"], item["kind"], item["path"]))
+    ephemeral_files.sort(key=lambda item: (item["symbol"], item["path"]))
     canonical = json.dumps(files, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ephemeral_canonical = json.dumps(
+        ephemeral_files, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
     manifest = {
         "schema_version": 1,
         "dataset": "stage1b_lrt15m_rolling_730d",
@@ -556,8 +632,13 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
         "rows_total": sum(item["rows"] for item in files),
         "files": files,
         "dataset_sha256": hashlib.sha256(canonical).hexdigest(),
+        "ephemeral_evidence_files": ephemeral_files,
+        "ephemeral_evidence_files_count": len(ephemeral_files),
+        "ephemeral_evidence_rows_total": sum(item["rows"] for item in ephemeral_files),
+        "ephemeral_evidence_sha256": hashlib.sha256(ephemeral_canonical).hexdigest(),
         "hash_algorithm": "SHA-256",
-        "hash_scope": "canonical sorted file list with per-file SHA-256, path, size and row count",
+        "hash_scope": "canonical stored file list with per-file SHA-256, path, size and row count",
+        "ephemeral_hash_scope": "per-run current-day closed-candle evidence; not persisted to market-data branch",
         "workflow_commit": workflow_commit,
         "engine_commit": engine_commit,
         "workflow_run_id": workflow_run_id,
@@ -604,7 +685,7 @@ def main() -> int:
         build_dataset_manifest(
             args.storage_dir, args.report, args.manifest,
             args.workflow_commit, args.engine_commit, args.workflow_run_id,
-            args.legacy_source_commit,
+            args.legacy_source_commit, args.compute_dir / "ephemeral_tail",
         )
     return 0 if report["status"] in {"PASS", "DEGRADED"} else 1
 
