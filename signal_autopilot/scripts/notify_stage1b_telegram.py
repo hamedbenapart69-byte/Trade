@@ -149,9 +149,9 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError("WATCHLIST_RR_MISMATCH")
         hypothesis = row.get("hypothesis")
         falsification = row.get("falsification")
-        if not isinstance(hypothesis, str) or not hypothesis.strip():
+        if not isinstance(hypothesis, str) or hypothesis.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
             raise ValueError("WATCHLIST_HYPOTHESIS_MISSING")
-        if not isinstance(falsification, str) or not falsification.strip():
+        if not isinstance(falsification, str) or falsification.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
             raise ValueError("WATCHLIST_FALSIFICATION_MISSING")
         if len(hypothesis) > 700 or len(falsification) > 700:
             raise ValueError("WATCHLIST_THESIS_TOO_LONG")
