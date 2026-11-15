@@ -19,6 +19,8 @@ MAX_REPORT_BYTES = 2_000_000
 MAX_MESSAGE_LENGTH = 3900
 MAX_REPORT_AGE = timedelta(hours=4)
 MAX_FUTURE_SKEW = timedelta(minutes=5)
+MAX_CLOSED_CANDLE_AGE = timedelta(minutes=30)
+CANDLE_INTERVAL = timedelta(minutes=15)
 EXPECTED_UNIVERSE_SIZE = 27
 
 
@@ -104,11 +106,40 @@ def validate_report(
     reference_now = now or datetime.now(timezone.utc)
     if reference_now.tzinfo is None:
         raise ValueError("VALIDATION_CLOCK_NOT_TIMEZONE_AWARE")
-    age = reference_now.astimezone(timezone.utc) - parsed.astimezone(timezone.utc)
+    parsed = parsed.astimezone(timezone.utc)
+    age = reference_now.astimezone(timezone.utc) - parsed
     if age > MAX_REPORT_AGE:
         raise ValueError("REPORT_STALE")
     if age < -MAX_FUTURE_SKEW:
         raise ValueError("REPORT_TIMESTAMP_TOO_FAR_IN_FUTURE")
+
+    watchlist_rows = [
+        row for row in rows
+        if row.get("mode") == "PRODUCTION" and row.get("decision") == "WATCHLIST"
+    ]
+    if payload.get("production_watchlist_count") != len(watchlist_rows):
+        raise ValueError("PRODUCTION_WATCHLIST_COUNT_MISMATCH")
+    forbidden_decisions = {"BUY_NOW", "SELL_NOW", "CONDITIONAL_BUY", "CONDITIONAL_SELL"}
+    if any(
+        row.get("mode") == "PRODUCTION" and row.get("decision") in forbidden_decisions
+        for row in rows
+    ):
+        raise ValueError("PRODUCTION_EXECUTABLE_DECISION_FORBIDDEN")
+    for row in watchlist_rows:
+        candle_raw = row.get("last_closed_candle_utc")
+        if not isinstance(candle_raw, str):
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_MISSING")
+        try:
+            candle_open = datetime.fromisoformat(candle_raw.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_INVALID") from exc
+        if candle_open.tzinfo is None:
+            raise ValueError("WATCHLIST_CANDLE_TIMESTAMP_NOT_TIMEZONE_AWARE")
+        candle_close = candle_open.astimezone(timezone.utc) + CANDLE_INTERVAL
+        if candle_close > parsed:
+            raise ValueError("WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME")
+        if parsed - candle_close > MAX_CLOSED_CANDLE_AGE:
+            raise ValueError("WATCHLIST_CANDLE_STALE")
     return payload
 
 
