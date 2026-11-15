@@ -47,8 +47,30 @@ def normalize_lfs1(current: float, p10: float, p90: float) -> float:
     return _clip((float(current) - float(p10)) / (float(p90) - float(p10)))
 
 
-def funding_extreme_score(funding_rate: float) -> float:
-    return _clip(abs(float(funding_rate)) / FUNDING_EXTREME_RATE)
+REFERENCE_FUNDING_INTERVAL_MS = 8 * 60 * 60 * 1000
+
+
+def normalize_funding_rate_8h(
+    funding_rate: float, funding_interval_ms: int | None
+) -> float | None:
+    """نرخ هر دوره را به معادل ۸ساعته تبدیل می‌کند؛ بازهٔ نامعتبر را نمی‌پذیرد."""
+    rate = _finite(funding_rate)
+    if isinstance(funding_interval_ms, bool) or not isinstance(funding_interval_ms, int):
+        return None
+    if funding_interval_ms <= 0 or rate is None:
+        return None
+    normalized = rate * REFERENCE_FUNDING_INTERVAL_MS / funding_interval_ms
+    return normalized if math.isfinite(normalized) else None
+
+
+def funding_extreme_score(
+    funding_rate: float, funding_interval_ms: int | None
+) -> float | None:
+    """امتیاز شدت Funding پس از نرمال‌سازی به دورهٔ مرجع ۸ساعته."""
+    normalized = normalize_funding_rate_8h(funding_rate, funding_interval_ms)
+    if normalized is None:
+        return None
+    return _clip(abs(normalized) / FUNDING_EXTREME_RATE)
 
 
 def empirical_percentile(current: float, history: Iterable[float]) -> float | None:
@@ -256,6 +278,7 @@ def calculate_lfs_v2(
     as_of_time_ms: int | None = None,
     funding_timestamp_ms: int | None = None,
     funding_received_at_ms: int | None = None,
+    funding_interval_ms: int | None = None,
     long_short_ratio_timestamp_ms: int | None = None,
 ) -> dict[str, Any]:
     """محاسبهٔ پنج مؤلفه با وزن ثابت؛ وزن دادهٔ UNAVAILABLE حذف یا بازتوزیع نمی‌شود."""
@@ -263,13 +286,17 @@ def calculate_lfs_v2(
     if as_of_time_ms is None:
         oi_1h_points = _oi_points(oi_1h)
         oi_1d_points = _oi_points(oi_1d)
-        funding_fresh = _finite(funding_rate) is not None
+        funding_fresh = (
+            _finite(funding_rate) is not None
+            and normalize_funding_rate_8h(float(funding_rate), funding_interval_ms) is not None
+        )
         ratio_fresh = _finite(long_short_ratio) is not None and float(long_short_ratio) > 0
     else:
         oi_1h_points = _fresh_oi_points(oi_1h, as_of_time_ms, 3 * 60 * 60 * 1000)
         oi_1d_points = _fresh_oi_points(oi_1d, as_of_time_ms, 30 * 60 * 60 * 1000)
         funding_fresh = (
             _finite(funding_rate) is not None
+            and normalize_funding_rate_8h(float(funding_rate), funding_interval_ms) is not None
             and _timestamp_is_fresh(funding_timestamp_ms, as_of_time_ms, 5 * 60 * 1000)
             and _timestamp_is_fresh(funding_received_at_ms, as_of_time_ms, 5 * 60 * 1000)
         )
@@ -309,10 +336,13 @@ def calculate_lfs_v2(
     # LFS2: Funding جاری OKX؛ نرخ ۰.۰۳٪ امتیاز کامل می‌گیرد.
     if funding_fresh:
         funding = float(funding_rate)
+        normalized_funding = normalize_funding_rate_8h(funding, funding_interval_ms)
         components["LFS2"] = _component(
-            funding_extreme_score(funding), WEIGHTS["LFS2"], "REAL", funding,
+            funding_extreme_score(funding, funding_interval_ms), WEIGHTS["LFS2"], "REAL", funding,
             threshold=FUNDING_EXTREME_RATE,
-            score_method="FIXED_REFERENCE_PROXY_NOT_HISTORICAL_PERCENTILE",
+            score_method="FIXED_8H_NORMALIZED_REFERENCE_NOT_HISTORICAL_PERCENTILE",
+            normalized_8h_rate=normalized_funding,
+            funding_interval_ms=funding_interval_ms,
             source_timestamp_ms=funding_timestamp_ms,
             received_timestamp_ms=funding_received_at_ms,
         )
@@ -416,6 +446,8 @@ def calculate_lfs_v2(
             "derivatives_as_of_time_ms": as_of_time_ms,
             "funding_timestamp_ms": funding_timestamp_ms,
             "funding_received_at_ms": funding_received_at_ms,
+            "funding_interval_ms": funding_interval_ms,
+            "funding_normalization": "8H_EQUIVALENT",
             "long_short_ratio_timestamp_ms": long_short_ratio_timestamp_ms,
             "oi_1h_latest_timestamp_ms": oi_1h_points[-1][0] if oi_1h_points else None,
             "oi_1d_latest_timestamp_ms": oi_1d_points[-1][0] if oi_1d_points else None,
