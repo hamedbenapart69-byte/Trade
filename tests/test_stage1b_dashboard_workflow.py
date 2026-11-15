@@ -18,6 +18,7 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         failure_job = workflow.split("publish-degraded-report:", 1)[1]
         self.assertNotIn("actions/download-artifact", failure_job)
         self.assertIn("timed_out", failure_job)
+        self.assertIn("cancelled", failure_job)
         self.assertIn("--generated-at", failure_job)
         self.assertIn("--run-id", failure_job)
         self.assertIn("--conclusion", failure_job)
