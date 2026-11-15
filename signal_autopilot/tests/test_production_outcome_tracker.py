@@ -44,11 +44,15 @@ def signal(signal_id="prod-1", tracker_status="OPEN", direction="BUY"):
     }
 
 
-def write_state(path, open_rows=None, closed_rows=None):
+def write_state(
+    path, open_rows=None, closed_rows=None,
+    updated_at_utc="2026-11-14T15:14:00+00:00",
+):
     open_rows = open_rows or {}
     closed_rows = closed_rows or {}
     path.write_text(json.dumps({
         "schema_version": 1,
+        "updated_at_utc": updated_at_utc,
         "open_signals": open_rows,
         "closed_signals": closed_rows,
     }), encoding="utf-8")
@@ -154,6 +158,62 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
                     outcomes_path,
                     now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
                     fetcher=lambda *args: ([], "UNUSED"),
+                )
+
+    def test_rejects_stale_or_future_dated_source_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_path = root / "open_signals.json"
+            outcomes_path = root / "production_outcomes.json"
+            write_state(state_path, updated_at_utc="2026-11-14T10:00:00+00:00")
+            with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_STATE_STALE"):
+                update_production_outcomes(
+                    state_path, outcomes_path,
+                    now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                    fetcher=lambda *args: ([], "UNUSED"),
+                )
+            write_state(state_path, updated_at_utc="2026-11-14T15:21:00+00:00")
+            with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_STATE_FUTURE_DATED"):
+                update_production_outcomes(
+                    state_path, outcomes_path,
+                    now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                    fetcher=lambda *args: ([], "UNUSED"),
+                )
+
+    def test_rejects_mutated_signal_snapshot_after_outcome_creation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_path = root / "open_signals.json"
+            outcomes_path = root / "production_outcomes.json"
+            row = signal()
+            write_state(state_path, {"prod-1": row})
+            entry_open_ms = int(datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc).timestamp() * 1000)
+
+            def fake_fetcher(symbol, since_ms, now_ms, limit):
+                return ([{
+                    "open_time": entry_open_ms,
+                    "open": 100.0,
+                    "high": 101.0,
+                    "low": 99.0,
+                    "close": 100.0,
+                    "volume": 1000.0,
+                }], "TEST_PUBLIC_FIXTURE")
+
+            update_production_outcomes(
+                state_path, outcomes_path,
+                now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                fetcher=fake_fetcher,
+            )
+            row["hypothesis"] = "MUTATED AFTER FIRST OBSERVATION"
+            write_state(
+                state_path, {"prod-1": row},
+                updated_at_utc="2026-11-14T15:29:00+00:00",
+            )
+            with self.assertRaisesRegex(ValueError, "PRODUCTION_SIGNAL_SNAPSHOT_MUTATED"):
+                update_production_outcomes(
+                    state_path, outcomes_path,
+                    now=datetime(2026, 11, 14, 15, 30, tzinfo=timezone.utc),
+                    fetcher=lambda *args: (_ for _ in ()).throw(AssertionError("must fail before fetching")),
                 )
 
     def test_rejects_duplicate_ids_in_previous_outcome_history(self):
