@@ -25,6 +25,9 @@ class SignalTrackerSnapshotTests(unittest.TestCase):
                 "created_at_utc": "2026-11-15T10:00:00+00:00",
                 "last_closed_candle_utc": "2026-11-15T09:45:00+00:00",
                 "levels": {"entry": 100.0, "stop_loss": 98.0, "tp2": 104.0},
+                "lfs_score": 0.30,
+                "lfs_threshold": 0.30,
+                "hypothesis": "first immutable hypothesis",
             }
             with patch("modules.signal_tracker._now", side_effect=[
                 "2026-11-15T10:00:01+00:00",
@@ -38,6 +41,8 @@ class SignalTrackerSnapshotTests(unittest.TestCase):
                     "created_at_utc": "2026-11-15T10:15:00+00:00",
                     "levels": {"entry": 101.0, "stop_loss": 99.0, "tp2": 105.0},
                     "lfs_score": 0.55,
+                    "lfs_threshold": 0.70,
+                    "hypothesis": "later changed hypothesis",
                 }
                 second_record = tracker.upsert(second)
 
@@ -45,7 +50,9 @@ class SignalTrackerSnapshotTests(unittest.TestCase):
             self.assertEqual(second_record["first_seen_utc"], first_record["first_seen_utc"])
             self.assertEqual(second_record["levels"], first["levels"])
             self.assertEqual(second_record["last_closed_candle_utc"], first["last_closed_candle_utc"])
-            self.assertEqual(second_record["lfs_score"], 0.55)
+            self.assertEqual(second_record["lfs_score"], 0.30)
+            self.assertEqual(second_record["lfs_threshold"], 0.30)
+            self.assertEqual(second_record["hypothesis"], "first immutable hypothesis")
             self.assertEqual(second_record["updates"], 2)
             self.assertEqual(second_record["last_seen_utc"], "2026-11-15T10:15:01+00:00")
 
