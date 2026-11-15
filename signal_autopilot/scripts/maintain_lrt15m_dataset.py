@@ -537,6 +537,13 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
         rows = _read_rows(path)
         if not rows:
             raise ValueError(f"MANIFEST_EMPTY_TAIL:{path}")
+        relative_tail = path.relative_to(tail_root)
+        if len(relative_tail.parts) != 2:
+            raise ValueError(f"MANIFEST_TAIL_PATH_INVALID:{path}")
+        try:
+            date.fromisoformat(relative_tail.parts[0])
+        except ValueError as exc:
+            raise ValueError(f"MANIFEST_TAIL_DAY_INVALID:{path}") from exc
         symbol = path.name.removesuffix("_15m.parquet")
         if symbol not in timestamps_by_symbol:
             raise ValueError(f"MANIFEST_UNKNOWN_TAIL_SYMBOL:{symbol}")
@@ -547,6 +554,12 @@ def build_dataset_manifest(storage_dir: Path, report_path: Path, manifest_path: 
             raise ValueError(f"MANIFEST_TAIL_DUPLICATE_TIMESTAMP:{path}")
         if any(ts % INTERVAL_MS for ts in timestamps):
             raise ValueError(f"MANIFEST_TAIL_ALIGNMENT:{path}")
+        partition_day = relative_tail.parts[0]
+        if any(
+            datetime.fromtimestamp(ts / 1000, timezone.utc).strftime("%Y-%m-%d") != partition_day
+            for ts in timestamps
+        ):
+            raise ValueError(f"MANIFEST_TAIL_PARTITION_DATE_MISMATCH:{path}")
         overlap = timestamps_by_symbol[symbol].intersection(timestamps)
         if overlap:
             raise ValueError(f"MANIFEST_CROSS_FILE_DUPLICATE:{symbol}:{min(overlap)}")
