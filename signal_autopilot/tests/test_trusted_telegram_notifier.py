@@ -184,7 +184,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "chat": {"id": -1001234567890, "type": "channel"},
             },
         }
-        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
+        with patch.dict(os.environ, {"TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts"}), patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
             MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "-1001234567890", "test message")
 
     def test_telegram_delivery_rejects_destination_mismatch(self):
@@ -195,7 +195,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "chat": {"id": 999999, "type": "channel"},
             },
         }
-        with patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
+        with patch.dict(os.environ, {"TELEGRAM_EXPECTED_CHANNEL_TITLE": "Trade Alerts"}), patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(response).encode("utf-8"))):
             with self.assertRaisesRegex(RuntimeError, "TELEGRAM_DESTINATION_MISMATCH"):
                 MODULE.send_message("12345:abcdefghijklmnopqrstuvwxyz", "-1001234567890", "test message")
 
