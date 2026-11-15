@@ -89,6 +89,7 @@ class TrustedNotifierTests(unittest.TestCase):
     def test_rejects_executable_production_decisions(self):
         payload = report()
         payload["symbols"][0]["decision"] = "BUY_NOW"
+        payload["production_watchlist_count"] = 0
         with self.assertRaisesRegex(ValueError, "PRODUCTION_EXECUTABLE_DECISION_FORBIDDEN"):
             validate_in_temp(payload)
 
