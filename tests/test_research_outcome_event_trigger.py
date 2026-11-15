@@ -20,6 +20,7 @@ class ResearchOutcomeEventTriggerTests(unittest.TestCase):
         self.assertIn('cron: "7,22,37,52 * * * *"', content)
         self.assertIn("workflow_dispatch:", content)
         self.assertIn("group: research-state-writes", content)
+        self.assertIn('python-version: "3.11"', content)
 
     def test_outcome_coverage_is_one_to_one_and_fail_closed(self):
         content = WORKFLOW.read_text(encoding="utf-8")
