@@ -38,6 +38,7 @@ def make_report(now=None):
             "lfs_veto": "PASS",
             "lfs_threshold": 0.70,
             "lfs_threshold_reason": "PROXY_OR_PARTIAL_DATA",
+            "lfs_threshold_method": "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D",
             "entry": 100.0 if index == 0 else None,
             "stop_loss": 101.0 if index == 0 else None,
             "take_profit_1": 99.0 if index == 0 else None,
@@ -86,6 +87,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             self.assertEqual(dashboard["signals"][0]["take_profit_1"], 99.0)
             self.assertEqual(dashboard["signals"][0]["lfs_threshold"], 0.70)
             self.assertEqual(dashboard["signals"][0]["lfs_threshold_reason"], "PROXY_OR_PARTIAL_DATA")
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold_method"], "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D")
             self.assertEqual(dashboard["signals"][1]["decision"], "NO_QUALIFIED_SETUP")
             self.assertEqual(dashboard["data_gate_status"], "NOT_REPORTED")
             self.assertEqual(dashboard["calibration_status"], "UNCALIBRATED")
@@ -219,6 +221,15 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             report["symbols"][0]["hypothesis"] = "UNAVAILABLE"
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_HYPOTHESIS_MISSING"):
+                publish_dashboard(report_path, universe_path, root)
+
+    def test_rejects_unverified_lfs_threshold_method(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][0]["lfs_threshold_method"] = "ROLLING_90D_80TH_PERCENTILE"
+            report_path, universe_path = write_inputs(root, report, symbols)
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED"):
                 publish_dashboard(report_path, universe_path, root)
 
     def test_rejects_proxy_watchlist_with_relaxed_real_cvd_threshold(self):
