@@ -236,7 +236,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             report, symbols = make_report()
             report["symbols"][0]["lfs_score"] = 1.2
             report_path, universe_path = write_inputs(root, report, symbols)
-            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_SCORE_INVALID"):
+            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_SCORE_OUT_OF_RANGE"):
                 publish_dashboard(report_path, universe_path, root)
 
 
