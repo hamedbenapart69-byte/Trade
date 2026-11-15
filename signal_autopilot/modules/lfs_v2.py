@@ -185,6 +185,26 @@ def _oi_points(rows: Any) -> list[tuple[int, float]]:
     return sorted({timestamp: value for timestamp, value in points}.items())
 
 
+def _fresh_oi_points(rows: Any, as_of_time_ms: int, max_age_ms: int) -> list[tuple[int, float]]:
+    points = _oi_points(rows)
+    if not points:
+        return []
+    latest_ts = points[-1][0]
+    if latest_ts > as_of_time_ms + 5 * 60 * 1000:
+        return []
+    if as_of_time_ms - latest_ts > max_age_ms:
+        return []
+    return [(timestamp, value) for timestamp, value in points if timestamp <= as_of_time_ms + 5 * 60 * 1000]
+
+
+def _timestamp_is_fresh(timestamp_ms: Any, as_of_time_ms: int, max_age_ms: int) -> bool:
+    if isinstance(timestamp_ms, bool) or not isinstance(timestamp_ms, (int, float)):
+        return False
+    timestamp = int(timestamp_ms)
+    age = as_of_time_ms - timestamp
+    return -5 * 60 * 1000 <= age <= max_age_ms
+
+
 def _oi_change_24h(rows: Any) -> float | None:
     points = _oi_points(rows)
     if len(points) < 2:
@@ -222,16 +242,37 @@ def calculate_lfs_v2(
     oi_1h: Any = None,
     oi_1d: Any = None,
     long_short_ratio: float | None = None,
+    *,
+    as_of_time_ms: int | None = None,
+    funding_received_at_ms: int | None = None,
+    long_short_ratio_timestamp_ms: int | None = None,
 ) -> dict[str, Any]:
     """محاسبهٔ پنج مؤلفه با وزن ثابت؛ وزن دادهٔ UNAVAILABLE حذف یا بازتوزیع نمی‌شود."""
     components: dict[str, dict[str, Any]] = {}
+    if as_of_time_ms is None:
+        oi_1h_points = _oi_points(oi_1h)
+        oi_1d_points = _oi_points(oi_1d)
+        funding_fresh = _finite(funding_rate) is not None
+        ratio_fresh = _finite(long_short_ratio) is not None and float(long_short_ratio) > 0
+    else:
+        oi_1h_points = _fresh_oi_points(oi_1h, as_of_time_ms, 3 * 60 * 60 * 1000)
+        oi_1d_points = _fresh_oi_points(oi_1d, as_of_time_ms, 30 * 60 * 60 * 1000)
+        funding_fresh = (
+            _finite(funding_rate) is not None
+            and _timestamp_is_fresh(funding_received_at_ms, as_of_time_ms, 5 * 60 * 1000)
+        )
+        ratio_fresh = (
+            _finite(long_short_ratio) is not None
+            and float(long_short_ratio) > 0
+            and _timestamp_is_fresh(long_short_ratio_timestamp_ms, as_of_time_ms, 2 * 60 * 60 * 1000)
+        )
+    oi_1h_effective = oi_1h_points
+    oi_1d_effective = oi_1d_points
     api_status = {
-        "funding": _finite(funding_rate) is not None,
-        "oi_1h": bool(_oi_points(oi_1h)),
-        "oi_1d": bool(_oi_points(oi_1d)),
-        "long_short_ratio": (
-            _finite(long_short_ratio) is not None and float(long_short_ratio) > 0
-        ),
+        "funding": funding_fresh,
+        "oi_1h": bool(oi_1h_points),
+        "oi_1d": bool(oi_1d_points),
+        "long_short_ratio": ratio_fresh,
     }
 
     # LFS1: توزیع تاریخی و مقدار جاری هر دو از کندل 1H محاسبه می‌شوند.
@@ -254,7 +295,7 @@ def calculate_lfs_v2(
         )
 
     # LFS2: Funding جاری OKX؛ نرخ ۰.۰۳٪ امتیاز کامل می‌گیرد.
-    if funding_rate is not None and _finite(funding_rate) is not None:
+    if funding_fresh:
         funding = float(funding_rate)
         components["LFS2"] = _component(
             funding_extreme_score(funding), WEIGHTS["LFS2"], "REAL", funding,
@@ -265,15 +306,15 @@ def calculate_lfs_v2(
         components["LFS2"] = _component(None, WEIGHTS["LFS2"], "UNAVAILABLE")
 
     # LFS3: نسبت لانگ/شورت؛ در نبود آن، رتبهٔ زمانی OI با علامت Funding.
-    if long_short_ratio is not None and _finite(long_short_ratio) is not None and float(long_short_ratio) > 0:
+    if ratio_fresh:
         ratio = float(long_short_ratio)
         ratio_score = _clip((ratio - 1.0) / 0.5)
         components["LFS3"] = _component(
             ratio_score, WEIGHTS["LFS3"], "PROXY", ratio, source="OKX_LONG_SHORT_RATIO",
         )
     elif funding is not None:
-        current_oi_change = _oi_change_24h(oi_1h)
-        history_oi_changes = _daily_oi_changes(oi_1d)
+        current_oi_change = _oi_change_24h(oi_1h_effective)
+        history_oi_changes = _daily_oi_changes(oi_1d_effective)
         rank = (
             rank_time_series(current_oi_change, history_oi_changes)
             if current_oi_change is not None and len(history_oi_changes) >= 30 else None
@@ -310,7 +351,7 @@ def calculate_lfs_v2(
         )
 
     # LFS5: افت/تغییر مطلق OI در ۲۴ ساعت؛ ۱۰٪ امتیاز کامل.
-    oi_change = _oi_change_24h(oi_1h)
+    oi_change = _oi_change_24h(oi_1h_effective)
     if oi_change is not None:
         components["LFS5"] = _component(
             oi_drop_score(oi_change), WEIGHTS["LFS5"], "REAL", oi_change,
