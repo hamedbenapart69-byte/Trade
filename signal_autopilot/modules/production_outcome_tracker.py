@@ -170,11 +170,12 @@ def update_production_outcomes(
         previous_payload = json.loads(outcomes_path.read_text(encoding="utf-8"))
         if not isinstance(previous_payload, dict) or not isinstance(previous_payload.get("outcomes"), list):
             raise ValueError("PRODUCTION_OUTCOME_STATE_SCHEMA_INVALID")
-        previous_ids = {
-            str(row.get("signal_id") or "")
-            for row in previous_payload["outcomes"]
-            if isinstance(row, dict) and row.get("signal_id")
-        }
+        if any(not isinstance(row, dict) or not row.get("signal_id") for row in previous_payload["outcomes"]):
+            raise ValueError("PRODUCTION_OUTCOME_STATE_RECORD_INVALID")
+        previous_ids = [str(row["signal_id"]) for row in previous_payload["outcomes"]]
+        if len(previous_ids) != len(set(previous_ids)):
+            raise ValueError("PRODUCTION_OUTCOME_STATE_DUPLICATE_ID")
+        previous_ids = set(previous_ids)
         if previous_ids - signal_ids:
             raise ValueError("PRODUCTION_SIGNAL_HISTORY_REGRESSION")
 
