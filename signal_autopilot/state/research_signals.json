@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "signal_count": 55,
+  "signal_count": 57,
   "signals": [
     {
       "calibration_status": "UNCALIBRATED",
@@ -3026,8 +3026,118 @@
       "timeframe": "15m",
       "zone_distance_pct": 1.107716,
       "zone_type": "OB"
+    },
+    {
+      "calibration_status": "UNCALIBRATED",
+      "candle_open_time": 1794774600000,
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "components": {
+        "bias_1h": false,
+        "bias_4h": true,
+        "cross": true,
+        "sweep": true,
+        "sweep_candles_ago": 0,
+        "zone_reaction": false
+      },
+      "created_at_utc": "2026-11-15T20:55:48.661535+00:00",
+      "cvd": {
+        "delta": -244227.90947777,
+        "source": "PROXY_OHLCV"
+      },
+      "data_sources": [
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "decision": "RESEARCH_WATCHLIST",
+      "direction": "SELL",
+      "entry_reference": 5.185,
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "first_seen_utc": "2026-11-15T20:55:48.661535+00:00",
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "lfs_coverage_pct": 100.0,
+      "lfs_score": 0.345505,
+      "lfs_status": "FULL",
+      "mode": "RESEARCH",
+      "points": {
+        "bias_1h": 0,
+        "bias_4h": 20,
+        "sweep": 20,
+        "tenkan_kijun_cross_10": 20,
+        "zone_reaction": 0
+      },
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "raw_score": 60,
+      "rr_reference": 2.0,
+      "scan_count": 1,
+      "signal_id": "4bb361e54f48323b",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "stop_reference": 5.215,
+      "symbol": "UNIUSDT",
+      "target_reference": 5.124999999999999,
+      "telegram_message_id": null,
+      "telegram_status": "NOT_ATTEMPTED",
+      "tier": null,
+      "tier_score": 60,
+      "timeframe": "15m",
+      "zone_distance_pct": null,
+      "zone_type": "NONE"
+    },
+    {
+      "calibration_status": "UNCALIBRATED",
+      "candle_open_time": 1794774600000,
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "components": {
+        "bias_1h": false,
+        "bias_4h": true,
+        "cross": true,
+        "sweep": true,
+        "sweep_candles_ago": 0,
+        "zone_reaction": false
+      },
+      "created_at_utc": "2026-11-15T20:56:28.802346+00:00",
+      "cvd": {
+        "delta": -3452.28890195,
+        "source": "PROXY_OHLCV"
+      },
+      "data_sources": [
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "decision": "RESEARCH_WATCHLIST",
+      "direction": "SELL",
+      "entry_reference": 108.66,
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "first_seen_utc": "2026-11-15T20:56:28.802346+00:00",
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "lfs_coverage_pct": 100.0,
+      "lfs_score": 0.505563,
+      "lfs_status": "FULL",
+      "mode": "RESEARCH",
+      "points": {
+        "bias_1h": 0,
+        "bias_4h": 20,
+        "sweep": 20,
+        "tenkan_kijun_cross_10": 20,
+        "zone_reaction": 0
+      },
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "raw_score": 60,
+      "rr_reference": 2.0,
+      "scan_count": 1,
+      "signal_id": "db303921849282de",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "stop_reference": 109.4,
+      "symbol": "AAVEUSDT",
+      "target_reference": 107.17999999999998,
+      "telegram_message_id": null,
+      "telegram_status": "NOT_ATTEMPTED",
+      "tier": null,
+      "tier_score": 60,
+      "timeframe": "15m",
+      "zone_distance_pct": null,
+      "zone_type": "NONE"
     }
   ],
   "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
-  "updated_at_utc": "2026-11-15T15:32:23.562545+00:00"
+  "updated_at_utc": "2026-11-15T20:56:53.611745+00:00"
 }
