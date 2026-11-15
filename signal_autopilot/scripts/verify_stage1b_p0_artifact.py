@@ -216,11 +216,33 @@ def validate_report_freshness(
         raise ValueError("DATA_REPORT_GATE_LOGIC_MISMATCH")
 
 
+def validate_universe_symbols(universe_path: Path, manifest_symbols: list[str]) -> list[str]:
+    """Bind an untrusted manifest to the canonical 27-symbol universe on main."""
+    if not universe_path.is_file() or universe_path.is_symlink():
+        raise ValueError("TRUSTED_UNIVERSE_FILE_MISSING_OR_LINK")
+    universe = json.loads(universe_path.read_text(encoding="utf-8"))
+    expected = universe.get("symbols")
+    if (
+        type(universe.get("count")) is not int
+        or universe.get("count") != 27
+        or not isinstance(expected, list)
+        or len(expected) != 27
+        or len(set(expected)) != 27
+        or any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in expected)
+    ):
+        raise ValueError("TRUSTED_UNIVERSE_SCHEMA_INVALID")
+    canonical = sorted(expected)
+    if manifest_symbols != canonical:
+        raise ValueError("MANIFEST_SYMBOL_SET_DIFFERS_FROM_TRUSTED_UNIVERSE")
+    return canonical
+
+
 def validate_artifact(
     artifact_dir: Path,
     expected_run_id: str,
     expected_workflow_sha: str,
     workflow_completed_at: str,
+    universe_path: Path,
 ) -> str:
     root = artifact_dir.resolve()
     storage = root / "market-data/datasets/stage1b/lrt15m"
@@ -255,6 +277,7 @@ def validate_artifact(
         raise ValueError("MANIFEST_SYMBOL_LIST_INVALID")
     if any(not isinstance(symbol, str) or not SYMBOL_RE.fullmatch(symbol) for symbol in symbols):
         raise ValueError("MANIFEST_SYMBOL_NAME_INVALID")
+    symbols = validate_universe_symbols(universe_path, symbols)
     if not isinstance(files, list) or manifest.get("files_count") != len(files):
         raise ValueError("MANIFEST_FILE_COUNT_INVALID")
     if manifest.get("baseline_files_count") != 27:
@@ -432,10 +455,11 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--workflow-sha", required=True)
     parser.add_argument("--workflow-completed-at", required=True)
+    parser.add_argument("--universe-path", type=Path, required=True)
     args = parser.parse_args()
     validate_artifact(
         args.artifact_dir, args.run_id, args.workflow_sha,
-        args.workflow_completed_at,
+        args.workflow_completed_at, args.universe_path,
     )
     return 0
 
