@@ -148,6 +148,26 @@ class ProductionOutcomeTrackerTests(unittest.TestCase):
                     fetcher=lambda *args: ([], "UNUSED"),
                 )
 
+    def test_rejects_duplicate_ids_in_previous_outcome_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state_path = root / "open_signals.json"
+            outcomes_path = root / "production_outcomes.json"
+            write_state(state_path, {"prod-1": signal()})
+            outcomes_path.write_text(json.dumps({
+                "outcomes": [
+                    {"signal_id": "prod-1"},
+                    {"signal_id": "prod-1"},
+                ]
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "PRODUCTION_OUTCOME_STATE_DUPLICATE_ID"):
+                update_production_outcomes(
+                    state_path,
+                    outcomes_path,
+                    now=datetime(2026, 11, 14, 15, 15, tzinfo=timezone.utc),
+                    fetcher=lambda *args: ([], "UNUSED"),
+                )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
