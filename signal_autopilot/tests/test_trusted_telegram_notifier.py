@@ -1,6 +1,7 @@
 """Unit tests for trusted Stage 1B Telegram report delivery."""
 import importlib.util
 import json
+import os
 import sys
 from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
@@ -23,7 +24,9 @@ def report():
     rows[0] = {
         "symbol": "BTCUSDT", "mode": "PRODUCTION", "decision": "WATCHLIST", "veto": "PASS",
         "direction": "BUY", "entry": 100.0, "stop_loss": 98.0,
-        "take_profit": 104.0, "rr": 2.0,
+        "take_profit_1": 102.0, "take_profit": 104.0, "rr": 2.0,
+        "hypothesis": "Liquidity sweep and reclaim support a mean-reversion move.",
+        "falsification": "A 15m close below the stop invalidates the setup.",
     }
     return {
         "stage": "STAGE_1_UNCALIBRATED",
@@ -50,11 +53,18 @@ def validate_in_temp(payload, now=None, universe_symbols=None):
 class TrustedNotifierTests(unittest.TestCase):
     def test_validates_exact_universe_and_formats_watchlist_only(self):
         checked = validate_in_temp(report())
-        message = MODULE.build_message(checked)
+        messages = MODULE.build_messages(checked, "https://trade.example.pages.dev")
+        message = "\\n".join(messages)
         self.assertIn("NOT_CALIBRATED", message)
         self.assertIn("WATCHLIST فقط", message)
         self.assertIn("BTCUSDT | BUY", message)
-        self.assertIn("Entry 100", message)
+        self.assertIn("Entry: 100", message)
+        self.assertIn("TP1: 102", message)
+        self.assertIn("TP2: 104", message)
+        self.assertIn("Confidence: NOT_CALIBRATED", message)
+        self.assertIn("Hypothesis:", message)
+        self.assertIn("Falsification:", message)
+        self.assertIn("https://trade.example.pages.dev", message)
         self.assertIn("BUY_NOW/SELL_NOW صادر نمی‌شود", message)
 
     def test_rejects_incomplete_universe(self):
@@ -89,7 +99,7 @@ class TrustedNotifierTests(unittest.TestCase):
             {"symbol": f"COIN{i}USDT", "decision": "NO_TRADE", "veto": "PASS"}
             for i in range(27)
         ]
-        message = MODULE.build_message(payload)
+        message = "\\n".join(MODULE.build_messages(payload, "https://trade.example.pages.dev"))
         self.assertIn("نامزدهای زیرنظر: 0", message)
         self.assertIn("هیچ موقعیت WATCHLIST", message)
 
@@ -116,6 +126,12 @@ class TrustedNotifierTests(unittest.TestCase):
         payload["symbols"][0]["mode"] = "RESEARCH"
         self.assertEqual(MODULE.candidate_rows(payload), [])
 
+    def test_dashboard_url_must_be_https_and_configured(self):
+        with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
+            MODULE.validate_dashboard_url("")
+        with self.assertRaisesRegex(ValueError, "DASHBOARD_URL_UNAVAILABLE_OR_INVALID"):
+            MODULE.validate_dashboard_url("http://example.com")
+
     def test_validate_only_never_sends_telegram(self):
         payload = report()
         with tempfile.TemporaryDirectory() as tmp:
@@ -131,7 +147,7 @@ class TrustedNotifierTests(unittest.TestCase):
                 "notify_stage1b_telegram.py", "--report", str(report_path),
                 "--universe", str(universe_path), "--validate-only",
             ]
-            with patch.object(sys, "argv", args), patch.object(MODULE, "send_message") as sender:
+            with patch.object(sys, "argv", args), patch.dict(os.environ, {"DASHBOARD_URL": "https://trade.example.pages.dev"}), patch.object(MODULE, "send_message") as sender:
                 self.assertEqual(MODULE.main(), 0)
                 sender.assert_not_called()
 
