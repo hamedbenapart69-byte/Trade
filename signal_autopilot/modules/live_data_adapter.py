@@ -250,10 +250,13 @@ class LiveOHLCVFetcher:
         self._assert_fresh_closed_bars(rows, interval_ms, now_ms, timeframe)
         return rows
 
-    def _ccxt_timeframe(self, symbol: str, timeframe: str, limit: int, now_ms: int) -> list[dict[str, Any]]:
+    def _ccxt_timeframe(
+        self, symbol: str, timeframe: str, limit: int, now_ms: int,
+        providers: tuple[str, ...] | None = None,
+    ) -> list[dict[str, Any]]:
         interval_ms = 3_600_000 if timeframe == "1h" else 900_000
         errors: list[str] = []
-        for provider in ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget"):
+        for provider in providers or self.provider_names:
             try:
                 exchange = self._exchange(provider)
                 market = self._find_market(exchange, symbol)
@@ -378,13 +381,24 @@ class LiveOHLCVFetcher:
             source = "OKX_PUBLIC_SWAP_CANDLE"
         except Exception as exc:
             errors.append(f"okx_candles:{type(exc).__name__}:{str(exc)[:140]}")
-            try:
-                stats_1h = self._ccxt_timeframe(symbol, "1h", self.stats_limit, now_ms)
-                live_15m = self._ccxt_timeframe(symbol, "15m", self.limit, now_ms)
-                source = "CCXT_PUBLIC_OHLCV_FALLBACK"
-            except Exception as fallback_exc:
-                raise RuntimeError("all_dual_timeframe_sources_failed|" + "|".join(errors) +
-                                   f"|fallback:{type(fallback_exc).__name__}:{str(fallback_exc)[:160]}")
+            for provider in self.provider_names:
+                try:
+                    # هر دو تایم‌فریم باید از یک صرافی باشند؛ ترکیب 1H و 15m
+                    # از دو بازار متفاوت می‌تواند سوگیری و اختلاف قیمت بسازد.
+                    stats_1h = self._ccxt_timeframe(
+                        symbol, "1h", self.stats_limit, now_ms, providers=(provider,)
+                    )
+                    live_15m = self._ccxt_timeframe(
+                        symbol, "15m", self.limit, now_ms, providers=(provider,)
+                    )
+                    source = f"CCXT_{provider.upper()}_PUBLIC_OHLCV_FALLBACK"
+                    break
+                except Exception as fallback_exc:
+                    errors.append(
+                        f"{provider}_dual_timeframe:{type(fallback_exc).__name__}:{str(fallback_exc)[:140]}"
+                    )
+            else:
+                raise RuntimeError("all_dual_timeframe_sources_failed|" + "|".join(errors))
         metrics = self._okx_metrics(symbol, now_ms)
         LOG.info(
             "%s dual_timeframe source=%s bars_1h=%d bars_15m=%d okx_funding=%s okx_oi_1h=%s okx_oi_1d=%s okx_lsr=%s",
