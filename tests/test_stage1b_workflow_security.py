@@ -26,6 +26,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
         self.assertIn("vars.DASHBOARD_URL", notifier)
+        self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", notifier)
         validation_step = notifier.split("Validate report before claiming delivery", 1)[1].split(
             "Claim this scanner run before Telegram delivery", 1
         )[0]
