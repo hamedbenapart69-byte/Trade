@@ -215,12 +215,16 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
     def test_trusted_writer_prunes_prior_artifacts_without_touching_newer_runs(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
-        self.assertIn("actions: write", workflow)
-        self.assertIn("actions/github-script@v8", workflow)
-        self.assertIn("listArtifactsForRepo", workflow)
-        self.assertIn("deleteArtifact", workflow)
-        self.assertIn("sourceRunId < currentRunId", workflow)
-        self.assertIn('artifact.name.startsWith("stage1b-p0-dataset-")', workflow)
+        persist_job, cleanup_job = workflow.split("  cleanup-artifacts:", 1)
+        self.assertIn("actions: read", persist_job)
+        self.assertIn("contents: write", persist_job)
+        self.assertIn("actions: write", cleanup_job)
+        self.assertIn("contents: read", cleanup_job)
+        self.assertIn("actions/github-script@v8", cleanup_job)
+        self.assertIn("listArtifactsForRepo", cleanup_job)
+        self.assertIn("deleteArtifact", cleanup_job)
+        self.assertIn("sourceRunId < currentRunId", cleanup_job)
+        self.assertIn('artifact.name.startsWith("stage1b-p0-dataset-")', cleanup_job)
 
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
