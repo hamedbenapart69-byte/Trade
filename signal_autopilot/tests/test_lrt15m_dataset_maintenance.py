@@ -194,16 +194,33 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
             self.assertFalse((root / "signals.json").exists())
             self.assertTrue((root / "report.json").exists())
 
-    def test_p0_workflow_is_manual_data_only_and_does_not_publish_signals(self):
+    def test_p0_workflow_is_scheduled_read_only_data_only_and_does_not_publish_signals(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "stage1b-scheduled.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn('cron: "0 */4 * * *"', workflow)
         self.assertIn("--data-only", workflow)
         self.assertIn("--manifest", workflow)
-        self.assertNotIn("schedule:", workflow)
+        self.assertIn("ephemeral_tail/", workflow)
+        self.assertIn("retention-days: 1", workflow)
         self.assertNotIn("push:", workflow)
         self.assertNotIn("signals-publish", workflow)
         self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertEqual(workflow.count("persist-credentials: false"), 3)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertNotIn("git push", workflow)
+
+    def test_trusted_writer_prunes_prior_artifacts_without_touching_newer_runs(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
+        self.assertIn("actions: write", workflow)
+        self.assertIn("actions/github-script@v8", workflow)
+        self.assertIn("listArtifactsForRepo", workflow)
+        self.assertIn("deleteArtifact", workflow)
+        self.assertIn("sourceRunId < currentRunId", workflow)
+        self.assertIn('artifact.name.startsWith("stage1b-p0-dataset-")', workflow)
 
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -216,20 +233,27 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
                 symbols = [f"COIN{i:02d}USDT" for i in range(27)]
                 for symbol in symbols:
                     write_timestamps(base / f"{symbol}_15m.parquet", [0, INTERVAL_MS])
-                tail_row = {
-                    "open_time": 2 * INTERVAL_MS, "open": 101.0, "high": 103.0,
-                    "low": 100.0, "close": 102.0, "volume": 5.0,
-                }
+                tail_ts = int(datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000)
                 write_timestamps(storage / "live_tail" / "2026-01-01" / "COIN00USDT_15m.parquet",
-                                 [2 * INTERVAL_MS])
+                                 [tail_ts])
                 report_path = root / "data_report.json"
                 report_path.write_text(json.dumps({"status": "DEGRADED"}), encoding="utf-8")
 
+                ephemeral_dir = root / "compute" / "ephemeral_tail"
+                ephemeral_ts = int(datetime(2026, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000)
+                write_timestamps(
+                    ephemeral_dir / "live_tail" / "2026-01-01" / "COIN00USDT_15m.parquet",
+                    [ephemeral_ts],
+                )
                 manifest = build_dataset_manifest(
                     storage, report_path, root / "manifest.json",
                     "workflow-sha", "engine-sha", "12345", "legacy-sha",
+                    ephemeral_dir,
                 )
                 self.assertEqual(manifest["symbols_count"], 27)
+                self.assertEqual(manifest["ephemeral_evidence_files_count"], 1)
+                self.assertEqual(manifest["ephemeral_evidence_rows_total"], 1)
+                self.assertEqual(len(manifest["ephemeral_evidence_sha256"]), 64)
                 self.assertEqual(manifest["baseline_files_count"], 27)
                 self.assertEqual(manifest["live_tail_files_count"], 1)
                 self.assertEqual(len(manifest["dataset_sha256"]), 64)
