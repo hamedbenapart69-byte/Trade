@@ -226,10 +226,12 @@ def calculate_lfs_v2(
     """محاسبهٔ پنج مؤلفه با وزن ثابت؛ وزن دادهٔ UNAVAILABLE حذف یا بازتوزیع نمی‌شود."""
     components: dict[str, dict[str, Any]] = {}
     api_status = {
-        "funding": funding_rate is not None,
+        "funding": _finite(funding_rate) is not None,
         "oi_1h": bool(_oi_points(oi_1h)),
         "oi_1d": bool(_oi_points(oi_1d)),
-        "long_short_ratio": long_short_ratio is not None,
+        "long_short_ratio": (
+            _finite(long_short_ratio) is not None and float(long_short_ratio) > 0
+        ),
     }
 
     # LFS1: توزیع تاریخی و مقدار جاری هر دو از کندل 1H محاسبه می‌شوند.
