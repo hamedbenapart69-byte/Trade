@@ -354,12 +354,21 @@ def publish_dashboard(
         incoming_time = _parse_utc(dashboard.get("generated_at_utc"), "INCOMING_REPORT_TIMESTAMP")
         if existing_time > incoming_time:
             raise ValueError("OLDER_REPORT_CANNOT_REPLACE_NEWER_DASHBOARD")
+        if existing_time == incoming_time:
+            existing_canonical = json.dumps(existing, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            incoming_canonical = json.dumps(dashboard, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+            if existing_canonical != incoming_canonical:
+                raise ValueError("SAME_TIMESTAMP_REPORT_CONFLICT")
 
     old_rows = _load_history(history_target)
     merged: dict[tuple[str, str], dict[str, str]] = {}
     for row in old_rows + _history_rows(dashboard):
         key = (row["generated_at_utc"], row["symbol"])
-        merged[key] = {field: row.get(field, "") for field in HISTORY_FIELDS}
+        normalized = {field: row.get(field, "") for field in HISTORY_FIELDS}
+        previous = merged.get(key)
+        if previous is not None and previous != normalized:
+            raise ValueError("HISTORY_KEY_CONFLICT")
+        merged[key] = normalized
     history = sorted(
         merged.values(),
         key=lambda row: (row["generated_at_utc"], row["symbol"]),
