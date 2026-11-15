@@ -118,18 +118,19 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_DIRECTION_INVALID")
     entry = _finite_number(row.get("entry"))
     stop = _finite_number(row.get("stop_loss"))
-    target = _finite_number(row.get("take_profit"))
+    target1 = _finite_number(row.get("take_profit_1"))
+    target2 = _finite_number(row.get("take_profit"))
     rr = _finite_number(row.get("rr"))
-    if entry is None or stop is None or target is None or rr is None or min(entry, stop, target) <= 0 or rr <= 0:
+    if any(value is None for value in (entry, stop, target1, target2, rr)) or min(entry, stop, target1, target2) <= 0 or rr <= 0:
         raise ValueError("REPORT_WATCHLIST_LEVELS_INVALID")
-    risk, reward = (
-        (entry - stop, target - entry)
+    risk, reward1, reward2 = (
+        (entry - stop, target1 - entry, target2 - entry)
         if direction == "BUY"
-        else (stop - entry, entry - target)
+        else (stop - entry, entry - target1, entry - target2)
     )
-    if risk <= 0 or reward <= 0:
+    if risk <= 0 or reward1 <= 0 or reward2 <= reward1:
         raise ValueError("REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID")
-    if abs(rr - reward / risk) > max(0.05, abs(rr) * 0.10):
+    if abs(rr - reward2 / risk) > max(0.05, abs(rr) * 0.10):
         raise ValueError("REPORT_WATCHLIST_RR_MISMATCH")
 
 
