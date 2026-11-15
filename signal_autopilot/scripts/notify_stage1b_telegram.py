@@ -16,7 +16,7 @@ from typing import Any
 SYMBOL_RE = re.compile(r"^[A-Z0-9]{2,30}$")
 MAX_REPORT_BYTES = 2_000_000
 MAX_MESSAGE_LENGTH = 3900
-MAX_REPORT_AGE = timedelta(hours=6)
+MAX_REPORT_AGE = timedelta(hours=4)
 MAX_FUTURE_SKEW = timedelta(minutes=5)
 EXPECTED_UNIVERSE_SIZE = 27
 
