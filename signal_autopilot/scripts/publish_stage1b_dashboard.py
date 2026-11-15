@@ -132,6 +132,10 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_LEVEL_DIRECTION_INVALID")
     if abs(rr - reward2 / risk) > max(0.05, abs(rr) * 0.10):
         raise ValueError("REPORT_WATCHLIST_RR_MISMATCH")
+    for field in ("hypothesis", "falsification"):
+        value = row.get(field)
+        if not isinstance(value, str) or value.strip().upper() in {"", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"}:
+            raise ValueError(f"REPORT_WATCHLIST_{field.upper()}_MISSING")
 
 
 def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
