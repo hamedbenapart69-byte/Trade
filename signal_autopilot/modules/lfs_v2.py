@@ -246,6 +246,7 @@ def calculate_lfs_v2(
     oi_1d: Any = None,
     long_short_ratio: float | None = None,
     as_of_time_ms: int | None = None,
+    funding_timestamp_ms: int | None = None,
     funding_received_at_ms: int | None = None,
     long_short_ratio_timestamp_ms: int | None = None,
 ) -> dict[str, Any]:
@@ -261,6 +262,7 @@ def calculate_lfs_v2(
         oi_1d_points = _fresh_oi_points(oi_1d, as_of_time_ms, 30 * 60 * 60 * 1000)
         funding_fresh = (
             _finite(funding_rate) is not None
+            and _timestamp_is_fresh(funding_timestamp_ms, as_of_time_ms, 5 * 60 * 1000)
             and _timestamp_is_fresh(funding_received_at_ms, as_of_time_ms, 5 * 60 * 1000)
         )
         ratio_fresh = (
@@ -302,6 +304,9 @@ def calculate_lfs_v2(
         components["LFS2"] = _component(
             funding_extreme_score(funding), WEIGHTS["LFS2"], "REAL", funding,
             threshold=FUNDING_EXTREME_RATE,
+            score_method="FIXED_REFERENCE_PROXY_NOT_HISTORICAL_PERCENTILE",
+            source_timestamp_ms=funding_timestamp_ms,
+            received_timestamp_ms=funding_received_at_ms,
         )
     else:
         funding = None
@@ -401,6 +406,7 @@ def calculate_lfs_v2(
             "lfs3_oi_current_change": "24H",
             "lfs5_oi_change": "24H_from_1H",
             "derivatives_as_of_time_ms": as_of_time_ms,
+            "funding_timestamp_ms": funding_timestamp_ms,
             "funding_received_at_ms": funding_received_at_ms,
             "long_short_ratio_timestamp_ms": long_short_ratio_timestamp_ms,
             "oi_1h_latest_timestamp_ms": oi_1h_points[-1][0] if oi_1h_points else None,
