@@ -125,8 +125,10 @@ def candidate_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     for row in payload["symbols"]:
         if row.get("mode") != "PRODUCTION":
             continue
-        if row.get("decision") != "WATCHLIST" or row.get("veto") != "PASS":
+        if row.get("decision") != "WATCHLIST":
             continue
+        if row.get("veto") != "PASS":
+            raise ValueError("WATCHLIST_VETO_NOT_PASS")
         direction = row.get("direction")
         if direction not in {"BUY", "SELL"}:
             raise ValueError("WATCHLIST_DIRECTION_INVALID")
