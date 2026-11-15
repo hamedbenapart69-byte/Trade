@@ -104,6 +104,7 @@ function render(report) {
   const rows = Array.isArray(report.signals) ? report.signals : [];
   const count = (decision) => rows.filter((item) => item.decision === decision).length;
   const dataGateStatus = report.data_gate_status || "NOT_REPORTED";
+  const reportStatus = report.report_status || "NORMAL";
   const generated = report.generated_at_utc ? new Date(report.generated_at_utc) : null;
   const generatedText = generated && !Number.isNaN(generated.getTime())
     ? generated.toLocaleString("fa-IR")
@@ -133,6 +134,9 @@ function render(report) {
     notices.push(staleReason + " تا انتشار گزارش تازه، به وضعیت‌های آن به‌عنوان اطلاعات زنده اتکا نکنید.");
   }
   if (dataGateStatus !== "PASS") notices.push("وضعیت دروازهٔ داده گزارش نشده یا PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
+  if (reportStatus === "MARKET_DATA_DEGRADED") {
+    notices.push("آخرین اجرای اسکن ناموفق بوده است؛ برای همهٔ نمادها فقط وضعیت MARKET_DATA_DEGRADED منتشر شده و هیچ قیمت یا سطح معاملاتی حدس زده نشده است. " + (report.failure_reason || ""));
+  }
   if (!calibrated) notices.push("کالیبراسیون احتمال برد انجام نشده است؛ Tier A و اطمینان عددی صادر نمی‌شود.");
   if (!evReady) notices.push("EV محاسبه نشده است؛ تا ثبت احتمال کالیبره و هزینهٔ واقعی، معاملهٔ اجرایی مجاز نیست.");
   if (count("NO_QUALIFIED_SETUP") === rows.length && rows.length) {
@@ -177,7 +181,9 @@ function render(report) {
           "<div>TP2: " + fmtPrice(item.take_profit) + "</div>" +
           "</div>"
         : "—";
-      const thesis = item.hypothesis || item.falsification
+      const hasThesis = (value) => typeof value === "string"
+        && !["", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"].includes(value.trim().toUpperCase());
+      const thesis = hasThesis(item.hypothesis) || hasThesis(item.falsification)
         ? '<details class="thesis-details"><summary>مشاهده</summary>' +
           "<div><strong>فرضیه:</strong> " + esc(item.hypothesis || "UNAVAILABLE") + "</div>" +
           "<div><strong>ابطال:</strong> " + esc(item.falsification || "UNAVAILABLE") + "</div>" +
@@ -243,6 +249,8 @@ async function loadReport() {
     const freshness = reportFreshness(report.generated_at_utc);
     if (!freshness.fresh) {
       setStatus("گزارش کهنه یا زمان نامعتبر", "bad");
+    } else if (report.report_status === "MARKET_DATA_DEGRADED") {
+      setStatus("گزارش: MARKET_DATA_DEGRADED", "bad");
     } else if (dataGateStatus === "PASS") {
       setStatus("داده: PASS", "ok");
     } else {
