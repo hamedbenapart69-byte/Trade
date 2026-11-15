@@ -63,9 +63,6 @@ jobs:
       - name: Validate report before claiming delivery
         env:
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_EXPECTED_CHANNEL_TITLE: ${{ secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE }}
         run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json --validate-only
 
       - name: Claim this scanner run before Telegram delivery
