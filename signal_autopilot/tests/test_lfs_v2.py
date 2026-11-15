@@ -195,6 +195,15 @@ class LFSV2UnitTests(unittest.TestCase):
         self.assertEqual(result["veto"], "LFS_INSUFFICIENT_COVERAGE")
         self.assertEqual(result["decision"], "NO_TRADE")
 
+    def test_api_status_rejects_nonfinite_funding_and_invalid_ratio(self):
+        result = calculate_lfs_v2(
+            "BTCUSDT", self.bars_15m, self.bars_1h,
+            funding_rate=float("nan"),
+            oi_1h=None, oi_1d=None, long_short_ratio=float("inf"),
+        )
+        self.assertFalse(result["api_status"]["funding"])
+        self.assertFalse(result["api_status"]["long_short_ratio"])
+
     def test_lfs_v2_bounded(self):
         rng = random.Random(17)
         for _ in range(100):
