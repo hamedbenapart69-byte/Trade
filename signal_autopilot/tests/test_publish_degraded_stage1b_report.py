@@ -28,6 +28,7 @@ class DegradedStage1BReportTests(unittest.TestCase):
         self.assertEqual(source["report_status"], "MARKET_DATA_DEGRADED")
         self.assertEqual(source["production_watchlist_count"], 0)
         self.assertEqual(source["research_candidate_count"], 0)
+        self.assertEqual(source["ev_status"], "NOT_CALCULATED")
         self.assertEqual(source["symbols_reported"], source["universe_count"])
         self.assertEqual(source["upstream_run_id"], "123456")
         self.assertEqual(source["upstream_conclusion"], "failure")
