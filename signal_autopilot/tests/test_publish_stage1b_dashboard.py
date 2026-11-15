@@ -97,6 +97,21 @@ class PublishStage1BDashboardTests(unittest.TestCase):
                 rows = list(reader)
             self.assertEqual(len(rows), 27)
 
+    def test_degraded_symbol_coverage_marks_entire_report_degraded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["symbols"][1]["decision"] = "MARKET_DATA_DEGRADED"
+            report["symbols"][1]["veto"] = "DATA_UNAVAILABLE"
+            report["symbols"][1]["reason"] = "UNAVAILABLE:provider_timeout"
+            report_path, universe_path = write_inputs(root, report, symbols)
+            publish_dashboard(report_path, universe_path, root)
+            dashboard = json.loads((root / "lrt15m_signals.json").read_text(encoding="utf-8"))
+            self.assertEqual(dashboard["report_status"], "MARKET_DATA_DEGRADED")
+            self.assertEqual(dashboard["data_gate_status"], "FAIL")
+            self.assertEqual(dashboard["market_data_degraded_count"], 1)
+            self.assertEqual(dashboard["signals"][1]["decision"], "MARKET_DATA_DEGRADED")
+
     def test_research_candidate_never_becomes_production_watchlist(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
