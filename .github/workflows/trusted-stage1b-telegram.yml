@@ -67,7 +67,23 @@ jobs:
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
         run: python signal_autopilot/scripts/notify_stage1b_telegram.py --report incoming/stage1_lrt_report.json --universe config/universe.json --validate-only
 
+      - name: Detect optional Telegram configuration
+        id: telegram-config
+        shell: bash
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_EXPECTED_CHANNEL_TITLE: ${{ secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE }}
+        run: |
+          if [[ -n "$TELEGRAM_TOKEN" && -n "$TELEGRAM_CHAT_ID" && -n "$TELEGRAM_EXPECTED_CHANNEL_TITLE" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "TELEGRAM_DELIVERY=SKIPPED_MISSING_CONFIGURATION"
+          fi
+
       - name: Verify Telegram destination before claiming delivery
+        if: steps.telegram-config.outputs.enabled == 'true'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -76,6 +92,7 @@ jobs:
 
       - name: Claim this scanner run before Telegram delivery
         id: claim
+        if: steps.telegram-config.outputs.enabled == 'true'
         shell: bash
         env:
           RUN_ID: ${{ github.event.workflow_run.id }}
