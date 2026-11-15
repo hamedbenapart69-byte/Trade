@@ -132,7 +132,7 @@ def build_signal(row: dict[str, Any], generated_at_utc: str) -> dict[str, Any]:
             side=side,
             stop_loss=round(stop, 10),
             take_profit=[round(target, 10) for target in targets],
-            reason=f"EMA20 {"بالاتر" if side == "BUY" else "پایین‌تر"} از EMA50 است و فاصله آن‌ها {spread:.4%} است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند." + (" قیمت ورود با زمان دریافت API ثبت شده و PROXY است." if ticker_source == "FETCH_TIME_PROXY" else ""),
+            reason=f"EMA20 {'بالاتر' if side == 'BUY' else 'پایین‌تر'} از EMA50 است و فاصله آن‌ها {spread:.4%} است؛ شرط حداقل 0.5% برقرار است. حدضرر و اهداف با ATR14 محاسبه شده‌اند." + (" قیمت ورود با زمان دریافت API ثبت شده و PROXY است." if ticker_source == "FETCH_TIME_PROXY" else ""),
             hypothesis=f"ادامه حرکت در جهت روند 1H؛ EMA20 {'بالای' if side == 'BUY' else 'پایین'} EMA50 و فاصله نسبی {spread:.4%} است.",
             falsification=f"بسته‌شدن کندل 1H {"پایین‌تر" if side == "BUY" else "بالاتر"} از EMA50 یا فعال‌شدن حدضرر {round(stop, 10)} فرضیه را باطل می‌کند.",
             chart_candles=candles[-70:],
