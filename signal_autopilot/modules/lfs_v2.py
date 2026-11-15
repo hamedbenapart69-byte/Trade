@@ -242,7 +242,6 @@ def calculate_lfs_v2(
     oi_1h: Any = None,
     oi_1d: Any = None,
     long_short_ratio: float | None = None,
-    *,
     as_of_time_ms: int | None = None,
     funding_received_at_ms: int | None = None,
     long_short_ratio_timestamp_ms: int | None = None,
