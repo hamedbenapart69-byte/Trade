@@ -53,7 +53,7 @@ class LiveOHLCVFetcher:
         self.client = httpx.Client(timeout=timeout, follow_redirects=True)
         self.exchanges: dict[str, Any] = {}
         self.market_cache: dict[str, dict[str, Any]] = {}
-        self.provider_names = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
+        self.provider_names = ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget")
 
     def close(self) -> None:
         self.client.close()
@@ -62,6 +62,21 @@ class LiveOHLCVFetcher:
                 exchange.close()
             except Exception:
                 LOG.exception("Exchange close failed: %s", getattr(exchange, "id", "unknown"))
+
+    @staticmethod
+    def _assert_fresh_closed_bars(
+        rows: list[dict[str, Any]], interval_ms: int, now_ms: int, label: str
+    ) -> None:
+        """Fail closed when the newest closed candle is stale or future-dated."""
+        if not rows:
+            raise ValueError(f"{label}_CANDLES_EMPTY")
+        latest_open = max(int(row["open_time"]) for row in rows)
+        expected_latest = (int(now_ms) // interval_ms) * interval_ms - interval_ms
+        lag_ms = expected_latest - latest_open
+        if lag_ms < 0:
+            raise ValueError(f"{label}_CANDLE_FUTURE_DATED:{latest_open}")
+        if lag_ms > interval_ms:
+            raise ValueError(f"{label}_CANDLES_STALE:lag_ms={lag_ms}")
 
     def _binance(self, symbol: str, now_ms: int) -> list[dict[str, Any]]:
         response = self.client.get(
@@ -85,7 +100,9 @@ class LiveOHLCVFetcher:
         result = list(deduped.values())
         if len(result) < MIN_BARS_FOR_ENGINE:
             raise ValueError(f"binance_history_short:{len(result)}")
-        return result[-self.limit:]
+        result = result[-self.limit:]
+        self._assert_fresh_closed_bars(result, INTERVAL_MS, now_ms, "15M")
+        return result
 
     def _exchange(self, provider: str):
         if provider in self.exchanges:
@@ -170,6 +187,7 @@ class LiveOHLCVFetcher:
                 # OHLCV عمومی CCXT، taker-buy volume را ارائه نمی‌کند؛ CVD جعل نمی‌شود.
                 "cvd_source": "UNAVAILABLE_NEUTRAL_PROXY",
             })
+        self._assert_fresh_closed_bars(rows, INTERVAL_MS, now_ms, "15M")
         return rows
 
     def _okx_candles(self, symbol: str, timeframe: str, limit: int, now_ms: int) -> list[dict[str, Any]]:
@@ -228,12 +246,14 @@ class LiveOHLCVFetcher:
         rows = [collected[key] for key in sorted(collected)]
         if len(rows) < limit:
             raise ValueError(f"okx_{timeframe}_history_short:{len(rows)}/{limit}")
-        return rows[-limit:]
+        rows = rows[-limit:]
+        self._assert_fresh_closed_bars(rows, interval_ms, now_ms, timeframe)
+        return rows
 
     def _ccxt_timeframe(self, symbol: str, timeframe: str, limit: int, now_ms: int) -> list[dict[str, Any]]:
         interval_ms = 3_600_000 if timeframe == "1h" else 900_000
         errors: list[str] = []
-        for provider in ("okx", "bybit", "kucoinfutures", "mexc", "bitget"):
+        for provider in ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget"):
             try:
                 exchange = self._exchange(provider)
                 market = self._find_market(exchange, symbol)
@@ -272,6 +292,7 @@ class LiveOHLCVFetcher:
                             "data_source": f"CCXT_{provider.upper()}_PUBLIC_OHLCV",
                             "cvd_source": "UNAVAILABLE_NEUTRAL_PROXY",
                         })
+                    self._assert_fresh_closed_bars(rows, interval_ms, now_ms, timeframe.upper())
                     return rows
                 errors.append(f"{provider}_history_short:{len(collected)}/{limit}")
             except Exception as exc:
