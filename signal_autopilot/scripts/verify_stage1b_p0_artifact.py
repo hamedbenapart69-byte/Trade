@@ -135,6 +135,11 @@ def validate_report_freshness(
     complete_count = 0
     fresh_count = 0
     for symbol in symbols:
+        if any(
+            timestamp + INTERVAL_MS > completed_ms + 60_000
+            for timestamp in timestamps_by_symbol.get(symbol, set())
+        ):
+            raise ValueError(f"DATASET_CONTAINS_FUTURE_CANDLE:{symbol}")
         actual = sorted(
             timestamp for timestamp in timestamps_by_symbol.get(symbol, set())
             if window_start_ms <= timestamp < closed_end_ms
@@ -372,6 +377,20 @@ def validate_artifact(
         timestamps = validate_rows(rows, symbol, "LIVE_TAIL", rel)
         if not timestamps:
             raise ValueError(f"EPHEMERAL_FILE_EMPTY:{rel_text}")
+        report_end_ms = _parse_utc_ms(
+            report.get("end_date_exclusive_utc"), "DATA_REPORT_WINDOW_END"
+        )
+        report_window_start_ms = report_end_ms - EXPECTED_ROWS * INTERVAL_MS
+        report_generated_ms = _parse_utc_ms(
+            report.get("generated_at_utc"), "DATA_REPORT_GENERATED_AT"
+        )
+        if any(
+            timestamp < report_window_start_ms
+            or timestamp >= report_end_ms
+            or timestamp + INTERVAL_MS > report_generated_ms + 60_000
+            for timestamp in timestamps
+        ):
+            raise ValueError(f"EPHEMERAL_CANDLE_OUTSIDE_REPORT_WINDOW:{rel_text}")
         if item.get("first_open_ms") != timestamps[0] or item.get("last_open_ms") != timestamps[-1]:
             raise ValueError(f"EPHEMERAL_TIMESTAMP_RANGE_MISMATCH:{rel_text}")
         if timestamps_by_symbol[symbol].intersection(timestamps):
