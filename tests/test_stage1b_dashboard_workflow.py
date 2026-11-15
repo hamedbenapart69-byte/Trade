@@ -34,6 +34,11 @@ class Stage1BDashboardWorkflowTests(unittest.TestCase):
         self.assertIn("/signals/lrt15m_history.csv", app)
         self.assertIn('report.data_gate_status || "NOT_REPORTED"', app)
         self.assertIn("NOT_CALIBRATED", app)
+        self.assertIn("TP1:", app)
+        self.assertIn("TP2:", app)
+        self.assertIn("فرضیه:", app)
+        self.assertIn("ابطال:", app)
+        self.assertIn("const fmtPrice", app)
 
     def test_dashboard_summary_does_not_call_watchlist_a_qualified_trade(self):
         app = APP.read_text(encoding="utf-8")
