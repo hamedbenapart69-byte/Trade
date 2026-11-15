@@ -11,6 +11,7 @@ from typing import Any
 
 from modules.chart_renderer_lrt15m import render_lrt15m_chart
 from modules.signal_tracker import SignalTracker
+from modules.lfs_v2 import LFS_V2_MIN_SCORE
 from modules.live_data_adapter import LiveOHLCVFetcher
 from modules.lrt15m_engine import (
     WATCHLIST_CONFLUENCE_THRESHOLD,
@@ -486,8 +487,8 @@ def main() -> int:
         for row in diagnostics
         if isinstance(row.get("lfs_score"), (int, float))
     ]
-    lfs_ge_030 = sum(score >= 0.30 for score in lfs_scores)
-    lfs_lt_030 = sum(score < 0.30 for score in lfs_scores)
+    lfs_ge_030 = sum(score >= LFS_V2_MIN_SCORE for score in lfs_scores)
+    lfs_lt_030 = sum(score < LFS_V2_MIN_SCORE for score in lfs_scores)
     histogram_bins = [
         (0.0, 0.1), (0.1, 0.2), (0.2, 0.3), (0.3, 0.4), (0.4, 0.5),
         (0.5, 0.6), (0.6, 0.7), (0.7, 0.8), (0.8, 0.9), (0.9, 1.0000001),
@@ -510,7 +511,7 @@ def main() -> int:
     symbols_with_3plus_confluence = set()
     for row in diagnostics:
         score = row.get("lfs_score")
-        if not isinstance(score, (int, float)) or float(score) < 0.30:
+        if not isinstance(score, (int, float)) or float(score) < LFS_V2_MIN_SCORE:
             continue
         options = row.get("direction_candidates") or [row]
         for option in options:
