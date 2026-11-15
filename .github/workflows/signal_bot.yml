@@ -85,7 +85,8 @@ jobs:
             tests.test_research_tracker \
             tests.test_telegram_channel_guard \
             tests.test_trusted_telegram_notifier \
-            tests.test_telegram_delivery_ledger -v
+            tests.test_telegram_delivery_ledger \
+            tests.test_publish_stage1b_dashboard -v
 
       - name: Restore persisted state snapshots
         run: |
