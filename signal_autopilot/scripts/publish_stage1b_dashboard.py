@@ -95,7 +95,7 @@ def _load_report(path: Path, expected: set[str], now: datetime) -> dict[str, Any
             continue
         candle_open = _parse_utc(row.get("last_closed_candle_utc"), "WATCHLIST_CANDLE_TIMESTAMP")
         candle_close = candle_open + CANDLE_INTERVAL
-        if candle_close > generated + MAX_FUTURE_SKEW:
+        if candle_close > generated:
             raise ValueError("WATCHLIST_CANDLE_NOT_CLOSED_AT_REPORT_TIME")
         if generated - candle_close > MAX_CLOSED_CANDLE_AGE:
             raise ValueError("WATCHLIST_CANDLE_STALE")
