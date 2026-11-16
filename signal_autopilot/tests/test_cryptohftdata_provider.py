@@ -71,6 +71,37 @@ def open_interest_table(symbol: str = "BTCUSDT") -> pa.Table:
     })
 
 
+def trades_table(symbol: str = "FILUSDT") -> pa.Table:
+    return pa.table({
+        "received_time": [1_794_787_200_000_000_000],
+        "event_time": [1_794_787_200_000],
+        "symbol": [symbol],
+        "trade_id": [123456],
+        "price": ["1.2345"],
+        "quantity": ["10.0"],
+        "trade_time": [1_794_787_200_000],
+        "is_buyer_maker": [False],
+        "order_type": ["LIMIT"],
+    })
+
+
+def liquidations_table(symbol: str = "FILUSDT") -> pa.Table:
+    return pa.table({
+        "received_time": [1_794_787_200_000_000_000],
+        "event_time": [1_794_787_200_000],
+        "symbol": [symbol],
+        "side": ["SELL"],
+        "order_type": ["LIMIT"],
+        "time_in_force": ["IOC"],
+        "quantity": ["10.0"],
+        "price": ["1.23"],
+        "average_price": ["1.234"],
+        "order_status": ["FILLED"],
+        "filled_quantity": ["10.0"],
+        "trade_time": [1_794_787_200_000],
+    })
+
+
 class ProviderPathAndTimeTests(unittest.TestCase):
     def test_latest_complete_hour_respects_publication_delay(self):
         now = datetime(2026, 11, 16, 14, 25, tzinfo=timezone.utc)
@@ -92,6 +123,12 @@ class ProviderPathAndTimeTests(unittest.TestCase):
             build_file_path("binance_futures", "BTCUSDT", "mark_price", hour),
             "binance_futures/2026-11-16/13/BTCUSDT_mark_price.parquet",
         )
+
+
+    def test_file_path_supports_trade_and_liquidation_data(self):
+        hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
+        self.assertTrue(build_file_path("binance_futures", "FILUSDT", "trades", hour).endswith("FILUSDT_trades.parquet"))
+        self.assertTrue(build_file_path("binance_futures", "FILUSDT", "liquidations", hour).endswith("FILUSDT_liquidations.parquet"))
 
     def test_rejects_unsupported_exchange_and_invalid_symbol(self):
         hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
@@ -137,6 +174,35 @@ class ProviderDownloadTests(unittest.TestCase):
         )
         self.assertEqual(snapshot.row_count, 1)
         self.assertIn("sum_open_interest_value", snapshot.columns)
+
+
+    def test_downloads_and_parses_trade_file_in_memory(self):
+        body = parquet_bytes(trades_table())
+        provider = CryptoHFTDataProvider(
+            min_request_interval_seconds=0,
+            opener=lambda _request, timeout=None: FakeResponse(body),
+        )
+        hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
+        snapshot = provider.download_hourly_parquet(
+            "binance_futures", "FILUSDT", "trades", hour
+        )
+        self.assertEqual(snapshot.row_count, 1)
+        self.assertIn("is_buyer_maker", snapshot.columns)
+        self.assertIn("trade_id", snapshot.columns)
+
+    def test_downloads_and_parses_liquidation_file_in_memory(self):
+        body = parquet_bytes(liquidations_table())
+        provider = CryptoHFTDataProvider(
+            min_request_interval_seconds=0,
+            opener=lambda _request, timeout=None: FakeResponse(body),
+        )
+        hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
+        snapshot = provider.download_hourly_parquet(
+            "binance_futures", "FILUSDT", "liquidations", hour
+        )
+        self.assertEqual(snapshot.row_count, 1)
+        self.assertIn("filled_quantity", snapshot.columns)
+        self.assertIn("side", snapshot.columns)
 
     def test_rejects_symbol_mismatch(self):
         body = parquet_bytes(mark_price_table("ETHUSDT"))
