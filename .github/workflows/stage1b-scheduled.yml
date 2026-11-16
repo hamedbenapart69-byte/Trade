@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/stage1b-scheduled.yml"
+      - "signal_autopilot/scripts/maintain_lrt15m_dataset.py"
   schedule:
     - cron: "0 */4 * * *"
   workflow_dispatch:

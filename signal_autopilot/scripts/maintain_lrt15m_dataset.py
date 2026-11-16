@@ -189,6 +189,48 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
 
         missing = chunk_expected.difference(collected)
         if missing:
+            bybit_fetch = getattr(downloader, "fetch_bybit_15m", None)
+            if callable(bybit_fetch):
+                try:
+                    bybit_rows, bybit_status = bybit_fetch(
+                        symbol, chunk_start, chunk_end, "linear"
+                    )
+                    statuses["bybit"] = bybit_status
+                    for ts, row in bybit_rows.items():
+                        ts = int(ts)
+                        if ts in missing and ts + INTERVAL_MS <= now_ms:
+                            enriched = dict(row)
+                            enriched["open_time"] = ts
+                            collected[ts] = enriched
+                except Exception as exc:
+                    statuses["bybit"] = f"ERROR:{type(exc).__name__}:{exc}"
+            else:
+                statuses["bybit"] = "UNAVAILABLE_METHOD"
+
+        missing = chunk_expected.difference(collected)
+        if missing:
+            binance_fetch = getattr(downloader, "fetch_binance_rest_15m", None)
+            if callable(binance_fetch):
+                try:
+                    binance_rows, binance_status = binance_fetch(
+                        symbol, chunk_start, chunk_end
+                    )
+                    statuses["binance"] = binance_status
+                    for ts, row in binance_rows.items():
+                        ts = int(ts)
+                        if ts in missing and ts + INTERVAL_MS <= now_ms:
+                            enriched = dict(row)
+                            enriched["open_time"] = ts
+                            enriched["data_source"] = "BINANCE_USDM_REST_15M"
+                            enriched["cvd_source"] = "BINANCE_FUTURES_TAKER_BUY_BASE"
+                            collected[ts] = enriched
+                except Exception as exc:
+                    statuses["binance"] = f"ERROR:{type(exc).__name__}:{exc}"
+            else:
+                statuses["binance"] = "UNAVAILABLE_METHOD"
+
+        missing = chunk_expected.difference(collected)
+        if missing:
             try:
                 mexc_rows, mexc_status = downloader.fetch_mexc_futures_15m(
                     symbol, chunk_start, chunk_end
@@ -474,6 +516,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
         "interval": "15m", "universe_count": 27,
         "symbols_complete": symbols_complete, "symbols_fresh": symbols_fresh,
         "symbols_processed": 27, "status": gate_status,
+        "signal_engine_executed": not data_only,
         "baseline_status": "PASS" if not base_missing else "DEGRADED",
         "storage_migration": {
             "migrated_symbols": migration["migrated_symbols"],
