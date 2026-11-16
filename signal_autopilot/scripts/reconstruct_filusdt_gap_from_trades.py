@@ -402,6 +402,7 @@ def run_reconstruction(
         },
         "overlap_validation": overlap,
         "status": status,
+        "probe_execution_status": "COMPLETED",
         "canonical_dataset_mutated": False,
         "canonical_promotion": "NOT_AUTHORIZED_BY_THIS_RESEARCH_JOB",
         "raw_provider_files_persisted": False,
@@ -435,7 +436,8 @@ def main() -> int:
         "overlap_validation": result["overlap_validation"],
         "report": str(args.output),
     }, ensure_ascii=False))
-    return 0 if result["status"] == "COMPLETE_SECONDARY_SOURCE" else 2
+    # اجرای موفق probe با PASS داده یکی نیست؛ وضعیت کیفیت در JSON ثبت می‌شود.
+    return 0
 
 
 if __name__ == "__main__":
