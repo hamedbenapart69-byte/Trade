@@ -6,13 +6,20 @@ on:
     paths:
       - "signal_autopilot/modules/research_tracker.py"
       - "signal_autopilot/tests/test_research_tracker.py"
+      - "signal_autopilot/modules/outcome_cost_model.py"
+      - "signal_autopilot/tests/test_outcome_cost_model.py"
       - ".github/workflows/research_outcome_tracker.yml"
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7 */4 * * *"
+  workflow_run:
+    workflows:
+      - "Persist Stage 1B Scanner State"
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: research-state-writes
@@ -20,8 +27,11 @@ concurrency:
 
 jobs:
   track-outcomes:
+    if: ${{ (github.event_name == 'workflow_run' && github.ref == 'refs/heads/main' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'schedule' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && github.ref == 'refs/heads/production-v1') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     steps:
       - name: Checkout tracker code
         uses: actions/checkout@v4
@@ -38,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: "pip"
           cache-dependency-path: signal_autopilot/requirements.txt
 
@@ -49,12 +59,61 @@ jobs:
 
       - name: Run tracker unit tests
         run: |
-          PYTHONPATH=signal_autopilot python -m unittest signal_autopilot.tests.test_research_tracker -v
+          PYTHONPATH=signal_autopilot python -m unittest signal_autopilot.tests.test_research_tracker signal_autopilot.tests.test_outcome_cost_model -v
 
       - name: Update research outcomes from public OHLCV only
         run: |
           python signal_autopilot/modules/research_tracker.py \
             --signals research-state/signal_autopilot/state/research_signals.json \
+            --outcomes research-state/signal_autopilot/state/research_outcomes.json
+
+      - name: Validate one-to-one signal outcome coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          signals_path = Path("research-state/signal_autopilot/state/research_signals.json")
+          outcomes_path = Path("research-state/signal_autopilot/state/research_outcomes.json")
+          signals_payload = json.loads(signals_path.read_text(encoding="utf-8"))
+          outcomes_payload = json.loads(outcomes_path.read_text(encoding="utf-8"))
+          signals = signals_payload.get("signals") if isinstance(signals_payload, dict) else None
+          outcomes = outcomes_payload.get("outcomes") if isinstance(outcomes_payload, dict) else None
+          if not isinstance(signals, list) or not isinstance(outcomes, list):
+              raise SystemExit("OUTCOME_COVERAGE_SCHEMA_INVALID")
+
+          signal_ids = [str(row.get("signal_id") or "") for row in signals if isinstance(row, dict)]
+          outcome_ids = [str(row.get("signal_id") or "") for row in outcomes if isinstance(row, dict)]
+          if len(signal_ids) != len(signals) or any(not value for value in signal_ids):
+              raise SystemExit("SOURCE_SIGNAL_ID_MISSING")
+          if len(outcome_ids) != len(outcomes) or any(not value for value in outcome_ids):
+              raise SystemExit("OUTCOME_SIGNAL_ID_MISSING")
+          if len(set(signal_ids)) != len(signal_ids):
+              raise SystemExit("SOURCE_SIGNAL_ID_DUPLICATE")
+          if len(set(outcome_ids)) != len(outcome_ids):
+              raise SystemExit("OUTCOME_SIGNAL_ID_DUPLICATE")
+          if set(signal_ids) != set(outcome_ids):
+              missing = sorted(set(signal_ids) - set(outcome_ids))
+              extra = sorted(set(outcome_ids) - set(signal_ids))
+              raise SystemExit(
+                  "OUTCOME_COVERAGE_MISMATCH:"
+                  f"missing={','.join(missing)}:extra={','.join(extra)}"
+              )
+
+          allowed = {
+              "ENTRY_PENDING_DATA", "DATA_UNAVAILABLE", "ACTIVE", "TP_HIT",
+              "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED", "ENTRY_INVALIDATED_GAP",
+          }
+          invalid = sorted({str(row.get("status")) for row in outcomes if row.get("status") not in allowed})
+          if invalid:
+              raise SystemExit("OUTCOME_STATUS_INVALID:" + ",".join(invalid))
+          print(f"OUTCOME_COVERAGE={len(outcome_ids)}/{len(signal_ids)}")
+          print("OUTCOME_COVERAGE_VALIDATED=PASS")
+          PY
+
+      - name: Annotate explicit fee-basis scenarios and unavailable cost components
+        run: |
+          PYTHONPATH=signal_autopilot python -m modules.outcome_cost_model \
             --outcomes research-state/signal_autopilot/state/research_outcomes.json
 
       - name: Upload outcome report
