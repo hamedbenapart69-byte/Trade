@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,51 @@ STATE_PATH = Path(__file__).resolve().parent / "state" / "open_signals.json"
 RESEARCH_STATE_PATH = Path(__file__).resolve().parent / "state" / "research_signals.json"
 
 LOG = logging.getLogger("trader_me.main")
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """نوشتن JSON به‌صورت اتمی؛ فایل قبلی تا پایان نوشتن سالم باقی می‌ماند."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2, allow_nan=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, path)
+        directory_fd = os.open(str(path.parent), os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except Exception:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def _validate_research_state_payload(payload: Any) -> dict[str, Any]:
+    if (
+        not isinstance(payload, dict)
+        or isinstance(payload.get("schema_version", 1), bool)
+        or payload.get("schema_version", 1) != 1
+        or not isinstance(payload.get("signals"), list)
+    ):
+        raise ValueError("research_state_schema_invalid")
+    seen_ids: set[str] = set()
+    for row in payload["signals"]:
+        if not isinstance(row, dict):
+            raise ValueError("research_state_record_invalid")
+        signal_id = str(row.get("signal_id") or "").strip()
+        if not signal_id or signal_id in seen_ids:
+            raise ValueError("research_state_signal_id_missing_or_duplicate")
+        seen_ids.add(signal_id)
+    return payload
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -338,7 +384,9 @@ def process_symbol(
 
 
 def load_research_state(path: Path) -> dict[str, Any]:
-    """خواندن مخزن مستقل داده‌های پژوهشی با اعتبارسنجی حداقلی ساختار."""
+    """خواندن مخزن پژوهشی با اعتبارسنجی فایل، schema و یکتایی شناسه‌ها."""
+    if path.is_symlink():
+        raise ValueError("research_state_file_invalid")
     if not path.exists():
         return {
             "schema_version": 1,
@@ -346,25 +394,24 @@ def load_research_state(path: Path) -> dict[str, Any]:
             "updated_at_utc": None,
             "signals": [],
         }
+    if not path.is_file() or path.stat().st_size > 10_000_000:
+        raise ValueError("research_state_file_invalid")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or not isinstance(payload.get("signals"), list):
-        raise ValueError("research_state_schema_invalid")
+    payload = _validate_research_state_payload(payload)
     payload.setdefault("schema_version", 1)
     payload.setdefault("stage_label", "STAGE_1_RESEARCH_UNCALIBRATED")
     return payload
 
 
 def save_research_state(path: Path, payload: dict[str, Any]) -> None:
-    """ذخیرهٔ اتمی داده‌های پژوهشی برای انتقال به شاخهٔ مستقل."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
-    payload["signal_count"] = len(payload.get("signals", []))
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+    """ذخیرهٔ اتمی state با یکتایی شناسه‌ها و fsync فایل/پوشه."""
+    normalized = dict(payload) if isinstance(payload, dict) else payload
+    normalized = _validate_research_state_payload(normalized)
+    if path.is_symlink():
+        raise ValueError("research_state_file_invalid")
+    normalized["updated_at_utc"] = datetime.now(timezone.utc).isoformat()
+    normalized["signal_count"] = len(normalized["signals"])
+    _atomic_write_json(path, normalized)
 
 
 def main() -> int:
@@ -634,7 +681,7 @@ def main() -> int:
         "decision_policy": "WATCHLIST_ONLY_NO_BUY_NOW_NO_SELL_NOW",
         "spread": {"value": 0.0008, "source": "PROXY", "limit": None},
     }
-    REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    _atomic_write_json(REPORT_PATH, report)
 
     summary = {
         "universe": len(symbols),
