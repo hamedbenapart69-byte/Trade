@@ -126,7 +126,7 @@ def inspect_gap(storage_dir: Path, report_path: Path, symbol: str = "FILUSDT") -
         ),
     }
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "symbol": symbol,
         "interval": "15m",
@@ -141,27 +141,38 @@ def inspect_gap(storage_dir: Path, report_path: Path, symbol: str = "FILUSDT") -
         },
         "storage_counts": {
             "base_rows": len(base_times),
-            "tail_rows": len(tail_times),
+            "persisted_tail_rows": len(tail_times),
             "combined_rows_including_duplicates": len(combined),
-            "unique_rows": len(unique_times),
+            "persisted_unique_rows": len(unique_times),
             "duplicate_timestamps": duplicates,
             "outside_window_timestamps": len(outside_window),
-            "missing_bars": len(missing),
-            "gap_ranges": len(gaps),
+            "persisted_missing_bars": len(persisted_missing),
+            "persisted_gap_ranges": len(persisted_gaps),
+            "inferred_ephemeral_rows": inferred_ephemeral_rows,
+            "inferred_ephemeral_gap_ranges": len(inferred_ephemeral_gaps),
+            "compute_input_missing_bars": compute_missing,
+            "compute_input_gap_ranges": len(compute_gaps),
         },
         "data_report_claims": {
-            "rows": item.get("rows"),
-            "tail_rows": item.get("tail_rows"),
+            "compute_input_rows": report_rows,
+            "compute_input_tail_rows": report_tail_rows,
             "expected_rows": item.get("expected_rows"),
-            "gap_count": item.get("gap_count"),
+            "compute_input_gap_count": item.get("gap_count"),
             "reason": item.get("reason"),
             "provider_status": item.get("provider_status"),
         },
         "consistency_checks": consistency,
-        "gap_ranges": gaps,
+        "persisted_gap_ranges": persisted_gaps,
+        "inferred_ephemeral_gap_ranges": inferred_ephemeral_gaps,
+        "compute_input_gap_ranges": compute_gaps,
         "archive_coverage_note": (
-            "CryptoHFTData archive begins 2025-06-28. Gaps after this date are date-eligible for a probe, "
-            "but provider symbol/file availability must be tested per hour."
+            "CryptoHFTData archive begins 2025-06-28. Remaining compute-input gaps after this date "
+            "are date-eligible for a provider probe, but symbol/file availability must be tested per hour."
+        ),
+        "interpretation": (
+            "The public market-data branch omits current-run ephemeral rows. The report's larger row/tail "
+            "counts are treated as compute-input counts only when their delta matches the inferred "
+            "unpersisted current-day gap; this is an inference from row-count and timestamp alignment."
         ),
         "raw_price_values_read": False,
         "raw_provider_data_downloaded": False,
@@ -179,8 +190,8 @@ def main() -> int:
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "symbol": result["symbol"],
-        "missing_bars": result["storage_counts"]["missing_bars"],
-        "gap_ranges": result["storage_counts"]["gap_ranges"],
+        "compute_input_missing_bars": result["storage_counts"]["compute_input_missing_bars"],
+        "compute_input_gap_ranges": result["storage_counts"]["compute_input_gap_ranges"],
         "consistency_checks": result["consistency_checks"],
         "report": str(args.output),
     }, ensure_ascii=False))
