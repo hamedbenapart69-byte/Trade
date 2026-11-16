@@ -1,0 +1,34 @@
+name: CryptoHFTData Internal Adapter Smoke V5
+on:
+  pull_request:
+    paths:
+      - "signal_autopilot/modules/cryptohftdata_provider.py"
+      - "signal_autopilot/tests/test_cryptohftdata_provider.py"
+      - "signal_autopilot/scripts/cryptohftdata_adapter_smoke.py"
+      - ".github/workflows/cryptohftdata-adapter-smoke-v5.yml"
+permissions:
+  contents: read
+jobs:
+  adapter-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Parquet reader
+        run: python -m pip install pyarrow
+      - name: Run offline adapter tests
+        run: |
+          python -m unittest discover -s signal_autopilot/tests -p "test_cryptohftdata_provider.py" -v
+          python -m py_compile signal_autopilot/modules/cryptohftdata_provider.py signal_autopilot/scripts/cryptohftdata_adapter_smoke.py
+      - name: Probe latest complete provider hour
+        run: python signal_autopilot/scripts/cryptohftdata_adapter_smoke.py
+      - name: Upload sanitized evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cryptohftdata-internal-adapter-smoke-v5
+          path: cryptohftdata-adapter-smoke.json
+          retention-days: 14
