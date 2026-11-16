@@ -47,7 +47,7 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2, allow_nan=False)
-            handle.write("\\n")
+            handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary_name, path)
@@ -385,6 +385,8 @@ def process_symbol(
 
 def load_research_state(path: Path) -> dict[str, Any]:
     """خواندن مخزن پژوهشی با اعتبارسنجی فایل، schema و یکتایی شناسه‌ها."""
+    if path.is_symlink():
+        raise ValueError("research_state_file_invalid")
     if not path.exists():
         return {
             "schema_version": 1,
@@ -392,7 +394,7 @@ def load_research_state(path: Path) -> dict[str, Any]:
             "updated_at_utc": None,
             "signals": [],
         }
-    if path.is_symlink() or not path.is_file() or path.stat().st_size > 10_000_000:
+    if not path.is_file() or path.stat().st_size > 10_000_000:
         raise ValueError("research_state_file_invalid")
     payload = json.loads(path.read_text(encoding="utf-8"))
     payload = _validate_research_state_payload(payload)
