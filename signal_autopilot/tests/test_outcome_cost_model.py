@@ -30,6 +30,19 @@ def closed_outcome(**overrides):
 
 
 class OutcomeCostModelTests(unittest.TestCase):
+    def test_ambiguous_both_touched_is_terminal_not_pending(self):
+        row = annotate_outcome_costs(closed_outcome(
+            status="AMBIGUOUS_BOTH_TOUCHED",
+            exit_price=None,
+            pnl_pct_raw=None,
+        ))
+        costs = row["cost_accounting"]
+        self.assertEqual(costs["status"], "TERMINAL_AMBIGUOUS_EXIT")
+        self.assertEqual(costs["gross_return_pct"], "UNAVAILABLE")
+        self.assertEqual(costs["fee"]["status"], "UNAVAILABLE")
+        self.assertEqual(costs["net_return_pct"], "UNAVAILABLE")
+        self.assertEqual(row["net_pnl_pct"], "UNAVAILABLE")
+
     def test_closed_trade_exposes_fee_basis_scenarios_but_never_full_net_label(self):
         row = annotate_outcome_costs(closed_outcome())
         costs = row["cost_accounting"]
