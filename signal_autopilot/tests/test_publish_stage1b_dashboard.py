@@ -290,7 +290,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report, symbols = make_report()
-            report["symbols"][0]["lfs_score"] = 0.65
+            report["symbols"][0]["lfs_score"] = 0.25
             report_path, universe_path = write_inputs(root, report, symbols)
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_GATE_MISMATCH"):
                 publish_dashboard(report_path, universe_path, root)
