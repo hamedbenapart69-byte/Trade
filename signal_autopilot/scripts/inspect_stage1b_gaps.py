@@ -70,12 +70,19 @@ def inspect_gap(storage_dir: Path, report_path: Path, symbol: str = "FILUSDT") -
         tail_times.extend(_read_open_times(path))
 
     combined = base_times + tail_times
-    unique_times = sorted(set(combined))
+    all_unique_times = sorted(set(combined))
+    unique_times = [
+        timestamp for timestamp in all_unique_times
+        if first_ms <= timestamp <= last_ms
+    ]
     expected = list(range(first_ms, last_ms + INTERVAL_MS, INTERVAL_MS))
     actual_set = set(unique_times)
     missing = [timestamp for timestamp in expected if timestamp not in actual_set]
-    outside_window = [timestamp for timestamp in unique_times if timestamp < first_ms or timestamp > last_ms]
-    duplicates = len(combined) - len(actual_set)
+    outside_window = [
+        timestamp for timestamp in all_unique_times
+        if timestamp < first_ms or timestamp > last_ms
+    ]
+    duplicates = len(combined) - len(all_unique_times)
     gaps = group_missing_timestamps(missing)
 
     consistency = {
