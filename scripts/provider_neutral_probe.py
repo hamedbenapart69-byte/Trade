@@ -78,8 +78,21 @@ def request_probe(provider: str, category: str, url: str, binary: bool = False) 
                 if len(body) > MAX_BODY_BYTES:
                     result["status"] = "BODY_TOO_LARGE"
                 elif binary:
-                    result["status"] = "PASS" if body.startswith(b"PAR1") else "SCHEMA_UNVERIFIED"
-                    result["schema_hint"] = "parquet_magic_valid" if body.startswith(b"PAR1") else "not_parquet_magic"
+                    if not body.startswith(b"PAR1"):
+                        result["status"] = "SCHEMA_UNVERIFIED"
+                        result["schema_hint"] = "not_parquet_magic"
+                    else:
+                        try:
+                            import pyarrow.parquet as pq
+                            parquet = pq.ParquetFile(io.BytesIO(body))
+                            result["status"] = "PASS"
+                            result["schema_hint"] = "parquet_schema_valid"
+                            result["parquet_rows"] = parquet.metadata.num_rows
+                            result["parquet_columns"] = parquet.schema_arrow.names
+                        except Exception as exc:
+                            result["status"] = "PARQUET_PARSE_ERROR"
+                            result["schema_hint"] = "parquet_magic_valid_but_metadata_unreadable"
+                            result["error"] = type(exc).__name__
                 else:
                     try:
                         payload = json.loads(body.decode("utf-8"))
