@@ -115,7 +115,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             publish_dashboard(report_path, universe_path, root)
             dashboard = json.loads((root / "lrt15m_signals.json").read_text(encoding="utf-8"))
             self.assertEqual(dashboard["report_status"], "MARKET_DATA_DEGRADED")
-            self.assertEqual(dashboard["data_gate_status"], "FAIL")
+            self.assertEqual(dashboard["data_gate_status"], "DEGRADED")
             self.assertEqual(dashboard["market_data_degraded_count"], 1)
             self.assertEqual(dashboard["signals"][1]["decision"], "MARKET_DATA_DEGRADED")
 
