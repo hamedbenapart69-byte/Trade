@@ -117,6 +117,7 @@ def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str
         "na_order_type_rows": na_rows,
         "invalid_or_nonpositive_rows": invalid_rows,
         "valid_trade_rows": sum(item["trade_count"] for item in candles.values()),
+        "event_time_mismatch_rows": event_time_mismatch_rows,
         "candles_built": len(candles),
     }
 
