@@ -1,9 +1,9 @@
 """Cost-coverage annotations for Stage 1 research outcomes.
 
 All rates in this module are percentage points of notional return, not leveraged ROI.
-The configured 0.04% per-fill fee is a PROXY assumption from the project cost guard.
-Unknown execution costs remain UNAVAILABLE; this module never labels fee-only return
-as fully net performance.
+The project specifies a 0.04% reference fee but does not unambiguously state whether
+it is per fill or round trip. Both interpretations are exposed as PROXY scenarios.
+Unknown execution costs remain UNAVAILABLE; no scenario is labeled fully net performance.
 """
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-FEE_RATE_PER_FILL_PCT = 0.04
-FEE_MODEL = "PROXY_FIXED_0.04_PERCENT_PER_FILL"
+FEE_REFERENCE_RATE_PCT = 0.04
+FEE_MODEL = "PROXY_FEE_BASIS_SENSITIVITY"
 CLOSED_FILLED_STATUSES = {"TP_HIT", "SL_HIT", "EXPIRED"}
 
 
@@ -82,27 +82,36 @@ def annotate_outcome_costs(outcome: dict[str, Any]) -> dict[str, Any]:
         }
         return result
 
-    fills = 2
-    fee_proxy = round(FEE_RATE_PER_FILL_PCT * fills, 8)
+    # منبع فقط نرخ مرجع ۰٫۰۴٪ را تعیین کرده؛ مبنای هر Fill یا Round-trip مشخص نیست.
+    # بنابراین دو سناریو را نشان می‌دهیم و هیچ‌کدام را هزینهٔ واقعی فرض نمی‌کنیم.
+    one_way_reference = FEE_REFERENCE_RATE_PCT
+    two_fill_reference = round(FEE_REFERENCE_RATE_PCT * 2, 8)
     result["cost_accounting"] = {
-        "status": "PARTIAL_PROXY",
+        "status": "PROXY_BASIS_UNRESOLVED",
         "gross_return_pct": round(gross, 8),
         "fee": {
-            "status": "PROXY",
+            "status": "PROXY_SCENARIOS_ONLY",
             "model": FEE_MODEL,
-            "rate_pct_per_fill": FEE_RATE_PER_FILL_PCT,
-            "fill_count": fills,
-            "total_pct": fee_proxy,
+            "reference_rate_pct": FEE_REFERENCE_RATE_PCT,
+            "basis": "UNRESOLVED_PER_FILL_VS_ROUND_TRIP",
+            "round_trip_total_interpretation": {
+                "fee_pct": one_way_reference,
+                "after_fee_only_pct": round(gross - one_way_reference, 8),
+            },
+            "per_fill_interpretation": {
+                "fill_count": 2,
+                "fee_pct": two_fill_reference,
+                "after_fee_only_pct": round(gross - two_fill_reference, 8),
+            },
         },
         "spread": {"status": "UNAVAILABLE"},
         "slippage": {"status": "UNAVAILABLE"},
         "funding": {"status": "UNAVAILABLE"},
         "market_impact": {"status": "UNAVAILABLE"},
-        "net_after_fee_only_pct": round(gross - fee_proxy, 8),
         "net_return_pct": "UNAVAILABLE",
         "net_ev": "NOT_CALCULATED",
-        "unavailable_components": ["spread", "slippage", "funding", "market_impact"],
-        "warning": "FEE_ONLY_PROXY_IS_NOT_FULLY_NET_PERFORMANCE",
+        "unavailable_components": ["fee_basis", "spread", "slippage", "funding", "market_impact"],
+        "warning": "FEE_SCENARIOS_ARE_NOT_OBSERVED_COSTS_OR_FULLY_NET_PERFORMANCE",
     }
     # Preserve legacy fields as UNAVAILABLE until every required cost is observed.
     result["fee_pct"] = "UNAVAILABLE"
@@ -115,11 +124,12 @@ def annotate_payload(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(payload, dict) or not isinstance(payload.get("outcomes"), list):
         raise ValueError("INVALID_OUTCOME_PAYLOAD_SCHEMA")
     updated = dict(payload)
-    updated["outcomes"] = [
-        annotate_outcome_costs(row) if isinstance(row, dict) else
-        (_ for _ in ()).throw(ValueError("INVALID_OUTCOME_ROW"))
-        for row in payload["outcomes"]
-    ]
+    rows = []
+    for row in payload["outcomes"]:
+        if not isinstance(row, dict):
+            raise ValueError("INVALID_OUTCOME_ROW")
+        rows.append(annotate_outcome_costs(row))
+    updated["outcomes"] = rows
     updated["cost_accounting_schema_version"] = 1
     updated["cost_accounting_model"] = FEE_MODEL
     return updated
