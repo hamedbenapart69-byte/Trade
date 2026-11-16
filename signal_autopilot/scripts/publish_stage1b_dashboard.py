@@ -186,6 +186,28 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
             raise ValueError(f"REPORT_WATCHLIST_{field.upper()}_MISSING")
 
 
+def _dashboard_reason(source_row: dict[str, Any], decision: str) -> str:
+    """Expose the source veto or an explicit non-production reason; never invent a trade rationale."""
+    if (
+        source_row.get("mode") == "PRODUCTION"
+        and source_row.get("decision") == "WATCHLIST"
+        and decision == "NO_QUALIFIED_SETUP"
+    ):
+        return "PROXY_COMPONENTS_NOT_PRODUCTION_QUALIFIED"
+    if source_row.get("mode") == "RESEARCH" or source_row.get("decision") == "RESEARCH_WATCHLIST":
+        return "RESEARCH_ONLY_NOT_PRODUCTION_QUALIFIED"
+    reason = source_row.get("reason")
+    if isinstance(reason, str) and reason.strip():
+        return reason
+    veto = source_row.get("veto")
+    if isinstance(veto, str) and veto not in {"", "PASS"}:
+        return veto
+    lfs_veto = source_row.get("lfs_veto")
+    if isinstance(lfs_veto, str) and lfs_veto not in {"", "PASS"}:
+        return lfs_veto
+    return "NO_QUALIFIED_LRT15M_SETUP"
+
+
 def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
     source_rows = source["symbols"]
     declared_candidates = source.get("production_watchlist_count")
@@ -222,13 +244,7 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "mode": source_row.get("mode") or "UNAVAILABLE",
             "direction": source_row.get("direction"),
             "veto": source_row.get("veto") or "UNAVAILABLE",
-            "reason": (
-                "PROXY_COMPONENTS_NOT_PRODUCTION_QUALIFIED"
-                if source_row.get("mode") == "PRODUCTION"
-                and source_row.get("decision") == "WATCHLIST"
-                and decision == "NO_QUALIFIED_SETUP"
-                else source_row.get("reason") or "UNAVAILABLE"
-            ),
+            "reason": _dashboard_reason(source_row, decision),
             "higher_timeframe_bias": {
                 "4h_kumo": bias.get("4h_kumo", "UNAVAILABLE"),
                 "1h_kijun": bias.get("1h_kijun", "UNAVAILABLE"),
