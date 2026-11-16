@@ -30,7 +30,7 @@ def closed_outcome(**overrides):
 
 
 class OutcomeCostModelTests(unittest.TestCase):
-    def test_closed_trade_gets_fee_only_proxy_but_never_full_net_label(self):
+    def test_closed_trade_exposes_fee_basis_scenarios_but_never_full_net_label(self):
         row = annotate_outcome_costs(closed_outcome())
         costs = row["cost_accounting"]
         self.assertEqual(costs["status"], "PROXY_BASIS_UNRESOLVED")
@@ -41,7 +41,6 @@ class OutcomeCostModelTests(unittest.TestCase):
         self.assertAlmostEqual(costs["fee"]["round_trip_total_interpretation"]["after_fee_only_pct"], 1.96)
         self.assertAlmostEqual(costs["fee"]["per_fill_interpretation"]["fee_pct"], 0.08)
         self.assertAlmostEqual(costs["fee"]["per_fill_interpretation"]["after_fee_only_pct"], 1.92)
-        self.assertEqual(costs["net_return_pct"], "UNAVAILABLE")
         self.assertEqual(costs["net_return_pct"], "UNAVAILABLE")
         self.assertEqual(row["net_pnl_pct"], "UNAVAILABLE")
         self.assertEqual(row["fee_pct"], "UNAVAILABLE")
