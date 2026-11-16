@@ -204,7 +204,8 @@ def validate_archive(storage_dir: Path, report_path: Path, output_path: Path | N
             "No values are merged into the canonical dataset by this research job.",
         ],
     }
-    output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if output_path is not None:
+        output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
     return result
 
 
