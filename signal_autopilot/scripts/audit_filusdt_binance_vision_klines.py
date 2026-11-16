@@ -133,6 +133,15 @@ def validate_archive(storage_dir: Path, report_path: Path, output_path: Path | N
         daily_reports.append(daily)
 
     missing = sorted(expected.difference(all_rows))
+    parseable_candles = 0
+    invalid_reference_values: Counter[str] = Counter()
+    for timestamp in expected.intersection(all_rows):
+        row = all_rows[timestamp]
+        if all(_decimal(row.get(field)) is not None for field in FIELDS):
+            parseable_candles += 1
+        for field in FIELDS:
+            if _decimal(row.get(field)) is None:
+                invalid_reference_values[field] += 1
     comparisons: dict[str, list[float]] = {field: [] for field in FIELDS}
     exact_candles = 0
     compared_candles = 0
@@ -176,7 +185,7 @@ def validate_archive(storage_dir: Path, report_path: Path, output_path: Path | N
             {"first_open_utc": datetime.fromtimestamp(ts / 1000, timezone.utc).isoformat()}
             for ts in missing[:20]
         ],
-        "all_five_fields_parseable": len(expected) - len(missing),
+        "all_five_fields_parseable": parseable_candles,\n        "invalid_reference_values": dict(invalid_reference_values),
         "trade_reconstruction_comparison": {
             "compared_candles": compared_candles,
             "exact_ohlcv_candles": exact_candles,
