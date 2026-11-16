@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -17,9 +18,14 @@ from signal_autopilot.modules.cryptohftdata_provider import (
     latest_complete_hour,
 )
 
-TARGET_SYMBOLS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT")
-DATA_TYPES = ("mark_price", "open_interest")
 EXCHANGE_ID = "binance_futures"
+TARGETS_BY_TYPE = {
+    "mark_price": ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT"),
+    "open_interest": ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT"),
+    "trades": ("FILUSDT", "SOLUSDT"),
+    "liquidations": ("FILUSDT",),
+}
+CORE_TYPES = frozenset({"mark_price", "open_interest"})
 
 
 def _range(table, column_name: str) -> dict[str, int] | None:
@@ -35,6 +41,17 @@ def _range(table, column_name: str) -> dict[str, int] | None:
     return {"min_raw": min(values), "max_raw": max(values)}
 
 
+def _positive_count(values: list[Any]) -> int:
+    count = 0
+    for value in values:
+        try:
+            if value is not None and float(value) > 0:
+                count += 1
+        except (TypeError, ValueError):
+            continue
+    return count
+
+
 def _snapshot_report(snapshot) -> dict[str, Any]:
     table = snapshot.table
     required = {
@@ -46,18 +63,28 @@ def _snapshot_report(snapshot) -> dict[str, Any]:
             "received_time", "symbol", "sum_open_interest",
             "sum_open_interest_value", "timestamp",
         ),
+        "trades": (
+            "received_time", "event_time", "symbol", "trade_id",
+            "price", "quantity", "trade_time", "is_buyer_maker", "order_type",
+        ),
+        "liquidations": (
+            "received_time", "event_time", "symbol", "side", "order_type",
+            "time_in_force", "quantity", "price", "average_price",
+            "order_status", "filled_quantity", "trade_time",
+        ),
     }[snapshot.data_type]
     symbols = sorted({
         str(value).upper()
         for value in table.column("symbol").to_pylist()
         if value is not None
     })
-    timestamp_columns = (
-        ("event_time", "received_time", "next_funding_time")
-        if snapshot.data_type == "mark_price"
-        else ("timestamp", "received_time")
-    )
-    return {
+    timestamp_columns = {
+        "mark_price": ("event_time", "received_time", "next_funding_time"),
+        "open_interest": ("timestamp", "received_time"),
+        "trades": ("event_time", "trade_time", "received_time"),
+        "liquidations": ("event_time", "trade_time", "received_time"),
+    }[snapshot.data_type]
+    report = {
         "provider": snapshot.provider,
         "exchange_id": snapshot.exchange_id,
         "symbol": snapshot.symbol,
@@ -77,6 +104,42 @@ def _snapshot_report(snapshot) -> dict[str, Any]:
         "symbol_match": symbols == [snapshot.symbol],
         "raw_file_persisted": False,
     }
+    if snapshot.data_type == "trades":
+        order_types = table.column("order_type").to_pylist()
+        trade_ids = [
+            int(value) for value in table.column("trade_id").to_pylist()
+            if value is not None
+        ]
+        unique_ids = sorted(set(trade_ids))
+        report["trade_quality"] = {
+            "order_type_counts": dict(Counter(str(x) for x in order_types)),
+            "na_order_type_rows": sum(1 for x in order_types if str(x) == "NA"),
+            "positive_price_rows": _positive_count(table.column("price").to_pylist()),
+            "positive_quantity_rows": _positive_count(table.column("quantity").to_pylist()),
+            "trade_id_rows": len(trade_ids),
+            "unique_trade_ids": len(unique_ids),
+            "duplicate_trade_ids": len(trade_ids) - len(unique_ids),
+            "trade_id_gaps_inside_file": sum(
+                1 for left, right in zip(unique_ids, unique_ids[1:])
+                if right - left > 1
+            ),
+            "is_buyer_maker_counts": {
+                str(k): v for k, v in Counter(
+                    str(x) for x in table.column("is_buyer_maker").to_pylist()
+                ).items()
+            },
+        }
+    elif snapshot.data_type == "liquidations":
+        report["liquidation_quality"] = {
+            "side_counts": {
+                str(k): v for k, v in Counter(
+                    str(x) for x in table.column("side").to_pylist()
+                ).items()
+            },
+            "coverage_label": "SAMPLED_LOWER_BOUND",
+            "note": "Provider documents Binance force-order liquidation events as sampled, not a complete liquidation tape.",
+        }
+    return report
 
 
 def run() -> dict[str, Any]:
@@ -84,18 +147,19 @@ def run() -> dict[str, Any]:
     hour_start = latest_complete_hour(started)
     provider = CryptoHFTDataProvider(
         api_key=None,
-        timeout_seconds=20,
-        max_file_bytes=16 * 1024 * 1024,
+        timeout_seconds=25,
+        max_file_bytes=32 * 1024 * 1024,
         min_request_interval_seconds=1.05,
     )
     report: dict[str, Any] = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at_utc": started.isoformat(),
         "mode": "READ_ONLY_INTERNAL_PROCESSING",
         "exchange_id": EXCHANGE_ID,
         "hour_start_utc": hour_start.isoformat(),
-        "target_symbols": list(TARGET_SYMBOLS),
-        "data_types": list(DATA_TYPES),
+        "targets_by_type": {
+            key: list(value) for key, value in TARGETS_BY_TYPE.items()
+        },
         "raw_data_persisted": False,
         "repository_visibility": "public",
         "snapshots": [],
@@ -104,17 +168,17 @@ def run() -> dict[str, Any]:
     }
 
     discovered: dict[str, set[str]] = {}
-    for data_type in DATA_TYPES:
+    for data_type, targets in TARGETS_BY_TYPE.items():
         try:
             symbols = set(provider.discover_symbols(EXCHANGE_ID, data_type))
             discovered[data_type] = symbols
             report["discovery"][data_type] = {
                 "count": len(symbols),
                 "target_symbols_present": [
-                    symbol for symbol in TARGET_SYMBOLS if symbol in symbols
+                    symbol for symbol in targets if symbol in symbols
                 ],
                 "missing_target_symbols": [
-                    symbol for symbol in TARGET_SYMBOLS if symbol not in symbols
+                    symbol for symbol in targets if symbol not in symbols
                 ],
             }
         except Exception as exc:
@@ -126,8 +190,8 @@ def run() -> dict[str, Any]:
                 "detail": str(exc)[:200],
             })
 
-    for symbol in TARGET_SYMBOLS:
-        for data_type in DATA_TYPES:
+    for data_type, targets in TARGETS_BY_TYPE.items():
+        for symbol in targets:
             if symbol not in discovered.get(data_type, set()):
                 report["snapshots"].append({
                     "symbol": symbol,
@@ -153,13 +217,28 @@ def run() -> dict[str, Any]:
                     "raw_file_persisted": False,
                 })
 
-    passed = sum(1 for item in report["snapshots"] if item.get("status") == "PASS")
-    expected = len(TARGET_SYMBOLS) * len(DATA_TYPES)
-    report["passed"] = passed
-    report["expected"] = expected
-    report["status"] = "PASS" if passed == expected else "DEGRADED"
+    core_rows = [
+        item for item in report["snapshots"]
+        if item.get("data_type") in CORE_TYPES
+    ]
+    optional_rows = [
+        item for item in report["snapshots"]
+        if item.get("data_type") not in CORE_TYPES
+    ]
+    core_passed = sum(1 for item in core_rows if item.get("status") == "PASS")
+    optional_passed = sum(1 for item in optional_rows if item.get("status") == "PASS")
+    core_expected = sum(len(TARGETS_BY_TYPE[k]) for k in CORE_TYPES)
+    report["core_passed"] = core_passed
+    report["core_expected"] = core_expected
+    report["optional_passed"] = optional_passed
+    report["optional_expected"] = len(optional_rows)
+    report["optional_status"] = (
+        "PASS" if optional_rows and optional_passed == len(optional_rows)
+        else "PARTIAL" if optional_rows else "NOT_TESTED"
+    )
+    report["status"] = "PASS" if core_passed == core_expected else "DEGRADED"
     report["interpretation"] = (
-        "Schema and row metadata only; not proof of full continuity, semantic correctness, "
+        "Schema and bounded metadata only; not proof of full continuity, semantic correctness, "
         "two-year history, signal value, or Stage 1 acceptance."
     )
     return report
@@ -174,8 +253,11 @@ def main() -> int:
     )
     print(json.dumps({
         "status": report["status"],
-        "passed": report["passed"],
-        "expected": report["expected"],
+        "core_passed": report["core_passed"],
+        "core_expected": report["core_expected"],
+        "optional_status": report["optional_status"],
+        "optional_passed": report["optional_passed"],
+        "optional_expected": report["optional_expected"],
         "hour_start_utc": report["hour_start_utc"],
         "report": str(output),
     }, ensure_ascii=False))
