@@ -56,6 +56,7 @@ class GapAuditTests(unittest.TestCase):
                     "tail_rows": 3,
                     "expected_rows": 8,
                     "gap_count": 1,
+                    "provider_status": {"received_bars": "3", "missing_bars": "1"},
                 }],
             }), encoding="utf-8")
 
@@ -94,7 +95,11 @@ class GapAuditTests(unittest.TestCase):
                     "expected_rows": 8,
                     "gap_count": 1,
                     "reason": "BASELINE_MISSING_OR_INCOMPLETE",
-                    "provider_status": {"mexc": "MEXC_CONTRACT_NOT_LISTED"},
+                    "provider_status": {
+                        "received_bars": "2",
+                        "missing_bars": "2",
+                        "mexc": "MEXC_CONTRACT_NOT_LISTED",
+                    },
                 }],
             }), encoding="utf-8")
 
