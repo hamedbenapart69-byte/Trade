@@ -79,6 +79,14 @@ Its known-gaps page is material:
 
 Therefore, CryptoHFTData is a **high-priority independent archive candidate**, not an unquestioned source of truth. Use it for cross-source validation and carefully bounded backfill, retain venue and timestamp provenance, and do not mark a symbol complete until per-file timestamps, sequence/gap checks, row semantics and cross-source consistency pass.
 
+## Licence boundary and repository visibility
+
+The `Trade` repository is public. CryptoHFTData's official terms (updated 2026-10-06) allow internal research and derived signals/features, but prohibit raw-data redistribution, republishing and embedding the data in a downstream feed or product. They permit derived outputs only when the raw data cannot be reconstructed.
+
+The current probe stores only sanitized metadata in the workflow artifact. Any future adapter must process raw Parquet in the ephemeral runner and must not write the downloaded files to the public `market-data` branch, public workflow artifacts, Pages or Telegram. Only non-reconstructable derived features, quality summaries, provenance and final signals may persist. This is a hard implementation requirement, not an optional optimization.
+
+Official terms: https://www.cryptohftdata.com/terms
+
 ## Related source documents
 
 - `docs/USER-DECISIONS-AND-PROVIDER-POLICY-2026-11-16.md`
