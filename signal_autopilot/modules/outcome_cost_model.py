@@ -158,9 +158,10 @@ def main() -> int:
     parser.add_argument("--outcomes", type=Path, required=True)
     args = parser.parse_args()
     payload = json.loads(args.outcomes.read_text(encoding="utf-8"))
-    write_payload(args.outcomes, annotate_payload(payload))
+    updated = annotate_payload(payload)
+    write_payload(args.outcomes, updated)
     summary = {}
-    for row in payload["outcomes"]:
+    for row in updated["outcomes"]:
         state = row.get("cost_accounting", {}).get("status", "UNKNOWN")
         summary[state] = summary.get(state, 0) + 1
     print("OUTCOME_COST_ACCOUNTING " + json.dumps(summary, sort_keys=True))
