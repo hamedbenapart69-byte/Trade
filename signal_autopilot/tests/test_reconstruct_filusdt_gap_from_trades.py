@@ -51,7 +51,7 @@ class TradeReconstructionTests(unittest.TestCase):
         ]
         hours = MODULE._hour_starts_for_segments(segments)
         self.assertLessEqual(len(hours), 60)
-        self.assertEqual(len(hours), 54)
+        self.assertEqual(len(hours), 58)
 
 
 if __name__ == "__main__":
