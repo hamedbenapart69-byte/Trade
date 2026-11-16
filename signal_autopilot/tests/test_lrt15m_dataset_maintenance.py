@@ -83,6 +83,39 @@ class TailCollectorTests(unittest.TestCase):
         self.assertEqual(status["missing_bars"], "0")
         self.assertNotIn(end, bars)
 
+    def test_binance_usdm_fallback_fills_remaining_closed_bars(self):
+        start = 98 * INTERVAL_MS
+        end = 100 * INTERVAL_MS
+        now = end + 5 * 60_000
+
+        class FakeDownloader:
+            @staticmethod
+            def fetch_okx_history_15m(symbol, start_ms, end_ms):
+                return {}, "HTTP_429"
+
+            @staticmethod
+            def fetch_binance_rest_15m(symbol, start_ms, end_ms):
+                return {
+                    start: {"open": 10.0, "high": 11.0, "low": 9.0, "close": 10.5,
+                            "volume": 100.0, "taker_buy_base": 55.0},
+                    start + INTERVAL_MS: {"open": 10.5, "high": 12.0, "low": 10.0,
+                                          "close": 11.5, "volume": 120.0,
+                                          "taker_buy_base": 70.0},
+                }, "200"
+
+            @staticmethod
+            def fetch_mexc_futures_15m(symbol, start_ms, end_ms):
+                raise AssertionError("MEXC must not be called when Binance fills the gap")
+
+        bars, status = _fetch_symbol_tail("FILUSDT", start, end, now, FakeDownloader)
+        self.assertEqual(set(bars), {start, start + INTERVAL_MS})
+        self.assertEqual(status["binance"], "200")
+        self.assertEqual(status["missing_bars"], "0")
+        self.assertEqual(bars[start]["data_source"], "BINANCE_USDM_REST_15M")
+        self.assertEqual(bars[start]["cvd_source"], "BINANCE_FUTURES_TAKER_BUY_BASE")
+        self.assertEqual(bars[start]["open_time"], start)
+        self.assertAlmostEqual(bars[start]["taker_buy_base"], 55.0)
+
     def test_merge_is_timestamp_unique_and_later_group_wins(self):
         rows = _merge_rows(
             [{"open_time": 1, "close": 10}, {"open_time": 2, "close": 20}],
