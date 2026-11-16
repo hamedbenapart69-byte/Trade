@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - "signal_autopilot/scripts/inspect_stage1b_gaps.py"
+      - "signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py"
+      - "signal_autopilot/modules/cryptohftdata_provider.py"
+      - "signal_autopilot/tests/test_reconstruct_filusdt_gap_from_trades.py"
       - "signal_autopilot/tests/test_inspect_stage1b_gaps.py"
       - ".github/workflows/filusdt-gap-audit-v3.yml"
 permissions:
@@ -35,10 +38,22 @@ jobs:
             --report market-data/datasets/stage1b/data_report.json \
             --symbol FILUSDT \
             --output filusdt-gap-audit.json
-      - name: Upload timestamp-only audit
+      - name: Run offline trade reconstruction tests
+        run: |
+          python -m unittest discover -s signal_autopilot/tests -p "test_reconstruct_filusdt_gap_from_trades.py" -v
+          python -m py_compile signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py
+      - name: Reconstruct missing FILUSDT candles from archived public trades
+        run: |
+          python signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py \
+            --storage-dir market-data/datasets/stage1b/lrt15m \
+            --report market-data/datasets/stage1b/data_report.json \
+            --output filusdt-trade-reconstruction.json
+      - name: Upload sanitized audit and reconstruction evidence only
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: filusdt-gap-audit-v3-1
-          path: filusdt-gap-audit.json
+          name: filusdt-gap-and-trade-reconstruction-v4
+          path: |
+            filusdt-gap-audit.json
+            filusdt-trade-reconstruction.json
           retention-days: 14
