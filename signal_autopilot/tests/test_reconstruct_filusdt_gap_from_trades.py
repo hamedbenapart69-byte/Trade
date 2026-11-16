@@ -20,10 +20,10 @@ class TradeReconstructionTests(unittest.TestCase):
     def test_aggregates_ohlcv_and_excludes_na_rows(self):
         start = 1_800_000_000_000
         rows = [
-            {"trade_time": start + 2, "trade_id": 12, "price": "10.5", "quantity": "2", "order_type": "MARKET"},
-            {"trade_time": start + 1, "trade_id": 11, "price": "10", "quantity": "1", "order_type": "MARKET"},
-            {"trade_time": start + 3, "trade_id": 13, "price": "0", "quantity": "0", "order_type": "NA"},
-            {"trade_time": start + INTERVAL_MS + 1, "trade_id": 14, "price": "11", "quantity": "3", "order_type": "MARKET"},
+            {"trade_time": start + 2, "event_time": start + 2, "trade_id": 12, "price": "10.5", "quantity": "2", "order_type": "MARKET"},
+            {"trade_time": start + 1, "event_time": start + 1, "trade_id": 11, "price": "10", "quantity": "1", "order_type": "MARKET"},
+            {"trade_time": start + 3, "event_time": start + 3, "trade_id": 13, "price": "0", "quantity": "0", "order_type": "NA"},
+            {"trade_time": start + INTERVAL_MS + 1, "event_time": start + INTERVAL_MS + 1, "trade_id": 14, "price": "11", "quantity": "3", "order_type": "MARKET"},
         ]
         candles, quality = MODULE.aggregate_trade_rows(rows)
         self.assertEqual(candles[start]["open"], "10")
@@ -34,6 +34,7 @@ class TradeReconstructionTests(unittest.TestCase):
         self.assertEqual(candles[start + INTERVAL_MS]["volume"], "3")
         self.assertEqual(quality["na_order_type_rows"], 1)
         self.assertEqual(quality["valid_trade_rows"], 3)
+        self.assertEqual(quality["event_time_mismatch_rows"], 0)
 
     def test_trade_id_quality_counts_duplicates_and_gaps(self):
         rows = [{"trade_id": value} for value in [10, 11, 11, 14, 15]]
