@@ -20,7 +20,7 @@ jobs:
   stage1b-data:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 120
     permissions:
       contents: read
     steps:

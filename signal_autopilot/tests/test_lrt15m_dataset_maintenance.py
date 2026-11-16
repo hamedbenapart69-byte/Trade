@@ -199,6 +199,7 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         workflow = (root / ".github" / "workflows" / "stage1b-scheduled.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
         self.assertIn('cron: "0 */4 * * *"', workflow)
+        self.assertIn("timeout-minutes: 120", workflow)
         self.assertIn("--data-only", workflow)
         self.assertIn("--manifest", workflow)
         self.assertIn("ephemeral_tail/", workflow)
