@@ -175,6 +175,9 @@ def _validate_watchlist_levels(row: dict[str, Any]) -> None:
         raise ValueError("REPORT_WATCHLIST_LFS_BASELINE_THRESHOLD_MISMATCH")
     if row.get("lfs_status") != "FULL" or not _all_lfs_components_real(row):
         raise ValueError("REPORT_WATCHLIST_PROXY_COMPONENTS_NOT_PRODUCTION_QUALIFIED")
+    threshold_method = row.get("lfs_threshold_method")
+    if threshold_method not in (None, "", "FIXED_BASELINE_0.30_NOT_ROLLING_90D"):
+        raise ValueError("REPORT_WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED")
     # The current engine's effective gate is fixed at 0.30. Do not silently
     # replace it with a new real/proxy threshold policy or claim rolling calibration.
     for field in ("hypothesis", "falsification"):
@@ -243,7 +246,7 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
             "lfs_coverage_pct": source_row.get("lfs_coverage_pct"),
             "lfs_veto": source_row.get("lfs_veto"),
             "lfs_threshold": source_row.get("lfs_threshold"),
-            "lfs_threshold_reason": source_row.get("lfs_threshold_reason") or (
+            "lfs_threshold_reason": (
                 "ALL_FIVE_COMPONENTS_REAL" if _all_lfs_components_real(source_row)
                 else "PROXY_OR_INCOMPLETE_COMPONENTS_NOT_PRODUCTION_QUALIFIED"
             ),
