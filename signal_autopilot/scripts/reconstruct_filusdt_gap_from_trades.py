@@ -78,10 +78,14 @@ def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str
     buckets: dict[int, list[tuple[int, int, Decimal, Decimal]]] = defaultdict(list)
     na_rows = 0
     invalid_rows = 0
+    event_time_mismatch_rows = 0
     for row in ordered:
         try:
             trade_time = int(row["trade_time"])
             trade_id = int(row["trade_id"])
+            event_time = int(row["event_time"])
+            if event_time != trade_time:
+                event_time_mismatch_rows += 1
         except (TypeError, ValueError, KeyError):
             invalid_rows += 1
             continue
@@ -299,10 +303,12 @@ def run_reconstruction(
     reconstructed_count = sum(1 for timestamp in expected_timestamps if timestamp in all_candles)
     complete_candle_coverage = reconstructed_count == expected_count
     sequence_complete = sequence_gap_intervals == 0 and duplicate_trade_ids == 0
+    timestamp_semantics_valid = aggregate_totals["event_time_mismatch_rows"] == 0
+    invalid_rows_absent = aggregate_totals["invalid_or_nonpositive_rows"] == 0
     files_complete = not unavailable_hours
     status = (
         "COMPLETE_SECONDARY_SOURCE"
-        if complete_candle_coverage and sequence_complete and files_complete
+        if complete_candle_coverage and sequence_complete and timestamp_semantics_valid and invalid_rows_absent and files_complete
         else "DEGRADED_SECONDARY_SOURCE"
     )
     result = {
@@ -332,6 +338,7 @@ def run_reconstruction(
             "duplicate_trade_ids": duplicate_trade_ids,
             "na_order_type_rows": aggregate_totals["na_order_type_rows"],
             "invalid_or_nonpositive_rows": aggregate_totals["invalid_or_nonpositive_rows"],
+            "event_time_mismatch_rows": aggregate_totals["event_time_mismatch_rows"],
             "valid_trade_rows": aggregate_totals["valid_trade_rows"],
         },
         "overlap_validation": overlap,
