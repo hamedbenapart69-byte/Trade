@@ -10,7 +10,7 @@
 
 ## Result
 
-<badge>PASS</badge> **8/8 required snapshots passed** for Binance Futures via CryptoHFTData.
+**PASS — 8/8 required snapshots passed** for Binance Futures via CryptoHFTData.
 
 The provider's symbol-discovery endpoint returned:
 - 1,003 symbols for `mark_price`
