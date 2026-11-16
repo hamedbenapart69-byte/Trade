@@ -474,6 +474,7 @@ def maintain_dataset(storage_dir: Path, compute_dir: Path, report_path: Path,
         "interval": "15m", "universe_count": 27,
         "symbols_complete": symbols_complete, "symbols_fresh": symbols_fresh,
         "symbols_processed": 27, "status": gate_status,
+        "signal_engine_executed": not data_only,
         "baseline_status": "PASS" if not base_missing else "DEGRADED",
         "storage_migration": {
             "migrated_symbols": migration["migrated_symbols"],
