@@ -203,7 +203,7 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         self.assertIn("--manifest", workflow)
         self.assertIn("ephemeral_tail/", workflow)
         self.assertIn("retention-days: 1", workflow)
-        self.assertIn('push:\\n    branches: [main]\\n    paths:\\n      - ".github/workflows/stage1b-scheduled.yml"', workflow)
+        self.assertIn('push:\n    branches: [main]\n    paths:\n      - ".github/workflows/stage1b-scheduled.yml"', workflow)
         self.assertNotIn('"signal_autopilot/modules/**"', workflow)
         self.assertNotIn("signals-publish", workflow)
         self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
