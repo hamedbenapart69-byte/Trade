@@ -74,6 +74,7 @@ def run(provider: Any | None = None) -> dict[str, Any]:
         "mode": "PUBLIC_READ_ONLY_SYMBOL_DISCOVERY",
         "api_key_used": False,
         "raw_market_data_downloaded": False,
+        "probe_execution_status": "COMPLETED",
         "results": results,
         "interpretation": (
             "A symbol-name match is discovery evidence only. It does not prove contract equivalence, "
@@ -102,9 +103,8 @@ def main() -> int:
         ],
         "report": str(args.output),
     }, ensure_ascii=False))
-    return 0 if any(
-        item.get("exact_target_symbol") for item in report["results"]
-    ) else 2
+    # پایان probe با یافتن نماد یکسان نیست؛ نتیجه در گزارش ثبت می‌شود.
+    return 0
 
 
 if __name__ == "__main__":
