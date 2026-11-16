@@ -14,7 +14,7 @@ from urllib.parse import urlparse, parse_qs
 
 ROOT = Path(__file__).resolve().parents[2]
 TIMEOUT_SECONDS = 12
-MAX_BODY_BYTES = 4 * 1024 * 1024
+MAX_BODY_BYTES = 16 * 1024 * 1024
 USER_AGENT = "Trade-Provider-Probe/1.0 (+read-only; no trading)"
 
 def _timestamp_hint(payload: Any) -> str | None:
@@ -127,7 +127,12 @@ def build_probes(now: datetime | None = None) -> list[tuple[str, str, str, bool]
         ("CryptoHFTData", f"{symbol}_open_interest".lower(), hft_base + f"{symbol}_open_interest.parquet", True)
         for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT")
     ]
-    return hft_probes + [
+    hft_extra = [
+        ("CryptoHFTData", "filusdt_trades", hft_base + "FILUSDT_trades.parquet", True),
+        ("CryptoHFTData", "solusdt_trades", hft_base + "SOLUSDT_trades.parquet", True),
+        ("CryptoHFTData", "filusdt_liquidations", hft_base + "FILUSDT_liquidations.parquet", True),
+    ]
+    return hft_probes + hft_extra + [
         ("CoinGecko", "aggregated_market_api", "https://api.coingecko.com/api/v3/ping", False),
         ("CoinMarketCap", "keyless_aggregated_market_api", "https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/listings/latest?start=1&limit=5&convert=USD", False),
         ("GeckoTerminal", "onchain_dex_networks", "https://api.geckoterminal.com/api/v2/networks", False),
