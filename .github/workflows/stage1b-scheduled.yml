@@ -1,6 +1,10 @@
 name: Stage 1b - LRT 15m data maintenance (P0 data-only)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/stage1b-scheduled.yml"
   schedule:
     - cron: "0 */4 * * *"
   workflow_dispatch:
