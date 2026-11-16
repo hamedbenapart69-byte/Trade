@@ -25,6 +25,72 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("head_branch == 'production-v1'", notifier)
         self.assertIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertIn("secrets.TELEGRAM_CHAT_ID", notifier)
+        self.assertIn("vars.DASHBOARD_URL", notifier)
+        self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", notifier)
+        preflight = notifier.split("name: Validate report before claiming delivery", 1)[1].split("name: Detect optional Telegram configuration", 1)[0]
+        self.assertNotIn("secrets.TELEGRAM_TOKEN", preflight)
+        self.assertNotIn("secrets.TELEGRAM_CHAT_ID", preflight)
+        self.assertNotIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", preflight)
+        self.assertIn("vars.DASHBOARD_URL", preflight)
+        destination_check = notifier.split("name: Verify Telegram destination before claiming delivery", 1)[1].split("name: Claim this scanner run", 1)[0]
+        self.assertIn("secrets.TELEGRAM_TOKEN", destination_check)
+        self.assertIn("secrets.TELEGRAM_CHAT_ID", destination_check)
+        self.assertIn("secrets.TELEGRAM_EXPECTED_CHANNEL_TITLE", destination_check)
+        self.assertIn("--verify-destination-only", destination_check)
+        self.assertIn("pip install -r signal_autopilot/requirements.txt", notifier)
+    def test_missing_telegram_credentials_are_silently_skipped(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        optional = notifier.split("name: Detect optional Telegram configuration", 1)[1].split("name: Verify Telegram destination", 1)[0]
+        self.assertIn("enabled=false", optional)
+        self.assertIn("SKIPPED_MISSING_CONFIGURATION", optional)
+        self.assertIn("if: steps.telegram-config.outputs.enabled == 'true'", notifier)
+        self.assertIn("id: telegram-config", notifier)
+
+    def test_trusted_notifier_checks_out_production_code(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn("Checkout trusted notifier from production-v1", notifier)
+        self.assertIn("ref: production-v1", notifier)
+        self.assertNotIn("ref: main", notifier)
+        self.assertIn('python-version: "3.11"', notifier)
+
+    def test_trusted_notifier_only_follows_stage1b_scanner(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn('"Trader_me Stage 1B LRT-15m Signal Bot"', notifier)
+        self.assertNotIn('"Trader_me Stage 1 Signal Bot"', notifier)
+
+    def test_live_scanner_never_receives_telegram_secrets(self):
+        scanner = (WORKFLOWS / "signal_bot.yml").read_text(encoding="utf-8")
+        self.assertIn("read-only, no Telegram credentials", scanner)
+        self.assertNotIn("secrets.TELEGRAM_TOKEN", scanner)
+        self.assertNotIn("secrets.TELEGRAM_CHAT_ID", scanner)
+        self.assertIn('python-version: "3.11"', scanner)
+        persistence = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")
+        self.assertIn('python-version: "3.11"', persistence)
+
+
+    def test_trusted_notifier_uses_serialized_durable_at_most_once_delivery(self):
+        notifier = (WORKFLOWS / "trusted-stage1b-telegram.yml").read_text(encoding="utf-8")
+        self.assertIn("group: trusted-stage1b-telegram-delivery", notifier)
+        self.assertNotIn("group: trusted-stage1b-telegram-${{ github.event.workflow_run.id }}", notifier)
+        self.assertIn("ref: telegram-delivery-state", notifier)
+        self.assertIn("contents: write", notifier)
+        self.assertIn('claimed=false', notifier)
+        self.assertIn('claimed=true', notifier)
+        self.assertIn("telegram_delivery_ledger.py claim", notifier)
+        self.assertIn("telegram_delivery_ledger.py finalize", notifier)
+        self.assertIn("--validate-only", notifier)
+        self.assertLess(
+            notifier.index("Validate report before claiming delivery"),
+            notifier.index("Claim this scanner run before Telegram delivery"),
+        )
+        self.assertLess(
+            notifier.index("Claim this scanner run before Telegram delivery"),
+            notifier.index("Send validated Stage 1B report to Telegram"),
+        )
+        self.assertLess(
+            notifier.index("Send validated Stage 1B report to Telegram"),
+            notifier.index("Finalize durable delivery state"),
+        )
 
     def test_state_writer_persists_only_validated_state_artifacts(self):
         writer = (WORKFLOWS / "persist-stage1b-state.yml").read_text(encoding="utf-8")

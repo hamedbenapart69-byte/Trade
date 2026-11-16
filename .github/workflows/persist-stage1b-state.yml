@@ -37,6 +37,11 @@ jobs:
           path: research-repo
           persist-credentials: true
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Download open-signal state artifact
         uses: actions/download-artifact@v4
         with:
