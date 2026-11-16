@@ -125,6 +125,7 @@ class TailCollectorTests(unittest.TestCase):
         end = 100 * INTERVAL_MS
         now = end + 5 * 60_000
 
+        category_seen = []
         class FakeDownloader:
             @staticmethod
             def fetch_okx_history_15m(symbol, start_ms, end_ms):
@@ -132,7 +133,7 @@ class TailCollectorTests(unittest.TestCase):
 
             @staticmethod
             def fetch_bybit_15m(symbol, start_ms, end_ms, category):
-                self.assertEqual(category, "linear")
+                category_seen.append(category)
                 return {
                     start: {"open": 10.0, "high": 11.0, "low": 9.0, "close": 10.5,
                             "volume": 100.0, "data_source": "BYBIT_LINEAR_15M",
@@ -154,6 +155,7 @@ class TailCollectorTests(unittest.TestCase):
         bars, status = _fetch_symbol_tail("FILUSDT", start, end, now, FakeDownloader)
         self.assertEqual(set(bars), {start, start + INTERVAL_MS})
         self.assertEqual(status["bybit"], "200")
+        self.assertEqual(category_seen, ["linear"])
         self.assertEqual(status["missing_bars"], "0")
         self.assertEqual(bars[start]["data_source"], "BYBIT_LINEAR_15M")
         self.assertEqual(bars[start]["cvd_source"], "BYBIT_CVD_UNAVAILABLE_NEUTRAL_PROXY")
