@@ -191,6 +191,7 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
                 downloader=NoBackfillDownloader(), data_only=True,
             )
             self.assertEqual(report["status"], "DEGRADED")
+            self.assertFalse(report["signal_engine_executed"])
             self.assertFalse((root / "signals.json").exists())
             self.assertTrue((root / "report.json").exists())
 
