@@ -189,6 +189,26 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
 
         missing = chunk_expected.difference(collected)
         if missing:
+            bybit_fetch = getattr(downloader, "fetch_bybit_15m", None)
+            if callable(bybit_fetch):
+                try:
+                    bybit_rows, bybit_status = bybit_fetch(
+                        symbol, chunk_start, chunk_end, "linear"
+                    )
+                    statuses["bybit"] = bybit_status
+                    for ts, row in bybit_rows.items():
+                        ts = int(ts)
+                        if ts in missing and ts + INTERVAL_MS <= now_ms:
+                            enriched = dict(row)
+                            enriched["open_time"] = ts
+                            collected[ts] = enriched
+                except Exception as exc:
+                    statuses["bybit"] = f"ERROR:{type(exc).__name__}:{exc}"
+            else:
+                statuses["bybit"] = "UNAVAILABLE_METHOD"
+
+        missing = chunk_expected.difference(collected)
+        if missing:
             binance_fetch = getattr(downloader, "fetch_binance_rest_15m", None)
             if callable(binance_fetch):
                 try:
