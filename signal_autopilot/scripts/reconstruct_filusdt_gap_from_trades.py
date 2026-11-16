@@ -68,13 +68,13 @@ def _hour_starts_for_segments(segments: list[dict[str, int]]) -> list[datetime]:
 
 def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str, Any]], dict[str, int]]:
     """تجمیع معاملات معتبر به OHLCV پانزده‌دقیقه‌ای؛ NA فقط برای کنترل ID می‌ماند."""
-    ordered = sorted(
-        rows,
-        key=lambda row: (
-            int(row["trade_time"]),
-            int(row["trade_id"]),
-        ),
-    )
+    def _sort_key(row: dict[str, Any]) -> tuple[int, int, int]:
+        try:
+            return (0, int(row["trade_time"]), int(row["trade_id"]))
+        except (TypeError, ValueError, KeyError):
+            return (1, 0, 0)
+
+    ordered = sorted(rows, key=_sort_key)
     buckets: dict[int, list[tuple[int, int, Decimal, Decimal]]] = defaultdict(list)
     na_rows = 0
     invalid_rows = 0
