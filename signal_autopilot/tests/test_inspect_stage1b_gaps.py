@@ -1,7 +1,9 @@
 """آزمون‌های آفلاین ممیزی شکاف‌های دادهٔ 15m."""
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,11 +12,15 @@ from datetime import datetime, timezone
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from signal_autopilot.scripts.inspect_stage1b_gaps import (
-    INTERVAL_MS,
-    group_missing_timestamps,
-    inspect_gap,
-)
+_MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "inspect_stage1b_gaps.py"
+_SPEC = importlib.util.spec_from_file_location("inspect_stage1b_gaps", _MODULE_PATH)
+_MODULE = importlib.util.module_from_spec(_SPEC)
+assert _SPEC and _SPEC.loader
+sys.modules[_SPEC.name] = _MODULE
+_SPEC.loader.exec_module(_MODULE)
+INTERVAL_MS = _MODULE.INTERVAL_MS
+group_missing_timestamps = _MODULE.group_missing_timestamps
+inspect_gap = _MODULE.inspect_gap
 
 
 class GapAuditTests(unittest.TestCase):
