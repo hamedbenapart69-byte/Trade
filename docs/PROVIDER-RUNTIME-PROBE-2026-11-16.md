@@ -9,20 +9,22 @@
 
 ## Observed result
 
-<summary>
-This was a reachability and response-shape probe, not a data-quality or production acceptance test.
-</summary>
+This is a reachability and response-schema probe, not a data-quality or production acceptance test.
 
 | Provider | Probe | HTTP | Result | Latency | Observation |
 |---|---|---:|---|---:|---|
-| CryptoHFTData | BTC futures mark-price Parquet | 200 | PASS | 1,967 ms | 105,285 bytes; Parquet magic valid |
-| CryptoHFTData | BTC futures open-interest Parquet | 200 | PASS | 1,475 ms | 2,231 bytes; Parquet magic valid |
-| CoinGecko | Public API ping | 200 | PASS | 131 ms | JSON object returned without key |
-| CoinPaprika | BTC ticker | 200 | PASS | 47 ms | `last_updated=2026-11-16T14:19:14Z` |
-| Alternative.me | Fear & Greed latest | 200 | PASS | 307 ms | Provider timestamp `1794787200` = 2026-11-16 00:00:00 UTC |
-| DEX Screener | DEX pair search for BTC | 200 | PASS | 75 ms | JSON response, 25,043 bytes |
-| DefiLlama | Chain list | 200 | PASS | 138 ms | JSON array with 423 entries |\n| DefiLlama | Perpetual DEX open-interest overview | 200 | PASS | 123 ms | Aggregated protocol/chain OI structure returned |\n| DefiLlama | DEX volume overview | 200 | PASS | 189 ms | Aggregated DEX protocol/chain volume structure returned |
-| Coinalyze | Assets endpoint without key | 401 | AUTH REQUIRED | 235 ms | Confirms API key is required; no key was sent |
+| CryptoHFTData | BTC futures mark-price Parquet | 200 | PASS | 1,956 ms | 105,285 bytes; PyArrow validated 3,600 rows; columns: received_time, event_time, symbol, mark_price, index_price, estimated_settle_price, funding_rate, next_funding_time |
+| CryptoHFTData | BTC futures open-interest Parquet | 200 | PASS | 1,372 ms | 2,231 bytes; PyArrow validated 13 rows; columns: received_time, symbol, sum_open_interest, sum_open_interest_value, timestamp |
+| CoinGecko | Public API ping | 200 | PASS | 145 ms | JSON object returned without key |
+| CoinMarketCap | Keyless public listings | 200 | PASS | 261 ms | JSON object returned without key |
+| GeckoTerminal | Public DEX networks | 200 | PASS | 90 ms | JSON response returned |
+| CoinPaprika | BTC ticker | 200 | PASS | 152 ms | JSON ticker returned |
+| Alternative.me | Fear & Greed latest | 200 | PASS | 184 ms | Provider timestamp `1794787200` = 2026-11-16 00:00:00 UTC |
+| DEX Screener | DEX pair search for BTC | 200 | PASS | 64 ms | JSON response returned |
+| DefiLlama | Chain list | 200 | PASS | 138 ms | JSON array with 423 entries |
+| DefiLlama | Perpetual DEX open-interest overview | 200 | PASS | 123 ms | Aggregated protocol/chain OI structure returned |
+| DefiLlama | DEX volume overview | 200 | PASS | 189 ms | Aggregated DEX protocol/chain volume structure returned |
+| Coinalyze | Assets endpoint without key | 401 | AUTH REQUIRED | 234 ms | Confirms API key is required; no key was sent |
 
 **Summary:** 11/12 endpoint probes returned HTTP 200 and passed their applicable JSON/Parquet schema checks. Coinalyze returned HTTP 401, so it is not usable anonymously from this runtime.
 
@@ -30,7 +32,7 @@ This was a reachability and response-shape probe, not a data-quality or producti
 
 - GitHub-hosted runtime could reach the tested public endpoints at the recorded time.
 - CryptoHFTData delivered actual BTC futures Parquet files and PyArrow parsed both schemas: 3,600 mark-price rows and 13 open-interest rows for the tested hour. The mark-price file includes funding_rate and next_funding_time columns.
-- CoinGecko keyless ping, CoinPaprika ticker, Alternative.me sentiment, DEX Screener search and DefiLlama chain metadata were reachable.
+- CoinGecko keyless ping, CoinMarketCap keyless listings, GeckoTerminal, CoinPaprika ticker, Alternative.me sentiment, DEX Screener search and DefiLlama endpoints were reachable.
 - Coinalyze requires an API key for the tested endpoint.
 
 ## What this does not prove
@@ -44,12 +46,13 @@ This was a reachability and response-shape probe, not a data-quality or producti
 
 ## Next validation
 
-1. Parse CryptoHFTData Parquet files with PyArrow/Polars and validate schemas, rows, timestamp ranges, duplicates, gaps and field semantics.
-2. Extend CryptoHFTData probes to ETH, SOL and FILUSDT; current runtime evidence covers BTC only.\n3. Validate CryptoHFTData trades and liquidation files, and test whether order-book files can be consumed within bounded storage/runtime limits.\n4. Compare CoinMarketCap keyless and GeckoTerminal data with a second independent provider; this run only validates reachability and response shape.
-3. Probe several liquid altcoins and at least one symbol that is absent/incomplete in the current Stage 1B dataset.
-4. Compare the same fields across independent sources with explicit instrument and timestamp alignment.
-5. Preserve provider attribution and license constraints; CoinPaprika Free is documented for personal use only, and any public/commercial distribution needs a separate license review.
-6. Keep Coinalyze as key-required/UNAVAILABLE until a lawful, genuinely free backend credential path exists; do not ask the owner to perform provider setup.
+1. Extend CryptoHFTData probes to ETH, SOL and FILUSDT; current runtime evidence covers BTC only.
+2. Validate CryptoHFTData trades and liquidation files, and test whether order-book files can be consumed within bounded storage/runtime limits.
+3. Compare CoinMarketCap keyless and GeckoTerminal data with a second independent provider; this run only validates reachability and response shape.
+4. Probe at least one symbol that is absent/incomplete in the current Stage 1B dataset.
+5. Compare the same fields across independent sources with explicit instrument and timestamp alignment.
+6. Preserve provider attribution and license constraints; CoinPaprika Free is documented for personal use only, and any public/commercial distribution needs a separate license review.
+7. Keep Coinalyze as key-required/UNAVAILABLE until a lawful, genuinely free backend credential path exists; do not ask the owner to perform provider setup.
 
 ## Related source documents
 
