@@ -50,6 +50,24 @@ def annotate_outcome_costs(outcome: dict[str, Any]) -> dict[str, Any]:
         }
         return result
 
+    if status == "AMBIGUOUS_BOTH_TOUCHED" and filled:
+        result["cost_accounting"] = {
+            "status": "TERMINAL_AMBIGUOUS_EXIT",
+            "gross_return_pct": "UNAVAILABLE",
+            "fee": {"status": "UNAVAILABLE", "reason": "EXIT_FILL_PRICE_AMBIGUOUS"},
+            "spread": {"status": "UNAVAILABLE"},
+            "slippage": {"status": "UNAVAILABLE"},
+            "funding": {"status": "UNAVAILABLE"},
+            "market_impact": {"status": "UNAVAILABLE"},
+            "net_return_pct": "UNAVAILABLE",
+            "net_ev": "NOT_CALCULATED",
+            "reason": "STOP_AND_TARGET_TOUCHED_WITHIN_SAME_CANDLE",
+        }
+        result["fee_pct"] = "UNAVAILABLE"
+        result["slippage_pct"] = "UNAVAILABLE"
+        result["net_pnl_pct"] = "UNAVAILABLE"
+        return result
+
     if status not in CLOSED_FILLED_STATUSES or not filled:
         result["cost_accounting"] = {
             "status": "PENDING",
