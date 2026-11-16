@@ -108,6 +108,8 @@ def build_probes(now: datetime | None = None) -> list[tuple[str, str, str, bool]
         ("CryptoHFTData", "historical_derivatives_mark_price", hft_base + "mark_price.parquet", True),
         ("CryptoHFTData", "historical_derivatives_open_interest", hft_base + "open_interest.parquet", True),
         ("CoinGecko", "aggregated_market_api", "https://api.coingecko.com/api/v3/ping", False),
+        ("CoinMarketCap", "keyless_aggregated_market_api", "https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/listings/latest?start=1&limit=5&convert=USD", False),
+        ("GeckoTerminal", "onchain_dex_networks", "https://api.geckoterminal.com/api/v2/networks", False),
         ("CoinPaprika", "aggregated_market_ticker", "https://api.coinpaprika.com/v1/tickers/btc-bitcoin", False),
         ("Alternative.me", "sentiment_fear_greed", "https://api.alternative.me/fng/?limit=1", False),
         ("DEXScreener", "onchain_dex_discovery", "https://api.dexscreener.com/latest/dex/search?q=BTC", False),
