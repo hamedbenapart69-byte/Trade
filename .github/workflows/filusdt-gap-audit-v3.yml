@@ -1,4 +1,4 @@
-name: FILUSDT Exact Gap Audit V3
+name: FILUSDT Exact Gap Audit V3.1
 on:
   pull_request:
     paths:
@@ -39,6 +39,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: filusdt-gap-audit-v3
+          name: filusdt-gap-audit-v3-1
           path: filusdt-gap-audit.json
           retention-days: 14
