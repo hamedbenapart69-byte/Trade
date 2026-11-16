@@ -5,7 +5,6 @@
 """
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
@@ -220,7 +219,7 @@ class CryptoHFTDataProvider:
             raise CryptoHFTDataError("provider_response_not_parquet")
 
         try:
-            table = pq.read_table(io.BytesIO(body))
+            table = pq.ParquetFile(pa.BufferReader(body)).read(use_threads=False)
         except Exception as exc:
             raise CryptoHFTDataError(f"provider_parquet_parse_error:{type(exc).__name__}") from exc
 
