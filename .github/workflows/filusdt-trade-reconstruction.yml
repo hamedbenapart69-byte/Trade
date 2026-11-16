@@ -1,0 +1,45 @@
+name: FILUSDT Archived Trade Reconstruction
+on:
+  pull_request:
+    paths:
+      - "signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py"
+      - "signal_autopilot/tests/test_reconstruct_filusdt_gap_from_trades.py"
+      - "signal_autopilot/scripts/inspect_stage1b_gaps.py"
+      - "signal_autopilot/modules/cryptohftdata_provider.py"
+      - ".github/workflows/filusdt-trade-reconstruction.yml"
+permissions:
+  contents: read
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout immutable Stage 1B market-data snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: c34b037e3534192fd95e65a10bc67acba9821f8b
+          path: market-data
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Parquet dependency
+        run: python -m pip install pyarrow
+      - name: Run offline reconstruction tests
+        run: |
+          python -m unittest discover -s signal_autopilot/tests -p "test_reconstruct_filusdt_gap_from_trades.py" -v
+          python -m py_compile signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py
+      - name: Download archived public trades and reconstruct in memory
+        run: |
+          python signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py \
+            --storage-dir market-data/datasets/stage1b/lrt15m \
+            --report market-data/datasets/stage1b/data_report.json \
+            --output filusdt-trade-reconstruction.json
+      - name: Upload sanitized evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: filusdt-trade-reconstruction-evidence
+          path: filusdt-trade-reconstruction.json
+          retention-days: 14
