@@ -54,6 +54,19 @@ This is a reachability and response-schema probe, not a data-quality or producti
 6. Preserve provider attribution and license constraints; CoinPaprika Free is documented for personal use only, and any public/commercial distribution needs a separate license review.
 7. Keep Coinalyze as key-required/UNAVAILABLE until a lawful, genuinely free backend credential path exists; do not ask the owner to perform provider setup.
 
+## Provider caveats discovered in the official data-quality ledger
+
+CryptoHFTData's official documentation says the archive begins on 2025-06-28, publishes one UTC-hour Parquet file per symbol/data type, and the last completed hour is typically available about 15 minutes after close. Anonymous REST access is capped at 60 file downloads per minute; a free account key removes that cap, but no key is required for the current bounded probe.
+
+The provider's known-gaps page is material to production use:
+- Its 2026-10 data-quality release is still marked **not yet deployed** on the page as checked on 2026-11-16.
+- Binance Futures mark-price streams have documented 1–2 minute gaps around HH:02–HH:05 in most hours since at least mid-August 2026; the provider says those ticks cannot be recovered.
+- Bybit trade streams can have reconnect gaps from a few seconds to about three minutes.
+- Some historical exchange/type combinations have documented timestamp, quantity, duplicate, order-book reset and missing-hour caveats. The exact venue notes and known-gap ledger must be consulted before using each data type.
+- Corrected historical files may replace prior files at the same object key; previously downloaded files must be refreshed after a correction is published.
+
+Therefore, CryptoHFTData is a **high-priority independent archive candidate**, not an unquestioned source of truth. Use it for cross-source validation and carefully bounded backfill, retain its venue and timestamp provenance, and do not mark any symbol complete until per-file timestamps, sequence/gap checks, row semantics and cross-source consistency pass.
+
 ## Related source documents
 
 - `docs/USER-DECISIONS-AND-PROVIDER-POLICY-2026-11-16.md`
