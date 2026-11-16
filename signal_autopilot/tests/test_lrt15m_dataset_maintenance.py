@@ -212,6 +212,13 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertNotIn("git push", workflow)
 
+    def test_trusted_writer_rechecks_data_report_during_push_race(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
+        persist_job = workflow.split("  cleanup-artifacts:", 1)[0]
+        retry_guard = persist_job.split("for attempt in 1 2 3; do", 1)[1].split("if ! git rebase", 1)[0]
+        self.assertIn("datasets/stage1b/data_report.json", retry_guard)
+
     def test_trusted_writer_prunes_prior_artifacts_without_touching_newer_runs(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
