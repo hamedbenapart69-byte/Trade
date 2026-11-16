@@ -119,10 +119,15 @@ def build_probes(now: datetime | None = None) -> list[tuple[str, str, str, bool]
     hour = (now - timedelta(hours=2)).replace(minute=0, second=0, microsecond=0)
     date = hour.strftime("%Y-%m-%d")
     hh = hour.strftime("%H")
-    hft_base = f"https://api.cryptohftdata.com/v1/download?file=binance_futures/{date}/{hh}/BTCUSDT_"
-    return [
-        ("CryptoHFTData", "historical_derivatives_mark_price", hft_base + "mark_price.parquet", True),
-        ("CryptoHFTData", "historical_derivatives_open_interest", hft_base + "open_interest.parquet", True),
+    hft_base = f"https://api.cryptohftdata.com/v1/download?file=binance_futures/{date}/{hh}/"
+    hft_probes = [
+        ("CryptoHFTData", f"{symbol}_mark_price".lower(), hft_base + f"{symbol}_mark_price.parquet", True)
+        for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT")
+    ] + [
+        ("CryptoHFTData", f"{symbol}_open_interest".lower(), hft_base + f"{symbol}_open_interest.parquet", True)
+        for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT", "FILUSDT")
+    ]
+    return hft_probes + [
         ("CoinGecko", "aggregated_market_api", "https://api.coingecko.com/api/v3/ping", False),
         ("CoinMarketCap", "keyless_aggregated_market_api", "https://pro-api.coinmarketcap.com/public-api/v1/cryptocurrency/listings/latest?start=1&limit=5&convert=USD", False),
         ("GeckoTerminal", "onchain_dex_networks", "https://api.geckoterminal.com/api/v2/networks", False),
