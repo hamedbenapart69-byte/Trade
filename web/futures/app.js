@@ -7,19 +7,24 @@ const $ = (id) => document.getElementById(id);
 
 // طبق چرخهٔ اسکن چهار‌ساعته، گزارش قدیمی‌تر از چهار ساعت نباید تازه نمایش داده شود.
 const MAX_REPORT_AGE_MS = 4 * 60 * 60 * 1000;
+const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
+let reportLoading = false;
+let historyLoading = false;
+let historyLoaded = false;
 function reportFreshness(generatedAtUtc) {
   const timestamp = Date.parse(generatedAtUtc || "");
   if (!Number.isFinite(timestamp)) {
     return { fresh: false, ageMs: null, reason: "INVALID_TIMESTAMP" };
   }
   const ageMs = Date.now() - timestamp;
-  if (ageMs < 0) {
+  if (ageMs < -MAX_FUTURE_SKEW_MS) {
     return { fresh: false, ageMs, reason: "FUTURE_TIMESTAMP" };
   }
+  const fresh = ageMs <= MAX_REPORT_AGE_MS;
   return {
-    fresh: ageMs <= MAX_REPORT_AGE_MS,
-    ageMs,
-    reason: ageMs <= MAX_REPORT_AGE_MS ? null : "STALE_REPORT"
+    fresh,
+    ageMs: Math.max(0, ageMs),
+    reason: fresh ? null : "STALE_REPORT"
   };
 }
 function reportAgeText(ageMs) {
@@ -57,9 +62,20 @@ const cvdLabel = (value) => ({
   MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی MEXC",
   OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY: "Proxy خنثی OKX Spot"
 }[value] || value || "—");
-const fmt = (value) => Number.isFinite(Number(value))
-  ? Number(value).toLocaleString("fa-IR")
-  : "—";
+const fmt = (value) => value === null || value === undefined || value === ""
+  ? "—"
+  : Number.isFinite(Number(value))
+    ? Number(value).toLocaleString("fa-IR", { maximumFractionDigits: 2 })
+    : "—";
+const fmtPrice = (value) => value === null || value === undefined || value === ""
+  ? "—"
+  : Number.isFinite(Number(value))
+    ? Number(value).toLocaleString("fa-IR", { maximumFractionDigits: 10 })
+    : "—";
+const directionLabel = (value) => ({
+  BUY: "خرید",
+  SELL: "فروش"
+}[value] || "—");
 
 function setStatus(text, kind) {
   const el = $("status");
@@ -93,6 +109,7 @@ function render(report) {
   const rows = Array.isArray(report.signals) ? report.signals : [];
   const count = (decision) => rows.filter((item) => item.decision === decision).length;
   const dataGateStatus = report.data_gate_status || "NOT_REPORTED";
+  const reportStatus = report.report_status || "NORMAL";
   const generated = report.generated_at_utc ? new Date(report.generated_at_utc) : null;
   const generatedText = generated && !Number.isNaN(generated.getTime())
     ? generated.toLocaleString("fa-IR")
@@ -100,8 +117,8 @@ function render(report) {
   const freshness = reportFreshness(report.generated_at_utc);
 
   $("summary").innerHTML = [
-    ["نمادهای بررسی‌شده", fmt(report.symbols_analyzed ?? rows.length)],
-    ["موقعیت‌های واجد شرایط", fmt(report.candidate_setups ?? 0)],
+    ["نمادهای بررسی‌شده", freshness.fresh ? fmt(report.symbols_analyzed ?? rows.length) : "—"],
+    ["نامزدهای زیرنظر", freshness.fresh ? fmt(report.candidate_setups ?? 0) : "—"],
     ["وضعیت کالیبراسیون", esc(report.calibration_status || "نامشخص")],
     ["وضعیت EV", esc(report.ev_status || "نامشخص")]
   ].map(([label, value]) =>
@@ -122,6 +139,9 @@ function render(report) {
     notices.push(staleReason + " تا انتشار گزارش تازه، به وضعیت‌های آن به‌عنوان اطلاعات زنده اتکا نکنید.");
   }
   if (dataGateStatus !== "PASS") notices.push("وضعیت دروازهٔ داده گزارش نشده یا PASS نیست؛ این گزارش برای تصمیم معاملاتی معتبر نیست.");
+  if (reportStatus === "MARKET_DATA_DEGRADED") {
+    notices.push("آخرین اجرای اسکن ناموفق بوده است؛ برای همهٔ نمادها فقط وضعیت MARKET_DATA_DEGRADED منتشر شده و هیچ قیمت یا سطح معاملاتی حدس زده نشده است. " + (report.failure_reason || ""));
+  }
   if (!calibrated) notices.push("کالیبراسیون احتمال برد انجام نشده است؛ Tier A و اطمینان عددی صادر نمی‌شود.");
   if (!evReady) notices.push("EV محاسبه نشده است؛ تا ثبت احتمال کالیبره و هزینهٔ واقعی، معاملهٔ اجرایی مجاز نیست.");
   if (count("NO_QUALIFIED_SETUP") === rows.length && rows.length) {
@@ -137,14 +157,20 @@ function render(report) {
   $("sources").textContent = (report.data_sources || []).map(sourceLabel).join("، ") +
     " · CVD: " + (report.cvd_sources || []).map(cvdLabel).join("، ");
 
+  if (!freshness.fresh) {
+    $("signals").innerHTML = '<p class="empty">گزارش قدیمی یا زمان آن نامعتبر است؛ وضعیت‌های قبلی برای ورود جدید نمایش داده نمی‌شوند.</p>';
+    return;
+  }
+
   if (!rows.length) {
     $("signals").innerHTML = '<p class="empty">گزارش نمادها خالی است؛ دادهٔ نمونه نمایش داده نمی‌شود.</p>';
     return;
   }
 
   $("signals").innerHTML = '<div class="table-wrap"><table><thead><tr>' +
-    "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>سوگیری ۴ساعته</th>" +
-    "<th>سوگیری ۱ساعته</th><th>منبع CVD</th><th>تعداد کندل</th><th>اطمینان</th>" +
+    "<th>نماد</th><th>وضعیت</th><th>Tier</th><th>جهت</th><th>سطوح مرجع</th>" +
+    "<th>سوگیری ۴ساعته</th><th>سوگیری ۱ساعته</th><th>LFS</th><th>منبع CVD</th><th>تعداد کندل</th>" +
+    "<th>اطمینان</th><th>فرضیه و شرط ابطال</th>" +
     "</tr></thead><tbody>" +
     rows.map((item) => {
       const decision = item.decision || "MARKET_DATA_DEGRADED";
@@ -152,22 +178,44 @@ function render(report) {
         ? "buy" : decision === "SELL_NOW" || decision === "CONDITIONAL_SELL"
           ? "sell" : "wait";
       const bias = item.higher_timeframe_bias || {};
+      const levels = decision === "WATCHLIST"
+        ? '<div class="levels-cell">' +
+          "<div>Entry: " + fmtPrice(item.entry) + "</div>" +
+          "<div>SL: " + fmtPrice(item.stop_loss) + "</div>" +
+          "<div>TP1: " + fmtPrice(item.take_profit_1) + "</div>" +
+          "<div>TP2: " + fmtPrice(item.take_profit) + "</div>" +
+          "</div>"
+        : "—";
+      const hasThesis = (value) => typeof value === "string"
+        && !["", "UNAVAILABLE", "NOT_AVAILABLE", "N/A", "NONE"].includes(value.trim().toUpperCase());
+      const thesis = hasThesis(item.hypothesis) || hasThesis(item.falsification)
+        ? '<details class="thesis-details"><summary>مشاهده</summary>' +
+          "<div><strong>فرضیه:</strong> " + esc(item.hypothesis || "UNAVAILABLE") + "</div>" +
+          "<div><strong>ابطال:</strong> " + esc(item.falsification || "UNAVAILABLE") + "</div>" +
+          "</details>"
+        : "—";
       return "<tr>" +
         '<td dir="ltr">' + esc(item.symbol) + "</td>" +
         '<td><span class="tag ' + css + '">' + esc(labels[decision] || decision) + "</span></td>" +
         "<td>" + esc(item.tier || "—") + "</td>" +
+        "<td>" + directionLabel(item.direction) + "</td>" +
+        "<td>" + levels + "</td>" +
         "<td>" + esc(direction(bias['4h_kumo'])) + "</td>" +
         "<td>" + esc(direction(bias['1h_kijun'])) + "</td>" +
+        "<td>" + fmt(item.lfs_score) + " / " + esc(item.lfs_status || "UNAVAILABLE") + " / " + fmt(item.lfs_coverage_pct) + "% / حد: " + fmt(item.lfs_threshold) + " / " + esc(item.lfs_threshold_reason || "UNAVAILABLE") + " / روش: " + esc(item.lfs_threshold_method || "UNAVAILABLE") + "</td>" +
         "<td>" + esc(cvdLabel(item.cvd_source || (item.cvd && item.cvd.source))) + "</td>" +
         "<td>" + fmt(item.rows_available) + "</td>" +
         "<td>" + esc(item.confidence || "NOT_CALIBRATED") + "</td>" +
+        "<td>" + thesis + "</td>" +
         "</tr>";
     }).join("") +
     "</tbody></table></div>";
 }
 
-async function loadHistory() {
+async function loadHistory(force = false) {
   const target = $("history");
+  if (historyLoading || (historyLoaded && !force)) return;
+  historyLoading = true;
   try {
     const response = await fetch(HISTORY_URL + "?v=" + Date.now(), { cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
@@ -191,12 +239,18 @@ async function loadHistory() {
         "<td>" + esc(row.confidence || "NOT_CALIBRATED") + "</td>" +
         "</tr>").join("") +
       "</tbody></table></div>";
+    historyLoaded = true;
   } catch (error) {
     target.innerHTML = '<p class="empty">تاریخچهٔ اسکن هنوز منتشر نشده است.</p>';
+    historyLoaded = true;
+  } finally {
+    historyLoading = false;
   }
 }
 
-async function loadReport() {
+async function loadReport(forceHistory = false) {
+  if (reportLoading) return;
+  reportLoading = true;
   $("refresh").disabled = true;
   setStatus("در حال دریافت…", "muted");
   try {
@@ -208,22 +262,25 @@ async function loadReport() {
     const freshness = reportFreshness(report.generated_at_utc);
     if (!freshness.fresh) {
       setStatus("گزارش کهنه یا زمان نامعتبر", "bad");
+    } else if (report.report_status === "MARKET_DATA_DEGRADED") {
+      setStatus("گزارش: MARKET_DATA_DEGRADED", "bad");
     } else if (dataGateStatus === "PASS") {
       setStatus("داده: PASS", "ok");
     } else {
       setStatus("دروازه داده: PASS نیست", "muted");
     }
-    loadHistory();
+    loadHistory(forceHistory);
   } catch (error) {
     $("signals").innerHTML = '<p class="empty">گزارش LRT-15m در دسترس نیست. اتصال اینترنت یا انتشار فایل گزارش را بررسی کنید.</p>';
     $("notice").textContent = "داده دریافت نشد؛ هیچ سیگنال قدیمی یا ساختگی جایگزین نمی‌شود.";
     setStatus("عدم دسترسی به داده", "bad");
   } finally {
+    reportLoading = false;
     $("refresh").disabled = false;
   }
 }
 
-$("refresh").addEventListener("click", loadReport);
+$("refresh").addEventListener("click", () => loadReport(true));
 loadLegacyEngineStatus();
-loadReport();
-window.setInterval(loadReport, 60000);
+loadReport(false);
+window.setInterval(() => loadReport(false), 60000);
