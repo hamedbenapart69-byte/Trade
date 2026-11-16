@@ -104,12 +104,22 @@ def inspect_gap(storage_dir: Path, report_path: Path, symbol: str = "FILUSDT") -
     compute_missing = len(persisted_missing) - sum(
         gap["bars"] for gap in inferred_ephemeral_gaps
     )
+    provider_status = item.get("provider_status") or {}
     consistency = {
         "report_rows_delta_matches_tail_rows_delta": (
             inferred_ephemeral_rows == tail_rows_delta
         ),
         "report_rows_within_expected_window": (
             0 <= report_rows <= len(expected)
+        ),
+        "report_expected_rows_matches_timestamp_window": (
+            int(item.get("expected_rows", -1)) == len(expected)
+        ),
+        "provider_received_bars_matches_report_tail_rows": (
+            int(provider_status.get("received_bars", -1)) == report_tail_rows
+        ),
+        "provider_missing_bars_matches_compute_missing": (
+            int(provider_status.get("missing_bars", -1)) == compute_missing
         ),
         "report_missing_matches_expected_minus_report_rows": (
             report_missing == len(expected) - report_rows
