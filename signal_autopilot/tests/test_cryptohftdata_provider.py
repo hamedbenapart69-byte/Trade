@@ -44,7 +44,7 @@ class FakeResponse:
 
 def parquet_bytes(table: pa.Table) -> bytes:
     buffer = io.BytesIO()
-    pq.write_table(table, buffer, compression="zstd")
+    pq.write_table(table, buffer, compression="NONE")
     return buffer.getvalue()
 
 
