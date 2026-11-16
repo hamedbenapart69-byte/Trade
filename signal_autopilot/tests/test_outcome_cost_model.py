@@ -33,11 +33,15 @@ class OutcomeCostModelTests(unittest.TestCase):
     def test_closed_trade_gets_fee_only_proxy_but_never_full_net_label(self):
         row = annotate_outcome_costs(closed_outcome())
         costs = row["cost_accounting"]
-        self.assertEqual(costs["status"], "PARTIAL_PROXY")
-        self.assertEqual(costs["fee"]["status"], "PROXY")
+        self.assertEqual(costs["status"], "PROXY_BASIS_UNRESOLVED")
+        self.assertEqual(costs["fee"]["status"], "PROXY_SCENARIOS_ONLY")
         self.assertEqual(costs["fee"]["model"], FEE_MODEL)
-        self.assertAlmostEqual(costs["fee"]["total_pct"], 0.08)
-        self.assertAlmostEqual(costs["net_after_fee_only_pct"], 1.92)
+        self.assertEqual(costs["fee"]["basis"], "UNRESOLVED_PER_FILL_VS_ROUND_TRIP")
+        self.assertAlmostEqual(costs["fee"]["round_trip_total_interpretation"]["fee_pct"], 0.04)
+        self.assertAlmostEqual(costs["fee"]["round_trip_total_interpretation"]["after_fee_only_pct"], 1.96)
+        self.assertAlmostEqual(costs["fee"]["per_fill_interpretation"]["fee_pct"], 0.08)
+        self.assertAlmostEqual(costs["fee"]["per_fill_interpretation"]["after_fee_only_pct"], 1.92)
+        self.assertEqual(costs["net_return_pct"], "UNAVAILABLE")
         self.assertEqual(costs["net_return_pct"], "UNAVAILABLE")
         self.assertEqual(row["net_pnl_pct"], "UNAVAILABLE")
         self.assertEqual(row["fee_pct"], "UNAVAILABLE")
@@ -47,7 +51,8 @@ class OutcomeCostModelTests(unittest.TestCase):
         row = annotate_outcome_costs(closed_outcome(
             status="SL_HIT", exit_price=102.0, pnl_pct_raw=-2.0
         ))
-        self.assertAlmostEqual(row["cost_accounting"]["net_after_fee_only_pct"], -2.08)
+        self.assertAlmostEqual(row["cost_accounting"]["fee"]["round_trip_total_interpretation"]["after_fee_only_pct"], -2.04)
+        self.assertAlmostEqual(row["cost_accounting"]["fee"]["per_fill_interpretation"]["after_fee_only_pct"], -2.08)
 
     def test_non_filled_gap_is_not_counted_as_a_trade(self):
         row = annotate_outcome_costs(closed_outcome(
