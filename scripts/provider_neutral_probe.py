@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import io
 import time
 import urllib.error
 import urllib.parse
@@ -9,6 +10,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse, parse_qs
 
 ROOT = Path(__file__).resolve().parents[2]
 TIMEOUT_SECONDS = 12
@@ -50,6 +52,7 @@ def request_probe(provider: str, category: str, url: str, binary: bool = False) 
         "provider": provider,
         "category": category,
         "url": url.split("?")[0],
+        "resource_hint": parse_qs(urlparse(url).query).get("file", [None])[0],
         "status_code": None,
         "status": "UNAVAILABLE",
         "latency_ms": None,
