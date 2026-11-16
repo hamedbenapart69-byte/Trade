@@ -142,7 +142,7 @@ class ProviderDownloadTests(unittest.TestCase):
         body = parquet_bytes(mark_price_table("ETHUSDT"))
         provider = CryptoHFTDataProvider(
             min_request_interval_seconds=0,
-            opener=lambda _request, _timeout: FakeResponse(body),
+            opener=lambda _request, timeout=None: FakeResponse(body),
         )
         hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
         with self.assertRaisesRegex(CryptoHFTDataError, "symbol_mismatch"):
@@ -154,7 +154,7 @@ class ProviderDownloadTests(unittest.TestCase):
         table = pa.table({"symbol": ["BTCUSDT"], "mark_price": ["90000"]})
         provider = CryptoHFTDataProvider(
             min_request_interval_seconds=0,
-            opener=lambda _request, _timeout: FakeResponse(parquet_bytes(table)),
+            opener=lambda _request, timeout=None: FakeResponse(parquet_bytes(table)),
         )
         hour = datetime(2026, 11, 16, 13, 0, tzinfo=timezone.utc)
         with self.assertRaisesRegex(CryptoHFTDataError, "schema_missing_columns"):
