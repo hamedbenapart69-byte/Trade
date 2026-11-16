@@ -20,7 +20,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from signal_autopilot.scripts.inspect_stage1b_gaps import inspect_gap
+import importlib.util
+
+_AUDIT_PATH = Path(__file__).with_name("inspect_stage1b_gaps.py")
+_AUDIT_SPEC = importlib.util.spec_from_file_location("inspect_stage1b_gaps_for_vision", _AUDIT_PATH)
+_AUDIT_MODULE = importlib.util.module_from_spec(_AUDIT_SPEC)
+if _AUDIT_SPEC is None or _AUDIT_SPEC.loader is None:
+    raise RuntimeError("GAP_AUDIT_MODULE_UNAVAILABLE")
+sys.modules[_AUDIT_SPEC.name] = _AUDIT_MODULE
+_AUDIT_SPEC.loader.exec_module(_AUDIT_MODULE)
+inspect_gap = _AUDIT_MODULE.inspect_gap
 
 BASE_URL = "https://data.binance.vision/data/futures/um/daily/klines"
 SYMBOL = "FILUSDT"
