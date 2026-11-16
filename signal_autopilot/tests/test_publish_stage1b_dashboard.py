@@ -93,7 +93,7 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             self.assertEqual(dashboard["signals"][0]["decision"], "WATCHLIST")
             self.assertEqual(dashboard["signals"][0]["take_profit_1"], 99.0)
             self.assertEqual(dashboard["signals"][0]["lfs_threshold"], 0.30)
-            self.assertEqual(dashboard["signals"][0]["lfs_threshold_reason"], "PROXY_OR_PARTIAL_DATA")
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold_reason"], "ALL_FIVE_COMPONENTS_REAL")
             self.assertEqual(dashboard["signals"][0]["lfs_threshold_method"], "FIXED_BASELINE_0.30_NOT_ROLLING_90D")
             self.assertEqual(dashboard["signals"][1]["decision"], "NO_QUALIFIED_SETUP")
             self.assertEqual(dashboard["data_gate_status"], "NOT_REPORTED")
@@ -273,15 +273,18 @@ class PublishStage1BDashboardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_THRESHOLD_METHOD_UNVERIFIED"):
                 publish_dashboard(report_path, universe_path, root)
 
-    def test_rejects_proxy_watchlist_with_relaxed_real_cvd_threshold(self):
+    def test_cvd_proxy_does_not_silently_change_the_current_fixed_lfs_threshold(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             report, symbols = make_report()
+            report["symbols"][0]["cvd"] = {"source": "PROXY_OHLCV"}
             report["symbols"][0]["lfs_threshold"] = 0.30
-            report["symbols"][0]["lfs_threshold_reason"] = "REAL_CVD_FULL_LFS"
             report_path, universe_path = write_inputs(root, report, symbols)
-            with self.assertRaisesRegex(ValueError, "REPORT_WATCHLIST_LFS_EFFECTIVE_THRESHOLD_POLICY_MISMATCH"):
-                publish_dashboard(report_path, universe_path, root)
+            result = publish_dashboard(report_path, universe_path, root)
+            dashboard = json.loads((root / "lrt15m_signals.json").read_text(encoding="utf-8"))
+            self.assertEqual(result["candidate_setups"], 1)
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold"], 0.30)
+            self.assertEqual(dashboard["signals"][0]["lfs_threshold_method"], "FIXED_BASELINE_0.30_NOT_ROLLING_90D")
 
     def test_rejects_watchlist_below_effective_lfs_threshold(self):
         with tempfile.TemporaryDirectory() as tmp:
