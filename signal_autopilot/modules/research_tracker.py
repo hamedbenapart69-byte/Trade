@@ -11,7 +11,7 @@ PRODUCTION_MODE_THRESHOLD = 80
 RESEARCH_MODE_THRESHOLD = 60
 INTERVAL_MS = 900_000
 MAX_HOLD = timedelta(hours=48)
-PROVIDERS = ("okx", "bybit", "kucoinfutures", "mexc", "bitget")
+PROVIDERS = ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget")
 TERMINAL = {"TP_HIT", "SL_HIT", "EXPIRED", "AMBIGUOUS_BOTH_TOUCHED", "ENTRY_INVALIDATED_GAP"}
 
 
