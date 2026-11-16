@@ -90,10 +90,15 @@ def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str
         try:
             trade_time = int(row["trade_time"])
             trade_id = int(row["trade_id"])
-            event_time = int(row["event_time"])
         except (TypeError, ValueError, KeyError):
             invalid_rows += 1
             invalid_timestamp_or_id_rows += 1
+            continue
+        try:
+            event_time = int(row["event_time"])
+        except (TypeError, ValueError, KeyError):
+            invalid_rows += 1
+            invalid_event_time_rows += 1
             continue
         if event_time != trade_time:
             event_time_mismatch_rows += 1
