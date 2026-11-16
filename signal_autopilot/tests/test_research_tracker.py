@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from modules.research_tracker import INTERVAL_MS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one
+from modules.research_tracker import INTERVAL_MS, PROVIDERS, PRODUCTION_MODE_THRESHOLD as TRACKER_PRODUCTION_THRESHOLD, RESEARCH_MODE_THRESHOLD as TRACKER_RESEARCH_THRESHOLD, _pnl_pct, update_one
 from modules.lrt15m_engine import PRODUCTION_MODE_THRESHOLD, RESEARCH_MODE_THRESHOLD
 
 NOW = datetime(2026, 11, 13, 20, 0, tzinfo=timezone.utc)
@@ -29,6 +29,9 @@ def fetcher_for(rows, source="OKX_PUBLIC_OHLCV"):
     return fetcher
 
 class ResearchTrackerTests(unittest.TestCase):
+    def test_public_provider_fallback_order_matches_project_chain(self):
+        self.assertEqual(PROVIDERS, ("okx", "bybit", "binanceusdm", "kucoinfutures", "mexc", "bitget"))
+
     def test_tracker_thresholds_match_engine_contract(self):
         self.assertEqual(TRACKER_PRODUCTION_THRESHOLD, PRODUCTION_MODE_THRESHOLD)
         self.assertEqual(TRACKER_RESEARCH_THRESHOLD, RESEARCH_MODE_THRESHOLD)
