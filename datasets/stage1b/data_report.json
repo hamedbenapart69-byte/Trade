@@ -1,14 +1,14 @@
 {
-  "generated_at_utc": "2026-11-16T13:45:58.729000+00:00",
+  "generated_at_utc": "2026-11-16T23:57:34.277000+00:00",
   "universe_as_of_utc": "2026-11-09T06:13:33.345Z",
   "start_date_utc": "2024-11-16",
-  "end_date_exclusive_utc": "2026-11-16T13:45:00+00:00",
+  "end_date_exclusive_utc": "2026-11-16T23:45:00+00:00",
   "interval": "15m",
   "universe_count": 27,
-  "symbols_complete": 26,
-  "symbols_fresh": 26,
+  "symbols_complete": 27,
+  "symbols_fresh": 27,
   "symbols_processed": 27,
-  "status": "DEGRADED",
+  "status": "PASS",
   "signal_engine_executed": false,
   "baseline_status": "PASS",
   "storage_migration": {
@@ -20,13 +20,13 @@
     {
       "symbol": "BTCUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BTCUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -39,30 +39,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "ETHUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ETHUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -75,30 +72,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "BNBUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BNBUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -111,30 +105,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "SOLUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/SOLUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -147,30 +138,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "XRPUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/XRPUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -183,30 +171,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "ADAUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ADAUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -219,30 +204,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "DOGEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/DOGEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -255,30 +237,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "AVAXUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/AVAXUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -291,30 +270,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "LINKUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/LINKUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -327,30 +303,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "LTCUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/LTCUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -363,30 +336,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
-        "okx": "HTTP_429",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "okx": "200",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "BCHUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BCHUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -399,30 +369,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "NEARUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/NEARUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -435,30 +402,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "INJUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/INJUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -471,30 +435,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "UNIUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/UNIUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -507,30 +468,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
-        "okx": "HTTP_429",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "okx": "200",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "FILUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 431,
-      "rows": 69880,
+      "tail_rows": 671,
+      "rows": 70080,
       "expected_rows": 70080,
-      "gap_count": 2,
-      "continuity": false,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "gap_count": 0,
+      "continuity": true,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/FILUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -540,31 +498,28 @@
         "BINANCE_KLINE_TAKER_BUY_PROXY",
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
-      "fresh": false,
-      "age_minutes": 0.98,
-      "reason": "BASELINE_MISSING_OR_INCOMPLETE",
+      "fresh": true,
+      "age_minutes": 12.57,
+      "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "ERROR:ArchiveError:MEXC_CONTRACT_NOT_LISTED:FIL_USDT",
         "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "431",
-        "missing_bars": "200"
+        "expected_bars": "671",
+        "received_bars": "671",
+        "missing_bars": "0"
       },
-      "new_rows": 431
+      "new_rows": 671
     },
     {
       "symbol": "ARBUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ARBUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -577,30 +532,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "ENAUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ENAUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -613,30 +565,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "SUIUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/SUIUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -649,30 +598,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
-        "okx": "HTTP_429",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "okx": "200",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "TAOUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/TAOUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -685,30 +631,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "WLDUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/WLDUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -721,30 +664,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "ZECUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ZECUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -757,30 +697,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
-        "okx": "HTTP_429",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "okx": "200",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "AAVEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/AAVEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -793,30 +730,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
-        "okx": "HTTP_429",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "okx": "200",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "QNTUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/QNTUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -829,30 +763,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "RSRUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/RSRUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -865,30 +796,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "ONEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ONEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -901,30 +829,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "bybit": "HTTP_403",
-        "binance": "HTTP_451",
-        "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "HOTUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/HOTUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -935,30 +860,30 @@
         "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "ERROR:ArchiveError:OKX_API_ERROR:{'code': '51001', 'data': [], 'msg': \"Instrument ID, Instrument ID code, or Spread ID doesn't exist.\"}",
         "bybit": "HTTP_403",
         "binance": "HTTP_451",
         "mexc": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     },
     {
       "symbol": "1000PEPEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 631,
+      "tail_rows": 671,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731764700000,
-      "last_open_ms": 1794835800000,
+      "first_open_ms": 1731800700000,
+      "last_open_ms": 1794871800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/1000PEPEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -969,7 +894,7 @@
         "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 0.98,
+      "age_minutes": 12.57,
       "reason": null,
       "provider_status": {
         "okx": "UNSUPPORTED_CONTRACT_MULTIPLIER",
@@ -977,12 +902,12 @@
         "binance": "HTTP_451",
         "mexc": "ERROR:ArchiveError:MEXC_CONTRACT_NOT_LISTED:1000PEPE_USDT",
         "okx_spot_proxy": "200",
-        "chunks": "7",
-        "expected_bars": "631",
-        "received_bars": "631",
+        "chunks": "1",
+        "expected_bars": "95",
+        "received_bars": "95",
         "missing_bars": "0"
       },
-      "new_rows": 631
+      "new_rows": 95
     }
   ]
 }
