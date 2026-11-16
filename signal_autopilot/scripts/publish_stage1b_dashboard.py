@@ -286,7 +286,7 @@ def build_dashboard_report(source: dict[str, Any]) -> dict[str, Any]:
     )
     source_data_gate = str(source.get("data_gate_status") or "").strip()
     data_gate_status = source_data_gate or (
-        "FAIL" if degraded_count else "NOT_REPORTED"
+        "DEGRADED" if degraded_count else "NOT_REPORTED"
     )
 
     return {
