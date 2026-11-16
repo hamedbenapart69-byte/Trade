@@ -138,6 +138,39 @@ class PublishStage1BDashboardTests(unittest.TestCase):
                 "PROXY_OR_INCOMPLETE_COMPONENTS_NOT_PRODUCTION_QUALIFIED",
             )
 
+    def test_research_candidate_has_explicit_non_production_reason(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["production_watchlist_count"] = 0
+            report["research_candidate_count"] = 1
+            report["symbols"][0]["mode"] = "RESEARCH"
+            report["symbols"][0]["decision"] = "RESEARCH_WATCHLIST"
+            report["symbols"][0]["reason"] = None
+            report_path, universe_path = write_inputs(root, report, symbols)
+            publish_dashboard(report_path, universe_path, root)
+            dashboard = json.loads((root / "lrt15m_signals.json").read_text(encoding="utf-8"))
+            self.assertEqual(dashboard["signals"][0]["decision"], "NO_QUALIFIED_SETUP")
+            self.assertEqual(
+                dashboard["signals"][0]["reason"],
+                "RESEARCH_ONLY_NOT_PRODUCTION_QUALIFIED",
+            )
+
+    def test_missing_source_reason_uses_explicit_veto(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report, symbols = make_report()
+            report["production_watchlist_count"] = 0
+            report["symbols"][0]["mode"] = "NONE"
+            report["symbols"][0]["decision"] = "NO_TRADE"
+            report["symbols"][0]["veto"] = "LFS_BELOW_THRESHOLD"
+            report["symbols"][0]["lfs_veto"] = "LFS_BELOW_THRESHOLD"
+            report["symbols"][0]["reason"] = None
+            report_path, universe_path = write_inputs(root, report, symbols)
+            publish_dashboard(report_path, universe_path, root)
+            dashboard = json.loads((root / "lrt15m_signals.json").read_text(encoding="utf-8"))
+            self.assertEqual(dashboard["signals"][0]["reason"], "LFS_BELOW_THRESHOLD")
+
     def test_research_candidate_never_becomes_production_watchlist(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
