@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,7 @@ if str(_package_root) not in sys.path:
     sys.path.insert(0, str(_package_root))
 
 from modules.cvd_proxy import CVD_SOURCE, calculate_cvd_proxy
-from modules.lfs_v2 import calculate_lfs_v2
+from modules.lfs_v2 import LFS_V2_MIN_SCORE, calculate_lfs_v2
 
 
 LFS_WEIGHTS = {
@@ -26,8 +27,10 @@ LFS_WEIGHTS = {
     "cvd": 0.15,
 }
 TIER_A_BRIER_MAX = 0.25
+# دادهٔ Proxy باید آستانهٔ سخت‌گیرانه‌تری از CVD واقعی داشته باشد.
 MIN_LFS_SCORE_REAL_CVD = 0.70
 MIN_LFS_SCORE_PROXY_CVD = 0.30
+LFS_THRESHOLD_METHOD = "FIXED_STAGE1B_REFERENCE_NOT_ROLLING_90D"
 CROSS_LOOKBACK = 10
 MAX_ZONE_DISTANCE_PCT = 0.80
 PRODUCTION_MODE_THRESHOLD = 80
@@ -348,24 +351,55 @@ def evaluate_stage1_decision(
     cvd_source: str,
     components: dict[str, bool],
     cvd_aligned: bool = False,
+    lfs_status: str = "FULL",
 ) -> dict[str, Any]:
     """سه Veto قطعی و سپس امتیازدهی؛ هیچ مسیر BUY_NOW/SELL_NOW ندارد."""
     if not data_valid:
         return {"veto": "DATA_INSUFFICIENT", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
     if inside_kumo:
         return {"veto": "INSIDE_KUMO_4H", "decision": "NO_TRADE", "mode": "NONE", "research_decision": None, "score": None}
-    threshold = 0.30  # LFS_v2: آستانه برای FULL و PARTIAL_PROXY یکسان است.
+    if lfs_status not in {"FULL", "PARTIAL_PROXY"}:
+        return {
+            "veto": "LFS_INSUFFICIENT_COVERAGE",
+            "lfs_veto": "LFS_INSUFFICIENT_COVERAGE",
+            "decision": "NO_TRADE",
+            "mode": "NONE",
+            "research_decision": None,
+            "score": None,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
+        }
+    if isinstance(lfs_score, bool) or not isinstance(lfs_score, (int, float)) or not math.isfinite(float(lfs_score)):
+        return {
+            "veto": "LFS_INVALID_SCORE",
+            "lfs_veto": "LFS_INVALID_SCORE",
+            "decision": "NO_TRADE",
+            "mode": "NONE",
+            "research_decision": None,
+            "score": None,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
+        }
+    # آستانهٔ مؤثر فعلی Stage 1B حفظ می‌شود؛ تغییر REAL/PROXY نیازمند تأیید مستقل است.
+    threshold = 0.30
+    threshold_reason = "CURRENT_EFFECTIVE_STAGE1B_THRESHOLD_UNCHANGED"
     if float(lfs_score) < threshold:
         return {
             "veto": "LFS_BELOW_THRESHOLD",
+            "lfs_veto": "LFS_BELOW_THRESHOLD",
             "decision": "NO_TRADE",
             "mode": "NONE",
             "research_decision": None,
             "score": None,
             "lfs_threshold": threshold,
+            "lfs_threshold_reason": threshold_reason,
+            "lfs_threshold_method": LFS_THRESHOLD_METHOD,
         }
     scored = score_stage1_confluence(components, cvd_source, cvd_aligned)
-    return {"veto": "PASS", **scored, "lfs_threshold": threshold}
+    return {
+        "veto": "PASS", "lfs_veto": "PASS", **scored,
+        "lfs_threshold": threshold,
+        "lfs_threshold_reason": threshold_reason,
+        "lfs_threshold_method": LFS_THRESHOLD_METHOD,
+    }
 
 
 def _aggregate_hourly_to_4h(bars_1h: list[dict[str, Any]]) -> list[dict[str, float]]:
@@ -429,7 +463,18 @@ def evaluate_stage1_symbol(
                 bar[key] = int(value) if key == "open_time" else (
                     str(value) if key in {"data_source", "cvd_source"} else float(value)
                 )
-            if bar["high"] < bar["low"] or bar["close"] <= 0 or bar["open"] <= 0:
+            prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+            if (
+                not all(math.isfinite(value) for value in prices)
+                or bar["open_time"] < 0
+                or bar["open_time"] % 900_000 != 0
+                or bar["open"] <= 0
+                or bar["close"] <= 0
+                or bar["volume"] < 0
+                or bar["high"] < max(bar["open"], bar["close"])
+                or bar["low"] > min(bar["open"], bar["close"])
+                or bar["high"] < bar["low"]
+            ):
                 return {**base, "reason": "INVALID_OHLC"}
             bars.append(bar)
         bars.sort(key=lambda item: item["open_time"])
@@ -443,17 +488,44 @@ def evaluate_stage1_symbol(
                 "high": float(row["high"]), "low": float(row["low"]),
                 "close": float(row["close"]), "volume": float(row["volume"]),
             }
-            if bar["high"] >= bar["low"] and bar["close"] > 0 and bar["open"] > 0:
-                bars_1h.append(bar)
+            prices = (bar["open"], bar["high"], bar["low"], bar["close"], bar["volume"])
+            if (
+                not all(math.isfinite(value) for value in prices)
+                or bar["open_time"] < 0
+                or bar["open_time"] % 3_600_000 != 0
+                or bar["open"] <= 0
+                or bar["close"] <= 0
+                or bar["volume"] < 0
+                or bar["high"] < max(bar["open"], bar["close"])
+                or bar["low"] > min(bar["open"], bar["close"])
+                or bar["high"] < bar["low"]
+            ):
+                return {**base, "reason": "DATA_INSUFFICIENT_1H_INVALID_OHLC"}
+            bars_1h.append(bar)
         bars_1h.sort(key=lambda item: item["open_time"])
         if not bars_1h:
             bars_1h = aggregate_bars(bars, 4)  # سازگاری قدیمی؛ برای LFS تاریخچه کافی نیست.
+
+        # کل پنجرهٔ تاریخی LFS باید پیوسته باشد؛ بررسی فقط ۸۰ کندل آخر
+        # برای صدک‌های ۹۰روزه کافی نیست و شکاف‌های قدیمی را پنهان می‌کند.
+        if len(bars_1h) > 1 and not _continuous_bars(
+            bars_1h, 3_600_000, len(bars_1h)
+        ):
+            return {**base, "reason": "DATA_INSUFFICIENT_1H_HISTORY_GAP"}
 
         lfs_data = calculate_lfs_v2(
             symbol, bars, bars_1h,
             funding_rate=okx_metrics.get("funding_rate"),
             oi_1h=okx_metrics.get("oi_1h"), oi_1d=okx_metrics.get("oi_1d"),
             long_short_ratio=okx_metrics.get("long_short_ratio"),
+            as_of_time_ms=okx_metrics.get("as_of_time_ms"),
+            funding_timestamp_ms=okx_metrics.get("funding_timestamp_ms"),
+            funding_received_at_ms=okx_metrics.get("funding_received_at_ms"),
+            funding_interval_ms=okx_metrics.get("funding_interval_ms"),
+            long_short_ratio_timestamp_ms=okx_metrics.get("long_short_ratio_timestamp_ms"),
+        )
+        lfs_data["derivatives_source"] = str(
+            okx_metrics.get("derivatives_source") or "UNAVAILABLE"
         )
         base.update(lfs_data)
         base["lfs_source"] = "LFS_V2"
@@ -528,11 +600,15 @@ def evaluate_stage1_symbol(
                 "zone_reaction": zone_ok, "cross": cross_ok,
             }
             decision = evaluate_stage1_decision(
-                True, False, float(lfs_data["lfs_score"]), cvd_source, components, cvd_aligned
+                True, False, float(lfs_data["lfs_score"]), cvd_source, components,
+                cvd_aligned, lfs_status=str(lfs_data["lfs_status"]),
             )
             record = {
                 **decision, "symbol": symbol, "direction": direction,
                 "lfs_score": lfs_data["lfs_score"], "lfs_source": "LFS_V2",
+                "lfs_veto": decision.get("lfs_veto", lfs_data.get("lfs_veto")),
+                "lfs_threshold": decision.get("lfs_threshold"),
+                "lfs_threshold_reason": decision.get("lfs_threshold_reason"),
                 "lfs_coverage_pct": lfs_data["lfs_coverage_pct"],
                 "lfs_status": lfs_data["lfs_status"],
                 "lfs_components": lfs_data["lfs_components"],
@@ -544,6 +620,7 @@ def evaluate_stage1_symbol(
                 "data_sources": sorted(
                     {str(x.get("data_source", "UNAVAILABLE")) for x in bars}
                     | {str(x.get("data_source", "UNAVAILABLE")) for x in bars_1h}
+                    | {str(lfs_data.get("derivatives_source", "UNAVAILABLE"))}
                 ),
                 "rows_available": len(bars), "stats_1h_rows_available": len(bars_1h),
             }
@@ -597,7 +674,10 @@ def evaluate_stage1_symbol(
             and candidates[0].get("raw_score") == candidates[1].get("raw_score")
         ):
             return {
-                **base, "veto": "PASS", "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
+                **base, "veto": "PASS", "lfs_veto": "PASS",
+                "lfs_threshold": candidates[0].get("lfs_threshold"),
+                "lfs_threshold_reason": candidates[0].get("lfs_threshold_reason"),
+                "decision": "NO_TRADE", "reason": "DIRECTION_CONFLICT",
                 "direction_candidates": [
                     {
                         k: item.get(k)
