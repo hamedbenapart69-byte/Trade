@@ -6,6 +6,8 @@ on:
       - "signal_autopilot/scripts/reconstruct_filusdt_gap_from_trades.py"
       - "signal_autopilot/modules/cryptohftdata_provider.py"
       - "signal_autopilot/tests/test_reconstruct_filusdt_gap_from_trades.py"
+      - "signal_autopilot/scripts/discover_filusdt_trade_venues.py"
+      - "signal_autopilot/tests/test_discover_filusdt_trade_venues.py"
       - "signal_autopilot/tests/test_inspect_stage1b_gaps.py"
       - ".github/workflows/filusdt-gap-audit-v3.yml"
 permissions:
@@ -48,12 +50,19 @@ jobs:
             --storage-dir market-data/datasets/stage1b/lrt15m \
             --report market-data/datasets/stage1b/data_report.json \
             --output filusdt-trade-reconstruction.json
-      - name: Upload sanitized audit and reconstruction evidence only
+      - name: Run offline multi-venue discovery tests
+        run: |
+          python -m unittest discover -s signal_autopilot/tests -p "test_discover_filusdt_trade_venues.py" -v
+          python -m py_compile signal_autopilot/scripts/discover_filusdt_trade_venues.py
+      - name: Discover exact FIL symbol coverage across archive venues
+        run: python signal_autopilot/scripts/discover_filusdt_trade_venues.py --output filusdt-venue-discovery.json
+      - name: Upload sanitized audit and provider evidence only
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: filusdt-gap-and-trade-reconstruction-v4
+          name: filusdt-gap-trade-and-venue-evidence-v5
           path: |
             filusdt-gap-audit.json
             filusdt-trade-reconstruction.json
+            filusdt-venue-discovery.json
           retention-days: 14
