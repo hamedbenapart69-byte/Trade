@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "reconstruct_filusdt_gap_from_trades.py"
@@ -57,6 +58,26 @@ class TradeReconstructionTests(unittest.TestCase):
         self.assertLessEqual(len(hours), 60)
         self.assertEqual(len(hours), 58)
 
+    def test_binance_vision_archive_comparison_counts_exact_ohlcv(self):
+        vision = MODULE._load_vision_audit_module()
+        start = 1_800_000_000_000
+        end = start + 199 * INTERVAL_MS
+        expected_times = list(range(start, end + INTERVAL_MS, INTERVAL_MS))
+        fake_rows = {
+            ts: {"open": "10", "high": "11", "low": "9", "close": "10.5", "volume": "100"}
+            for ts in expected_times
+        }
+        def fake_daily(date):
+            return fake_rows, {"date": date, "checksum_verified": True, "daily_rows": 96, "archive_bytes": 100, "archive_sha256": "a" * 64}
+        with patch.object(vision, "inspect_gap", return_value={"compute_input_gap_ranges": [{"first_open_ms": start, "last_open_ms": end}]}), patch.object(vision, "_daily_klines", side_effect=fake_daily):
+            result = vision.validate_archive(Path("."), Path("report.json"), None, {
+                ts: {"open": "10", "high": "11", "low": "9", "close": "10.5", "volume": "100"}
+                for ts in expected_times
+            })
+        self.assertEqual(result["available_gap_candles"], 200)
+        self.assertEqual(result["trade_reconstruction_comparison"]["compared_candles"], 200)
+        self.assertEqual(result["trade_reconstruction_comparison"]["exact_ohlcv_candles"], 200)
+        self.assertEqual(result["status"], "ARCHIVE_COVERAGE_VERIFIED_RESEARCH_ONLY")
 
 if __name__ == "__main__":
     unittest.main()
