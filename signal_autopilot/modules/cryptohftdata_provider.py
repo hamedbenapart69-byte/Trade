@@ -43,6 +43,15 @@ REQUIRED_COLUMNS = {
         "received_time", "symbol", "sum_open_interest",
         "sum_open_interest_value", "timestamp",
     }),
+    "trades": frozenset({
+        "received_time", "event_time", "symbol", "trade_id",
+        "price", "quantity", "trade_time", "is_buyer_maker", "order_type",
+    }),
+    "liquidations": frozenset({
+        "received_time", "event_time", "symbol", "side", "order_type",
+        "time_in_force", "quantity", "price", "average_price",
+        "order_status", "filled_quantity", "trade_time",
+    }),
 }
 
 
