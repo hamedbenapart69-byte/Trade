@@ -116,7 +116,7 @@ jobs:
               echo "P0_FAIL: source commit is no longer an ancestor of market-data"
               exit 1
             fi
-            if ! git diff --quiet "$SOURCE_SHA" refs/remotes/origin/market-data -- datasets/stage1b/lrt15m datasets/stage1b/manifest.json; then
+            if ! git diff --quiet "$SOURCE_SHA" refs/remotes/origin/market-data -- datasets/stage1b/lrt15m datasets/stage1b/manifest.json datasets/stage1b/data_report.json; then
               echo "P0_FAIL: concurrent Stage 1b dataset update detected; refusing overwrite"
               exit 1
             fi
