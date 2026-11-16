@@ -19,6 +19,9 @@ class ResearchStateIntegrityTests(unittest.TestCase):
             with self.assertRaises(TypeError):
                 _atomic_write_json(path, {"invalid": object()})
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 1})
+            with self.assertRaises(ValueError):
+                _atomic_write_json(path, {"invalid": float("nan")})
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 1})
             self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
             _atomic_write_json(path, {"version": 2})
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 2})
