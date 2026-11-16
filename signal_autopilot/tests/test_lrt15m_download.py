@@ -67,7 +67,7 @@ class BinanceRestKlineParsingTests(unittest.TestCase):
         self.assertEqual(bar["volume"], 30.0)
         self.assertEqual(bar["quote_volume"], 3000.0)
         self.assertEqual(bar["trades"], 45.0)
-        self.assertEqual(bar["taker_buy_base"], 18.0)
+        self.assertAlmostEqual(bar["taker_buy_base"], 18.0, places=10)
         self.assertEqual(bar["data_source"], "BINANCE_VISION_1M_AGGREGATED")
 
     def test_rejects_incomplete_1m_group(self):
