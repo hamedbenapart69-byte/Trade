@@ -77,20 +77,52 @@ def inspect_gap(storage_dir: Path, report_path: Path, symbol: str = "FILUSDT") -
     ]
     expected = list(range(first_ms, last_ms + INTERVAL_MS, INTERVAL_MS))
     actual_set = set(unique_times)
-    missing = [timestamp for timestamp in expected if timestamp not in actual_set]
+    persisted_missing = [timestamp for timestamp in expected if timestamp not in actual_set]
     outside_window = [
         timestamp for timestamp in all_unique_times
         if timestamp < first_ms or timestamp > last_ms
     ]
     duplicates = len(combined) - len(all_unique_times)
-    gaps = group_missing_timestamps(missing)
+    persisted_gaps = group_missing_timestamps(persisted_missing)
 
+    report_rows = int(item.get("rows", -1))
+    report_tail_rows = int(item.get("tail_rows", -1))
+    report_missing = len(expected) - report_rows
+    inferred_ephemeral_rows = report_rows - len(unique_times)
+    tail_rows_delta = report_tail_rows - len(tail_times)
+
+    inferred_ephemeral_gaps = [
+        gap for gap in persisted_gaps
+        if gap["last_open_ms"] == last_ms
+        and gap["bars"] == inferred_ephemeral_rows
+        and inferred_ephemeral_rows > 0
+    ]
+    compute_gaps = [
+        gap for gap in persisted_gaps
+        if gap not in inferred_ephemeral_gaps
+    ]
+    compute_missing = len(persisted_missing) - sum(
+        gap["bars"] for gap in inferred_ephemeral_gaps
+    )
     consistency = {
-        "report_rows_matches_unique_rows": len(unique_times) == int(item.get("rows", -1)),
-        "report_tail_rows_matches_partition_rows": len(tail_times) == int(item.get("tail_rows", -1)),
-        "report_gap_count_matches_gap_ranges": len(gaps) == int(item.get("gap_count", -1)),
-        "report_missing_count_matches_expected_minus_actual": (
-            len(expected) - len(unique_times) == len(missing)
+        "report_rows_delta_matches_tail_rows_delta": (
+            inferred_ephemeral_rows == tail_rows_delta
+        ),
+        "report_rows_within_expected_window": (
+            0 <= report_rows <= len(expected)
+        ),
+        "report_missing_matches_expected_minus_report_rows": (
+            report_missing == len(expected) - report_rows
+        ),
+        "report_missing_matches_persisted_missing_minus_ephemeral": (
+            report_missing == compute_missing
+        ),
+        "report_gap_count_matches_compute_gap_ranges": (
+            len(compute_gaps) == int(item.get("gap_count", -1))
+        ),
+        "ephemeral_gap_ends_at_report_last_open": (
+            not inferred_ephemeral_gaps
+            or all(gap["last_open_ms"] == last_ms for gap in inferred_ephemeral_gaps)
         ),
     }
     return {
