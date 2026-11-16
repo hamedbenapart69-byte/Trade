@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import sys
 import urllib.error
 import unittest
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ _MODULE_PATH = Path(__file__).resolve().parents[1] / "modules" / "cryptohftdata_
 _SPEC = importlib.util.spec_from_file_location("cryptohftdata_provider", _MODULE_PATH)
 _PROVIDER_MODULE = importlib.util.module_from_spec(_SPEC)
 assert _SPEC and _SPEC.loader
+sys.modules[_SPEC.name] = _PROVIDER_MODULE
 _SPEC.loader.exec_module(_PROVIDER_MODULE)
 
 CryptoHFTDataProvider = _PROVIDER_MODULE.CryptoHFTDataProvider
