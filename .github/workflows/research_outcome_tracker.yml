@@ -6,6 +6,8 @@ on:
     paths:
       - "signal_autopilot/modules/research_tracker.py"
       - "signal_autopilot/tests/test_research_tracker.py"
+      - "signal_autopilot/modules/outcome_cost_model.py"
+      - "signal_autopilot/tests/test_outcome_cost_model.py"
       - ".github/workflows/research_outcome_tracker.yml"
   schedule:
     - cron: "7 */4 * * *"
@@ -57,7 +59,7 @@ jobs:
 
       - name: Run tracker unit tests
         run: |
-          PYTHONPATH=signal_autopilot python -m unittest signal_autopilot.tests.test_research_tracker -v
+          PYTHONPATH=signal_autopilot python -m unittest signal_autopilot.tests.test_research_tracker signal_autopilot.tests.test_outcome_cost_model -v
 
       - name: Update research outcomes from public OHLCV only
         run: |
@@ -108,6 +110,11 @@ jobs:
           print(f"OUTCOME_COVERAGE={len(outcome_ids)}/{len(signal_ids)}")
           print("OUTCOME_COVERAGE_VALIDATED=PASS")
           PY
+
+      - name: Annotate explicit fee-basis scenarios and unavailable cost components
+        run: |
+          PYTHONPATH=signal_autopilot python -m modules.outcome_cost_model \
+            --outcomes research-state/signal_autopilot/state/research_outcomes.json
 
       - name: Upload outcome report
         uses: actions/upload-artifact@v4
