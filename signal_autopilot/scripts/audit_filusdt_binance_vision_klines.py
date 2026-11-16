@@ -113,7 +113,7 @@ def _daily_klines(date: str) -> tuple[dict[int, dict[str, str]], dict[str, Any]]
     }
 
 
-def validate_archive(storage_dir: Path, report_path: Path, output_path: Path) -> dict[str, Any]:
+def validate_archive(storage_dir: Path, report_path: Path, output_path: Path | None = None, reconstructed_candles: dict[int, dict[str, Any]] | None = None) -> dict[str, Any]:
     audit = inspect_gap(storage_dir, report_path, SYMBOL)
     ranges = audit["compute_input_gap_ranges"]
     expected: set[int] = set()
@@ -135,17 +135,30 @@ def validate_archive(storage_dir: Path, report_path: Path, output_path: Path) ->
     missing = sorted(expected.difference(all_rows))
     comparisons: dict[str, list[float]] = {field: [] for field in FIELDS}
     exact_candles = 0
-    for timestamp in sorted(expected.intersection(all_rows)):
-        row = all_rows[timestamp]
-        matched = True
-        for field in FIELDS:
-            value = _decimal(row[field])
-            if value is None:
-                matched = False
-                continue
-            # OHLCV is emitted only as summary errors; never print source values.
-        if matched:
-            exact_candles += 1
+    compared_candles = 0
+    field_mismatch_counts: Counter[str] = Counter()
+    if reconstructed_candles is not None:
+        for timestamp in sorted(expected.intersection(all_rows).intersection(reconstructed_candles)):
+            reference = all_rows[timestamp]
+            candidate = reconstructed_candles[timestamp]
+            all_equal = True
+            for field in FIELDS:
+                actual = _decimal(candidate.get(field))
+                expected_value = _decimal(reference.get(field))
+                if actual is None or expected_value is None:
+                    all_equal = False
+                    field_mismatch_counts[field] += 1
+                    continue
+                if actual != expected_value:
+                    all_equal = False
+                    field_mismatch_counts[field] += 1
+                if expected_value != 0:
+                    comparisons[field].append(float(abs(actual - expected_value) / abs(expected_value) * Decimal("100")))
+                elif actual != 0:
+                    comparisons[field].append(float(abs(actual - expected_value)))
+            compared_candles += 1
+            if all_equal:
+                exact_candles += 1
 
     result = {
         "schema_version": "1.0",
@@ -163,7 +176,21 @@ def validate_archive(storage_dir: Path, report_path: Path, output_path: Path) ->
             {"first_open_utc": datetime.fromtimestamp(ts / 1000, timezone.utc).isoformat()}
             for ts in missing[:20]
         ],
-        "all_five_fields_parseable": exact_candles,
+        "all_five_fields_parseable": len(expected) - len(missing),
+        "trade_reconstruction_comparison": {
+            "compared_candles": compared_candles,
+            "exact_ohlcv_candles": exact_candles,
+            "field_mismatch_counts": dict(field_mismatch_counts),
+            "absolute_relative_difference_pct": {
+                field: {
+                    "median": _percentile(values.copy(), 50),
+                    "p95": _percentile(values.copy(), 95),
+                    "max": round(max(values), 10) if values else None,
+                }
+                for field, values in comparisons.items()
+            },
+            "interpretation": "Same-venue OHLCV comparison; this does not validate missing trade-level order flow.",
+        },
         "ohlcv_values_emitted": False,
         "raw_archive_persisted": False,
         "canonical_dataset_mutated": False,
