@@ -40,6 +40,16 @@ def _load_gap_audit_module():
     return module
 
 
+def _load_vision_audit_module():
+    path = Path(__file__).with_name("audit_filusdt_binance_vision_klines.py")
+    spec = importlib.util.spec_from_file_location("audit_filusdt_binance_vision_klines", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("BINANCE_VISION_AUDIT_MODULE_UNAVAILABLE")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
 def _decimal(value: Any) -> Decimal | None:
     try:
         result = Decimal(str(value))
@@ -415,6 +425,22 @@ def run_reconstruction(
             "The result remains a separate venue-specific data stream."
         ),
     }
+    try:
+        vision_module = _load_vision_audit_module()
+        result["binance_vision_validation"] = vision_module.validate_archive(
+            storage_dir=storage_dir,
+            report_path=report_path,
+            output_path=None,
+            reconstructed_candles=all_candles,
+        )
+    except Exception as exc:
+        result["binance_vision_validation"] = {
+            "status": "UNAVAILABLE",
+            "error_type": type(exc).__name__,
+            "raw_error": str(exc)[:180],
+            "canonical_dataset_mutated": False,
+        }
+
     output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
 
