@@ -14,7 +14,7 @@ class ProviderProbeTests(unittest.TestCase):
 
     def test_build_probes_are_read_only_and_bounded(self):
         probes = build_probes(datetime(2026, 11, 16, 17, 0, tzinfo=timezone.utc))
-        self.assertEqual(len(probes), 10)
+        self.assertEqual(len(probes), 12)
         self.assertTrue(all(url.startswith("https://") for _, _, url, _ in probes))
         self.assertTrue(all("api_key=" not in url for _, _, url, _ in probes))
         self.assertTrue(all("order" not in url.lower() for _, _, url, _ in probes))
