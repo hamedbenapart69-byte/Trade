@@ -57,8 +57,8 @@ def _hour_starts_for_segments(segments: list[dict[str, int]]) -> list[datetime]:
     for segment in segments:
         start_ms = segment["start_ms"]
         end_ms = segment["end_exclusive_ms"]
-        first = _utc_hour(start_ms) - timedelta(hours=1)
-        last = _utc_hour(end_ms - 1) + timedelta(hours=1)
+        first = _utc_hour(start_ms) - timedelta(hours=2)
+        last = _utc_hour(end_ms - 1) + timedelta(hours=2)
         cursor = first
         while cursor <= last:
             hours.add(cursor)
@@ -254,13 +254,12 @@ def run_reconstruction(
                 continue
             for index, segment in enumerate(segments):
                 # کمی حاشیه برای معامله‌ای که در ساعت بعد دریافت شده باشد.
-                if segment["start_ms"] - HOUR_MS <= trade_time < segment["end_exclusive_ms"] + HOUR_MS:
+                if segment["start_ms"] - 2 * HOUR_MS <= trade_time < segment["end_exclusive_ms"] + 2 * HOUR_MS:
                     rows_by_segment[index].append(row)
                     break
 
     all_candles: dict[int, dict[str, Any]] = {}
     segment_reports: list[dict[str, Any]] = []
-    all_quality_rows: list[dict[str, Any]] = []
     aggregate_totals = Counter()
     expected_timestamps: set[int] = set()
     for segment, rows in zip(segments, rows_by_segment):
@@ -269,7 +268,6 @@ def run_reconstruction(
         candles, aggregate_quality = aggregate_trade_rows(rows)
         quality = trade_id_quality(rows)
         all_candles.update(candles)
-        all_quality_rows.extend(rows)
         aggregate_totals.update(aggregate_quality)
         missing = [timestamp for timestamp in expected if timestamp not in candles]
         segment_reports.append({
