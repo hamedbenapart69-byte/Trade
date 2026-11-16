@@ -189,6 +189,28 @@ def _fetch_symbol_tail(symbol: str, start_ms: int, end_ms: int, now_ms: int,
 
         missing = chunk_expected.difference(collected)
         if missing:
+            binance_fetch = getattr(downloader, "fetch_binance_rest_15m", None)
+            if callable(binance_fetch):
+                try:
+                    binance_rows, binance_status = binance_fetch(
+                        symbol, chunk_start, chunk_end
+                    )
+                    statuses["binance"] = binance_status
+                    for ts, row in binance_rows.items():
+                        ts = int(ts)
+                        if ts in missing and ts + INTERVAL_MS <= now_ms:
+                            enriched = dict(row)
+                            enriched["open_time"] = ts
+                            enriched["data_source"] = "BINANCE_USDM_REST_15M"
+                            enriched["cvd_source"] = "BINANCE_FUTURES_TAKER_BUY_BASE"
+                            collected[ts] = enriched
+                except Exception as exc:
+                    statuses["binance"] = f"ERROR:{type(exc).__name__}:{exc}"
+            else:
+                statuses["binance"] = "UNAVAILABLE_METHOD"
+
+        missing = chunk_expected.difference(collected)
+        if missing:
             try:
                 mexc_rows, mexc_status = downloader.fetch_mexc_futures_15m(
                     symbol, chunk_start, chunk_end
