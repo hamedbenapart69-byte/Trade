@@ -104,9 +104,9 @@ class GapAuditTests(unittest.TestCase):
             }), encoding="utf-8")
 
             result = inspect_gap(storage, report_path, "FILUSDT")
-            self.assertEqual(result["storage_counts"]["missing_bars"], 2)
-            self.assertEqual(result["storage_counts"]["gap_ranges"], 1)
-            self.assertEqual(result["gap_ranges"][0]["bars"], 2)
+            self.assertEqual(result["storage_counts"]["persisted_missing_bars"], 2)
+            self.assertEqual(result["storage_counts"]["persisted_gap_ranges"], 1)
+            self.assertEqual(result["persisted_gap_ranges"][0]["bars"], 2)
             self.assertTrue(all(result["consistency_checks"].values()))
             self.assertFalse(result["raw_price_values_read"])
             self.assertFalse(result["raw_provider_data_downloaded"])
