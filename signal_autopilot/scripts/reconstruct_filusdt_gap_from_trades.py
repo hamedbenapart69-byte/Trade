@@ -78,25 +78,48 @@ def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str
     buckets: dict[int, list[tuple[int, int, Decimal, Decimal]]] = defaultdict(list)
     na_rows = 0
     invalid_rows = 0
+    invalid_timestamp_or_id_rows = 0
+    invalid_event_time_rows = 0
     event_time_mismatch_rows = 0
+    invalid_price_rows = 0
+    nonpositive_price_rows = 0
+    invalid_quantity_rows = 0
+    nonpositive_quantity_rows = 0
+
     for row in ordered:
         try:
             trade_time = int(row["trade_time"])
             trade_id = int(row["trade_id"])
             event_time = int(row["event_time"])
-            if event_time != trade_time:
-                event_time_mismatch_rows += 1
         except (TypeError, ValueError, KeyError):
             invalid_rows += 1
+            invalid_timestamp_or_id_rows += 1
             continue
+        if event_time != trade_time:
+            event_time_mismatch_rows += 1
         if str(row.get("order_type", "")).upper() == "NA":
             na_rows += 1
             continue
+
         price = _decimal(row.get("price"))
         quantity = _decimal(row.get("quantity"))
-        if price is None or quantity is None or price <= 0 or quantity <= 0:
+        row_invalid = False
+        if price is None:
+            invalid_price_rows += 1
+            row_invalid = True
+        elif price <= 0:
+            nonpositive_price_rows += 1
+            row_invalid = True
+        if quantity is None:
+            invalid_quantity_rows += 1
+            row_invalid = True
+        elif quantity <= 0:
+            nonpositive_quantity_rows += 1
+            row_invalid = True
+        if row_invalid:
             invalid_rows += 1
             continue
+
         bucket = (trade_time // INTERVAL_MS) * INTERVAL_MS
         buckets[bucket].append((trade_time, trade_id, price, quantity))
 
@@ -116,27 +139,51 @@ def aggregate_trade_rows(rows: list[dict[str, Any]]) -> tuple[dict[int, dict[str
     return candles, {
         "na_order_type_rows": na_rows,
         "invalid_or_nonpositive_rows": invalid_rows,
-        "valid_trade_rows": sum(item["trade_count"] for item in candles.values()),
+        "invalid_timestamp_or_id_rows": invalid_timestamp_or_id_rows,
+        "invalid_event_time_rows": invalid_event_time_rows,
         "event_time_mismatch_rows": event_time_mismatch_rows,
+        "invalid_price_rows": invalid_price_rows,
+        "nonpositive_price_rows": nonpositive_price_rows,
+        "invalid_quantity_rows": invalid_quantity_rows,
+        "nonpositive_quantity_rows": nonpositive_quantity_rows,
+        "valid_trade_rows": sum(item["trade_count"] for item in candles.values()),
         "candles_built": len(candles),
     }
 
 
-def trade_id_quality(rows: list[dict[str, Any]]) -> dict[str, int]:
-    ids: list[int] = []
+def trade_id_quality(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    pairs: list[tuple[int, int]] = []
     for row in rows:
         try:
-            ids.append(int(row["trade_id"]))
+            pairs.append((int(row["trade_id"]), int(row["trade_time"])))
         except (TypeError, ValueError, KeyError):
             continue
-    unique = sorted(set(ids))
-    gaps = [right - left - 1 for left, right in zip(unique, unique[1:]) if right - left > 1]
+    # یک شناسه باید یک رخداد داشته باشد؛ duplicateها جداگانه گزارش می‌شوند.
+    by_id: dict[int, int] = {}
+    for trade_id, trade_time in sorted(pairs, key=lambda item: (item[0], item[1])):
+        by_id.setdefault(trade_id, trade_time)
+    unique_ids = sorted(by_id)
+    gaps = []
+    for left, right in zip(unique_ids, unique_ids[1:]):
+        missing = right - left - 1
+        if missing > 0:
+            gaps.append({
+                "after_trade_time_utc": datetime.fromtimestamp(
+                    by_id[left] / 1000, timezone.utc
+                ).isoformat(),
+                "before_trade_time_utc": datetime.fromtimestamp(
+                    by_id[right] / 1000, timezone.utc
+                ).isoformat(),
+                "missing_trade_ids_estimate": missing,
+                "elapsed_seconds": round((by_id[right] - by_id[left]) / 1000, 3),
+            })
     return {
-        "trade_id_rows": len(ids),
-        "unique_trade_ids": len(unique),
-        "duplicate_trade_ids": len(ids) - len(unique),
+        "trade_id_rows": len(pairs),
+        "unique_trade_ids": len(unique_ids),
+        "duplicate_trade_ids": len(pairs) - len(unique_ids),
         "trade_id_gap_intervals": len(gaps),
-        "missing_trade_ids_estimate": sum(gaps),
+        "missing_trade_ids_estimate": sum(item["missing_trade_ids_estimate"] for item in gaps),
+        "trade_id_gap_time_ranges": gaps,
     }
 
 
