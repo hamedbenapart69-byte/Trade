@@ -7,6 +7,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# اجرای مستقیم اسکریپت از پوشهٔ scripts، ریشهٔ مخزن را به مسیر import اضافه می‌کند.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from signal_autopilot.modules.cryptohftdata_provider import (
     CryptoHFTDataProvider,
     latest_complete_hour,
