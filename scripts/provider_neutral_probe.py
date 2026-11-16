@@ -117,6 +117,8 @@ def build_probes(now: datetime | None = None) -> list[tuple[str, str, str, bool]
         ("Alternative.me", "sentiment_fear_greed", "https://api.alternative.me/fng/?limit=1", False),
         ("DEXScreener", "onchain_dex_discovery", "https://api.dexscreener.com/latest/dex/search?q=BTC", False),
         ("DefiLlama", "defi_protocol_context", "https://api.llama.fi/v2/chains", False),
+        ("DefiLlama", "perpetual_dex_open_interest", "https://api.llama.fi/overview/open-interest?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true", False),
+        ("DefiLlama", "dex_volume_overview", "https://api.llama.fi/overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true", False),
         ("Coinalyze", "derivatives_auth_requirement", "https://api.coinalyze.net/v1/assets", False),
     ]
 
