@@ -35,15 +35,18 @@ class TradeReconstructionTests(unittest.TestCase):
         self.assertEqual(quality["na_order_type_rows"], 1)
         self.assertEqual(quality["valid_trade_rows"], 3)
         self.assertEqual(quality["event_time_mismatch_rows"], 0)
+        self.assertEqual(quality["invalid_or_nonpositive_rows"], 0)
 
     def test_trade_id_quality_counts_duplicates_and_gaps(self):
-        rows = [{"trade_id": value} for value in [10, 11, 11, 14, 15]]
+        rows = [{"trade_id": value, "trade_time": 1_800_000_000_000 + index * 1000} for index, value in enumerate([10, 11, 11, 14, 15])]
         quality = MODULE.trade_id_quality(rows)
         self.assertEqual(quality["trade_id_rows"], 5)
         self.assertEqual(quality["unique_trade_ids"], 4)
         self.assertEqual(quality["duplicate_trade_ids"], 1)
         self.assertEqual(quality["trade_id_gap_intervals"], 1)
         self.assertEqual(quality["missing_trade_ids_estimate"], 2)
+        self.assertEqual(len(quality["trade_id_gap_time_ranges"]), 1)
+        self.assertEqual(quality["trade_id_gap_time_ranges"][0]["missing_trade_ids_estimate"], 2)
 
     def test_hour_file_selection_stays_under_anonymous_limit(self):
         segments = [
