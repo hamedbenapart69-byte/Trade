@@ -1,0 +1,30 @@
+name: Provider-Neutral Read-Only Probe
+on:
+  pull_request:
+    paths:
+      - "scripts/provider_neutral_probe.py"
+      - ".github/workflows/provider-neutral-probe.yml"
+      - "tests/test_provider_neutral_probe.py"
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate probe code
+        run: |
+          python -m unittest tests.test_provider_neutral_probe -v
+          python -m py_compile scripts/provider_neutral_probe.py
+      - name: Probe public provider endpoints
+        run: python scripts/provider_neutral_probe.py
+      - name: Upload sanitized provider evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-neutral-read-only-probe
+          path: provider-probe-report.json
+          retention-days: 14
