@@ -1,71 +1,83 @@
 # Provider-Neutral Runtime Probe — Evidence Snapshot
 
-**Latest run:** GitHub Actions `43885281503`  
+**Latest completed multi-symbol run:** GitHub Actions `43885572155`  
 **Job:** `probe` — completed successfully  
-**Artifact:** `provider-neutral-read-only-probe` (ID `14234176523`, SHA-256 `362ad50768a16810abca20a9d50f62169130375bae701507d88990dbce357302`)  
-**Generated:** 2026-11-16 14:23:59 UTC  
+**Artifact:** `provider-neutral-read-only-probe` (ID `14235285305`, SHA-256 `0245df7a4370b60d9473eb14b12ade79ffe9a5d36210c80fd48dc6d88ea7c60e`)  
+**Generated:** 2026-11-16 14:25:48 UTC  
 **Mode:** public read-only HTTP GET, no credentials, no trading access  
-**Probe version:** 12-endpoint version on commit `b7d604875fee1017b049ff542e560ff17ff2120d`.
+**Probe version:** 18-endpoint multi-symbol version on commit `3c5585b24722fa0ca5cc6dda489c4d04214d1799`.
 
 ## Observed result
 
-This is a reachability and response-schema probe, not a data-quality or production acceptance test.
+| Provider | Probe | HTTP | Result | Observation |
+|---|---|---:|---|---|
+| CryptoHFTData | BTCUSDT mark price | 200 | PASS | 3,600 rows; schema valid |
+| CryptoHFTData | ETHUSDT mark price | 200 | PASS | 3,600 rows; schema valid |
+| CryptoHFTData | SOLUSDT mark price | 200 | PASS | 3,600 rows; schema valid |
+| CryptoHFTData | FILUSDT mark price | 200 | PASS | 3,600 rows; schema valid |
+| CryptoHFTData | BTCUSDT open interest | 200 | PASS | 13 rows; schema valid |
+| CryptoHFTData | ETHUSDT open interest | 200 | PASS | 13 rows; schema valid |
+| CryptoHFTData | SOLUSDT open interest | 200 | PASS | 13 rows; schema valid |
+| CryptoHFTData | FILUSDT open interest | 200 | PASS | 13 rows; schema valid |
+| CoinGecko | Public API ping | 200 | PASS | Keyless endpoint reachable |
+| CoinMarketCap | Keyless public listings | 429 | RATE LIMITED | Keyless path was rate-limited in this run; not suitable as a reliable core without a free backend key or a lower polling schedule |
+| GeckoTerminal | Public DEX networks | 200 | PASS | Keyless public endpoint reachable |
+| CoinPaprika | BTC ticker | 200 | PASS | Ticker response returned |
+| Alternative.me | Fear & Greed latest | 200 | PASS | Daily sentiment response returned |
+| DEX Screener | DEX pair search | 200 | PASS | Keyless pair-search response returned |
+| DefiLlama | Chain list | 200 | PASS | 423 chain records |
+| DefiLlama | Perpetual DEX open-interest overview | 200 | PASS | Free DEX-perpetual OI overview reachable |
+| DefiLlama | DEX volume overview | 200 | PASS | Free DEX-volume overview reachable |
+| Coinalyze | Assets endpoint without key | 401 | AUTH REQUIRED | API key required; no key was sent |
 
-| Provider | Probe | HTTP | Result | Latency | Observation |
-|---|---|---:|---|---:|---|
-| CryptoHFTData | BTC futures mark-price Parquet | 200 | PASS | 1,956 ms | 105,285 bytes; PyArrow validated 3,600 rows; columns: received_time, event_time, symbol, mark_price, index_price, estimated_settle_price, funding_rate, next_funding_time |
-| CryptoHFTData | BTC futures open-interest Parquet | 200 | PASS | 1,372 ms | 2,231 bytes; PyArrow validated 13 rows; columns: received_time, symbol, sum_open_interest, sum_open_interest_value, timestamp |
-| CoinGecko | Public API ping | 200 | PASS | 145 ms | JSON object returned without key |
-| CoinMarketCap | Keyless public listings | 200 | PASS | 261 ms | JSON object returned without key |
-| GeckoTerminal | Public DEX networks | 200 | PASS | 90 ms | JSON response returned |
-| CoinPaprika | BTC ticker | 200 | PASS | 152 ms | JSON ticker returned |
-| Alternative.me | Fear & Greed latest | 200 | PASS | 184 ms | Provider timestamp `1794787200` = 2026-11-16 00:00:00 UTC |
-| DEX Screener | DEX pair search for BTC | 200 | PASS | 64 ms | JSON response returned |
-| DefiLlama | Chain list | 200 | PASS | 138 ms | JSON array with 423 entries |
-| DefiLlama | Perpetual DEX open-interest overview | 200 | PASS | 123 ms | Aggregated protocol/chain OI structure returned |
-| DefiLlama | DEX volume overview | 200 | PASS | 189 ms | Aggregated DEX protocol/chain volume structure returned |
-| Coinalyze | Assets endpoint without key | 401 | AUTH REQUIRED | 234 ms | Confirms API key is required; no key was sent |
+**Summary:** 16/18 endpoint probes returned HTTP 200 and passed the applicable JSON/Parquet schema check. The two non-PASS results were CoinMarketCap keyless HTTP 429 and Coinalyze HTTP 401.
 
-**Summary:** 11/12 endpoint probes returned HTTP 200 and passed their applicable JSON/Parquet schema checks. Coinalyze returned HTTP 401, so it is not usable anonymously from this runtime.
+## Important CryptoHFTData result
+
+For the tested UTC hour `2026-11-16/12`, the provider supplied mark-price and open-interest files for **all four test symbols: BTCUSDT, ETHUSDT, SOLUSDT and FILUSDT**. The four mark-price files each contained 3,600 rows and the four open-interest files each contained 13 rows. PyArrow parsed the Parquet metadata and schemas successfully.
+
+The BTC mark-price schema includes `received_time`, `event_time`, `symbol`, `mark_price`, `index_price`, `estimated_settle_price`, `funding_rate` and `next_funding_time`. The open-interest schema includes `received_time`, `symbol`, `sum_open_interest`, `sum_open_interest_value` and `timestamp`.
+
+**Engineering significance:** this is the first tested independent archive source that has returned both mark/funding context and OI for FILUSDT in the actual GitHub Actions runtime. It is a strong candidate to investigate for filling the recent FIL tail gap. It does **not** yet prove that the archive contains every missing 15-minute OHLCV candle, because trade-file parsing and 15-minute candle reconstruction have not passed.
 
 ## What this proves
 
-- GitHub-hosted runtime could reach the tested public endpoints at the recorded time.
-- CryptoHFTData delivered actual BTC futures Parquet files and PyArrow parsed both schemas: 3,600 mark-price rows and 13 open-interest rows for the tested hour. The mark-price file includes funding_rate and next_funding_time columns.
-- CoinGecko keyless ping, CoinMarketCap keyless listings, GeckoTerminal, CoinPaprika ticker, Alternative.me sentiment, DEX Screener search and DefiLlama endpoints were reachable.
-- Coinalyze requires an API key for the tested endpoint.
+- The actual GitHub-hosted runtime can reach CryptoHFTData's public REST download service without an API key.
+- It can retrieve and parse hourly BTC/ETH/SOL/FIL mark-price and OI Parquet files from the tested hour.
+- CoinGecko, GeckoTerminal, CoinPaprika, Alternative.me, DEX Screener and DefiLlama public endpoints were reachable in this run.
+- CoinMarketCap's keyless endpoint was rate-limited at this time; Coinalyze requires a key.
 
 ## What this does not prove
 
-- Full semantic validation of all rows, timestamp continuity, duplicate handling, instrument mapping, unit conventions and source corrections. Only schema and row count were validated for the two BTC files.
-- Full symbol or market coverage, history depth, completeness, or timestamp alignment.
+- Full semantic validation of all rows, timestamp continuity, duplicate handling, instrument mapping, unit conventions and source corrections.
+- Two-year historical coverage: CryptoHFTData documents its archive start as 2025-06-28, so it cannot independently replace the full two-year baseline.
+- That trades, liquidations or order-book files for FILUSDT are available and valid.
 - That provider terms allow the exact intended distribution or long-term retention.
-- That every GitHub Actions run or another compute region has the same reachability.
 - That any provider adds predictive value or improves out-of-sample signal quality.
 - That the signal engine ran, Telegram delivery succeeded, or Stage 1 passed.
 
 ## Next validation
 
-1. Extend CryptoHFTData probes to ETH, SOL and FILUSDT; current runtime evidence covers BTC only.
-2. Validate CryptoHFTData trades and liquidation files, and test whether order-book files can be consumed within bounded storage/runtime limits.
-3. Compare CoinMarketCap keyless and GeckoTerminal data with a second independent provider; this run only validates reachability and response shape.
-4. Probe at least one symbol that is absent/incomplete in the current Stage 1B dataset.
-5. Compare the same fields across independent sources with explicit instrument and timestamp alignment.
-6. Preserve provider attribution and license constraints; CoinPaprika Free is documented for personal use only, and any public/commercial distribution needs a separate license review.
-7. Keep Coinalyze as key-required/UNAVAILABLE until a lawful, genuinely free backend credential path exists; do not ask the owner to perform provider setup.
+1. Parse CryptoHFTData trade and liquidation Parquet files for FILUSDT and SOLUSDT; verify event timestamps, trade side, quantity and row coverage.
+2. Reconstruct 15-minute OHLCV from tick trades for FILUSDT, compare against the current dataset and calculate missing-bar coverage without silently filling gaps.
+3. Probe the same target assets across Bybit, OKX, Bitget and Hyperliquid datasets using the provider's symbol-discovery endpoint; do not guess symbol aliases.
+4. Compare mark price, funding and OI with a second independent source using aligned instrument IDs and timestamps.
+5. Keep CoinMarketCap keyless as rate-limited/UNAVAILABLE unless its documented free key path is available to the backend; do not ask the owner to configure it.
+6. Keep Coinalyze as key-required/UNAVAILABLE until a lawful, genuinely free backend credential path exists.
+7. Preserve attribution, licence and provider caveats; CoinPaprika Free is personal-use only and CoinDesk Personal is non-commercial.
 
-## Provider caveats discovered in the official data-quality ledger
+## Provider caveats
 
 CryptoHFTData's official documentation says the archive begins on 2025-06-28, publishes one UTC-hour Parquet file per symbol/data type, and the last completed hour is typically available about 15 minutes after close. Anonymous REST access is capped at 60 file downloads per minute; a free account key removes that cap, but no key is required for the current bounded probe.
 
-The provider's known-gaps page is material to production use:
-- Its 2026-10 data-quality release is still marked **not yet deployed** on the page as checked on 2026-11-16.
+Its known-gaps page is material:
+- The 2026-10 data-quality release was still marked **not yet deployed** on the documentation page when checked on 2026-11-16.
 - Binance Futures mark-price streams have documented 1–2 minute gaps around HH:02–HH:05 in most hours since at least mid-August 2026; the provider says those ticks cannot be recovered.
 - Bybit trade streams can have reconnect gaps from a few seconds to about three minutes.
-- Some historical exchange/type combinations have documented timestamp, quantity, duplicate, order-book reset and missing-hour caveats. The exact venue notes and known-gap ledger must be consulted before using each data type.
-- Corrected historical files may replace prior files at the same object key; previously downloaded files must be refreshed after a correction is published.
+- Other venue/type combinations have documented timestamp, quantity, duplicate, order-book reset and missing-hour caveats. Consult the exact venue notes and known-gap ledger before using each data type.
+- Corrected historical files may replace prior files at the same object key; refresh previously downloaded files after a correction is published.
 
-Therefore, CryptoHFTData is a **high-priority independent archive candidate**, not an unquestioned source of truth. Use it for cross-source validation and carefully bounded backfill, retain its venue and timestamp provenance, and do not mark any symbol complete until per-file timestamps, sequence/gap checks, row semantics and cross-source consistency pass.
+Therefore, CryptoHFTData is a **high-priority independent archive candidate**, not an unquestioned source of truth. Use it for cross-source validation and carefully bounded backfill, retain venue and timestamp provenance, and do not mark a symbol complete until per-file timestamps, sequence/gap checks, row semantics and cross-source consistency pass.
 
 ## Related source documents
 
