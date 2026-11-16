@@ -103,6 +103,20 @@ Verified on 2026-11-16:
 
 Therefore, this run proves successful dataset validation/persistence workflow execution, not a complete data gate, a signal-engine run, a Telegram signal delivery, or Stage 1 PASS.
 
+## 4.1 Provider-specific retention and redistribution controls
+
+The repository `hamedbenapart69-byte/Trade` is **public** (verified 2026-11-16). CryptoHFTData's Terms & Licensing page, last updated 2026-10-06, permits personal/internal use and keeping downloaded files on the user's own servers or cloud/hosting providers, but prohibits sharing, redistributing, republishing, or embedding raw data in downstream products. It explicitly permits derived signals, features, models and analysis when the underlying data cannot be reconstructed.
+
+Therefore:
+- CryptoHFTData raw Parquet files may be downloaded and processed transiently inside the GitHub Actions runner for internal computation.
+- Do **not** commit, publish, upload as public workflow artifacts, or otherwise expose raw CryptoHFTData files or reconstructable tables to the public repository, public Pages, Telegram or any third party.
+- Persist only sanitized provenance, row counts, quality metrics, non-reconstructable features, signal records and derived research results that cannot recreate the underlying feed.
+- Remove raw provider data from the runner after the computation step; do not place it in the public `market-data` branch.
+- Any change to repository visibility, retention or distribution model requires a fresh licence review; do not assume a private repository or public Telegram channel is permitted without checking the exact terms.
+
+Official terms: https://www.cryptohftdata.com/terms  
+The provider's terms explicitly permit AI tools/processors used for internal inference/research, while retaining the no-redistribution rule.
+
 ## 5. Execution policy
 
 - Continue reversible research, documentation, provider probes, isolated code branches and tests without asking the owner to configure backend providers.
