@@ -18,7 +18,7 @@
     }
   },
   "total_rows": 1773,
-  "captured_at_utc": "2026-11-15T22:50:44.648902+00:00",
+  "captured_at_utc": "2026-11-16T02:49:40.392080+00:00",
   "symbols": [
     "BTC",
     "ETH",
@@ -32,8 +32,8 @@
     "AVAX"
   ],
   "parquet_files": [
-    "data/orderbook_l2/2026-11-15/okx.parquet",
-    "data/orderbook_l2/2026-11-15/bybit.parquet",
-    "data/orderbook_l2/2026-11-15/kucoin.parquet"
+    "data/orderbook_l2/2026-11-16/okx.parquet",
+    "data/orderbook_l2/2026-11-16/bybit.parquet",
+    "data/orderbook_l2/2026-11-16/kucoin.parquet"
   ]
 }
