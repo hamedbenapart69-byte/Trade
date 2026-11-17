@@ -186,6 +186,12 @@ int main() {
         cfss::telegram::reconcile_inbound_status("PROCESSED") != "PROCESSED") {
         std::cerr << "Telegram crash-recovery state reconciliation failed\n"; return EXIT_FAILURE;
     }
+    const auto inbound_default = cfss::telegram::default_inbound_state();
+    if (inbound_default.value("last_poll_status", std::string{}) != "NEVER_POLLED" ||
+        inbound_default.value("poll_count", -1LL) != 0LL ||
+        !inbound_default.at("processed_updates").is_object()) {
+        std::cerr << "Telegram inbound poll evidence defaults failed\\n"; return EXIT_FAILURE;
+    }
     if (cfss::telegram::command_reply("/status").empty() ||
         cfss::telegram::command_reply("/help").empty() ||
         !cfss::telegram::command_reply("/unknown").empty()) {
