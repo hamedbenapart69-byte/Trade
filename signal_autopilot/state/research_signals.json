@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "signal_count": 102,
+  "signal_count": 103,
   "signals": [
     {
       "calibration_status": "UNCALIBRATED",
@@ -5652,8 +5652,64 @@
       "telegram_message_id": null,
       "first_seen_utc": "2026-11-17T12:57:25.079472+00:00",
       "scan_count": 1
+    },
+    {
+      "symbol": "INJUSDT",
+      "direction": "SELL",
+      "timeframe": "15m",
+      "mode": "RESEARCH",
+      "decision": "RESEARCH_WATCHLIST",
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "calibration_status": "UNCALIBRATED",
+      "raw_score": 60,
+      "tier_score": 60,
+      "tier": null,
+      "points": {
+        "bias_4h": 20,
+        "bias_1h": 20,
+        "sweep": 20,
+        "zone_reaction": 0,
+        "tenkan_kijun_cross_10": 0
+      },
+      "components": {
+        "bias_4h": true,
+        "bias_1h": true,
+        "sweep": true,
+        "sweep_candles_ago": 1,
+        "zone_reaction": false,
+        "cross": false
+      },
+      "lfs_score": 0.586931,
+      "lfs_status": "FULL",
+      "lfs_coverage_pct": 100.0,
+      "cvd": {
+        "delta": 43508.54526868,
+        "source": "PROXY_OHLCV"
+      },
+      "zone_type": "NONE",
+      "zone_distance_pct": null,
+      "entry_reference": 7.381,
+      "stop_reference": 7.408,
+      "target_reference": 7.327,
+      "rr_reference": 2.0,
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "data_sources": [
+        "OKX_PUBLIC_SWAP",
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "candle_open_time": 1794956400000,
+      "created_at_utc": "2026-11-17T23:25:54.658316+00:00",
+      "signal_id": "b481d66e5c03a281",
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "telegram_status": "NOT_ATTEMPTED",
+      "telegram_message_id": null,
+      "first_seen_utc": "2026-11-17T23:25:54.658316+00:00",
+      "scan_count": 1
     }
   ],
   "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
-  "updated_at_utc": "2026-11-17T12:57:49.932088+00:00"
+  "updated_at_utc": "2026-11-17T23:27:06.615679+00:00"
 }
