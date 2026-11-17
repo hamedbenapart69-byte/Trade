@@ -46,7 +46,6 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
     const char* branch = std::getenv("GITHUB_REF_NAME");
     const char* build_id = std::getenv("CFSS_BUILD_ID");
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
-    const auto& producer = contract.at("producer");
     return {
         {"run_id", contract.at("run_id")}, {"scan_id", contract.at("scan_id")},
         {"run_timestamp_utc", contract.at("acquired_at_utc")},
@@ -73,7 +72,9 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
             {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}}}
         }},
         {"telegram_send_status", "NOT_ATTEMPTED"},
-        {"telegram_receive_test_status", "NOT_REQUESTED"}
+        {"telegram_receive_test_status", "NOT_REQUESTED"},
+        {"telegram_message_ids", nlohmann::json::array()},
+        {"telegram_last_update_id", 0}
     };
 }
 
