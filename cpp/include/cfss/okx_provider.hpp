@@ -521,7 +521,10 @@ inline json collect(int symbol_count, int years) {
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
         {"universe", {{"declared_usdt_swap_count", declared_count}, {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
-                      {"liquidity_threshold_usd", 10000000.0}}},
+                      {"liquidity_threshold_usd", 10000000.0},
+                      {"selection_method", "top_turnover_usd_desc_with_btc_first"},
+                      {"selection_timestamp_utc", acquired_text},
+                      {"selected_instrument_ids", selected_ids}}},
         {"instruments", instruments}
     };
 }
