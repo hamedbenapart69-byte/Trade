@@ -1,1 +1,2 @@
 C++-only L1/L2/L3 live acceptance run. No Python production runtime. Initial smoke: one BTC linear USDT perpetual, one year of completed 1h OHLCV, 30-day funding/OI where available. Stage PASS is not implied by workflow success.
+Retry after D3 discovery failure: OKX instrument metadata normalization and per-dataset failure isolation were corrected. The next run is still a smoke test, not Stage 1 PASS.
