@@ -136,22 +136,28 @@ struct Instrument {
     std::string contract_value_currency;
 };
 
+inline std::optional<double> quote_turnover_usd(const json& ticker) {
+    const auto last = number(ticker.value("last", json{}));
+    const auto base_volume = number(ticker.value("volCcy24h", json{}));
+    if (!last || !base_volume || *last <= 0.0 || *base_volume <= 0.0) return std::nullopt;
+    return *last * *base_volume;
+}
+inline bool passes_liquidity(double quote_turnover_usd, double threshold_usd = 10000000.0) {
+    return std::isfinite(quote_turnover_usd) && quote_turnover_usd > threshold_usd;
+}
 inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
     for (const auto& ticker : tickers["data"]) {
-        const auto last = number(ticker.value("last", json{}));
-        const auto base_volume = number(ticker.value("volCcy24h", json{}));
         // OKX documents volCcy24h for derivatives in base currency; convert to quote notional.
-        if (last && base_volume && *last > 0.0 && *base_volume > 0.0)
-            turnover[text(ticker, "instId")] = *last * *base_volume;
+        const auto notional = quote_turnover_usd(ticker);
+        if (notional) turnover[text(ticker, "instId")] = *notional;
     }
 
     std::vector<Instrument> eligible;
     std::size_t swap_rows = 0U, live_rows = 0U, usdt_settle_rows = 0U, linear_rows = 0U;
-    json btc_diagnostic = nullptr;
     for (const auto& item : instruments["data"]) {
         const auto id = text(item, "instId");
         if (id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP") continue;
@@ -181,7 +187,7 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         // Contract mapping and liquidity are hard eligibility gates, never silently inferred.
         if (!ct || *ct <= 0.0 || !mult || *mult <= 0.0 || !tick || *tick <= 0.0 || !lot || *lot <= 0.0 ||
             !minimum || *minimum <= 0.0 || value_ccy != base || listing <= 0 ||
-            quote_turnover <= 10000000.0) continue;
+            !passes_liquidity(quote_turnover)) continue;
         eligible.push_back({id, base, quote, "USDT", *ct, *mult,
                             *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
         (void)second_dash;
