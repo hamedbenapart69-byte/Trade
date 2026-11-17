@@ -1,14 +1,12 @@
 #include <curl/curl.h>
 
+#include "cfss/http_utils.hpp"
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
 
 namespace {
-
-size_t discard_response(char* data, size_t size, size_t count, void*) {
-    return size * count;
-}
 
 bool send_telegram_message(const std::string& token,
                            const std::string& chat_id,
@@ -21,60 +19,69 @@ bool send_telegram_message(const std::string& token,
 
     const std::string endpoint =
         "https://api.telegram.org/bot" + token + "/sendMessage";
-    char* escaped_chat_id = curl_easy_escape(handle, chat_id.c_str(), 0);
-    char* escaped_message = curl_easy_escape(handle, message.c_str(), 0);
-
-    if (escaped_chat_id == nullptr || escaped_message == nullptr) {
-        if (escaped_chat_id != nullptr) curl_free(escaped_chat_id);
-        if (escaped_message != nullptr) curl_free(escaped_message);
-        curl_easy_cleanup(handle);
-        return false;
-    }
-
-    const std::string payload =
-        "chat_id=" + std::string{escaped_chat_id} +
-        "&text=" + std::string{escaped_message};
-
-    curl_free(escaped_chat_id);
-    curl_free(escaped_message);
+    const std::string payload = cfss::telegram_payload(chat_id, message);
+    std::string response;
 
     struct curl_slist* headers = nullptr;
-    headers = curl_slist_append(
-        headers, "Content-Type: application/x-www-form-urlencoded");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    if (headers == nullptr) {
+        curl_easy_cleanup(handle);
+        std::cerr << "Could not allocate HTTP headers\n";
+        return false;
+    }
 
     curl_easy_setopt(handle, CURLOPT_URL, endpoint.c_str());
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(handle, CURLOPT_POST, 1L);
     curl_easy_setopt(handle, CURLOPT_POSTFIELDS, payload.c_str());
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, discard_response);
+    curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE,
+                     static_cast<long>(payload.size()));
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, cfss::append_response);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response);
     curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10L);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 20L);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 0L);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
 
     const CURLcode result = curl_easy_perform(handle);
     long status_code = 0;
     if (result == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status_code);
     } else {
-        std::cerr << "Telegram HTTP request failed: "
+        std::cerr << "Telegram POST transport failed: "
                   << curl_easy_strerror(result) << '\n';
     }
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(handle);
-    return result == CURLE_OK && status_code >= 200 && status_code < 300;
+
+    std::cout << "Telegram HTTP status: " << status_code << '\n';
+    // پاسخ API چاپ می‌شود، اما token هرگز در log قرار نمی‌گیرد.
+    std::cout << "Telegram response: " << response << '\n';
+    return result == CURLE_OK && status_code >= 200 && status_code < 300 &&
+           response.find("\"ok\":true") != std::string::npos;
 }
 
 }  // namespace
 
 int main() {
-    const char* token_env = std::getenv("TELEGRAM_BOT_TOKEN");
+    const char* token_env = std::getenv("TELEGRAM_TOKEN");
+    if (token_env == nullptr || token_env[0] == '\0') {
+        // سازگاری با نام متغیر استفاده‌شده در scaffold قبلی.
+        token_env = std::getenv("TELEGRAM_BOT_TOKEN");
+    }
     const char* chat_env = std::getenv("TELEGRAM_CHAT_ID");
 
-    // نبود Secret به‌صورت امن و بدون چاپ مقدار آن مدیریت می‌شود.
     if (token_env == nullptr || chat_env == nullptr ||
         token_env[0] == '\0' || chat_env[0] == '\0') {
-        std::cout << "Telegram delivery skipped: credentials are not configured\n";
+        std::cout << "Telegram delivery skipped: secrets are not configured\n";
+        std::cout << "Payload fixture: "
+                  << cfss::telegram_payload(
+                         "CHAT_ID_PLACEHOLDER",
+                         "V18.2 C++ Vertical Slice Active")
+                  << '\n';
         return EXIT_SUCCESS;
     }
 
@@ -84,7 +91,7 @@ int main() {
     }
 
     const bool sent = send_telegram_message(
-        token_env, chat_env, "CFSS C++ Telegram connectivity test");
+        token_env, chat_env, "V18.2 C++ Vertical Slice Active");
 
     curl_global_cleanup();
     return sent ? EXIT_SUCCESS : EXIT_FAILURE;

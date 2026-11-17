@@ -1,15 +1,13 @@
 #include <curl/curl.h>
 
+#include "cfss/http_utils.hpp"
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <string_view>
 
 namespace {
-
-size_t discard_response(char* data, size_t size, size_t count, void*) {
-    return size * count;
-}
 
 bool perform_get(std::string_view url) {
     CURL* handle = curl_easy_init();
@@ -19,22 +17,29 @@ bool perform_get(std::string_view url) {
     }
 
     const std::string url_string{url};
+    std::string response;
     curl_easy_setopt(handle, CURLOPT_URL, url_string.c_str());
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, discard_response);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, cfss::append_response);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response);
     curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10L);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 20L);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 0L);
-    curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-CPP/0.1");
+    curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-CPP/0.2");
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 2L);
+    curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
 
     const CURLcode result = curl_easy_perform(handle);
     long status_code = 0;
     if (result == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status_code);
     } else {
-        std::cerr << "HTTP request failed: " << curl_easy_strerror(result) << '\n';
+        std::cerr << "HTTP GET failed: " << curl_easy_strerror(result) << '\n';
     }
 
     curl_easy_cleanup(handle);
+    std::cout << "Binance HTTP status: " << status_code << '\n';
+    std::cout << "Binance response: " << response << '\n';
     return result == CURLE_OK && status_code >= 200 && status_code < 300;
 }
 
@@ -46,18 +51,17 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    // اتصال عمومی و فقط خواندنی؛ هیچ مسیر حساب معاملاتی یا سفارش وجود ندارد.
+    // فقط endpoint عمومی قیمت؛ بدون حساب کاربری یا امکان ثبت سفارش.
     constexpr std::string_view endpoint =
-        "https://www.okx.com/api/v5/public/instruments?instType=SWAP";
+        "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT";
 
     const bool request_ok = perform_get(endpoint);
     curl_global_cleanup();
 
     if (!request_ok) {
-        std::cerr << "Market data connectivity check did not pass\n";
+        std::cerr << "Binance public market-data GET did not pass\n";
         return EXIT_FAILURE;
     }
 
-    std::cout << "Market pipeline HTTP connectivity check passed\n";
     return EXIT_SUCCESS;
 }
