@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include "cfss/http_utils.hpp"
 #include "cfss/atomic_file.hpp"
+#include "cfss/hash.hpp"
 
 #include <algorithm>
 #include <chrono>
