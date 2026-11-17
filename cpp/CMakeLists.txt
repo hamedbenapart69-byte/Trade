@@ -29,14 +29,21 @@ target_include_directories(telegram_delivery PRIVATE include)
 target_link_libraries(telegram_delivery PRIVATE CURL::libcurl)
 target_compile_features(telegram_delivery PRIVATE cxx_std_20)
 
+add_executable(telegram_inbound
+    apps/telegram_inbound/main.cpp
+)
+target_include_directories(telegram_inbound PRIVATE include)
+target_link_libraries(telegram_inbound PRIVATE CURL::libcurl)
+target_compile_features(telegram_inbound PRIVATE cxx_std_20)
+
 add_executable(cfss_unit_tests tests/test_main.cpp)
 target_include_directories(cfss_unit_tests PRIVATE include)
 target_compile_features(cfss_unit_tests PRIVATE cxx_std_20)
-target_link_libraries(cfss_unit_tests PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(cfss_unit_tests PRIVATE nlohmann_json::nlohmann_json CURL::libcurl)
 add_test(NAME cfss_unit_tests COMMAND cfss_unit_tests)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    foreach(target market_pipeline telegram_delivery cfss_unit_tests)
+    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests)
         target_compile_options(${target} PRIVATE
             -Wall
             -Wextra
