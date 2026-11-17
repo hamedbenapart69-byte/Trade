@@ -41,7 +41,9 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
                 })},
                 {"open_interest", nlohmann::json::array({
                     {{"timestamp_ms", candle_ms}, {"open_interest", 1000.0},
-                     {"open_interest_value_usd", nullptr}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
+                     {"open_interest_unit", "contracts"}, {"open_interest_base", 0.1},
+                     {"open_interest_base_currency", "BTC"}, {"open_interest_value_usd", nullptr},
+                     {"open_interest_value_currency", "USD"}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"availability", {{"ohlcv", "AVAILABLE"}, {"funding", "PARTIAL"},
                                   {"open_interest", "PARTIAL"}}}
