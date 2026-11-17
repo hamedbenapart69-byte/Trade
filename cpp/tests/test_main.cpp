@@ -13,6 +13,9 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
     const auto candle_ms = now_ms - 3'600'000;
     return {
         {"schema_version", "1.0.0"}, {"run_id", "test-run-001"},
+        {"acquired_at_utc", "2026-11-17T12:00:00Z"},
+        {"window", {{"timeframe", "1h"}, {"start_ms", now_ms - 7'200'000}, {"end_ms", now_ms}}},
+        {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public REST"}, {"fallback_used", false}}},
         {"instruments", nlohmann::json::array({
             {
                 {"instrument_id", "BTC-USDT-SWAP"}, {"unified_symbol", "BTC/USDT:USDT"},
