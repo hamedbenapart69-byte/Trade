@@ -150,6 +150,9 @@ jobs:
         run: |
           RUN_ID=$(jq -r .run_id artifacts/run-manifest.v1.json)
           cp artifacts/run-manifest.v1.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
+          cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
+          cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"
+          cp artifacts/fear-greed.v1.json "signals-state/cpp_runtime/fear-greed-${RUN_ID}.json"
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
@@ -182,7 +185,7 @@ jobs:
           retention-days: 1
 
       - name: Upload compact multi-symbol evidence
-        if: always() && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.symbols != '1'))
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.symbols != '1'
         uses: actions/upload-artifact@v4
         with:
           name: cpp-only-stage1-compact-${{ github.run_id }}
