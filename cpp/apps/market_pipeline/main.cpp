@@ -129,8 +129,8 @@ std::vector<Candle> parse_candles(std::string_view json, std::string_view marker
 
 std::optional<std::pair<std::vector<double>, std::string>> fetch_ohlcv() {
     constexpr std::array<Provider, 2> providers{{
-        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=50", "\"data\"", true},
-        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=50", "\"list\"", false}
+        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=51", "\"data\"", true},
+        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=51", "\"list\"", false}
     }};
     for (const auto& provider : providers) {
         const HttpResult response = get(provider.endpoint);
