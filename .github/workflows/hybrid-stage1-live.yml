@@ -48,7 +48,11 @@ jobs:
       - name: Resolve safe integration defaults
         run: |
           echo "L1_PROVIDER=${{ inputs.provider || 'okx' }}" >> "$GITHUB_ENV"
-          echo "L1_SYMBOLS=${{ inputs.symbols || '10' }}" >> "$GITHUB_ENV"
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            echo "L1_SYMBOLS=100" >> "$GITHUB_ENV"
+          else
+            echo "L1_SYMBOLS=${{ inputs.symbols || '10' }}" >> "$GITHUB_ENV"
+          fi
           echo "L1_YEARS=${{ inputs.years || '2' }}" >> "$GITHUB_ENV"
       - name: Acquire public data and export versioned L1 contract
         run: |
