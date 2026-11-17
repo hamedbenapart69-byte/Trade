@@ -2,6 +2,7 @@
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
 #include "cfss/l1_contract.hpp"
+#include "cfss/okx_provider.hpp"
 #include "cfss/signal.hpp"
 #include "cfss/telegram_l3.hpp"
 #include <chrono>
@@ -61,6 +62,22 @@ int main() {
         std::abs(fallback.take_profit - 66300.0) > 1e-9 ||
         std::abs(fallback.risk_reward - 2.0) > 1e-12 || !fallback.used_fallback) {
         std::cerr << "Invalid stop 1% fallback calculation failed\n"; return EXIT_FAILURE;
+    }
+
+    nlohmann::json short_oi = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 99; ++i) {
+        short_oi.push_back({{"timestamp_ms", 1'700'000'000'000LL + i * 3'600'000LL},
+                            {"open_interest", 1000.0}});
+    }
+    nlohmann::json full_oi = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 720; ++i) {
+        full_oi.push_back({{"timestamp_ms", 1'700'000'000'000LL + i * 3'600'000LL},
+                           {"open_interest", 1000.0}});
+    }
+    if (cfss::okx::availability(short_oi, "open_interest", 29.0) != "PARTIAL" ||
+        cfss::okx::availability(full_oi, "open_interest", 29.0) != "AVAILABLE" ||
+        cfss::okx::availability(nlohmann::json::array(), "open_interest", 29.0) != "UNAVAILABLE") {
+        std::cerr << "Open-interest 30-day coverage gate failed\n"; return EXIT_FAILURE;
     }
 
     const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
