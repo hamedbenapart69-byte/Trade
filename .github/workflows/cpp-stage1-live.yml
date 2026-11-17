@@ -141,6 +141,22 @@ jobs:
           mkdir -p artifacts
           printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\n' > artifacts/telegram-inbound-test-status.json
 
+      - name: Validate required signals performance coverage and system-status artifacts
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/signals.v1.schema.json -d artifacts/signals.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/performance.v1.schema.json -d artifacts/performance.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/coverage.v1.schema.json -d artifacts/coverage.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/system-status.v1.schema.json -d artifacts/system_status.json --all-errors
+
+      - name: Validate history CSV header and row count
+        run: |
+          EXPECTED_HEADER="timestamp_utc,run_id,scan_id,instrument_id,symbol,state,reason_code,data_quality,confidence_status,actionable,latest_candle_timestamp_ms"
+          test "$(head -n 1 artifacts/history.csv)" = "$EXPECTED_HEADER"
+          CSV_ROWS=$(wc -l < artifacts/history.csv)
+          L1_ROWS=$(jq '.instruments | length' artifacts/l1-market-data.v1.json)
+          test "$CSV_ROWS" -eq "$((L1_ROWS + 1))"
+          echo "HISTORY_CSV_ROWS=$((CSV_ROWS - 1))"
+
       - name: Validate V18.2 run manifest
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
@@ -153,6 +169,11 @@ jobs:
           cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
           cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"
           cp artifacts/fear-greed.v1.json "signals-state/cpp_runtime/fear-greed-${RUN_ID}.json"
+          cp artifacts/signals.json "signals-state/cpp_runtime/signals-${RUN_ID}.json"
+          cp artifacts/history.csv "signals-state/cpp_runtime/history-${RUN_ID}.csv"
+          cp artifacts/performance.json "signals-state/cpp_runtime/performance-${RUN_ID}.json"
+          cp artifacts/coverage.json "signals-state/cpp_runtime/coverage-${RUN_ID}.json"
+          cp artifacts/system_status.json "signals-state/cpp_runtime/system-status-${RUN_ID}.json"
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
@@ -194,6 +215,11 @@ jobs:
             artifacts/run-manifest.v1.json
             artifacts/provider-health.v1.json
             artifacts/fear-greed.v1.json
+            artifacts/signals.json
+            artifacts/history.csv
+            artifacts/performance.json
+            artifacts/coverage.json
+            artifacts/system_status.json
             artifacts/telegram-inbound-test-status.json
             signals-state/cpp_runtime/
           if-no-files-found: warn
