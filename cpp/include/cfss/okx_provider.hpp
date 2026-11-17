@@ -145,6 +145,17 @@ inline std::optional<double> quote_turnover_usd(const json& ticker) {
 inline bool passes_liquidity(double quote_turnover_usd, double threshold_usd = 10000000.0) {
     return std::isfinite(quote_turnover_usd) && quote_turnover_usd > threshold_usd;
 }
+inline bool valid_linear_usdt_contract(const json& item, const std::string& base) {
+    const auto ct_type = text(item, "ctType");
+    const auto positive = [&](const char* key) {
+        const auto value = number(item.value(key, json{}));
+        return value && *value > 0.0;
+    };
+    return text(item, "state") == "live" && text(item, "settleCcy") == "USDT" &&
+           (ct_type.empty() || ct_type == "linear") && text(item, "ctValCcy") == base &&
+           positive("ctVal") && positive("ctMult") && positive("tickSz") &&
+           positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
+}
 inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
@@ -166,9 +177,6 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         ++live_rows;
         if (text(item, "settleCcy") != "USDT") continue;
         ++usdt_settle_rows;
-        const auto ct_type = text(item, "ctType");
-        if (!ct_type.empty() && ct_type != "linear") continue;
-        ++linear_rows;
 
         const auto first_dash = id.find('-');
         const auto second_dash = first_dash == std::string::npos ? std::string::npos : id.find('-', first_dash + 1U);
@@ -177,6 +185,8 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         const std::string quote = text(item, "quoteCcy").empty() ? "USDT" : text(item, "quoteCcy");
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
+        if (!valid_linear_usdt_contract(item, base) || !passes_liquidity(quote_turnover)) continue;
+        ++linear_rows;
         const auto ct = number(item.value("ctVal", json{}));
         const auto mult = number(item.value("ctMult", json{}));
         const auto tick = number(item.value("tickSz", json{}));
@@ -184,10 +194,6 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         const auto minimum = number(item.value("minSz", json{}));
         const auto listing = timestamp(item.value("listTime", json{}));
         const auto value_ccy = text(item, "ctValCcy");
-        // Contract mapping and liquidity are hard eligibility gates, never silently inferred.
-        if (!ct || *ct <= 0.0 || !mult || *mult <= 0.0 || !tick || *tick <= 0.0 || !lot || *lot <= 0.0 ||
-            !minimum || *minimum <= 0.0 || value_ccy != base || listing <= 0 ||
-            !passes_liquidity(quote_turnover)) continue;
         eligible.push_back({id, base, quote, "USDT", *ct, *mult,
                             *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
         (void)second_dash;
