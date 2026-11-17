@@ -127,7 +127,13 @@ inline std::string text(const json& obj, const char* key) {
 struct Instrument {
     std::string id, base, quote, settle;
     double contract_size{0.0};
+    double contract_multiplier{0.0};
+    double tick_size{0.0};
+    double lot_size{0.0};
+    double min_size{0.0};
     double turnover{0.0};
+    std::int64_t listing_time_ms{0};
+    std::string contract_value_currency;
 };
 
 inline std::vector<Instrument> discover(int target_count) {
@@ -136,10 +142,10 @@ inline std::vector<Instrument> discover(int target_count) {
     std::map<std::string, double> turnover;
     for (const auto& ticker : tickers["data"]) {
         const auto last = number(ticker.value("last", json{}));
-        auto volume = number(ticker.value("volCcy24h", json{}));
-        if (!volume) volume = number(ticker.value("vol24h", json{}));
-        if (last && volume && *last > 0.0 && *volume > 0.0)
-            turnover[text(ticker, "instId")] = *last * *volume;
+        const auto base_volume = number(ticker.value("volCcy24h", json{}));
+        // OKX documents volCcy24h for derivatives in base currency; convert to quote notional.
+        if (last && base_volume && *last > 0.0 && *base_volume > 0.0)
+            turnover[text(ticker, "instId")] = *last * *base_volume;
     }
 
     std::vector<Instrument> eligible;
@@ -166,7 +172,18 @@ inline std::vector<Instrument> discover(int target_count) {
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
         const auto ct = number(item.value("ctVal", json{}));
-        eligible.push_back({id, base, quote, "USDT", ct.value_or(0.0), quote_turnover});
+        const auto mult = number(item.value("ctMult", json{}));
+        const auto tick = number(item.value("tickSz", json{}));
+        const auto lot = number(item.value("lotSz", json{}));
+        const auto minimum = number(item.value("minSz", json{}));
+        const auto listing = timestamp(item.value("listTime", json{}));
+        const auto value_ccy = text(item, "ctValCcy");
+        // Contract mapping and liquidity are hard eligibility gates, never silently inferred.
+        if (!ct || *ct <= 0.0 || !tick || *tick <= 0.0 || !lot || *lot <= 0.0 ||
+            !minimum || *minimum <= 0.0 || value_ccy != base || listing <= 0 ||
+            quote_turnover <= 10000000.0) continue;
+        eligible.push_back({id, base, quote, "USDT", *ct, mult.value_or(1.0),
+                            *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
         (void)second_dash;
     }
     std::cerr << "OKX_UNIVERSE_DIAGNOSTICS total=" << instruments["data"].size()
@@ -352,7 +369,8 @@ inline json probe_provider_health() {
             {"http_status", response.status},
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
-            {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" : "UNAVAILABLE"},
+            {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" :
+                (std::string{probe.adapter} == "NOT_IMPLEMENTED" ? "NOT_IMPLEMENTED" : "REFERENCE_ONLY")},
             {"fallback_equivalence", "NOT_PROVEN"}
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -423,7 +441,11 @@ inline json collect(int symbol_count, int years) {
             {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
             {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
             {"contract_type", "linear_perpetual"},
-            {"contract_size", item.contract_size > 0.0 ? json(item.contract_size) : json(nullptr)},
+            {"contract_size", item.contract_size}, {"contract_multiplier", item.contract_multiplier},
+            {"contract_value_currency", item.contract_value_currency}, {"tick_size", item.tick_size},
+            {"lot_size", item.lot_size}, {"min_size", item.min_size},
+            {"listing_time_ms", item.listing_time_ms}, {"turnover_24h_usd", item.turnover},
+            {"liquidity_threshold_usd", 10000000.0}, {"liquidity_status", "ELIGIBLE"},
             {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
             {"provenance", {{"ohlcv_endpoint", "/api/v5/market/history-candles"},
                             {"funding_endpoint", "/api/v5/public/funding-rate-history"},
@@ -446,6 +468,8 @@ inline json collect(int symbol_count, int years) {
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
     const char* commit = std::getenv("GITHUB_SHA");
+    const auto provider_health = probe_provider_health();
+    const auto fear_greed = fetch_fear_greed();
     return {
         {"schema_version", "1.0.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
@@ -455,6 +479,10 @@ inline json collect(int symbol_count, int years) {
         {"window", {{"timeframe", "1h"}, {"start_ms", start_ms}, {"end_ms", end_ms}}},
         {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public market-data API"},
                       {"fallback_used", false}}},
+        {"provider_health", provider_health}, {"fear_greed", fear_greed},
+        {"universe", {{"target_count", symbol_count}, {"selected_count", selected.size()},
+                      {"liquidity_threshold_usd", 10000000.0},
+                      {"eligible_count_at_least_target", selected.size() >= static_cast<std::size_t>(symbol_count)}}},
         {"instruments", instruments}
     };
 }
