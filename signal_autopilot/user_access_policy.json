@@ -1,6 +1,8 @@
 {
-  "policy_version": 1,
+  "policy_version": 2,
+  "policy_status": "USER_DIRECTIVE_SUPERSEDES_PRIOR_USER_ACCESS_ASSUMPTIONS",
   "user_delivery_channels": ["telegram"],
+  "primary_user_interface": "telegram_signal_channel",
   "user_connectivity_required": false,
   "user_accounts_required_for_data_sources": false,
   "user_exchange_account_connection": false,
@@ -9,19 +11,56 @@
   "order_execution": false,
   "backend_fetches_public_market_data": true,
   "backend_runtime": "github_actions_or_other_server_side_runner",
-  "provider_selection": "quality_freshness_coverage_reliability_cost_and_server_reachability",
+  "provider_selection": [
+    "data_quality",
+    "freshness",
+    "coverage",
+    "reliability",
+    "free_tier_sufficiency",
+    "data_license_and_permitted_use",
+    "backend_runtime_reachability",
+    "incremental_out_of_sample_value"
+  ],
+  "user_geography_policy": {
+    "user_location_is_provider_selection_criterion": false,
+    "iran_user_side_filtering_or_vpn_requirement": false,
+    "mobile_browser_provider_access_test_required": false,
+    "backend_egress_reachability_test_required": true,
+    "backend_geo_or_provider_block": "record_provider_failure_then_automatic_fallback"
+  },
   "provider_failover": "automatic_server_side",
-  "regional_user_access_is_provider_selection_criterion": false,
+  "provider_credentials": {
+    "user_must_create_or_connect_provider_accounts": false,
+    "free_backend_provider_api_keys_permitted": true,
+    "backend_secrets_only": true,
+    "paid_or_trial_or_card_required_services": "EXCLUDE",
+    "trading_credentials": "FORBIDDEN"
+  },
+  "tool_admission": {
+    "discovered_tools_are_not_automatically_trusted": true,
+    "runtime_test_required_before_production": true,
+    "incremental_oos_value_required_for_strategy_features": true,
+    "duplicate_or_non_incremental_features": "DO_NOT_ADD_TO_SIGNAL_SCORE"
+  },
   "data_integrity": {
     "missing_real_data": "UNAVAILABLE",
     "substitute_data": "PROXY",
     "spot_data_as_futures_ohlcv": false,
-    "fabricated_market_values": false
+    "fabricated_market_values": false,
+    "computed_cvd_label": "COMPUTED_FROM_PUBLIC_TRADES",
+    "historical_orderbook_or_liquidations_without_archived_records": "UNAVAILABLE"
   },
   "delivery_behavior": {
     "actionable_signals": "telegram_channel",
     "daily_no_signal_or_degraded_status": "telegram_channel",
     "dashboard_required_for_user": false,
+    "dashboard_role": "OPTIONAL_INTERNAL_OBSERVABILITY_ONLY",
+    "email_delivery_enabled": false,
     "user_must_connect_to_exchange_or_analytics_tools": false
-  }
+  },
+  "supersedes": [
+    "dashboard_as_primary_user_interface",
+    "telegram_as_secondary_user_notification",
+    "user_mobile_browser_or_iran_access_as_provider_admission_gate"
+  ]
 }
