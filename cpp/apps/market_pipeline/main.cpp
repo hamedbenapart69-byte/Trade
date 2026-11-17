@@ -1,5 +1,6 @@
 #include "cfss/l1_contract.hpp"
 #include "cfss/hash.hpp"
+#include "cfss/atomic_file.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -29,19 +30,7 @@ int main(int argc, char** argv) {
         const auto contract = nlohmann::json::parse(raw);
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
         cfss::add_artifact_hash(artifact);
-        if (std::filesystem::exists(output_path))
-            throw std::runtime_error("immutable_l2_artifact_already_exists");
-        const auto parent = output_path.parent_path().empty() ? std::filesystem::path{"."} : output_path.parent_path();
-        std::filesystem::create_directories(parent);
-        const auto temp_path = output_path.string() + ".tmp";
-        {
-            std::ofstream output(temp_path, std::ios::binary | std::ios::trunc);
-            if (!output) throw std::runtime_error("l2_artifact_temp_open_failed");
-            output << artifact.dump(2) << '\n';
-            output.flush();
-            if (!output) throw std::runtime_error("l2_artifact_write_failed");
-        }
-        std::filesystem::rename(temp_path, output_path);
+        write_file_atomic(output_path, artifact.dump(2) + "\n", true);
         std::cout << "L2_ARTIFACT_CREATED run_id=" << contract.at("run_id")
                   << " instruments=" << artifact.at("instruments").size() << '\n';
         return EXIT_SUCCESS;
