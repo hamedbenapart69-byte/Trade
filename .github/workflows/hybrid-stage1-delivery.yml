@@ -38,7 +38,7 @@ jobs:
           if [ -n "$INPUT_RUN_ID" ]; then
             run_id="$INPUT_RUN_ID"
           else
-            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/hybrid-stage1-live.yml/runs?branch=feat%2Fhybrid-stage1-live-run&status=success&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id')"
+            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/hybrid-stage1-live.yml/runs?branch=feat%2Fhybrid-stage1-live-run&status=completed&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id')"
           fi
           if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
             echo "NO_SUCCESSFUL_L1_L2_RUN_FOUND"
