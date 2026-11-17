@@ -48,6 +48,9 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
     const char* commit = std::getenv("GITHUB_SHA");
     const char* branch = std::getenv("GITHUB_REF_NAME");
     const char* build_id = std::getenv("CFSS_BUILD_ID");
+    const char* event_name = std::getenv("GITHUB_EVENT_NAME");
+    const bool retain_l1 = symbols == 1 && (!event_name || std::string{event_name} != "schedule");
+    const auto l1_retention_days = retain_l1 ? 1 : 0;
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
     auto retry_summary = cfss::okx::request_metrics();
     retry_summary["telegram_send_attempts_total_for_scan"] = 0;
@@ -75,12 +78,17 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
         {"start_time_utc", contract.at("acquired_at_utc")}, {"end_time_utc", now_text},
         {"error_summary", errors}, {"retry_summary", retry_summary},
         {"artifact_manifest", {
-            {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)}, {"bytes", l1_raw.size()}}},
-            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}}},
+            {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)},
+                                {"bytes", l1_raw.size()}, {"retained_in_workflow_artifacts", retain_l1},
+                                {"retention_days", l1_retention_days}}},
+            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)},
+                           {"bytes", l2_raw.size()}, {"retained_in_workflow_artifacts", true}, {"retention_days", 1}}},
             {"provider_health", {{"path", (evidence_dir / "provider-health.v1.json").generic_string()},
-                                 {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()}}},
+                                 {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()},
+                                 {"retained_in_workflow_artifacts", true}, {"retention_days", 1}}},
             {"fear_greed", {{"path", (evidence_dir / "fear-greed.v1.json").generic_string()},
-                            {"sha256", cfss::sha256_hex(fear_raw)}, {"bytes", fear_raw.size()}}}
+                            {"sha256", cfss::sha256_hex(fear_raw)}, {"bytes", fear_raw.size()},
+                            {"retained_in_workflow_artifacts", true}, {"retention_days", 1}}}
         }},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
