@@ -1,6 +1,11 @@
 name: Hybrid Stage 1 Live L1-to-L2 Integration
 
 on:
+  push:
+    branches: [feat/hybrid-stage1-live-run]
+    paths:
+      - "docs/evidence/run-live-l1-l2.txt"
+      - ".github/workflows/hybrid-stage1-live.yml"
   workflow_dispatch:
     inputs:
       symbols:
@@ -29,6 +34,9 @@ jobs:
   live-l1-to-l2:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
+    concurrency:
+      group: hybrid-stage1-live-l1-l2
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -37,12 +45,17 @@ jobs:
           python-version: "3.11"
       - name: Install Python L1 dependencies
         run: python -m pip install --disable-pip-version-check -r signal_autopilot/requirements.txt
+      - name: Resolve safe integration defaults
+        run: |
+          echo "L1_PROVIDER=${{ inputs.provider || 'okx' }}" >> "$GITHUB_ENV"
+          echo "L1_SYMBOLS=${{ inputs.symbols || '10' }}" >> "$GITHUB_ENV"
+          echo "L1_YEARS=${{ inputs.years || '2' }}" >> "$GITHUB_ENV"
       - name: Acquire public data and export versioned L1 contract
         run: |
           python signal_autopilot/scripts/export_l1_contract.py \
-            --provider "${{ inputs.provider }}" \
-            --symbols "${{ inputs.symbols }}" \
-            --years "${{ inputs.years }}" \
+            --provider "$L1_PROVIDER" \
+            --symbols "$L1_SYMBOLS" \
+            --years "$L1_YEARS" \
             --data-dir signal_autopilot/data/stage1-hybrid \
             --output artifacts/l1-market-data.v1.json
       - name: Install C++ dependencies
@@ -67,6 +80,9 @@ jobs:
                      "WATCHLIST", "NO_QUALIFIED_SETUP", "MARKET_DATA_DEGRADED"}
           source = {x["instrument_id"] for x in l1["instruments"]}
           outputs = l2["instruments"]
+          expected = int(__import__("os").environ.get("L1_SYMBOLS", "10"))
+          assert len(source) == expected, f"expected {expected} instruments, got {len(source)}"
+          assert any(x["base"] == "BTC" for x in l1["instruments"]), "BTC context missing"
           assert len(outputs) == len(source), "L2 output count mismatch"
           assert {x["instrument_id"] for x in outputs} == source, "L2 instrument identity mismatch"
           assert all(x["state"] in allowed for x in outputs), "unknown C10 state"
