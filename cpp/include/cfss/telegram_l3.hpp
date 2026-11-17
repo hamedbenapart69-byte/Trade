@@ -414,6 +414,7 @@ inline void record_inbound_manifest(const std::filesystem::path& manifest_path,
     if (status == "FAILED" || status == "UNAVAILABLE")
         manifest["error_summary"].push_back("telegram_inbound:" + status);
     manifest["end_time_utc"] = utc_now_iso();
+    sync_system_status_artifact(manifest_path, manifest);
     write_json_atomic(manifest_path, manifest);
 }
 
