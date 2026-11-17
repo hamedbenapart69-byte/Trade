@@ -76,9 +76,9 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
         {"error_summary", errors}, {"retry_summary", retry_summary},
         {"artifact_manifest", {
             {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)}, {"bytes", l1_raw.size()}}},
-            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}},
+            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}}},
             {"provider_health", {{"path", (evidence_dir / "provider-health.v1.json").generic_string()},
-                                 {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()}},
+                                 {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()}}},
             {"fear_greed", {{"path", (evidence_dir / "fear-greed.v1.json").generic_string()},
                             {"sha256", cfss::sha256_hex(fear_raw)}, {"bytes", fear_raw.size()}}}
         }},
