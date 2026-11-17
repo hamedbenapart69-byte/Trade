@@ -29,14 +29,31 @@ jobs:
     steps:
       - name: Checkout Hybrid C++ source
         uses: actions/checkout@v4
+      - name: Resolve latest successful real L1/L2 run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          if [ -n "$INPUT_RUN_ID" ]; then
+            run_id="$INPUT_RUN_ID"
+          else
+            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/hybrid-stage1-live.yml/runs?branch=feat%2Fhybrid-stage1-live-run&status=success&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id')"
+          fi
+          if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+            echo "NO_SUCCESSFUL_L1_L2_RUN_FOUND"
+            exit 1
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "L1_L2_SOURCE_RUN_ID=$run_id"
       - name: Download real L1/L2 artifact
         uses: actions/download-artifact@v4
         with:
-          name: hybrid-stage1-l1-l2-${{ inputs.source_run_id || '44119249492' }}
+          name: hybrid-stage1-l1-l2-${{ steps.source.outputs.run_id }}
           path: artifacts
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.source_run_id || '44119249492' }}
+          run-id: ${{ steps.source.outputs.run_id }}
       - name: Checkout persistent signals branch
         uses: actions/checkout@v4
         with:
