@@ -70,11 +70,12 @@ int main() {
     const auto atomic_test_dir = std::filesystem::temp_directory_path() /
         ("cfss-atomic-test-" + std::to_string(now_ms));
     const auto atomic_test_file = atomic_test_dir / "state.json";
-    cfss::write_file_atomic(atomic_test_file, "{\\\"status\\\":\\\"PENDING\\\"}\\n");
+    const std::string atomic_expected = std::string{R"({"status":"PENDING"})"} + "\n";
+    cfss::write_file_atomic(atomic_test_file, atomic_expected);
     std::ifstream atomic_input(atomic_test_file, std::ios::binary);
     const std::string atomic_content{std::istreambuf_iterator<char>{atomic_input},
                                     std::istreambuf_iterator<char>{}};
-    if (atomic_content != "{\\\"status\\\":\\\"PENDING\\\"}\\n") {
+    if (atomic_content != atomic_expected) {
         std::cerr << "Atomic state persistence content test failed\\n";
         std::filesystem::remove_all(atomic_test_dir);
         return EXIT_FAILURE;
