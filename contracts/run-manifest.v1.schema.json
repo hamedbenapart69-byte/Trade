@@ -334,7 +334,10 @@
         "http_request_attempts",
         "http_failed_attempts",
         "http_retry_attempts",
-        "exhausted_requests"
+        "exhausted_requests",
+        "telegram_send_attempts",
+        "telegram_retry_attempts",
+        "telegram_inbound_polls"
       ],
       "properties": {
         "http_request_attempts": {
@@ -352,6 +355,18 @@
         "exhausted_requests": {
           "type": "integer",
           "minimum": 0
+        },
+        "telegram_send_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "telegram_retry_attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "telegram_inbound_polls": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
@@ -360,13 +375,21 @@
       "additionalProperties": false,
       "required": [
         "l1_market_data",
-        "l2_status"
+        "l2_status",
+        "provider_health",
+        "fear_greed"
       ],
       "properties": {
         "l1_market_data": {
           "$ref": "#/$defs/artifact"
         },
         "l2_status": {
+          "$ref": "#/$defs/artifact"
+        },
+        "provider_health": {
+          "$ref": "#/$defs/artifact"
+        },
+        "fear_greed": {
           "$ref": "#/$defs/artifact"
         }
       }
