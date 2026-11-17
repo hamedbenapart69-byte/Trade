@@ -6,6 +6,7 @@ import argparse
 import json
 import math
 import os
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,8 @@ import pyarrow.parquet as pq
 from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 SCHEMA_PATH = ROOT.parent / "contracts" / "l1-market-data.v1.schema.json"
 HOUR_MS = 3_600_000
 
