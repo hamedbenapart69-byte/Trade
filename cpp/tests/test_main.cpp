@@ -1,11 +1,15 @@
 #include "cfss/http_utils.hpp"
 #include "cfss/hash.hpp"
+#include "cfss/atomic_file.hpp"
 #include "cfss/l1_contract.hpp"
 #include "cfss/signal.hpp"
 #include "cfss/telegram_l3.hpp"
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -63,6 +67,27 @@ int main() {
         std::chrono::system_clock::now().time_since_epoch()).count();
     const auto contract = sample_contract(now_ms);
     const auto artifact = cfss::build_l2_artifact(contract, now_ms);
+    const auto atomic_test_dir = std::filesystem::temp_directory_path() /
+        ("cfss-atomic-test-" + std::to_string(now_ms));
+    const auto atomic_test_file = atomic_test_dir / "state.json";
+    cfss::write_file_atomic(atomic_test_file, "{\\\"status\\\":\\\"PENDING\\\"}\\n");
+    std::ifstream atomic_input(atomic_test_file, std::ios::binary);
+    const std::string atomic_content{std::istreambuf_iterator<char>{atomic_input},
+                                    std::istreambuf_iterator<char>{}};
+    if (atomic_content != "{\\\"status\\\":\\\"PENDING\\\"}\\n") {
+        std::cerr << "Atomic state persistence content test failed\\n";
+        std::filesystem::remove_all(atomic_test_dir);
+        return EXIT_FAILURE;
+    }
+    bool immutable_write_rejected = false;
+    try { cfss::write_file_atomic(atomic_test_file, "overwrite", true); }
+    catch (const std::runtime_error&) { immutable_write_rejected = true; }
+    if (!immutable_write_rejected) {
+        std::cerr << "Immutable artifact overwrite was not rejected\\n";
+        std::filesystem::remove_all(atomic_test_dir);
+        return EXIT_FAILURE;
+    }
+    std::filesystem::remove_all(atomic_test_dir);
     auto hashed_artifact = artifact;
     cfss::add_artifact_hash(hashed_artifact);
     if (!cfss::verify_artifact_hash(hashed_artifact)) {
