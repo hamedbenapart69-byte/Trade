@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "94cbbfad-791a-4150-abf5-eae073260128:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "627543d3e07f3d3a",
+      "status": "DELIVERED",
+      "telegram_message_id": 36,
+      "updated_at_epoch_ms": 1794932986118
+    }
+  },
+  "schema_version": 1
+}
