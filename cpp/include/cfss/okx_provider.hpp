@@ -355,6 +355,10 @@ inline json collect(int symbol_count, int years) {
             {"contract_type", "linear_perpetual"},
             {"contract_size", item.contract_size > 0.0 ? json(item.contract_size) : json(nullptr)},
             {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
+            {"provenance", {{"ohlcv_endpoint", "/api/v5/market/history-candles"},
+                            {"funding_endpoint", "/api/v5/public/funding-rate-history"},
+                            {"open_interest_endpoint", "/api/v5/rubik/stat/contracts/open-interest-history"},
+                            {"retrieved_at_utc", acquired_text}}},
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
