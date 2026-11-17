@@ -61,6 +61,7 @@ def test_missing_funding_and_oi_remain_null(tmp_path):
     assert instrument["funding"][0]["mark_price"] is None
     assert instrument["open_interest"][0]["open_interest_value_usd"] is None
     assert instrument["availability"]["funding"] == "PARTIAL"
+    assert instrument["availability"]["ohlcv"] == "PARTIAL"
 
 
 def test_open_candle_is_excluded(tmp_path):
@@ -94,3 +95,16 @@ def test_exact_linear_perpetual_identity_is_required(tmp_path):
         assert "unsupported_contract_type" in str(exc)
     else:
         raise AssertionError("non-perpetual identity must fail closed")
+
+def test_future_ohlcv_timestamp_fails_closed(tmp_path):
+    report, data, acquired, acquired_ms = _fixture(tmp_path)
+    rows = pq.read_table(data / "ohlcv.parquet").to_pylist()
+    rows.append({"timestamp": acquired_ms + 1, "open": 104.0, "high": 106.0,
+                 "low": 103.0, "close": 105.0, "volume": 12.0})
+    pq.write_table(pa.Table.from_pylist(rows), data / "ohlcv.parquet")
+    try:
+        build_contract(report, data, now=acquired)
+    except ValueError as exc:
+        assert "future_ohlcv_timestamp" in str(exc)
+    else:
+        raise AssertionError("future OHLCV timestamp must fail closed")
