@@ -1,0 +1,1 @@
+Controlled Stage 1 market-coverage run. Push-trigger defaults: OKX public endpoints, 100 eligible USDT linear perpetual contracts including BTC context, 2 years of hourly OHLCV. This workflow performs L1 acquisition and C++ L2 validation only. No Telegram delivery or order execution.
