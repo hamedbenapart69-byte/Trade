@@ -130,7 +130,9 @@
               "ohlcv_rows": {"type": "integer", "minimum": 0},
               "funding_rows": {"type": "integer", "minimum": 0},
               "open_interest_rows": {"type": "integer", "minimum": 0},
-              "ohlcv_coverage_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100}
+              "ohlcv_coverage_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+              "funding_coverage_days": {"type": "number", "minimum": 0},
+              "open_interest_coverage_days": {"type": "number", "minimum": 0}
             }
           },
           "errors": {"type": "array", "items": {"type": "string"}}
