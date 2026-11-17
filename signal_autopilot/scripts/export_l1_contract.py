@@ -96,6 +96,8 @@ def build_contract(
             if ts in seen:
                 raise ValueError(f"duplicate_ohlcv_timestamp:{instrument_id}:{ts}")
             seen.add(ts)
+            if ts > acquired_ms:
+                raise ValueError(f"future_ohlcv_timestamp:{instrument_id}:{ts}")
             if ts + HOUR_MS > acquired_ms:
                 continue
             op = _finite(row["open"], positive=True)
@@ -113,22 +115,36 @@ def build_contract(
 
         raw_funding = _read_rows(data_root, files["funding"])
         funding = []
+        funding_seen = set()
         for row in sorted(raw_funding, key=lambda x: int(x["timestamp"])):
+            funding_ts = int(row["timestamp"])
+            if funding_ts in funding_seen:
+                raise ValueError(f"duplicate_funding_timestamp:{instrument_id}:{funding_ts}")
+            funding_seen.add(funding_ts)
+            if funding_ts > acquired_ms:
+                raise ValueError(f"future_funding_timestamp:{instrument_id}:{funding_ts}")
             rate = _finite(row.get("funding_rate"), nullable=True)
             mark = _finite(row.get("mark_price"), nullable=True, positive=True)
             funding.append({
-                "timestamp_ms": int(row["timestamp"]),
+                "timestamp_ms": funding_ts,
                 "funding_rate": rate,
                 "mark_price": mark,
             })
 
         raw_oi = _read_rows(data_root, files["open_interest"])
         open_interest = []
+        oi_seen = set()
         for row in sorted(raw_oi, key=lambda x: int(x["timestamp"])):
+            oi_ts = int(row["timestamp"])
+            if oi_ts in oi_seen:
+                raise ValueError(f"duplicate_open_interest_timestamp:{instrument_id}:{oi_ts}")
+            oi_seen.add(oi_ts)
+            if oi_ts > acquired_ms:
+                raise ValueError(f"future_open_interest_timestamp:{instrument_id}:{oi_ts}")
             amount = _finite(row.get("open_interest"), nullable=True, positive=True)
             value = _finite(row.get("open_interest_value_usd"), nullable=True, positive=True)
             open_interest.append({
-                "timestamp_ms": int(row["timestamp"]),
+                "timestamp_ms": oi_ts,
                 "open_interest": amount,
                 "open_interest_value_usd": value,
             })
@@ -152,7 +168,8 @@ def build_contract(
             "funding": funding,
             "open_interest": open_interest,
             "availability": {
-                "ohlcv": "AVAILABLE" if candles else "UNAVAILABLE",
+                "ohlcv": ("UNAVAILABLE" if not candles else
+                          ("PARTIAL" if coverage_pct is not None and coverage_pct < 99.9 else "AVAILABLE")),
                 "funding": _availability(funding, "funding_rate"),
                 "open_interest": _availability(open_interest, "open_interest"),
             },
