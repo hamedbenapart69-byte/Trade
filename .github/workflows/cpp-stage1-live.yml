@@ -4,9 +4,6 @@ on:
   push:
     branches: [feat/cpp-stage1-clean]
     paths:
-      - "cpp/**"
-      - "contracts/**"
-      - ".github/workflows/cpp-stage1-live.yml"
       - "docs/evidence/run-cpp-stage1-live*.txt"
   schedule:
     - cron: "0 */4 * * *"
