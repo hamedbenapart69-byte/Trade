@@ -47,7 +47,7 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
 }
 int main() {
     const std::string input = std::string{"quote: \""} + '\n' + '\t';
-    if (cfss::json_escape(input) != "quote: \\\"\\n\\t") {
+    if (cfss::json_escape(input) != "quote: \\\"\n\\t") {
         std::cerr << "JSON escaping test failed\n"; return EXIT_FAILURE;
     }
     const auto levels = cfss::calculate_long_levels(65000.0, 64000.0);
@@ -76,7 +76,7 @@ int main() {
     const std::string atomic_content{std::istreambuf_iterator<char>{atomic_input},
                                     std::istreambuf_iterator<char>{}};
     if (atomic_content != atomic_expected) {
-        std::cerr << "Atomic state persistence content test failed\\n";
+        std::cerr << "Atomic state persistence content test failed\n";
         std::filesystem::remove_all(atomic_test_dir);
         return EXIT_FAILURE;
     }
@@ -84,7 +84,7 @@ int main() {
     try { cfss::write_file_atomic(atomic_test_file, "overwrite", true); }
     catch (const std::runtime_error&) { immutable_write_rejected = true; }
     if (!immutable_write_rejected) {
-        std::cerr << "Immutable artifact overwrite was not rejected\\n";
+        std::cerr << "Immutable artifact overwrite was not rejected\n";
         std::filesystem::remove_all(atomic_test_dir);
         return EXIT_FAILURE;
     }
@@ -92,11 +92,11 @@ int main() {
     auto hashed_artifact = artifact;
     cfss::add_artifact_hash(hashed_artifact);
     if (!cfss::verify_artifact_hash(hashed_artifact)) {
-        std::cerr << "Immutable artifact SHA-256 verification failed\\n"; return EXIT_FAILURE;
+        std::cerr << "Immutable artifact SHA-256 verification failed\n"; return EXIT_FAILURE;
     }
     hashed_artifact["instruments"][0]["state"] = "BUY_NOW";
     if (cfss::verify_artifact_hash(hashed_artifact)) {
-        std::cerr << "Tampered artifact passed SHA-256 verification\\n"; return EXIT_FAILURE;
+        std::cerr << "Tampered artifact passed SHA-256 verification\n"; return EXIT_FAILURE;
     }
     const auto& item = artifact.at("instruments").at(0);
     if (item.at("state") != "NO_QUALIFIED_SETUP" || item.at("actionable") != false ||
@@ -167,7 +167,7 @@ int main() {
         rejected.status != "PERMANENT_FAILURE" ||
         timeout.status != "DELIVERY_UNKNOWN" ||
         malformed.status != "DELIVERY_UNKNOWN") {
-        std::cerr << "Telegram HTTP outcome classification failed\\n"; return EXIT_FAILURE;
+        std::cerr << "Telegram HTTP outcome classification failed\n"; return EXIT_FAILURE;
     }
     if (!cfss::telegram::outbox_should_send(nlohmann::json{{"status", "PENDING"}, {"attempts", 0}}) ||
         !cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 2}}) ||
@@ -189,7 +189,7 @@ int main() {
     if (cfss::telegram::command_reply("/status").empty() ||
         cfss::telegram::command_reply("/help").empty() ||
         !cfss::telegram::command_reply("/unknown").empty()) {
-        std::cerr << "Telegram inbound command allowlist failed\\n"; return EXIT_FAILURE;
+        std::cerr << "Telegram inbound command allowlist failed\n"; return EXIT_FAILURE;
     }
     auto actionable_artifact = status_artifact;
     actionable_artifact["instruments"][0]["state"] = "BUY_NOW";
