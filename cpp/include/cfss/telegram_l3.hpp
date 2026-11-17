@@ -332,11 +332,15 @@ inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
     const auto outbox = load_json_or_default(outbox_path, default_outbox());
     const std::string prefix = scan_id + ":status:";
     bool found = false, all_delivered = true, has_unknown = false, has_permanent = false;
+    long long send_attempts = 0, send_retries = 0;
     nlohmann::json message_ids = nlohmann::json::array();
     for (auto it = outbox.at("messages").begin(); it != outbox.at("messages").end(); ++it) {
         if (it.key().rfind(prefix, 0U) != 0U) continue;
         found = true;
         const auto status = it.value().value("status", std::string{});
+        const auto attempts = it.value().value("attempts", 0);
+        send_attempts += attempts;
+        send_retries += std::max(0, attempts - 1);
         if (status != "DELIVERED") all_delivered = false;
         if (status == "DELIVERY_UNKNOWN") has_unknown = true;
         if (status == "PERMANENT_FAILURE") has_permanent = true;
@@ -348,6 +352,8 @@ inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
          (has_permanent ? "PERMANENT_FAILURE" : "RETRYABLE_FAILURE")));
     manifest["telegram_send_status"] = status;
     manifest["telegram_message_ids"] = message_ids;
+    manifest["retry_summary"]["telegram_send_attempts"] = send_attempts;
+    manifest["retry_summary"]["telegram_retry_attempts"] = send_retries;
     if (status == "DELIVERED" && manifest.value("run_status", std::string{}) == "L1_L2_PASS")
         manifest["run_status"] = "L1_L2_L3_PASS";
     else if (status != "DELIVERED") {
@@ -379,6 +385,7 @@ inline void record_inbound_manifest(const std::filesystem::path& manifest_path,
     } else if (saw_new_update) status = "FAILED";
     manifest["telegram_receive_test_status"] = status;
     manifest["telegram_last_update_id"] = state.value("last_update_id", 0LL);
+    manifest["retry_summary"]["telegram_inbound_polls"] = state.value("poll_count", 0LL);
     if (status == "RECEIVED_PROCESSED" && manifest.value("run_status", std::string{}) == "L1_L2_L3_PASS")
         manifest["run_status"] = "STAGE1_CONTROLLED_ACCEPTANCE_PASS";
     if (status == "FAILED" || status == "UNAVAILABLE")
