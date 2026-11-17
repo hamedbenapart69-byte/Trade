@@ -274,8 +274,8 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
                 *high < std::max({*open, *low, *close}) || *low > std::min({*open, *high, *close}))
                 continue;
             rows[ts] = {{"timestamp_ms", ts}, {"open", *open}, {"high", *high},
-                        {"low", *low}, {"close", *close}, {"volume", *volume_contracts},
-                        {"volume_unit", "contracts"}, {"volume_base", *volume_base},
+                        {"low", *low}, {"close", *close}, {"price_currency", instrument.quote},
+                        {"volume", *volume_contracts}, {"volume_unit", "contracts"}, {"volume_base", *volume_base},
                         {"volume_base_currency", instrument.base}, {"volume_quote", *volume_quote},
                         {"volume_quote_currency", instrument.quote},
                         {"closed", true}, {"retrieved_at_utc", page_retrieved_at}};
@@ -311,7 +311,9 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
             const auto mark = number(row.value("markPx", json{}));
             rows[ts] = {{"timestamp_ms", ts},
                         {"funding_rate", rate ? json(*rate) : json(nullptr)},
+                        {"funding_rate_unit", "fraction"},
                         {"mark_price", mark ? json(*mark) : json(nullptr)},
+                        {"mark_price_currency", instrument.quote},
                         {"retrieved_at_utc", page_retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
