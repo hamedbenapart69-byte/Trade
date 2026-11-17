@@ -233,8 +233,9 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     for (int page = 0; page < 250; ++page) {
         std::string path = "/api/v5/market/history-candles?instId=" + encode(instrument.id) +
                            "&bar=1H&limit=300";
-        if (after) path += "&end=" + std::to_string(*after);
+        if (after) path += "&after=" + std::to_string(*after);
         const auto payload = request(path);
+        const auto page_retrieved_at = utc_iso(now_ms());
         if (payload["data"].empty()) break;
         std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
         for (const auto& row : payload["data"]) {
@@ -243,16 +244,23 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
             if (ts <= 0) continue;
             oldest = std::min(oldest, ts);
             const auto open = number(row[1]), high = number(row[2]), low = number(row[3]);
-            const auto close = number(row[4]), volume = number(row[5]);
+            const auto close = number(row[4]);
+            const auto volume_contracts = number(row[5]);
+            const auto volume_base = number(row[6]);
+            const auto volume_quote = number(row[7]);
             const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
             if (ts < start_ms || ts >= end_ms || !confirmed || ts + 3'600'000LL > end_ms ||
-                !open || !high || !low || !close || !volume ||
-                *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 || *volume < 0.0 ||
+                !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
+                *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
+                *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
                 *high < std::max({*open, *low, *close}) || *low > std::min({*open, *high, *close}))
                 continue;
             rows[ts] = {{"timestamp_ms", ts}, {"open", *open}, {"high", *high},
-                        {"low", *low}, {"close", *close}, {"volume", *volume},
-                        {"closed", true}, {"retrieved_at_utc", retrieved_at}};
+                        {"low", *low}, {"close", *close}, {"volume", *volume_contracts},
+                        {"volume_unit", "contracts"}, {"volume_base", *volume_base},
+                        {"volume_base_currency", instrument.base}, {"volume_quote", *volume_quote},
+                        {"volume_quote_currency", instrument.quote},
+                        {"closed", true}, {"retrieved_at_utc", page_retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
             break;
@@ -459,7 +467,7 @@ inline json collect(int symbol_count, int years) {
             {"provenance", {{"ohlcv_endpoint", "/api/v5/market/history-candles"},
                             {"funding_endpoint", "/api/v5/public/funding-rate-history"},
                             {"open_interest_endpoint", "/api/v5/rubik/stat/contracts/open-interest-history"},
-                            {"retrieved_at_utc", acquired_text}}},
+                            {"retrieved_at_utc", utc_iso(now_ms())}}},
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
@@ -489,9 +497,9 @@ inline json collect(int symbol_count, int years) {
         {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public market-data API"},
                       {"fallback_used", false}}},
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
-        {"universe", {{"target_count", symbol_count}, {"selected_count", selected.size()},
-                      {"liquidity_threshold_usd", 10000000.0},
-                      {"eligible_count_at_least_target", selected.size() >= static_cast<std::size_t>(symbol_count)}}},
+        {"universe", {{"declared_usdt_swap_count", declared_count}, {"eligible_count", eligible_count},
+                      {"selected_count", selected.size()}, {"target_count", symbol_count},
+                      {"liquidity_threshold_usd", 10000000.0}}},
         {"instruments", instruments}
     };
 }
