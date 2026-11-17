@@ -8,6 +8,15 @@
       "status": "DELIVERED",
       "telegram_message_id": 37,
       "updated_at_epoch_ms": 1794933757181
+    },
+    "okx-cpp-1794933931579:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "37c5620b515f5052",
+      "status": "DELIVERED",
+      "telegram_message_id": 38,
+      "updated_at_epoch_ms": 1794933951195
     }
   },
   "schema_version": 1
