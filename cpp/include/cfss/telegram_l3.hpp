@@ -151,7 +151,7 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
             throw std::invalid_argument("telegram_c10_state_invalid");
     }
 
-    const std::string run_id = artifact.at("source_run_id").get<std::string>();
+    const std::string scan_id = artifact.at("source_scan_id").get<std::string>();
     const auto total = instruments.size();
     const auto parts = (total + rows_per_message - 1U) / rows_per_message;
     std::vector<std::string> messages;
@@ -159,7 +159,7 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
     for (std::size_t part = 0; part < parts; ++part) {
         std::ostringstream out;
         out << "گزارش وضعیت بازار | Stage 1\n"
-            << "شناسه اجرا: " << run_id << "\n"
+            << "شناسه اسکن: " << scan_id.substr(5U, 12U) << "\n"
             << "بخش " << (part + 1U) << " از " << parts << "\n"
             << "این پیام گزارش داده است، نه دستور معامله.\n\n";
         const std::size_t begin = part * rows_per_message;
@@ -252,6 +252,8 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         if (entries.contains(key)) {
             auto& entry = entries[key];
             const auto status = entry.value("status", std::string{});
+            if (entry.value("payload_fingerprint", std::string{}) != fingerprint)
+                throw std::runtime_error("outbox_idempotency_payload_conflict");
             if (reconcile_outbox_status(status) == "DELIVERY_UNKNOWN" && status == "SENDING") {
                 entry["status"] = "DELIVERY_UNKNOWN";
                 entry["updated_at_epoch_ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -275,8 +277,6 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
                 delivery_problem = true;
                 continue;
             }
-            if (entry.value("payload_fingerprint", std::string{}) != fingerprint)
-                throw std::runtime_error("outbox_idempotency_payload_conflict");
         } else {
             entries[key] = {
                 {"scan_id", scan_id}, {"source_run_id", run_id},
