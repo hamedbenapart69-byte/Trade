@@ -395,6 +395,7 @@ class MarketDataFetcher:
                     "open_interest": "UNAVAILABLE",
                 },
                 "data_quality": "PROXY",
+                "trade_signal_eligible": False,
                 "errors": ["ohlcv:coingecko_spot_has_no_futures_ohlcv"],
             })
             if len(output) >= target_count:
