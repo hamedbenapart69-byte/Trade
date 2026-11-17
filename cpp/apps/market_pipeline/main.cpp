@@ -12,13 +12,15 @@
 #include <iostream>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace {
 struct HttpResult { CURLcode transport{CURLE_FAILED_INIT}; long status_code{0}; std::string response; };
-struct Provider { std::string_view name; std::string_view endpoint; std::string_view row_marker; };
+struct Provider { std::string_view name; std::string_view endpoint; std::string_view row_marker; bool okx_confirm_field; };
 struct Candle { long long timestamp_ms; double close; };
 
 HttpResult get(std::string_view url) {
@@ -68,13 +70,16 @@ std::vector<std::string> split_json_row(std::string_view row) {
     return fields;
 }
 
-std::vector<Candle> parse_candles(std::string_view json, std::string_view marker) {
+std::vector<Candle> parse_candles(std::string_view json, std::string_view marker,
+                                  bool require_okx_confirmation) {
     std::vector<Candle> candles;
     const std::size_t marker_pos = json.find(marker);
     if (marker_pos == std::string_view::npos) return candles;
     const std::size_t outer = json.find('[', marker_pos + marker.size());
     if (outer == std::string_view::npos) return candles;
 
+    const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     int depth = 0;
     bool in_string = false;
     bool escaped = false;
@@ -95,7 +100,13 @@ std::vector<Candle> parse_candles(std::string_view json, std::string_view marker
                     try {
                         const long long ts = std::stoll(fields[0]);
                         const double close = std::stod(fields[4]);
-                        if (ts > 0 && std::isfinite(close) && close > 0.0) candles.push_back({ts, close});
+                        const bool confirmed = !require_okx_confirmation ||
+                            (fields.size() > 8U && fields[8] == "1");
+                        const bool candle_closed = ts + 900000LL <= now_ms;
+                        if (ts > 0 && candle_closed && confirmed &&
+                            std::isfinite(close) && close > 0.0) {
+                            candles.push_back({ts, close});
+                        }
                     } catch (...) {
                         // ردیف خراب حذف می‌شود؛ پذیرش دادهٔ ناقص ممنوع است.
                     }
@@ -118,8 +129,8 @@ std::vector<Candle> parse_candles(std::string_view json, std::string_view marker
 
 std::optional<std::pair<std::vector<double>, std::string>> fetch_ohlcv() {
     constexpr std::array<Provider, 2> providers{{
-        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=50", "\"data\""},
-        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=50", "\"list\""}
+        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=50", "\"data\"", true},
+        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=50", "\"list\"", false}
     }};
     for (const auto& provider : providers) {
         const HttpResult response = get(provider.endpoint);
@@ -128,16 +139,16 @@ std::optional<std::pair<std::vector<double>, std::string>> fetch_ohlcv() {
                       << " transport=" << curl_easy_strerror(response.transport) << '\n';
             continue;
         }
-        auto candles = parse_candles(response.response, provider.row_marker);
+        auto candles = parse_candles(response.response, provider.row_marker, provider.okx_confirm_field);
         if (candles.size() != 50U) {
-            std::cerr << provider.name << " rejected: expected 50 valid unique candles, got "
+            std::cerr << provider.name << " rejected: expected 50 valid, closed, unique candles, got "
                       << candles.size() << '\n';
             continue;
         }
         std::vector<double> closes;
         closes.reserve(candles.size());
         for (const auto& candle : candles) closes.push_back(candle.close);
-        std::cout << "Validated 50 x 15m candles from " << provider.name << '\n';
+        std::cout << "Validated 50 closed 15m candles from " << provider.name << '\n';
         return std::make_pair(std::move(closes), std::string{provider.name});
     }
     return std::nullopt;
@@ -196,7 +207,5 @@ int main() {
     }
     const bool delivered = cfss::send_telegram_json(token, chat_id, signal_json);
     curl_global_cleanup();
-    if (!delivered) return EXIT_FAILURE;
-    std::cout << "Telegram signal JSON delivered and acknowledged\n";
-    return EXIT_SUCCESS;
+    return delivered ? EXIT_SUCCESS : EXIT_FAILURE;
 }
