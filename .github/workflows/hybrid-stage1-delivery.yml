@@ -50,7 +50,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: hybrid-stage1-l1-l2-${{ steps.source.outputs.run_id }}
-          path: artifacts
+          path: .
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.source.outputs.run_id }}
