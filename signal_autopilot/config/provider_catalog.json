@@ -3,7 +3,7 @@
   "generated_for": "server_side_provider_discovery",
   "user_access": "telegram_only",
   "user_location_filter": "FORBIDDEN",
-  "runtime_verification": "NOT_YET_RUN_FOR_ENTRIES_UNLESS_EXPLICITLY_STATED",
+  "runtime_verification": "PROBE_IMPLEMENTED_BUT_NOT_EXECUTED_FROM_MAIN_RUNNER",
   "entries": [
     {
       "id": "okx_public_perpetual",
@@ -280,5 +280,7 @@
     "instrument_equivalence",
     "fallback_test",
     "incremental_oos_value_for_signal_features"
-  ]
+  ],
+  "probe_workflow": ".github/workflows/provider-health-probe.yml",
+  "probe_script": "signal_autopilot/scripts/probe_public_providers.py"
 }
