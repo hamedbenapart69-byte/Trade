@@ -69,7 +69,13 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
         {"error_summary", errors}, {"retry_summary", cfss::okx::request_metrics()},
         {"artifact_manifest", {
             {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)}, {"bytes", l1_raw.size()}}},
-            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}}}
+            {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}},
+            {"provider_health", {{"path", "artifacts/provider-health.v1.json"},
+                                 {"sha256", cfss::sha256_hex(contract.at("provider_health").dump(2) + "\\n")},
+                                 {"bytes", (contract.at("provider_health").dump(2) + "\\n").size()}},
+            {"fear_greed", {{"path", "artifacts/fear-greed.v1.json"},
+                            {"sha256", cfss::sha256_hex(contract.at("fear_greed").dump(2) + "\\n")},
+                            {"bytes", (contract.at("fear_greed").dump(2) + "\\n").size()}}}
         }},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
