@@ -47,7 +47,7 @@ inline std::string json_escape(std::string_view input) {
     for (const char raw_ch : input) {
         const auto ch = static_cast<unsigned char>(raw_ch);
         switch (ch) {
-            case '"': output += "\\""; break;
+            case '"': output += "\\\""; break;
             case '\\': output += "\\\\"; break;
             case '\b': output += "\\b"; break;
             case '\f': output += "\\f"; break;
