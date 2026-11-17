@@ -28,8 +28,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const auto contract = cfss::okx::collect(symbols, years);
         write_json(l1_path, contract);
         const auto evidence_dir = l1_path.parent_path().empty() ? std::filesystem::path{"."} : l1_path.parent_path();
-        write_json(evidence_dir / "provider-health.v1.json", cfss::okx::probe_provider_health());
-        write_json(evidence_dir / "fear-greed.v1.json", cfss::okx::fetch_fear_greed());
+        write_json(evidence_dir / "provider-health.v1.json", contract.at("provider_health"));
+        write_json(evidence_dir / "fear-greed.v1.json", contract.at("fear_greed"));
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
         cfss::add_artifact_hash(artifact);
         write_json(l2_path, artifact);
