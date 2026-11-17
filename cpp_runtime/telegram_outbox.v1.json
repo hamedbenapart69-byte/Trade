@@ -18,6 +18,17 @@
       "telegram_message_id": 38,
       "updated_at_epoch_ms": 1794933951195
     },
+    "scan-3b61df4b5612af77b1b364b82f0363da8d2764514d9abcd76acd837486ce2279:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "7b85cc4db5b779ba",
+      "scan_id": "scan-3b61df4b5612af77b1b364b82f0363da8d2764514d9abcd76acd837486ce2279",
+      "source_run_id": "okx-cpp-1794940713508",
+      "status": "DELIVERED",
+      "telegram_message_id": 40,
+      "updated_at_epoch_ms": 1794940755086
+    },
     "scan-f4e01b3a015c9aa427ee592482d90f92587128fab5f619fcbfd46872ad9c8ac6:status:1": {
       "attempts": 1,
       "http_status": 200,
