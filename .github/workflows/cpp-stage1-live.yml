@@ -80,6 +80,10 @@ jobs:
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
 
+      - name: Validate L2 against the versioned JSON Schema
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l2-status.v1.schema.json -d artifacts/l2-status.v1.json --all-errors
+
       - name: C++ artifact integrity and state coverage summary
         run: |
           test -s artifacts/l1-market-data.v1.json
