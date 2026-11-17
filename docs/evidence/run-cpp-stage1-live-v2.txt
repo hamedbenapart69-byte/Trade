@@ -1,0 +1,1 @@
+Live C++ Stage 1 push run #1. Two-year BTC-USDT-SWAP vertical slice, full L1/L2 schemas and run manifest, actual Telegram outbound, persistent outbox and manifest receipts. Inbound test intentionally not requested in this run.
