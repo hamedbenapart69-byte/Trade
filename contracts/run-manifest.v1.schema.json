@@ -377,7 +377,12 @@
         "l1_market_data",
         "l2_status",
         "provider_health",
-        "fear_greed"
+        "fear_greed",
+        "signals",
+        "history",
+        "performance",
+        "coverage",
+        "system_status"
       ],
       "properties": {
         "l1_market_data": {
@@ -390,6 +395,21 @@
           "$ref": "#/$defs/artifact"
         },
         "fear_greed": {
+          "$ref": "#/$defs/artifact"
+        },
+        "signals": {
+          "$ref": "#/$defs/artifact"
+        },
+        "history": {
+          "$ref": "#/$defs/artifact"
+        },
+        "performance": {
+          "$ref": "#/$defs/artifact"
+        },
+        "coverage": {
+          "$ref": "#/$defs/artifact"
+        },
+        "system_status": {
           "$ref": "#/$defs/artifact"
         }
       }
