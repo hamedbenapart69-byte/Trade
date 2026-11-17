@@ -1,4 +1,5 @@
 #include "cfss/l1_contract.hpp"
+#include "cfss/hash.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -26,7 +27,10 @@ int main(int argc, char** argv) {
         if (!input) throw std::runtime_error("l1_contract_open_failed");
         const std::string raw{std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
         const auto contract = nlohmann::json::parse(raw);
-        const auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        cfss::add_artifact_hash(artifact);
+        if (std::filesystem::exists(output_path))
+            throw std::runtime_error("immutable_l2_artifact_already_exists");
         const auto parent = output_path.parent_path().empty() ? std::filesystem::path{"."} : output_path.parent_path();
         std::filesystem::create_directories(parent);
         const auto temp_path = output_path.string() + ".tmp";
