@@ -13,7 +13,7 @@
       "additionalProperties": false,
       "required": ["name", "version", "source_commit"],
       "properties": {
-        "name": {"const": "cfss-python-l1-exporter"},
+        "name": {"enum": ["cfss-python-l1-exporter", "cfss-cpp-l1-collector"]},
         "version": {"type": "string"},
         "source_commit": {"type": ["string", "null"]}
       }
