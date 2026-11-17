@@ -90,11 +90,13 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
             (void)require_finite_number(candle.at("volume"), "volume", false, true);
             (void)require_finite_number(candle.at("volume_base"), "volume_base", false, true);
             (void)require_finite_number(candle.at("volume_quote"), "volume_quote", false, true);
+            require_string(candle, "price_currency");
             require_string(candle, "volume_unit");
             require_string(candle, "volume_base_currency");
             require_string(candle, "volume_quote_currency");
             require_string(candle, "retrieved_at_utc");
-            if (candle.at("volume_unit") != "contracts" ||
+            if (candle.at("price_currency") != instrument.at("quote") ||
+                candle.at("volume_unit") != "contracts" ||
                 candle.at("volume_base_currency") != instrument.at("base") ||
                 candle.at("volume_quote_currency") != instrument.at("quote"))
                 throw std::invalid_argument("ohlcv_volume_unit_or_currency_mismatch");
@@ -113,6 +115,10 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         }
         for (const auto& row : instrument.at("funding")) {
             require_string(row, "retrieved_at_utc");
+            require_string(row, "funding_rate_unit");
+            require_string(row, "mark_price_currency");
+            if (row.at("funding_rate_unit") != "fraction" || row.at("mark_price_currency") != instrument.at("quote"))
+                throw std::invalid_argument("funding_unit_or_currency_mismatch");
             if (!row.contains("funding_rate") || !row.contains("mark_price"))
                 throw std::invalid_argument("funding_nullable_fields_missing");
             validate_nullable_number(row.at("funding_rate"), "funding_rate");
