@@ -122,6 +122,8 @@ class CryptoUniverseTests(unittest.TestCase):
             "base": f"{prefix}{index}",
             "provider": provider,
             "symbol": f"{prefix}{index}/USDT:USDT",
+            "last": 1.0,
+            "ticker_timestamp_utc": "2026-11-17T00:00:00+00:00",
             "availability": {"ohlcv": "OK", "funding": "OK", "open_interest": "OK"},
             "ohlcv": [{"timestamp": 1, "open": 1, "high": 2, "low": 0.5, "close": 1.5, "volume": 10}],
         } for index in range(count)]
