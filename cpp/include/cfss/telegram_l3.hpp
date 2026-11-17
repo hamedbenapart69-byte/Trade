@@ -148,11 +148,11 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
     for (const auto& row : instruments) {
         const auto state = row.value("state", std::string{});
         const bool actionable = row.value("actionable", false);
-        if (actionable || state == "BUY_NOW" || state == "SELL_NOW" ||
-            state == "CONDITIONAL_BUY" || state == "CONDITIONAL_SELL") {
+        if (actionable || state == "BUY_NOW" || state == "SELL_NOW") {
             throw std::invalid_argument("stage1_delivery_blocks_unvalidated_actionable_signal");
         }
-        if (state != "WATCHLIST" && state != "NO_QUALIFIED_SETUP" && state != "MARKET_DATA_DEGRADED")
+        if (state != "CONDITIONAL_BUY" && state != "CONDITIONAL_SELL" &&
+            state != "WATCHLIST" && state != "NO_QUALIFIED_SETUP" && state != "MARKET_DATA_DEGRADED")
             throw std::invalid_argument("telegram_c10_state_invalid");
     }
 
@@ -363,13 +363,14 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
             std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count()}};
         std::string reply;
-        if (update.contains("message") && update.at("message").is_object() &&
-            update.at("message").contains("chat") && update.at("message").at("chat").contains("id")) {
-            const auto& chat = update.at("message").at("chat").at("id");
+        nlohmann::json message = nullptr;
+        if (update.contains("message") && update.at("message").is_object()) message = update.at("message");
+        else if (update.contains("channel_post") && update.at("channel_post").is_object()) message = update.at("channel_post");
+        if (message.is_object() && message.contains("chat") && message.at("chat").contains("id")) {
+            const auto& chat = message.at("chat").at("id");
             const std::string chat_id = chat.is_string() ? chat.get<std::string>() : chat.dump();
-            if (chat_id == allowed_chat_id && update.at("message").contains("text") &&
-                update.at("message").at("text").is_string()) {
-                reply = command_reply(update.at("message").at("text").get<std::string>());
+            if (chat_id == allowed_chat_id && message.contains("text") && message.at("text").is_string()) {
+                reply = command_reply(message.at("text").get<std::string>());
                 if (reply.empty()) entry["status"] = "IGNORED_UNKNOWN_COMMAND";
             } else {
                 entry["status"] = "IGNORED_UNAUTHORIZED_OR_NON_TEXT";
