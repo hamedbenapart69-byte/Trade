@@ -6,6 +6,8 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <ctime>
+#include <limits>
 #include <cstdlib>
 #include <map>
 #include <optional>
@@ -142,7 +144,7 @@ inline std::vector<Instrument> discover(int target_count) {
         const auto id = text(item, "instId");
         if (text(item, "state") != "live" || text(item, "ctType") != "linear" ||
             text(item, "quoteCcy") != "USDT" || text(item, "settleCcy") != "USDT" ||
-            id.empty() || id.size() < 9U || id.substr(id.size() - 9U) != "-USDT-SWAP")
+            id.empty() || id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP")
             continue;
         const auto vol = turnover.find(id);
         if (vol == turnover.end() || vol->second <= 0.0) continue;
