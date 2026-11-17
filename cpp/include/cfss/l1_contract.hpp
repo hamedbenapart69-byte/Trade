@@ -86,6 +86,16 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         for (const auto& candle : instrument.at("candles")) {
             for (const char* key : {"open", "high", "low", "close"}) (void)require_finite_number(candle.at(key), key, true);
             (void)require_finite_number(candle.at("volume"), "volume", false, true);
+            (void)require_finite_number(candle.at("volume_base"), "volume_base", false, true);
+            (void)require_finite_number(candle.at("volume_quote"), "volume_quote", false, true);
+            require_string(candle, "volume_unit");
+            require_string(candle, "volume_base_currency");
+            require_string(candle, "volume_quote_currency");
+            require_string(candle, "retrieved_at_utc");
+            if (candle.at("volume_unit") != "contracts" ||
+                candle.at("volume_base_currency") != instrument.at("base") ||
+                candle.at("volume_quote_currency") != instrument.at("quote"))
+                throw std::invalid_argument("ohlcv_volume_unit_or_currency_mismatch");
             if (!candle.contains("closed") || candle.at("closed") != true)
                 throw std::invalid_argument("incomplete_candle_in_l1_contract");
             const auto candle_ts = candle.at("timestamp_ms").get<std::int64_t>();
@@ -100,12 +110,14 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
             latest_candle_ms = candle.at("timestamp_ms").get<std::int64_t>();
         }
         for (const auto& row : instrument.at("funding")) {
+            require_string(row, "retrieved_at_utc");
             if (!row.contains("funding_rate") || !row.contains("mark_price"))
                 throw std::invalid_argument("funding_nullable_fields_missing");
             validate_nullable_number(row.at("funding_rate"), "funding_rate");
             validate_nullable_number(row.at("mark_price"), "mark_price", true);
         }
         for (const auto& row : instrument.at("open_interest")) {
+            require_string(row, "retrieved_at_utc");
             if (!row.contains("open_interest") || !row.contains("open_interest_value_usd"))
                 throw std::invalid_argument("open_interest_nullable_fields_missing");
             validate_nullable_number(row.at("open_interest"), "open_interest", true);
