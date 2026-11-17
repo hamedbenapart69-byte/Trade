@@ -20,7 +20,7 @@ add_executable(market_pipeline
     apps/market_pipeline/main.cpp
 )
 target_include_directories(market_pipeline PRIVATE include)
-target_link_libraries(market_pipeline PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+target_link_libraries(market_pipeline PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
 target_compile_features(market_pipeline PRIVATE cxx_std_20)
 
 add_executable(telegram_delivery
