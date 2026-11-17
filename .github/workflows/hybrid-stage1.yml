@@ -6,7 +6,7 @@ on:
     paths:
       - "contracts/**"
       - "signal_autopilot/app/data_layer/**"
-      - "signal_autopilot/scripts/export_l1_contract.py"
+      - "signal_autopilot/scripts/**"
       - "signal_autopilot/tests/test_hybrid_l1_export.py"
       - "signal_autopilot/requirements.txt"
       - "cpp/**"
