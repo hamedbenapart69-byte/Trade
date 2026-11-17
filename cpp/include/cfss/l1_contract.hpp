@@ -118,9 +118,18 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         }
         for (const auto& row : instrument.at("open_interest")) {
             require_string(row, "retrieved_at_utc");
-            if (!row.contains("open_interest") || !row.contains("open_interest_value_usd"))
+            if (!row.contains("open_interest") || !row.contains("open_interest_base") ||
+                !row.contains("open_interest_value_usd"))
                 throw std::invalid_argument("open_interest_nullable_fields_missing");
+            require_string(row, "open_interest_unit");
+            require_string(row, "open_interest_base_currency");
+            require_string(row, "open_interest_value_currency");
+            if (row.at("open_interest_unit") != "contracts" ||
+                row.at("open_interest_base_currency") != instrument.at("base") ||
+                row.at("open_interest_value_currency") != "USD")
+                throw std::invalid_argument("open_interest_unit_or_currency_mismatch");
             validate_nullable_number(row.at("open_interest"), "open_interest", true);
+            validate_nullable_number(row.at("open_interest_base"), "open_interest_base", true);
             validate_nullable_number(row.at("open_interest_value_usd"), "open_interest_value_usd", true);
         }
         const bool latest_fresh = latest_candle_ms > 0 && now_ms >= latest_candle_ms &&
