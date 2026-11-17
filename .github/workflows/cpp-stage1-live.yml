@@ -5,6 +5,7 @@ on:
     branches: [feat/cpp-stage1-clean]
     paths:
       - "docs/evidence/run-cpp-stage1-live*.txt"
+      - "docs/evidence/run-telegram-inbound-test*.txt"
   schedule:
     - cron: "0 */4 * * *"
   pull_request:
@@ -120,7 +121,7 @@ jobs:
             signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v1.json
 
       - name: Controlled Telegram inbound receive through C++ L3
-        if: github.event_name == 'workflow_dispatch' && inputs.run_inbound_test
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]'))
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -135,7 +136,7 @@ jobs:
           echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
       - name: Record inbound test not requested
-        if: github.event_name != 'workflow_dispatch' || !inputs.run_inbound_test
+        if: !((github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]')))
         run: |
           mkdir -p artifacts
           printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\n' > artifacts/telegram-inbound-test-status.json
