@@ -49,6 +49,10 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
     const char* branch = std::getenv("GITHUB_REF_NAME");
     const char* build_id = std::getenv("CFSS_BUILD_ID");
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
+    auto retry_summary = cfss::okx::request_metrics();
+    retry_summary["telegram_send_attempts"] = 0;
+    retry_summary["telegram_retry_attempts"] = 0;
+    retry_summary["telegram_inbound_polls"] = 0;
     return {
         {"run_id", contract.at("run_id")}, {"scan_id", contract.at("scan_id")},
         {"run_timestamp_utc", contract.at("acquired_at_utc")},
@@ -69,7 +73,7 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
                                 {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}}},
         {"run_status", all_real ? "L1_L2_PASS" : "DATA_DEGRADED"},
         {"start_time_utc", contract.at("acquired_at_utc")}, {"end_time_utc", now_text},
-        {"error_summary", errors}, {"retry_summary", cfss::okx::request_metrics()},
+        {"error_summary", errors}, {"retry_summary", retry_summary},
         {"artifact_manifest", {
             {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)}, {"bytes", l1_raw.size()}}},
             {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}},
