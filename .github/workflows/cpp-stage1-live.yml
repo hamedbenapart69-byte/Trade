@@ -5,7 +5,6 @@ on:
     branches: [feat/cpp-only-stage1]
     paths:
       - "docs/evidence/run-cpp-stage1-live.txt"
-      - ".github/workflows/cpp-stage1-live.yml"
   pull_request:
     branches: [main]
     paths:
@@ -28,7 +27,7 @@ on:
         options: ["1", "2"]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: cpp-only-stage1-live
@@ -110,6 +109,9 @@ jobs:
             ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json
             sleep 5
           done
+          test -s signals-state/cpp_runtime/telegram_inbound.v1.json
+          grep -Eq '"status": "PROCESSED"' signals-state/cpp_runtime/telegram_inbound.v1.json
+          echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name == 'push'
