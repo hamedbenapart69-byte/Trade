@@ -278,6 +278,7 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
                 throw std::runtime_error("outbox_idempotency_payload_conflict");
         } else {
             entries[key] = {
+                {"scan_id", scan_id}, {"source_run_id", run_id},
                 {"payload_fingerprint", fingerprint}, {"status", "PENDING"}, {"attempts", 0},
                 {"telegram_message_id", nullptr}, {"http_status", nullptr}, {"last_error", nullptr}
             };
