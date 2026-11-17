@@ -325,6 +325,24 @@ inline std::string utc_now_iso() {
     return buffer;
 }
 
+inline void sync_system_status_artifact(const std::filesystem::path& manifest_path,
+                                         nlohmann::json& manifest) {
+    const auto system_path = manifest_path.parent_path() / "system_status.json";
+    if (!std::filesystem::exists(system_path)) return;
+    auto system = load_json_or_default(system_path, nlohmann::json::object());
+    for (const auto* key : {"run_status", "telegram_send_status", "telegram_receive_test_status",
+                            "telegram_message_ids", "telegram_last_update_id", "error_summary"}) {
+        if (manifest.contains(key)) system[key] = manifest[key];
+    }
+    system["updated_at_utc"] = utc_now_iso();
+    write_json_atomic(system_path, system);
+    const std::string raw = system.dump(2) + "\n";
+    if (manifest.contains("artifact_manifest") && manifest["artifact_manifest"].contains("system_status")) {
+        manifest["artifact_manifest"]["system_status"]["sha256"] = cfss::sha256_hex(raw);
+        manifest["artifact_manifest"]["system_status"]["bytes"] = raw.size();
+    }
+}
+
 inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
                                      const std::filesystem::path& outbox_path,
                                      const std::string& scan_id) {
@@ -361,6 +379,7 @@ inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
         manifest["error_summary"].push_back("telegram_outbound:" + status);
     }
     manifest["end_time_utc"] = utc_now_iso();
+    sync_system_status_artifact(manifest_path, manifest);
     write_json_atomic(manifest_path, manifest);
 }
 
