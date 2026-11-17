@@ -379,6 +379,7 @@ inline void record_inbound_manifest(const std::filesystem::path& manifest_path,
         if (it.value().value("status", std::string{}) == "PROCESSED") processed_new_update = true;
     }
     std::string status = manifest.value("telegram_receive_test_status", std::string{"NO_UPDATE_RECEIVED"});
+    if (status == "NOT_REQUESTED") status = "NO_UPDATE_RECEIVED";
     if (processed_new_update && receiver_result == EXIT_SUCCESS) status = "RECEIVED_PROCESSED";
     else if (status == "RECEIVED_PROCESSED" && !saw_new_update && receiver_result == EXIT_SUCCESS) {
         // Preserve a previously proven update across subsequent empty polls in the same controlled run.
