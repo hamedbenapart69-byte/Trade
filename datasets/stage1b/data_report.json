@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-11-17T06:49:34.942000+00:00",
+  "generated_at_utc": "2026-11-17T17:18:06.336000+00:00",
   "universe_as_of_utc": "2026-11-09T06:13:33.345Z",
   "start_date_utc": "2024-11-17",
-  "end_date_exclusive_utc": "2026-11-17T06:45:00+00:00",
+  "end_date_exclusive_utc": "2026-11-17T17:15:00+00:00",
   "interval": "15m",
   "universe_count": 27,
   "symbols_complete": 27,
@@ -20,13 +20,13 @@
     {
       "symbol": "BTCUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BTCUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -39,27 +39,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ETHUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ETHUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -72,27 +72,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "BNBUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BNBUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -105,27 +105,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "SOLUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/SOLUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -138,27 +138,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "XRPUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/XRPUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -171,27 +171,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ADAUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ADAUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -204,27 +204,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "DOGEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/DOGEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -237,27 +237,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "AVAXUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/AVAXUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -270,27 +270,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "LINKUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/LINKUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -303,27 +303,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "LTCUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/LTCUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -336,27 +336,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "BCHUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/BCHUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -369,27 +369,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "NEARUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/NEARUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -402,27 +402,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "INJUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/INJUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -435,27 +435,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "UNIUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/UNIUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -468,27 +468,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "FILUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/FILUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -499,27 +499,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ARBUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ARBUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -532,27 +532,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ENAUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ENAUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -565,27 +565,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "SUIUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/SUIUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -598,27 +598,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "TAOUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/TAOUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -631,27 +631,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "WLDUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/WLDUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -664,27 +664,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ZECUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ZECUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -697,27 +697,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "AAVEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/AAVEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -730,27 +730,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "QNTUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/QNTUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -763,27 +763,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "RSRUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/RSRUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -796,27 +796,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "ONEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/ONEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -829,27 +829,27 @@
         "OKX_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "HOTUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/HOTUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -860,30 +860,30 @@
         "MEXC_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "ERROR:ArchiveError:OKX_API_ERROR:{'code': '51001', 'data': [], 'msg': \"Instrument ID, Instrument ID code, or Spread ID doesn't exist.\"}",
         "bybit": "HTTP_403",
         "binance": "HTTP_451",
         "mexc": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     },
     {
       "symbol": "1000PEPEUSDT",
       "baseline_rows": 70080,
-      "tail_rows": 699,
+      "tail_rows": 741,
       "rows": 70080,
       "expected_rows": 70080,
       "gap_count": 0,
       "continuity": true,
-      "first_open_ms": 1731825900000,
-      "last_open_ms": 1794897000000,
+      "first_open_ms": 1731863700000,
+      "last_open_ms": 1794934800000,
       "compute_file": "signal_autopilot/data/stage1b_compute/1000PEPEUSDT_15m_730d.parquet",
       "sources": [
         "BINANCE_VISION_KLINES",
@@ -894,7 +894,7 @@
         "OKX_SPOT_CVD_UNAVAILABLE_NEUTRAL_PROXY"
       ],
       "fresh": true,
-      "age_minutes": 4.58,
+      "age_minutes": 3.11,
       "reason": null,
       "provider_status": {
         "okx": "UNSUPPORTED_CONTRACT_MULTIPLIER",
@@ -902,12 +902,12 @@
         "binance": "HTTP_451",
         "mexc": "ERROR:ArchiveError:MEXC_CONTRACT_NOT_LISTED:1000PEPE_USDT",
         "okx_spot_proxy": "200",
-        "chunks": "2",
-        "expected_bars": "123",
-        "received_bars": "123",
+        "chunks": "1",
+        "expected_bars": "69",
+        "received_bars": "69",
         "missing_bars": "0"
       },
-      "new_rows": 123
+      "new_rows": 69
     }
   ]
 }
