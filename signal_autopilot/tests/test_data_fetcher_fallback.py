@@ -32,6 +32,9 @@ class MultiProviderFallbackTests(unittest.TestCase):
                     row("ETH", "okx"),
                     row("DOGE", "okx", ohlcv="UNAVAILABLE"),
                 ]
+            if provider == "binance":
+                fetcher.universe_diagnostics[provider] = {"eligible_before_limit": 0}
+                return []
             if provider == "bybit":
                 fetcher.universe_diagnostics[provider] = {"eligible_before_limit": 4}
                 return [
@@ -58,6 +61,22 @@ class MultiProviderFallbackTests(unittest.TestCase):
         self.assertEqual(len({item["base"] for item in result["symbols"]}), 4)
         self.assertEqual(result["universe_diagnostics"]["okx"]["ohlcv_unavailable"], 1)
         self.assertEqual(result["universe_diagnostics"]["bybit"]["duplicates_skipped"], 1)
+
+    def test_coingecko_fallback_is_spot_proxy_and_never_signal_eligible(self):
+        fetcher = MarketDataFetcher.__new__(MarketDataFetcher)
+        fetcher.universe = {"blacklist_patterns": []}
+        fetcher.coingecko_market_rows = [
+            {"symbol": "BTC", "current_price": 90000, "total_volume": 1000000},
+            {"symbol": "ETH", "current_price": 3000, "total_volume": 500000},
+        ]
+        rows = fetcher._coingecko_spot_proxy_rows(set(), {"BTC", "ETH"}, 2)
+        self.assertEqual([item["provider"] for item in rows], ["coingecko", "coingecko"])
+        self.assertEqual(rows[0]["last"], 90000.0)
+        self.assertEqual(rows[0]["ticker_timestamp_source"], "COINGECKO_FETCH_TIME_PROXY")
+        self.assertEqual(rows[0]["data_quality"], "PROXY")
+        self.assertEqual(rows[0]["availability"]["ohlcv"], "UNAVAILABLE")
+        self.assertEqual(rows[0]["ohlcv"], [])
+        self.assertFalse(rows[0].get("trade_signal_eligible", True))
 
     def test_signal_payload_keeps_provider_diagnostics_and_symbol_provenance(self):
         result = generate_signals({
