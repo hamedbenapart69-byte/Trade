@@ -78,6 +78,26 @@ class MultiProviderFallbackTests(unittest.TestCase):
         self.assertEqual(rows[0]["ohlcv"], [])
         self.assertFalse(rows[0].get("trade_signal_eligible", True))
 
+    def test_1000pepe_contract_mapping_normalizes_cross_exchange_price_units(self):
+        self.assertEqual(
+            MarketDataFetcher._canonical_base_and_scale("PEPE"),
+            ("1000PEPE", 1000.0),
+        )
+        self.assertEqual(
+            MarketDataFetcher._canonical_base_and_scale("1000PEPE"),
+            ("1000PEPE", 1.0),
+        )
+
+        fetcher = MarketDataFetcher.__new__(MarketDataFetcher)
+        fetcher.universe = {"blacklist_patterns": []}
+        fetcher.coingecko_market_rows = [
+            {"symbol": "pepe", "current_price": 0.00001, "total_volume": 1000000},
+        ]
+        proxy = fetcher._coingecko_spot_proxy_rows(set(), {"PEPE"}, 1)[0]
+        self.assertEqual(proxy["base"], "1000PEPE")
+        self.assertEqual(proxy["symbol"], "1000PEPE/USDT:USDT")
+        self.assertAlmostEqual(proxy["last"], 0.01)
+
     def test_signal_payload_keeps_provider_diagnostics_and_symbol_provenance(self):
         result = generate_signals({
             "provider": "multi-provider",
