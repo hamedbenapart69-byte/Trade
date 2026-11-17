@@ -1,0 +1,1 @@
+Controlled clean-branch live smoke run after C++ Stage 1 schema, contract metadata, liquidity and provider/sentiment changes. Expected profile: one eligible BTC linear USDT perpetual, one year of completed 1h OHLCV. Telegram inbound is intentionally not requested in this run; no Stage 1 PASS is implied.
