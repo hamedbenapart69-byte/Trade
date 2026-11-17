@@ -253,10 +253,13 @@ class Stage1Collector:
             for item in batch:
                 ts = int(item.get("timestamp") or 0)
                 if since_ms <= ts < until_ms:
+                    raw_rate = item.get("fundingRate")
+                    raw_mark = item.get("markPrice")
                     collected[ts] = {
                         "timestamp":ts,"symbol":market_id,
-                        "funding_rate":float(item.get("fundingRate") or 0),
-                        "mark_price":float(item.get("markPrice") or 0) if item.get("markPrice") else None,
+                        # مقدار مفقود هرگز به صفر تبدیل نمی‌شود.
+                        "funding_rate":float(raw_rate) if raw_rate is not None else None,
+                        "mark_price":float(raw_mark) if raw_mark is not None else None,
                     }
             last_ts = max(int(x.get("timestamp") or 0) for x in batch)
             if last_ts < cursor:
@@ -389,7 +392,18 @@ class Stage1Collector:
                 gaps = gap_report(ohlcv)
                 gaps["coverage_of_requested_window_pct"] = round(100*len(ohlcv)/expected_ohlcv_rows, 3)
                 provider_dir = "okx_swap" if self.provider == "okx" else "binance_usdm"
+                market = self.exchange.market(symbol)
                 reports[market_id] = {
+                    "instrument": {
+                        "instrument_id": market_id,
+                        "unified_symbol": symbol,
+                        "base": market.get("base"),
+                        "quote": market.get("quote"),
+                        "settle": market.get("settle"),
+                        "contract_type": "linear_perpetual" if market.get("swap") and market.get("linear") else "UNVERIFIED",
+                        "contract_size": float(market.get("contractSize")) if market.get("contractSize") is not None else None,
+                        "provider_id": self.provider,
+                    },
                     "ohlcv":gaps,
                     "funding":{"rows":len(funding),"first_timestamp_utc":self._utc(funding[0]["timestamp"]) if funding else None,
                            "last_timestamp_utc":self._utc(funding[-1]["timestamp"]) if funding else None,
