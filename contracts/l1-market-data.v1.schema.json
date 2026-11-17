@@ -532,6 +532,7 @@
               "fallback_status": {
                 "enum": [
                   "PRIMARY",
+                  "UNAVAILABLE",
                   "NOT_IMPLEMENTED",
                   "REFERENCE_ONLY"
                 ]
