@@ -1,0 +1,45 @@
+name: C++ Foundation
+
+on:
+  push:
+    branches: [main, feat/cpp-core]
+    paths:
+      - "cpp/**"
+      - ".github/workflows/cpp-foundation.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - ".github/workflows/cpp-foundation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev
+
+      - name: Record toolchain
+        run: |
+          cmake --version
+          g++ --version
+          pkg-config --modversion libcurl
+
+      - name: Configure
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
