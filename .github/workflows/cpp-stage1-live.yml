@@ -4,7 +4,12 @@ on:
   push:
     branches: [feat/cpp-only-stage1]
     paths:
+      - "cpp/**"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage1-live.yml"
       - "docs/evidence/run-cpp-stage1-live*.txt"
+  schedule:
+    - cron: "0 */4 * * *"
   pull_request:
     branches: [main]
     paths:
@@ -25,6 +30,11 @@ on:
         default: "2"
         type: choice
         options: ["1", "2"]
+      run_inbound_test:
+        description: "Run the controlled Telegram inbound test after sending /status to the bot"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -61,13 +71,17 @@ jobs:
 
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || '1' }}
-          YEARS: ${{ inputs.years || '1' }}
+          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '1') }}
+          YEARS: ${{ inputs.years || (github.event_name == 'schedule' && '2' || '1') }}
         run: |
           mkdir -p artifacts
           ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json
           sha256sum artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json
+
+      - name: Validate L1 against the versioned JSON Schema
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
 
       - name: C++ artifact integrity and state coverage summary
         run: |
@@ -79,7 +93,7 @@ jobs:
 
       - name: Checkout persistent signals branch
         id: checkout_signals
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         uses: actions/checkout@v4
         with:
           ref: signals
@@ -88,7 +102,7 @@ jobs:
           persist-credentials: true
 
       - name: Real Telegram outbound through C++ L3
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -97,10 +111,11 @@ jobs:
           test -n "$TELEGRAM_CHAT_ID"
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
-            signals-state/cpp_runtime/telegram_outbox.v1.json
+            signals-state/cpp_runtime/
+            artifacts/telegram-inbound-test-status.jsontelegram_outbox.v1.json
 
       - name: Controlled Telegram inbound receive through C++ L3
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch' && inputs.run_inbound_test
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -114,8 +129,14 @@ jobs:
           grep -Eq '"status": "PROCESSED"' signals-state/cpp_runtime/telegram_inbound.v1.json
           echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
+      - name: Record inbound test not requested
+        if: github.event_name != 'workflow_dispatch' || !inputs.run_inbound_test
+        run: |
+          mkdir -p artifacts
+          printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\\n' > artifacts/telegram-inbound-test-status.json
+
       - name: Persist Telegram delivery and inbound receipts
-        if: always() && github.event_name == 'push' && steps.checkout_signals.outcome == 'success'
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         working-directory: signals-state
         shell: bash
         run: |
