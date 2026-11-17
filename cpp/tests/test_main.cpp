@@ -157,7 +157,7 @@ int main() {
     complete_contract["instruments"][0]["open_interest"][0]["open_interest_value_usd"] = 1000000.0;
     complete_contract["instruments"][0]["availability"]["funding"] = "AVAILABLE";
     complete_contract["instruments"][0]["availability"]["open_interest"] = "AVAILABLE";
-    const auto complete_artifact = cfss::build_l2_artifact(complete_contract, now_ms());
+    const auto complete_artifact = cfss::build_l2_artifact(complete_contract, now_ms);
     const auto& complete_item = complete_artifact.at("instruments").at(0);
     if (complete_item.at("state") != "NO_QUALIFIED_SETUP" || complete_item.at("actionable") != false ||
         complete_item.at("data_quality") != "REAL" ||
