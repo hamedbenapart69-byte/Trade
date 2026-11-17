@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at_utc": "2026-11-16T19:36:49.435587+00:00",
+  "updated_at_utc": "2026-11-17T02:38:33.871087+00:00",
   "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
   "source_signals_count": 89,
   "outcomes_count": 89,
@@ -4191,7 +4191,7 @@
       "net_pnl_pct": "UNAVAILABLE",
       "data_source": "OKX_PUBLIC_OHLCV",
       "last_checked_open_time": null,
-      "last_checked_at_utc": "2026-11-16T19:36:49.435587+00:00",
+      "last_checked_at_utc": "2026-11-17T02:38:33.871087+00:00",
       "last_error": null,
       "history": [
         {
@@ -4346,7 +4346,7 @@
       "net_pnl_pct": "UNAVAILABLE",
       "data_source": "OKX_PUBLIC_OHLCV",
       "last_checked_open_time": null,
-      "last_checked_at_utc": "2026-11-16T19:36:49.435587+00:00",
+      "last_checked_at_utc": "2026-11-17T02:38:33.871087+00:00",
       "last_error": null,
       "history": [
         {
@@ -5327,7 +5327,7 @@
       "signal_id": "dccef6cba6fe2f46",
       "symbol": "ONEUSDT",
       "direction": "SELL",
-      "status": "ACTIVE",
+      "status": "SL_HIT",
       "entry_contract": "FIRST_15M_OPEN_STRICTLY_AFTER_SIGNAL_TIMESTAMP",
       "entry_reference": 0.0013066,
       "entry_actual": 0.0013068,
@@ -5345,16 +5345,23 @@
       "stop_reference": 0.0013152,
       "target_reference": 0.0012893999999999998,
       "rr_actual": 2.071428571428612,
-      "exit_price": null,
-      "exit_time_utc": null,
-      "exit_candle_ohlc": null,
-      "pnl_pct_raw": null,
+      "exit_price": 0.0013152,
+      "exit_time_utc": "2026-11-16T20:00:00+00:00",
+      "exit_candle_ohlc": {
+        "open_time": 1794858300000,
+        "open": 0.0013049,
+        "high": 0.0013206,
+        "low": 0.0013044,
+        "close": 0.001319,
+        "volume": 16755200.0
+      },
+      "pnl_pct_raw": -0.64279155,
       "fee_pct": "UNAVAILABLE",
       "slippage_pct": "UNAVAILABLE",
       "net_pnl_pct": "UNAVAILABLE",
       "data_source": "OKX_PUBLIC_OHLCV",
-      "last_checked_open_time": 1794856500000,
-      "last_checked_at_utc": "2026-11-16T19:36:49.435587+00:00",
+      "last_checked_open_time": 1794858300000,
+      "last_checked_at_utc": "2026-11-17T02:38:33.871087+00:00",
       "last_error": null,
       "history": [
         {
@@ -5366,6 +5373,11 @@
           "status": "ACTIVE",
           "at_utc": "2026-11-16T19:36:49.435587+00:00",
           "reason": "ENTRY_FILLED_AT_NEXT_15M_OPEN"
+        },
+        {
+          "status": "SL_HIT",
+          "at_utc": "2026-11-17T02:38:33.871087+00:00",
+          "reason": "PRICE_LEVEL_TOUCHED"
         }
       ]
     }
