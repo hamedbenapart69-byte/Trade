@@ -29,6 +29,9 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
         {"symbol_target", symbols}, {"years", years}, {"timeframe", "1h"},
         {"liquidity_threshold_usd", 10000000.0}, {"ohlcv_closed_bars_only", true}
     };
+    const auto evidence_dir = l1_path.parent_path().empty() ? std::filesystem::path{"."} : l1_path.parent_path();
+    const std::string provider_raw = contract.at("provider_health").dump(2) + "\n";
+    const std::string fear_raw = contract.at("fear_greed").dump(2) + "\n";
     bool all_real = true;
     nlohmann::json errors = nlohmann::json::array();
     for (const auto& item : artifact.at("instruments")) {
@@ -70,12 +73,10 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
         {"artifact_manifest", {
             {"l1_market_data", {{"path", l1_path.generic_string()}, {"sha256", cfss::sha256_hex(l1_raw)}, {"bytes", l1_raw.size()}}},
             {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)}, {"bytes", l2_raw.size()}},
-            {"provider_health", {{"path", "artifacts/provider-health.v1.json"},
-                                 {"sha256", cfss::sha256_hex(contract.at("provider_health").dump(2) + "\\n")},
-                                 {"bytes", (contract.at("provider_health").dump(2) + "\\n").size()}},
-            {"fear_greed", {{"path", "artifacts/fear-greed.v1.json"},
-                            {"sha256", cfss::sha256_hex(contract.at("fear_greed").dump(2) + "\\n")},
-                            {"bytes", (contract.at("fear_greed").dump(2) + "\\n").size()}}}
+            {"provider_health", {{"path", (evidence_dir / "provider-health.v1.json").generic_string()},
+                                 {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()}},
+            {"fear_greed", {{"path", (evidence_dir / "fear-greed.v1.json").generic_string()},
+                            {"sha256", cfss::sha256_hex(fear_raw)}, {"bytes", fear_raw.size()}}}
         }},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
