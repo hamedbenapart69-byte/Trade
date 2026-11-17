@@ -352,8 +352,8 @@ inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
          (has_permanent ? "PERMANENT_FAILURE" : "RETRYABLE_FAILURE")));
     manifest["telegram_send_status"] = status;
     manifest["telegram_message_ids"] = message_ids;
-    manifest["retry_summary"]["telegram_send_attempts"] = send_attempts;
-    manifest["retry_summary"]["telegram_retry_attempts"] = send_retries;
+    manifest["retry_summary"]["telegram_send_attempts_total_for_scan"] = send_attempts;
+    manifest["retry_summary"]["telegram_retry_attempts_total_for_scan"] = send_retries;
     if (status == "DELIVERED" && manifest.value("run_status", std::string{}) == "L1_L2_PASS")
         manifest["run_status"] = "L1_L2_L3_PASS";
     else if (status != "DELIVERED") {
