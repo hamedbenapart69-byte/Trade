@@ -131,6 +131,7 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
     if (!artifact.is_object() || artifact.value("artifact_type", std::string{}) != "cfss_l2_status_v1")
         throw std::invalid_argument("telegram_rejects_unknown_l2_artifact");
     if (!artifact.contains("source_run_id") || !artifact.at("source_run_id").is_string() ||
+        !artifact.contains("source_scan_id") || !artifact.at("source_scan_id").is_string() ||
         !artifact.contains("instruments") || !artifact.at("instruments").is_array() ||
         artifact.at("instruments").empty())
         throw std::invalid_argument("telegram_l2_artifact_incomplete");
@@ -212,6 +213,10 @@ inline SendResult send_message(const std::string& token, const std::string& chat
                                   response.body, response.error);
 }
 
+inline std::string delivery_idempotency_key(const std::string& scan_id, std::size_t part) {
+    return scan_id + ":status:" + std::to_string(part);
+}
+
 inline nlohmann::json default_outbox() {
     return {{"schema_version", 1}, {"messages", nlohmann::json::object()}};
 }
@@ -237,9 +242,10 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         throw std::runtime_error("telegram_outbox_schema_invalid");
     const auto messages = build_status_messages(artifact);
     const auto run_id = artifact.at("source_run_id").get<std::string>();
+    const auto scan_id = artifact.at("source_scan_id").get<std::string>();
     bool delivery_problem = false;
     for (std::size_t i = 0; i < messages.size(); ++i) {
-        const std::string key = run_id + ":status:" + std::to_string(i + 1U);
+        const std::string key = delivery_idempotency_key(scan_id, i + 1U);
         const std::string fingerprint = stable_fingerprint(messages[i]);
         auto& entries = outbox["messages"];
         if (entries.contains(key)) {
