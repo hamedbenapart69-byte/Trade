@@ -1,0 +1,27 @@
+{
+  "policy_version": 1,
+  "user_delivery_channels": ["telegram"],
+  "user_connectivity_required": false,
+  "user_accounts_required_for_data_sources": false,
+  "user_exchange_account_connection": false,
+  "exchange_account_connection": false,
+  "trading_api_keys": false,
+  "order_execution": false,
+  "backend_fetches_public_market_data": true,
+  "backend_runtime": "github_actions_or_other_server_side_runner",
+  "provider_selection": "quality_freshness_coverage_reliability_cost_and_server_reachability",
+  "provider_failover": "automatic_server_side",
+  "regional_user_access_is_provider_selection_criterion": false,
+  "data_integrity": {
+    "missing_real_data": "UNAVAILABLE",
+    "substitute_data": "PROXY",
+    "spot_data_as_futures_ohlcv": false,
+    "fabricated_market_values": false
+  },
+  "delivery_behavior": {
+    "actionable_signals": "telegram_channel",
+    "daily_no_signal_or_degraded_status": "telegram_channel",
+    "dashboard_required_for_user": false,
+    "user_must_connect_to_exchange_or_analytics_tools": false
+  }
+}
