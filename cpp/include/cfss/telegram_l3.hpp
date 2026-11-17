@@ -215,6 +215,13 @@ inline nlohmann::json default_outbox() {
     return {{"schema_version", 1}, {"messages", nlohmann::json::object()}};
 }
 
+inline std::string reconcile_outbox_status(const std::string& status) {
+    return status == "SENDING" ? "DELIVERY_UNKNOWN" : status;
+}
+inline std::string reconcile_inbound_status(const std::string& status) {
+    return status == "REPLY_SENDING" ? "DELIVERY_UNKNOWN" : status;
+}
+
 inline bool outbox_should_send(const nlohmann::json& entry) {
     const auto status = entry.value("status", std::string{"PENDING"});
     const int attempts = entry.value("attempts", 0);
@@ -237,7 +244,7 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         if (entries.contains(key)) {
             auto& entry = entries[key];
             const auto status = entry.value("status", std::string{});
-            if (status == "SENDING") {
+            if (reconcile_outbox_status(status) == "DELIVERY_UNKNOWN" && status == "SENDING") {
                 entry["status"] = "DELIVERY_UNKNOWN";
                 entry["updated_at_epoch_ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count();
@@ -334,7 +341,7 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
         if (state["processed_updates"].contains(key)) {
             auto& prior = state["processed_updates"][key];
             const auto status = prior.value("status", std::string{});
-            if (status == "REPLY_SENDING") {
+            if (reconcile_inbound_status(status) == "DELIVERY_UNKNOWN" && status == "REPLY_SENDING") {
                 prior["status"] = "DELIVERY_UNKNOWN";
                 prior["reply_error"] = "previous_process_ended_while_reply_sending";
                 delivery_problem = true;
