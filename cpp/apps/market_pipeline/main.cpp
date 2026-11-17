@@ -240,10 +240,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
         const char* event_name = std::getenv("GITHUB_EVENT_NAME");
         const bool persist_signals = event_name && std::string{event_name} != "pull_request";
-        const bool retain_full_evidence = symbols == 1 && (!event_name || std::string{event_name} != "schedule");
-        const bool retain_compact_evidence = event_name && std::string{event_name} == "workflow_dispatch";
-        const bool retain_non_l1_workflow = retain_full_evidence || retain_compact_evidence;
-        const int full_retention_days = retain_full_evidence ? 1 : (retain_compact_evidence ? 1 : 0);
+        const bool retain_full_evidence = false;
+        const bool retain_non_l1_workflow = false;
+        const int full_retention_days = 0;
         json artifact_manifest = {
             {"l1_market_data", artifact_entry(l1_path, l1_raw, retain_full_evidence, retain_full_evidence ? 1 : 0, false)},
             {"l2_status", artifact_entry(l2_path, l2_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
