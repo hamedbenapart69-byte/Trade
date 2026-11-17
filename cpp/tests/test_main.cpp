@@ -197,6 +197,7 @@ int main() {
     }
     const nlohmann::json status_artifact = {
         {"artifact_type", "cfss_l2_status_v1"}, {"source_run_id", "run-test-01"},
+        {"source_scan_id", "scan-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
         {"instruments", nlohmann::json::array({
             {{"symbol", "BTC/USDT:USDT"}, {"state", "NO_QUALIFIED_SETUP"}, {"actionable", false}},
             {{"symbol", "ETH/USDT:USDT"}, {"state", "MARKET_DATA_DEGRADED"}, {"actionable", false}}
