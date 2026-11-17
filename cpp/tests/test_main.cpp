@@ -1,4 +1,5 @@
 #include "cfss/http_utils.hpp"
+#include "cfss/hash.hpp"
 #include "cfss/l1_contract.hpp"
 #include "cfss/signal.hpp"
 #include "cfss/telegram_l3.hpp"
@@ -62,6 +63,15 @@ int main() {
         std::chrono::system_clock::now().time_since_epoch()).count();
     const auto contract = sample_contract(now_ms);
     const auto artifact = cfss::build_l2_artifact(contract, now_ms);
+    auto hashed_artifact = artifact;
+    cfss::add_artifact_hash(hashed_artifact);
+    if (!cfss::verify_artifact_hash(hashed_artifact)) {
+        std::cerr << "Immutable artifact SHA-256 verification failed\\n"; return EXIT_FAILURE;
+    }
+    hashed_artifact["instruments"][0]["state"] = "BUY_NOW";
+    if (cfss::verify_artifact_hash(hashed_artifact)) {
+        std::cerr << "Tampered artifact passed SHA-256 verification\\n"; return EXIT_FAILURE;
+    }
     const auto& item = artifact.at("instruments").at(0);
     if (item.at("state") != "NO_QUALIFIED_SETUP" || item.at("actionable") != false ||
         item.at("confidence_status") != "NOT_CALIBRATED" || item.at("data_quality") != "PARTIAL") {
