@@ -20,6 +20,7 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
     const auto candle_ms = now_ms - 3'600'000;
     return {
         {"schema_version", "1.0.0"}, {"run_id", "test-run-001"},
+        {"scan_id", "scan-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
         {"acquired_at_utc", "2026-11-17T12:00:00Z"},
         {"window", {{"timeframe", "1h"}, {"start_ms", now_ms - 7'200'000}, {"end_ms", now_ms}}},
         {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public REST"}, {"fallback_used", false}}},
@@ -229,7 +230,11 @@ int main() {
         malformed.status != "DELIVERY_UNKNOWN") {
         std::cerr << "Telegram HTTP outcome classification failed\n"; return EXIT_FAILURE;
     }
-    if (!cfss::telegram::outbox_should_send(nlohmann::json{{"status", "PENDING"}, {"attempts", 0}}) ||
+    if (cfss::telegram::delivery_idempotency_key("scan-abc", 1U) !=
+            cfss::telegram::delivery_idempotency_key("scan-abc", 1U) ||
+        cfss::telegram::delivery_idempotency_key("scan-abc", 1U) ==
+            cfss::telegram::delivery_idempotency_key("scan-def", 1U) ||
+        !cfss::telegram::outbox_should_send(nlohmann::json{{"status", "PENDING"}, {"attempts", 0}}) ||
         !cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 2}}) ||
         cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 3}}) ||
         cfss::telegram::outbox_should_send(nlohmann::json{{"status", "DELIVERY_UNKNOWN"}, {"attempts", 1}})) {
