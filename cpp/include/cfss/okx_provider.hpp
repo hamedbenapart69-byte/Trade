@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -20,6 +21,17 @@
 
 namespace cfss::okx {
 using json = nlohmann::json;
+
+inline std::atomic<std::uint64_t>& http_request_attempts() { static std::atomic<std::uint64_t> value{0}; return value; }
+inline std::atomic<std::uint64_t>& http_failed_attempts() { static std::atomic<std::uint64_t> value{0}; return value; }
+inline std::atomic<std::uint64_t>& http_retry_attempts() { static std::atomic<std::uint64_t> value{0}; return value; }
+inline std::atomic<std::uint64_t>& exhausted_requests() { static std::atomic<std::uint64_t> value{0}; return value; }
+inline json request_metrics() {
+    return {{"http_request_attempts", http_request_attempts().load()},
+            {"http_failed_attempts", http_failed_attempts().load()},
+            {"http_retry_attempts", http_retry_attempts().load()},
+            {"exhausted_requests", exhausted_requests().load()}};
+}
 
 inline std::size_t write_body(char* data, std::size_t size, std::size_t count, void* ctx) {
     if (!ctx || (size != 0U && count > static_cast<std::size_t>(-1) / size)) return 0U;
@@ -44,8 +56,11 @@ inline HttpResponse get(const std::string& url, long timeout_seconds = 25L) {
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "CFSS-CXX20/1.0");
+    http_request_attempts().fetch_add(1U);
     out.transport = curl_easy_perform(curl);
     if (out.transport == CURLE_OK) curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &out.status);
+    if (out.transport != CURLE_OK || out.status < 200 || out.status >= 400)
+        http_failed_attempts().fetch_add(1U);
     curl_easy_cleanup(curl);
     return out;
 }
@@ -65,6 +80,7 @@ inline json request(const std::string& path, int attempts = 3) {
     const std::string url = "https://www.okx.com" + path;
     std::string last_error = "provider_request_failed";
     for (int attempt = 0; attempt < attempts; ++attempt) {
+        if (attempt > 0) http_retry_attempts().fetch_add(1U);
         const auto response = get(url);
         if (response.transport == CURLE_OK && response.status == 200) {
             try {
@@ -80,6 +96,7 @@ inline json request(const std::string& path, int attempts = 3) {
         }
         if (attempt + 1 < attempts) std::this_thread::sleep_for(std::chrono::milliseconds(500 * (attempt + 1)));
     }
+    exhausted_requests().fetch_add(1U);
     throw std::runtime_error(last_error);
 }
 
