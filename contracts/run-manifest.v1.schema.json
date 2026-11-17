@@ -335,9 +335,9 @@
         "http_failed_attempts",
         "http_retry_attempts",
         "exhausted_requests",
-        "telegram_send_attempts",
-        "telegram_retry_attempts",
-        "telegram_inbound_polls"
+        "telegram_inbound_polls",
+        "telegram_send_attempts_total_for_scan",
+        "telegram_retry_attempts_total_for_scan"
       ],
       "properties": {
         "http_request_attempts": {
@@ -356,15 +356,15 @@
           "type": "integer",
           "minimum": 0
         },
-        "telegram_send_attempts": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "telegram_retry_attempts": {
-          "type": "integer",
-          "minimum": 0
-        },
         "telegram_inbound_polls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "telegram_send_attempts_total_for_scan": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "telegram_retry_attempts_total_for_scan": {
           "type": "integer",
           "minimum": 0
         }
