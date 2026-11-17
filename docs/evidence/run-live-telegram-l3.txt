@@ -1,0 +1,1 @@
+Controlled inbound-only recheck. The existing DELIVERED outbox entry on the signals branch must be reused without resending the same logical report; poll the authorized chat for /status and persist only new update receipts.
