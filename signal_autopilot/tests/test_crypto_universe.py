@@ -148,29 +148,29 @@ class CryptoUniverseTests(unittest.TestCase):
         self.assertTrue(result["fallback_used"])
         self.assertEqual(result["primary_error"], "DEBUG_BLOCK_OKX_FORCED")
 
-    def test_fallback_merges_unique_symbols_after_primary_and_secondary_failures(self):
+    def test_fallback_uses_bybit_after_binance_failure_and_merges_unique_symbols(self):
         self.fetcher._coingecko_top_symbols = lambda: {"BTC"}
         okx_rows = self.provider_rows("okx", "BTC", 20)
-        binance_rows = self.provider_rows("binance", "ETH", 80)
+        bybit_rows = self.provider_rows("bybit", "ETH", 80)
 
         def fake_provider(provider, whitelist, exclude_bases=None, target_count=None):
             if provider == "okx":
                 return okx_rows[:target_count]
-            if provider == "bybit":
-                raise RuntimeError("403 blocked")
             if provider == "binance":
-                return binance_rows[:target_count]
+                raise RuntimeError("403 blocked")
+            if provider == "bybit":
+                return bybit_rows[:target_count]
             self.fail(f"unexpected provider call after universe was filled: {provider}")
 
         self.fetcher._fetch_from_provider = fake_provider
         result = self.fetcher.fetch()
         self.assertEqual(result["provider"], "multi-provider")
         self.assertEqual(result["symbols_processed"], 100)
-        self.assertEqual(result["provider_sources"], ["okx", "binance"])
+        self.assertEqual(result["provider_sources"], ["okx", "bybit"])
         self.assertTrue(result["fallback_used"])
         self.assertEqual(len({row["base"] for row in result["symbols"]}), 100)
-        self.assertIn("bybit", result["errors"])
-        self.assertEqual(result["universe_diagnostics"]["binance"]["symbols_added"], 80)
+        self.assertIn("binance", result["errors"])
+        self.assertEqual(result["universe_diagnostics"]["bybit"]["symbols_added"], 80)
 
 
     def test_gateio_provider_uses_current_ccxt_gate_class(self):
