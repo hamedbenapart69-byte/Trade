@@ -281,6 +281,7 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
         std::string path = "/api/v5/public/funding-rate-history?instId=" + encode(instrument.id) + "&limit=100";
         if (after) path += "&after=" + std::to_string(*after);
         const auto payload = request(path);
+        const auto page_retrieved_at = utc_iso(now_ms());
         if (payload["data"].empty()) break;
         std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
         for (const auto& row : payload["data"]) {
@@ -293,7 +294,7 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
             rows[ts] = {{"timestamp_ms", ts},
                         {"funding_rate", rate ? json(*rate) : json(nullptr)},
                         {"mark_price", mark ? json(*mark) : json(nullptr)},
-                        {"retrieved_at_utc", retrieved_at}};
+                        {"retrieved_at_utc", page_retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
             break;
@@ -315,6 +316,7 @@ inline json fetch_open_interest(const Instrument& instrument, std::int64_t start
                            encode(instrument.id) + "&period=1H&limit=100";
         if (after) path += "&after=" + std::to_string(*after);
         const auto payload = request(path);
+        const auto page_retrieved_at = utc_iso(now_ms());
         if (payload["data"].empty()) break;
         std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
         for (const auto& row : payload["data"]) {
@@ -334,7 +336,7 @@ inline json fetch_open_interest(const Instrument& instrument, std::int64_t start
             rows[ts] = {{"timestamp_ms", ts},
                         {"open_interest", amount ? json(*amount) : json(nullptr)},
                         {"open_interest_value_usd", value ? json(*value) : json(nullptr)},
-                        {"retrieved_at_utc", retrieved_at}};
+                        {"retrieved_at_utc", page_retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
             break;
