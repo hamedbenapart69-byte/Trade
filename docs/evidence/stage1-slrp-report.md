@@ -18,10 +18,10 @@ Deliver one real C++20 vertical slice from public market-data acquisition throug
 | S1-03 | Real provider data, not fixtures or mock data | OKX live response; 17,532 closed 1h BTC candles over two years, 100% coverage; 90 funding rows/29.67d; 720 OI rows/29.96d; 730 FNG observations | PASS |
 | S1-04 | Fallback chain is equivalence-tested or explicitly UNAVAILABLE | Bybit 403, Binance 451; KuCoin/MEXC/Bitget reachable but no equivalence-verified C++ adapter; all classified UNAVAILABLE; CoinGecko reference-only | PASS (explicit unavailability) |
 | S1-05 | Frozen universe and per-symbol coverage report | 529 declared active USDT swaps; 90 passed metadata and >USD 10M 24h quote-notional gate; frozen selected ID list and per-symbol coverage emitted | PASS |
-| S1-06 | L1/L2/run-manifest schemas, deterministic tests and hashes | L1, L2 and run-manifest AJV validation passed; four artifact SHA-256 values independently matched in the uploaded ZIP; deterministic scan ID and delivery key tests | PASS |
-| S1-07 | Real Telegram outbound with positive response and message ID | Push run 44135013370; HTTP 200; Telegram message ID 39; one send attempt; receipt persisted | PASS |
+| S1-06 | L1/L2/output/run-manifest schemas, deterministic tests and hashes | L1, L2, signals, performance, coverage, system-status and run-manifest AJV validations passed; L1/L2 hashes logged; eight persisted output SHA-256 values independently recomputed and matched; deterministic scan ID and delivery key tests | PASS |
+| S1-07 | Real Telegram outbound with positive response and message ID | Runs 44135013370 and 44149930383; HTTP 200; Telegram message IDs 39 and 40; one send attempt each; both receipts persisted | PASS |
 | S1-08 | Real Telegram inbound, update processing, offset persistence and duplicate suppression | Controlled `/status` test not yet run | NOT PROVEN |
-| S1-09 | Two consecutive complete L1/L2/L3 runs with integrity and manifests | First complete run 44135013370 passed; second distinct hourly scan window not yet run | PARTIAL |
+| S1-09 | Two consecutive complete L1/L2/L3 runs with integrity and manifests | Runs 44135013370 and 44149930383 both have L1_L2_L3_PASS and DELIVERED receipts; scan IDs differ; second run's eight persisted artifact hashes independently matched | PASS |
 | S1-10 | Failure honesty and degraded/no-signal reporting | Partial funding/OI is classified MARKET_DATA_DEGRADED; complete data with no strategy admitted is NO_QUALIFIED_SETUP; actionable=false; confidence NOT_CALIBRATED | PASS |
 | S1-11 | No user-side provider connectivity | GitHub Actions fetches public data; user receives Telegram only; no exchange account keys or account connection | PASS |
 | S1-12 | Every core dependency's current free use/limits recorded | Public standard GitHub-hosted runner is free per official docs; current workflow disables artifact uploads; one historical artifact and account-wide storage/billing state remain unverified | PARTIAL |
@@ -80,6 +80,31 @@ If the remaining gates fail:
 
 The first complete run did not claim a trade. The L2 output correctly reported that no strategy had qualified.
 
+
+## Second complete run — evidence
+
+**GitHub Actions run:** `44149930383`  
+**Run ID:** `okx-cpp-1794940713508`  
+**Scan ID:** `scan-3b61df4b5612af77b1b364b82f0363da8d2764514d9abcd76acd837486ce2279`  
+**Run status:** `L1_L2_L3_PASS`  
+**Telegram:** HTTP 200, message ID `40`, one send attempt, persisted as `DELIVERED`  
+**Build ID:** `78be8cc006ea5de963f54c59a13fed390447ba6298ce102592be989ec2b613fa`
+
+The first run's scan ID was `scan-f4e01b3a015c9aa427ee592482d90f92587128fab5f619fcbfd46872ad9c8ac6`; the second scan ID is different. Both runs therefore represent distinct hourly scan windows, not a repeated delivery for the same idempotency key.
+
+Second-run real data:
+- BTC/USDT:USDT: 17,532 completed 1h OHLCV rows; 100% coverage.
+- Funding: 90 rows; 29.6667 days.
+- Open interest: 720 rows; 29.9583 days.
+- OHLCV, funding and OI all marked AVAILABLE; coverage summary 1 fully available, 0 partial, 0 unavailable.
+- L2 state: `NO_QUALIFIED_SETUP`; `data_quality=REAL`; `confidence_status=NOT_CALIBRATED`; `actionable=false`.
+- Signals artifact: zero actionable signals; one C10 status row. This is an honest no-setup report, not a missed signal.
+- Performance artifact: `NOT_CALCULATED`, zero trades, all metrics null because no strategy engine or executed trades exist in Stage 1.
+- Provider health: OKX primary HTTP 200; Bybit 403; Binance 451; KuCoin/MEXC/Bitget reachable but fallback remains UNAVAILABLE without an equivalence-verified C++ adapter; CoinGecko reference-only.
+- Eight persisted artifacts (L2, provider health, Fear & Greed, signals, history, performance, coverage, system status) were independently SHA-256 recomputed from the `signals` branch and matched the manifest exactly. L1/L2 raw file hashes were printed by the runner and matched their manifest entries.
+
+**S1-09 is now PASS.** The second complete run is independently verified and the two scan IDs differ.
+
 ## Self-critique
 
 1. **Future data used?** No. Only completed hourly bars are admitted; the candle confirmation flag and bar-end boundary are checked.
@@ -90,9 +115,8 @@ The first complete run did not claim a trade. The L2 output correctly reported t
 
 ## Handoff
 
-Stage 1 is **not PASS yet**. Required remaining evidence:
-- A second complete push run using a different hourly scan ID and a real Telegram delivery receipt.
-- Owner sends `/status` to the configured Telegram bot; then the tagged inbound-test workflow must prove a newly received update, processed reply, persisted offset and no duplicate response.
-- Confirm the account-level artifact-storage allowance or an equivalent billing guard for S1-12.
+Stage 1 is **not PASS yet**. S1-09 is now PASS. Remaining evidence:
+- Owner sends `/status` to the configured Telegram bot; then the tagged inbound-test workflow must prove a newly received update, processed reply, persisted offset and duplicate suppression (S1-08).
+- Confirm the account-level artifact-storage allowance or an equivalent billing guard for S1-12. The current workflow disables future Actions artifact uploads, but one historical artifact remains under its original retention period.
 
 Do not merge PR #150 or begin Stage 2 until the complete S1-01 through S1-12 matrix is PASS and the owner confirms the Stage 1 handoff.
