@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Coverage Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "scan_id",
+    "generated_at_utc",
+    "universe",
+    "summary",
+    "instruments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scan_id": {
+      "type": "string",
+      "pattern": "^scan-[0-9a-f]{64}$"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "universe": {
+      "type": "object"
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "fully_available_count",
+        "partial_count",
+        "unavailable_count",
+        "selected_count"
+      ],
+      "properties": {
+        "fully_available_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "partial_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unavailable_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "symbol",
+          "availability",
+          "coverage",
+          "errors"
+        ],
+        "properties": {
+          "instrument_id": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "object"
+          },
+          "coverage": {
+            "type": "object"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
