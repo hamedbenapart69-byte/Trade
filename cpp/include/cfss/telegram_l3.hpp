@@ -90,7 +90,8 @@ inline HttpResult perform_http(const std::string& url, const std::string* payloa
 inline std::string stable_fingerprint(std::string_view text) {
     // FNV-1a 64-bit is used only as a deterministic deduplication fingerprint, not as a security hash.
     std::uint64_t hash = 14695981039346656037ULL;
-    for (const unsigned char ch : text) {
+    for (const char raw_ch : text) {
+        const auto ch = static_cast<unsigned char>(raw_ch);
         hash ^= static_cast<std::uint64_t>(ch);
         hash *= 1099511628211ULL;
     }
