@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -306,6 +307,82 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         std::this_thread::sleep_for(std::chrono::milliseconds(350));
     }
     return delivery_problem ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+inline std::string utc_now_iso() {
+    const auto now = std::chrono::system_clock::now();
+    const auto seconds = std::chrono::system_clock::to_time_t(now);
+    std::tm tm{};
+#if defined(_WIN32)
+    gmtime_s(&tm, &seconds);
+#else
+    gmtime_r(&seconds, &tm);
+#endif
+    char buffer[32]{};
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &tm);
+    return buffer;
+}
+
+inline void record_outbound_manifest(const std::filesystem::path& manifest_path,
+                                     const std::filesystem::path& outbox_path,
+                                     const std::string& scan_id) {
+    auto manifest = load_json_or_default(manifest_path, nlohmann::json::object());
+    const auto outbox = load_json_or_default(outbox_path, default_outbox());
+    const std::string prefix = scan_id + ":status:";
+    bool found = false, all_delivered = true, has_unknown = false, has_permanent = false;
+    nlohmann::json message_ids = nlohmann::json::array();
+    for (auto it = outbox.at("messages").begin(); it != outbox.at("messages").end(); ++it) {
+        if (it.key().rfind(prefix, 0U) != 0U) continue;
+        found = true;
+        const auto status = it.value().value("status", std::string{});
+        if (status != "DELIVERED") all_delivered = false;
+        if (status == "DELIVERY_UNKNOWN") has_unknown = true;
+        if (status == "PERMANENT_FAILURE") has_permanent = true;
+        if (it.value().contains("telegram_message_id") && it.value()["telegram_message_id"].is_number_integer())
+            message_ids.push_back(it.value()["telegram_message_id"]);
+    }
+    const std::string status = !found ? "NOT_ATTEMPTED" :
+        (all_delivered ? "DELIVERED" : (has_unknown ? "DELIVERY_UNKNOWN" :
+         (has_permanent ? "PERMANENT_FAILURE" : "RETRYABLE_FAILURE")));
+    manifest["telegram_send_status"] = status;
+    manifest["telegram_message_ids"] = message_ids;
+    if (status == "DELIVERED" && manifest.value("run_status", std::string{}) == "L1_L2_PASS")
+        manifest["run_status"] = "L1_L2_L3_PASS";
+    else if (status != "DELIVERED") {
+        manifest["run_status"] = "L3_FAILED";
+        manifest["error_summary"].push_back("telegram_outbound:" + status);
+    }
+    manifest["end_time_utc"] = utc_now_iso();
+    write_json_atomic(manifest_path, manifest);
+}
+
+inline void record_inbound_manifest(const std::filesystem::path& manifest_path,
+                                    const std::filesystem::path& state_path,
+                                    long long previous_update_id, int receiver_result) {
+    auto manifest = load_json_or_default(manifest_path, nlohmann::json::object());
+    const auto state = load_json_or_default(state_path, default_inbound_state());
+    bool processed_new_update = false;
+    bool saw_new_update = false;
+    for (auto it = state.at("processed_updates").begin(); it != state.at("processed_updates").end(); ++it) {
+        long long update_id = 0;
+        try { update_id = std::stoll(it.key()); } catch (...) { continue; }
+        if (update_id <= previous_update_id) continue;
+        saw_new_update = true;
+        if (it.value().value("status", std::string{}) == "PROCESSED") processed_new_update = true;
+    }
+    std::string status = "NO_UPDATE_RECEIVED";
+    if (processed_new_update && receiver_result == EXIT_SUCCESS) status = "RECEIVED_PROCESSED";
+    else if (receiver_result != EXIT_SUCCESS) {
+        status = state.value("last_poll_status", std::string{}) == "UNAVAILABLE" ? "UNAVAILABLE" : "FAILED";
+    } else if (saw_new_update) status = "FAILED";
+    manifest["telegram_receive_test_status"] = status;
+    manifest["telegram_last_update_id"] = state.value("last_update_id", 0LL);
+    if (status == "RECEIVED_PROCESSED" && manifest.value("run_status", std::string{}) == "L1_L2_L3_PASS")
+        manifest["run_status"] = "STAGE1_CONTROLLED_ACCEPTANCE_PASS";
+    if (status == "FAILED" || status == "UNAVAILABLE")
+        manifest["error_summary"].push_back("telegram_inbound:" + status);
+    manifest["end_time_utc"] = utc_now_iso();
+    write_json_atomic(manifest_path, manifest);
 }
 
 inline nlohmann::json default_inbound_state() {
