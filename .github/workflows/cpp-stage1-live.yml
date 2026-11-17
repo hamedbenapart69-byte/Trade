@@ -2,7 +2,7 @@ name: C++ Only Stage 1 Live Vertical Slice
 
 on:
   push:
-    branches: [feat/cpp-only-stage1]
+    branches: [feat/cpp-stage1-clean]
     paths:
       - "cpp/**"
       - "contracts/**"
