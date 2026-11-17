@@ -123,6 +123,26 @@ int main() {
         telegram_messages[0].find("این پیام گزارش داده است") == std::string::npos) {
         std::cerr << "Telegram safe status message formatting failed\n"; return EXIT_FAILURE;
     }
+    const auto delivered = cfss::telegram::classify_send_response(
+        CURLE_OK, 200, R"({"ok":true,"result":{"message_id":77}})", "");
+    const auto rate_limited = cfss::telegram::classify_send_response(
+        CURLE_OK, 429, R"({"ok":false})", "");
+    const auto server_error = cfss::telegram::classify_send_response(
+        CURLE_OK, 503, "temporarily unavailable", "");
+    const auto rejected = cfss::telegram::classify_send_response(
+        CURLE_OK, 400, R"({"ok":false,"description":"bad request"})", "");
+    const auto timeout = cfss::telegram::classify_send_response(
+        CURLE_OPERATION_TIMEDOUT, 0, "", "timeout");
+    const auto malformed = cfss::telegram::classify_send_response(
+        CURLE_OK, 200, "not-json", "");
+    if (delivered.status != "DELIVERED" || delivered.message_id != 77 ||
+        rate_limited.status != "RETRYABLE_FAILURE" ||
+        server_error.status != "RETRYABLE_FAILURE" ||
+        rejected.status != "PERMANENT_FAILURE" ||
+        timeout.status != "DELIVERY_UNKNOWN" ||
+        malformed.status != "DELIVERY_UNKNOWN") {
+        std::cerr << "Telegram HTTP outcome classification failed\\n"; return EXIT_FAILURE;
+    }
     if (!cfss::telegram::outbox_should_send(nlohmann::json{{"status", "PENDING"}, {"attempts", 0}}) ||
         !cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 2}}) ||
         cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 3}}) ||
