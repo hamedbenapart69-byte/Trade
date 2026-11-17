@@ -262,6 +262,58 @@ int main() {
         !cfss::telegram::command_reply("/unknown").empty()) {
         std::cerr << "Telegram inbound command allowlist failed\n"; return EXIT_FAILURE;
     }
+
+    const auto manifest_test_dir = std::filesystem::temp_directory_path() /
+        ("cfss-manifest-test-" + std::to_string(now_ms));
+    std::filesystem::create_directories(manifest_test_dir);
+    const auto manifest_path = manifest_test_dir / "run-manifest.json";
+    const auto outbox_path = manifest_test_dir / "outbox.json";
+    nlohmann::json manifest_fixture = {
+        {"run_status", "L1_L2_PASS"}, {"telegram_send_status", "NOT_ATTEMPTED"},
+        {"telegram_receive_test_status", "NOT_REQUESTED"}, {"telegram_message_ids", nlohmann::json::array()},
+        {"telegram_last_update_id", 0}, {"error_summary", nlohmann::json::array()},
+        {"retry_summary", {{"telegram_send_attempts", 0}, {"telegram_retry_attempts", 0},
+                           {"telegram_inbound_polls", 0}}}
+    };
+    nlohmann::json outbox_fixture = {{"schema_version", 1}, {"messages", {
+        {"scan-abc:status:1", {{"status", "DELIVERED"}, {"attempts", 1}, {"telegram_message_id", 77}}}
+    }}};
+    cfss::telegram::write_json_atomic(manifest_path, manifest_fixture);
+    cfss::telegram::write_json_atomic(outbox_path, outbox_fixture);
+    cfss::telegram::record_outbound_manifest(manifest_path, outbox_path, "scan-abc");
+    auto updated_manifest = cfss::telegram::load_json_or_default(manifest_path, nlohmann::json::object());
+    if (updated_manifest.value("telegram_send_status", std::string{}) != "DELIVERED" ||
+        updated_manifest.value("run_status", std::string{}) != "L1_L2_L3_PASS" ||
+        updated_manifest.at("telegram_message_ids").size() != 1U ||
+        updated_manifest.at("telegram_message_ids")[0] != 77) {
+        std::cerr << "Telegram outbound run-manifest update failed\n";
+        std::filesystem::remove_all(manifest_test_dir); return EXIT_FAILURE;
+    }
+    nlohmann::json inbound_fixture = {
+        {"schema_version", 1}, {"last_update_id", 6}, {"poll_count", 3},
+        {"processed_updates", {{"6", {{"status", "PROCESSED"}}}}}
+    };
+    const auto inbound_path = manifest_test_dir / "inbound.json";
+    cfss::telegram::write_json_atomic(inbound_path, inbound_fixture);
+    cfss::telegram::record_inbound_manifest(manifest_path, inbound_path, 5, EXIT_SUCCESS);
+    updated_manifest = cfss::telegram::load_json_or_default(manifest_path, nlohmann::json::object());
+    if (updated_manifest.value("telegram_receive_test_status", std::string{}) != "RECEIVED_PROCESSED" ||
+        updated_manifest.value("run_status", std::string{}) != "STAGE1_CONTROLLED_ACCEPTANCE_PASS" ||
+        updated_manifest.value("telegram_last_update_id", 0LL) != 6LL ||
+        updated_manifest.at("retry_summary").value("telegram_inbound_polls", 0LL) != 3LL) {
+        std::cerr << "Telegram inbound run-manifest update failed\n";
+        std::filesystem::remove_all(manifest_test_dir); return EXIT_FAILURE;
+    }
+    inbound_fixture["last_update_id"] = 6;
+    inbound_fixture["processed_updates"] = nlohmann::json::object();
+    cfss::telegram::write_json_atomic(inbound_path, inbound_fixture);
+    cfss::telegram::record_inbound_manifest(manifest_path, inbound_path, 6, EXIT_SUCCESS);
+    updated_manifest = cfss::telegram::load_json_or_default(manifest_path, nlohmann::json::object());
+    if (updated_manifest.value("telegram_receive_test_status", std::string{}) != "RECEIVED_PROCESSED") {
+        std::cerr << "Successful inbound proof was lost on a subsequent empty poll\n";
+        std::filesystem::remove_all(manifest_test_dir); return EXIT_FAILURE;
+    }
+    std::filesystem::remove_all(manifest_test_dir);
     auto actionable_artifact = status_artifact;
     actionable_artifact["instruments"][0]["state"] = "BUY_NOW";
     actionable_artifact["instruments"][0]["actionable"] = true;
