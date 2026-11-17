@@ -60,7 +60,7 @@ std::vector<std::string> split_json_row(std::string_view row) {
     for (std::size_t i = 0; i < row.size(); ++i) {
         const char ch = row[i];
         if (in_string && escaped) { escaped = false; continue; }
-        if (in_string && ch == '\\\\') { escaped = true; continue; }
+        if (in_string && ch == '\\') { escaped = true; continue; }
         if (ch == '"') { in_string = !in_string; continue; }
         if (ch == ',' && !in_string) {
             fields.emplace_back(trim_json_value(std::string{row.substr(start, i - start)}));
@@ -88,7 +88,7 @@ std::vector<Candle> parse_candles(std::string_view json, std::string_view marker
     for (std::size_t i = outer; i < json.size(); ++i) {
         const char ch = json[i];
         if (in_string && escaped) { escaped = false; continue; }
-        if (in_string && ch == '\\\\') { escaped = true; continue; }
+        if (in_string && ch == '\\') { escaped = true; continue; }
         if (ch == '"') { in_string = !in_string; continue; }
         if (in_string) continue;
         if (ch == '[') {
@@ -132,23 +132,23 @@ std::vector<Candle> parse_candles(std::string_view json, std::string_view marker
 
 std::optional<MarketData> fetch_ohlcv() {
     constexpr std::array<Provider, 2> providers{{
-        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=51", "\\"data\\"", true},
-        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=51", "\\"list\\"", false}
+        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=51", "\"data\"", true},
+        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=51", "\"list\"", false}
     }};
     for (const auto& provider : providers) {
         const HttpResult response = get(provider.endpoint);
         if (response.transport != CURLE_OK || response.status_code != 200) {
             std::cerr << provider.name << " candle fetch failed; HTTP=" << response.status_code
-                      << " transport=" << curl_easy_strerror(response.transport) << '\\n';
+                      << " transport=" << curl_easy_strerror(response.transport) << '\n';
             continue;
         }
         auto candles = parse_candles(response.response, provider.row_marker, provider.okx_confirm_field);
         if (candles.size() != 50U) {
             std::cerr << provider.name << " rejected: expected 50 valid, closed, unique candles, got "
-                      << candles.size() << '\\n';
+                      << candles.size() << '\n';
             continue;
         }
-        std::cout << "Validated 50 closed 15m OHLCV candles from " << provider.name << '\\n';
+        std::cout << "Validated 50 closed 15m OHLCV candles from " << provider.name << '\n';
         return MarketData{std::move(candles), std::string{provider.name}};
     }
     return std::nullopt;
@@ -187,7 +187,7 @@ int main() {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) return EXIT_FAILURE;
     const auto fetched = fetch_ohlcv();
     if (!fetched) {
-        std::cerr << "OHLCV unavailable from OKX and Bybit; MARKET_DATA_DEGRADED\\n";
+        std::cerr << "OHLCV unavailable from OKX and Bybit; MARKET_DATA_DEGRADED\n";
         curl_global_cleanup();
         return EXIT_FAILURE;
     }
@@ -201,10 +201,10 @@ int main() {
     const std::string bias = current_close > sma20 ? "BULLISH" :
                              current_close < sma20 ? "BEARISH" : "NEUTRAL";
     std::cout << "SMA20=" << std::setprecision(15) << sma20 << " CLOSE=" << current_close
-              << " BIAS=" << bias << '\\n';
+              << " BIAS=" << bias << '\n';
 
     if (bias != "BULLISH") {
-        std::cout << "NO_QUALIFIED_SETUP: LRT SMA20 proxy requires BULLISH bias; no actionable LONG sent.\\n";
+        std::cout << "NO_QUALIFIED_SETUP: LRT SMA20 proxy requires BULLISH bias; no actionable LONG sent.\n";
         curl_global_cleanup();
         return EXIT_SUCCESS;
     }
@@ -224,13 +224,13 @@ int main() {
     };
     const std::string signal_json = cfss::format_signal_json(signal);
     const std::string telegram_markdown = cfss::format_signal_markdown(signal);
-    std::cout << "SIGNAL_JSON=" << signal_json << '\\n';
-    std::cout << "TELEGRAM_MARKDOWN_BEGIN\\n" << telegram_markdown << "\\nTELEGRAM_MARKDOWN_END\\n";
+    std::cout << "SIGNAL_JSON=" << signal_json << '\n';
+    std::cout << "TELEGRAM_MARKDOWN_BEGIN\n" << telegram_markdown << "\nTELEGRAM_MARKDOWN_END\n";
 
     const char* token = std::getenv("TELEGRAM_TOKEN");
     const char* chat_id = std::getenv("TELEGRAM_CHAT_ID");
-    if (!token || !chat_id || token[0] == '\\0' || chat_id[0] == '\\0') {
-        std::cerr << "Telegram secrets unavailable; signal not delivered\\n";
+    if (!token || !chat_id || token[0] == '\0' || chat_id[0] == '\0') {
+        std::cerr << "Telegram secrets unavailable; signal not delivered\n";
         curl_global_cleanup();
         return EXIT_FAILURE;
     }
