@@ -56,6 +56,16 @@
           "contract_size": {"type": ["number", "null"], "exclusiveMinimum": 0},
           "provider_id": {"type": "string", "minLength": 1},
           "timeframe": {"const": "1h"},
+          "provenance": {
+            "type": "object", "additionalProperties": false,
+            "required": ["ohlcv_endpoint", "funding_endpoint", "open_interest_endpoint", "retrieved_at_utc"],
+            "properties": {
+              "ohlcv_endpoint": {"type": "string"},
+              "funding_endpoint": {"type": "string"},
+              "open_interest_endpoint": {"type": "string"},
+              "retrieved_at_utc": {"type": "string", "format": "date-time"}
+            }
+          },
           "candles": {
             "type": "array",
             "items": {
@@ -83,7 +93,8 @@
               "properties": {
                 "timestamp_ms": {"type": "integer", "minimum": 1},
                 "funding_rate": {"type": ["number", "null"]},
-                "mark_price": {"type": ["number", "null"], "exclusiveMinimum": 0}
+                "mark_price": {"type": ["number", "null"], "exclusiveMinimum": 0},
+                "retrieved_at_utc": {"type": "string", "format": "date-time"}
               }
             }
           },
@@ -96,7 +107,8 @@
               "properties": {
                 "timestamp_ms": {"type": "integer", "minimum": 1},
                 "open_interest": {"type": ["number", "null"], "exclusiveMinimum": 0},
-                "open_interest_value_usd": {"type": ["number", "null"], "exclusiveMinimum": 0}
+                "open_interest_value_usd": {"type": ["number", "null"], "exclusiveMinimum": 0},
+                "retrieved_at_utc": {"type": "string", "format": "date-time"}
               }
             }
           },
