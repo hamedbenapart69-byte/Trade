@@ -10,8 +10,6 @@ if str(ROOT / "scripts") not in sys.path:
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pytest
-
 from export_l1_contract import build_contract
 
 
@@ -79,12 +77,20 @@ def test_duplicate_ohlcv_timestamp_fails_closed(tmp_path):
     rows = pq.read_table(data / "ohlcv.parquet").to_pylist()
     rows.append(dict(rows[0]))
     pq.write_table(pa.Table.from_pylist(rows), data / "ohlcv.parquet")
-    with pytest.raises(ValueError, match="duplicate_ohlcv_timestamp"):
+    try:
         build_contract(report, data, now=acquired)
+    except ValueError as exc:
+        assert "duplicate_ohlcv_timestamp" in str(exc)
+    else:
+        raise AssertionError("duplicate timestamps must fail closed")
 
 
 def test_exact_linear_perpetual_identity_is_required(tmp_path):
     report, data, acquired, _ = _fixture(tmp_path)
     report["symbols"]["BTC-USDT-SWAP"]["instrument"]["contract_type"] = "spot"
-    with pytest.raises(ValueError, match="unsupported_contract_type"):
+    try:
         build_contract(report, data, now=acquired)
+    except ValueError as exc:
+        assert "unsupported_contract_type" in str(exc)
+    else:
+        raise AssertionError("non-perpetual identity must fail closed")
