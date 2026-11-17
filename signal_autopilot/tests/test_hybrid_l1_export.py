@@ -5,14 +5,14 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from scripts.export_l1_contract import build_contract
+from export_l1_contract import build_contract
 
 
 def _fixture(tmp_path: Path):
