@@ -50,6 +50,7 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
     const char* build_id = std::getenv("CFSS_BUILD_ID");
     const char* event_name = std::getenv("GITHUB_EVENT_NAME");
     const bool retain_full_evidence = symbols == 1 && (!event_name || std::string{event_name} != "schedule");
+    const bool persist_signals = event_name && std::string{event_name} != "pull_request";
     const auto evidence_retention_days = retain_full_evidence ? 1 : 0;
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
     auto retry_summary = cfss::okx::request_metrics();
@@ -83,15 +84,15 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
                                 {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", false}}},
             {"l2_status", {{"path", l2_path.generic_string()}, {"sha256", cfss::sha256_hex(l2_raw)},
                            {"bytes", l2_raw.size()}, {"retained_in_workflow_artifacts", retain_full_evidence},
-                           {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", true}}},
+                           {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", persist_signals}}},
             {"provider_health", {{"path", (evidence_dir / "provider-health.v1.json").generic_string()},
                                  {"sha256", cfss::sha256_hex(provider_raw)}, {"bytes", provider_raw.size()},
                                  {"retained_in_workflow_artifacts", retain_full_evidence},
-                                 {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", true}}},
+                                 {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", persist_signals}}},
             {"fear_greed", {{"path", (evidence_dir / "fear-greed.v1.json").generic_string()},
                             {"sha256", cfss::sha256_hex(fear_raw)}, {"bytes", fear_raw.size()},
                             {"retained_in_workflow_artifacts", retain_full_evidence},
-                            {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", true}}}
+                            {"retention_days", evidence_retention_days}, {"retained_in_signals_branch", persist_signals}}}
         }},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
