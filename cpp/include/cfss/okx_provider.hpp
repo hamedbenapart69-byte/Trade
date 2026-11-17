@@ -343,9 +343,9 @@ inline json collect(int symbol_count, int years) {
         json errors = json::array();
         try { candles = fetch_candles(item, start_ms, end_ms, acquired_text); }
         catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
-        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms); }
+        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms, acquired_text); }
         catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
-        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms); }
+        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms, acquired_text); }
         catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
