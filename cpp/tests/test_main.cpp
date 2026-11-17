@@ -47,7 +47,7 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
 }
 int main() {
     const std::string input = std::string{"quote: \""} + '\n' + '\t';
-    if (cfss::json_escape(input) != "quote: \\\"\n\\t") {
+    if (cfss::json_escape(input) != "quote: \\\"\\n\\t") {
         std::cerr << "JSON escaping test failed\n"; return EXIT_FAILURE;
     }
     const auto levels = cfss::calculate_long_levels(65000.0, 64000.0);
