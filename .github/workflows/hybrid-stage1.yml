@@ -1,0 +1,67 @@
+name: Hybrid Stage 1 Contract and C++ Validation
+
+on:
+  push:
+    branches: [feat/hybrid-stage1]
+    paths:
+      - "contracts/**"
+      - "signal_autopilot/app/data_layer/**"
+      - "signal_autopilot/scripts/export_l1_contract.py"
+      - "signal_autopilot/tests/test_hybrid_l1_export.py"
+      - "signal_autopilot/requirements.txt"
+      - "cpp/**"
+      - ".github/workflows/hybrid-stage1.yml"
+      - ".github/workflows/cpp-foundation.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "contracts/**"
+      - "signal_autopilot/app/data_layer/**"
+      - "signal_autopilot/scripts/export_l1_contract.py"
+      - "signal_autopilot/tests/test_hybrid_l1_export.py"
+      - "signal_autopilot/requirements.txt"
+      - "cpp/**"
+      - ".github/workflows/hybrid-stage1.yml"
+      - ".github/workflows/cpp-foundation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-l1-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install focused L1 test dependencies
+        run: python -m pip install --disable-pip-version-check pytest pyarrow jsonschema
+      - name: Run L1 contract tests
+        run: python -m pytest -q signal_autopilot/tests/test_hybrid_l1_export.py
+
+  cpp-l2-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install C++ dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev
+      - name: Record compiler and CMake
+        run: |
+          cmake --version
+          g++ --version
+      - name: Configure and build
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+      - name: Run C++ contract tests
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Verify contract-driven executable has no implicit live side effects
+        run: |
+          ./build/market_pipeline >/tmp/market_pipeline_usage.log 2>&1 && exit 1 || test $? -eq 1
+          grep -q "Usage: market_pipeline" /tmp/market_pipeline_usage.log
