@@ -433,7 +433,8 @@
         "sha256",
         "bytes",
         "retained_in_workflow_artifacts",
-        "retention_days"
+        "retention_days",
+        "retained_in_signals_branch"
       ],
       "properties": {
         "path": {
@@ -455,6 +456,9 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 1
+        },
+        "retained_in_signals_branch": {
+          "type": "boolean"
         }
       }
     }
