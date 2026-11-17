@@ -12,3 +12,5 @@ websockets>=13,<16
 # Telegram delivery credentials are intentionally absent from this scanner environment.
 
 # Trusted workflow_run notifier subscription verified after PR #89.
+
+jsonschema>=4.22,<5
