@@ -1,4 +1,4 @@
-"""Telegram delivery for actionable futures signals and daily no-signal status."""
+"""کانال تلگرام تنها رابط تحویل کاربر؛ تمام دریافت و تحلیل داده در سمت سرور انجام می‌شود."""
 from __future__ import annotations
 
 import asyncio
@@ -120,7 +120,6 @@ def _format_signal(signal: dict, payload: dict) -> str:
     targets = signal.get("take_profit") or []
     tp1 = targets[0] if len(targets) > 0 else "—"
     tp2 = targets[1] if len(targets) > 1 else "—"
-    dashboard = (os.getenv("DASHBOARD_URL") or "https://trade-3vn.pages.dev/").strip()
     return "\n".join([
         "🔔 سیگنال فیوچرز",
         f"نماد: {signal.get('symbol', '—')}",
@@ -136,7 +135,6 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"ابطال تحلیل: {signal.get('falsification', '—')}",
         "اطمینان: هنوز کالیبراسیون آماری انجام نشده است",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
-        dashboard,
     ])
 
 
