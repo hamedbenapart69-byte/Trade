@@ -226,7 +226,7 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
-                          std::int64_t end_ms, const std::string& retrieved_at) {
+                          std::int64_t end_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
@@ -273,7 +273,7 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     return out;
 }
 
-inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms, const std::string& retrieved_at) {
+inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
@@ -307,7 +307,7 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
     return out;
 }
 
-inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms, const std::string& retrieved_at) {
+inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
@@ -466,11 +466,11 @@ inline json collect(int symbol_count, int years) {
     for (const auto& item : selected) {
         json candles = json::array(), funding = json::array(), oi = json::array();
         json errors = json::array();
-        try { candles = fetch_candles(item, start_ms, end_ms, acquired_text); }
+        try { candles = fetch_candles(item, start_ms, end_ms); }
         catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
-        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms, acquired_text); }
+        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms); }
         catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
-        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms, acquired_text); }
+        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms); }
         catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
@@ -509,6 +509,8 @@ inline json collect(int symbol_count, int years) {
     const char* commit = std::getenv("GITHUB_SHA");
     const auto provider_health = probe_provider_health();
     const auto fear_greed = fetch_fear_greed();
+    json selected_ids = json::array();
+    for (const auto& item : selected) selected_ids.push_back(item.id);
     return {
         {"schema_version", "1.0.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
