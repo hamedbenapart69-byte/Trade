@@ -314,28 +314,34 @@ inline json fetch_open_interest(const Instrument& instrument, std::int64_t start
     for (int page = 0; page < 12; ++page) {
         std::string path = "/api/v5/rubik/stat/contracts/open-interest-history?instId=" +
                            encode(instrument.id) + "&period=1H&limit=100";
-        if (after) path += "&after=" + std::to_string(*after);
+        if (after) path += "&end=" + std::to_string(*after);
         const auto payload = request(path);
         const auto page_retrieved_at = utc_iso(now_ms());
         if (payload["data"].empty()) break;
         std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
         for (const auto& row : payload["data"]) {
             std::int64_t ts = 0;
-            std::optional<double> amount, value;
+            std::optional<double> amount, base_amount, usd_value;
             if (row.is_object()) {
                 ts = timestamp(row.value("ts", row.value("timestamp", json{})));
                 amount = number(row.value("oi", row.value("openInterestAmount", row.value("openInterest", json{}))));
-                value = number(row.value("oiUsd", row.value("openInterestValue", json{})));
+                base_amount = number(row.value("oiCcy", row.value("openInterestBase", json{})));
+                usd_value = number(row.value("oiUsd", row.value("openInterestValue", json{})));
             } else if (row.is_array() && row.size() >= 2U) {
                 ts = timestamp(row[0]); amount = number(row[1]);
-                if (row.size() >= 3U) value = number(row[2]);
+                if (row.size() >= 3U) base_amount = number(row[2]);
+                if (row.size() >= 4U) usd_value = number(row[3]);
             }
             if (ts <= 0) continue;
             oldest = std::min(oldest, ts);
             if (ts < start_ms || ts >= end_ms) continue;
             rows[ts] = {{"timestamp_ms", ts},
                         {"open_interest", amount ? json(*amount) : json(nullptr)},
-                        {"open_interest_value_usd", value ? json(*value) : json(nullptr)},
+                        {"open_interest_unit", "contracts"},
+                        {"open_interest_base", base_amount ? json(*base_amount) : json(nullptr)},
+                        {"open_interest_base_currency", instrument.base},
+                        {"open_interest_value_usd", usd_value ? json(*usd_value) : json(nullptr)},
+                        {"open_interest_value_currency", "USD"},
                         {"retrieved_at_utc", page_retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
@@ -360,6 +366,16 @@ inline std::string availability(const json& rows, const char* field, double mini
     if (!rows.is_array() || rows.empty()) return "UNAVAILABLE";
     for (const auto& row : rows) if (!row.contains(field) || row[field].is_null()) return "PARTIAL";
     if (coverage_days(rows) < minimum_days) return "PARTIAL";
+    return "AVAILABLE";
+}
+inline std::string open_interest_availability(const json& rows, double minimum_days = 29.0) {
+    const auto base = availability(rows, "open_interest", minimum_days);
+    if (base != "AVAILABLE") return base;
+    for (const auto& row : rows) {
+        if (!row.contains("open_interest_base") || row["open_interest_base"].is_null() ||
+            !row.contains("open_interest_value_usd") || row["open_interest_value_usd"].is_null())
+            return "PARTIAL";
+    }
     return "AVAILABLE";
 }
 
@@ -478,7 +494,7 @@ inline json collect(int symbol_count, int years) {
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
                 {"funding", availability(funding, "funding_rate", 29.0)},
-                {"open_interest", availability(oi, "open_interest", 29.0)}
+                {"open_interest", open_interest_availability(oi, 29.0)}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
