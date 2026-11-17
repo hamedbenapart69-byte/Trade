@@ -214,13 +214,14 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
     });
     if (btc == eligible.end()) throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
     std::vector<Instrument> selected;
+    const auto selection_limit = std::min(static_cast<std::size_t>(target_count), eligible.size());
     selected.push_back(*btc);
     for (const auto& item : eligible) {
-        if (selected.size() >= static_cast<std::size_t>(target_count)) break;
+        if (selected.size() >= selection_limit) break;
         if (item.id != btc->id) selected.push_back(item);
     }
-    if (selected.size() != static_cast<std::size_t>(target_count))
-        throw std::runtime_error("eligible_instrument_universe_below_requested_count");
+    if (selected.size() != selection_limit)
+        throw std::runtime_error("instrument_universe_selection_inconsistent");
     return selected;
 }
 
