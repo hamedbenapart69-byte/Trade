@@ -34,7 +34,7 @@ def _finite(value: Any, *, nullable: bool = False, positive: bool = False) -> fl
 
 def _read_rows(data_dir: Path, relative_path: str) -> list[dict[str, Any]]:
     path = Path(relative_path)
-    if not path.is_absolute():
+    if not path.is_absolute() and not path.is_file():
         path = data_dir / path
     if not path.is_file():
         raise FileNotFoundError(f"parquet_file_missing:{path}")
