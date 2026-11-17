@@ -82,7 +82,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add hybrid_runtime/telegram_outbox.v1.json hybrid_runtime/telegram_inbound.v1.json
+          git add -A hybrid_runtime/
           if git diff --cached --quiet; then
             echo "HYBRID_TELEGRAM_STATE_UNCHANGED"
             exit 0
