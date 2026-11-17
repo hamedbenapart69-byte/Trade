@@ -18,7 +18,7 @@ Official GitHub billing references:
 - https://docs.github.com/en/billing/concepts/product-billing/github-actions
 - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 
-**Storage caveat:** GitHub's public-runner compute is free, but artifact storage is governed by account-level allowances and can incur charges above the included amount. The repository API does not expose the account's billing plan or current storage usage. The workflow therefore uses one-day retention and omits the large raw L1 JSON artifact from scheduled multi-symbol uploads. It still validates and hashes the full L1 file before the runner discards it. The account's exact storage quota remains **UNVERIFIED**.
+**Storage caveat:** GitHub's public-runner compute is free, but artifact storage is governed by account-level allowances and can incur charges above the included amount. The repository API does not expose the account's billing plan or current storage usage. The workflow therefore uses one-day retention for one-symbol validation artifacts and performs no Actions artifact upload on scheduled multi-symbol runs. Scheduled L2, provider-health, Fear & Greed and run-manifest evidence is committed to the signals branch; the large raw L1 JSON is validated and hashed on the runner, then discarded. The account's exact storage quota remains **UNVERIFIED**.
 
 ## Data providers
 
