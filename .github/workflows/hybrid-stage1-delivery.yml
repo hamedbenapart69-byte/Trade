@@ -86,7 +86,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ -n "$TELEGRAM_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-            ./build/telegram_inbound signals-state/hybrid_runtime/telegram_inbound.v1.json
+            for attempt in $(seq 1 12); do
+              echo "TELEGRAM_INBOUND_POLL=$attempt/12"
+              ./build/telegram_inbound signals-state/hybrid_runtime/telegram_inbound.v1.json
+              sleep 5
+            done
+            echo "TELEGRAM_INBOUND_POLL_WINDOW_COMPLETE"
           else
             echo "TELEGRAM_INBOUND_SKIPPED_CONFIGURATION_MISSING"
           fi
