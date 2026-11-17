@@ -145,9 +145,22 @@ int main() {
         std::cerr << "Tampered artifact passed SHA-256 verification\n"; return EXIT_FAILURE;
     }
     const auto& item = artifact.at("instruments").at(0);
-    if (item.at("state") != "NO_QUALIFIED_SETUP" || item.at("actionable") != false ||
-        item.at("confidence_status") != "NOT_CALIBRATED" || item.at("data_quality") != "PARTIAL") {
-        std::cerr << "C10 safe-default state test failed\n"; return EXIT_FAILURE;
+    if (item.at("state") != "MARKET_DATA_DEGRADED" || item.at("actionable") != false ||
+        item.at("confidence_status") != "NOT_CALIBRATED" || item.at("data_quality") != "PARTIAL" ||
+        item.at("reason_code") != "FUNDING_DATA_DEGRADED") {
+        std::cerr << "C10 partial-data safe-default state test failed\n"; return EXIT_FAILURE;
+    }
+    auto complete_contract = contract;
+    complete_contract["instruments"][0]["funding"][0]["funding_rate"] = 0.0001;
+    complete_contract["instruments"][0]["open_interest"][0]["open_interest_value_usd"] = 1000000.0;
+    complete_contract["instruments"][0]["availability"]["funding"] = "AVAILABLE";
+    complete_contract["instruments"][0]["availability"]["open_interest"] = "AVAILABLE";
+    const auto complete_artifact = cfss::build_l2_artifact(complete_contract, now_ms());
+    const auto& complete_item = complete_artifact.at("instruments").at(0);
+    if (complete_item.at("state") != "NO_QUALIFIED_SETUP" || complete_item.at("actionable") != false ||
+        complete_item.at("data_quality") != "REAL" ||
+        complete_item.at("reason_code") != "NO_STRATEGY_ADMITTED") {
+        std::cerr << "C10 full-data no-setup state test failed\n"; return EXIT_FAILURE;
     }
     auto duplicate = contract;
     duplicate["instruments"][0]["candles"].push_back(duplicate["instruments"][0]["candles"][0]);
