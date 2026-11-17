@@ -1,0 +1,109 @@
+name: Hybrid Stage 1 C++ Telegram Delivery
+
+on:
+  push:
+    branches: [feat/hybrid-stage1-delivery-run]
+    paths:
+      - "docs/evidence/run-live-telegram-l3.txt"
+      - ".github/workflows/hybrid-stage1-delivery.yml"
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Successful Hybrid L1/L2 integration run ID"
+        required: true
+        default: "44119249492"
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: hybrid-stage1-telegram-l3
+  cancel-in-progress: false
+
+jobs:
+  telegram-l3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Hybrid C++ source
+        uses: actions/checkout@v4
+      - name: Download real L1/L2 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hybrid-stage1-l1-l2-${{ inputs.source_run_id || '44119249492' }}
+          path: artifacts
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id || '44119249492' }}
+      - name: Checkout persistent signals branch
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Install C++ dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev
+      - name: Build C++20 L2/L3
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Send validated daily status through C++ L3
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          ./build/telegram_delivery artifacts/l2-status.v1.json signals-state/hybrid_runtime/telegram_outbox.v1.json
+      - name: Poll Telegram inbound updates through C++ L3
+        if: always()
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$TELEGRAM_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            ./build/telegram_inbound signals-state/hybrid_runtime/telegram_inbound.v1.json
+          else
+            echo "TELEGRAM_INBOUND_SKIPPED_CONFIGURATION_MISSING"
+          fi
+      - name: Persist outbox and inbound receipt state
+        if: always()
+        working-directory: signals-state
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d hybrid_runtime ]; then
+            echo "No C++ L3 state produced."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hybrid_runtime/telegram_outbox.v1.json hybrid_runtime/telegram_inbound.v1.json
+          if git diff --cached --quiet; then
+            echo "HYBRID_TELEGRAM_STATE_UNCHANGED"
+            exit 0
+          fi
+          git commit -m "state: persist C++ Telegram outbox and inbound receipts [skip ci]"
+          for attempt in 1 2 3; do
+            git fetch origin refs/heads/signals:refs/remotes/origin/signals
+            git rebase refs/remotes/origin/signals
+            if git push origin HEAD:refs/heads/signals; then
+              exit 0
+            fi
+            echo "signals branch advanced; retrying synchronized push ($attempt/3)"
+            sleep 2
+          done
+          echo "HYBRID_TELEGRAM_STATE_PERSIST_FAILED"
+          exit 1
+      - name: Upload C++ L3 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-stage1-telegram-l3-${{ github.run_id }}
+          path: signals-state/hybrid_runtime/
+          if-no-files-found: warn
+          retention-days: 30
