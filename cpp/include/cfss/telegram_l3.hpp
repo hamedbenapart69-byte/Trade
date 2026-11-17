@@ -327,7 +327,7 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
     const auto response = perform_http(endpoint);
     if (response.transport != CURLE_OK || response.http_status != 200) {
         std::cerr << "TELEGRAM_INBOUND_UNAVAILABLE http=" << response.http_status
-                  << " error=" << response.error << '\\n';
+                  << " error=" << response.error << '\n';
         return EXIT_FAILURE;
     }
     const auto parsed = nlohmann::json::parse(response.body);
@@ -404,7 +404,7 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
         state["last_update_id"] = std::max(state.value("last_update_id", 0LL), update_id);
         write_json_atomic(state_path, state);
     }
-    std::cout << "TELEGRAM_INBOUND_LAST_UPDATE_ID=" << state.value("last_update_id", 0LL) << '\\n';
+    std::cout << "TELEGRAM_INBOUND_LAST_UPDATE_ID=" << state.value("last_update_id", 0LL) << '\n';
     return delivery_problem ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
