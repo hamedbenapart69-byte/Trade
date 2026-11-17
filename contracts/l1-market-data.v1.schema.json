@@ -14,7 +14,8 @@
     "instruments",
     "universe",
     "provider_health",
-    "fear_greed"
+    "fear_greed",
+    "scan_id"
   ],
   "properties": {
     "schema_version": {
@@ -689,6 +690,10 @@
           }
         }
       }
+    },
+    "scan_id": {
+      "type": "string",
+      "pattern": "^scan-[0-9a-f]{64}$"
     }
   }
 }
