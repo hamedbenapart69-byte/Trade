@@ -2,7 +2,7 @@
 
 **Repository:** hamedbenapart69-byte/Trade  
 **Branch:** feat/hybrid-stage1  
-**Evidence revision:** 95b77c78b638c989fc399f99200243109f66e9fb  
+**Evidence revision:** d62ec9b3a6371bb9bf50b2e9d7ceccd46a1e3860  
 **Status:** IN PROGRESS — NOT STAGE 1 PASS
 
 ## Architecture boundary
@@ -35,6 +35,13 @@ GitHub Actions run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/4
 - Full repository CI: run 44125052833 was still in progress when this register was updated.
 - Policy guard: earlier revision 511d65967433c83582b38b06b7afda6dffb503f9 passed run 44121955460; latest revision policy check not yet independently confirmed.
 
+### C++ L3 implementation and live evidence
+- Live delivery run 44126127032 completed successfully.
+- Source L1/L2 run: 44119249492; source_run_id: 94cbbfad-791a-4150-abf5-eae073260128.
+- Telegram response: HTTP 200, DELIVERED, message_id 36.
+- Outbox receipt persisted to signals branch commit 93e764a.
+- Twelve inbound polls succeeded at transport level, but last_update_id remained 0; no controlled inbound command was received. Inbound command acceptance/deduplication remains unverified.
+
 ### C++ L3 implementation present
 - SHA-256 integrity helper for immutable L2 artifacts; verification before outbound delivery.
 - Telegram outbound with fsync-backed atomic outbox persistence, bounded retries, message ID capture and DELIVERY_UNKNOWN state.
@@ -53,9 +60,9 @@ GitHub Actions run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/4
 | S1-04 | Provider fallback | PENDING | Need a controlled runner-side fallback/recovery test with exact contract equivalence |
 | S1-05 | L1 market coverage | IN PROGRESS | 100-symbol run 44123123760 running; second sequential run 44123138538 queued; no completion evidence yet |
 | S1-06 | L2 validation and correctness | PASS (slice) | Python/C++ contract tests run 44125052887 and 10/10 real C++ status rows in run 44119249492 |
-| S1-07 | Real Telegram outbound | PENDING | Need real Telegram response, message_id and persisted outbox receipt |
-| S1-08 | Real Telegram inbound | PENDING | Need controlled authorized-chat update, update_id and persisted deduplication receipt |
-| S1-09 | Two consecutive complete L1/L2/L3 runs | PENDING | Only one L1/L2 run exists; no complete L3 run yet |
+| S1-07 | Real Telegram outbound | PASS (10-symbol slice) | Run 44126127032; HTTP 200, message_id 36, outbox commit 93e764a |
+| S1-08 | Real Telegram inbound | PENDING | 12 successful polls, but last_update_id=0; controlled /status or /help update not yet received |
+| S1-09 | Two consecutive complete L1/L2/L3 runs | PENDING | One 10-symbol outbound L3 run; 100-symbol L1/L2 run 44123123760 running and second 44123138538 queued; inbound command evidence pending |
 | S1-10 | Honest failure/degraded reporting | PARTIAL | Safe defaults and fail-closed tests exist; provider outage/fallback runtime evidence remains |
 | S1-11 | No user-side data connectivity | PASS (architecture) | Acquisition runs on GitHub-hosted runner; no exchange account credentials or user-side fetch |
 | S1-12 | Zero-cost deployment/runtime | PENDING FINAL ACCOUNTING | Uses public APIs, standard GitHub-hosted runner and open-source system packages; actual quota/billing ledger not inspected |
