@@ -130,6 +130,11 @@ int main() {
         cfss::telegram::reconcile_inbound_status("PROCESSED") != "PROCESSED") {
         std::cerr << "Telegram crash-recovery state reconciliation failed\n"; return EXIT_FAILURE;
     }
+    if (cfss::telegram::command_reply("/status").empty() ||
+        cfss::telegram::command_reply("/help").empty() ||
+        !cfss::telegram::command_reply("/unknown").empty()) {
+        std::cerr << "Telegram inbound command allowlist failed\\n"; return EXIT_FAILURE;
+    }
     auto actionable_artifact = status_artifact;
     actionable_artifact["instruments"][0]["state"] = "BUY_NOW";
     actionable_artifact["instruments"][0]["actionable"] = true;
