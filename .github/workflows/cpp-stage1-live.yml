@@ -78,6 +78,7 @@ jobs:
           echo "CPP_L1_L2_ARTIFACTS_PRESENT"
 
       - name: Checkout persistent signals branch
+        id: checkout_signals
         if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
@@ -114,7 +115,7 @@ jobs:
           echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
       - name: Persist Telegram delivery and inbound receipts
-        if: always() && github.event_name == 'push'
+        if: always() && github.event_name == 'push' && steps.checkout_signals.outcome == 'success'
         working-directory: signals-state
         shell: bash
         run: |
