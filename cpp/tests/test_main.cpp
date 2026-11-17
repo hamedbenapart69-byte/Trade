@@ -80,6 +80,29 @@ int main() {
         std::cerr << "Open-interest 30-day coverage gate failed\n"; return EXIT_FAILURE;
     }
 
+    const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
+    const nlohmann::json ambiguous_ticker = {{"last", "50000"}, {"vol24h", "250"}};
+    const auto turnover = cfss::okx::quote_turnover_usd(valid_ticker);
+    if (!turnover || std::abs(*turnover - 12500000.0) > 1e-9 ||
+        cfss::okx::quote_turnover_usd(ambiguous_ticker).has_value() ||
+        !cfss::okx::passes_liquidity(10000000.01) ||
+        cfss::okx::passes_liquidity(10000000.0) ||
+        cfss::okx::passes_liquidity(std::numeric_limits<double>::quiet_NaN())) {
+        std::cerr << "Quote-notional conversion or strict liquidity threshold failed\n"; return EXIT_FAILURE;
+    }
+    const nlohmann::json valid_contract = {
+        {"state","live"},{"settleCcy","USDT"},{"ctType","linear"},{"ctValCcy","BTC"},
+        {"ctVal","0.01"},{"ctMult","1"},{"tickSz","0.1"},{"lotSz","1"},
+        {"minSz","1"},{"listTime","1600000000000"}
+    };
+    auto invalid_contract = valid_contract;
+    invalid_contract["ctMult"] = "";
+    if (!cfss::okx::valid_linear_usdt_contract(valid_contract,"BTC") ||
+        cfss::okx::valid_linear_usdt_contract(invalid_contract,"BTC") ||
+        cfss::okx::valid_linear_usdt_contract(valid_contract,"ETH")) {
+        std::cerr << "Linear USDT perpetual contract metadata gate failed\n"; return EXIT_FAILURE;
+    }
+
     const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     const auto contract = sample_contract(now_ms);
