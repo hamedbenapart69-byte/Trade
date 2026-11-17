@@ -302,7 +302,10 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
 }
 
 inline nlohmann::json default_inbound_state() {
-    return {{"schema_version", 1}, {"last_update_id", 0}, {"processed_updates", nlohmann::json::object()}};
+    return {{"schema_version", 1}, {"last_update_id", 0},
+            {"poll_count", 0}, {"last_poll_status", "NEVER_POLLED"},
+            {"last_poll_at_epoch_ms", nullptr}, {"last_error", nullptr},
+            {"processed_updates", nlohmann::json::object()}};
 }
 
 inline std::string command_reply(const std::string& text) {
@@ -326,10 +329,21 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
         "/getUpdates?offset=" + std::to_string(last_id + 1LL) + "&timeout=5";
     const auto response = perform_http(endpoint);
     if (response.transport != CURLE_OK || response.http_status != 200) {
+        state["last_poll_status"] = "UNAVAILABLE";
+        state["last_poll_at_epoch_ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+        state["last_error"] = response.error;
+        write_json_atomic(state_path, state);
         std::cerr << "TELEGRAM_INBOUND_UNAVAILABLE http=" << response.http_status
                   << " error=" << response.error << '\n';
         return EXIT_FAILURE;
     }
+    state["poll_count"] = state.value("poll_count", 0LL) + 1LL;
+    state["last_poll_status"] = "OK";
+    state["last_poll_at_epoch_ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    state["last_error"] = nullptr;
+    write_json_atomic(state_path, state);
     const auto parsed = nlohmann::json::parse(response.body);
     if (!parsed.value("ok", false) || !parsed.contains("result") || !parsed.at("result").is_array())
         throw std::runtime_error("telegram_getupdates_invalid_response");
