@@ -230,6 +230,27 @@
       "role": "research_reference_only",
       "notes": "Backtesting and data tooling may be evaluated; disable all live trading, order placement and exchange-account features. Custom project validation gates remain authoritative.",
       "docs": "https://docs.freqtrade.io/en/latest/backtesting/"
+    },
+    {
+      "id": "coinboss_public_derivatives_aggregator",
+      "category": [
+        "cross_exchange_futures",
+        "open_interest",
+        "funding",
+        "liquidations",
+        "long_short",
+        "orderbook_depth",
+        "basis",
+        "market_sentiment",
+        "onchain_context"
+      ],
+      "provider": "CoinBoss API",
+      "access": "public_rest_websocket_no_key_documented",
+      "cost": "FREE_DURING_CURRENT_PERIOD_NOT_GUARANTEED",
+      "status": "LICENSE_REVIEW_REQUIRED",
+      "role": "secondary_cross_check_and_discovery_candidate",
+      "notes": "Provider docs currently state all data endpoints are public/free with no key and 1200 req/min, but pricing page describes future paid tiers and explicitly says future free-access terms are undecided. Terms of Service must be reviewed. Aggregates are collected/computed by CoinBoss, not raw independent exchange feeds; compare formulas, coverage, contract type, timestamps, one-sided/two-sided OI and freshness against direct venue sources. Never make it the sole source or assume permanent zero cost.",
+      "docs": "https://www.coinboss.com/api-docs"
     }
   ],
   "computed_features": [
