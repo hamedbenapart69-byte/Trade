@@ -66,6 +66,11 @@ jobs:
       - name: Run C++ unit and contract tests
         run: ctest --test-dir build --output-on-failure --no-tests=error
 
+      - name: Record immutable C++ build identity
+        run: |
+          BUILD_ID=$(sha256sum build/market_pipeline | awk '{print $1}')
+          echo "CFSS_BUILD_ID=$BUILD_ID" >> "$GITHUB_ENV"
+
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
           SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '1') }}
@@ -112,7 +117,7 @@ jobs:
           test -n "$TELEGRAM_CHAT_ID"
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
-            signals-state/cpp_runtime/telegram_outbox.v1.json
+            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v1.json
 
       - name: Controlled Telegram inbound receive through C++ L3
         if: github.event_name == 'workflow_dispatch' && inputs.run_inbound_test
@@ -122,7 +127,7 @@ jobs:
         run: |
           for attempt in $(seq 1 12); do
             echo "CPP_TELEGRAM_INBOUND_POLL=$attempt/12"
-            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json
+            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v1.json
             sleep 5
           done
           test -s signals-state/cpp_runtime/telegram_inbound.v1.json
@@ -134,6 +139,16 @@ jobs:
         run: |
           mkdir -p artifacts
           printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\n' > artifacts/telegram-inbound-test-status.json
+
+      - name: Validate V18.2 run manifest
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
+
+      - name: Persist run manifest and Telegram receipts
+        if: github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
+        run: |
+          RUN_ID=$(jq -r .run_id artifacts/run-manifest.v1.json)
+          cp artifacts/run-manifest.v1.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
