@@ -43,6 +43,7 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
     if (!contract.is_object() || !contract.contains("schema_version") || contract.at("schema_version") != "1.0.0")
         throw std::invalid_argument("unsupported_l1_contract_schema_version");
     require_string(contract, "run_id");
+    require_string(contract, "scan_id");
     require_string(contract, "acquired_at_utc");
     if (!contract.contains("window") || !contract.at("window").is_object() ||
         contract.at("window").value("timeframe", std::string{}) != "1h" ||
@@ -60,7 +61,8 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         throw std::invalid_argument("contract_instruments_missing");
     nlohmann::json artifact = {
         {"artifact_type", "cfss_l2_status_v1"}, {"source_schema_version", "1.0.0"},
-        {"source_run_id", contract.at("run_id")}, {"created_at_epoch_ms", now_ms},
+        {"source_run_id", contract.at("run_id")}, {"source_scan_id", contract.at("scan_id")},
+        {"created_at_epoch_ms", now_ms},
         {"instruments", nlohmann::json::array()}
     };
     std::unordered_set<std::string> seen_instrument_ids;
