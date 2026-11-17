@@ -249,7 +249,7 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
             const auto volume_base = number(row[6]);
             const auto volume_quote = number(row[7]);
             const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
-            if (ts < start_ms || ts >= end_ms || !confirmed || ts + 3'600'000LL > end_ms ||
+            if (ts < start_ms || ts >= end_ms || ts % 3'600'000LL != 0 || !confirmed || ts + 3'600'000LL > end_ms ||
                 !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
                 *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
                 *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
