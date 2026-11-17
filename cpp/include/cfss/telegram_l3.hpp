@@ -309,6 +309,8 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
     return delivery_problem ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
+inline nlohmann::json default_inbound_state();
+
 inline std::string utc_now_iso() {
     const auto now = std::chrono::system_clock::now();
     const auto seconds = std::chrono::system_clock::to_time_t(now);
