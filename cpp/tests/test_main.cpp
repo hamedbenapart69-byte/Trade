@@ -100,6 +100,45 @@ int main() {
     if (!non_finite_rejected) {
         std::cerr << "Non-finite funding value was not rejected\n"; return EXIT_FAILURE;
     }
-    std::cout << "L1 contract validation and C10 safe-default tests passed\n";
+    const nlohmann::json status_artifact = {
+        {"artifact_type", "cfss_l2_status_v1"}, {"source_run_id", "run-test-01"},
+        {"instruments", nlohmann::json::array({
+            {{"symbol", "BTC/USDT:USDT"}, {"state", "NO_QUALIFIED_SETUP"}, {"actionable", false}},
+            {{"symbol", "ETH/USDT:USDT"}, {"state", "MARKET_DATA_DEGRADED"}, {"actionable", false}}
+        })}
+    };
+    const auto telegram_messages = cfss::telegram::build_status_messages(status_artifact, 20U);
+    if (telegram_messages.size() != 1U ||
+        telegram_messages[0].find("BTC/USDT:USDT") == std::string::npos ||
+        telegram_messages[0].find("این پیام گزارش داده است") == std::string::npos) {
+        std::cerr << "Telegram safe status message formatting failed\n"; return EXIT_FAILURE;
+    }
+    if (!cfss::telegram::outbox_should_send(nlohmann::json{{"status", "PENDING"}, {"attempts", 0}}) ||
+        !cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 2}}) ||
+        cfss::telegram::outbox_should_send(nlohmann::json{{"status", "RETRYABLE_FAILURE"}, {"attempts", 3}}) ||
+        cfss::telegram::outbox_should_send(nlohmann::json{{"status", "DELIVERY_UNKNOWN"}, {"attempts", 1}})) {
+        std::cerr << "Telegram bounded outbox retry policy failed\n"; return EXIT_FAILURE;
+    }
+    auto conditional_artifact = status_artifact;
+    conditional_artifact["instruments"][0]["state"] = "CONDITIONAL_BUY";
+    if (cfss::telegram::build_status_messages(conditional_artifact).empty()) {
+        std::cerr << "Conditional C10 status was not delivered as a non-actionable report\n"; return EXIT_FAILURE;
+    }
+    if (cfss::telegram::reconcile_outbox_status("SENDING") != "DELIVERY_UNKNOWN" ||
+        cfss::telegram::reconcile_outbox_status("DELIVERED") != "DELIVERED" ||
+        cfss::telegram::reconcile_inbound_status("REPLY_SENDING") != "DELIVERY_UNKNOWN" ||
+        cfss::telegram::reconcile_inbound_status("PROCESSED") != "PROCESSED") {
+        std::cerr << "Telegram crash-recovery state reconciliation failed\n"; return EXIT_FAILURE;
+    }
+    auto actionable_artifact = status_artifact;
+    actionable_artifact["instruments"][0]["state"] = "BUY_NOW";
+    actionable_artifact["instruments"][0]["actionable"] = true;
+    bool actionable_blocked = false;
+    try { (void)cfss::telegram::build_status_messages(actionable_artifact); }
+    catch (const std::invalid_argument&) { actionable_blocked = true; }
+    if (!actionable_blocked) {
+        std::cerr << "Unvalidated actionable Telegram message was not blocked\n"; return EXIT_FAILURE;
+    }
+    std::cout << "L1/L2 contract, C10 safety and Telegram outbox tests passed\n";
     return EXIT_SUCCESS;
 }
