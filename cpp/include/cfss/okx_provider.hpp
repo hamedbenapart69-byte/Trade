@@ -331,9 +331,14 @@ inline json collect(int symbol_count, int years) {
     const auto selected = discover(symbol_count);
     json instruments = json::array();
     for (const auto& item : selected) {
-        const auto candles = fetch_candles(item, start_ms, end_ms, acquired_text);
-        const auto funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
-        const auto oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms);
+        json candles = json::array(), funding = json::array(), oi = json::array();
+        json errors = json::array();
+        try { candles = fetch_candles(item, start_ms, end_ms, acquired_text); }
+        catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
+        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms); }
+        catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
+        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms); }
+        catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
         instruments.push_back({
@@ -344,7 +349,7 @@ inline json collect(int symbol_count, int years) {
             {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
-                {"ohlcv", coverage >= 99.9 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
+                {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
                 {"funding", availability(funding, "funding_rate")},
                 {"open_interest", availability(oi, "open_interest")}
             }},
@@ -352,7 +357,7 @@ inline json collect(int symbol_count, int years) {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
                 {"open_interest_rows", oi.size()}, {"ohlcv_coverage_pct", std::min(100.0, coverage)}
             }},
-            {"errors", json::array()}
+            {"errors", errors}
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
