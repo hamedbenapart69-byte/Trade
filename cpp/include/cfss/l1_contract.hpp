@@ -145,14 +145,18 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         if (!valid_status(ohlcv_status) || !valid_status(funding_status) || !valid_status(oi_status))
             throw std::invalid_argument("instrument_availability_status_invalid");
         const bool ohlcv_available = ohlcv_status == "AVAILABLE";
-        const bool admitted = candles_valid && latest_fresh && ohlcv_available;
         const bool full_data = funding_status == "AVAILABLE" && oi_status == "AVAILABLE";
+        const bool admitted = candles_valid && latest_fresh && ohlcv_available && full_data;
+        const std::string reason_code = !candles_valid ? "OHLCV_EMPTY" :
+            (!latest_fresh || !ohlcv_available ? "OHLCV_STALE_OR_UNAVAILABLE" :
+             (funding_status != "AVAILABLE" ? "FUNDING_DATA_DEGRADED" :
+              (oi_status != "AVAILABLE" ? "OPEN_INTEREST_DATA_DEGRADED" : "NO_STRATEGY_ADMITTED")));
         artifact["instruments"].push_back({
             {"instrument_id", instrument.at("instrument_id")}, {"symbol", instrument.at("unified_symbol")},
             {"provider_id", instrument.at("provider_id")},
             {"state", admitted ? "NO_QUALIFIED_SETUP" : "MARKET_DATA_DEGRADED"},
-            {"reason_code", admitted ? "NO_STRATEGY_ADMITTED" : (candles_valid ? "OHLCV_STALE_OR_UNAVAILABLE" : "OHLCV_EMPTY")},
-            {"data_quality", admitted && full_data ? "REAL" : "PARTIAL"},
+            {"reason_code", reason_code},
+            {"data_quality", admitted ? "REAL" : "PARTIAL"},
             {"confidence_status", "NOT_CALIBRATED"}, {"actionable", false},
             {"latest_candle_timestamp_ms", latest_candle_ms}
         });
