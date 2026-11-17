@@ -166,6 +166,27 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
         self.assertFalse(policy["order_execution"])
         self.assertTrue(policy["backend_fetches_public_market_data"])
 
+    def test_user_geography_never_filters_backend_provider_candidates(self):
+        policy = json.loads((ROOT / "user_access_policy.json").read_text(encoding="utf-8"))
+        self.assertFalse(policy["user_geography_policy"]["user_location_is_provider_selection_criterion"])
+        self.assertFalse(policy["user_geography_policy"]["iran_user_side_filtering_or_vpn_requirement"])
+        self.assertFalse(policy["user_geography_policy"]["mobile_browser_provider_access_test_required"])
+        self.assertTrue(policy["user_geography_policy"]["backend_egress_reachability_test_required"])
+
+    def test_telegram_is_the_only_user_delivery_channel(self):
+        policy = json.loads((ROOT / "user_access_policy.json").read_text(encoding="utf-8"))
+        self.assertEqual(policy["delivery_behavior"]["actionable_signals"], "telegram_channel")
+        self.assertFalse(policy["delivery_behavior"]["email_delivery_enabled"])
+        self.assertFalse(policy["delivery_behavior"]["dashboard_required_for_user"])
+
+    def test_provider_catalog_marks_documentation_discovery_separately_from_runtime_proof(self):
+        catalog = json.loads((ROOT / "config" / "provider_catalog.json").read_text(encoding="utf-8"))
+        self.assertTrue(catalog["entries"])
+        for entry in catalog["entries"]:
+            self.assertIn("status", entry)
+            self.assertIn("category", entry)
+        self.assertEqual(catalog["runtime_verification"], "NOT_YET_RUN_FOR_ENTRIES_UNLESS_EXPLICITLY_STATED")
+
     def test_signal_message_uses_real_newline_characters(self):
         from modules.notifier import _format_signal
         message = _format_signal({
