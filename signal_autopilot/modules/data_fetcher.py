@@ -34,6 +34,15 @@ class MarketDataFetcher:
         return datetime.fromtimestamp(float(value) / 1000, timezone.utc).isoformat() if value is not None else None
 
     @staticmethod
+    def _canonical_base_and_scale(base: str) -> tuple[str, float]:
+        """تبدیل قراردادهای دارای ضریب ۱۰۰۰ به واحد قیمت یکسان برای مقایسهٔ بین صرافی‌ها."""
+        normalized = str(base or "").upper()
+        if normalized in {"PEPE", "1000PEPE"}:
+            # قیمت در OKX بر حسب یک PEPE است؛ قراردادهای 1000PEPE بر حسب ۱۰۰۰ واحدند.
+            return "1000PEPE", 1000.0 if normalized == "PEPE" else 1.0
+        return normalized, 1.0
+
+    @staticmethod
     def _listing_time_ms(market: dict, provider: str) -> int | None:
         info = market.get("info") or {}
         parsed_created = market.get("created")
@@ -184,7 +193,9 @@ class MarketDataFetcher:
             if not market.get("contract"):
                 rejected["not_contract"] += 1
                 continue
-            base = str(market.get("base") or "").upper()
+            raw_base = str(market.get("base") or "").upper()
+            base, _price_scale = self._canonical_base_and_scale(raw_base)
+            whitelist_base = "PEPE" if base == "1000PEPE" else base
             if base in exclude_bases:
                 rejected["already_covered"] += 1
                 continue
@@ -201,7 +212,7 @@ class MarketDataFetcher:
             if base in blacklist or market_id in blacklist:
                 rejected["blacklisted"] += 1
                 continue
-            if base not in whitelist:
+            if whitelist_base not in whitelist:
                 rejected["not_crypto_whitelist"] += 1
                 continue
             ticker = tickers.get(symbol) or {}
@@ -287,10 +298,17 @@ class MarketDataFetcher:
                 # KuCoin Futures may omit exchange ticker timestamps; receipt time is an explicit PROXY.
                 ticker_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
                 ticker_timestamp_source = "FETCH_TIME_PROXY"
+            market_base = str(exchange.market(symbol).get("base") or "").upper()
+            canonical_base, price_scale = self._canonical_base_and_scale(market_base)
+            try:
+                scaled_last = float(ticker.get("last")) * price_scale
+            except (TypeError, ValueError):
+                scaled_last = None
             row = {
-                "base": str(exchange.market(symbol).get("base") or "").upper(),
+                "base": canonical_base,
                 "provider": provider,
-                "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
+                "symbol": f"{canonical_base}/USDT:USDT",
+                "last": scaled_last, "quote_volume_24h": qv,
                 "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
                 "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
                 "funding_rate": None, "funding_timestamp_utc": None, "funding_interval_hours": None,
@@ -303,8 +321,11 @@ class MarketDataFetcher:
                 completed = self._completed_ohlcv(candles, now_ms)
                 row["ohlcv"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
-                    "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
-                    "close": float(c[4]), "volume": float(c[5]),
+                    "open": float(c[1]) * price_scale,
+                    "high": float(c[2]) * price_scale,
+                    "low": float(c[3]) * price_scale,
+                    "close": float(c[4]) * price_scale,
+                    "volume": float(c[5]) / price_scale,
                 } for c in completed]
                 if len(row["ohlcv"]) >= 52:
                     row["availability"]["ohlcv"] = "OK"
@@ -365,11 +386,12 @@ class MarketDataFetcher:
         timestamp = now.isoformat()
         blacklist = {str(x).upper() for x in self.universe.get("blacklist_patterns", [])}
         for asset in self.coingecko_market_rows:
-            base = str(asset.get("symbol") or "").upper()
-            if not base or base not in whitelist or base in existing_bases or base in blacklist:
+            raw_base = str(asset.get("symbol") or "").upper()
+            base, price_scale = self._canonical_base_and_scale(raw_base)
+            if not raw_base or raw_base not in whitelist or base in existing_bases or raw_base in blacklist:
                 continue
             try:
-                price = float(asset.get("current_price"))
+                price = float(asset.get("current_price")) * price_scale
                 volume = float(asset.get("total_volume") or 0)
             except (TypeError, ValueError):
                 continue
