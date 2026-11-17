@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include "cfss/http_utils.hpp"
+#include "cfss/atomic_file.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -99,16 +100,7 @@ inline std::string stable_fingerprint(std::string_view text) {
 }
 
 inline void write_json_atomic(const std::filesystem::path& path, const nlohmann::json& value) {
-    if (!path.parent_path().empty()) std::filesystem::create_directories(path.parent_path());
-    const auto temp = path.string() + ".tmp";
-    {
-        std::ofstream output(temp, std::ios::binary | std::ios::trunc);
-        if (!output) throw std::runtime_error("state_temp_open_failed");
-        output << value.dump(2) << '\n';
-        output.flush();
-        if (!output) throw std::runtime_error("state_write_failed");
-    }
-    std::filesystem::rename(temp, path);
+    write_file_atomic(path, value.dump(2) + "\n");
 }
 
 inline nlohmann::json load_json_or_default(const std::filesystem::path& path,
