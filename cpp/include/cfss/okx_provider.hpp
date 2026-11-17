@@ -387,8 +387,10 @@ inline json probe_provider_health() {
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
             {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" :
-                (!reachable ? "UNAVAILABLE" :
-                 (std::string{probe.adapter} == "NOT_IMPLEMENTED" ? "NOT_IMPLEMENTED" : "REFERENCE_ONLY"))},
+                (std::string{probe.adapter} == "REFERENCE_ONLY" ? "REFERENCE_ONLY" : "UNAVAILABLE")},
+            {"fallback_reason", std::string{probe.id} == "okx" ? "primary_provider" :
+                (std::string{probe.adapter} == "REFERENCE_ONLY" ? "not_a_futures_fallback" :
+                 (!reachable ? "provider_endpoint_unreachable" : "no_equivalence_verified_cpp_adapter"))},
             {"fallback_equivalence", "NOT_PROVEN"}
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -466,7 +468,9 @@ inline json collect(int symbol_count, int years) {
             {"listing_time_ms", item.listing_time_ms}, {"turnover_24h_usd", item.turnover},
             {"liquidity_threshold_usd", 10000000.0}, {"liquidity_status", "ELIGIBLE"},
             {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
-            {"provenance", {{"ohlcv_endpoint", "/api/v5/market/history-candles"},
+            {"provenance", {{"instrument_endpoint", "/api/v5/public/instruments?instType=SWAP"},
+                            {"ticker_endpoint", "/api/v5/market/tickers?instType=SWAP"},
+                            {"ohlcv_endpoint", "/api/v5/market/history-candles"},
                             {"funding_endpoint", "/api/v5/public/funding-rate-history"},
                             {"open_interest_endpoint", "/api/v5/rubik/stat/contracts/open-interest-history"},
                             {"retrieved_at_utc", utc_iso(now_ms())}}},
