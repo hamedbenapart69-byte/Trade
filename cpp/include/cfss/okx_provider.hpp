@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <ctime>
 #include <limits>
+#include <iostream>
 #include <cstdlib>
 #include <map>
 #include <optional>
@@ -135,30 +136,60 @@ inline std::vector<Instrument> discover(int target_count) {
     std::map<std::string, double> turnover;
     for (const auto& ticker : tickers["data"]) {
         const auto last = number(ticker.value("last", json{}));
-        const auto volume = number(ticker.value("volCcy24h", json{}));
+        auto volume = number(ticker.value("volCcy24h", json{}));
+        if (!volume) volume = number(ticker.value("vol24h", json{}));
         if (last && volume && *last > 0.0 && *volume > 0.0)
             turnover[text(ticker, "instId")] = *last * *volume;
     }
+
     std::vector<Instrument> eligible;
+    std::size_t swap_rows = 0U, live_rows = 0U, usdt_settle_rows = 0U, linear_rows = 0U;
+    json btc_diagnostic = nullptr;
     for (const auto& item : instruments["data"]) {
         const auto id = text(item, "instId");
-        if (text(item, "state") != "live" || text(item, "ctType") != "linear" ||
-            text(item, "quoteCcy") != "USDT" || text(item, "settleCcy") != "USDT" ||
-            id.empty() || id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP")
-            continue;
+        if (id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP") continue;
+        ++swap_rows;
+        if (text(item, "state") != "live") continue;
+        ++live_rows;
+        if (text(item, "settleCcy") != "USDT") continue;
+        ++usdt_settle_rows;
+        const auto ct_type = text(item, "ctType");
+        if (!ct_type.empty() && ct_type != "linear") continue;
+        ++linear_rows;
+
+        const auto first_dash = id.find('-');
+        const auto second_dash = first_dash == std::string::npos ? std::string::npos : id.find('-', first_dash + 1U);
+        const std::string parsed_base = first_dash == std::string::npos ? std::string{} : id.substr(0U, first_dash);
+        const std::string base = text(item, "baseCcy").empty() ? parsed_base : text(item, "baseCcy");
+        const std::string quote = text(item, "quoteCcy").empty() ? "USDT" : text(item, "quoteCcy");
+        if (base == "BTC") btc_diagnostic = item;
         const auto vol = turnover.find(id);
-        if (vol == turnover.end() || vol->second <= 0.0) continue;
+        const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
         const auto ct = number(item.value("ctVal", json{}));
-        eligible.push_back({id, text(item, "baseCcy"), text(item, "quoteCcy"),
-                            text(item, "settleCcy"), ct.value_or(0.0), vol->second});
+        eligible.push_back({id, base, quote, "USDT", ct.value_or(0.0), quote_turnover});
+        (void)second_dash;
+    }
+    std::cerr << "OKX_UNIVERSE_DIAGNOSTICS total=" << instruments["data"].size()
+              << " usdt_swap_suffix=" << swap_rows << " live=" << live_rows
+              << " settle_usdt=" << usdt_settle_rows << " linear_or_unspecified=" << linear_rows
+              << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
+    if (btc_diagnostic.is_null()) {
+        for (const auto& item : instruments["data"]) {
+            if (text(item, "instId") == "BTC-USDT-SWAP") {
+                std::cerr << "OKX_BTC_INSTRUMENT_DIAGNOSTIC=" << item.dump() << '\n';
+                break;
+            }
+        }
+        throw std::runtime_error("btc_usdt_linear_perpetual_not_found");
     }
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
+        if (a.base == "BTC") return true;
+        if (b.base == "BTC") return false;
         return a.turnover > b.turnover;
     });
     const auto btc = std::find_if(eligible.begin(), eligible.end(), [](const Instrument& x) {
         return x.base == "BTC";
     });
-    if (btc == eligible.end()) throw std::runtime_error("btc_usdt_linear_perpetual_not_found");
     std::vector<Instrument> selected;
     selected.push_back(*btc);
     for (const auto& item : eligible) {
