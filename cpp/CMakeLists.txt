@@ -34,7 +34,7 @@ add_executable(telegram_inbound
     apps/telegram_inbound/main.cpp
 )
 target_include_directories(telegram_inbound PRIVATE include)
-target_link_libraries(telegram_inbound PRIVATE CURL::libcurl)
+target_link_libraries(telegram_inbound PRIVATE CURL::libcurl OpenSSL::Crypto)
 target_compile_features(telegram_inbound PRIVATE cxx_std_20)
 
 add_executable(cfss_unit_tests tests/test_main.cpp)
