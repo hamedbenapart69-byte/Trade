@@ -194,12 +194,21 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const std::string performance_raw = performance_json.dump(2) + "\n";
         write_json(performance_path, performance_json);
 
-        const auto& producer = contract.at("producer");
         const auto& path_statuses = json{{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}};
         const auto& generator_statuses = json{{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
                                               {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}};
-        const bool all_real = full_count == coverage_rows.size();
+        bool all_real = true;
+        for (const auto& item : artifact.at("instruments"))
+            if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
         const std::string run_status = all_real ? "L1_L2_PASS" : "DATA_DEGRADED";
+        json system_errors = json::array();
+        for (const auto& item : contract.at("instruments"))
+            for (const auto& error : item.at("errors"))
+                system_errors.push_back(item.at("instrument_id").get<std::string>() + ":" + error.get<std::string>());
+        for (const auto& provider : contract.at("provider_health").at("providers"))
+            if (provider.value("fallback_status", std::string{}) == "UNAVAILABLE")
+                system_errors.push_back(provider.at("provider_id").get<std::string>() + ":" +
+                                         provider.value("fallback_reason", std::string{"fallback_unavailable"}));
         const json system_status_json = {
             {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
             {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
@@ -208,7 +217,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             {"telegram_send_status", "NOT_ATTEMPTED"},
             {"telegram_receive_test_status", "NOT_REQUESTED"},
             {"telegram_message_ids", json::array()}, {"telegram_last_update_id", 0},
-            {"error_summary", json::array()}
+            {"error_summary", system_errors}
         };
         const std::string system_raw = system_status_json.dump(2) + "\n";
         write_json(system_path, system_status_json);
