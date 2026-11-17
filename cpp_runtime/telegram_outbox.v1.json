@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "okx-cpp-1794933738500:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "c56544cdf2a85a11",
+      "status": "DELIVERED",
+      "telegram_message_id": 37,
+      "updated_at_epoch_ms": 1794933757181
+    }
+  },
+  "schema_version": 1
+}
