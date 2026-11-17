@@ -24,7 +24,7 @@ Deliver one real C++20 vertical slice from public market-data acquisition throug
 | S1-09 | Two consecutive complete L1/L2/L3 runs with integrity and manifests | First complete run 44135013370 passed; second distinct hourly scan window not yet run | PARTIAL |
 | S1-10 | Failure honesty and degraded/no-signal reporting | Partial funding/OI is classified MARKET_DATA_DEGRADED; complete data with no strategy admitted is NO_QUALIFIED_SETUP; actionable=false; confidence NOT_CALIBRATED | PASS |
 | S1-11 | No user-side provider connectivity | GitHub Actions fetches public data; user receives Telegram only; no exchange account keys or account connection | PASS |
-| S1-12 | Every core dependency's current free use/limits recorded | Public repository and free standard runner confirmed; no paid providers or larger runners; artifact retention/compaction implemented; account-level artifact-storage quota remains unverified | PARTIAL |
+| S1-12 | Every core dependency's current free use/limits recorded | Public standard GitHub-hosted runner is free per official docs; current workflow disables artifact uploads; one historical artifact and account-wide storage/billing state remain unverified | PARTIAL |
 
 ## SLRP — v1
 
@@ -52,6 +52,7 @@ All observed failures were implementation defects in v1 (D3); no v2 or v3 rewrit
 | Partial derivatives could be labeled NO_QUALIFIED_SETUP | L2 state did not distinguish incomplete required data | D3 | Require OHLCV, funding and OI availability; otherwise MARKET_DATA_DEGRADED |
 | C++ compile and test integration defects | Missing frozen-universe variable, initializer brace error and test timestamp shadowing | D3 | Correct declaration, initializer and test fixture |
 | Workflow YAML negation parsed incorrectly | Push workflow had no jobs | D3 | Wrap negated condition in GitHub expression syntax |
+| Telegram inbound executable omitted OpenSSL Crypto at link time | GCC link failed with undefined reference to SHA256 and `DSO missing from command line` | D3 | Link `OpenSSL::Crypto` explicitly to `telegram_inbound`; subsequent C++ Foundation and unit-test workflows passed |
 
 ### Active version
 
@@ -85,7 +86,7 @@ The first complete run did not claim a trade. The L2 output correctly reported t
 2. **Parameters tuned on test?** No strategy parameters exist in this Stage 1 vertical slice. The liquidity threshold is a fixed system requirement, not fitted on the validation sample.
 3. **Costs included?** No trade is admitted or executed in Stage 1, so trade EV/cost modeling is not applicable here. The production path remains manual-trade-only.
 4. **Report in no-signal case?** Yes. NO_QUALIFIED_SETUP and MARKET_DATA_DEGRADED are explicit C10 states and are delivered through Telegram.
-5. **Weakest assumption?** OKX is currently the only equivalence-verified futures data adapter. Other providers remain explicitly UNAVAILABLE until C++ adapter equivalence is tested. The account's artifact-storage quota also remains unverified.
+5. **Weakest assumption?** OKX is currently the only equivalence-verified futures data adapter. Other providers remain explicitly UNAVAILABLE until C++ adapter equivalence is tested. The account's billing plan and shared Actions/Packages storage remain unverified; one older artifact remains retained under its original policy.
 
 ## Handoff
 
