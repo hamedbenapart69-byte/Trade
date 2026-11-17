@@ -2,7 +2,7 @@
 
 **Repository:** hamedbenapart69-byte/Trade  
 **Branch:** feat/hybrid-stage1  
-**Evidence revision:** 5e597d65ce09dfc8d1fbe7499447d37512dde623  
+**Evidence revision:** 95b77c78b638c989fc399f99200243109f66e9fb  
 **Status:** IN PROGRESS — NOT STAGE 1 PASS
 
 ## Architecture boundary
@@ -26,33 +26,33 @@ GitHub Actions run: https://github.com/hamedbenapart69-byte/Trade/actions/runs/4
 - L2 export: artifacts/l2-status.v1.json.
 - Run ID: 94cbbfad-791a-4150-abf5-eae073260128.
 - Artifact: hybrid-stage1-l1-l2-44119249492.
-- This is one successful L1/L2 run, not two complete three-layer runs.
+- This is one successful 10-symbol L1/L2 run, not two complete three-layer runs. Two 100-symbol L1/L2 coverage runs are in progress/queued.
 
 ### CI on evidence revision
 - C++20 build and unit tests: PASS — run 44125052812.
-- Python L1 contract tests: PASS — run 44122390833.
-- C++ L2 contract tests: PASS — run 44122390833.
-- Repository CI: PASS — run 44122390761.
+- Python L1 contract tests: PASS — run 44125052887.
+- C++ L2 contract tests: PASS — run 44125052887.
+- Full repository CI: run 44125052833 was still in progress when this register was updated.
 - Policy guard: earlier revision 511d65967433c83582b38b06b7afda6dffb503f9 passed run 44121955460; latest revision policy check not yet independently confirmed.
 
 ### C++ L3 implementation present
 - SHA-256 integrity helper for immutable L2 artifacts; verification before outbound delivery.
-- Telegram outbound with persisted outbox, bounded retries, message ID capture and DELIVERY_UNKNOWN state.
-- Telegram inbound polling with authorized chat filter, command allowlist, update deduplication and persisted receipts.
+- Telegram outbound with fsync-backed atomic outbox persistence, bounded retries, message ID capture and DELIVERY_UNKNOWN state.
+- Telegram inbound polling with fsync-backed atomic state, authorized chat filter, command allowlist, update deduplication and persisted receipts.
 - Crash recovery converts ambiguous SENDING / REPLY_SENDING states to DELIVERY_UNKNOWN.
-- Unit tests cover outbox policy, state reconciliation, conditional reports, command allowlist and SHA-256 tamper detection.
+- Unit tests cover outbox policy, HTTP response classification, state reconciliation, conditional reports, command allowlist, SHA-256 tamper detection and atomic-write/immutable-overwrite behavior.
 - Code compilation and unit tests pass on evidence revision. This is not evidence of a real Telegram API send or inbound update.
 
 ## S1 acceptance register
 
 | ID | Acceptance area | Current result | Evidence / remaining work |
 |---|---|---|---|
-| S1-01 | Clean C++20 build | PASS | C++ Foundation run 44122390695 |
+| S1-01 | Clean C++20 build | PASS | C++ Foundation run 44125052812 |
 | S1-02 | Actual C++ runtime | PASS (slice) | Real L1 artifact consumed by C++ in run 44119249492 |
 | S1-03 | Real public market data | PASS (slice) | 10 OKX perpetual instruments + BTC context |
 | S1-04 | Provider fallback | PENDING | Need a controlled runner-side fallback/recovery test with exact contract equivalence |
-| S1-05 | L1 market coverage | PENDING | 10-symbol integration slice only; target remains approximately 100 eligible perpetuals + BTC context |
-| S1-06 | L2 validation and correctness | PASS (slice) | Python/C++ contract tests and 10/10 C++ status rows |
+| S1-05 | L1 market coverage | IN PROGRESS | 100-symbol run 44123123760 running; second sequential run 44123138538 queued; no completion evidence yet |
+| S1-06 | L2 validation and correctness | PASS (slice) | Python/C++ contract tests run 44125052887 and 10/10 real C++ status rows in run 44119249492 |
 | S1-07 | Real Telegram outbound | PENDING | Need real Telegram response, message_id and persisted outbox receipt |
 | S1-08 | Real Telegram inbound | PENDING | Need controlled authorized-chat update, update_id and persisted deduplication receipt |
 | S1-09 | Two consecutive complete L1/L2/L3 runs | PENDING | Only one L1/L2 run exists; no complete L3 run yet |
