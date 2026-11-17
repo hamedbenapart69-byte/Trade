@@ -30,14 +30,18 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
                 {"contract_type", "linear_perpetual"}, {"provider_id", "okx"}, {"timeframe", "1h"},
                 {"candles", nlohmann::json::array({
                     {{"timestamp_ms", candle_ms}, {"open", 100.0}, {"high", 105.0},
-                     {"low", 99.0}, {"close", 103.0}, {"volume", 10.0}, {"closed", true}}
+                     {"low", 99.0}, {"close", 103.0}, {"volume", 10.0},
+                     {"volume_unit", "contracts"}, {"volume_base", 0.1}, {"volume_base_currency", "BTC"},
+                     {"volume_quote", 10.0}, {"volume_quote_currency", "USDT"},
+                     {"closed", true}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"funding", nlohmann::json::array({
-                    {{"timestamp_ms", candle_ms}, {"funding_rate", nullptr}, {"mark_price", nullptr}}
+                    {{"timestamp_ms", candle_ms}, {"funding_rate", nullptr}, {"mark_price", nullptr},
+                     {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"open_interest", nlohmann::json::array({
                     {{"timestamp_ms", candle_ms}, {"open_interest", 1000.0},
-                     {"open_interest_value_usd", nullptr}}
+                     {"open_interest_value_usd", nullptr}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"availability", {{"ohlcv", "AVAILABLE"}, {"funding", "PARTIAL"},
                                   {"open_interest", "PARTIAL"}}}
