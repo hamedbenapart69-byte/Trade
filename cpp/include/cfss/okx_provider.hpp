@@ -376,7 +376,8 @@ inline json probe_provider_health() {
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
             {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" :
-                (std::string{probe.adapter} == "NOT_IMPLEMENTED" ? "NOT_IMPLEMENTED" : "REFERENCE_ONLY")},
+                (!reachable ? "UNAVAILABLE" :
+                 (std::string{probe.adapter} == "NOT_IMPLEMENTED" ? "NOT_IMPLEMENTED" : "REFERENCE_ONLY"))},
             {"fallback_equivalence", "NOT_PROVEN"}
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
