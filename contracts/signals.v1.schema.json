@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Signals Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "scan_id",
+    "generated_at_utc",
+    "report_status",
+    "signal_count",
+    "signals",
+    "status_report_count",
+    "status_report",
+    "note"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scan_id": {
+      "type": "string",
+      "pattern": "^scan-[0-9a-f]{64}$"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "report_status": {
+      "enum": [
+        "NO_QUALIFIED_SETUP",
+        "MARKET_DATA_DEGRADED"
+      ]
+    },
+    "signal_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status_report_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status_report": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/status"
+      }
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instrument_id",
+        "symbol",
+        "provider_id",
+        "state",
+        "reason_code",
+        "data_quality",
+        "confidence_status",
+        "actionable",
+        "latest_candle_timestamp_ms"
+      ],
+      "properties": {
+        "instrument_id": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "provider_id": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "BUY_NOW",
+            "SELL_NOW",
+            "CONDITIONAL_BUY",
+            "CONDITIONAL_SELL",
+            "WATCHLIST",
+            "NO_QUALIFIED_SETUP",
+            "MARKET_DATA_DEGRADED"
+          ]
+        },
+        "reason_code": {
+          "type": "string"
+        },
+        "data_quality": {
+          "enum": [
+            "REAL",
+            "PARTIAL",
+            "PROXY",
+            "UNAVAILABLE"
+          ]
+        },
+        "confidence_status": {
+          "enum": [
+            "NOT_CALIBRATED",
+            "CALIBRATED"
+          ]
+        },
+        "actionable": {
+          "type": "boolean"
+        },
+        "latest_candle_timestamp_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
