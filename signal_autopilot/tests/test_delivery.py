@@ -120,32 +120,10 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
 
 
 
-    def test_email_fallback_sends_only_with_configured_sender_and_recipient(self):
-        import os
+    def test_email_delivery_is_disabled_by_telegram_only_policy(self):
         from modules.notifier import notify_email
-        payload = {
-            "generated_at_utc": "2026-11-08T12:00:00+00:00",
-            "signals": [{
-                "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
-                "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
-            }],
-        }
-        class FakeSMTP:
-            sent_message = None
-            def __init__(self, *args, **kwargs): pass
-            def __enter__(self): return self
-            def __exit__(self, *args): return False
-            def login(self, username, password): self.credentials = (username, password)
-            def send_message(self, message): FakeSMTP.sent_message = message
-        with patch.dict(os.environ, {
-            "SMTP_HOST": "smtp.gmail.com", "SMTP_PORT": "465",
-            "SMTP_USER": "from@example.test", "SMTP_PASSWORD": "test-app-password",
-            "ALERT_EMAIL_TO": "to@example.test",
-        }, clear=True), patch("modules.notifier.smtplib.SMTP_SSL", FakeSMTP):
-            result = notify_email(payload)
-        self.assertEqual(result, {"status": "SENT", "sent": 1})
-        self.assertEqual(FakeSMTP.sent_message["To"], "to@example.test")
-        self.assertIn(chr(10) + "جهت:", FakeSMTP.sent_message.get_content())
+        payload = {"signals": [{"symbol": "BTC", "status": "BUY_NOW"}]}
+        self.assertEqual(notify_email(payload), {"status": "SKIPPED_POLICY_DISABLED", "sent": 0})
 
     def test_telegram_is_the_only_user_facing_delivery_and_has_no_dashboard_dependency(self):
         from modules.notifier import _format_signal
