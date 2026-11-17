@@ -179,36 +179,44 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
     return messages;
 }
 
+inline SendResult classify_send_response(CURLcode transport, long http_status,
+                                          const std::string& body, const std::string& error) {
+    if (transport != CURLE_OK) {
+        if (transport == CURLE_OPERATION_TIMEDOUT || transport == CURLE_SEND_ERROR ||
+            transport == CURLE_RECV_ERROR) {
+            return {"DELIVERY_UNKNOWN", http_status, 0, error.empty()
+                ? curl_easy_strerror(transport) : error};
+        }
+        return {"RETRYABLE_FAILURE", http_status, 0, error.empty()
+            ? curl_easy_strerror(transport) : error};
+    }
+    if (http_status == 429 || http_status >= 500)
+        return {"RETRYABLE_FAILURE", http_status, 0, body.substr(0, 240)};
+    if (http_status < 200 || http_status >= 300)
+        return {"PERMANENT_FAILURE", http_status, 0, body.substr(0, 240)};
+    try {
+        const auto parsed = nlohmann::json::parse(body);
+        if (parsed.value("ok", false) && parsed.contains("result") &&
+            parsed.at("result").contains("message_id") &&
+            parsed.at("result").at("message_id").is_number_integer()) {
+            return {"DELIVERED", http_status,
+                parsed.at("result").at("message_id").get<long>(), {}};
+        }
+        return {"PERMANENT_FAILURE", http_status, 0,
+            "telegram_api_ok_false_or_message_id_missing"};
+    } catch (const std::exception&) {
+        return {"DELIVERY_UNKNOWN", http_status, 0, "telegram_response_parse_failed"};
+    }
+}
+
 inline SendResult send_message(const std::string& token, const std::string& chat_id,
                                const std::string& message) {
     const std::string endpoint = "https://api.telegram.org/bot" + token + "/sendMessage";
     const nlohmann::json payload = {{"chat_id", chat_id}, {"text", message}, {"disable_web_page_preview", true}};
     const std::string body = payload.dump();
     const auto response = perform_http(endpoint, &body);
-
-    if (response.transport != CURLE_OK) {
-        if (response.transport == CURLE_OPERATION_TIMEDOUT ||
-            response.transport == CURLE_SEND_ERROR || response.transport == CURLE_RECV_ERROR) {
-            return {"DELIVERY_UNKNOWN", response.http_status, 0, response.error.empty()
-                ? curl_easy_strerror(response.transport) : response.error};
-        }
-        return {"RETRYABLE_FAILURE", response.http_status, 0, response.error.empty()
-            ? curl_easy_strerror(response.transport) : response.error};
-    }
-    if (response.http_status == 429 || response.http_status >= 500)
-        return {"RETRYABLE_FAILURE", response.http_status, 0, response.body.substr(0, 240)};
-    if (response.http_status < 200 || response.http_status >= 300)
-        return {"PERMANENT_FAILURE", response.http_status, 0, response.body.substr(0, 240)};
-    try {
-        const auto parsed = nlohmann::json::parse(response.body);
-        if (parsed.value("ok", false) && parsed.contains("result") &&
-            parsed.at("result").contains("message_id") && parsed.at("result").at("message_id").is_number_integer()) {
-            return {"DELIVERED", response.http_status, parsed.at("result").at("message_id").get<long>(), {}};
-        }
-        return {"PERMANENT_FAILURE", response.http_status, 0, "telegram_api_ok_false_or_message_id_missing"};
-    } catch (const std::exception&) {
-        return {"DELIVERY_UNKNOWN", response.http_status, 0, "telegram_response_parse_failed"};
-    }
+    return classify_send_response(response.transport, response.http_status,
+                                  response.body, response.error);
 }
 
 inline nlohmann::json default_outbox() {
