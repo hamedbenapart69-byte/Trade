@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         const auto contract = nlohmann::json::parse(raw);
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
         cfss::add_artifact_hash(artifact);
-        write_file_atomic(output_path, artifact.dump(2) + "\n", true);
+        cfss::write_file_atomic(output_path, artifact.dump(2) + "\n", true);
         std::cout << "L2_ARTIFACT_CREATED run_id=" << contract.at("run_id")
                   << " instruments=" << artifact.at("instruments").size() << '\n';
         return EXIT_SUCCESS;
