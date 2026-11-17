@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "signal_count": 99,
+  "signal_count": 102,
   "signals": [
     {
       "calibration_status": "UNCALIBRATED",
@@ -5484,8 +5484,176 @@
       "telegram_message_id": null,
       "first_seen_utc": "2026-11-17T02:53:33.265121+00:00",
       "scan_count": 1
+    },
+    {
+      "symbol": "INJUSDT",
+      "direction": "SELL",
+      "timeframe": "15m",
+      "mode": "RESEARCH",
+      "decision": "RESEARCH_WATCHLIST",
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "calibration_status": "UNCALIBRATED",
+      "raw_score": 60,
+      "tier_score": 60,
+      "tier": null,
+      "points": {
+        "bias_4h": 20,
+        "bias_1h": 0,
+        "sweep": 20,
+        "zone_reaction": 0,
+        "tenkan_kijun_cross_10": 20
+      },
+      "components": {
+        "bias_4h": true,
+        "bias_1h": false,
+        "sweep": true,
+        "sweep_candles_ago": 2,
+        "zone_reaction": false,
+        "cross": true
+      },
+      "lfs_score": 0.604629,
+      "lfs_status": "FULL",
+      "lfs_coverage_pct": 100.0,
+      "cvd": {
+        "delta": 77803.88102042,
+        "source": "PROXY_OHLCV"
+      },
+      "zone_type": "NONE",
+      "zone_distance_pct": null,
+      "entry_reference": 7.622,
+      "stop_reference": 7.722,
+      "target_reference": 7.421999999999999,
+      "rr_reference": 2.0,
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "data_sources": [
+        "OKX_PUBLIC_SWAP",
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "candle_open_time": 1794918600000,
+      "created_at_utc": "2026-11-17T12:56:21.389071+00:00",
+      "signal_id": "18dc0bfaf5b085e3",
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "telegram_status": "NOT_ATTEMPTED",
+      "telegram_message_id": null,
+      "first_seen_utc": "2026-11-17T12:56:21.389071+00:00",
+      "scan_count": 1
+    },
+    {
+      "symbol": "ARBUSDT",
+      "direction": "SELL",
+      "timeframe": "15m",
+      "mode": "RESEARCH",
+      "decision": "RESEARCH_WATCHLIST",
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "calibration_status": "UNCALIBRATED",
+      "raw_score": 60,
+      "tier_score": 60,
+      "tier": null,
+      "points": {
+        "bias_4h": 20,
+        "bias_1h": 20,
+        "sweep": 20,
+        "zone_reaction": 0,
+        "tenkan_kijun_cross_10": 0
+      },
+      "components": {
+        "bias_4h": true,
+        "bias_1h": true,
+        "sweep": true,
+        "sweep_candles_ago": 0,
+        "zone_reaction": false,
+        "cross": false
+      },
+      "lfs_score": 0.448877,
+      "lfs_status": "FULL",
+      "lfs_coverage_pct": 100.0,
+      "cvd": {
+        "delta": 1154208.61986604,
+        "source": "PROXY_OHLCV"
+      },
+      "zone_type": "NONE",
+      "zone_distance_pct": null,
+      "entry_reference": 0.13306,
+      "stop_reference": 0.13345,
+      "target_reference": 0.13228,
+      "rr_reference": 2.0,
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "data_sources": [
+        "OKX_PUBLIC_SWAP",
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "candle_open_time": 1794918600000,
+      "created_at_utc": "2026-11-17T12:56:40.722726+00:00",
+      "signal_id": "d1eddd0fe037e7e6",
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "telegram_status": "NOT_ATTEMPTED",
+      "telegram_message_id": null,
+      "first_seen_utc": "2026-11-17T12:56:40.722726+00:00",
+      "scan_count": 1
+    },
+    {
+      "symbol": "QNTUSDT",
+      "direction": "SELL",
+      "timeframe": "15m",
+      "mode": "RESEARCH",
+      "decision": "RESEARCH_WATCHLIST",
+      "production_decision": "BELOW_PRODUCTION_THRESHOLD",
+      "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
+      "calibration_status": "UNCALIBRATED",
+      "raw_score": 60,
+      "tier_score": 60,
+      "tier": null,
+      "points": {
+        "bias_4h": 20,
+        "bias_1h": 20,
+        "sweep": 20,
+        "zone_reaction": 0,
+        "tenkan_kijun_cross_10": 0
+      },
+      "components": {
+        "bias_4h": true,
+        "bias_1h": true,
+        "sweep": true,
+        "sweep_candles_ago": 1,
+        "zone_reaction": false,
+        "cross": false
+      },
+      "lfs_score": 0.465679,
+      "lfs_status": "FULL",
+      "lfs_coverage_pct": 100.0,
+      "cvd": {
+        "delta": -81.87628205,
+        "source": "PROXY_OHLCV"
+      },
+      "zone_type": "NONE",
+      "zone_distance_pct": null,
+      "entry_reference": 32.39,
+      "stop_reference": 32.62,
+      "target_reference": 31.930000000000007,
+      "rr_reference": 2.0,
+      "hypothesis": "SELL setup: 4H/1H bias, liquidity sweep, OB/FVG zone reaction and 10-candle Tenkan/Kijun cross confluence",
+      "falsification": "15m close beyond the reference stop-loss or invalidation of the aligned HTF bias",
+      "data_sources": [
+        "OKX_PUBLIC_SWAP",
+        "OKX_PUBLIC_SWAP_CANDLE",
+        "UNAVAILABLE"
+      ],
+      "candle_open_time": 1794918600000,
+      "created_at_utc": "2026-11-17T12:57:25.079472+00:00",
+      "signal_id": "9aa746dc188796d8",
+      "collection_status": "PENDING_OUTCOME_LABEL",
+      "telegram_status": "NOT_ATTEMPTED",
+      "telegram_message_id": null,
+      "first_seen_utc": "2026-11-17T12:57:25.079472+00:00",
+      "scan_count": 1
     }
   ],
   "stage_label": "STAGE_1_RESEARCH_UNCALIBRATED",
-  "updated_at_utc": "2026-11-17T02:53:58.517162+00:00"
+  "updated_at_utc": "2026-11-17T12:57:49.932088+00:00"
 }
