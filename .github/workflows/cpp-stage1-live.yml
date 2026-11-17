@@ -111,8 +111,7 @@ jobs:
           test -n "$TELEGRAM_CHAT_ID"
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
-            signals-state/cpp_runtime/
-            artifacts/telegram-inbound-test-status.jsontelegram_outbox.v1.json
+            signals-state/cpp_runtime/telegram_outbox.v1.json
 
       - name: Controlled Telegram inbound receive through C++ L3
         if: github.event_name == 'workflow_dispatch' && inputs.run_inbound_test
@@ -133,7 +132,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.run_inbound_test
         run: |
           mkdir -p artifacts
-          printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\\n' > artifacts/telegram-inbound-test-status.json
+          printf '{"status":"NOT_REQUESTED","reason":"Controlled inbound test requires an actual user message to the bot"}\n' > artifacts/telegram-inbound-test-status.json
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
