@@ -59,7 +59,9 @@ Official Telegram references:
 - Open interest: 720 observations; 29.96 days.
 - Fear & Greed: 730 observations.
 - First complete push run: GitHub Actions run `44135013370`; Telegram returned HTTP 200 and message ID `39`.
-- Compressed full evidence artifact for that one-symbol run: 866,358 bytes, retained for 30 days under the earlier workflow revision. Future workflow revisions cap retention at one day.
+- Second distinct complete push run: GitHub Actions run `44149930383`; Telegram returned HTTP 200 and message ID `40`; scan ID differs from the first run.
+- Current workflow contains no `actions/upload-artifact` step. Eight persisted outputs were independently SHA-256 recomputed and matched their run manifest.
+- One historical compressed evidence artifact from the earlier workflow revision: 866,358 bytes, originally retained for 30 days. Current workflow uploads no new Actions artifacts.
 - Four artifact hashes matched independently when recalculated from the uploaded ZIP.
 
 ## S1-12 assessment
