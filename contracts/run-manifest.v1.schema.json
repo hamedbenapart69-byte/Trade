@@ -431,7 +431,9 @@
       "required": [
         "path",
         "sha256",
-        "bytes"
+        "bytes",
+        "retained_in_workflow_artifacts",
+        "retention_days"
       ],
       "properties": {
         "path": {
@@ -445,6 +447,14 @@
         "bytes": {
           "type": "integer",
           "minimum": 1
+        },
+        "retained_in_workflow_artifacts": {
+          "type": "boolean"
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
         }
       }
     }
