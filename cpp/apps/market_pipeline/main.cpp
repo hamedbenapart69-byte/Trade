@@ -50,8 +50,8 @@ nlohmann::json build_run_manifest(const nlohmann::json& contract, const nlohmann
     const char* build_id = std::getenv("CFSS_BUILD_ID");
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
     auto retry_summary = cfss::okx::request_metrics();
-    retry_summary["telegram_send_attempts"] = 0;
-    retry_summary["telegram_retry_attempts"] = 0;
+    retry_summary["telegram_send_attempts_total_for_scan"] = 0;
+    retry_summary["telegram_retry_attempts_total_for_scan"] = 0;
     retry_summary["telegram_inbound_polls"] = 0;
     return {
         {"run_id", contract.at("run_id")}, {"scan_id", contract.at("scan_id")},
