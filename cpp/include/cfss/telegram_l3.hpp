@@ -3,7 +3,9 @@
 #include <nlohmann/json.hpp>
 #include "cfss/http_utils.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -12,6 +14,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -225,6 +229,7 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         throw std::runtime_error("telegram_outbox_schema_invalid");
     const auto messages = build_status_messages(artifact);
     const auto run_id = artifact.at("source_run_id").get<std::string>();
+    bool delivery_problem = false;
     for (std::size_t i = 0; i < messages.size(); ++i) {
         const std::string key = run_id + ":status:" + std::to_string(i + 1U);
         const std::string fingerprint = stable_fingerprint(messages[i]);
@@ -238,11 +243,23 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
                     std::chrono::system_clock::now().time_since_epoch()).count();
                 entry["last_error"] = "previous_process_ended_while_sending";
                 write_json_atomic(outbox_path, outbox);
+                delivery_problem = true;
                 continue;
             }
-            if (status == "DELIVERED" || status == "DELIVERY_UNKNOWN" || status == "PERMANENT_FAILURE")
+            if (status == "DELIVERED") continue;
+            if (status == "DELIVERY_UNKNOWN" || status == "PERMANENT_FAILURE") {
+                delivery_problem = true;
                 continue;
-            if (!outbox_should_send(entry)) continue;
+            }
+            if (!outbox_should_send(entry)) {
+                if (status == "RETRYABLE_FAILURE") {
+                    entry["status"] = "PERMANENT_FAILURE";
+                    entry["last_error"] = "retry_budget_exhausted";
+                    write_json_atomic(outbox_path, outbox);
+                }
+                delivery_problem = true;
+                continue;
+            }
             if (entry.value("payload_fingerprint", std::string{}) != fingerprint)
                 throw std::runtime_error("outbox_idempotency_payload_conflict");
         } else {
@@ -270,10 +287,10 @@ inline int run_outbound(const nlohmann::json& artifact, const std::filesystem::p
         std::cout << "TELEGRAM_OUTBOX key=" << key << " status=" << result.status
                   << " http=" << result.http_status << " message_id=" << result.message_id << '\n';
         if (result.status == "RETRYABLE_FAILURE" || result.status == "PERMANENT_FAILURE" ||
-            result.status == "DELIVERY_UNKNOWN") return EXIT_FAILURE;
+            result.status == "DELIVERY_UNKNOWN") delivery_problem = true;
         std::this_thread::sleep_for(std::chrono::milliseconds(350));
     }
-    return EXIT_SUCCESS;
+    return delivery_problem ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 inline nlohmann::json default_inbound_state() {
@@ -302,21 +319,45 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
     const auto response = perform_http(endpoint);
     if (response.transport != CURLE_OK || response.http_status != 200) {
         std::cerr << "TELEGRAM_INBOUND_UNAVAILABLE http=" << response.http_status
-                  << " error=" << response.error << '\n';
+                  << " error=" << response.error << '\\n';
         return EXIT_FAILURE;
     }
     const auto parsed = nlohmann::json::parse(response.body);
     if (!parsed.value("ok", false) || !parsed.contains("result") || !parsed.at("result").is_array())
         throw std::runtime_error("telegram_getupdates_invalid_response");
 
+    bool delivery_problem = false;
     for (const auto& update : parsed.at("result")) {
         if (!update.contains("update_id") || !update.at("update_id").is_number_integer()) continue;
         const auto update_id = update.at("update_id").get<long long>();
         const std::string key = std::to_string(update_id);
         if (state["processed_updates"].contains(key)) {
+            auto& prior = state["processed_updates"][key];
+            const auto status = prior.value("status", std::string{});
+            if (status == "REPLY_SENDING") {
+                prior["status"] = "DELIVERY_UNKNOWN";
+                prior["reply_error"] = "previous_process_ended_while_reply_sending";
+                delivery_problem = true;
+                write_json_atomic(state_path, state);
+            } else if (status == "REPLY_PENDING") {
+                prior["status"] = "REPLY_SENDING";
+                write_json_atomic(state_path, state);
+                const auto sent = send_message(token, allowed_chat_id, prior.value("reply_text", std::string{}));
+                prior["reply_status"] = sent.status;
+                prior["reply_message_id"] = sent.message_id > 0 ? nlohmann::json(sent.message_id) : nlohmann::json(nullptr);
+                prior["status"] = sent.status == "DELIVERED" ? "PROCESSED" : sent.status;
+                prior["reply_error"] = sent.detail;
+                write_json_atomic(state_path, state);
+                if (sent.status != "DELIVERED") delivery_problem = true;
+            } else if (status == "DELIVERY_UNKNOWN" || status == "RETRYABLE_FAILURE" ||
+                       status == "PERMANENT_FAILURE") {
+                delivery_problem = true;
+            }
             state["last_update_id"] = std::max(state.value("last_update_id", 0LL), update_id);
+            write_json_atomic(state_path, state);
             continue;
         }
+
         auto& entry = state["processed_updates"][key];
         entry = {{"status", "RECEIVED"}, {"processed_at_epoch_ms",
             std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -329,30 +370,33 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
             if (chat_id == allowed_chat_id && update.at("message").contains("text") &&
                 update.at("message").at("text").is_string()) {
                 reply = command_reply(update.at("message").at("text").get<std::string>());
+                if (reply.empty()) entry["status"] = "IGNORED_UNKNOWN_COMMAND";
             } else {
                 entry["status"] = "IGNORED_UNAUTHORIZED_OR_NON_TEXT";
             }
         } else {
             entry["status"] = "IGNORED_NON_MESSAGE_UPDATE";
         }
-        write_json_atomic(state_path, state);
+
         if (!reply.empty()) {
+            entry["status"] = "REPLY_PENDING";
+            entry["reply_text"] = reply;
+            write_json_atomic(state_path, state);
             entry["status"] = "REPLY_SENDING";
             write_json_atomic(state_path, state);
             const auto sent = send_message(token, allowed_chat_id, reply);
             entry["reply_status"] = sent.status;
             entry["reply_message_id"] = sent.message_id > 0 ? nlohmann::json(sent.message_id) : nlohmann::json(nullptr);
-            if (sent.status == "DELIVERY_UNKNOWN") entry["status"] = "DELIVERY_UNKNOWN";
-            else if (sent.status == "DELIVERED") entry["status"] = "PROCESSED";
-            else entry["status"] = sent.status;
+            entry["reply_error"] = sent.detail;
+            entry["status"] = sent.status == "DELIVERED" ? "PROCESSED" : sent.status;
             write_json_atomic(state_path, state);
-            if (sent.status != "DELIVERED") return EXIT_FAILURE;
+            if (sent.status != "DELIVERED") delivery_problem = true;
         }
         state["last_update_id"] = std::max(state.value("last_update_id", 0LL), update_id);
         write_json_atomic(state_path, state);
     }
-    std::cout << "TELEGRAM_INBOUND_LAST_UPDATE_ID=" << state.value("last_update_id", 0LL) << '\n';
-    return EXIT_SUCCESS;
+    std::cout << "TELEGRAM_INBOUND_LAST_UPDATE_ID=" << state.value("last_update_id", 0LL) << '\\n';
+    return delivery_problem ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 } // namespace cfss::telegram
