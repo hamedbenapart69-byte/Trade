@@ -92,7 +92,7 @@ inline std::string format_signal_markdown(const ActionableSignal& signal) {
         << "Risk/Reward: *1:" << signal.risk_reward << "*\n"
         << "Strategy: `" << signal.strategy << "`\n"
         << "Provider: " << signal.provider << "  |  Data: *" << signal.data_quality << "*\n"
-        << "Confidence: NOT_CALIBRATED\n"
+        << "Confidence: `NOT_CALIBRATED`\n"
         << "Hypothesis: " << signal.hypothesis << "\n"
         << "Invalidation: " << signal.falsification << "\n"
         << "UTC: " << signal.timestamp_utc << "\n"
