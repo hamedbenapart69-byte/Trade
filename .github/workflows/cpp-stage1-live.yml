@@ -4,7 +4,7 @@ on:
   push:
     branches: [feat/cpp-only-stage1]
     paths:
-      - "docs/evidence/run-cpp-stage1-live.txt"
+      - "docs/evidence/run-cpp-stage1-live*.txt"
   pull_request:
     branches: [main]
     paths:
