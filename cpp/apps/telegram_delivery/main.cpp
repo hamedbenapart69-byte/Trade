@@ -1,4 +1,5 @@
 #include "cfss/telegram_l3.hpp"
+#include "cfss/hash.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -23,6 +24,8 @@ int main(int argc, char** argv) {
         if (!input) throw std::runtime_error("l2_artifact_open_failed");
         const std::string raw{std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
         const auto artifact = nlohmann::json::parse(raw);
+        if (!cfss::verify_artifact_hash(artifact))
+            throw std::runtime_error("l2_artifact_sha256_verification_failed");
         const int result = cfss::telegram::run_outbound(artifact, argv[2], token, chat_id);
         curl_global_cleanup();
         return result;
