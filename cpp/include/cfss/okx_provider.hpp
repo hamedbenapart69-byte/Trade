@@ -209,7 +209,7 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     for (int page = 0; page < 250; ++page) {
         std::string path = "/api/v5/market/history-candles?instId=" + encode(instrument.id) +
                            "&bar=1H&limit=300";
-        if (after) path += "&after=" + std::to_string(*after);
+        if (after) path += "&end=" + std::to_string(*after);
         const auto payload = request(path);
         if (payload["data"].empty()) break;
         std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
@@ -241,7 +241,7 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     return out;
 }
 
-inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
+inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms, const std::string& retrieved_at) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
@@ -260,13 +260,13 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
             const auto mark = number(row.value("markPx", json{}));
             rows[ts] = {{"timestamp_ms", ts},
                         {"funding_rate", rate ? json(*rate) : json(nullptr)},
-                        {"mark_price", mark ? json(*mark) : json(nullptr)}};
+                        {"mark_price", mark ? json(*mark) : json(nullptr)},
+                        {"retrieved_at_utc", retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
             break;
         previous_oldest = oldest;
         after = oldest;
-        if (payload["data"].size() < 100U) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
     json out = json::array();
@@ -274,7 +274,7 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
     return out;
 }
 
-inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
+inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms, const std::string& retrieved_at) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
@@ -301,13 +301,13 @@ inline json fetch_open_interest(const Instrument& instrument, std::int64_t start
             if (ts < start_ms || ts >= end_ms) continue;
             rows[ts] = {{"timestamp_ms", ts},
                         {"open_interest", amount ? json(*amount) : json(nullptr)},
-                        {"open_interest_value_usd", value ? json(*value) : json(nullptr)}};
+                        {"open_interest_value_usd", value ? json(*value) : json(nullptr)},
+                        {"retrieved_at_utc", retrieved_at}};
         }
         if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
             break;
         previous_oldest = oldest;
         after = oldest;
-        if (payload["data"].size() < 100U) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
     json out = json::array();
@@ -315,9 +315,17 @@ inline json fetch_open_interest(const Instrument& instrument, std::int64_t start
     return out;
 }
 
-inline std::string availability(const json& rows, const char* field) {
+inline double coverage_days(const json& rows) {
+    if (!rows.is_array() || rows.size() < 2U) return 0.0;
+    const auto first = timestamp(rows.front().value("timestamp_ms", json{}));
+    const auto last = timestamp(rows.back().value("timestamp_ms", json{}));
+    if (first <= 0 || last <= first) return 0.0;
+    return static_cast<double>(last - first) / 86'400'000.0;
+}
+inline std::string availability(const json& rows, const char* field, double minimum_days = 0.0) {
     if (!rows.is_array() || rows.empty()) return "UNAVAILABLE";
     for (const auto& row : rows) if (!row.contains(field) || row[field].is_null()) return "PARTIAL";
+    if (coverage_days(rows) < minimum_days) return "PARTIAL";
     return "AVAILABLE";
 }
 
@@ -350,12 +358,14 @@ inline json collect(int symbol_count, int years) {
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
-                {"funding", availability(funding, "funding_rate")},
-                {"open_interest", availability(oi, "open_interest")}
+                {"funding", availability(funding, "funding_rate", 29.0)},
+                {"open_interest", availability(oi, "open_interest", 29.0)}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
-                {"open_interest_rows", oi.size()}, {"ohlcv_coverage_pct", std::min(100.0, coverage)}
+                {"open_interest_rows", oi.size()}, {"ohlcv_coverage_pct", std::min(100.0, coverage)},
+                {"funding_coverage_days", coverage_days(funding)},
+                {"open_interest_coverage_days", coverage_days(oi)}
             }},
             {"errors", errors}
         });
