@@ -194,8 +194,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const std::string performance_raw = performance_json.dump(2) + "\n";
         write_json(performance_path, performance_json);
 
-        const auto& path_statuses = json{{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}};
-        const auto& generator_statuses = json{{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
+        const json path_statuses = {{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}};
+        const json generator_statuses = {{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
                                               {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}};
         bool all_real = true;
         for (const auto& item : artifact.at("instruments"))
