@@ -85,6 +85,25 @@ class OkxAdapterTests(unittest.TestCase):
         finally:
             p.close()
 
+    def test_1000pepe_candles_use_okx_pepe_swap_and_scale_prices(self):
+        rows=[["2000","0.000001","0.000002","0.0000005","0.0000015","10","10000000","12.5","1"]]
+        def handler(request):
+            self.assertEqual(request.url.path,"/api/v5/market/candles")
+            self.assertEqual(request.url.params.get("instId"),"PEPE-USDT-SWAP")
+            self.assertEqual(request.url.params.get("bar"),"1H")
+            return httpx.Response(200,json={"code":"0","data":rows})
+        p=self.make_provider(handler)
+        try:
+            candles=p.candles("1000PEPEUSDT","1h",1)
+            self.assertEqual(len(candles),1)
+            self.assertAlmostEqual(candles[0].open,0.001)
+            self.assertAlmostEqual(candles[0].high,0.002)
+            self.assertAlmostEqual(candles[0].low,0.0005)
+            self.assertAlmostEqual(candles[0].close,0.0015)
+            self.assertEqual(candles[0].volume,12.5)
+        finally:
+            p.close()
+
     def test_risk_sizing_uses_contract_multiplier_and_contract_step(self):
         contract={"symbol":"BTCUSDT","contract_type":"PERPETUAL","status":"TRADING",
             "base_asset":"BTC","quote_asset":"USDT","margin_asset":"USDT","quantity_unit":"contracts",
