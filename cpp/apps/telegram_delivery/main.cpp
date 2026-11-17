@@ -7,8 +7,8 @@
 #include <string>
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
-        std::cerr << "Usage: telegram_delivery <l2-artifact.json> <outbox-state.json>\n";
+    if (argc != 4) {
+        std::cerr << "Usage: telegram_delivery <l2-artifact.json> <outbox-state.json> <run-manifest.json>\n";
         return EXIT_FAILURE;
     }
     const char* token = std::getenv("TELEGRAM_TOKEN");
@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
         if (!cfss::verify_artifact_hash(artifact))
             throw std::runtime_error("l2_artifact_sha256_verification_failed");
         const int result = cfss::telegram::run_outbound(artifact, argv[2], token, chat_id);
+        cfss::telegram::record_outbound_manifest(argv[3], argv[2], artifact.at("source_scan_id").get<std::string>());
         curl_global_cleanup();
         return result;
     } catch (const std::exception& error) {
