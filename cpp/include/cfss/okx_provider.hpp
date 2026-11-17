@@ -329,6 +329,76 @@ inline std::string availability(const json& rows, const char* field, double mini
     return "AVAILABLE";
 }
 
+inline json probe_provider_health() {
+    const auto checked_at = utc_iso(now_ms());
+    struct Probe { const char* id; const char* url; int rank; const char* adapter; };
+    const std::vector<Probe> probes{
+        {"okx", "https://www.okx.com/api/v5/public/time", 1, "IMPLEMENTED_PRIMARY"},
+        {"bybit", "https://api.bybit.com/v5/market/time", 2, "NOT_IMPLEMENTED"},
+        {"binance", "https://fapi.binance.com/fapi/v1/ping", 3, "NOT_IMPLEMENTED"},
+        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "NOT_IMPLEMENTED"},
+        {"mexc", "https://contract.mexc.com/api/v1/contract/detail", 5, "NOT_IMPLEMENTED"},
+        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"},
+        {"coingecko", "https://api.coingecko.com/api/v3/ping", 7, "REFERENCE_ONLY"}
+    };
+    json providers = json::array();
+    for (const auto& probe : probes) {
+        const auto response = get(probe.url, 12L);
+        const bool reachable = response.transport == CURLE_OK && response.status == 200;
+        providers.push_back({
+            {"provider_id", probe.id}, {"fallback_rank", probe.rank}, {"endpoint", probe.url},
+            {"checked_at_utc", checked_at},
+            {"connectivity_status", reachable ? "HTTP_REACHABLE" : "UNAVAILABLE"},
+            {"http_status", response.status},
+            {"transport_status", curl_easy_strerror(response.transport)},
+            {"adapter_status", probe.adapter},
+            {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" : "UNAVAILABLE"},
+            {"fallback_equivalence", "NOT_PROVEN"}
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    }
+    return {{"schema_version", "1.0.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
+}
+
+inline json fetch_fear_greed() {
+    const auto retrieved_at = utc_iso(now_ms());
+    const auto response = get("https://api.alternative.me/fng/?limit=0&format=json", 20L);
+    if (response.transport != CURLE_OK || response.status != 200)
+        return {{"schema_version", "1.0.0"}, {"status", "UNAVAILABLE"},
+                {"retrieved_at_utc", retrieved_at}, {"observations", json::array()},
+                {"error", "fear_greed_http_or_transport_unavailable"}};
+    try {
+        const auto payload = json::parse(response.body);
+        if (!payload.contains("data") || !payload["data"].is_array())
+            throw std::runtime_error("fear_greed_payload_shape_invalid");
+        const auto cutoff = now_ms() - 730LL * 86'400'000LL;
+        std::map<std::int64_t, json> ordered;
+        for (const auto& row : payload["data"]) {
+            const auto raw_ts = text(row, "timestamp");
+            const auto raw_value = text(row, "value");
+            std::int64_t ts = 0;
+            int value = -1;
+            try { ts = std::stoll(raw_ts) * 1000LL; value = std::stoi(raw_value); }
+            catch (...) { continue; }
+            if (ts < cutoff || value < 0 || value > 100) continue;
+            ordered[ts] = {{"timestamp_ms", ts}, {"value", value},
+                           {"classification", text(row, "value_classification")},
+                           {"retrieved_at_utc", retrieved_at}};
+        }
+        json observations = json::array();
+        for (const auto& [ts, item] : ordered) { (void)ts; observations.push_back(item); }
+        return {{"schema_version", "1.0.0"},
+                {"status", observations.empty() ? "UNAVAILABLE" : "AVAILABLE"},
+                {"source_id", "alternative_me_fear_greed"},
+                {"source_endpoint", "https://api.alternative.me/fng/?limit=0&format=json"},
+                {"retrieved_at_utc", retrieved_at}, {"observations", observations}};
+    } catch (const std::exception& e) {
+        return {{"schema_version", "1.0.0"}, {"status", "UNAVAILABLE"},
+                {"retrieved_at_utc", retrieved_at}, {"observations", json::array()},
+                {"error", e.what()}};
+    }
+}
+
 inline json collect(int symbol_count, int years) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
