@@ -136,7 +136,8 @@ struct Instrument {
     std::string contract_value_currency;
 };
 
-inline std::vector<Instrument> discover(int target_count) {
+inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_count = nullptr,
+                                       std::size_t* declared_count = nullptr) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
@@ -168,7 +169,6 @@ inline std::vector<Instrument> discover(int target_count) {
         const std::string parsed_base = first_dash == std::string::npos ? std::string{} : id.substr(0U, first_dash);
         const std::string base = text(item, "baseCcy").empty() ? parsed_base : text(item, "baseCcy");
         const std::string quote = text(item, "quoteCcy").empty() ? "USDT" : text(item, "quoteCcy");
-        if (base == "BTC") btc_diagnostic = item;
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
         const auto ct = number(item.value("ctVal", json{}));
@@ -179,26 +179,19 @@ inline std::vector<Instrument> discover(int target_count) {
         const auto listing = timestamp(item.value("listTime", json{}));
         const auto value_ccy = text(item, "ctValCcy");
         // Contract mapping and liquidity are hard eligibility gates, never silently inferred.
-        if (!ct || *ct <= 0.0 || !tick || *tick <= 0.0 || !lot || *lot <= 0.0 ||
+        if (!ct || *ct <= 0.0 || !mult || *mult <= 0.0 || !tick || *tick <= 0.0 || !lot || *lot <= 0.0 ||
             !minimum || *minimum <= 0.0 || value_ccy != base || listing <= 0 ||
             quote_turnover <= 10000000.0) continue;
-        eligible.push_back({id, base, quote, "USDT", *ct, mult.value_or(1.0),
+        eligible.push_back({id, base, quote, "USDT", *ct, *mult,
                             *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
         (void)second_dash;
     }
+    if (eligible_count) *eligible_count = eligible.size();
+    if (declared_count) *declared_count = usdt_settle_rows;
     std::cerr << "OKX_UNIVERSE_DIAGNOSTICS total=" << instruments["data"].size()
               << " usdt_swap_suffix=" << swap_rows << " live=" << live_rows
               << " settle_usdt=" << usdt_settle_rows << " linear_or_unspecified=" << linear_rows
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
-    if (btc_diagnostic.is_null()) {
-        for (const auto& item : instruments["data"]) {
-            if (text(item, "instId") == "BTC-USDT-SWAP") {
-                std::cerr << "OKX_BTC_INSTRUMENT_DIAGNOSTIC=" << item.dump() << '\n';
-                break;
-            }
-        }
-        throw std::runtime_error("btc_usdt_linear_perpetual_not_found");
-    }
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
         if (a.base == "BTC") return true;
         if (b.base == "BTC") return false;
@@ -207,6 +200,7 @@ inline std::vector<Instrument> discover(int target_count) {
     const auto btc = std::find_if(eligible.begin(), eligible.end(), [](const Instrument& x) {
         return x.base == "BTC";
     });
+    if (btc == eligible.end()) throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
     std::vector<Instrument> selected;
     selected.push_back(*btc);
     for (const auto& item : eligible) {
@@ -424,7 +418,8 @@ inline json collect(int symbol_count, int years) {
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    const auto selected = discover(symbol_count);
+    std::size_t eligible_count = 0U, declared_count = 0U;
+    const auto selected = discover(symbol_count, &eligible_count, &declared_count);
     json instruments = json::array();
     for (const auto& item : selected) {
         json candles = json::array(), funding = json::array(), oi = json::array();
