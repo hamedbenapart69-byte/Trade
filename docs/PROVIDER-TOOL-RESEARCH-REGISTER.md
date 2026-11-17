@@ -31,6 +31,7 @@
 8. Alternative.me شاخص Fear & Greed را از API عمومی می‌دهد و attribution را الزامی می‌کند.
 9. TradingView برای widgetها API داده یا export نمی‌دهد و سیاست استفادهٔ داده، پردازش ماشینی غیرنمایشی را محدود می‌کند؛ پس از موتور سیگنال حذف و فقط در صورت نیاز نمایش‌محور بررسی می‌شود.
 10. CryptoPanic برای API به auth token نیاز دارد؛ تا وقتی هزینه و مجوز رایگان پایدار اثبات نشده، منبع تولید نیست.
+11. CoinBoss API در مستندات فعلی REST/WebSocket عمومی بدون کلید و رایگان در دورهٔ فعلی با سقف اعلامی ۱۲۰۰ درخواست در دقیقه معرفی شده و مجموعهٔ وسیعی از OI، Funding، Liquidations، Long/Short، عمق دفتر سفارش و دادهٔ تجمیعی را ارائه می‌کند. اما صفحهٔ قیمت، tierهای پولیِ برنامه‌ریزی‌شده و نامشخص‌بودن تداوم دسترسی رایگان را اعلام می‌کند؛ بنابراین فقط نامزد ثانویهٔ cross-check است، نه وابستگی اصلی. شرایط استفاده باید پیش از تولید بررسی شود و اعداد تجمیعی آن با منبع مستقیم، قرارداد، روش محاسبه و timestamp تطبیق داده شوند.
 
 ## پذیرش provider
 هر provider باید از این مراحل عبور کند:
@@ -61,6 +62,7 @@
 - CoinGecko Pricing: https://www.coingecko.com/en/api/pricing
 - DefiLlama API: https://api-docs.defillama.com/
 - Coin Metrics Community: https://docs.coinmetrics.io/packages/coin-metrics-community-data
+- CoinBoss API / Authentication / Pricing: https://www.coinboss.com/api-docs | https://www.coinboss.com/api-docs/authentication | https://www.coinboss.com/pricing
 - Alternative.me FNG: https://alternative.me/crypto/fear-and-greed-index/
 - TradingView Data FAQ: https://www.tradingview.com/widget-docs/faq/data/
 - TradingView Lightweight Charts: https://www.tradingview.com/free-charting-libraries/
