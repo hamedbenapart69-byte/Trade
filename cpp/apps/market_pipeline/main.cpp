@@ -123,16 +123,35 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         }
         std::optional<json> cached_market_data;
         if (market_data_cache_path && std::filesystem::exists(*market_data_cache_path)) {
-            std::ifstream market_cache_input(*market_data_cache_path, std::ios::binary);
-            if (!market_cache_input) throw std::runtime_error("market_data_cache_open_failed");
-            cached_market_data = json::parse(market_cache_input);
-            if (!cached_market_data->is_object() ||
-                cached_market_data->value("schema_version", std::string{}) != "1.0.0" ||
-                cached_market_data->value("provider", json::object())
-                    .value("primary_provider_id", std::string{}) != "okx" ||
-                !cached_market_data->contains("instruments") ||
-                !cached_market_data->at("instruments").is_array())
-                throw std::runtime_error("market_data_cache_schema_or_provider_invalid");
+            try {
+                std::ifstream market_cache_input(*market_data_cache_path, std::ios::binary);
+                if (!market_cache_input) throw std::runtime_error("market_data_cache_open_failed");
+                cached_market_data = json::parse(market_cache_input);
+                const auto policy = cached_market_data->value("cache_policy", json::object());
+                const bool valid_cache =
+                    cached_market_data->is_object() &&
+                    cached_market_data->value("schema_version", std::string{}) == "1.0.0" &&
+                    cached_market_data->value("cache_contract_version", std::string{}) == "1.0.0" &&
+                    cached_market_data->value("provider", json::object())
+                        .value("primary_provider_id", std::string{}) == "okx" &&
+                    policy.value("venue", std::string{}) == "OKX" &&
+                    policy.value("market_type", std::string{}) == "LINEAR_PERPETUAL" &&
+                    policy.value("window_policy", std::string{}) == "ROLLING_2Y_OHLCV_30D_DERIVATIVES" &&
+                    policy.value("normalization_schema_version", std::string{}) == "1.0.0" &&
+                    policy.value("timeframes", json::object()) ==
+                        json{{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}} &&
+                    cached_market_data->contains("cache_entries") &&
+                    cached_market_data->at("cache_entries").is_object() &&
+                    cached_market_data->contains("instruments") &&
+                    cached_market_data->at("instruments").is_array();
+                if (!valid_cache) {
+                    std::cerr << "MARKET_CACHE_MISS reason=cache_contract_mismatch\n";
+                    cached_market_data.reset();
+                }
+            } catch (const std::exception& error) {
+                std::cerr << "MARKET_CACHE_MISS reason=" << error.what() << '\n';
+                cached_market_data.reset();
+            }
         }
         std::set<std::string> required_symbols;
         if (pending_symbols_path && std::filesystem::exists(*pending_symbols_path)) {
@@ -154,8 +173,6 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                                                   market_data_cache_path);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
-        if (market_data_cache_path)
-            cfss::write_file_atomic(*market_data_cache_path, l1_raw, true);
 
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
         cfss::add_artifact_hash(artifact);
