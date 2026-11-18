@@ -107,6 +107,11 @@ target_include_directories(dual_engine_probe PRIVATE include)
 target_compile_features(dual_engine_probe PRIVATE cxx_std_20)
 target_link_libraries(dual_engine_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
 
+add_executable(meta_calibration_v1_tests tests/meta_calibration_v1_test.cpp)
+target_include_directories(meta_calibration_v1_tests PRIVATE include)
+target_compile_features(meta_calibration_v1_tests PRIVATE cxx_std_20)
+add_test(NAME meta_calibration_v1_tests COMMAND meta_calibration_v1_tests)
+
 add_executable(dual_engine_v1_tests tests/dual_engine_v1_test.cpp)
 target_include_directories(dual_engine_v1_tests PRIVATE include)
 target_compile_features(dual_engine_v1_tests PRIVATE cxx_std_20)
