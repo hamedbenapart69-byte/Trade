@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <nlohmann/json.hpp>
 
@@ -29,7 +30,7 @@ struct V2Result {
     std::size_t missing_count{};
 };
 
-inline constexpr std::array<std::string, 5> v2_component_ids{
+inline constexpr std::array<std::string_view, 5> v2_component_ids{
     "LFS1_BOOK_THINNESS",
     "LFS2_FUNDING_EXTREME",
     "LFS3_LONG_SHORT_POSITIONING",
