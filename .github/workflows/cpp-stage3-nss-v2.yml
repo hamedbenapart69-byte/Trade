@@ -69,7 +69,11 @@ jobs:
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+          if [ -f cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json ]; then
+            git add cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+          else
+            echo "No NSS v2 outbox reservation was created; nothing to persist"
+          fi
           if ! git diff --cached --quiet; then
             git commit -m "audit(stage3): reserve NSS v2 Telegram report"
             git push origin HEAD:signals
