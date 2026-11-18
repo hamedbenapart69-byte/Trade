@@ -1,5 +1,6 @@
 #include "cfss/nss.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -26,7 +27,7 @@ json inspect_component(const std::string& id, bool raw_available,
     return {
         {"id", id},
         {"score", nullptr},
-        {"data_class", raw_available ? "UNAVAILABLE" : "UNAVAILABLE"},
+        {"data_class", raw_available ? "REAL" : "UNAVAILABLE"},
         {"available_at_ms", timestamp},
         {"definition_id", ""},
         {"status", "UNAVAILABLE"},
