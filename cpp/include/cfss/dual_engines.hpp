@@ -208,13 +208,16 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
         result.reason = "PHASE_NOT_DIRECTIONAL";
         return result;
     }
-    const auto& direction = nss.at(long_phase ? "nss_long" : "nss_short");
     const auto score = direction_score(nss, long_phase ? "nss_long" : "nss_short");
     if (!score || *score < 0.0 || *score > 1.0) {
         result.status = "INSUFFICIENT_DATA";
         result.reason = "NSS_DIRECTIONAL_SCORE_UNAVAILABLE";
         return result;
     }
+
+    result.score = score;
+    result.data_class = nss.value("data_class", std::string{"PROXY"});
+    result.direction = long_phase ? "LONG" : "SHORT";
 
     const auto bars = cfss::liquidity::aggregate_4h(
         instrument.value("candles", nlohmann::json::array()), decision_time_ms);
@@ -241,9 +244,6 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
     if (!breakout || volume_ratio < 1.20) return result;
 
     result.status = "CANDIDATE";
-    result.direction = long_phase ? "LONG" : "SHORT";
-    result.score = score;
-    result.data_class = nss.value("data_class", std::string{"PROXY"});
     result.entry_reference = last.close;
     result.invalidation_reference = long_phase ? prior_high : prior_low;
     if (long_phase && liquidity.contains("nearest_resistance") && liquidity.at("nearest_resistance").is_object())
