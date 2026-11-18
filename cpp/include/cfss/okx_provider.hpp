@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <ctime>
@@ -19,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <utility>
 
 namespace cfss::okx {
 using json = nlohmann::json;
@@ -141,8 +143,8 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
         std::set<std::string> symbols;
         for (const auto& row : payload) {
             if (!row.is_object() || !row.value("is_active", false)) continue;
-            const auto symbol = uppercase_symbol(text(row, "symbol"));
-            const auto type = text(row, "type");
+            const auto symbol = uppercase_symbol(row.value("symbol", std::string{}));
+            const auto type = row.value("type", std::string{});
             if (!symbol.empty() && (type == "coin" || type == "token")) symbols.insert(symbol);
         }
         if (symbols.size() < 500U || !symbols.contains("BTC"))
