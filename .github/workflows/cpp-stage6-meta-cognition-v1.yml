@@ -55,11 +55,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence stage6-cache
+          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
+            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
+              signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
+              > stage6-evidence/pending-symbols.v1.json
+          else
+            printf '%s\\n' '[]' > stage6-evidence/pending-symbols.v1.json
+          fi
           ./build/market_pipeline --collect-okx 100 2 \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l2-status.v1.json \
             signals-state/cpp_runtime/crypto_universe.v1.json \
-            stage6-cache/market_data_cache.v1.json
+            stage6-cache/market_data_cache.v1.json \
+            stage6-evidence/pending-symbols.v1.json
           ./build/lfs_v2_probe \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/lfs-v2.json
