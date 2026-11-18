@@ -128,6 +128,9 @@ jobs:
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/outcome-ledger.v1.schema.json \
             -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/outcome-ledger.v1.schema.json \
+            -d signals-state/cpp_runtime/scalp_outcome_ledger.v1.json --all-errors
           jq '{ledger_status, outcome_count:(.outcomes|length)}' stage6-evidence/daily_outcome_ledger.v1.json
 
       - name: Compute meta-cognition with path, regime and data-class isolation
