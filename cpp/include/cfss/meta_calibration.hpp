@@ -63,6 +63,14 @@ struct IsotonicModel {
     }
 };
 
+struct ReliabilityBin {
+    double lower_bound{};
+    double upper_bound{};
+    std::size_t count{};
+    double mean_probability{};
+    double observed_win_rate{};
+};
+
 struct CalibrationReport {
     std::string status{"NOT_CALIBRATED"};
     std::string reason{"INSUFFICIENT_OUTCOMES"};
@@ -95,6 +103,9 @@ struct CalibrationReport {
     std::optional<double> brier_ci_low;
     std::optional<double> brier_ci_high;
     std::optional<double> log_loss_oos;
+    std::optional<double> ece_raw_oos;
+    std::optional<double> ece_calibrated_oos;
+    std::vector<ReliabilityBin> reliability_bins;
     std::optional<double> win_rate_oos;
     std::optional<double> win_rate_ci_low;
     std::optional<double> win_rate_ci_high;
@@ -218,6 +229,42 @@ inline double log_loss(const std::vector<double>& probabilities,
         sum -= labels[i] ? std::log(p) : std::log(1.0 - p);
     }
     return sum / static_cast<double>(probabilities.size());
+}
+
+inline std::pair<double, std::vector<ReliabilityBin>> expected_calibration_error(
+    const std::vector<double>& probabilities, const std::vector<bool>& labels,
+    std::size_t bin_count = 10U) {
+    if (probabilities.empty() || probabilities.size() != labels.size() || bin_count == 0U)
+        return {std::numeric_limits<double>::quiet_NaN(), {}};
+    std::vector<std::size_t> counts(bin_count, 0U);
+    std::vector<double> probability_sums(bin_count, 0.0);
+    std::vector<std::size_t> win_counts(bin_count, 0U);
+    for (std::size_t i = 0U; i < probabilities.size(); ++i) {
+        const double p = std::clamp(probabilities[i], 0.0, 1.0);
+        const auto index = std::min(bin_count - 1U,
+            static_cast<std::size_t>(p * static_cast<double>(bin_count)));
+        ++counts[index];
+        probability_sums[index] += p;
+        if (labels[i]) ++win_counts[index];
+    }
+    double ece = 0.0;
+    std::vector<ReliabilityBin> bins;
+    bins.reserve(bin_count);
+    const double total = static_cast<double>(probabilities.size());
+    for (std::size_t i = 0U; i < bin_count; ++i) {
+        const double lower = static_cast<double>(i) / static_cast<double>(bin_count);
+        const double upper = static_cast<double>(i + 1U) / static_cast<double>(bin_count);
+        ReliabilityBin bin{lower, upper, counts[i], 0.0, 0.0};
+        if (counts[i] > 0U) {
+            bin.mean_probability = probability_sums[i] / static_cast<double>(counts[i]);
+            bin.observed_win_rate = static_cast<double>(win_counts[i]) /
+                                    static_cast<double>(counts[i]);
+            ece += (static_cast<double>(counts[i]) / total) *
+                   std::abs(bin.mean_probability - bin.observed_win_rate);
+        }
+        bins.push_back(bin);
+    }
+    return {ece, bins};
 }
 
 inline PlattModel fit_platt(const std::vector<Outcome>& outcomes) {
@@ -449,9 +496,14 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     const double raw_brier = brier_score(oos_raw, oos_labels);
     const double calibrated_brier = brier_score(oos_calibrated, oos_labels);
     const double calibrated_logloss = log_loss(oos_calibrated, oos_labels);
+    const auto raw_ece = expected_calibration_error(oos_raw, oos_labels);
+    const auto calibrated_ece = expected_calibration_error(oos_calibrated, oos_labels);
     report.brier_raw_oos = raw_brier;
     report.brier_calibrated_oos = calibrated_brier;
     report.log_loss_oos = calibrated_logloss;
+    report.ece_raw_oos = raw_ece.first;
+    report.ece_calibrated_oos = calibrated_ece.first;
+    report.reliability_bins = calibrated_ece.second;
     report.win_rate_oos = static_cast<double>(wins) / static_cast<double>(oos.size());
     const auto win_ci = wilson_interval(wins, oos.size());
     report.win_rate_ci_low = win_ci.first;
