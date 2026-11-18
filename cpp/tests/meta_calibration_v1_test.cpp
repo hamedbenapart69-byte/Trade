@@ -85,7 +85,7 @@ int main() {
         correlated, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 86'400'000LL);
     require(correlated_result.status == "NOT_CALIBRATED" &&
             correlated_result.reason ==
-                "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_AND_SYMBOL_CLUSTERING",
+                "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_SYMBOL_AND_UTC_DAY_CLUSTERING",
             "large row count cannot hide a small independent clustered sample");
 
     require(calibrated.ev_status == "CALCULATED" &&
