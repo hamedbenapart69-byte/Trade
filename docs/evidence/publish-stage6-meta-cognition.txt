@@ -4,3 +4,5 @@ Run against the latest reviewed branch head. C++20 build and full CTest. Restore
 Re-run after the latest C++ regression test fixture correction; do not proceed beyond CTest unless every test passes.
 
 Retry after exact dual-engine schema correction: include the emitted universe summary in the dual-engine, LRT and NMT artifact contracts. Run latest score-model isolation and resumable cache checkpoint code.
+
+Retry with bounded apt mirror retries/timeouts and the transient-only HTTP retry policy; use latest branch head.
