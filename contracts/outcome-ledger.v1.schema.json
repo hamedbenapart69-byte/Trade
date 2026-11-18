@@ -3,10 +3,12 @@
   "title": "CFSS Immutable Closed Outcome Ledger",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "ledger_status", "outcomes"],
+  "required": ["schema_version", "artifact_type", "profile", "ledger_status", "outcomes"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "artifact_type": {"const": "cfss_outcome_ledger_v1"},
+    "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
+    "reason": {"type": "string"},
     "ledger_status": {"enum": ["EMPTY", "AVAILABLE", "UNAVAILABLE"]},
     "outcomes": {
       "type": "array",
@@ -16,7 +18,7 @@
         "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind"],
         "properties": {
           "signal_id": {"type": "string", "minLength": 1},
-          "profile": {"const": "DAILY_SWING"},
+          "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
           "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT", "PLAN_B", "PLAN_C", "PLAN_H"]},
           "regime": {"type": "string", "minLength": 1},
           "closed_at_ms": {"type": "integer", "minimum": 1},
