@@ -1,0 +1,123 @@
+{
+  "artifact_type": "cfss_lfs_v2_proxy",
+  "decision_time_ms": 1795003200000,
+  "instruments": [
+    {
+      "component_coverage": {
+        "available_scores": 5,
+        "required_scores": 5
+      },
+      "components": [
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "PROXY",
+          "definition_id": "lfs1_atr_volume_percentile_v2",
+          "id": "LFS1_BOOK_THINNESS",
+          "reason": "OHLCV proxy only; no REAL order-book depth history is present",
+          "score": 0.4251717160844397
+        },
+        {
+          "available_at_ms": 1794988800000,
+          "data_class": "REAL",
+          "definition_id": "lfs2_abs_funding_percentile_v2",
+          "id": "LFS2_FUNDING_EXTREME",
+          "reason": "Absolute funding-rate percentile over available 30-day REAL history",
+          "score": 0.1348314606741573
+        },
+        {
+          "available_at_ms": 1795003200000,
+          "data_class": "REAL",
+          "definition_id": "lfs3_abs_log_ratio_percentile_v2",
+          "id": "LFS3_LONG_SHORT_POSITIONING",
+          "reason": "OKX contract long/short account ratio; 30-day REAL history",
+          "score": 0.7583333333333333
+        },
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "REAL",
+          "definition_id": "lfs4_bb_width_percentile_v2",
+          "id": "LFS4_VOLATILITY_COMPRESSION",
+          "reason": "20-period Bollinger width inverse percentile over 90-day REAL OHLCV history",
+          "score": 0.46156920968478754
+        },
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "REAL",
+          "definition_id": "lfs5_abs_24h_oi_change_percentile_v2",
+          "id": "LFS5_OPEN_INTEREST_CHANGE",
+          "reason": "Absolute 24-hour OI change percentile over available REAL OI history",
+          "score": 0.0776978417266187
+        }
+      ],
+      "data_class": "PROXY",
+      "instrument_id": "BTC-USDT-SWAP",
+      "long_short_rows": 721,
+      "long_short_scope": "OKX contract-level all-trader account ratio",
+      "score": 0.3888944060185584,
+      "status": "CALCULATED",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "component_coverage": {
+        "available_scores": 5,
+        "required_scores": 5
+      },
+      "components": [
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "PROXY",
+          "definition_id": "lfs1_atr_volume_percentile_v2",
+          "id": "LFS1_BOOK_THINNESS",
+          "reason": "OHLCV proxy only; no REAL order-book depth history is present",
+          "score": 0.4548996230157776
+        },
+        {
+          "available_at_ms": 1794988800000,
+          "data_class": "REAL",
+          "definition_id": "lfs2_abs_funding_percentile_v2",
+          "id": "LFS2_FUNDING_EXTREME",
+          "reason": "Absolute funding-rate percentile over available 30-day REAL history",
+          "score": 0.06741573033707865
+        },
+        {
+          "available_at_ms": 1795003200000,
+          "data_class": "REAL",
+          "definition_id": "lfs3_abs_log_ratio_percentile_v2",
+          "id": "LFS3_LONG_SHORT_POSITIONING",
+          "reason": "OKX contract long/short account ratio; 30-day REAL history",
+          "score": 0.7013888888888888
+        },
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "REAL",
+          "definition_id": "lfs4_bb_width_percentile_v2",
+          "id": "LFS4_VOLATILITY_COMPRESSION",
+          "reason": "20-period Bollinger width inverse percentile over 90-day REAL OHLCV history",
+          "score": 0.6536089538602101
+        },
+        {
+          "available_at_ms": 1794999600000,
+          "data_class": "REAL",
+          "definition_id": "lfs5_abs_24h_oi_change_percentile_v2",
+          "id": "LFS5_OPEN_INTEREST_CHANGE",
+          "reason": "Absolute 24-hour OI change percentile over available REAL OI history",
+          "score": 0.36258992805755397
+        }
+      ],
+      "data_class": "PROXY",
+      "instrument_id": "ETH-USDT-SWAP",
+      "long_short_rows": 721,
+      "long_short_scope": "OKX contract-level all-trader account ratio",
+      "score": 0.45259610957981306,
+      "status": "CALCULATED",
+      "symbol": "ETH/USDT:USDT"
+    }
+  ],
+  "l1_sha256": "155d1c41ea27f57c25d46f826275fa43917ea029d87df4c8882f9bc5714881e8",
+  "note": "Research feature score only. PROXY is not REAL and is not an actionable trade signal.",
+  "schema_version": "1.0.0",
+  "source_run_id": "okx-cpp-1795005637653",
+  "source_scan_id": "scan-246d8795472a954f053704771015ad588ead9e78334f612fdf566c3c48af25c7",
+  "status": "CALCULATED",
+  "version": "LFS_V2_PROXY"
+}
