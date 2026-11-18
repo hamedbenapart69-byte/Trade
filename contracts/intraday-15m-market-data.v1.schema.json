@@ -31,6 +31,7 @@
           "unified_symbol": {"type": "string", "minLength": 1},
           "timeframe": {"const": "15m"},
           "data_quality": {"enum": ["REAL", "UNAVAILABLE"]},
+          "error": {"type": ["string", "null"]},
           "candles": {
             "type": "array",
             "items": {
