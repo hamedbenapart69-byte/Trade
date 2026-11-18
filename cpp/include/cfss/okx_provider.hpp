@@ -14,6 +14,7 @@
 #include <limits>
 #include <iostream>
 #include <filesystem>
+#include <functional>
 #include <cstdlib>
 #include <map>
 #include <optional>
@@ -81,25 +82,50 @@ inline std::string encode(const std::string& value) {
     return result;
 }
 
+inline bool retryable_http_failure(CURLcode transport, long status) {
+    return transport != CURLE_OK || status == 408L || status == 429L ||
+        (status >= 500L && status <= 599L);
+}
+
+inline bool retryable_okx_error_code(const std::string& code) {
+    return code == "50011" || code == "50013";
+}
+
+inline std::chrono::milliseconds retry_delay(const std::string& url, int attempt) {
+    const auto exponent = std::min(attempt, 4);
+    const auto base_ms = std::min(8000, 500 * (1 << exponent));
+    const auto jitter_seed = std::hash<std::string>{}(url + ":" + std::to_string(attempt));
+    const auto jitter_ms = static_cast<int>(jitter_seed % 251U);
+    return std::chrono::milliseconds(base_ms + jitter_ms);
+}
+
 inline json request(const std::string& path, int attempts = 3) {
     const std::string url = "https://www.okx.com" + path;
     std::string last_error = "provider_request_failed";
     for (int attempt = 0; attempt < attempts; ++attempt) {
         if (attempt > 0) http_retry_attempts().fetch_add(1U);
         const auto response = get(url);
+        bool retryable = false;
         if (response.transport == CURLE_OK && response.status == 200) {
+            json parsed;
             try {
-                auto parsed = json::parse(response.body);
-                if (parsed.value("code", std::string{}) == "0" && parsed.contains("data") && parsed["data"].is_array())
-                    return parsed;
-                last_error = "okx_api_error:" + parsed.value("code", std::string{"missing_code"}) + ":" +
-                             parsed.value("msg", std::string{});
-            } catch (const std::exception& e) { last_error = std::string{"json_parse_failed:"} + e.what(); }
+                parsed = json::parse(response.body);
+            } catch (const std::exception& e) {
+                last_error = std::string{"json_parse_failed:"} + e.what();
+                break;
+            }
+            const auto code = parsed.value("code", std::string{"missing_code"});
+            if (code == "0" && parsed.contains("data") && parsed["data"].is_array())
+                return parsed;
+            last_error = "okx_api_error:" + code + ":" + parsed.value("msg", std::string{});
+            retryable = retryable_okx_error_code(code);
         } else {
             last_error = "http_or_transport_error:" + std::to_string(response.status) + ":" +
                          curl_easy_strerror(response.transport);
+            retryable = retryable_http_failure(response.transport, response.status);
         }
-        if (attempt + 1 < attempts) std::this_thread::sleep_for(std::chrono::milliseconds(500 * (attempt + 1)));
+        if (!retryable || attempt + 1 >= attempts) break;
+        std::this_thread::sleep_for(retry_delay(url, attempt));
     }
     exhausted_requests().fetch_add(1U);
     throw std::runtime_error(last_error);
