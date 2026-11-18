@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 
 #include <nlohmann/json.hpp>
 
