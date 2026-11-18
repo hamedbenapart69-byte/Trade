@@ -20,7 +20,7 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
     for (std::size_t i = 0U; i < 250U; ++i) {
         const bool low_score_group = i < 125U;
         const bool win = (i % 5U) < (low_score_group ? 2U : 3U);
-        out.push_back({
+        cfss::meta::Outcome row{
             "signal-" + std::to_string(i),
             "PLAN_A_LRT",
             "DOWNTREND",
@@ -32,7 +32,10 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
             fee,
             slippage,
             funding
-        });
+        };
+        row.source_scan_id = "scan-" + std::to_string(i);
+        row.symbol = "SYMBOL-" + std::to_string(i);
+        out.push_back(row);
     }
     return out;
 }
@@ -62,6 +65,23 @@ int main() {
     require(calibrated.brier_ci_low && calibrated.brier_ci_high &&
             calibrated.win_rate_ci_low && calibrated.win_rate_ci_high,
             "OOS confidence intervals are reported");
+    require(calibrated.oos_scan_clusters == 50U &&
+            calibrated.oos_symbol_clusters == 50U &&
+            std::abs(calibrated.oos_effective_sample_size - 50.0) < 1e-9,
+            "effective independent OOS sample size accounts for scan and symbol clusters");
+
+    auto correlated = outcomes;
+    for (std::size_t i = 0U; i < correlated.size(); ++i) {
+        correlated[i].source_scan_id = "scan-block-" + std::to_string(i / 50U);
+        correlated[i].symbol = "symbol-block-" + std::to_string(i / 50U);
+    }
+    const auto correlated_result = cfss::meta::calibrate(
+        correlated, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
+    require(correlated_result.status == "NOT_CALIBRATED" &&
+            correlated_result.reason ==
+                "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_AND_SYMBOL_CLUSTERING",
+            "large row count cannot hide a small independent clustered sample");
+
     require(calibrated.ev_status == "CALCULATED" &&
             calibrated.ev_net && *calibrated.ev_net > 0.0 &&
             calibrated.ev_decision == "EV_POSITIVE_RESEARCH_ONLY",
@@ -113,6 +133,14 @@ int main() {
     require(isolated_execution.status == "NOT_CALIBRATED" &&
             isolated_execution.sample_count == 0U,
             "hypothesis proxy calibration never absorbs executed-trade outcomes");
+
+    auto funding_credit = fixture(2.0, 1.0, 0.04, 0.02, -0.01);
+    const auto credit_ev = cfss::meta::calibrate(
+        funding_credit, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
+    require(credit_ev.status == "CALIBRATED" &&
+            credit_ev.ev_status == "CALCULATED" &&
+            credit_ev.avg_funding_r && *credit_ev.avg_funding_r < 0.0,
+            "negative funding credit is preserved rather than clamped to a cost");
 
     auto negative = fixture(0.5, 2.0, 0.10, 0.05, 0.05);
     const auto negative_ev = cfss::meta::calibrate(
