@@ -73,15 +73,19 @@ struct CalibrationReport {
     std::size_t oos_count{};
     std::size_t train_scan_clusters{};
     std::size_t train_symbol_clusters{};
+    std::size_t train_utc_day_clusters{};
     std::size_t validation_scan_clusters{};
     std::size_t validation_symbol_clusters{};
+    std::size_t validation_utc_day_clusters{};
     std::size_t oos_scan_clusters{};
     std::size_t oos_symbol_clusters{};
+    std::size_t oos_utc_day_clusters{};
     double train_effective_sample_size{};
     double validation_effective_sample_size{};
     double oos_effective_sample_size{};
-    std::string confidence_interval_method{"TWO_WAY_CLUSTER_ROBUST"};
-    std::string win_rate_interval_method{"WILSON_95_PLUS_TWO_WAY_CLUSTER_ROBUST"};
+    std::string confidence_interval_method{"THREE_WAY_CLUSTER_ROBUST"};
+    std::string win_rate_interval_method{"WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"};
+    std::string win_rate_interval_method{"WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"};
     std::optional<double> brier_raw_oos;
     std::optional<double> brier_calibrated_oos;
     std::optional<double> brier_ci_low;
@@ -106,16 +110,24 @@ struct CalibrationReport {
 struct ClusterMetrics {
     std::size_t scan_clusters{};
     std::size_t symbol_clusters{};
+    std::size_t utc_day_clusters{};
     double scan_effective_n{};
     double symbol_effective_n{};
+    double utc_day_effective_n{};
     double effective_n{};
 };
 
-inline double effective_n_for_groups(const std::vector<Outcome>& rows, bool by_scan) {
+inline std::string cluster_key(const Outcome& row, int dimension) {
+    if (dimension == 0) return row.source_scan_id;
+    if (dimension == 1) return row.symbol;
+    return std::to_string(row.closed_at_ms / 86'400'000LL);
+}
+
+inline double effective_n_for_groups(const std::vector<Outcome>& rows, int dimension) {
     if (rows.empty()) return 0.0;
     std::map<std::string, std::size_t> counts;
     for (const auto& row : rows)
-        ++counts[by_scan ? row.source_scan_id : row.symbol];
+        ++counts[cluster_key(row, dimension)];
     double sum_squares = 0.0;
     for (const auto& [key, count] : counts) {
         (void)key;
@@ -127,31 +139,35 @@ inline double effective_n_for_groups(const std::vector<Outcome>& rows, bool by_s
 }
 
 inline ClusterMetrics cluster_metrics(const std::vector<Outcome>& rows) {
-    std::set<std::string> scans, symbols;
+    std::set<std::string> scans, symbols, utc_days;
     for (const auto& row : rows) {
         scans.insert(row.source_scan_id);
         symbols.insert(row.symbol);
+        utc_days.insert(cluster_key(row, 2));
     }
     ClusterMetrics metrics{};
     metrics.scan_clusters = scans.size();
     metrics.symbol_clusters = symbols.size();
-    metrics.scan_effective_n = effective_n_for_groups(rows, true);
-    metrics.symbol_effective_n = effective_n_for_groups(rows, false);
-    metrics.effective_n = std::min(metrics.scan_effective_n, metrics.symbol_effective_n);
+    metrics.utc_day_clusters = utc_days.size();
+    metrics.scan_effective_n = effective_n_for_groups(rows, 0);
+    metrics.symbol_effective_n = effective_n_for_groups(rows, 1);
+    metrics.utc_day_effective_n = effective_n_for_groups(rows, 2);
+    metrics.effective_n = std::min({
+        metrics.scan_effective_n, metrics.symbol_effective_n, metrics.utc_day_effective_n
+    });
     return metrics;
 }
 
 inline double cluster_robust_se(const std::vector<double>& values,
                                 const std::vector<Outcome>& rows,
-                                bool by_scan) {
+                                int dimension) {
     if (values.size() != rows.size() || values.size() < 2U)
         return std::numeric_limits<double>::quiet_NaN();
     std::map<std::string, double> cluster_sums;
     const double mean = std::accumulate(values.begin(), values.end(), 0.0) /
                         static_cast<double>(values.size());
     for (std::size_t i = 0U; i < values.size(); ++i) {
-        const auto& key = by_scan ? rows[i].source_scan_id : rows[i].symbol;
-        cluster_sums[key] += values[i] - mean;
+        cluster_sums[cluster_key(rows[i], dimension)] += values[i] - mean;
     }
     if (cluster_sums.size() < 2U) return std::numeric_limits<double>::quiet_NaN();
     double sum_squares = 0.0;
@@ -165,13 +181,14 @@ inline double cluster_robust_se(const std::vector<double>& values,
     return std::sqrt(std::max(0.0, variance));
 }
 
-inline double two_way_cluster_robust_se(const std::vector<double>& values,
-                                        const std::vector<Outcome>& rows) {
-    const double scan_se = cluster_robust_se(values, rows, true);
-    const double symbol_se = cluster_robust_se(values, rows, false);
-    if (!std::isfinite(scan_se) || !std::isfinite(symbol_se))
+inline double three_way_cluster_robust_se(const std::vector<double>& values,
+                                          const std::vector<Outcome>& rows) {
+    const double scan_se = cluster_robust_se(values, rows, 0);
+    const double symbol_se = cluster_robust_se(values, rows, 1);
+    const double day_se = cluster_robust_se(values, rows, 2);
+    if (!std::isfinite(scan_se) || !std::isfinite(symbol_se) || !std::isfinite(day_se))
         return std::numeric_limits<double>::quiet_NaN();
-    return std::max(scan_se, symbol_se);
+    return std::max({scan_se, symbol_se, day_se});
 }
 
 inline double brier_score(const std::vector<double>& probabilities,
@@ -347,10 +364,13 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     const auto oos_clusters = cluster_metrics(oos);
     report.train_scan_clusters = train_clusters.scan_clusters;
     report.train_symbol_clusters = train_clusters.symbol_clusters;
+    report.train_utc_day_clusters = train_clusters.utc_day_clusters;
     report.validation_scan_clusters = validation_clusters.scan_clusters;
     report.validation_symbol_clusters = validation_clusters.symbol_clusters;
+    report.validation_utc_day_clusters = validation_clusters.utc_day_clusters;
     report.oos_scan_clusters = oos_clusters.scan_clusters;
     report.oos_symbol_clusters = oos_clusters.symbol_clusters;
+    report.oos_utc_day_clusters = oos_clusters.utc_day_clusters;
     report.train_effective_sample_size = train_clusters.effective_n;
     report.validation_effective_sample_size = validation_clusters.effective_n;
     report.oos_effective_sample_size = oos_clusters.effective_n;
@@ -432,8 +452,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         const double error = oos_calibrated[i] - y;
         brier_values.push_back(error * error);
     }
-    const double win_se = two_way_cluster_robust_se(win_values, oos);
-    const double brier_se = two_way_cluster_robust_se(brier_values, oos);
+    const double win_se = three_way_cluster_robust_se(win_values, oos);
+    const double brier_se = three_way_cluster_robust_se(brier_values, oos);
     if (!std::isfinite(win_se) || !std::isfinite(brier_se)) {
         report.reason = "CLUSTER_ROBUST_CONFIDENCE_INTERVAL_UNAVAILABLE";
         return report;
