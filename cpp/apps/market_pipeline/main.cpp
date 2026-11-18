@@ -125,9 +125,12 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             if (!market_cache_input) throw std::runtime_error("market_data_cache_open_failed");
             cached_market_data = json::parse(market_cache_input);
             if (!cached_market_data->is_object() ||
+                cached_market_data->value("schema_version", std::string{}) != "1.0.0" ||
+                cached_market_data->value("provider", json::object())
+                    .value("primary_provider_id", std::string{}) != "okx" ||
                 !cached_market_data->contains("instruments") ||
                 !cached_market_data->at("instruments").is_array())
-                throw std::runtime_error("market_data_cache_schema_invalid");
+                throw std::runtime_error("market_data_cache_schema_or_provider_invalid");
         }
         const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
                                                   cached_market_data);
@@ -309,7 +312,7 @@ int main(int argc, char** argv) {
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json]\n";
+                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json]\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};
