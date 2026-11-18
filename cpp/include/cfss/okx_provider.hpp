@@ -978,7 +978,7 @@ inline json collect(int symbol_count, int years,
             (instrument_index % 25U == 0U || instrument_index == selected.size())) {
             const auto snapshot = make_market_cache_snapshot(cached_market_data, instruments,
                                                           start_ms, end_ms);
-            cfss::write_file_atomic(*market_cache_path, snapshot.dump(2) + "\n", true);
+            cfss::write_file_atomic(*market_cache_path, snapshot.dump(2) + "\n", false);
             std::cout << "L1_CACHE_CHECKPOINT instruments="
                       << snapshot.at("instruments").size() << std::endl;
         }
