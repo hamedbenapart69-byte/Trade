@@ -78,6 +78,24 @@ int main() {
             std::abs(*with_future.probability_win - *calibrated.probability_win) < 1e-9,
             "future OOS outcomes do not change the fitted calibration probability");
 
+    auto no_costs = fixture(2.0, 1.0, 0.0, 0.0, 0.0);
+    for (auto& row : no_costs) row.costs_available = false;
+    const auto calibrated_without_costs = cfss::meta::calibrate(
+        no_costs, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
+    require(calibrated_without_costs.status == "CALIBRATED" &&
+            calibrated_without_costs.ev_status == "COSTS_UNAVAILABLE" &&
+            !calibrated_without_costs.ev_net &&
+            calibrated_without_costs.ev_decision == "NOT_CALCULATED_COSTS_UNAVAILABLE",
+            "probability calibration may pass while EV remains blocked without costs");
+
+    auto other_data_class = outcomes;
+    for (auto& row : other_data_class) row.data_class = "REAL";
+    const auto isolated_data_class = cfss::meta::calibrate(
+        other_data_class, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL, "PROXY");
+    require(isolated_data_class.status == "NOT_CALIBRATED" &&
+            isolated_data_class.sample_count == 0U,
+            "REAL and PROXY outcomes are never pooled");
+
     auto negative = fixture(0.5, 2.0, 0.10, 0.05, 0.05);
     const auto negative_ev = cfss::meta::calibrate(
         negative, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
