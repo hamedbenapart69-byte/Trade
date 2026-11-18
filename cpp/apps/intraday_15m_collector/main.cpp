@@ -53,16 +53,30 @@ int main(int argc, char** argv) {
             instrument.id = source.value("instrument_id", std::string{});
             instrument.base = source.value("base", std::string{});
             instrument.quote = source.value("quote", std::string{"USDT"});
-            if (instrument.id.empty() || instrument.base.empty())
-                throw std::runtime_error("l1_instrument_mapping_invalid");
-            const auto candles = cfss::okx::fetch_recent_candles(
-                instrument, "15m", 900'000LL, decision_time, 100);
-            if (!candles.empty()) ++available;
+            json candles = json::array();
+            std::string data_quality = "UNAVAILABLE";
+            std::string error;
+            if (instrument.id.empty() || instrument.base.empty()) {
+                error = "L1_INSTRUMENT_MAPPING_UNAVAILABLE";
+            } else {
+                try {
+                    candles = cfss::okx::fetch_recent_candles(
+                        instrument, "15m", 900'000LL, decision_time, 100);
+                    if (candles.empty()) error = "NO_CONFIRMED_15M_CANDLES";
+                    else {
+                        data_quality = "REAL";
+                        ++available;
+                    }
+                } catch (const std::exception&) {
+                    error = "OKX_15M_PROVIDER_REQUEST_FAILED";
+                }
+            }
             instruments.push_back({
                 {"instrument_id", instrument.id},
                 {"unified_symbol", source.value("unified_symbol", std::string{})},
                 {"timeframe", "15m"},
-                {"data_quality", candles.empty() ? "UNAVAILABLE" : "REAL"},
+                {"data_quality", data_quality},
+                {"error", error.empty() ? json(nullptr) : json(error)},
                 {"candles", candles}
             });
         }
