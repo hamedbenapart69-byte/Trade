@@ -28,7 +28,6 @@ struct Result {
     std::array<std::string, 5> missing{};
     std::size_t missing_count{};
     std::size_t real_count{};
-    std::size_t proxy_count{};
 };
 
 inline constexpr std::array<std::string_view, 5> component_ids{
@@ -51,12 +50,11 @@ inline Result aggregate_v1(const std::array<Component, 5>& components,
             *component.score < 0.0 || *component.score > 1.0 ||
             component.available_at_ms <= 0 ||
             component.available_at_ms > decision_time_ms ||
-            component.data_class == DataClass::UNAVAILABLE) {
+            component.data_class != DataClass::REAL) {
             result.missing[result.missing_count++] = std::string(component_ids[i]);
             continue;
         }
         if (component.data_class == DataClass::REAL) ++result.real_count;
-        if (component.data_class == DataClass::PROXY) ++result.proxy_count;
         weighted_sum += weights[i] * *component.score;
     }
 
@@ -65,8 +63,7 @@ inline Result aggregate_v1(const std::array<Component, 5>& components,
 
     result.score = weighted_sum;
     result.status = "CALCULATED";
-    result.data_class = result.proxy_count == 0U ? "REAL" :
-                        (result.real_count == 0U ? "PROXY" : "MIXED");
+    result.data_class = "REAL";
     return result;
 }
 
