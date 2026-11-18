@@ -133,6 +133,19 @@ int main() {
                 "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE",
             "expired candidate with missing future candles is rejected, not converted to an outcome");
 
+    auto legacy_registry = cfss::shadow::empty_registry();
+    legacy_registry["candidates"].push_back({
+        {"signal_id", std::string(64, 'b')}, {"state", "PENDING"},
+        {"path", "PLAN_A_NMT"}, {"symbol", "MMT/USDT:USDT"}, {"direction", "LONG"}
+    });
+    const auto quarantined = cfss::shadow::process(
+        no_future_l1, fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        legacy_registry, cfss::shadow::empty_ledger());
+    require(quarantined.at("registry").at("candidates").front().at("state") == "REJECTED" &&
+            quarantined.at("registry").at("candidates").front().at("skip_reason") ==
+                "SOURCE_UNIVERSE_NOT_VERIFIED",
+            "legacy pending candidates without crypto-universe provenance are quarantined");
+
     auto missing_target = candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0);
     missing_target["target_reference"] = nullptr;
     const auto rejected = cfss::shadow::process(
