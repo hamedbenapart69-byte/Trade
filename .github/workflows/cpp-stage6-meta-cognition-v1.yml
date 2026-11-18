@@ -20,7 +20,7 @@ jobs:
   validate-and-deliver:
     if: ${{ github.event_name != 'push' || contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 240
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
