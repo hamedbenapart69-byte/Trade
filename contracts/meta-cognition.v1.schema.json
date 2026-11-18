@@ -3,11 +3,12 @@
   "title": "CFSS Stage 6 Meta Cognition Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "version", "source_run_id", "source_scan_id", "decision_time_ms", "l1_sha256", "stage5_report_sha256", "liquidity_report_sha256", "outcome_ledger_sha256", "outcome_ledger_status", "outcome_ledger_count", "calibration_policy", "actionable", "instruments"],
+  "required": ["schema_version", "artifact_type", "version", "profile", "source_run_id", "source_scan_id", "decision_time_ms", "l1_sha256", "stage5_report_sha256", "liquidity_report_sha256", "outcome_ledger_sha256", "outcome_ledger_status", "outcome_ledger_count", "calibration_policy", "actionable", "instruments"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "artifact_type": {"const": "cfss_meta_cognition_v1"},
     "version": {"const": "META_COGNITION_V1"},
+    "profile": {"const": "DAILY_SWING"},
     "source_run_id": {"type": "string", "minLength": 1},
     "source_scan_id": {"type": "string", "minLength": 1},
     "decision_time_ms": {"type": "integer", "minimum": 1},
