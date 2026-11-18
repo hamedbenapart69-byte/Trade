@@ -114,6 +114,13 @@ inline std::string uppercase_symbol(std::string value) {
     return value;
 }
 
+inline bool valid_crypto_symbol(const std::string& symbol) {
+    return !symbol.empty() && symbol.size() <= 20U &&
+        std::all_of(symbol.begin(), symbol.end(), [](unsigned char ch) {
+            return (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+        });
+}
+
 inline bool is_known_non_crypto_underlying(const std::string& raw_symbol) {
     static const std::set<std::string> blocked{
         "SOXL", "SNDK", "NVDA", "ANTHROPIC", "XAU", "XAG", "GOLD", "SILVER",
@@ -145,7 +152,8 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             if (!row.is_object() || !row.value("is_active", false)) continue;
             const auto symbol = uppercase_symbol(row.value("symbol", std::string{}));
             const auto type = row.value("type", std::string{});
-            if (!symbol.empty() && (type == "coin" || type == "token")) symbols.insert(symbol);
+            if (valid_crypto_symbol(symbol) && (type == "coin" || type == "token"))
+                symbols.insert(symbol);
         }
         if (symbols.size() < 500U || !symbols.contains("BTC"))
             throw std::runtime_error("coinpaprika_coin_list_coverage_insufficient");
@@ -180,9 +188,12 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             throw std::runtime_error("crypto_universe_cache_stale");
         std::set<std::string> symbols;
         for (const auto& value : cached->at("symbols")) {
-            if (!value.is_string()) continue;
+            if (!value.is_string())
+                throw std::runtime_error("crypto_universe_cache_symbol_type_invalid");
             const auto symbol = uppercase_symbol(value.get<std::string>());
-            if (!symbol.empty()) symbols.insert(symbol);
+            if (!valid_crypto_symbol(symbol))
+                throw std::runtime_error("crypto_universe_cache_symbol_format_invalid");
+            symbols.insert(symbol);
         }
         if (symbols.size() < 500U || !symbols.contains("BTC") ||
             cached->value("symbol_count", std::size_t{0}) != symbols.size())
