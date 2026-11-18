@@ -1,5 +1,6 @@
 #pragma once
 #include "cfss/hash.hpp"
+#include "cfss/atomic_file.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -12,6 +13,7 @@
 #include <ctime>
 #include <limits>
 #include <iostream>
+#include <filesystem>
 #include <cstdlib>
 #include <map>
 #include <optional>
@@ -676,10 +678,38 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
     return result;
 }
 
+inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
+                                       const json& refreshed_instruments) {
+    std::map<std::string, json> by_instrument;
+    if (old_cache && old_cache->is_object() && old_cache->contains("instruments") &&
+        old_cache->at("instruments").is_array()) {
+        for (const auto& item : old_cache->at("instruments")) {
+            if (!item.is_object()) continue;
+            const auto id = item.value("instrument_id", std::string{});
+            if (!id.empty()) by_instrument[id] = item;
+        }
+    }
+    if (refreshed_instruments.is_array()) {
+        for (const auto& item : refreshed_instruments) {
+            if (!item.is_object()) continue;
+            const auto id = item.value("instrument_id", std::string{});
+            if (!id.empty()) by_instrument[id] = item;
+        }
+    }
+    json instruments = json::array();
+    for (const auto& [id, item] : by_instrument) { (void)id; instruments.push_back(item); }
+    return {
+        {"schema_version", "1.0.0"},
+        {"provider", {{"primary_provider_id", "okx"}}},
+        {"instruments", std::move(instruments)}
+    };
+}
+
 inline json collect(int symbol_count, int years,
                        const std::optional<json>& cached_crypto_universe = std::nullopt,
                        const std::optional<json>& cached_market_data = std::nullopt,
-                       const std::set<std::string>& required_symbols = {}) {
+                       const std::set<std::string>& required_symbols = {},
+                       const std::optional<std::filesystem::path>& market_cache_path = std::nullopt) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
     const auto acquired_ms = now_ms();
@@ -822,6 +852,13 @@ inline json collect(int symbol_count, int years,
                   << " funding=" << funding.size()
                   << " oi=" << oi.size()
                   << " errors=" << errors.size() << std::endl;
+        if (market_cache_path &&
+            (instrument_index % 25U == 0U || instrument_index == selected.size())) {
+            const auto snapshot = make_market_cache_snapshot(cached_market_data, instruments);
+            cfss::write_file_atomic(*market_cache_path, snapshot.dump(2) + "\n", true);
+            std::cout << "L1_CACHE_CHECKPOINT instruments="
+                      << snapshot.at("instruments").size() << std::endl;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
     const char* commit = std::getenv("GITHUB_SHA");
