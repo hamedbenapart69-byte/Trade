@@ -780,9 +780,23 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
                 by_instrument.contains(id) &&
                 valid_cache_entry(cache_entries, by_instrument.at(id), id,
                                   window_start_ms, window_end_ms)) {
-                const auto previous_start = cache_entries.at(id).value("window_start_ms", std::int64_t{0});
-                if (previous_start > 0 && previous_start <= window_start_ms)
-                    retained_start_ms = previous_start;
+                const auto& old_item = by_instrument.at(id);
+                const bool old_has_candles = old_item.contains("candles") &&
+                    old_item.at("candles").is_array() && !old_item.at("candles").empty();
+                if (old_has_candles) {
+                    const auto first_old = old_item.at("candles").front().value("timestamp_ms", std::int64_t{0});
+                    const auto expected_old = std::max<std::int64_t>(
+                        1, (window_end_ms - window_start_ms) / 3'600'000LL);
+                    const double old_coverage = 100.0 *
+                        static_cast<double>(old_item.at("candles").size()) /
+                        static_cast<double>(expected_old);
+                    const auto previous_start =
+                        cache_entries.at(id).value("window_start_ms", std::int64_t{0});
+                    if (first_old > 0 && first_old <= window_start_ms + 3LL * 3'600'000LL &&
+                        old_coverage >= 98.0 && previous_start > 0 &&
+                        previous_start <= window_start_ms)
+                        retained_start_ms = previous_start;
+                }
             }
             by_instrument[id] = item;
             cache_entries[id] = make_cache_entry(item, retained_start_ms, window_end_ms);
