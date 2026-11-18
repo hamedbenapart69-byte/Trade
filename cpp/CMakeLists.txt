@@ -72,6 +72,11 @@ target_include_directories(nss_v1_probe PRIVATE include)
 target_compile_features(nss_v1_probe PRIVATE cxx_std_20)
 target_link_libraries(nss_v1_probe PRIVATE nlohmann_json::nlohmann_json)
 
+add_executable(nss_telegram_report apps/nss_telegram_report/main.cpp)
+target_include_directories(nss_telegram_report PRIVATE include)
+target_compile_features(nss_telegram_report PRIVATE cxx_std_20)
+target_link_libraries(nss_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
 add_executable(nss_v1_tests tests/nss_v1_test.cpp)
 target_include_directories(nss_v1_tests PRIVATE include)
 target_compile_features(nss_v1_tests PRIVATE cxx_std_20)
