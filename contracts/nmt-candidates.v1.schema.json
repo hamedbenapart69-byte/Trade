@@ -5,6 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "universe",
     "source_run_id",
     "source_scan_id",
     "decision_time_ms",
@@ -17,6 +18,17 @@
     "instruments"
   ],
   "properties": {
+    "universe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_non_btc_count", "selected_total_count", "eligible_count", "status"],
+      "properties": {
+        "target_non_btc_count": {"type": "integer", "minimum": 1},
+        "selected_total_count": {"type": "integer", "minimum": 1},
+        "eligible_count": {"type": "integer", "minimum": 0},
+        "status": {"enum": ["PASS", "PARTIAL"]}
+      }
+    },
     "schema_version": {
       "const": "1.0.0"
     },
