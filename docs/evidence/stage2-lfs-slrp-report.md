@@ -4,7 +4,7 @@
 **Base:** `feat/cpp-stage1-clean` at `190b0270ccb1425f4ed77503825aeaf26668baa4`  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data; v2 L3 Telegram receipt is still pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
+**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data in two runs; the final aggregate-determinism test rerun and v2 L3 Telegram receipt are pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -77,7 +77,8 @@ Measured real run `44245558287` / `okx-cpp-1794980311216`:
 - L2 SHA-256: `8a37633b1d959e2042706504c0517937d5d23d151457b5885d79dcf0fe6929ee`.
 - LFS v2 SHA-256: `8dc176bb80394b7c498e9041aa13d01d729e2a9eb593427717e07e935e5d1170`.
 - JSON Schema validation: PASS.
-- CTest: 4/4 PASS; no Actions artifact upload: PASS.
+- CTest: 4/4 PASS in both live runs; future-perturbation guards for candles, funding, long/short and OI passed. An additional deterministic aggregate assertion has since been added and is awaiting its CI rerun.
+- No Actions artifact upload: PASS.
 - The report is a feature score only. It does not create BUY/SELL states, trade instructions, or calibrated confidence.
 
 v2 was created only after the measured v1 FAIL and D1/D2 diagnosis above.
@@ -109,7 +110,7 @@ Calibration remains NOT_CALIBRATED. The 30-day funding, long/short and OI distri
 
 - Added `cpp/include/cfss/lfs_delivery.hpp` and `cpp/apps/lfs_telegram_report/main.cpp`.
 - Report ID is SHA-256 of the canonical LFS v2 report.
-- Outbox is persisted before sending; `DELIVERED` records Telegram message ID.
+- Outbox reservation is committed to `signals` before the Telegram network send; `DELIVERED` then records the Telegram message ID.
 - Interrupted/uncertain attempts become `DELIVERY_UNKNOWN` and are not automatically resent.
 - Delivery is gated by a dedicated `[LFS_STAGE2_REPORT]` commit marker; routine CI runs do not send messages.
 - Receipt state is persisted on the `signals` branch. Live Telegram receipt is pending final v2 validation.
