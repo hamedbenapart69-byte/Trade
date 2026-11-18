@@ -1,0 +1,270 @@
+#pragma once
+
+#include "cfss/hash.hpp"
+
+#include <cmath>
+#include <cstdint>
+#include <set>
+#include <stdexcept>
+#include <string>
+
+#include <nlohmann/json.hpp>
+
+namespace cfss::shadow {
+using json = nlohmann::json;
+constexpr std::int64_t kOneHourMs = 3'600'000LL;
+
+inline const json* find_instrument(const json& l1, const std::string& symbol) {
+    if (!l1.contains("instruments") || !l1.at("instruments").is_array()) return nullptr;
+    for (const auto& item : l1.at("instruments")) {
+        if (item.value("unified_symbol", std::string{}) == symbol ||
+            item.value("symbol", std::string{}) == symbol) return &item;
+    }
+    return nullptr;
+}
+
+inline const json* find_phase(const json& liquidity, const std::string& symbol) {
+    if (!liquidity.contains("instruments") || !liquidity.at("instruments").is_array()) return nullptr;
+    for (const auto& item : liquidity.at("instruments"))
+        if (item.value("symbol", std::string{}) == symbol) return &item;
+    return nullptr;
+}
+
+inline double required_number(const json& value, const char* key) {
+    if (!value.contains(key) || !value.at(key).is_number())
+        throw std::runtime_error(std::string{"shadow_candidate_missing_numeric:"} + key);
+    const double result = value.at(key).get<double>();
+    if (!std::isfinite(result)) throw std::runtime_error(std::string{"shadow_candidate_nonfinite:"} + key);
+    return result;
+}
+
+inline json empty_registry() {
+    return {
+        {"schema_version", "1.0.0"},
+        {"artifact_type", "cfss_shadow_candidate_registry_v1"},
+        {"candidates", json::array()}
+    };
+}
+
+inline json empty_ledger() {
+    return {
+        {"schema_version", "1.0.0"},
+        {"artifact_type", "cfss_outcome_ledger_v1"},
+        {"ledger_status", "EMPTY"},
+        {"outcomes", json::array()}
+    };
+}
+
+inline json process(const json& l1, const json& dual, const json& liquidity,
+                    json registry, json ledger) {
+    if (l1.value("schema_version", std::string{}) != "1.0.0" ||
+        dual.value("artifact_type", std::string{}) != "cfss_dual_engine_report_v1" ||
+        liquidity.value("artifact_type", std::string{}) != "cfss_liquidity_phase_v1")
+        throw std::runtime_error("shadow_input_artifact_type_mismatch");
+    if (l1.value("window", json::object()).value("timeframe", std::string{}) != "1h")
+        throw std::runtime_error("shadow_resolver_requires_1h_closed_candles");
+
+    const auto decision_time = dual.value("decision_time_ms", std::int64_t{0});
+    const auto current_time = l1.value("window", json::object()).value("end_ms", std::int64_t{0});
+    if (decision_time <= 0 || current_time < decision_time ||
+        dual.value("source_run_id", std::string{}) != l1.value("run_id", std::string{}) ||
+        dual.value("source_scan_id", std::string{}) != l1.value("scan_id", std::string{}) ||
+        liquidity.value("source_run_id", std::string{}) != dual.value("source_run_id", std::string{}) ||
+        liquidity.value("source_scan_id", std::string{}) != dual.value("source_scan_id", std::string{}) ||
+        liquidity.value("decision_time_ms", std::int64_t{0}) != decision_time ||
+        liquidity.value("l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}))
+        throw std::runtime_error("shadow_cross_artifact_provenance_mismatch");
+
+    if (registry.is_null() || registry.empty()) registry = empty_registry();
+    if (ledger.is_null() || ledger.empty()) ledger = empty_ledger();
+    if (registry.value("artifact_type", std::string{}) != "cfss_shadow_candidate_registry_v1" ||
+        !registry.contains("candidates") || !registry.at("candidates").is_array() ||
+        ledger.value("artifact_type", std::string{}) != "cfss_outcome_ledger_v1" ||
+        !ledger.contains("outcomes") || !ledger.at("outcomes").is_array())
+        throw std::runtime_error("shadow_state_artifact_invalid");
+
+    std::set<std::string> known_ids;
+    for (const auto& item : registry.at("candidates"))
+        known_ids.insert(item.value("signal_id", std::string{}));
+    for (const auto& item : ledger.at("outcomes"))
+        known_ids.insert(item.value("signal_id", std::string{}));
+
+    std::size_t registered = 0U;
+    std::size_t rejected = 0U;
+    for (const auto& instrument : dual.at("instruments")) {
+        const auto symbol = instrument.value("symbol", std::string{});
+        const auto* phase = find_phase(liquidity, symbol);
+        if (symbol.empty() || !phase) continue;
+        const auto regime = phase->value("phase", std::string{"UNKNOWN"});
+        for (const auto* key : {"lrt", "nmt"}) {
+            const auto& candidate = instrument.at(key);
+            if (candidate.value("status", std::string{}) != "CANDIDATE") continue;
+            const auto path = candidate.value("path", std::string{});
+            const auto direction = candidate.value("direction", std::string{});
+            const auto score = required_number(candidate, "score");
+            const auto entry = required_number(candidate, "entry_reference");
+            const auto stop = required_number(candidate, "invalidation_reference");
+            const auto target = required_number(candidate, "target_reference");
+            const auto candidate_time = candidate.value("decision_time_ms", std::int64_t{0});
+            const bool levels_valid = direction == "LONG"
+                ? stop < entry && entry < target
+                : direction == "SHORT" && target < entry && entry < stop;
+            if ((path != "PLAN_A_LRT" && path != "PLAN_A_NMT") ||
+                (direction != "LONG" && direction != "SHORT") ||
+                !levels_valid || candidate_time != decision_time ||
+                score < 0.0 || score > 1.0 ||
+                candidate.value("hypothesis", std::string{}).empty() ||
+                candidate.value("falsification", std::string{}).empty()) {
+                ++rejected;
+                continue;
+            }
+
+            const auto horizon = path == "PLAN_A_LRT" ? 4LL * kOneHourMs : 7LL * 24LL * kOneHourMs;
+            const auto scan_id = dual.value("source_scan_id", std::string{});
+            const auto material = path + "|" + symbol + "|" + direction + "|" +
+                std::to_string(decision_time) + "|" + scan_id;
+            const auto signal_id = cfss::sha256_hex(material);
+            if (known_ids.contains(signal_id)) continue;
+
+            bool active_duplicate = false;
+            for (const auto& old : registry.at("candidates")) {
+                if (old.value("state", std::string{}) == "PENDING" &&
+                    old.value("path", std::string{}) == path &&
+                    old.value("symbol", std::string{}) == symbol &&
+                    old.value("direction", std::string{}) == direction) {
+                    active_duplicate = true;
+                    break;
+                }
+            }
+            if (active_duplicate) continue;
+
+            registry["candidates"].push_back({
+                {"signal_id", signal_id}, {"path", path}, {"symbol", symbol},
+                {"direction", direction}, {"regime", regime},
+                {"decision_time_ms", decision_time}, {"expiry_time_ms", decision_time + horizon},
+                {"entry_reference", entry}, {"stop_reference", stop}, {"target_reference", target},
+                {"raw_score", score}, {"data_class", candidate.value("data_class", std::string{"PROXY"})},
+                {"hypothesis", candidate.at("hypothesis")}, {"falsification", candidate.at("falsification")},
+                {"source_run_id", dual.at("source_run_id")}, {"source_scan_id", scan_id},
+                {"source_l1_sha256", dual.at("l1_sha256")}, {"resolution_timeframe", "1h"},
+                {"state", "PENDING"}, {"resolution", nullptr}, {"closed_at_ms", nullptr},
+                {"gross_r", nullptr}, {"skip_reason", nullptr}
+            });
+            known_ids.insert(signal_id);
+            ++registered;
+        }
+    }
+
+    std::size_t resolved = 0U;
+    std::size_t still_pending = 0U;
+    for (auto& candidate : registry["candidates"]) {
+        if (candidate.value("state", std::string{}) != "PENDING") continue;
+        const auto symbol = candidate.value("symbol", std::string{});
+        const auto* instrument = find_instrument(l1, symbol);
+        if (!instrument || !instrument->contains("candles") || !instrument->at("candles").is_array()) {
+            ++still_pending;
+            continue;
+        }
+        const auto direction = candidate.value("direction", std::string{});
+        const double entry = required_number(candidate, "entry_reference");
+        const double stop = required_number(candidate, "stop_reference");
+        const double target = required_number(candidate, "target_reference");
+        const auto decision = candidate.value("decision_time_ms", std::int64_t{0});
+        const auto expiry = candidate.value("expiry_time_ms", std::int64_t{0});
+        const double risk = std::abs(entry - stop);
+        if (risk <= 0.0 || expiry <= decision) {
+            candidate["state"] = "REJECTED";
+            candidate["skip_reason"] = "INVALID_RISK_OR_HORIZON";
+            ++rejected;
+            continue;
+        }
+
+        bool closed = false;
+        double exit_price = 0.0;
+        std::int64_t close_time = 0;
+        std::string resolution;
+        const auto& candles = instrument->at("candles");
+        for (const auto& candle : candles) {
+            if (!candle.value("closed", false)) continue;
+            const auto ts = candle.value("timestamp_ms", std::int64_t{0});
+            const auto bar_close_time = ts + kOneHourMs;
+            if (ts < decision || bar_close_time > current_time || bar_close_time > expiry) continue;
+            const double high = required_number(candle, "high");
+            const double low = required_number(candle, "low");
+            const bool stop_hit = direction == "LONG" ? low <= stop : high >= stop;
+            const bool target_hit = direction == "LONG" ? high >= target : low <= target;
+            if (stop_hit) {
+                exit_price = stop;
+                close_time = bar_close_time;
+                resolution = target_hit ? "STOP_FIRST_SAME_BAR_AMBIGUITY" : "STOP";
+                closed = true;
+                break;
+            }
+            if (target_hit) {
+                exit_price = target;
+                close_time = bar_close_time;
+                resolution = "TARGET";
+                closed = true;
+                break;
+            }
+        }
+
+        if (!closed && current_time >= expiry) {
+            const json* expiry_bar = nullptr;
+            std::int64_t expiry_bar_close = 0;
+            for (const auto& candle : candles) {
+                if (!candle.value("closed", false)) continue;
+                const auto ts = candle.value("timestamp_ms", std::int64_t{0});
+                const auto bar_close_time = ts + kOneHourMs;
+                if (ts >= decision && bar_close_time <= expiry && bar_close_time <= current_time) {
+                    expiry_bar = &candle;
+                    expiry_bar_close = bar_close_time;
+                }
+            }
+            if (expiry_bar) {
+                exit_price = required_number(*expiry_bar, "close");
+                close_time = expiry_bar_close;
+                resolution = "TIME_EXPIRY";
+                closed = true;
+            }
+        }
+
+        if (!closed) {
+            ++still_pending;
+            continue;
+        }
+        const double sign = direction == "LONG" ? 1.0 : -1.0;
+        const double gross_r = ((exit_price - entry) * sign) / risk;
+        const bool win = gross_r > 0.0;
+        const auto signal_id = candidate.at("signal_id").get<std::string>();
+        ledger["outcomes"].push_back({
+            {"signal_id", signal_id}, {"path", candidate.at("path")},
+            {"regime", candidate.at("regime")}, {"closed_at_ms", close_time},
+            {"raw_score", candidate.at("raw_score")}, {"win", win},
+            {"win_r", win ? gross_r : 0.0}, {"loss_r", win ? 0.0 : std::abs(gross_r)},
+            {"fee_r", nullptr}, {"slippage_r", nullptr}, {"funding_r", nullptr},
+            {"data_class", candidate.at("data_class")}, {"cost_status", "UNAVAILABLE"},
+            {"symbol", symbol}, {"direction", direction}, {"entry_reference", entry},
+            {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
+            {"decision_time_ms", decision}, {"resolution", resolution},
+            {"resolution_timeframe", "1h"}, {"source_scan_id", candidate.at("source_scan_id")},
+            {"source_l1_sha256", candidate.at("source_l1_sha256")}, {"outcome_kind", "SHADOW_PROXY"}
+        });
+        candidate["state"] = "RESOLVED";
+        candidate["resolution"] = resolution;
+        candidate["closed_at_ms"] = close_time;
+        candidate["gross_r"] = gross_r;
+        ++resolved;
+    }
+
+    ledger["ledger_status"] = ledger["outcomes"].empty() ? "EMPTY" : "AVAILABLE";
+    registry["updated_at_ms"] = current_time;
+    registry["summary"] = {
+        {"registered_this_run", registered}, {"resolved_this_run", resolved},
+        {"pending_count", still_pending}, {"rejected_this_run", rejected},
+        {"total_candidates", registry["candidates"].size()},
+        {"total_outcomes", ledger["outcomes"].size()}
+    };
+    return {{"registry", registry}, {"ledger", ledger}};
+}
+} // namespace cfss::shadow
