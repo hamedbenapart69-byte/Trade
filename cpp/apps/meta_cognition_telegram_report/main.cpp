@@ -44,6 +44,8 @@ std::string report_id(const json& report) {
 std::string report_text(const json& report) {
     std::string out = "گزارش مرحله ۶ | فراشناخت، کالیبراسیون و EV\n";
     out += "این گزارش تصمیم‌یار پژوهشی است؛ هیچ سفارش یا اجرای معاملاتی ندارد.\n";
+    out += "مبنای کالیبراسیون: HYPOTHESIS_PROXY؛ ورود فرضی در بازشدن کندل بعدی؛ اجرا NOT_EXECUTED.\\n";
+    out += "پروفایل Daily در حالت پژوهشی است؛ Scalp تا عبور از گیت فعال‌سازی غیرفعال است.\\n";
     out += "شناسه اجرا: " + report.value("source_run_id", std::string{"UNKNOWN"}) + "\n";
     out += "وضعیت دفتر نتایج: " + report.value("outcome_ledger_status", std::string{"UNKNOWN"}) +
            " | تعداد نتایج بسته‌شده: " + std::to_string(report.value("outcome_ledger_count", 0)) + "\n";
