@@ -49,7 +49,7 @@ Measured GitHub Actions run: `44244101096`; run ID: `okx-cpp-1794979539131`.
 - L1 SHA-256: `1c184b36a86a478131f363667629c6c7b43411861243d1af1be6149fa3634a79`.
 - L2 SHA-256: `c3834f7718dc8aa0ce76f6c714a3b7db3d610b41281938720704e0540ff9cdeb`.
 - For both symbols, orderbook and long/short arrays are absent from the current L1 contract.
-- The probe in this first run predates the C++ LFS probe executable; the updated workflow will run it in the next attempt.
+- The first v1 run predates the C++ LFS probe executable; the subsequent v2 run executed both the v1 probe and v2 scorer against fresh real inputs.
 
 **v1 result: FAIL for full-score availability, not for the aggregator's arithmetic contract.** The 5/5 score gate cannot be met. D1: LFS1 order-book and LFS3 long/short inputs are absent. D2: canonical raw-to-score transforms are not fully specified for all five components. No missing component is set to zero and no weights are redistributed.
 
@@ -79,8 +79,6 @@ Measured real run `44245558287` / `okx-cpp-1794980311216`:
 - JSON Schema validation: PASS.
 - CTest: 4/4 PASS; no Actions artifact upload: PASS.
 - The report is a feature score only. It does not create BUY/SELL states, trade instructions, or calibrated confidence.
-
-## v2 — LFS_V2_PROXY
 
 v2 was created only after the measured v1 FAIL and D1/D2 diagnosis above.
 
