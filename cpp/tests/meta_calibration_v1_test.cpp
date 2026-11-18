@@ -39,14 +39,14 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
 }
 
 int main() {
-    const auto empty = cfss::meta::calibrate({}, "PLAN_A_LRT", "DOWNTREND", 0.7);
+    const auto empty = cfss::meta::calibrate({}, "PLAN_A_LRT", "DOWNTREND", 0.7, 251LL * 60000LL);
     require(empty.status == "NOT_CALIBRATED" && !empty.probability_win &&
             empty.ev_status == "NOT_CALCULATED",
             "empty outcome ledger never produces probability or EV");
 
     auto outcomes = fixture(2.0, 1.0, 0.04, 0.02, 0.01);
     const auto calibrated = cfss::meta::calibrate(
-        outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80);
+        outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
     require(calibrated.status == "CALIBRATED",
             "chronological Platt/isotonic calibration improves held-out Brier");
     require(calibrated.train_count == 150U &&
@@ -73,14 +73,14 @@ int main() {
         0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01
     });
     const auto with_future = cfss::meta::calibrate(
-        future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80);
+        future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
     require(with_future.status == "CALIBRATED" &&
             std::abs(*with_future.probability_win - *calibrated.probability_win) < 1e-9,
             "future OOS outcomes do not change the fitted calibration probability");
 
     auto negative = fixture(0.5, 2.0, 0.10, 0.05, 0.05);
     const auto negative_ev = cfss::meta::calibrate(
-        negative, "PLAN_A_LRT", "DOWNTREND", 0.80);
+        negative, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
     require(negative_ev.status == "CALIBRATED" &&
             negative_ev.ev_status == "CALCULATED" &&
             negative_ev.ev_net && *negative_ev.ev_net <= 0.0 &&
@@ -90,12 +90,12 @@ int main() {
     auto duplicate = outcomes;
     duplicate.push_back(outcomes.front());
     const auto duplicate_result = cfss::meta::calibrate(
-        duplicate, "PLAN_A_LRT", "DOWNTREND", 0.80);
+        duplicate, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
     require(duplicate_result.status == "INVALID_OUTCOME_LEDGER",
             "duplicate signal IDs invalidate the calibration ledger");
 
     const auto other_regime = cfss::meta::calibrate(
-        outcomes, "PLAN_A_LRT", "UPTREND", 0.80);
+        outcomes, "PLAN_A_LRT", "UPTREND", 0.80, 251LL * 60000LL);
     require(other_regime.status == "NOT_CALIBRATED" &&
             other_regime.sample_count == 0U,
             "calibration is isolated by path and regime");
