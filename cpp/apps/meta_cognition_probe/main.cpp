@@ -125,6 +125,8 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
         {"win_rate_oos", optional_number(report.win_rate_oos)},
         {"win_rate_ci_low", optional_number(report.win_rate_ci_low)},
         {"win_rate_ci_high", optional_number(report.win_rate_ci_high)},
+        {"win_rate_cluster_ci_low", optional_number(report.win_rate_cluster_ci_low)},
+        {"win_rate_cluster_ci_high", optional_number(report.win_rate_cluster_ci_high)},
         {"probability_win", optional_number(report.probability_win)},
         {"avg_win_r", optional_number(report.avg_win_r)},
         {"avg_loss_r", optional_number(report.avg_loss_r)},
