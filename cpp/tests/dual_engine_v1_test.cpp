@@ -39,7 +39,8 @@ nlohmann::json hourly_fixture(bool breakout, bool sweep) {
             rows.push_back({
                 {"timestamp_ms", start + k * hour},
                 {"open", hourly_open}, {"high", high}, {"low", low},
-                {"close", hourly_close}, {"volume_quote", volume / 4.0}
+                {"close", hourly_close}, {"volume_quote", volume / 4.0},
+                {"closed", true}
             });
         }
     }
