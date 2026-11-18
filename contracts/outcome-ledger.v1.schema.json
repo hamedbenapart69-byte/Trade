@@ -39,6 +39,7 @@
           "resolution_timeframe": {"const": "1h"},
           "source_scan_id": {"type": "string", "minLength": 1},
           "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "source_universe_status": {"const": "VERIFIED"},
           "outcome_kind": {"const": "SHADOW_PROXY"}
         }
       }
