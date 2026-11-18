@@ -1,4 +1,4 @@
-"""Regression checks for the Stage 1B public dashboard publisher workflow."""
+"""Regression checks for the quarantined legacy Stage 1B dashboard workflow."""
 from pathlib import Path
 import unittest
 
@@ -9,38 +9,28 @@ APP = ROOT / "web" / "futures" / "app.js"
 
 
 class Stage1BDashboardWorkflowTests(unittest.TestCase):
-    def test_scanner_failure_publishes_explicit_degraded_snapshot(self):
+    def test_legacy_dashboard_publisher_is_quarantined(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("publish-degraded-report:", workflow)
-        self.assertIn("publish_degraded_stage1b_report.py", workflow)
-        self.assertIn("MARKET_DATA_DEGRADED", workflow)
-        self.assertIn("github.event.workflow_run.updated_at", workflow)
-        failure_job = workflow.split("publish-degraded-report:", 1)[1]
-        self.assertNotIn("actions/download-artifact", failure_job)
-        self.assertIn("timed_out", failure_job)
-        self.assertIn("cancelled", failure_job)
-        self.assertIn("--generated-at", failure_job)
-        self.assertIn("--run-id", failure_job)
-        self.assertIn("--conclusion", failure_job)
-        self.assertIn("Persist only LRT dashboard files", failure_job)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("workflow_run:", workflow)
+        self.assertIn("publish-dashboard:\n    if: ${{ false }}", workflow)
+        self.assertIn("publish-degraded-report:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("actions/download-artifact", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertNotIn("pages: write", workflow)
 
-    def test_publisher_runs_only_after_successful_scanner_and_uses_trusted_code(self):
-        content = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('"Trader_me Stage 1B LRT-15m Signal Bot"', content)
-        self.assertIn("github.event.workflow_run.conclusion == 'success'", content)
-        self.assertIn("ref: production-v1", content)
-        self.assertIn("ref: signals", content)
-        self.assertIn("persist-credentials: false", content)
-        self.assertIn("contents: write", content)
-        self.assertIn('python-version: "3.11"', content)
+    def test_dashboard_publisher_has_no_legacy_telegram_or_web_delivery_path(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("TELEGRAM_TOKEN", workflow)
+        self.assertNotIn("workflow_run:", workflow)
+        self.assertNotIn("git -C signals-repo push", workflow)
+        self.assertNotIn("actions/upload-artifact", workflow)
 
-    def test_publisher_downloads_scanner_artifact_and_writes_only_lrt_files(self):
-        content = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("trader-me-stage1-signal-bot-${{ github.event.workflow_run.id }}", content)
-        self.assertIn("incoming/stage1_lrt_report.json", content)
-        self.assertIn("publish_stage1b_dashboard.py", content)
-        self.assertIn("git -C signals-repo add lrt15m_signals.json lrt15m_history.csv", content)
-        self.assertNotIn("git -C signals-repo add .", content)
+    def test_dashboard_publication_is_not_part_of_v18_2(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("publish_stage1b_dashboard.py", workflow)
+        self.assertNotIn("publish_degraded_stage1b_report.py", workflow)
+        self.assertNotIn("incoming/stage1_lrt_report.json", workflow)
 
     def test_dashboard_consumes_lrt_specific_files_and_marks_unreported_gate(self):
         app = APP.read_text(encoding="utf-8")

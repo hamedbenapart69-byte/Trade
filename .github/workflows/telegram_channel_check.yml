@@ -1,12 +1,6 @@
 name: Telegram Public Channel Verification
 
 on:
-  push:
-    branches: [production-v1]
-    paths:
-      - "signal_autopilot/scripts/test_telegram_channel.py"
-      - "signal_autopilot/tests/test_telegram_channel_guard.py"
-      - ".github/workflows/telegram_channel_check.yml"
   workflow_dispatch:
 
 permissions:
