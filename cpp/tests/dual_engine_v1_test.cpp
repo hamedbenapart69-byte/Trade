@@ -114,7 +114,7 @@ int main() {
 
     const auto lrt_independent = cfss::engines::evaluate(
         "BTC/USDT:USDT",
-        {{"candles", hourly_fixture(false, true)}},
+        instrument_fixture(false, true),
         lfs(0.75), nss(0.10, 0.20), liquidity("RANGE", true), decision);
     require(lrt_independent.lrt.status == "CANDIDATE",
             "changing NSS below the veto threshold does not alter LRT logic");
@@ -130,7 +130,7 @@ int main() {
 
     const auto nmt_independent = cfss::engines::evaluate(
         "ETH/USDT:USDT",
-        {{"candles", hourly_fixture(true, false)}},
+        instrument_fixture(true, false),
         lfs(0.10), nss(0.75, 0.40), liquidity("UPTREND", false), decision);
     require(nmt_independent.nmt.status == "CANDIDATE",
             "changing LFS below the veto threshold does not alter NMT logic");
