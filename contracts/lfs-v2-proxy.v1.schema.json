@@ -12,7 +12,9 @@
     "source_scan_id",
     "status",
     "note",
-    "instruments"
+    "instruments",
+    "decision_time_ms",
+    "l1_sha256"
   ],
   "properties": {
     "schema_version": {
@@ -169,6 +171,14 @@
           }
         }
       }
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "l1_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     }
   }
 }
