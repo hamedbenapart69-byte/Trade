@@ -710,10 +710,30 @@ inline json collect(int symbol_count, int years,
             !cached_instrument->at("candles").empty();
         if (has_valid_candle_cache) {
             const auto& cached_candles = cached_instrument->at("candles");
+            const auto first_cached_ms = cached_candles.front().value("timestamp_ms", std::int64_t{0});
             const auto last_cached_ms = cached_candles.back().value("timestamp_ms", std::int64_t{0});
-            has_valid_candle_cache = last_cached_ms > 0 &&
-                end_ms >= last_cached_ms + 3'600'000LL &&
-                end_ms - (last_cached_ms + 3'600'000LL) <= 10LL * 86'400'000LL;
+            const auto effective_start_ms = item.listing_time_ms > start_ms
+                ? item.listing_time_ms : start_ms;
+            const auto expected_rows = std::max<std::int64_t>(
+                1, (end_ms - effective_start_ms) / 3'600'000LL);
+            const double cached_coverage = 100.0 * static_cast<double>(cached_candles.size()) /
+                                           static_cast<double>(expected_rows);
+            has_valid_candle_cache = first_cached_ms > 0 &&
+                first_cached_ms <= effective_start_ms + 3LL * 3'600'000LL &&
+                last_cached_ms > 0 && end_ms >= last_cached_ms + 3'600'000LL &&
+                end_ms - (last_cached_ms + 3'600'000LL) <= 10LL * 86'400'000LL &&
+                cached_coverage >= 98.0;
+        }
+        bool oi_cache_complete = false;
+        if (cached_instrument && cached_instrument->contains("open_interest") &&
+            cached_instrument->at("open_interest").is_array() &&
+            !cached_instrument->at("open_interest").empty()) {
+            const auto& cached_oi = cached_instrument->at("open_interest");
+            const auto first_oi_ms = cached_oi.front().value("timestamp_ms", std::int64_t{0});
+            const auto last_oi_ms = cached_oi.back().value("timestamp_ms", std::int64_t{0});
+            oi_cache_complete = first_oi_ms > 0 && last_oi_ms > first_oi_ms &&
+                last_oi_ms - first_oi_ms >= 25LL * 86'400'000LL &&
+                end_ms >= last_oi_ms && end_ms - last_oi_ms <= 3LL * 86'400'000LL;
         }
         try {
             if (has_valid_candle_cache) {
@@ -741,7 +761,7 @@ inline json collect(int symbol_count, int years,
         }
         try {
             const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
-                                                   has_valid_candle_cache ? 1 : 12);
+                                                   oi_cache_complete ? 1 : 12);
             const auto old = cached_instrument && cached_instrument->contains("open_interest")
                 ? cached_instrument->at("open_interest") : json::array();
             oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
