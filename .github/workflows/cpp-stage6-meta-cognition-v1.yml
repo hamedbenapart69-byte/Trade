@@ -1,6 +1,9 @@
-name: C++ Stage 6 Meta-Cognition Calibration and EV
+name: C++ Stage 6 Meta-Cognition Calibration and Shadow Outcomes
 
 on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
   push:
     branches: [feat/cpp-stage6-meta-calibration-v1]
     paths:
@@ -10,14 +13,14 @@ permissions:
   contents: write
 
 concurrency:
-  group: stage6-meta-cognition-${{ github.ref }}
+  group: stage6-meta-cognition-\${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   validate-and-deliver:
-    if: ${{ contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
+    if: \${{ github.event_name != 'push' || contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +35,44 @@ jobs:
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
 
-      - name: Checkout immutable signal history branch
+      - name: Collect fresh market data and recompute Stage 4/5 in C++
+        run: |
+          set -euo pipefail
+          mkdir -p stage6-evidence
+          ./build/market_pipeline --collect-okx 10 2 \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/l2-status.v1.json
+          ./build/lfs_v2_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/lfs-v2.json
+          ./build/nss_basis_collector \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/nss-basis.v1.json
+          ./build/nss_v2_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/nss-basis.v1.json \
+            stage6-evidence/nss-v2.json
+          ./build/liquidity_phase_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/liquidity-phase.v1.json
+          ./build/dual_engine_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/lfs-v2.json \
+            stage6-evidence/nss-v2.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/lrt-candidates.v1.json \
+            stage6-evidence/nmt-candidates.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/lfs-v2-proxy.v1.schema.json -d stage6-evidence/lfs-v2.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/nss-v2-proxy.v1.schema.json -d stage6-evidence/nss-v2.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/liquidity-phase.v1.schema.json -d stage6-evidence/liquidity-phase.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/dual-engine-report.v1.schema.json -d stage6-evidence/dual-engine-report.v1.json --all-errors
+          sha256sum stage6-evidence/l1-market-data.v1.json stage6-evidence/dual-engine-report.v1.json
+
+      - name: Checkout persistent signal and outcome state
         uses: actions/checkout@v4
         with:
           ref: signals
@@ -40,66 +80,94 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Verify Stage 4 and Stage 5 source artifacts
+      - name: Initialize explicit empty state only when no state exists
         run: |
-          test -s signals-state/cpp_runtime/dual_engine_stage5_v1.json
-          test -s signals-state/cpp_runtime/liquidity_stage5_v1.json
-          jq -e '.artifact_type == "cfss_dual_engine_report_v1"' signals-state/cpp_runtime/dual_engine_stage5_v1.json
-          jq -e '.artifact_type == "cfss_liquidity_phase_v1"' signals-state/cpp_runtime/liquidity_stage5_v1.json
-
-      - name: Create an explicit empty ledger only when no real ledger exists
-        run: |
+          set -euo pipefail
           mkdir -p signals-state/cpp_runtime
-          if [ ! -s signals-state/cpp_runtime/outcome_ledger.v1.json ]; then
-            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","ledger_status":"EMPTY","outcomes":[]}' > signals-state/cpp_runtime/outcome_ledger.v1.json
+          if [ ! -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' \
+              > signals-state/cpp_runtime/shadow_candidate_registry.v1.json
           fi
+          if [ ! -s signals-state/cpp_runtime/outcome_ledger.v1.json ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","ledger_status":"EMPTY","outcomes":[]}' \
+              > signals-state/cpp_runtime/outcome_ledger.v1.json
+          fi
+
+      - name: Register candidates and resolve only future closed 1H candles
+        run: |
+          set -euo pipefail
+          ./build/shadow_outcome_tracker \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/dual-engine-report.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
+            signals-state/cpp_runtime/outcome_ledger.v1.json \
+            stage6-evidence/shadow_candidate_registry.v1.json \
+            stage6-evidence/outcome_ledger.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/shadow-candidate-registry.v1.schema.json \
+            -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/outcome-ledger.v1.schema.json \
-            -d signals-state/cpp_runtime/outcome_ledger.v1.json --all-errors
-          jq '{ledger_status, outcome_count:(.outcomes|length)}' signals-state/cpp_runtime/outcome_ledger.v1.json
+            -d stage6-evidence/outcome_ledger.v1.json --all-errors
+          jq '{ledger_status, outcome_count:(.outcomes|length)}' stage6-evidence/outcome_ledger.v1.json
 
-      - name: Compute meta-cognition with point-in-time cutoff
+      - name: Compute meta-cognition with path, regime and data-class isolation
         run: |
+          set -euo pipefail
           ./build/meta_cognition_probe \
-            signals-state/cpp_runtime/dual_engine_stage5_v1.json \
-            signals-state/cpp_runtime/liquidity_stage5_v1.json \
-            signals-state/cpp_runtime/outcome_ledger.v1.json \
-            signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+            stage6-evidence/dual-engine-report.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/outcome_ledger.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/meta-cognition.v1.schema.json \
-            -d signals-state/cpp_runtime/meta_cognition_stage6_v1.json --all-errors
+            -d stage6-evidence/meta_cognition_stage6_v1.json --all-errors
           jq -r '.instruments[] | [.symbol, .lrt.candidate_status, .lrt.confidence_status, .lrt.ev_status, .nmt.candidate_status, .nmt.confidence_status, .nmt.ev_status] | @tsv' \
-            signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+            stage6-evidence/meta_cognition_stage6_v1.json
 
       - name: Reserve Telegram report idempotently and persist evidence before send
         run: |
+          set -euo pipefail
+          cp stage6-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage5_v2.json
+          cp stage6-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage5_v2.json
+          cp stage6-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage5_v1.json
+          cp stage6-evidence/dual-engine-report.v1.json signals-state/cpp_runtime/dual_engine_stage5_v1.json
+          cp stage6-evidence/shadow_candidate_registry.v1.json signals-state/cpp_runtime/shadow_candidate_registry.v1.json
+          cp stage6-evidence/outcome_ledger.v1.json signals-state/cpp_runtime/outcome_ledger.v1.json
+          cp stage6-evidence/meta_cognition_stage6_v1.json signals-state/cpp_runtime/meta_cognition_stage6_v1.json
           ./build/meta_cognition_telegram_report --prepare \
-            signals-state/cpp_runtime/meta_cognition_stage6_v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
             signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/outcome_ledger.v1.json \
+          git add cpp_runtime/lfs_stage5_v2.json \
+            cpp_runtime/nss_stage5_v2.json \
+            cpp_runtime/liquidity_stage5_v1.json \
+            cpp_runtime/dual_engine_stage5_v1.json \
+            cpp_runtime/shadow_candidate_registry.v1.json \
+            cpp_runtime/outcome_ledger.v1.json \
             cpp_runtime/meta_cognition_stage6_v1.json \
             cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           if ! git diff --cached --quiet; then
-            git commit -m "audit(stage6): persist meta-cognition report and Telegram reservation"
+            git commit -m "audit(stage6): persist fresh C++ shadow outcomes and calibration"
             git push origin HEAD:signals
           fi
 
       - name: Deliver Stage 6 report through Telegram only
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN: \${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          test -n "${TELEGRAM_TOKEN}"
-          test -n "${TELEGRAM_CHAT_ID}"
+          test -n "\${TELEGRAM_TOKEN}"
+          test -n "\${TELEGRAM_CHAT_ID}"
           ./build/meta_cognition_telegram_report --send \
-            signals-state/cpp_runtime/meta_cognition_stage6_v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
             signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
 
       - name: Persist Telegram receipt
-        if: ${{ always() }}
+        if: \${{ always() }}
         run: |
           cd signals-state
           git config user.name "github-actions[bot]"
