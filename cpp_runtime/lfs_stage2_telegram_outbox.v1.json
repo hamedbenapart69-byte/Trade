@@ -20,9 +20,11 @@
     },
     {
       "attempts": 1,
+      "delivered_at_utc": "2026-11-18T11:16:48Z",
+      "message_id": 50,
       "report_id": "061fddcc33bbbcfa1ca3f43ead32f4f60b52233364aedcda7aab443b0c808413",
       "started_at_utc": "2026-11-18T11:16:46Z",
-      "status": "SENDING"
+      "status": "DELIVERED"
     }
   ],
   "schema_version": "1.0.0"
