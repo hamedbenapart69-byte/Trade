@@ -50,6 +50,7 @@ inline json empty_ledger() {
     return {
         {"schema_version", "1.0.0"},
         {"artifact_type", "cfss_outcome_ledger_v1"},
+        {"profile", "DAILY_SWING"},
         {"ledger_status", "EMPTY"},
         {"outcomes", json::array()}
     };
@@ -86,6 +87,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
     if (registry.value("artifact_type", std::string{}) != "cfss_shadow_candidate_registry_v1" ||
         !registry.contains("candidates") || !registry.at("candidates").is_array() ||
         ledger.value("artifact_type", std::string{}) != "cfss_outcome_ledger_v1" ||
+        ledger.value("profile", std::string{}) != "DAILY_SWING" ||
         !ledger.contains("outcomes") || !ledger.at("outcomes").is_array())
         throw std::runtime_error("shadow_state_artifact_invalid");
 
