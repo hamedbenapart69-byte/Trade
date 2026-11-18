@@ -57,6 +57,23 @@ int main() {
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
             pinned.back().base == "SOL",
             "pending candidates remain in L1 even after falling outside top-turnover eligibility");
+    const nlohmann::json old_cache = {
+        {"schema_version", "1.0.0"},
+        {"provider", {{"primary_provider_id", "okx"}}},
+        {"instruments", nlohmann::json::array({
+            {{"instrument_id", "BTC-USDT-SWAP"}, {"candles", nlohmann::json::array({1, 2})}},
+            {{"instrument_id", "ETH-USDT-SWAP"}, {"candles", nlohmann::json::array({3, 4})}}
+        })}
+    };
+    const nlohmann::json refreshed = nlohmann::json::array({
+        {{"instrument_id", "ETH-USDT-SWAP"}, {"candles", nlohmann::json::array({5, 6})}},
+        {{"instrument_id", "SOL-USDT-SWAP"}, {"candles", nlohmann::json::array({7, 8})}}
+    });
+    const auto checkpoint = cfss::okx::make_market_cache_snapshot(old_cache, refreshed);
+    require(checkpoint.at("instruments").size() == 3U &&
+            checkpoint.at("instruments").at(1).at("instrument_id") == "ETH-USDT-SWAP" &&
+            checkpoint.at("instruments").at(1).at("candles").at(0) == 5,
+            "partial checkpoints preserve untouched instruments and replace refreshed instrument data");
     std::cout << "CRYPTO_UNIVERSE_TESTS_PASS\n";
     return 0;
 }
