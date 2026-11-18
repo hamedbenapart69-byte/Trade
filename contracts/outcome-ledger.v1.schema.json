@@ -13,9 +13,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["signal_id", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"],
+        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind"],
         "properties": {
           "signal_id": {"type": "string", "minLength": 1},
+          "profile": {"const": "DAILY_SWING"},
           "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT", "PLAN_B", "PLAN_C", "PLAN_H"]},
           "regime": {"type": "string", "minLength": 1},
           "closed_at_ms": {"type": "integer", "minimum": 1},
@@ -31,16 +32,19 @@
           "symbol": {"type": "string", "minLength": 1},
           "direction": {"enum": ["LONG", "SHORT"]},
           "entry_reference": {"type": "number", "exclusiveMinimum": 0},
+          "entry_fill_reference": {"type": "number", "exclusiveMinimum": 0},
+          "entry_model": {"const": "NEXT_BAR_OPEN_PROXY"},
+          "execution_status": {"const": "NOT_EXECUTED"},
           "stop_reference": {"type": "number", "exclusiveMinimum": 0},
           "target_reference": {"type": "number", "exclusiveMinimum": 0},
           "exit_reference": {"type": "number", "exclusiveMinimum": 0},
           "decision_time_ms": {"type": "integer", "minimum": 1},
           "resolution": {"enum": ["STOP", "TARGET", "STOP_FIRST_SAME_BAR_AMBIGUITY", "TIME_EXPIRY"]},
-          "resolution_timeframe": {"const": "1h"},
+          "resolution_timeframe": {"enum": ["15m", "1h"]},
           "source_scan_id": {"type": "string", "minLength": 1},
           "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
           "source_universe_status": {"const": "VERIFIED"},
-          "outcome_kind": {"const": "SHADOW_PROXY"}
+          "outcome_kind": {"const": "HYPOTHESIS_PROXY"}
         }
       }
     }
