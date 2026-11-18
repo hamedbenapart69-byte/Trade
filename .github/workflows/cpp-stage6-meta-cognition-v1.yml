@@ -210,6 +210,10 @@ jobs:
       - name: Persist Telegram receipt
         if: ${{ always() }}
         run: |
+          if [ ! -d signals-state ]; then
+            echo "Persistent signals checkout unavailable; no receipt state can be safely written."
+            exit 0
+          fi
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
