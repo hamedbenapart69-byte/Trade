@@ -11,14 +11,6 @@ on:
         description: "Comma-separated supported symbols"
         required: false
         default: "BTC,ETH,SOL,XRP,DOGE,ADA,LINK,LTC,BCH,AVAX"
-  push:
-    branches: [main, feat/orderbook-l2-l1, fix/orderbook-l2-per-symbol-freshness, stabilization/v9-hardening]
-    paths:
-      - ".github/workflows/orderbook-l2.yml"
-      - "signal_autopilot/modules/orderbook_l2.py"
-      - "signal_autopilot/scripts/collect_orderbook_l2.py"
-      - "signal_autopilot/scripts/merge_orderbook_l2.py"
-      - "signal_autopilot/requirements.txt"
 
 permissions:
   contents: read
