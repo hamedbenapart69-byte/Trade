@@ -1,8 +1,6 @@
 name: Public L2 Order Book Collector
 
 on:
-  schedule:
-    - cron: "7 * * * *"
   workflow_dispatch:
     inputs:
       duration_seconds:
@@ -68,11 +66,3 @@ jobs:
           SYMBOLS="${{ inputs.symbols || 'BTC,ETH,SOL,XRP,DOGE,ADA,LINK,LTC,BCH,AVAX' }}"
           python scripts/collect_orderbook_l2.py --duration-seconds "$DURATION" --sample-interval-seconds 10 --symbols "$SYMBOLS"
 
-      - name: Upload raw capture evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: orderbook-l2-capture-${{ github.run_id }}
-          path: signal_autopilot/data/orderbook_l2/
-          if-no-files-found: warn
-          retention-days: 30
