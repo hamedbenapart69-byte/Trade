@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <map>
+#include <limits>
 #include <optional>
 #include <string>
 #include <vector>
@@ -338,23 +339,29 @@ inline nlohmann::json to_json(const Result& result) {
             {"atr14", zone.atr},
             {"pivot_time_ms", zone.pivot_time_ms},
             {"confirmed_at_ms", zone.confirmed_at_ms},
-            {"invalidated_at_ms", zone.invalidated_at_ms},
+            {"invalidated_at_ms", zone.invalidated_at_ms > 0 ? json(zone.invalidated_at_ms) : json(nullptr)},
             {"touch_count", zone.touch_count},
             {"status", zone.status},
-            {"source_quality", "REAL"},
+            {"input_quality", "REAL"},
+            {"method_class", "RULE_BASED_PROXY"},
             {"timeframe", "4H"}
         });
     }
-    const auto optional_zone = [](const std::optional<Zone>& zone) -> json {
+    const auto optional_zone = [&](const std::optional<Zone>& zone) -> json {
         if (!zone) return nullptr;
+        const double distance = zone->side == "DEMAND"
+            ? result.current_price - zone->high
+            : zone->low - result.current_price;
         return {{"id", zone->id}, {"low", zone->low}, {"high", zone->high},
-                {"distance_from_price", zone->side == "DEMAND" ? 0.0 : 0.0},
-                {"side", zone->side}, {"confirmed_at_ms", zone->confirmed_at_ms}};
+                {"distance_from_price", distance},
+                {"side", zone->side}, {"confirmed_at_ms", zone->confirmed_at_ms},
+                {"input_quality", "REAL"}, {"method_class", "RULE_BASED_PROXY"}};
     };
     return {
         {"symbol", result.symbol},
         {"status", result.status},
         {"phase", result.phase},
+        {"phase_model", "STRUCTURE_EMA_RULES_V1"},
         {"phase_reason", result.phase_reason},
         {"as_of_ms", result.as_of_ms},
         {"current_price", result.current_price},
