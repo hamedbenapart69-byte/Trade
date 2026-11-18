@@ -35,13 +35,22 @@ jobs:
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
 
+      - name: Checkout persistent signal and outcome state
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+
       - name: Collect fresh market data and recompute Stage 4/5 in C++
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence
           ./build/market_pipeline --collect-okx 10 2 \
             stage6-evidence/l1-market-data.v1.json \
-            stage6-evidence/l2-status.v1.json
+            stage6-evidence/l2-status.v1.json \
+            signals-state/cpp_runtime/crypto_universe.v1.json
           ./build/lfs_v2_probe \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/lfs-v2.json
@@ -75,14 +84,6 @@ jobs:
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/l2-status.v1.schema.json -d stage6-evidence/l2-status.v1.json --all-errors
           sha256sum stage6-evidence/l1-market-data.v1.json stage6-evidence/dual-engine-report.v1.json
-
-      - name: Checkout persistent signal and outcome state
-        uses: actions/checkout@v4
-        with:
-          ref: signals
-          path: signals-state
-          fetch-depth: 0
-          persist-credentials: true
 
       - name: Initialize explicit empty state only when no state exists
         run: |
@@ -133,6 +134,7 @@ jobs:
       - name: Reserve Telegram report idempotently and persist evidence before send
         run: |
           set -euo pipefail
+          cp stage6-evidence/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
           cp stage6-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage5_v2.json
           cp stage6-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage5_v2.json
           cp stage6-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage5_v1.json
@@ -146,7 +148,8 @@ jobs:
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/lfs_stage5_v2.json \
+          git add cpp_runtime/crypto_universe.v1.json \
+            cpp_runtime/lfs_stage5_v2.json \
             cpp_runtime/nss_stage5_v2.json \
             cpp_runtime/liquidity_stage5_v1.json \
             cpp_runtime/dual_engine_stage5_v1.json \
