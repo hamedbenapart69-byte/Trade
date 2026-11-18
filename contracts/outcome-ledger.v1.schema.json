@@ -15,7 +15,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "data_class", "cost_status", "symbol", "direction", "entry_reference", "entry_fill_reference", "entry_model", "execution_status", "stop_reference", "target_reference", "exit_reference", "decision_time_ms", "resolution", "resolution_timeframe", "source_scan_id", "source_l1_sha256", "outcome_kind", "resolution_data_sha256", "resolution_bars"],
+        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "score_model_version", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "data_class", "cost_status", "symbol", "direction", "entry_reference", "entry_fill_reference", "entry_model", "execution_status", "stop_reference", "target_reference", "exit_reference", "decision_time_ms", "resolution", "resolution_timeframe", "source_scan_id", "source_l1_sha256", "outcome_kind", "resolution_data_sha256", "resolution_bars"],
         "properties": {
           "signal_id": {"type": "string", "minLength": 1},
           "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
@@ -23,6 +23,7 @@
           "regime": {"type": "string", "minLength": 1},
           "closed_at_ms": {"type": "integer", "minimum": 1},
           "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY"]},
           "win": {"type": "boolean"},
           "win_r": {"type": "number", "minimum": 0},
           "loss_r": {"type": "number", "minimum": 0},
