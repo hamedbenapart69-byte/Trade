@@ -192,15 +192,26 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
         }
 
         bool closed = false;
+        bool data_gap = false;
         double exit_price = 0.0;
         std::int64_t close_time = 0;
+        std::int64_t expected_next_bar_ms = decision;
+        const json* last_contiguous_bar = nullptr;
         std::string resolution;
         const auto& candles = instrument->at("candles");
         for (const auto& candle : candles) {
             if (!candle.value("closed", false)) continue;
             const auto ts = candle.value("timestamp_ms", std::int64_t{0});
+            if (ts < decision) continue;
+            if (ts >= expiry) break;
             const auto bar_close_time = ts + kOneHourMs;
-            if (ts < decision || bar_close_time > current_time || bar_close_time > expiry) continue;
+            if (bar_close_time > current_time) break;
+            if (ts != expected_next_bar_ms) {
+                data_gap = true;
+                break;
+            }
+            expected_next_bar_ms = bar_close_time;
+            last_contiguous_bar = &candle;
             const double high = required_number(candle, "high");
             const double low = required_number(candle, "low");
             const bool stop_hit = direction == "LONG" ? low <= stop : high >= stop;
@@ -221,24 +232,16 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             }
         }
 
-        if (!closed && current_time >= expiry) {
-            const json* expiry_bar = nullptr;
-            std::int64_t expiry_bar_close = 0;
-            for (const auto& candle : candles) {
-                if (!candle.value("closed", false)) continue;
-                const auto ts = candle.value("timestamp_ms", std::int64_t{0});
-                const auto bar_close_time = ts + kOneHourMs;
-                if (ts >= decision && bar_close_time <= expiry && bar_close_time <= current_time) {
-                    expiry_bar = &candle;
-                    expiry_bar_close = bar_close_time;
-                }
-            }
-            if (expiry_bar) {
-                exit_price = required_number(*expiry_bar, "close");
-                close_time = expiry_bar_close;
-                resolution = "TIME_EXPIRY";
-                closed = true;
-            }
+        if (data_gap) {
+            ++still_pending;
+            continue;
+        }
+        if (!closed && current_time >= expiry && expected_next_bar_ms >= expiry &&
+            last_contiguous_bar != nullptr) {
+            exit_price = required_number(*last_contiguous_bar, "close");
+            close_time = expected_next_bar_ms;
+            resolution = "TIME_EXPIRY";
+            closed = true;
         }
 
         if (!closed) {
