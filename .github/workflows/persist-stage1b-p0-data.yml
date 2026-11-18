@@ -35,15 +35,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Download completed P0 dataset artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: stage1b-p0-dataset-${{ github.event.workflow_run.id }}
-          path: incoming
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-
       - name: Set up trusted validator Python
         uses: actions/setup-python@v5
         with:
@@ -141,29 +132,3 @@ jobs:
       actions: read
       contents: read
     steps:
-      - name: Prune older Stage 1b P0 artifacts to stay within free storage
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const currentRunId = Number(context.payload.workflow_run.id);
-            const artifacts = await github.paginate(
-              github.rest.actions.listArtifactsForRepo,
-              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
-            );
-            let deleted = 0;
-            for (const artifact of artifacts) {
-              const sourceRunId = Number(artifact.workflow_run?.id || 0);
-              if (
-                artifact.name.startsWith("stage1b-p0-dataset-") &&
-                sourceRunId > 0 &&
-                sourceRunId < currentRunId
-              ) {
-                await github.rest.actions.deleteArtifact({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  artifact_id: artifact.id
-                });
-                deleted += 1;
-              }
-            }
-            core.info(`Deleted ${deleted} older Stage 1b P0 artifacts; retained current and newer runs.`);
