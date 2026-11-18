@@ -304,7 +304,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
             item.win_r < 0.0 || item.loss_r < 0.0 ||
             (item.costs_available && (!std::isfinite(item.fee_r) ||
              !std::isfinite(item.slippage_r) || !std::isfinite(item.funding_r) ||
-             item.fee_r < 0.0 || item.slippage_r < 0.0 || item.funding_r < 0.0)) ||
+             item.fee_r < 0.0 || item.slippage_r < 0.0)) ||
             (item.win && (item.win_r <= 0.0 || item.loss_r != 0.0)) ||
             (!item.win && (item.loss_r < 0.0 || item.win_r != 0.0))) {
             report.status = "INVALID_OUTCOME_LEDGER";
