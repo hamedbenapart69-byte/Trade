@@ -40,18 +40,32 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         throw std::runtime_error("outcome_ledger_array_missing");
     for (const auto& row : ledger.at("outcomes")) {
         if (!row.is_object()) throw std::runtime_error("outcome_row_not_object");
+        const std::vector<std::string> required{
+            "signal_id", "path", "regime", "closed_at_ms", "raw_score",
+            "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
+        };
+        for (const auto& key : required)
+            if (!row.contains(key) || row.at(key).is_null())
+                throw std::runtime_error("outcome_required_field_missing:" + key);
+        if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
+            !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
+            !row.at("raw_score").is_number() || !row.at("win").is_boolean() ||
+            !row.at("win_r").is_number() || !row.at("loss_r").is_number() ||
+            !row.at("fee_r").is_number() || !row.at("slippage_r").is_number() ||
+            !row.at("funding_r").is_number())
+            throw std::runtime_error("outcome_field_type_invalid");
         cfss::meta::Outcome item{};
-        item.signal_id = row.value("signal_id", std::string{});
-        item.path = row.value("path", std::string{});
-        item.regime = row.value("regime", std::string{});
-        item.closed_at_ms = row.value("closed_at_ms", std::int64_t{0});
-        item.raw_score = row.value("raw_score", std::numeric_limits<double>::quiet_NaN());
-        item.win = row.value("win", false);
-        item.win_r = row.value("win_r", 0.0);
-        item.loss_r = row.value("loss_r", 0.0);
-        item.fee_r = row.value("fee_r", 0.0);
-        item.slippage_r = row.value("slippage_r", 0.0);
-        item.funding_r = row.value("funding_r", 0.0);
+        item.signal_id = row.at("signal_id").get<std::string>();
+        item.path = row.at("path").get<std::string>();
+        item.regime = row.at("regime").get<std::string>();
+        item.closed_at_ms = row.at("closed_at_ms").get<std::int64_t>();
+        item.raw_score = row.at("raw_score").get<double>();
+        item.win = row.at("win").get<bool>();
+        item.win_r = row.at("win_r").get<double>();
+        item.loss_r = row.at("loss_r").get<double>();
+        item.fee_r = row.at("fee_r").get<double>();
+        item.slippage_r = row.at("slippage_r").get<double>();
+        item.funding_r = row.at("funding_r").get<double>();
         out.push_back(item);
     }
     return out;
@@ -105,7 +119,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
             report.reason = "OUTCOME_LEDGER_MISSING";
             reason = report.reason;
         } else {
-            report = cfss::meta::calibrate(outcomes, path, regime, *score);
+            report = cfss::meta::calibrate(outcomes, path, regime, *score, decision_time);
             reason = report.reason;
             if (report.status == "INVALID_OUTCOME_LEDGER") {
                 status = "INSUFFICIENT_DATA";
@@ -166,7 +180,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("STAGE5_STAGE4_PROVENANCE_MISMATCH");
 
         const auto outcomes = parse_outcomes(ledger);
-        const bool ledger_available = ledger.value("ledger_status", std::string{"AVAILABLE"}) == "AVAILABLE";
+        const bool ledger_available = ledger.value("ledger_status", std::string{"UNAVAILABLE"}) == "AVAILABLE";
         json instruments = json::array();
         for (const auto& item : dual.at("instruments")) {
             const auto symbol = item.value("symbol", std::string{"UNKNOWN"});
@@ -194,11 +208,11 @@ int main(int argc, char** argv) {
             {"stage5_report_sha256", cfss::sha256_hex(read_raw(dual_path))},
             {"liquidity_report_sha256", cfss::sha256_hex(read_raw(liquidity_path))},
             {"outcome_ledger_sha256", cfss::sha256_hex(read_raw(outcomes_path))},
-            {"outcome_ledger_status", ledger.value("ledger_status", std::string{"AVAILABLE"})},
+            {"outcome_ledger_status", ledger.value("ledger_status", std::string{"UNAVAILABLE"})},
             {"outcome_ledger_count", outcomes.size()},
             {"calibration_policy", {
                 {"split", "CHRONOLOGICAL_60_20_20"},
-                {"minimum_total", 180},
+                {"minimum_total", 250},
                 {"minimum_train", 100},
                 {"minimum_validation", 30},
                 {"minimum_oos", 50},
