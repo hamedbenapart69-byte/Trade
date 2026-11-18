@@ -63,8 +63,9 @@ int main() {
             *calibrated.brier_calibrated_oos < *calibrated.brier_raw_oos,
             "held-out Brier improves over raw score baseline");
     require(calibrated.brier_ci_low && calibrated.brier_ci_high &&
-            calibrated.win_rate_ci_low && calibrated.win_rate_ci_high,
-            "OOS confidence intervals are reported");
+            calibrated.win_rate_ci_low && calibrated.win_rate_ci_high &&
+            calibrated.win_rate_cluster_ci_low && calibrated.win_rate_cluster_ci_high,
+            "Wilson and two-way clustered OOS confidence intervals are both reported");
     require(calibrated.oos_scan_clusters == 50U &&
             calibrated.oos_symbol_clusters == 50U &&
             std::abs(calibrated.oos_effective_sample_size - 50.0) < 1e-9,
