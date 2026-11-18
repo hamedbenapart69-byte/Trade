@@ -95,8 +95,8 @@ struct CalibrationReport {
     std::int64_t oos_period_end_ms{};
     std::map<std::string, std::size_t> oos_symbol_distribution;
     std::map<std::string, std::size_t> oos_daily_distribution;
-    std::string confidence_interval_method{"THREE_WAY_CLUSTER_ROBUST"};
-    std::string win_rate_interval_method{"WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"};
+    std::string confidence_interval_method{"MAX_OF_ONE_WAY_CLUSTER_SE"};
+    std::string win_rate_interval_method{"WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"};
     std::optional<double> brier_raw_oos;
     std::optional<double> brier_calibrated_oos;
     std::optional<double> brier_ci_low;
