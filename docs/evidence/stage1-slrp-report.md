@@ -3,7 +3,7 @@
 **Canonical specification:** UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER  
 **Implementation branch:** `feat/cpp-stage1-clean`  
 **PR:** #150 (draft; not merged)  
-**Status:** IN PROGRESS — one complete L1/L2/L3 run verified; inbound and second distinct scan run remain open.
+**Status:** IN PROGRESS — two distinct complete L1/L2/L3 runs verified; live Telegram inbound receive/reply/offset persistence now verified; duplicate replay gate has deterministic C++ unit coverage; S1-12 account-level billing/storage remains unresolved.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Deliver one real C++20 vertical slice from public market-data acquisition throug
 | S1-05 | Frozen universe and per-symbol coverage report | 529 declared active USDT swaps; 90 passed metadata and >USD 10M 24h quote-notional gate; frozen selected ID list and per-symbol coverage emitted | PASS |
 | S1-06 | L1/L2/output/run-manifest schemas, deterministic tests and hashes | L1, L2, signals, performance, coverage, system-status and run-manifest AJV validations passed; L1/L2 hashes logged; eight persisted output SHA-256 values independently recomputed and matched; deterministic scan ID and delivery key tests | PASS |
 | S1-07 | Real Telegram outbound with positive response and message ID | Runs 44135013370 and 44149930383; HTTP 200; Telegram message IDs 39 and 40; one send attempt each; both receipts persisted | PASS |
-| S1-08 | Real Telegram inbound, update processing, offset persistence and duplicate suppression | Controlled `/status` test not yet run | NOT PROVEN |
+| S1-08 | Real Telegram inbound, update processing, offset persistence and duplicate suppression | Live run 44240412741 processed update 610176013, persisted offset 610176013, replied with Telegram message ID 43 (`DELIVERED`); deterministic C++ unit test now checks that only `REPLY_PENDING` can resume and `PROCESSED` updates are not replayed. A second live Telegram replay attempt has not been performed. | PARTIAL |
 | S1-09 | Two consecutive complete L1/L2/L3 runs with integrity and manifests | Runs 44135013370 and 44149930383 both have L1_L2_L3_PASS and DELIVERED receipts; scan IDs differ; second run's eight persisted artifact hashes independently matched | PASS |
 | S1-10 | Failure honesty and degraded/no-signal reporting | Partial funding/OI is classified MARKET_DATA_DEGRADED; complete data with no strategy admitted is NO_QUALIFIED_SETUP; actionable=false; confidence NOT_CALIBRATED | PASS |
 | S1-11 | No user-side provider connectivity | GitHub Actions fetches public data; user receives Telegram only; no exchange account keys or account connection | PASS |
@@ -115,8 +115,6 @@ Second-run real data:
 
 ## Handoff
 
-Stage 1 is **not PASS yet**. S1-09 is now PASS. Remaining evidence:
-- Owner sends `/status` to the configured Telegram bot; then the tagged inbound-test workflow must prove a newly received update, processed reply, persisted offset and duplicate suppression (S1-08).
-- Confirm the account-level artifact-storage allowance or an equivalent billing guard for S1-12. The current workflow disables future Actions artifact uploads, but one historical artifact remains under its original retention period.
+Stage 1 is **not PASS yet**. S1-09 is PASS. Live inbound processing and offset persistence are now proven; S1-08 remains PARTIAL until a controlled live replay/no-duplicate check is evidenced. S1-12 remains PARTIAL because account-level billing/storage cannot be read through the connected repository integration and one historical Actions artifact remains under its original retention period.
 
 Do not merge PR #150 or begin Stage 2 until the complete S1-01 through S1-12 matrix is PASS and the owner confirms the Stage 1 handoff.
