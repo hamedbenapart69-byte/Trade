@@ -22,7 +22,7 @@ jobs:
           ref: c34b037e3534192fd95e65a10bc67acba9821f8b
           path: market-data
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install Parquet reader
