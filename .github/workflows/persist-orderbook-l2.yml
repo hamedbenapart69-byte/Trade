@@ -37,15 +37,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Download capture artifact from completed collector run
-        uses: actions/download-artifact@v4
-        with:
-          name: orderbook-l2-capture-${{ github.event.workflow_run.id }}
-          path: incoming
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-
       - name: Validate and merge Parquet capture
         shell: bash
         run: |
