@@ -49,14 +49,21 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
       - name: Reconcile prior unknown delivery using complete recent public channel window
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           set -euo pipefail
+          getchat_code="$(curl --silent --show-error --get --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --output stage2-evidence/getchat.json --write-out "%{http_code}" --max-time 20 "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getChat")"
+          test "${getchat_code}" = "200"
+          channel_username="$(jq -r '.result.username // empty' stage2-evidence/getchat.json)"
+          test -n "${channel_username}"
           outbox="signals-state/cpp_runtime/lfs_stage2_telegram_outbox.v1.json"
           unknown_count="$(jq '[.receipts[] | select(.status == "DELIVERY_UNKNOWN")] | length' "${outbox}")"
           test "${unknown_count}" = "1"
           report_id="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .report_id' "${outbox}")"
           attempt_raw="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .started_at_utc' "${outbox}")"
-          code="$(curl --silent --show-error --location --output stage2-evidence/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/godsignlacrypto")"
+          code="$(curl --silent --show-error --location --output stage2-evidence/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/${channel_username}")"
           echo "reconciliation_preview_http_status=${code}"
           test "${code}" = "200"
           if grep -Fq "گزارش مرحلهٔ ۲ سامانهٔ معاملات" stage2-evidence/channel-preview.html; then
