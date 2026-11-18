@@ -79,6 +79,16 @@ int main() {
     const auto filtered_base = cfss::lfs::filter_time_series(c, decision_time);
     const auto filtered_future = cfss::lfs::filter_time_series(future_candles, decision_time);
     require(filtered_base == filtered_future, "future candle perturbations are excluded at decision time");
+    auto future_funding = f;
+    future_funding.push_back({{"timestamp_ms", 100LL * 28'800'000LL + 1LL}, {"funding_rate", 0.5}});
+    require(cfss::lfs::filter_time_series(f, 100LL * 28'800'000LL) ==
+            cfss::lfs::filter_time_series(future_funding, 100LL * 28'800'000LL),
+            "future funding perturbations are excluded at decision time");
+    auto future_oi = oi;
+    future_oi.push_back({{"timestamp_ms", 720LL * 3'600'000LL + 1LL}, {"open_interest_value_usd", 1e12}});
+    require(cfss::lfs::filter_time_series(oi, 720LL * 3'600'000LL) ==
+            cfss::lfs::filter_time_series(future_oi, 720LL * 3'600'000LL),
+            "future OI perturbations are excluded at decision time");
 
     const auto s1 = cfss::lfs::lfs1_proxy_score(c);
     const auto s2 = cfss::lfs::funding_extreme_score(f);
