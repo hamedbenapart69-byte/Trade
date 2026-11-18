@@ -1,16 +1,6 @@
 name: Trader_me Stage 1B LRT-15m Signal Bot
 
 on:
-  push:
-    branches: [production-v1]
-    paths:
-      - "config/universe.json"
-      - "signal_autopilot/main.py"
-      - "signal_autopilot/modules/**"
-      - "signal_autopilot/telegram_bot.py"
-      - ".github/workflows/signal_bot.yml"
-  schedule:
-    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -22,6 +12,7 @@ concurrency:
 
 jobs:
   live-scan:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -98,32 +89,3 @@ jobs:
           LOG_LEVEL: INFO
         run: python main.py
 
-      - name: Upload open-signal state for trusted persistence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage1b-open-signal-state
-          path: signal_autopilot/state/open_signals.json
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Upload report and diagnostics for trusted notifier
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trader-me-stage1-signal-bot-${{ github.run_id }}
-          path: |
-            signal_autopilot/artifacts/charts/
-            signal_autopilot/artifacts/diagnostics/gates_diagnostic.json
-            signal_autopilot/artifacts/stage1_lrt_report.json
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload research state for trusted persistence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage1-research-state-${{ github.run_id }}
-          path: signal_autopilot/state/research_signals.json
-          if-no-files-found: error
-          retention-days: 30

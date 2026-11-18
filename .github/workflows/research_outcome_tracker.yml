@@ -1,14 +1,6 @@
 name: Research Outcome Tracker
 
 on:
-  push:
-    branches: [production-v1]
-    paths:
-      - "signal_autopilot/modules/research_tracker.py"
-      - "signal_autopilot/tests/test_research_tracker.py"
-      - ".github/workflows/research_outcome_tracker.yml"
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -56,14 +48,6 @@ jobs:
           python signal_autopilot/modules/research_tracker.py \
             --signals research-state/signal_autopilot/state/research_signals.json \
             --outcomes research-state/signal_autopilot/state/research_outcomes.json
-
-      - name: Upload outcome report
-        uses: actions/upload-artifact@v4
-        with:
-          name: research-outcomes-${{ github.run_id }}
-          path: research-state/signal_autopilot/state/research_outcomes.json
-          if-no-files-found: error
-          retention-days: 30
 
       - name: Persist outcomes to research branch
         run: |

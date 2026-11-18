@@ -273,46 +273,43 @@ class P0DataOnlyAndManifestTests(unittest.TestCase):
             self.assertFalse((root / "signals.json").exists())
             self.assertTrue((root / "report.json").exists())
 
-    def test_p0_workflow_is_scheduled_read_only_data_only_and_does_not_publish_signals(self):
+    def test_p0_workflow_is_manual_only_read_only_data_only_and_does_not_publish_signals(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "stage1b-scheduled.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
-        self.assertIn('cron: "0 */4 * * *"', workflow)
+        self.assertNotIn("cron:", workflow)
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("push:", workflow)
         self.assertIn("timeout-minutes: 120", workflow)
         self.assertIn("--data-only", workflow)
         self.assertIn("--manifest", workflow)
-        self.assertIn("ephemeral_tail/", workflow)
-        self.assertIn("retention-days: 1", workflow)
-        self.assertIn('push:\n    branches: [main]\n    paths:\n      - ".github/workflows/stage1b-scheduled.yml"', workflow)
-        self.assertNotIn('"signal_autopilot/modules/**"', workflow)
+        self.assertNotIn("actions/upload-artifact", workflow)
+        self.assertNotIn("retention-days:", workflow)
         self.assertNotIn("signals-publish", workflow)
         self.assertNotIn("Publish LRT-15m report to signals branch", workflow)
         self.assertIn("permissions:\n  contents: read", workflow)
         self.assertNotIn("contents: write", workflow)
         self.assertEqual(workflow.count("persist-credentials: false"), 3)
-        self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertNotIn("git push", workflow)
 
-    def test_trusted_writer_rechecks_data_report_during_push_race(self):
+    def test_trusted_writer_is_disabled_by_v18_2(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
-        persist_job = workflow.split("  cleanup-artifacts:", 1)[0]
-        retry_guard = persist_job.split("for attempt in 1 2 3; do", 1)[1].split("if ! git rebase", 1)[0]
-        self.assertIn("datasets/stage1b/data_report.json", retry_guard)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("workflow_run:", workflow)
+        self.assertIn("persist:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("actions/download-artifact", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertNotIn("actions: write", workflow)
 
-    def test_trusted_writer_prunes_prior_artifacts_without_touching_newer_runs(self):
+    def test_trusted_writer_artifact_pruning_is_disabled(self):
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github" / "workflows" / "persist-stage1b-p0-data.yml").read_text(encoding="utf-8")
-        persist_job, cleanup_job = workflow.split("  cleanup-artifacts:", 1)
-        self.assertIn("actions: read", persist_job)
-        self.assertIn("contents: write", persist_job)
-        self.assertIn("actions: write", cleanup_job)
-        self.assertIn("contents: read", cleanup_job)
-        self.assertIn("actions/github-script@v8", cleanup_job)
-        self.assertIn("listArtifactsForRepo", cleanup_job)
-        self.assertIn("deleteArtifact", cleanup_job)
-        self.assertIn("sourceRunId < currentRunId", cleanup_job)
-        self.assertIn('artifact.name.startsWith("stage1b-p0-dataset-")', cleanup_job)
+        self.assertIn("cleanup-artifacts:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("actions/github-script", workflow)
+        self.assertNotIn("listArtifactsForRepo", workflow)
+        self.assertNotIn("deleteArtifact", workflow)
+        self.assertNotIn("actions: write", workflow)
 
     def test_manifest_hashes_27_baselines_and_tail_without_signal_execution(self):
         with tempfile.TemporaryDirectory() as tmp:
