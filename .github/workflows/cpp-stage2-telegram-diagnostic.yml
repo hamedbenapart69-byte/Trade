@@ -43,6 +43,19 @@ jobs:
           test "${code}" = "200"
           jq -e '.ok == true and (.result.status == "administrator" or .result.status == "creator") and .result.can_post_messages == true' /tmp/member.json >/dev/null
 
+      - name: Reconcile recent public channel preview without sending
+        run: |
+          set -euo pipefail
+          code="$(curl --silent --show-error --location --output /tmp/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/godsignlacrypto")"
+          echo "public_channel_preview_http_status=${code}"
+          test "${code}" = "200"
+          if grep -Fq "گزارش مرحلهٔ ۲ سامانهٔ معاملات" /tmp/channel-preview.html; then
+            echo "STAGE2_REPORT_HEADER_VISIBLE_IN_RECENT_CHANNEL_PREVIEW=true"
+          else
+            echo "STAGE2_REPORT_HEADER_VISIBLE_IN_RECENT_CHANNEL_PREVIEW=false"
+          fi
+          echo "preview_bytes=$(wc -c < /tmp/channel-preview.html)"
+
       - name: Verify configured destination with getChat (read-only)
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
