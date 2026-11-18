@@ -483,7 +483,7 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
                 prior["reply_error"] = "previous_process_ended_while_reply_sending";
                 delivery_problem = true;
                 write_json_atomic(state_path, state);
-            } else if (status == "REPLY_PENDING") {
+            } else if (inbound_duplicate_should_resume_reply(status)) {
                 prior["status"] = "REPLY_SENDING";
                 write_json_atomic(state_path, state);
                 const auto sent = send_message(token, allowed_chat_id, prior.value("reply_text", std::string{}));
