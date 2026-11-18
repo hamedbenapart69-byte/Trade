@@ -29,6 +29,10 @@ jobs:
           timeout 180s sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
           timeout 180s sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
 
+      - name: Install pinned AJV CLI and RFC3339 format support
+        run: |
+          npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+
       - name: Configure, compile C++20 and run full CTest
         run: |
           cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
@@ -88,24 +92,24 @@ jobs:
             stage6-evidence/liquidity-phase.v1.json \
             stage6-evidence/lrt-candidates.v1.json \
             stage6-evidence/nmt-candidates.v1.json
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/lfs-v2-proxy.v1.schema.json -d stage6-evidence/lfs-v2.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/nss-v2-proxy.v1.schema.json -d stage6-evidence/nss-v2.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/liquidity-phase.v1.schema.json -d stage6-evidence/liquidity-phase.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/dual-engine-report.v1.schema.json -d stage6-evidence/dual-engine-report.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/l1-market-data.v1.schema.json -d stage6-evidence/l1-market-data.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/crypto-universe.v1.schema.json -d stage6-evidence/crypto-universe.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/l2-status.v1.schema.json -d stage6-evidence/l2-status.v1.json --all-errors
           ./build/intraday_15m_collector \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l1-market-data-15m.v1.json
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 -c ajv-formats \
             -s contracts/intraday-15m-market-data.v1.schema.json \
             -d stage6-evidence/l1-market-data-15m.v1.json --all-errors
           sha256sum stage6-evidence/l1-market-data.v1.json stage6-evidence/dual-engine-report.v1.json
@@ -139,13 +143,13 @@ jobs:
             signals-state/cpp_runtime/daily_outcome_ledger.v1.json \
             stage6-evidence/shadow_candidate_registry.v1.json \
             stage6-evidence/daily_outcome_ledger.v1.json
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/shadow-candidate-registry.v1.schema.json \
             -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/outcome-ledger.v1.schema.json \
             -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/outcome-ledger.v1.schema.json \
             -d signals-state/cpp_runtime/scalp_outcome_ledger.v1.json --all-errors
           jq '{ledger_status, outcome_count:(.outcomes|length)}' stage6-evidence/daily_outcome_ledger.v1.json
@@ -158,7 +162,7 @@ jobs:
             stage6-evidence/liquidity-phase.v1.json \
             stage6-evidence/daily_outcome_ledger.v1.json \
             stage6-evidence/meta_cognition_stage6_v1.json
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/meta-cognition.v1.schema.json \
             -d stage6-evidence/meta_cognition_stage6_v1.json --all-errors
           jq -r '.instruments[] | [.symbol, .lrt.candidate_status, .lrt.confidence_status, .lrt.ev_status, .nmt.candidate_status, .nmt.confidence_status, .nmt.ev_status] | @tsv' \
