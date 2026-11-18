@@ -114,6 +114,17 @@ int main() {
     require(normalized.skipped_gap_count == 1U,
             "missing funding interval is counted and excluded");
 
+    const auto stale_funding = cfss::nss::normalize_funding_to_8h(
+        funding_intervals, 80 * hour);
+    require(stale_funding.observations.empty(),
+            "funding older than 24 hours is rejected as stale");
+
+    const auto stale_result = cfss::nss::calculate_v2(
+        instrument, basis, decision + 10LL * 86'400'000LL);
+    require(stale_result[0].status == "UNAVAILABLE" &&
+            stale_result[1].status == "UNAVAILABLE",
+            "stale market components cannot produce a current NSS score");
+
     std::cout << "NSS_V2_PROXY_TESTS_PASS\n";
     return 0;
 }
