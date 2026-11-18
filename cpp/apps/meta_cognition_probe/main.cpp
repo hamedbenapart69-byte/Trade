@@ -101,7 +101,7 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
 
 json evaluate_candidate(const json& candidate, const std::string& regime,
                         const std::vector<cfss::meta::Outcome>& outcomes,
-                        bool ledger_available) {
+                        bool ledger_available, std::int64_t decision_time) {
     auto status = candidate.value("status", std::string{"INSUFFICIENT_DATA"});
     const auto path = candidate.value("path", std::string{"UNKNOWN"});
     const auto score = candidate.contains("score") && candidate.at("score").is_number()
@@ -192,8 +192,8 @@ int main(int argc, char** argv) {
                 {"symbol", symbol},
                 {"regime", phase},
                 {"golden_rule", item.at("golden_rule")},
-                {"lrt", evaluate_candidate(item.at("lrt"), phase, outcomes, ledger_available)},
-                {"nmt", evaluate_candidate(item.at("nmt"), phase, outcomes, ledger_available)}
+                {"lrt", evaluate_candidate(item.at("lrt"), phase, outcomes, ledger_available, decision_time)},
+                {"nmt", evaluate_candidate(item.at("nmt"), phase, outcomes, ledger_available, decision_time)}
             });
         }
 
