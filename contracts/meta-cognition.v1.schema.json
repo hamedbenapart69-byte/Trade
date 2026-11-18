@@ -70,13 +70,14 @@
     "engine": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "candidate_status", "direction", "raw_score", "data_class", "hypothesis", "falsification", "confidence_status", "confidence_probability", "calibration", "ev_status", "ev_net", "ev_decision", "reason", "regime", "actionable"],
+      "required": ["path", "candidate_status", "direction", "raw_score", "data_class", "score_model_version", "hypothesis", "falsification", "confidence_status", "confidence_probability", "calibration", "ev_status", "ev_net", "ev_decision", "reason", "regime", "actionable"],
       "properties": {
         "path": {"type": "string"},
         "candidate_status": {"type": "string"},
         "direction": {"type": "string"},
         "raw_score": {"type": ["number", "null"]},
         "data_class": {"type": "string"},
+        "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY", "UNAVAILABLE"]},
         "hypothesis": {"type": "string"},
         "falsification": {"type": "string"},
         "confidence_status": {"enum": ["CALIBRATED", "NOT_CALIBRATED"]},
@@ -84,11 +85,12 @@
         "calibration": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["status", "reason", "method", "sample_count", "train_count", "validation_count", "oos_count", "train_scan_clusters", "train_symbol_clusters", "train_utc_day_clusters", "validation_scan_clusters", "validation_symbol_clusters", "validation_utc_day_clusters", "oos_scan_clusters", "oos_symbol_clusters", "oos_utc_day_clusters", "train_effective_sample_size", "validation_effective_sample_size", "oos_effective_sample_size", "oos_period_start_ms", "oos_period_end_ms", "oos_symbol_distribution", "oos_daily_distribution", "confidence_interval_method", "win_rate_interval_method", "brier_raw_oos", "brier_calibrated_oos", "brier_ci_low", "brier_ci_high", "log_loss_oos", "ece_raw_oos", "ece_calibrated_oos", "reliability_bins", "win_rate_oos", "win_rate_ci_low", "win_rate_ci_high", "win_rate_cluster_ci_low", "win_rate_cluster_ci_high", "probability_win", "avg_win_r", "avg_loss_r", "avg_fee_r", "avg_slippage_r", "avg_funding_r", "ev_net", "ev_status", "ev_decision"],
+          "required": ["status", "reason", "method", "score_model_version", "sample_count", "train_count", "validation_count", "oos_count", "train_scan_clusters", "train_symbol_clusters", "train_utc_day_clusters", "validation_scan_clusters", "validation_symbol_clusters", "validation_utc_day_clusters", "oos_scan_clusters", "oos_symbol_clusters", "oos_utc_day_clusters", "train_effective_sample_size", "validation_effective_sample_size", "oos_effective_sample_size", "oos_period_start_ms", "oos_period_end_ms", "oos_symbol_distribution", "oos_daily_distribution", "confidence_interval_method", "win_rate_interval_method", "brier_raw_oos", "brier_calibrated_oos", "brier_ci_low", "brier_ci_high", "log_loss_oos", "ece_raw_oos", "ece_calibrated_oos", "reliability_bins", "win_rate_oos", "win_rate_ci_low", "win_rate_ci_high", "win_rate_cluster_ci_low", "win_rate_cluster_ci_high", "probability_win", "avg_win_r", "avg_loss_r", "avg_fee_r", "avg_slippage_r", "avg_funding_r", "ev_net", "ev_status", "ev_decision"],
           "properties": {
             "status": {"enum": ["NOT_CALIBRATED", "CALIBRATED", "INVALID_OUTCOME_LEDGER"]},
             "reason": {"type": "string"},
             "method": {"enum": ["NONE", "PLATT", "ISOTONIC"]},
+            "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY", "UNAVAILABLE"]},
             "sample_count": {"type": "integer", "minimum": 0},
             "train_count": {"type": "integer", "minimum": 0},
             "validation_count": {"type": "integer", "minimum": 0},
