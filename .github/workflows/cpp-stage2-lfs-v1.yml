@@ -43,6 +43,11 @@ jobs:
             stage2-evidence/l1-market-data.v1.json \
             stage2-evidence/l2-status.v1.json
           sha256sum stage2-evidence/l1-market-data.v1.json stage2-evidence/l2-status.v1.json
+      - name: Execute LFS v1 against real L1 inputs
+        run: |
+          ./build/lfs_v1_probe stage2-evidence/l1-market-data.v1.json stage2-evidence/lfs-v1.json
+          jq -r '.instruments[] | [.symbol, .status, (.components[] | (.id + "=" + .raw_input + ":" + .data_class))] | @tsv' stage2-evidence/lfs-v1.json
+          sha256sum stage2-evidence/lfs-v1.json
       - name: Record LFS component source coverage
         run: |
           jq -r '.instruments[] | [
