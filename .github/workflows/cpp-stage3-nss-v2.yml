@@ -1,0 +1,102 @@
+name: C++ Stage 3 NSS v2 Proxy and Telegram L3
+
+on:
+  push:
+    branches: [feat/cpp-stage3-nss-v2]
+    paths:
+      - "docs/evidence/publish-stage3-v2-telegram-report.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage3-nss-v2-report-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deliver:
+    if: ${{ contains(github.event.head_commit.message, '[NSS_STAGE3_V2_REPORT]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+      - name: Configure and build C++20
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Collect fresh real OKX BTC and ETH perpetual inputs
+        run: |
+          mkdir -p stage3-v2-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage3-v2-evidence/l1-market-data.v1.json \
+            stage3-v2-evidence/l2-status.v1.json
+          sha256sum stage3-v2-evidence/l1-market-data.v1.json stage3-v2-evidence/l2-status.v1.json
+      - name: Collect real OKX spot candles and derive synchronized basis
+        run: |
+          ./build/nss_basis_collector \
+            stage3-v2-evidence/l1-market-data.v1.json \
+            stage3-v2-evidence/nss-basis.v1.json
+          jq -r '.instruments[] | [.symbol, .status, (.basis_rows|tostring), .source_quality] | @tsv' stage3-v2-evidence/nss-basis.v1.json
+          sha256sum stage3-v2-evidence/nss-basis.v1.json
+      - name: Calculate directional NSS v2 proxy
+        run: |
+          ./build/nss_v2_probe \
+            stage3-v2-evidence/l1-market-data.v1.json \
+            stage3-v2-evidence/nss-basis.v1.json \
+            stage3-v2-evidence/nss-v2.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/nss-v2-proxy.v1.schema.json \
+            -d stage3-v2-evidence/nss-v2.json --all-errors
+          jq -r '.instruments[] | [.symbol, .status, (.nss_long.score // "UNAVAILABLE"), (.nss_short.score // "UNAVAILABLE"), .data_class] | @tsv' stage3-v2-evidence/nss-v2.json
+      - name: Checkout persistent Telegram receipt state
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Reserve NSS v2 report idempotently
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          ./build/nss_telegram_report --prepare stage3-v2-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+      - name: Persist reservation before Telegram send
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage3): reserve NSS v2 Telegram report"
+            git push origin HEAD:signals
+          fi
+      - name: Send non-actionable NSS v2 report through C++ Telegram L3
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
+          ./build/nss_telegram_report --send stage3-v2-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+      - name: Persist Telegram delivery receipt
+        if: ${{ always() }}
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/nss_stage3_v2_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage3): persist NSS v2 Telegram receipt"
+            git push origin HEAD:signals
+          fi
+      - name: Assert no Actions artifact storage is used
+        run: |
+          if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage3-nss-v2.yml; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "ZERO_COST_TELEGRAM_ONLY_REPORT_PATH"
