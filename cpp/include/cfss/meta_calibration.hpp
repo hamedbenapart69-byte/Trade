@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <map>
+#include <numeric>
 #include <optional>
 #include <set>
 #include <string>
@@ -30,6 +32,8 @@ struct Outcome {
     std::string profile{"DAILY_SWING"};
     std::string outcome_kind{"HYPOTHESIS_PROXY"};
     std::string execution_status{"NOT_EXECUTED"};
+    std::string source_scan_id;
+    std::string symbol;
 };
 
 struct PlattModel {
@@ -67,6 +71,16 @@ struct CalibrationReport {
     std::size_t train_count{};
     std::size_t validation_count{};
     std::size_t oos_count{};
+    std::size_t train_scan_clusters{};
+    std::size_t train_symbol_clusters{};
+    std::size_t validation_scan_clusters{};
+    std::size_t validation_symbol_clusters{};
+    std::size_t oos_scan_clusters{};
+    std::size_t oos_symbol_clusters{};
+    double train_effective_sample_size{};
+    double validation_effective_sample_size{};
+    double oos_effective_sample_size{};
+    std::string confidence_interval_method{"TWO_WAY_CLUSTER_ROBUST"};
     std::optional<double> brier_raw_oos;
     std::optional<double> brier_calibrated_oos;
     std::optional<double> brier_ci_low;
@@ -85,6 +99,77 @@ struct CalibrationReport {
     std::string ev_status{"NOT_CALCULATED"};
     std::string ev_decision{"NOT_CALCULATED"};
 };
+
+struct ClusterMetrics {
+    std::size_t scan_clusters{};
+    std::size_t symbol_clusters{};
+    double scan_effective_n{};
+    double symbol_effective_n{};
+    double effective_n{};
+};
+
+inline double effective_n_for_groups(const std::vector<Outcome>& rows, bool by_scan) {
+    if (rows.empty()) return 0.0;
+    std::map<std::string, std::size_t> counts;
+    for (const auto& row : rows)
+        ++counts[by_scan ? row.source_scan_id : row.symbol];
+    double sum_squares = 0.0;
+    for (const auto& [key, count] : counts) {
+        (void)key;
+        const double n = static_cast<double>(count);
+        sum_squares += n * n;
+    }
+    const double total = static_cast<double>(rows.size());
+    return sum_squares > 0.0 ? (total * total) / sum_squares : 0.0;
+}
+
+inline ClusterMetrics cluster_metrics(const std::vector<Outcome>& rows) {
+    std::set<std::string> scans, symbols;
+    for (const auto& row : rows) {
+        scans.insert(row.source_scan_id);
+        symbols.insert(row.symbol);
+    }
+    ClusterMetrics metrics{};
+    metrics.scan_clusters = scans.size();
+    metrics.symbol_clusters = symbols.size();
+    metrics.scan_effective_n = effective_n_for_groups(rows, true);
+    metrics.symbol_effective_n = effective_n_for_groups(rows, false);
+    metrics.effective_n = std::min(metrics.scan_effective_n, metrics.symbol_effective_n);
+    return metrics;
+}
+
+inline double cluster_robust_se(const std::vector<double>& values,
+                                const std::vector<Outcome>& rows,
+                                bool by_scan) {
+    if (values.size() != rows.size() || values.size() < 2U)
+        return std::numeric_limits<double>::quiet_NaN();
+    std::map<std::string, double> cluster_sums;
+    const double mean = std::accumulate(values.begin(), values.end(), 0.0) /
+                        static_cast<double>(values.size());
+    for (std::size_t i = 0U; i < values.size(); ++i) {
+        const auto& key = by_scan ? rows[i].source_scan_id : rows[i].symbol;
+        cluster_sums[key] += values[i] - mean;
+    }
+    if (cluster_sums.size() < 2U) return std::numeric_limits<double>::quiet_NaN();
+    double sum_squares = 0.0;
+    for (const auto& [key, sum] : cluster_sums) {
+        (void)key;
+        sum_squares += sum * sum;
+    }
+    const double clusters = static_cast<double>(cluster_sums.size());
+    const double n = static_cast<double>(values.size());
+    const double variance = (clusters / (clusters - 1.0)) * sum_squares / (n * n);
+    return std::sqrt(std::max(0.0, variance));
+}
+
+inline double two_way_cluster_robust_se(const std::vector<double>& values,
+                                        const std::vector<Outcome>& rows) {
+    const double scan_se = cluster_robust_se(values, rows, true);
+    const double symbol_se = cluster_robust_se(values, rows, false);
+    if (!std::isfinite(scan_se) || !std::isfinite(symbol_se))
+        return std::numeric_limits<double>::quiet_NaN();
+    return std::max(scan_se, symbol_se);
+}
 
 inline double brier_score(const std::vector<double>& probabilities,
                           const std::vector<bool>& labels) {
@@ -212,6 +297,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
             item.profile != profile || item.outcome_kind != "HYPOTHESIS_PROXY" ||
             item.execution_status != "NOT_EXECUTED" || item.closed_at_ms >= as_of_ms) continue;
         if (item.signal_id.empty() || !ids.insert(item.signal_id).second ||
+            item.source_scan_id.empty() || item.symbol.empty() ||
             item.closed_at_ms <= 0 || !std::isfinite(item.raw_score) ||
             item.raw_score < 0.0 || item.raw_score > 1.0 ||
             !std::isfinite(item.win_r) || !std::isfinite(item.loss_r) ||
@@ -252,6 +338,23 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     std::vector<Outcome> oos(
         selected.begin() + static_cast<std::ptrdiff_t>(report.train_count + report.validation_count),
         selected.end());
+
+    const auto train_clusters = cluster_metrics(train);
+    const auto validation_clusters = cluster_metrics(validation);
+    const auto oos_clusters = cluster_metrics(oos);
+    report.train_scan_clusters = train_clusters.scan_clusters;
+    report.train_symbol_clusters = train_clusters.symbol_clusters;
+    report.validation_scan_clusters = validation_clusters.scan_clusters;
+    report.validation_symbol_clusters = validation_clusters.symbol_clusters;
+    report.oos_scan_clusters = oos_clusters.scan_clusters;
+    report.oos_symbol_clusters = oos_clusters.symbol_clusters;
+    report.train_effective_sample_size = train_clusters.effective_n;
+    report.validation_effective_sample_size = validation_clusters.effective_n;
+    report.oos_effective_sample_size = oos_clusters.effective_n;
+    if (oos_clusters.effective_n < 30.0) {
+        report.reason = "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_AND_SYMBOL_CLUSTERING";
+        return report;
+    }
 
     const auto class_counts_valid = [](const std::vector<Outcome>& rows) {
         std::size_t wins = 0U;
@@ -314,20 +417,23 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.brier_calibrated_oos = calibrated_brier;
     report.log_loss_oos = calibrated_logloss;
     report.win_rate_oos = static_cast<double>(wins) / static_cast<double>(oos.size());
-    const auto win_ci = wilson_interval(wins, oos.size());
-    report.win_rate_ci_low = win_ci.first;
-    report.win_rate_ci_high = win_ci.second;
-
-    double brier_variance = 0.0;
+    std::vector<double> win_values, brier_values;
+    win_values.reserve(oos.size());
+    brier_values.reserve(oos.size());
     for (std::size_t i = 0U; i < oos_calibrated.size(); ++i) {
         const double y = oos_labels[i] ? 1.0 : 0.0;
+        win_values.push_back(y);
         const double error = oos_calibrated[i] - y;
-        const double value = error * error;
-        brier_variance += (value - calibrated_brier) * (value - calibrated_brier);
+        brier_values.push_back(error * error);
     }
-    const double brier_se = std::sqrt(brier_variance /
-        static_cast<double>(std::max<std::size_t>(1U, oos.size() - 1U)) /
-        static_cast<double>(oos.size()));
+    const double win_se = two_way_cluster_robust_se(win_values, oos);
+    const double brier_se = two_way_cluster_robust_se(brier_values, oos);
+    if (!std::isfinite(win_se) || !std::isfinite(brier_se)) {
+        report.reason = "CLUSTER_ROBUST_CONFIDENCE_INTERVAL_UNAVAILABLE";
+        return report;
+    }
+    report.win_rate_ci_low = std::max(0.0, *report.win_rate_oos - 1.96 * win_se);
+    report.win_rate_ci_high = std::min(1.0, *report.win_rate_oos + 1.96 * win_se);
     report.brier_ci_low = std::max(0.0, calibrated_brier - 1.96 * brier_se);
     report.brier_ci_high = std::min(1.0, calibrated_brier + 1.96 * brier_se);
 
