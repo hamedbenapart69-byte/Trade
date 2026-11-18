@@ -108,6 +108,17 @@ int main() {
             no_future.at("registry").at("candidates").front().at("state") == "PENDING",
             "pre-decision candles cannot resolve a candidate");
 
+    const auto gap_l1 = fixture_l1({
+        candle(3'600'000LL, 101.0, 99.0, 100.5),
+        candle(10'800'000LL, 105.0, 99.5, 104.0)
+    }, 14'400'000LL);
+    const auto gap_result = cfss::shadow::process(
+        gap_l1, fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    require(gap_result.at("ledger").at("outcomes").empty() &&
+            gap_result.at("registry").at("candidates").front().at("state") == "PENDING",
+            "missing hourly candles block outcome resolution instead of assuming no barrier hit");
+
     auto missing_target = candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0);
     missing_target["target_reference"] = nullptr;
     const auto rejected = cfss::shadow::process(
