@@ -1,0 +1,113 @@
+name: C++ Stage 6 Meta-Cognition Calibration and EV
+
+on:
+  push:
+    branches: [feat/cpp-stage6-meta-calibration-v1]
+    paths:
+      - "docs/evidence/publish-stage6-meta-cognition.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage6-meta-cognition-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deliver:
+    if: ${{ contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+
+      - name: Configure, compile C++20 and run full CTest
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+
+      - name: Checkout immutable signal history branch
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify Stage 4 and Stage 5 source artifacts
+        run: |
+          test -s signals-state/cpp_runtime/dual_engine_stage5_v1.json
+          test -s signals-state/cpp_runtime/liquidity_stage5_v1.json
+          jq -e '.artifact_type == "cfss_dual_engine_report_v1"' signals-state/cpp_runtime/dual_engine_stage5_v1.json
+          jq -e '.artifact_type == "cfss_liquidity_phase_v1"' signals-state/cpp_runtime/liquidity_stage5_v1.json
+
+      - name: Create an explicit empty ledger only when no real ledger exists
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          if [ ! -s signals-state/cpp_runtime/outcome_ledger.v1.json ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","ledger_status":"EMPTY","outcomes":[]}' > signals-state/cpp_runtime/outcome_ledger.v1.json
+          fi
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/outcome-ledger.v1.schema.json \
+            -d signals-state/cpp_runtime/outcome_ledger.v1.json --all-errors
+          jq '{ledger_status, outcome_count:(.outcomes|length)}' signals-state/cpp_runtime/outcome_ledger.v1.json
+
+      - name: Compute meta-cognition with point-in-time cutoff
+        run: |
+          ./build/meta_cognition_probe \
+            signals-state/cpp_runtime/dual_engine_stage5_v1.json \
+            signals-state/cpp_runtime/liquidity_stage5_v1.json \
+            signals-state/cpp_runtime/outcome_ledger.v1.json \
+            signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/meta-cognition.v1.schema.json \
+            -d signals-state/cpp_runtime/meta_cognition_stage6_v1.json --all-errors
+          jq -r '.instruments[] | [.symbol, .lrt.candidate_status, .lrt.confidence_status, .lrt.ev_status, .nmt.candidate_status, .nmt.confidence_status, .nmt.ev_status] | @tsv' \
+            signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+
+      - name: Reserve Telegram report idempotently and persist evidence before send
+        run: |
+          ./build/meta_cognition_telegram_report --prepare \
+            signals-state/cpp_runtime/meta_cognition_stage6_v1.json \
+            signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/outcome_ledger.v1.json \
+            cpp_runtime/meta_cognition_stage6_v1.json \
+            cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage6): persist meta-cognition report and Telegram reservation"
+            git push origin HEAD:signals
+          fi
+
+      - name: Deliver Stage 6 report through Telegram only
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
+          ./build/meta_cognition_telegram_report --send \
+            signals-state/cpp_runtime/meta_cognition_stage6_v1.json \
+            signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
+
+      - name: Persist Telegram receipt
+        if: ${{ always() }}
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json ]; then
+            git add cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
+            if ! git diff --cached --quiet; then
+              git commit -m "audit(stage6): persist Telegram delivery receipt"
+              git push origin HEAD:signals
+            fi
+          fi
