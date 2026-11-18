@@ -43,6 +43,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         const std::vector<std::string> required{
             "signal_id", "path", "regime", "closed_at_ms", "raw_score",
             "profile", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind",
+            "resolution_data_sha256", "resolution_bars",
             "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
         };
         for (const auto& key : required)
@@ -53,6 +54,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             !row.at("profile").is_string() || !row.at("entry_fill_reference").is_number() ||
             !row.at("entry_model").is_string() || !row.at("execution_status").is_string() ||
             !row.at("outcome_kind").is_string() ||
+            !row.at("resolution_data_sha256").is_string() ||
+            !row.at("resolution_bars").is_array() || row.at("resolution_bars").empty() ||
             !row.at("raw_score").is_number() || !row.at("win").is_boolean() ||
             !row.at("win_r").is_number() || !row.at("loss_r").is_number())
             throw std::runtime_error("outcome_field_type_invalid");
