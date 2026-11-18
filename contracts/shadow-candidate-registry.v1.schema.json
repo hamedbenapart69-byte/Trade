@@ -40,6 +40,7 @@
           "source_run_id": {"type": "string", "minLength": 1},
           "source_scan_id": {"type": "string", "minLength": 1},
           "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "source_universe_status": {"const": "VERIFIED"},
           "resolution_timeframe": {"const": "1h"},
           "state": {"enum": ["PENDING", "RESOLVED", "REJECTED"]},
           "resolution": {"type": ["string", "null"]},
