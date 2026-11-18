@@ -38,18 +38,27 @@ nlohmann::json fixture_l1(std::initializer_list<nlohmann::json> candles,
 
 nlohmann::json fixture_l1_15m(std::initializer_list<nlohmann::json> candles,
                               std::int64_t end_ms) {
+    const nlohmann::json instruments = nlohmann::json::array({
+        {
+            {"instrument_id", "BTC-USDT-SWAP"},
+            {"unified_symbol", "BTC/USDT:USDT"},
+            {"timeframe", "15m"},
+            {"data_quality", "REAL"},
+            {"error", nullptr},
+            {"candles", candles}
+        }
+    });
     return {
         {"schema_version", "1.0.0"},
         {"artifact_type", "cfss_intraday_15m_market_data_v1"},
         {"source_run_id", "run-1"}, {"source_scan_id", "scan-1"},
         {"source_l1_sha256", std::string(64, 'a')},
-        {"candles_sha256", std::string(64, 'b')},
+        {"candles_sha256", cfss::sha256_hex(instruments.dump())},
         {"decision_time_ms", 3'600'000LL},
         {"window", {{"timeframe", "15m"}, {"end_ms", end_ms}}},
-        {"instruments", {{
-            {"unified_symbol", "BTC/USDT:USDT"},
-            {"candles", candles}
-        }}}
+        {"provider_id", "okx"},
+        {"status", "AVAILABLE"},
+        {"instruments", instruments}
     };
 }
 
@@ -117,7 +126,7 @@ int main() {
             target_row.at("execution_status") == "NOT_EXECUTED" &&
             target_row.at("outcome_kind") == "HYPOTHESIS_PROXY" &&
             target_row.at("resolution_timeframe") == "15m" &&
-            target_row.at("resolution_data_sha256") == std::string(64, 'b') &&
+            target_row.at("resolution_data_sha256").get<std::string>().size() == 64U &&
             target_row.at("resolution_bars").size() == 2U,
             "LRT outcome retains profile, 15m source fingerprint and exact resolution bars");
 
