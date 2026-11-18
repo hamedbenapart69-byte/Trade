@@ -63,7 +63,8 @@ jobs:
           test "${unknown_count}" = "1"
           report_id="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .report_id' "${outbox}")"
           attempt_raw="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .started_at_utc' "${outbox}")"
-          code="$(curl --silent --show-error --location --output stage2-evidence/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/${channel_username}")"
+          telegram_host="t.me"
+          code="$(curl --silent --show-error --location --output stage2-evidence/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://${telegram_host}/s/${channel_username}")"
           echo "reconciliation_preview_http_status=${code}"
           test "${code}" = "200"
           if grep -Fq "گزارش مرحلهٔ ۲ سامانهٔ معاملات" stage2-evidence/channel-preview.html; then
