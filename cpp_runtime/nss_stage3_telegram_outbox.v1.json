@@ -7,8 +7,7 @@
       "message_id": null,
       "report_id": "428e9cc2cf62cf292707835aefabc6997bc17f837f746aac9f4904c7bd609a45",
       "status": "ABORTED_PRE_SEND_D3",
-      "reason": "First send process failed before network invocation because atomic persistence was configured to refuse overwriting the reserved outbox file. No Telegram request was sent; safe to issue a fresh report.",
-      "completed_at_utc": "2026-11-18T12:08:00Z"
+      "reason": "First send process failed before network invocation because atomic persistence was configured to refuse overwriting the reserved outbox file. No Telegram request was sent; safe to issue a fresh report."
     }
   ],
   "schema_version": "1.0.0"
