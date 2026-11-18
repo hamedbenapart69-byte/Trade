@@ -1,10 +1,7 @@
 name: Persist Public L2 Order Book Capture
 
 on:
-  workflow_run:
-    workflows: ["Public L2 Order Book Collector"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,6 +12,7 @@ concurrency:
 
 jobs:
   persist:
+    if: ${{ false }}
     # The trusted writer runs from the main branch and accepts only successful,
     # same-repository captures. Feature-branch runs never receive write access.
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
@@ -22,7 +20,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       actions: read
-      contents: write
+      contents: read
     steps:
       - name: Checkout trusted merge utility from main
         uses: actions/checkout@v4
