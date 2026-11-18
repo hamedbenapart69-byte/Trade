@@ -89,6 +89,8 @@ int main(int argc, char** argv) {
             {"decision_time_ms", decision_time},
             {"window", {{"timeframe", "15m"}, {"end_ms", decision_time}}},
             {"provider_id", "okx"},
+            {"status", available == 0U ? "UNAVAILABLE" :
+                (available == instruments.size() ? "AVAILABLE" : "PARTIAL")},
             {"candles_sha256", cfss::sha256_hex(instruments.dump())},
             {"instruments", instruments},
             {"coverage", {{"selected_count", instruments.size()},
