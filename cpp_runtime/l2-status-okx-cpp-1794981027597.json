@@ -1,0 +1,21 @@
+{
+  "artifact_sha256": "682eac630a205b266a45740cbd88acba3fa02b7cb6e813e9e1160cbc6156c11f",
+  "artifact_type": "cfss_l2_status_v1",
+  "created_at_epoch_ms": 1794981053022,
+  "instruments": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1794974400000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    }
+  ],
+  "source_run_id": "okx-cpp-1794981027597",
+  "source_scan_id": "scan-3c5b09e5c00f7fb2186c551c9c4d76a3e466438f09b3f5082a076686969535a6",
+  "source_schema_version": "1.0.0"
+}

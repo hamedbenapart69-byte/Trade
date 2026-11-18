@@ -1,0 +1,16 @@
+{
+  "generated_at_utc": "2026-11-18T05:50:53Z",
+  "metrics": {
+    "expectancy": null,
+    "max_drawdown": null,
+    "profit_factor": null,
+    "sharpe": null,
+    "win_rate": null
+  },
+  "reason": "NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1",
+  "run_id": "okx-cpp-1794981027597",
+  "scan_id": "scan-3c5b09e5c00f7fb2186c551c9c4d76a3e466438f09b3f5082a076686969535a6",
+  "schema_version": "1.0.0",
+  "status": "NOT_CALCULATED",
+  "trade_count": 0
+}
