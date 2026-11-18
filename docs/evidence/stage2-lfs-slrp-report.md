@@ -1,10 +1,10 @@
 # STAGE 2 — LFS RESILIENCE (V18.2)
 
 **Branch:** `feat/cpp-stage2-lfs-v1`  
-**Base:** `feat/cpp-stage1-clean` at `190b0270ccb1425f4ed77503825aeaf26668baa4`  
+**Base:** `feat/cpp-stage1-clean` at `c333c257edf70df21baa6e9187f6018978e9fc86` (Stage 1 merged to main as `16cb5e874e89649e049abb6debc6300572e24f09`)  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data in two runs; the final aggregate-determinism test rerun and v2 L3 Telegram receipt are pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
+**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data in two runs; the final aggregate-determinism test rerun is in progress on the Stage 1-updated branch, and v2 L3 Telegram receipt is pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -64,20 +64,21 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 
 ## Version control
 - v1: strict REAL-only v1 aggregator contract.
-- v2: BUILT after the measured v1 FAIL under R11. Live L1/L2 validation PASS in GitHub Actions run `44245558287`, C++ run ID `okx-cpp-1794980311216`. A first compile attempt exposed D3 (a constexpr string type error); the v2 implementation was corrected and the subsequent build passed. Live Telegram L3 is pending.
+- v2: BUILT after the measured v1 FAIL under R11. Live L1/L2 validation PASS in GitHub Actions runs `44245558287` and `44245999599`. A first compile attempt exposed D3 (a constexpr string type error); the v2 implementation was corrected and subsequent builds passed. The current branch includes a new deterministic aggregate assertion and is being revalidated in run `44246628061`. Live Telegram L3 is pending.
 - v3: NOT_BUILT; only after an actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
 
 ## v2 — LFS_V2_PROXY
 
-Measured real run `44245558287` / `okx-cpp-1794980311216`:
-- BTC/USDT:USDT: score `0.3594750349014508`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
-- ETH/USDT:USDT: score `0.43494248311325506`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
-- L1 SHA-256: `34a3ac0f2d59b038bf897b049af539809fb6fd5b31e9f757b893c684aa5eb4b3`.
-- L2 SHA-256: `8a37633b1d959e2042706504c0517937d5d23d151457b5885d79dcf0fe6929ee`.
-- LFS v2 SHA-256: `8dc176bb80394b7c498e9041aa13d01d729e2a9eb593427717e07e935e5d1170`.
+Latest completed measured run `44245999599` / `okx-cpp-1794980604050`:
+- BTC/USDT:USDT: score `0.3575278860836483`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
+- ETH/USDT:USDT: score `0.43382982664593933`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
+- L1 SHA-256: `814f009b0daf5ea724b31b3c47d159f92b295621f4907b55a3a67d533cf0c3b2`.
+- L2 SHA-256: `fbc4ceecb40e1b4cb025294cca0ff57fee4f110ad0ac69edad4d211f533f5cdf`.
+- LFS v2 SHA-256: `3b81ddb893b5814dfe359ada99fc68943754b725238fcdbb5d2c87edbb60a2ed`.
+- Earlier independent run `44245558287` returned BTC `0.3594750349014508` and ETH `0.43494248311325506`, also 5/5.
 - JSON Schema validation: PASS.
-- CTest: 4/4 PASS in both live runs; future-perturbation guards for candles, funding, long/short and OI passed. An additional deterministic aggregate assertion has since been added and is awaiting its CI rerun.
+- CTest: 4/4 PASS in both live runs; future-perturbation guards for candles, funding, long/short and OI passed. An additional deterministic aggregate assertion has since been added; its CI rerun is run `44246628061`.
 - No Actions artifact upload: PASS.
 - The report is a feature score only. It does not create BUY/SELL states, trade instructions, or calibrated confidence.
 
