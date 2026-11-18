@@ -53,7 +53,8 @@ jobs:
           test "${getchat_code}" = "200"
           channel_username="$(jq -r '.result.username // empty' /tmp/getchat-preview.json)"
           test -n "${channel_username}"
-          code="$(curl --silent --show-error --location --output /tmp/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/${channel_username}")"
+          telegram_host="t.me"
+          code="$(curl --silent --show-error --location --output /tmp/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://${telegram_host}/s/${channel_username}")"
           echo "public_channel_preview_http_status=${code}"
           test "${code}" = "200"
           if grep -Fq "گزارش مرحلهٔ ۲ سامانهٔ معاملات" /tmp/channel-preview.html; then
