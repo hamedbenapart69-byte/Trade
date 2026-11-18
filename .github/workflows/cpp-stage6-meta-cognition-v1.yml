@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: stage6-meta-cognition-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate-and-deliver:
