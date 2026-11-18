@@ -275,6 +275,7 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
 inline std::vector<Instrument> discover(int target_count, const std::set<std::string>& crypto_symbols,
+                                       const std::set<std::string>& required_symbols = {},
                                        std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr,
                                        std::size_t* excluded_non_crypto_count = nullptr) {
@@ -288,6 +289,7 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
     }
 
     std::vector<Instrument> eligible;
+    std::vector<Instrument> all_valid_crypto;
     std::size_t swap_rows = 0U, live_rows = 0U, usdt_settle_rows = 0U, linear_rows = 0U;
     std::size_t excluded_non_crypto = 0U;
     for (const auto& item : instruments["data"]) {
@@ -310,7 +312,7 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
         }
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
-        if (!valid_linear_usdt_contract(item, base) || !passes_liquidity(quote_turnover)) continue;
+        if (!valid_linear_usdt_contract(item, base)) continue;
         ++linear_rows;
         const auto ct = number(item.value("ctVal", json{}));
         const auto mult = number(item.value("ctMult", json{}));
@@ -319,8 +321,10 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
         const auto minimum = number(item.value("minSz", json{}));
         const auto listing = timestamp(item.value("listTime", json{}));
         const auto value_ccy = text(item, "ctValCcy");
-        eligible.push_back({id, base, quote, "USDT", *ct, *mult,
-                            *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
+        const Instrument parsed{id, base, quote, "USDT", *ct, *mult,
+                                *tick, *lot, *minimum, quote_turnover, listing, value_ccy};
+        all_valid_crypto.push_back(parsed);
+        if (passes_liquidity(quote_turnover)) eligible.push_back(parsed);
         (void)second_dash;
     }
     if (eligible_count) *eligible_count = eligible.size();
@@ -349,7 +353,15 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
         if (selected.size() >= selection_limit) break;
         if (item.id != btc->id) selected.push_back(item);
     }
-    if (selected.size() != selection_limit)
+    for (const auto& required_base : required_symbols) {
+        const auto found = std::find_if(all_valid_crypto.begin(), all_valid_crypto.end(),
+            [&](const Instrument& item) { return item.base == required_base; });
+        if (found == all_valid_crypto.end()) continue;
+        const bool already_selected = std::any_of(selected.begin(), selected.end(),
+            [&](const Instrument& item) { return item.id == found->id; });
+        if (!already_selected) selected.push_back(*found);
+    }
+    if (selected.size() < selection_limit)
         throw std::runtime_error("instrument_universe_selection_inconsistent");
     return selected;
 }
@@ -646,7 +658,8 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
 
 inline json collect(int symbol_count, int years,
                        const std::optional<json>& cached_crypto_universe = std::nullopt,
-                       const std::optional<json>& cached_market_data = std::nullopt) {
+                       const std::optional<json>& cached_market_data = std::nullopt,
+                       const std::set<std::string>& required_symbols = {}) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
     const auto acquired_ms = now_ms();
@@ -655,7 +668,7 @@ inline json collect(int symbol_count, int years,
     const auto acquired_text = utc_iso(acquired_ms);
     const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
-    const auto selected = discover(symbol_count, crypto_universe.symbols,
+    const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
     json instruments = json::array();
     for (const auto& item : selected) {
