@@ -400,6 +400,44 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     return out;
 }
 
+inline json fetch_recent_candles(const Instrument& instrument, const std::string& bar,
+                                    std::int64_t interval_ms, std::int64_t end_ms,
+                                    int limit = 100) {
+    if ((bar != "15m" && bar != "5m") || interval_ms <= 0 || limit < 1 || limit > 300)
+        throw std::invalid_argument("recent_candle_request_invalid");
+    const auto payload = request("/api/v5/market/candles?instId=" + encode(instrument.id) +
+                                  "&bar=" + encode(bar) + "&limit=" + std::to_string(limit));
+    const auto retrieved_at = utc_iso(now_ms());
+    std::map<std::int64_t, json> rows;
+    for (const auto& row : payload["data"]) {
+        if (!row.is_array() || row.size() < 9U) continue;
+        const auto ts = timestamp(row[0]);
+        const auto open = number(row[1]), high = number(row[2]), low = number(row[3]);
+        const auto close = number(row[4]);
+        const auto volume_contracts = number(row[5]);
+        const auto volume_base = number(row[6]);
+        const auto volume_quote = number(row[7]);
+        const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
+        if (ts <= 0 || ts % interval_ms != 0 || ts + interval_ms > end_ms || !confirmed ||
+            !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
+            *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
+            *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
+            *high < std::max({*open, *low, *close}) ||
+            *low > std::min({*open, *high, *close})) continue;
+        rows[ts] = {
+            {"timestamp_ms", ts}, {"open", *open}, {"high", *high},
+            {"low", *low}, {"close", *close}, {"price_currency", instrument.quote},
+            {"volume", *volume_contracts}, {"volume_unit", "contracts"},
+            {"volume_base", *volume_base}, {"volume_base_currency", instrument.base},
+            {"volume_quote", *volume_quote}, {"volume_quote_currency", instrument.quote},
+            {"closed", true}, {"retrieved_at_utc", retrieved_at}
+        };
+    }
+    json out = json::array();
+    for (const auto& [ts, row] : rows) { (void)ts; out.push_back(row); }
+    return out;
+}
+
 inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
