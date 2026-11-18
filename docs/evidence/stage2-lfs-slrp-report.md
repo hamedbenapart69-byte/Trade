@@ -66,7 +66,6 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 - v1: strict REAL-only v1 aggregator contract.
 - v2: BUILT after the measured v1 FAIL under R11. Live validation pending.
 - v3: NOT_BUILT; only after an actual v2 FAIL and specific D-code evidence.
-- v3: NOT_BUILT; only after actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
 
 ## v2 — LFS_V2_PROXY
@@ -103,7 +102,7 @@ D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 
 2. Parameters tuned on test? No tunable parameters introduced.
 3. Costs included? No trade or EV is generated in Stage 2.
 4. No-signal report? Missing/invalid inputs produce UNAVAILABLE, never a trade.
-5. Weakest assumption? Five LFS components and weights are named, but raw-to-score transforms are not fully specified and Stage 1 L1 lacks order-book/long-short inputs.
+5. Weakest assumption? LFS1 remains an OHLCV proxy, and funding/long-short/OI percentile references cover about 30 days rather than the 90-day research reference.
 
 ## Handoff
-No Stage 3 work until Stage 2 measured PASS and owner approval. If v1 fails, publish exact D-code and measured evidence before considering v2.
+No Stage 3 work until Stage 2 measured PASS and owner approval. v1 has failed with D1/D2; v2 is under live validation. If v2 fails, publish the exact D-code and evidence before considering v3.
