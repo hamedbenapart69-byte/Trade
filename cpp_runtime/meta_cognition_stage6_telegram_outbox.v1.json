@@ -12,12 +12,15 @@
       "status": "DELIVERED"
     },
     {
-      "attempts": 0,
+      "attempts": 1,
+      "completed_at_utc": "2026-11-18T13:58:17Z",
       "created_at_utc": "2026-11-18T13:58:15Z",
-      "http_status": null,
+      "detail": "{\"ok\":false,\"error_code\":404,\"description\":\"Not Found\"}",
+      "http_status": 404,
       "message_id": null,
       "report_id": "151352ddf778b14d3f18b897a4f6e485891154796509af9b6e3556e1f2d9e62e",
-      "status": "RESERVED"
+      "send_started_at_utc": "2026-11-18T13:58:17Z",
+      "status": "PERMANENT_FAILURE"
     }
   ],
   "schema_version": "1.0.0"
