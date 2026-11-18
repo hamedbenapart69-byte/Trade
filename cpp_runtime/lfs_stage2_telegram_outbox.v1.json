@@ -3,9 +3,20 @@
     {
       "attempts": 1,
       "reason": "telegram_response_not_confirmed; duplicate_send_blocked",
+      "reconciled_at_utc": "2026-11-18T11:16:45Z",
+      "reconciliation_evidence": {
+        "attempt_started_at_utc": "2026-11-18T11:03:04Z",
+        "checked_at_utc": "2026-11-18T11:16:45Z",
+        "conclusion": "NOT_DELIVERED",
+        "latest_visible_message_at_utc": "2026-11-18T05:35:04Z",
+        "preview_message_count": 20,
+        "report_header_found": false,
+        "report_id": "90de08487d0b4af481d1877e238d8211f7efcbe3f987302a37fe02efb2e069cb",
+        "source": "public Telegram channel recent-message preview"
+      },
       "report_id": "90de08487d0b4af481d1877e238d8211f7efcbe3f987302a37fe02efb2e069cb",
       "started_at_utc": "2026-11-18T11:03:04Z",
-      "status": "DELIVERY_UNKNOWN"
+      "status": "RECONCILED_NOT_DELIVERED"
     }
   ],
   "schema_version": "1.0.0"
