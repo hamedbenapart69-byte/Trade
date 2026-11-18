@@ -133,6 +133,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                                                   cached_market_data);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
+        if (market_data_cache_path)
+            cfss::write_file_atomic(*market_data_cache_path, l1_raw, true);
 
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
         cfss::add_artifact_hash(artifact);
