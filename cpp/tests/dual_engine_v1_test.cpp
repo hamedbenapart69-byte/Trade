@@ -147,14 +147,14 @@ int main() {
 
     const auto exact_boundary = cfss::engines::evaluate(
         "BTC/USDT:USDT",
-        {{"candles", hourly_fixture(false, true)}},
+        instrument_fixture(false, true),
         lfs(0.70), nss(0.70, 0.40), liquidity("RANGE", true), decision);
     require(!exact_boundary.golden_rule_veto,
             "strict greater-than Golden Rule does not trigger at exactly 0.70");
 
     const auto missing = cfss::engines::evaluate(
         "BTC/USDT:USDT",
-        {{"candles", hourly_fixture(false, true)}},
+        instrument_fixture(false, true),
         {{"status", "UNAVAILABLE"}}, nss(0.8, 0.8), liquidity("RANGE", true), decision);
     require(!missing.golden_rule_evaluated &&
             missing.lrt.status == "INSUFFICIENT_DATA" &&
