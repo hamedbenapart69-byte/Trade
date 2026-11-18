@@ -45,7 +45,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             "profile", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind",
             "data_class", "cost_status",
             "resolution_data_sha256", "resolution_bars", "source_scan_id", "symbol",
-            "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
+            "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "score_model_version"
         };
         for (const auto& key : required) {
             if (!row.contains(key))
@@ -57,7 +57,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
             !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
             !row.at("profile").is_string() || !row.at("data_class").is_string() ||
-            !row.at("cost_status").is_string() || !row.at("entry_fill_reference").is_number() ||
+            !row.at("cost_status").is_string() || !row.at("score_model_version").is_string() ||
+            !row.at("entry_fill_reference").is_number() ||
             !row.at("entry_model").is_string() || !row.at("execution_status").is_string() ||
             !row.at("outcome_kind").is_string() ||
             !row.at("resolution_data_sha256").is_string() ||
@@ -104,6 +105,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         item.execution_status = row.at("execution_status").get<std::string>();
         item.source_scan_id = row.at("source_scan_id").get<std::string>();
         item.symbol = row.at("symbol").get<std::string>();
+        item.score_model_version = row.at("score_model_version").get<std::string>();
         out.push_back(item);
     }
     return out;
@@ -116,6 +118,7 @@ json optional_number(const std::optional<double>& value) {
 json calibration_json(const cfss::meta::CalibrationReport& report) {
     return {
         {"status", report.status}, {"reason", report.reason}, {"method", report.method},
+        {"score_model_version", report.score_model_version},
         {"sample_count", report.sample_count}, {"train_count", report.train_count},
         {"validation_count", report.validation_count}, {"oos_count", report.oos_count},
         {"train_scan_clusters", report.train_scan_clusters},
@@ -194,7 +197,8 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         } else {
             report = cfss::meta::calibrate(
                 outcomes, path, regime, *score, decision_time,
-                candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING");
+                candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING",
+                candidate.value("score_model_version", std::string{"UNAVAILABLE"}));
             reason = report.reason;
             if (report.status == "INVALID_OUTCOME_LEDGER") {
                 status = "INSUFFICIENT_DATA";
@@ -212,6 +216,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         {"direction", candidate.value("direction", std::string{"NONE"})},
         {"raw_score", optional_number(score)},
         {"data_class", candidate.value("data_class", std::string{"UNAVAILABLE"})},
+        {"score_model_version", candidate.value("score_model_version", std::string{"UNAVAILABLE"})},
         {"hypothesis", candidate.value("hypothesis", std::string{})},
         {"falsification", candidate.value("falsification", std::string{})},
         {"confidence_status", report.status == "CALIBRATED" ? "CALIBRATED" : "NOT_CALIBRATED"},
