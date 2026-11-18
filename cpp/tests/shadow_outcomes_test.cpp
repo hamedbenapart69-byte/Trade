@@ -73,9 +73,10 @@ nlohmann::json fixture_liquidity() {
     };
 }
 
-nlohmann::json candle(std::int64_t ts, double high, double low, double close) {
+nlohmann::json candle(std::int64_t ts, double high, double low, double close,
+                       double open = 100.0) {
     return {
-        {"timestamp_ms", ts}, {"open", 100.0}, {"high", high}, {"low", low}, {"close", close},
+        {"timestamp_ms", ts}, {"open", open}, {"high", high}, {"low", low}, {"close", close},
         {"closed", true}
     };
 }
@@ -185,7 +186,7 @@ int main() {
             "legacy pending candidates without crypto-universe provenance are quarantined");
 
     const auto missed_entry = cfss::shadow::process(
-        target_l1, fixture_l1_15m({candle(3'600'000LL, 106.0, 104.5, 105.0)}, 4'500'000LL),
+        target_l1, fixture_l1_15m({candle(3'600'000LL, 106.0, 104.5, 105.0, 105.0)}, 4'500'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(missed_entry.at("ledger").at("outcomes").empty() &&
@@ -193,7 +194,7 @@ int main() {
             "target gap before proxy entry is recorded as missed, never as a filled win");
 
     const auto invalidated_entry = cfss::shadow::process(
-        target_l1, fixture_l1_15m({candle(3'600'000LL, 99.0, 96.0, 97.0)}, 4'500'000LL),
+        target_l1, fixture_l1_15m({candle(3'600'000LL, 99.0, 96.0, 97.0, 97.0)}, 4'500'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(invalidated_entry.at("ledger").at("outcomes").empty() &&
