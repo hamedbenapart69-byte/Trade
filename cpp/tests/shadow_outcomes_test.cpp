@@ -176,7 +176,8 @@ int main() {
         {"path", "PLAN_A_NMT"}, {"symbol", "MMT/USDT:USDT"}, {"direction", "LONG"}
     });
     const auto quarantined = cfss::shadow::process(
-        no_future_l1, fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        no_future_l1, fixture_l1_15m({candle(2'700'000LL, 105.0, 97.0, 100.0)}, 3'600'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
         legacy_registry, cfss::shadow::empty_ledger());
     require(quarantined.at("registry").at("candidates").front().at("state") == "REJECTED" &&
             quarantined.at("registry").at("candidates").front().at("skip_reason") ==
@@ -202,7 +203,8 @@ int main() {
     auto missing_target = candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0);
     missing_target["target_reference"] = nullptr;
     const auto rejected = cfss::shadow::process(
-        no_future_l1, fixture_dual(missing_target), liquidity,
+        no_future_l1, fixture_l1_15m({candle(2'700'000LL, 105.0, 97.0, 100.0)}, 3'600'000LL),
+        fixture_dual(missing_target), liquidity,
         cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(rejected.at("registry").at("candidates").empty() &&
             rejected.at("registry").at("summary").at("rejected_this_run") == 1,
