@@ -3,7 +3,7 @@
   "title": "CFSS Intraday 15m Market Data",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "source_run_id", "source_scan_id", "source_l1_sha256", "decision_time_ms", "window", "provider_id", "instruments", "coverage"],
+  "required": ["schema_version", "artifact_type", "source_run_id", "source_scan_id", "source_l1_sha256", "decision_time_ms", "window", "provider_id", "candles_sha256", "instruments", "coverage"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "artifact_type": {"const": "cfss_intraday_15m_market_data_v1"},
@@ -18,6 +18,7 @@
       "properties": {"timeframe": {"const": "15m"}, "end_ms": {"type": "integer", "minimum": 1}}
     },
     "provider_id": {"const": "okx"},
+    "candles_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "instruments": {
       "type": "array",
       "minItems": 1,
