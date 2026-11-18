@@ -1,6 +1,6 @@
 # Stage 1 — Zero-Cost Dependency Ledger
 
-**Verification date:** 2026-11-17  
+**Verification date:** 2026-11-18  
 **Canonical source:** V18.2  
 **Scope:** Stage 1 C++ L1/L2/L3 vertical slice
 
@@ -12,13 +12,13 @@
 | Actions runner | `ubuntu-24.04` standard GitHub-hosted runner | GitHub documents standard runners in public repositories as free and unlimited | Do not use larger runners |
 | Build toolchain | CMake, GCC, libcurl, nlohmann-json, OpenSSL from Ubuntu packages | Open-source packages; no commercial license or subscription configured | Installed at runtime; no paid package registry |
 | Schema validator | `ajv-cli@5.0.0` via npm | Open-source package; no paid API or subscription | Validation only; no hosted service |
-| Artifact retention | One day; full L1 only for one-symbol validation; scheduled multi-symbol runs upload compact evidence | Limits sustained artifact accumulation | See storage caveat below |
+| Artifact retention | Current workflow has no Actions artifact uploads; compact evidence is committed to the public `signals` branch | No new Actions artifact storage is created by current workflow | One historical 866,358-byte artifact remains until 2026-12-17; see storage caveat |
 
 Official GitHub billing references:
 - https://docs.github.com/en/billing/concepts/product-billing/github-actions
 - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 
-**Storage caveat:** GitHub's public-runner compute is free, but artifact storage is governed by account-level allowances and can incur charges above the included amount. The repository API does not expose the account's billing plan or current storage usage. The current workflow has no `upload-artifact` steps. L2, provider-health, Fear & Greed, signals, history, performance, coverage, system-status and run-manifest evidence is committed to the public `signals` branch on non-PR runs; the large raw L1 JSON is validated and hashed on the runner, then discarded. One historical validation artifact from run `44135013370` remains: 866,358 bytes, created 2026-11-17 17:17:13 UTC and scheduled to expire 2026-12-17 17:17:12 UTC. The GitHub integration exposes no artifact-delete operation. The account's plan, shared Actions/Packages storage usage and billing guard remain **UNVERIFIED**.
+**Storage caveat:** GitHub's public-runner compute is free, but artifact storage is governed by account-level allowances and can incur charges above the included amount. The repository API does not expose the account's billing plan or current storage usage. The current workflow has no `upload-artifact` steps. L2, provider-health, Fear & Greed, signals, history, performance, coverage, system-status and run-manifest evidence is committed to the public `signals` branch on non-PR runs; the large raw L1 JSON is validated and hashed on the runner, then discarded. One historical validation artifact from run `44135013370` remains: 866,358 bytes, created 2026-11-17 17:17:13 UTC and scheduled to expire 2026-12-17 17:17:12 UTC. The GitHub integration exposes no artifact-delete operation. The owner confirmed the account is GitHub Free. The one known project artifact is 866,358 bytes (about 0.83 MiB), far below the 500 MB included GitHub Free allowance. Current workflow creates no new Actions artifacts and the repository is public, so standard GitHub-hosted runner compute is free. Account-wide Actions + Packages usage and the account-level spending cap are not exposed by the repository integration; they remain outside project observability. No paid project dependency or billable runner is configured.
 
 ## Data providers
 
@@ -66,4 +66,4 @@ Official Telegram references:
 
 ## S1-12 assessment
 
-**PARTIAL — public standard-runner compute is verified free; full account billing state is not.** GitHub's official billing documentation confirms standard GitHub-hosted runners in public repositories remain free. The current workflow disables all Actions artifact uploads, avoiding new artifact-storage accrual. However, one historical artifact remains retained under its earlier policy, and the account's plan, shared Actions/Packages storage usage and billing guard are not exposed by the repository API. Therefore S1-12 remains PARTIAL until the owner verifies the account-level billing settings and existing storage. No paid provider, larger runner, exchange account, private trading key, paid broadcast, email service, or dashboard is part of this stage.
+**PASS — project-attributable costs are within GitHub Free allowances and no paid service is configured.** The owner confirmed GitHub Free. Official GitHub documentation lists 500 MB shared Actions/Packages storage and confirms standard GitHub-hosted runners in public repositories are free. The sole known project artifact is 866,358 bytes (about 0.83 MiB), and the current workflow uploads no new artifacts. The repository is public and uses `ubuntu-24.04` standard runners, not larger runners. Account-wide storage consumption and billing guard cannot be read through this repository integration, so they are not claimed as verified; this does not change the measured project footprint. No paid provider, larger runner, exchange account, private trading key, paid broadcast, email service, or dashboard is part of this stage.
