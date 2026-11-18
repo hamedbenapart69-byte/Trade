@@ -1,0 +1,62 @@
+name: C++ Stage 3 NSS v1 Contract and Live Diagnosis
+
+on:
+  push:
+    branches: [feat/cpp-stage3-nss-v1]
+    paths:
+      - "cpp/**"
+      - ".github/workflows/cpp-stage3-nss-v1.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - ".github/workflows/cpp-stage3-nss-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpp-stage3-nss-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nss-v1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+      - name: Configure C++20
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build all C++ targets
+        run: cmake --build build --parallel 2
+      - name: Run complete CTest suite
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Collect fresh real OKX BTC and ETH L1 inputs
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p stage3-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage3-evidence/l1-market-data.v1.json \
+            stage3-evidence/l2-status.v1.json
+          sha256sum stage3-evidence/l1-market-data.v1.json
+      - name: Execute strict REAL-only NSS v1 diagnostic
+        if: github.event_name != 'pull_request'
+        run: |
+          ./build/nss_v1_probe stage3-evidence/l1-market-data.v1.json stage3-evidence/nss-v1.json
+          jq -r '.instruments[] | [.symbol, .status, (.component_coverage.real_basis_present|tostring), (.component_coverage.raw_oi_present|tostring), (.component_coverage.raw_funding_present|tostring)] | @tsv' stage3-evidence/nss-v1.json
+          test "$(jq -r .status stage3-evidence/nss-v1.json)" = "UNAVAILABLE"
+          test "$(jq '[.instruments[].components[] | select(.score != null)] | length' stage3-evidence/nss-v1.json)" -eq 0
+          test "$(jq '[.instruments[].components[] | select(.reason | contains("TRANSFORM_UNSPECIFIED"))] | length' stage3-evidence/nss-v1.json)" -ge 1
+          echo "NSS_V1_HONEST_UNAVAILABLE_D1_D2"
+      - name: Assert no paid runner or Actions artifact upload
+        run: |
+          if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage3-nss-v1.yml; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "ZERO_COST_STANDARD_RUNNER_NO_ACTIONS_ARTIFACTS"
