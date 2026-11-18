@@ -113,7 +113,7 @@ int main() {
             "a pivot is published only after the two right-hand bars close");
 
     auto invalidation_input = hourly;
-    const auto invalidation_start = static_cast<std::int64_t>(223U) * four_hours;
+    const auto invalidation_start = static_cast<std::int64_t>(bar_count) * four_hours;
     for (std::int64_t k = 0; k < 4; ++k) {
         invalidation_input.push_back({
             {"timestamp_ms", invalidation_start + k * 3'600'000LL},
