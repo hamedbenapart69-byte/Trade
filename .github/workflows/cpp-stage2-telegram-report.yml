@@ -48,6 +48,61 @@ jobs:
           path: signals-state
           fetch-depth: 0
           persist-credentials: true
+      - name: Reconcile prior unknown delivery using complete recent public channel window
+        run: |
+          set -euo pipefail
+          outbox="signals-state/cpp_runtime/lfs_stage2_telegram_outbox.v1.json"
+          unknown_count="$(jq '[.receipts[] | select(.status == "DELIVERY_UNKNOWN")] | length' "${outbox}")"
+          test "${unknown_count}" = "1"
+          report_id="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .report_id' "${outbox}")"
+          attempt_raw="$(jq -r '.receipts[] | select(.status == "DELIVERY_UNKNOWN") | .started_at_utc' "${outbox}")"
+          code="$(curl --silent --show-error --location --output stage2-evidence/channel-preview.html --write-out "%{http_code}" --max-time 20 "https://t.me/s/godsignlacrypto")"
+          echo "reconciliation_preview_http_status=${code}"
+          test "${code}" = "200"
+          if grep -Fq "گزارش مرحلهٔ ۲ سامانهٔ معاملات" stage2-evidence/channel-preview.html; then
+            header_found=true
+          else
+            header_found=false
+          fi
+          latest_raw="$(grep -oE 'datetime="[0-9T:+.-]+"' stage2-evidence/channel-preview.html | tail -n 1 | sed -E 's/^datetime="([^"]+)"$/\1/')"
+          test -n "${latest_raw}"
+          latest_utc="$(date -u -d "${latest_raw}" +'%Y-%m-%dT%H:%M:%SZ')"
+          attempt_utc="$(date -u -d "${attempt_raw}" +'%Y-%m-%dT%H:%M:%SZ')"
+          latest_epoch="$(date -u -d "${latest_utc}" +%s)"
+          attempt_epoch="$(date -u -d "${attempt_utc}" +%s)"
+          message_count="$(grep -o 'tgme_widget_message_wrap' stage2-evidence/channel-preview.html | wc -l)"
+          echo "old_report_id=${report_id}"
+          echo "old_attempt_started_at_utc=${attempt_utc}"
+          echo "latest_visible_message_at_utc=${latest_utc}"
+          echo "preview_message_count=${message_count}"
+          echo "report_header_found=${header_found}"
+          test "${header_found}" = "false"
+          test "${message_count}" -ge 20
+          test "${latest_epoch}" -lt "${attempt_epoch}"
+          jq -n \
+            --arg report_id "${report_id}" \
+            --arg attempt_started_at_utc "${attempt_raw}" \
+            --arg latest_visible_message_at_utc "${latest_utc}" \
+            --arg checked_at_utc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --argjson preview_message_count "${message_count}" \
+            '{conclusion:"NOT_DELIVERED", report_id:$report_id, attempt_started_at_utc:$attempt_started_at_utc, latest_visible_message_at_utc:$latest_visible_message_at_utc, checked_at_utc:$checked_at_utc, preview_message_count:$preview_message_count, report_header_found:false, source:"public Telegram channel recent-message preview"}' \
+            > stage2-evidence/telegram-reconciliation.json
+
+      - name: Persist reconciled non-delivery evidence
+        run: |
+          ./build/lfs_telegram_report --reconcile-not-delivered \
+            "$(jq -r '.report_id' stage2-evidence/telegram-reconciliation.json)" \
+            signals-state/cpp_runtime/lfs_stage2_telegram_outbox.v1.json \
+            stage2-evidence/telegram-reconciliation.json
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/lfs_stage2_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage2): reconcile prior Telegram non-delivery"
+            git push origin HEAD:signals
+          fi
+
       - name: Prepare Stage 2 Telegram outbox
         run: |
           mkdir -p signals-state/cpp_runtime
