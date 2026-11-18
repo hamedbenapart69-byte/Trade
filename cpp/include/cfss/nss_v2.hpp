@@ -131,6 +131,10 @@ inline NormalizedFundingSeries normalize_funding_to_8h(const nlohmann::json& row
             (static_cast<double>(standard_interval_ms) / static_cast<double>(interval));
         if (std::isfinite(normalized)) result.observations.emplace_back(ts, normalized);
     }
+    if (!result.observations.empty() &&
+        decision_time_ms - result.observations.back().first > 24LL * 3'600'000LL) {
+        result.observations.clear();
+    }
     return result;
 }
 
