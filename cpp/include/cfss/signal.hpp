@@ -102,7 +102,8 @@ inline std::string format_signal_markdown(const ActionableSignal& signal) {
 }
 
 inline bool send_telegram_message(const std::string& token, const std::string& chat_id,
-                                  const std::string& message) {
+                                  const std::string& message, std::string* response_out = nullptr,
+                                  bool log_response = true) {
     CURL* curl = curl_easy_init();
     if (!curl) return false;
     const std::string endpoint = "https://api.telegram.org/bot" + token + "/sendMessage";
@@ -130,8 +131,11 @@ inline bool send_telegram_message(const std::string& token, const std::string& c
     if (result == CURLE_OK) curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
-    std::cout << "Telegram HTTP status: " << status << '\n';
-    std::cout << "Telegram API response: " << response << '\n';
+    if (response_out) *response_out = response;
+    if (log_response) {
+        std::cout << "Telegram HTTP status: " << status << '\n';
+        std::cout << "Telegram API response: " << response << '\n';
+    }
     return result == CURLE_OK && status == 200 &&
            response.find("\"ok\":true") != std::string::npos;
 }
