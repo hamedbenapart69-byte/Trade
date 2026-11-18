@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cfss.local/contracts/lfs-v2-proxy.v1.schema.json",
+  "title": "CFSS LFS V2 Proxy Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "version",
+    "source_run_id",
+    "source_scan_id",
+    "status",
+    "note",
+    "instruments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_lfs_v2_proxy"
+    },
+    "version": {
+      "const": "LFS_V2_PROXY"
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_scan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "CALCULATED",
+        "PARTIAL",
+        "UNAVAILABLE"
+      ]
+    },
+    "note": {
+      "type": "string"
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "instrument_id",
+          "symbol",
+          "status",
+          "score",
+          "data_class",
+          "component_coverage",
+          "components",
+          "long_short_rows",
+          "long_short_scope"
+        ],
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "CALCULATED",
+              "UNAVAILABLE"
+            ]
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "data_class": {
+            "enum": [
+              "REAL",
+              "PROXY",
+              "UNAVAILABLE"
+            ]
+          },
+          "component_coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "available_scores",
+              "required_scores"
+            ],
+            "properties": {
+              "available_scores": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "required_scores": {
+                "const": 5
+              }
+            }
+          },
+          "components": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "score",
+                "data_class",
+                "available_at_ms",
+                "definition_id",
+                "reason"
+              ],
+              "properties": {
+                "id": {
+                  "enum": [
+                    "LFS1_BOOK_THINNESS",
+                    "LFS2_FUNDING_EXTREME",
+                    "LFS3_LONG_SHORT_POSITIONING",
+                    "LFS4_VOLATILITY_COMPRESSION",
+                    "LFS5_OPEN_INTEREST_CHANGE"
+                  ]
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "data_class": {
+                  "enum": [
+                    "REAL",
+                    "PROXY",
+                    "UNAVAILABLE"
+                  ]
+                },
+                "available_at_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "definition_id": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "long_short_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "long_short_scope": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
