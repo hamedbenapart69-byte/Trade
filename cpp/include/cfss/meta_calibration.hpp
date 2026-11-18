@@ -434,7 +434,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         }
     }
     if (oos_clusters.effective_n < 30.0) {
-        report.reason = "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_AND_SYMBOL_CLUSTERING";
+        report.reason = "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_SYMBOL_AND_UTC_DAY_CLUSTERING";
         return report;
     }
 
