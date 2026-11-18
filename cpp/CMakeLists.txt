@@ -102,6 +102,16 @@ target_include_directories(liquidity_phase_probe PRIVATE include)
 target_compile_features(liquidity_phase_probe PRIVATE cxx_std_20)
 target_link_libraries(liquidity_phase_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
 
+add_executable(dual_engine_probe apps/dual_engine_probe/main.cpp)
+target_include_directories(dual_engine_probe PRIVATE include)
+target_compile_features(dual_engine_probe PRIVATE cxx_std_20)
+target_link_libraries(dual_engine_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(dual_engine_v1_tests tests/dual_engine_v1_test.cpp)
+target_include_directories(dual_engine_v1_tests PRIVATE include)
+target_compile_features(dual_engine_v1_tests PRIVATE cxx_std_20)
+add_test(NAME dual_engine_v1_tests COMMAND dual_engine_v1_tests)
+
 add_executable(liquidity_phase_v1_tests tests/liquidity_phase_v1_test.cpp)
 target_include_directories(liquidity_phase_v1_tests PRIVATE include)
 target_compile_features(liquidity_phase_v1_tests PRIVATE cxx_std_20)
