@@ -92,7 +92,7 @@ int send(const json& report, const std::filesystem::path& path) {
 
     std::string response_text;
     const bool sent = cfss::send_telegram_message(
-        token_env, chat_env, cfss::lfs_delivery::message_text(report), &response_text, false);
+        token_env, chat_env, cfss::lfs_delivery::message_text(report), &response_text, true, false);
     json response = json::object();
     try { response = json::parse(response_text); } catch (...) {}
     if (sent && response.value("ok", false) && response.contains("result") &&
