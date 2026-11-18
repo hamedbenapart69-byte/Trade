@@ -2,9 +2,10 @@
   "receipts": [
     {
       "attempts": 1,
+      "reason": "telegram_response_not_confirmed; duplicate_send_blocked",
       "report_id": "90de08487d0b4af481d1877e238d8211f7efcbe3f987302a37fe02efb2e069cb",
       "started_at_utc": "2026-11-18T11:03:04Z",
-      "status": "SENDING"
+      "status": "DELIVERY_UNKNOWN"
     }
   ],
   "schema_version": "1.0.0"
