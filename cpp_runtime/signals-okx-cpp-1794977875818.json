@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-11-18T04:58:21Z",
+  "note": "Stage 1 has no admitted strategy engine; an empty signals array is intentional and is not a BUY or SELL recommendation.",
+  "report_status": "NO_QUALIFIED_SETUP",
+  "run_id": "okx-cpp-1794977875818",
+  "scan_id": "scan-9c264ad6eb24c778df437a5b916ef98644652003cdec37760afd8a25a7aaea2e",
+  "schema_version": "1.0.0",
+  "signal_count": 0,
+  "signals": [],
+  "status_report": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1794970800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    }
+  ],
+  "status_report_count": 1
+}

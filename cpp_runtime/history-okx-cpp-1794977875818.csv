@@ -1,0 +1,2 @@
+timestamp_utc,run_id,scan_id,instrument_id,symbol,state,reason_code,data_quality,confidence_status,actionable,latest_candle_timestamp_ms
+2026-11-18T04:58:21Z,okx-cpp-1794977875818,scan-9c264ad6eb24c778df437a5b916ef98644652003cdec37760afd8a25a7aaea2e,BTC-USDT-SWAP,BTC/USDT:USDT,NO_QUALIFIED_SETUP,NO_STRATEGY_ADMITTED,REAL,NOT_CALIBRATED,false,1794970800000

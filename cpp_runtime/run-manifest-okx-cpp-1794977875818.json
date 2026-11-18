@@ -1,0 +1,232 @@
+{
+  "artifact_manifest": {
+    "coverage": {
+      "bytes": 1213,
+      "path": "artifacts/coverage.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "3db21cbaab3ae5d75388efa6bf725f8e3ee2908a7b5e3591ede30269296b747b"
+    },
+    "fear_greed": {
+      "bytes": 112211,
+      "path": "artifacts/fear-greed.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "8f0db89a1e529632426ded110265229d57f7944e9058594e1f0f0ca6a53ca94d"
+    },
+    "history": {
+      "bytes": 358,
+      "path": "artifacts/history.csv",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "0e5c1ecae7d610ddb106eafcaf22f9feb9de6c52133e1545996f8b50ff4a5114"
+    },
+    "l1_market_data": {
+      "bytes": 9517957,
+      "path": "artifacts/l1-market-data.v1.json",
+      "retained_in_signals_branch": false,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "cfa98924b58cc54a0bb3a2762ea64010f6792eeba7e4579444ba4dd067ec1918"
+    },
+    "l2_status": {
+      "bytes": 716,
+      "path": "artifacts/l2-status.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "42da01f0b752bfb81697b1f66778c3aa9e1f2259597f4957c865225f4ccc27f6"
+    },
+    "performance": {
+      "bytes": 453,
+      "path": "artifacts/performance.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "3e8394a6fa9f6aa7a7b45e92c9de1957f100dc4499b513350a6193e7b370cb10"
+    },
+    "provider_health": {
+      "bytes": 3464,
+      "path": "artifacts/provider-health.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "f6c2788ff0813e1f394698eaa08f0af8a84e0e11abb7b7329c9c1535b9ee621d"
+    },
+    "signals": {
+      "bytes": 814,
+      "path": "artifacts/signals.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "afae7af8c74d87172cda8ee0015a4431394dfdfe24d8f2191a4530402318c79e"
+    },
+    "system_status": {
+      "bytes": 4740,
+      "path": "artifacts/system_status.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "cd51fc5a7039631e2e8cd3fbba677b683955a59164fd030b09eb3aac2465d9a2"
+    }
+  },
+  "branch": "feat/cpp-stage1-clean",
+  "build_id": "78be8cc006ea5de963f54c59a13fed390447ba6298ce102592be989ec2b613fa",
+  "compiler_id": "GCC",
+  "compiler_version": "13.3.0",
+  "configuration_hash": "7ef64007f1867ff6fff0f27bc101f579251ab2e89c00fae81e96b0febb4ccd91",
+  "configuration_version": "1.0.0",
+  "dataset_hash": "cfa98924b58cc54a0bb3a2762ea64010f6792eeba7e4579444ba4dd067ec1918",
+  "dataset_version": "1.0.0",
+  "document_version": "V18.2",
+  "end_time_utc": "2026-11-18T05:00:24Z",
+  "error_summary": [
+    "bybit:provider_endpoint_unreachable",
+    "binance:provider_endpoint_unreachable",
+    "kucoin:no_equivalence_verified_cpp_adapter",
+    "mexc:no_equivalence_verified_cpp_adapter",
+    "bitget:no_equivalence_verified_cpp_adapter",
+    "telegram_inbound:FAILED"
+  ],
+  "generator_statuses": {
+    "H1": "NOT_STARTED",
+    "H2": "NOT_STARTED",
+    "H3": "NOT_STARTED",
+    "H4": "NOT_STARTED",
+    "H5": "NOT_STARTED",
+    "H6": "NOT_STARTED",
+    "H7": "NOT_STARTED"
+  },
+  "path_statuses": {
+    "A": "NOT_STARTED",
+    "B": "NOT_STARTED",
+    "C": "NOT_STARTED",
+    "H": "NOT_STARTED"
+  },
+  "profile": {
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_symbols": 1,
+    "symbol_target": 1,
+    "timeframe": "1h",
+    "years": 2
+  },
+  "provider_status": {
+    "checked_at_utc": "2026-11-18T04:58:19Z",
+    "providers": [
+      {
+        "adapter_status": "IMPLEMENTED_PRIMARY",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://www.okx.com/api/v5/public/time",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 1,
+        "fallback_reason": "primary_provider",
+        "fallback_status": "PRIMARY",
+        "http_status": 200,
+        "provider_id": "okx",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "UNAVAILABLE",
+        "endpoint": "https://api.bybit.com/v5/market/time",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 2,
+        "fallback_reason": "provider_endpoint_unreachable",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 403,
+        "provider_id": "bybit",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "UNAVAILABLE",
+        "endpoint": "https://fapi.binance.com/fapi/v1/ping",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 3,
+        "fallback_reason": "provider_endpoint_unreachable",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 451,
+        "provider_id": "binance",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api-futures.kucoin.com/api/v1/timestamp",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 4,
+        "fallback_reason": "no_equivalence_verified_cpp_adapter",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 200,
+        "provider_id": "kucoin",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://contract.mexc.com/api/v1/contract/detail",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 5,
+        "fallback_reason": "no_equivalence_verified_cpp_adapter",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 200,
+        "provider_id": "mexc",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 6,
+        "fallback_reason": "no_equivalence_verified_cpp_adapter",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 200,
+        "provider_id": "bitget",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "REFERENCE_ONLY",
+        "checked_at_utc": "2026-11-18T04:58:19Z",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api.coingecko.com/api/v3/ping",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 7,
+        "fallback_reason": "not_a_futures_fallback",
+        "fallback_status": "REFERENCE_ONLY",
+        "http_status": 200,
+        "provider_id": "coingecko",
+        "transport_status": "No error"
+      }
+    ],
+    "schema_version": "1.0.0"
+  },
+  "repository_commit": "41cca17d33c0dba0460dada6a2613112d13b0b0e",
+  "retry_summary": {
+    "exhausted_requests": 0,
+    "http_failed_attempts": 2,
+    "http_request_attempts": 78,
+    "http_retry_attempts": 0,
+    "telegram_inbound_polls": 36,
+    "telegram_retry_attempts_total_for_scan": 0,
+    "telegram_send_attempts_total_for_scan": 0
+  },
+  "run_id": "okx-cpp-1794977875818",
+  "run_status": "L1_L2_PASS",
+  "run_timestamp_utc": "2026-11-18T04:57:55Z",
+  "scan_id": "scan-9c264ad6eb24c778df437a5b916ef98644652003cdec37760afd8a25a7aaea2e",
+  "start_time_utc": "2026-11-18T04:57:55Z",
+  "telegram_last_update_id": 610176013,
+  "telegram_message_ids": [],
+  "telegram_receive_test_status": "RECEIVED_PROCESSED",
+  "telegram_send_status": "NOT_ATTEMPTED"
+}
