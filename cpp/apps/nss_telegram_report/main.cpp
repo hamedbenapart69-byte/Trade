@@ -22,7 +22,7 @@ json read_json(const std::filesystem::path& path) {
 }
 
 void persist(const std::filesystem::path& path, const json& value) {
-    cfss::write_file_atomic(path, value.dump(2) + "\n", true);
+    cfss::write_file_atomic(path, value.dump(2) + "\n", false);
 }
 
 std::string report_text(const json& report) {
