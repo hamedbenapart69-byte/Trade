@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -128,6 +129,8 @@ inline Candidate build_lrt(const nlohmann::json& instrument,
         return result;
     }
     const double volume_ratio = last.volume_quote / median_volume;
+    result.score = lfs_score;
+    result.data_class = lfs.value("data_class", std::string{"PROXY"});
 
     std::optional<nlohmann::json> long_sweep;
     std::optional<nlohmann::json> short_sweep;
@@ -158,8 +161,6 @@ inline Candidate build_lrt(const nlohmann::json& instrument,
 
     result.status = "CANDIDATE";
     result.direction = long_sweep ? "LONG" : "SHORT";
-    result.score = lfs_score;
-    result.data_class = lfs.value("data_class", std::string{"PROXY"});
     result.entry_reference = last.close;
     if (long_sweep) {
         const auto sweep_low = last.low;
@@ -245,9 +246,9 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
     result.data_class = nss.value("data_class", std::string{"PROXY"});
     result.entry_reference = last.close;
     result.invalidation_reference = long_phase ? prior_high : prior_low;
-    if (long_phase && liquidity.contains("nearest_support") && liquidity.at("nearest_support").is_object())
+    if (long_phase && liquidity.contains("nearest_resistance") && liquidity.at("nearest_resistance").is_object())
         result.target_reference = numeric(liquidity.at("nearest_resistance"), "low");
-    if (short_phase && liquidity.contains("nearest_resistance") && liquidity.at("nearest_resistance").is_object())
+    if (short_phase && liquidity.contains("nearest_support") && liquidity.at("nearest_support").is_object())
         result.target_reference = numeric(liquidity.at("nearest_support"), "high");
     result.hypothesis = std::string{"A "} + phase + " structure has a 20-bar 4H breakout with volume_ratio=" +
         std::to_string(volume_ratio) + " and directional NSS=" + std::to_string(*score) +
@@ -277,6 +278,20 @@ inline Result evaluate(const std::string& symbol,
     result.golden_rule_evaluated = scores_ready;
     result.golden_rule_veto = scores_ready && *result.lfs_score > 0.70 &&
         std::max(*result.nss_long_score, *result.nss_short_score) > 0.70;
+
+    if (!scores_ready) {
+        result.lrt.path = "PLAN_A_LRT";
+        result.lrt.horizon = "30m-4h";
+        result.lrt.decision_time_ms = decision_time_ms;
+        result.lrt.status = "INSUFFICIENT_DATA";
+        result.lrt.reason = "GOLDEN_RULE_INPUTS_REQUIRE_LFS_AND_BOTH_NSS_DIRECTIONS";
+        result.nmt.path = "PLAN_A_NMT";
+        result.nmt.horizon = "1-7d";
+        result.nmt.decision_time_ms = decision_time_ms;
+        result.nmt.status = "INSUFFICIENT_DATA";
+        result.nmt.reason = "GOLDEN_RULE_INPUTS_REQUIRE_LFS_AND_BOTH_NSS_DIRECTIONS";
+        return result;
+    }
 
     result.lrt = build_lrt(instrument, lfs, liquidity, decision_time_ms);
     result.nmt = build_nmt(instrument, nss, liquidity, decision_time_ms);
