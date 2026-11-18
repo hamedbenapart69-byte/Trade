@@ -219,6 +219,17 @@ int main() {
             invalidated_entry.at("registry").at("candidates").front().at("state") == "REJECTED",
             "stop gap before proxy entry is rejected without a fabricated trade");
 
+    const auto unavailable_15m = cfss::shadow::process(
+        fixture_l1({}, 18'000'000LL),
+        fixture_l1_15m({}, 18'000'000LL),
+        fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    require(unavailable_15m.at("ledger").at("outcomes").empty() &&
+            unavailable_15m.at("registry").at("candidates").front().at("state") == "REJECTED" &&
+            unavailable_15m.at("registry").at("candidates").front().at("skip_reason") ==
+                "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY",
+            "expired LRT candidate without 15m resolution data is rejected, not left pending");
+
     auto missing_target = candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0);
     missing_target["target_reference"] = nullptr;
     const auto rejected = cfss::shadow::process(
