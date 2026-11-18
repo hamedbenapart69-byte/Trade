@@ -96,6 +96,24 @@ int main() {
             isolated_data_class.sample_count == 0U,
             "REAL and PROXY outcomes are never pooled");
 
+    auto scalp_outcomes = outcomes;
+    for (auto& row : scalp_outcomes) row.profile = "INTRADAY_SCALP";
+    const auto isolated_profile = cfss::meta::calibrate(
+        scalp_outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80,
+        251LL * 60000LL, "PROXY", "DAILY_SWING");
+    require(isolated_profile.status == "NOT_CALIBRATED" &&
+            isolated_profile.sample_count == 0U,
+            "Daily and Scalp calibration samples are never pooled");
+
+    auto executed_outcomes = outcomes;
+    for (auto& row : executed_outcomes) row.execution_status = "EXECUTED";
+    const auto isolated_execution = cfss::meta::calibrate(
+        executed_outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80,
+        251LL * 60000LL);
+    require(isolated_execution.status == "NOT_CALIBRATED" &&
+            isolated_execution.sample_count == 0U,
+            "hypothesis proxy calibration never absorbs executed-trade outcomes");
+
     auto negative = fixture(0.5, 2.0, 0.10, 0.05, 0.05);
     const auto negative_ev = cfss::meta::calibrate(
         negative, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 60000LL);
