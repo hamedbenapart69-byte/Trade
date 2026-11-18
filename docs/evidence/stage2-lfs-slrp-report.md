@@ -4,7 +4,7 @@
 **Base:** `feat/cpp-stage1-clean` at `c333c257edf70df21baa6e9187f6018978e9fc86` (Stage 1 merged to main as `16cb5e874e89649e049abb6debc6300572e24f09`)  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data in two runs; the aggregate-determinism test passed in the Stage 1-updated branch run 44246628061; v2 L3 Telegram receipt is pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
+**Status:** STAGE 2 PASS for LFS resilience and the required L1/L2/L3 vertical slice. v1 FAIL (D1 + D2); v2 PASS on fresh real BTC+ETH inputs with 5/5 component coverage; v2 L3 has a real Telegram HTTP 200 receipt (message_id=50) persisted to `signals`. v3 is NOT_BUILT under R11 because v2 passed. The v2 output remains PROXY / NOT_CALIBRATED research-only and cannot emit trades.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -64,18 +64,25 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 
 ## Version control
 - v1: strict REAL-only v1 aggregator contract.
-- v2: BUILT after the measured v1 FAIL under R11. Live L1/L2 validation PASS in GitHub Actions runs `44245558287`, `44245999599`, and `44246628061`. A first compile attempt exposed D3 (a constexpr string type error); the v2 implementation was corrected and subsequent builds passed. The Stage 1-updated branch passed the additional deterministic aggregate assertion in run `44246628061`. Live Telegram L3 is pending.
+- v2: BUILT after the measured v1 FAIL under R11. Live L1/L2 validation PASS in GitHub Actions runs `44245558287`, `44245999599`, `44246628061`, `44292375181`, and final end-to-end run `44292775092`. A first compile attempt exposed D3 (a constexpr string type error); corrected before subsequent successful builds. Deterministic aggregate and future-perturbation assertions pass. Final live Telegram L3 receipt is recorded below.
 - v3: NOT_BUILT; only after an actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
 
 ## v2 — LFS_V2_PROXY
 
-Latest completed measured run `44246628061` / `okx-cpp-1794981358236`:
+Earlier measured run `44246628061` / `okx-cpp-1794981358236`:
 - BTC/USDT:USDT: score `0.3519646037470697`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
 - ETH/USDT:USDT: score `0.4324390060617947`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
 - L1 SHA-256: `e077f04cd4462ebace6845c44d3c12b03192b5b2739c4708acc093abc264b6eb`.
 - L2 SHA-256: `403603ea0bb0df25e6d2a964770558449261a9d9b228eb912c80358e0ce9a2e6`.
 - LFS v2 SHA-256: `28006fc62b5fb5682b9daf9293ba5ad35df2f15d1d778320bba08301e98c1690`.
+
+Final end-to-end measured run `44292775092` / `okx-cpp-1795000537259`:
+- BTC/USDT:USDT: score `0.41505333368644903`, `CALCULATED`, `PROXY`, coverage 5/5.
+- ETH/USDT:USDT: score `0.4391550681652331`, `CALCULATED`, `PROXY`, coverage 5/5.
+- Final canonical report hash / outbox report ID: `061fddcc33bbbcfa1ca3f43ead32f4f60b52233364aedcda7aab443b0c808413`.
+- The report was generated from a fresh real OKX L1 collection and delivered through the same run's C++ Telegram L3.
+- These are feature scores only. Neither value is a trade signal, calibrated probability or evidence of profitability.
 - Earlier independent runs `44245558287` and `44245999599` also returned 5/5 for BTC and ETH.
 - JSON Schema validation: PASS.
 - CTest: 4/4 PASS in both live runs; future-perturbation guards for candles, funding, long/short and OI passed. Deterministic aggregate assertion: PASS in run `44246628061`; future-perturbation guards for candles, funding, long/short and OI also passed.
@@ -114,8 +121,14 @@ Calibration remains NOT_CALIBRATED. The 30-day funding, long/short and OI distri
 - Outbox reservation is committed to `signals` before the Telegram network send; `DELIVERED` then records the Telegram message ID.
 - Interrupted/uncertain attempts become `DELIVERY_UNKNOWN` and are not automatically resent.
 - Delivery is gated by a dedicated `[LFS_STAGE2_REPORT]` commit marker; routine CI runs do not send messages.
-- Receipt state is persisted on the `signals` branch. Live Telegram receipt is pending final v2 validation.
-
+- Receipt state is persisted on the `signals` branch.
+- First attempt (GitHub Actions run `44290154942`) reached the C++ send step but returned an unconfirmed response; the outbox correctly persisted `DELIVERY_UNKNOWN` and blocked automatic replay. The first attempt did not retain the Telegram HTTP response body, so its exact API rejection is unavailable.
+- Read-only diagnostics verified `getMe`, `getChat`, and `getChatMember`: HTTP 200; bot is an administrator and `can_post_messages=true`.
+- The first report was not present in the latest 20-message public channel preview; latest visible post was `2026-11-18T05:35:04Z`, earlier than the first send reservation at `2026-11-18T11:03:04Z`. The reconciliation evidence was persisted and the original receipt changed to `RECONCILED_NOT_DELIVERED`; no duplicate send was attempted for that report ID.
+- Code-level diagnosis (inference): the original sender used Telegram Markdown while the report contained underscore-delimited status strings such as `NOT_CALIBRATED`. The sender was corrected to send this report as plain text and to log the HTTP response safely.
+- Recovery/final run `44292775092`: fresh report reserved before network delivery; Telegram returned HTTP `200`, `ok=true`, and `message_id=50`; C++ persisted `DELIVERED` at `2026-11-18T11:16:48Z`.
+- Final report ID: `061fddcc33bbbcfa1ca3f43ead32f4f60b52233364aedcda7aab443b0c808413`.
+- 
 ## SLRP diagnosis codes
 D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 Regime; D6 Expectations.
 
@@ -126,5 +139,29 @@ D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 
 4. No-signal report? Missing/invalid inputs produce UNAVAILABLE, never a trade.
 5. Weakest assumption? LFS1 remains an OHLCV proxy, and funding/long-short/OI percentile references cover about 30 days rather than the 90-day research reference.
 
+## Final SLRP result
+
+```text
+STAGE 2 — LFS RESILIENCE
+├── Acceptance: 5/5 valid bounded components, canonical weights, point-in-time timestamps, deterministic aggregate, real L1 + C++ L2 + Telegram L3 receipt
+├── v1 → FAIL → D1/D2 + measured missing order-book and long/short source fields; no zero-fill or weight redistribution
+├── v2 → PASS → BTC and ETH each CALCULATED / PROXY / 5-of-5; schema valid; CTest 4/4 PASS; real Telegram HTTP 200, message_id=50 persisted
+├── v3 → NOT_BUILT → prohibited by R11 because v2 passed
+├── Active: v2 (PROXY / NOT_CALIBRATED; research-only)
+└── Handoff: Stage 2 PASS; next stage requires explicit owner approval
+```
+
+Budget: 2 of 3 versions used; 1 remains unused. No parameter-only rewrite was made.
+
+## Five-question self-critique
+1. Future data used? No. Inputs are filtered to decision time; future-perturbation tests cover candles, funding, long/short and OI.
+2. Parameters tuned on test? No test-set tuning or parameter search was performed.
+3. Costs included? No trades or EV are produced by Stage 2; trading-cost accounting is therefore not claimed here.
+4. No-signal case? Missing components produce UNAVAILABLE; the report is still generated and explicitly says the score is not a trade signal.
+5. Weakest assumption? LFS1 uses ATR/volume as an OHLCV proxy for book thinness; it is not order-book depth. Funding, long/short and OI histories are about 30 days, shorter than the 90-day research reference.
+
+## Delivery policy note
+The GitHub PR received an automatic Cloudflare Pages preview deployment comment from the repository's existing Cloudflare integration. This was not used by the Stage 2 pipeline or as a user delivery channel; Telegram remained the only report delivery. The current session has no Cloudflare account control to disable that pre-existing preview integration. It remains a C16 governance cleanup item before treating the repository's deployment surface as fully aligned with the Telegram-only rule.
+
 ## Handoff
-No Stage 3 work until Stage 2 measured PASS and owner approval. v1 has failed with D1/D2; v2 is under live validation. If v2 fails, publish the exact D-code and evidence before considering v3.
+Stage 2 measured acceptance is PASS. Do not start Stage 3 until the owner explicitly approves the handoff. The Cloudflare Pages preview integration noted above remains a separate C16 cleanup item; no dashboard or email was used for routine delivery.
