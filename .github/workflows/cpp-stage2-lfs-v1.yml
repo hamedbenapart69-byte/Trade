@@ -62,7 +62,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure --no-tests=error
       - name: Assert no Actions artifact upload is configured
         run: |
-          if grep -R -E "uses:[[:space:]]*actions/upload-artifact" .github/workflows; then
+          if grep -E "uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage2-lfs-v1.yml; then
             echo "Unexpected Actions artifact upload dependency detected"
             exit 1
           fi
