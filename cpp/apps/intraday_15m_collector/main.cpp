@@ -98,10 +98,12 @@ int main(int argc, char** argv) {
                           {"unavailable_count", instruments.size() - available}}}
         };
         write_json(argv[2], output);
-        std::cout << "INTRADAY_15M_STATUS=" << (available == instruments.size() ? "PASS" : "PARTIAL")
+        const std::string coverage_status = available == 0U ? "UNAVAILABLE" :
+            (available == instruments.size() ? "AVAILABLE" : "PARTIAL");
+        std::cout << "INTRADAY_15M_STATUS=" << coverage_status
                   << " AVAILABLE=" << available << " SELECTED=" << instruments.size() << '\n';
         curl_global_cleanup();
-        return available > 0U ? 0 : 1;
+        return EXIT_SUCCESS;
     } catch (const std::exception& error) {
         curl_global_cleanup();
         std::cerr << "INTRADAY_15M_ERROR=" << error.what() << '\n';
