@@ -180,6 +180,9 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
                         bool ledger_available, std::int64_t decision_time) {
     auto status = candidate.value("status", std::string{"INSUFFICIENT_DATA"});
     const auto path = candidate.value("path", std::string{"UNKNOWN"});
+    const auto score_model_version = candidate.value("score_model_version",
+        path == "PLAN_A_LRT" ? std::string{"LFS_V2_PROXY"} :
+        (path == "PLAN_A_NMT" ? std::string{"NSS_V2_PROXY"} : std::string{"UNAVAILABLE"}));
     const auto score = candidate.contains("score") && candidate.at("score").is_number()
         ? std::optional<double>{candidate.at("score").get<double>()} : std::nullopt;
     cfss::meta::CalibrationReport report{};
@@ -198,7 +201,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
             report = cfss::meta::calibrate(
                 outcomes, path, regime, *score, decision_time,
                 candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING",
-                candidate.value("score_model_version", std::string{"UNAVAILABLE"}));
+                score_model_version);
             reason = report.reason;
             if (report.status == "INVALID_OUTCOME_LEDGER") {
                 status = "INSUFFICIENT_DATA";
@@ -216,7 +219,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         {"direction", candidate.value("direction", std::string{"NONE"})},
         {"raw_score", optional_number(score)},
         {"data_class", candidate.value("data_class", std::string{"UNAVAILABLE"})},
-        {"score_model_version", candidate.value("score_model_version", std::string{"UNAVAILABLE"})},
+        {"score_model_version", score_model_version},
         {"hypothesis", candidate.value("hypothesis", std::string{})},
         {"falsification", candidate.value("falsification", std::string{})},
         {"confidence_status", report.status == "CALIBRATED" ? "CALIBRATED" : "NOT_CALIBRATED"},
