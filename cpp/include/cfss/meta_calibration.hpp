@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -193,12 +192,16 @@ inline std::pair<double, double> wilson_interval(std::size_t wins, std::size_t t
 inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                                    const std::string& path,
                                    const std::string& regime,
-                                   double current_score) {
+                                   double current_score, std::int64_t as_of_ms) {
     CalibrationReport report{};
     std::set<std::string> ids;
     std::vector<Outcome> selected;
+    if (as_of_ms <= 0 || !std::isfinite(current_score) || current_score < 0.0 || current_score > 1.0) {
+        report.reason = "INVALID_AS_OF_OR_CURRENT_SCORE";
+        return report;
+    }
     for (const auto& item : outcomes) {
-        if (item.path != path || item.regime != regime) continue;
+        if (item.path != path || item.regime != regime || item.closed_at_ms >= as_of_ms) continue;
         if (item.signal_id.empty() || !ids.insert(item.signal_id).second ||
             item.closed_at_ms <= 0 || !std::isfinite(item.raw_score) ||
             item.raw_score < 0.0 || item.raw_score > 1.0 ||
@@ -220,8 +223,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         return a.signal_id < b.signal_id;
     });
     report.sample_count = selected.size();
-    if (selected.size() < 180U) {
-        report.reason = "INSUFFICIENT_PATH_REGIME_OUTCOMES_MIN_180";
+    if (selected.size() < 250U) {
+        report.reason = "INSUFFICIENT_PATH_REGIME_OUTCOMES_MIN_250_FOR_60_20_20_SPLIT";
         return report;
     }
 
@@ -240,6 +243,16 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     std::vector<Outcome> oos(
         selected.begin() + static_cast<std::ptrdiff_t>(report.train_count + report.validation_count),
         selected.end());
+
+    const auto class_counts_valid = [](const std::vector<Outcome>& rows) {
+        std::size_t wins = 0U;
+        for (const auto& row : rows) if (row.win) ++wins;
+        return wins > 0U && wins < rows.size();
+    };
+    if (!class_counts_valid(train) || !class_counts_valid(validation) || !class_counts_valid(oos)) {
+        report.reason = "BOTH_OUTCOME_CLASSES_REQUIRED_IN_EACH_CHRONOLOGICAL_SPLIT";
+        return report;
+    }
 
     const auto platt = fit_platt(train);
     const auto isotonic = fit_isotonic(train);
