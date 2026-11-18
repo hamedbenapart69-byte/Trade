@@ -1,0 +1,5 @@
+One-time publication trigger for the Stage 3 NSS v1 diagnostic report.
+The dedicated C++ workflow performs a fresh real-data collection, executes the strict NSS v1 diagnostic, reserves the report hash in the persistent signals-branch outbox before sending, and records the Telegram API receipt.
+The report is non-actionable and may truthfully state UNAVAILABLE; no missing score is fabricated.
+
+Recovery note: the first attempt stopped before any Telegram request because the outbox writer was incorrectly configured as immutable. The old reservation was reconciled as ABORTED_PRE_SEND_D3; this run uses replace-safe atomic persistence and a fresh report ID.
