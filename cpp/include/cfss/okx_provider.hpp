@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <map>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -104,6 +105,95 @@ inline std::int64_t now_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
 }
+
+inline std::string uppercase_symbol(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+    return value;
+}
+
+inline bool is_known_non_crypto_underlying(const std::string& raw_symbol) {
+    static const std::set<std::string> blocked{
+        "SOXL", "SNDK", "NVDA", "ANTHROPIC", "XAU", "XAG", "GOLD", "SILVER",
+        "TSLA", "AAPL", "MSFT", "META", "AMZN", "GOOGL", "GOOG", "NFLX",
+        "MSTR", "COIN", "SPY", "QQQ", "USO", "UNG", "TLT", "GDX", "SMH",
+        "NVDL", "NVDX", "TSLL", "TSLT", "AAPU", "AMZU", "MSFU", "METU",
+        "PLTR", "AMD", "INTC", "AVGO", "ORCL", "CRM", "CRWD", "SMCI", "ARM",
+        "BABA", "PDD", "JD", "NIO", "XOM", "CVX", "BAC", "JPM", "GS", "WFC",
+        "DIS", "UBER", "ABNB", "PYPL", "HOOD", "VIX", "DXY", "WTI", "BRENT"
+    };
+    return blocked.contains(uppercase_symbol(raw_symbol));
+}
+
+struct CryptoUniverse {
+    std::set<std::string> symbols;
+    json artifact;
+};
+
+inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = std::nullopt) {
+    const auto retrieved_at = now_ms();
+    try {
+        const auto response = get("https://api.coinpaprika.com/v1/coins", 30L);
+        if (response.transport != CURLE_OK || response.status != 200)
+            throw std::runtime_error("coinpaprika_http_or_transport_unavailable");
+        const auto payload = json::parse(response.body);
+        if (!payload.is_array()) throw std::runtime_error("coinpaprika_coin_list_shape_invalid");
+        std::set<std::string> symbols;
+        for (const auto& row : payload) {
+            if (!row.is_object() || !row.value("is_active", false)) continue;
+            const auto symbol = uppercase_symbol(text(row, "symbol"));
+            const auto type = text(row, "type");
+            if (!symbol.empty() && (type == "coin" || type == "token")) symbols.insert(symbol);
+        }
+        if (symbols.size() < 500U || !symbols.contains("BTC"))
+            throw std::runtime_error("coinpaprika_coin_list_coverage_insufficient");
+        json symbol_array = json::array();
+        std::string hash_material;
+        for (const auto& symbol : symbols) {
+            symbol_array.push_back(symbol);
+            hash_material += symbol + "\n";
+        }
+        json artifact{
+            {"schema_version", "1.0.0"}, {"artifact_type", "cfss_crypto_universe_v1"},
+            {"status", "VERIFIED"}, {"provider_id", "coinpaprika"},
+            {"source_endpoint", "https://api.coinpaprika.com/v1/coins"},
+            {"attribution", "CoinPaprika"}, {"freshness_status", "LIVE"},
+            {"fetched_at_ms", retrieved_at}, {"retrieved_at_ms", retrieved_at},
+            {"symbol_count", symbols.size()}, {"symbols_sha256", cfss::sha256_hex(hash_material)},
+            {"symbols", symbol_array}
+        };
+        return {std::move(symbols), std::move(artifact)};
+    } catch (const std::exception&) {
+        if (!cached || !cached->is_object() ||
+            cached->value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
+            cached->value("status", std::string{}) != "VERIFIED" ||
+            !cached->contains("symbols") || !cached->at("symbols").is_array())
+            throw std::runtime_error("crypto_universe_live_reference_failed_and_no_valid_cache");
+        const auto fetched_at = cached->value("fetched_at_ms", std::int64_t{0});
+        if (fetched_at <= 0 || retrieved_at < fetched_at ||
+            retrieved_at - fetched_at > 7LL * 86'400'000LL)
+            throw std::runtime_error("crypto_universe_cache_stale");
+        std::set<std::string> symbols;
+        for (const auto& value : cached->at("symbols")) {
+            if (!value.is_string()) continue;
+            const auto symbol = uppercase_symbol(value.get<std::string>());
+            if (!symbol.empty()) symbols.insert(symbol);
+        }
+        if (symbols.size() < 500U || !symbols.contains("BTC"))
+            throw std::runtime_error("crypto_universe_cache_coverage_insufficient");
+        auto artifact = *cached;
+        artifact["freshness_status"] = "CACHED";
+        artifact["retrieved_at_ms"] = retrieved_at;
+        return {std::move(symbols), std::move(artifact)};
+    }
+}
+
+inline bool is_verified_crypto_underlying(const std::string& raw_symbol,
+                                          const std::set<std::string>& crypto_symbols) {
+    const auto symbol = uppercase_symbol(raw_symbol);
+    return !symbol.empty() && crypto_symbols.contains(symbol) &&
+           !is_known_non_crypto_underlying(symbol);
+}
 inline std::string utc_iso(std::int64_t epoch_ms) {
     const auto seconds = static_cast<std::time_t>(epoch_ms / 1000);
     std::tm tm{};
@@ -174,8 +264,10 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
-inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_count = nullptr,
-                                       std::size_t* declared_count = nullptr) {
+inline std::vector<Instrument> discover(int target_count, const std::set<std::string>& crypto_symbols,
+                                       std::size_t* eligible_count = nullptr,
+                                       std::size_t* declared_count = nullptr,
+                                       std::size_t* excluded_non_crypto_count = nullptr) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
@@ -187,6 +279,7 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
 
     std::vector<Instrument> eligible;
     std::size_t swap_rows = 0U, live_rows = 0U, usdt_settle_rows = 0U, linear_rows = 0U;
+    std::size_t excluded_non_crypto = 0U;
     for (const auto& item : instruments["data"]) {
         const auto id = text(item, "instId");
         if (id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP") continue;
@@ -201,6 +294,10 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         const std::string parsed_base = first_dash == std::string::npos ? std::string{} : id.substr(0U, first_dash);
         const std::string base = text(item, "baseCcy").empty() ? parsed_base : text(item, "baseCcy");
         const std::string quote = text(item, "quoteCcy").empty() ? "USDT" : text(item, "quoteCcy");
+        if (!is_verified_crypto_underlying(base, crypto_symbols)) {
+            ++excluded_non_crypto;
+            continue;
+        }
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
         if (!valid_linear_usdt_contract(item, base) || !passes_liquidity(quote_turnover)) continue;
@@ -218,9 +315,11 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
     }
     if (eligible_count) *eligible_count = eligible.size();
     if (declared_count) *declared_count = usdt_settle_rows;
+    if (excluded_non_crypto_count) *excluded_non_crypto_count = excluded_non_crypto;
     std::cerr << "OKX_UNIVERSE_DIAGNOSTICS total=" << instruments["data"].size()
               << " usdt_swap_suffix=" << swap_rows << " live=" << live_rows
               << " settle_usdt=" << usdt_settle_rows << " linear_or_unspecified=" << linear_rows
+              << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
         if (a.base == "BTC") return true;
@@ -473,15 +572,17 @@ inline json fetch_fear_greed() {
     }
 }
 
-inline json collect(int symbol_count, int years) {
+inline json collect(int symbol_count, int years, const std::optional<json>& cached_crypto_universe = std::nullopt) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
     const auto acquired_ms = now_ms();
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    std::size_t eligible_count = 0U, declared_count = 0U;
-    const auto selected = discover(symbol_count, &eligible_count, &declared_count);
+    const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
+    std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
+    const auto selected = discover(symbol_count, crypto_universe.symbols,
+                                    &eligible_count, &declared_count, &excluded_non_crypto_count);
     json instruments = json::array();
     for (const auto& item : selected) {
         json candles = json::array(), funding = json::array(), oi = json::array();
@@ -544,7 +645,14 @@ inline json collect(int symbol_count, int years) {
         {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public market-data API"},
                       {"fallback_used", false}}},
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
-        {"universe", {{"declared_usdt_swap_count", declared_count}, {"eligible_count", eligible_count},
+        {"crypto_universe", crypto_universe.artifact},
+        {"universe", {{"declared_usdt_swap_count", declared_count},
+                      {"crypto_universe_status", "VERIFIED"},
+                      {"crypto_universe_source", "coinpaprika"},
+                      {"crypto_universe_symbol_count", crypto_universe.symbols.size()},
+                      {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
+                      {"excluded_non_crypto_count", excluded_non_crypto_count},
+                      {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
                       {"liquidity_threshold_usd", 10000000.0},
                       {"selection_method", "top_turnover_usd_desc_with_btc_first"},
