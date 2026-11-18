@@ -83,14 +83,26 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
         !ledger.contains("outcomes") || !ledger.at("outcomes").is_array())
         throw std::runtime_error("shadow_state_artifact_invalid");
 
+    const bool universe_verified = l1.contains("crypto_universe") &&
+        l1.at("crypto_universe").value("status", std::string{}) == "VERIFIED" &&
+        l1.at("crypto_universe").value("provider_id", std::string{}) == "coinpaprika";
+    std::size_t registered = 0U;
+    std::size_t rejected = 0U;
+    for (auto& old_candidate : registry["candidates"]) {
+        if (old_candidate.value("state", std::string{}) == "PENDING" &&
+            old_candidate.value("source_universe_status", std::string{"UNVERIFIED"}) != "VERIFIED") {
+            old_candidate["state"] = "REJECTED";
+            old_candidate["skip_reason"] = "SOURCE_UNIVERSE_NOT_VERIFIED";
+            ++rejected;
+        }
+    }
+
     std::set<std::string> known_ids;
     for (const auto& item : registry.at("candidates"))
         known_ids.insert(item.value("signal_id", std::string{}));
     for (const auto& item : ledger.at("outcomes"))
         known_ids.insert(item.value("signal_id", std::string{}));
 
-    std::size_t registered = 0U;
-    std::size_t rejected = 0U;
     for (const auto& instrument : dual.at("instruments")) {
         const auto symbol = instrument.value("symbol", std::string{});
         const auto* phase = find_phase(liquidity, symbol);
@@ -99,6 +111,10 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
         for (const auto* key : {"lrt", "nmt"}) {
             const auto& candidate = instrument.at(key);
             if (candidate.value("status", std::string{}) != "CANDIDATE") continue;
+            if (!universe_verified) {
+                ++rejected;
+                continue;
+            }
             const auto path = candidate.value("path", std::string{});
             const auto direction = candidate.value("direction", std::string{});
             const auto candidate_data_class = candidate.value("data_class", std::string{"UNAVAILABLE"});
@@ -158,7 +174,8 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
                 {"raw_score", score}, {"data_class", candidate_data_class},
                 {"hypothesis", candidate.at("hypothesis")}, {"falsification", candidate.at("falsification")},
                 {"source_run_id", dual.at("source_run_id")}, {"source_scan_id", scan_id},
-                {"source_l1_sha256", dual.at("l1_sha256")}, {"resolution_timeframe", "1h"},
+                {"source_l1_sha256", dual.at("l1_sha256")}, {"source_universe_status", "VERIFIED"},
+                {"resolution_timeframe", "1h"},
                 {"state", "PENDING"}, {"resolution", nullptr}, {"closed_at_ms", nullptr},
                 {"gross_r", nullptr}, {"skip_reason", nullptr}
             });
@@ -275,7 +292,9 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
             {"resolution_timeframe", "1h"}, {"source_scan_id", candidate.at("source_scan_id")},
-            {"source_l1_sha256", candidate.at("source_l1_sha256")}, {"outcome_kind", "SHADOW_PROXY"}
+            {"source_l1_sha256", candidate.at("source_l1_sha256")},
+            {"source_universe_status", candidate.at("source_universe_status")},
+            {"outcome_kind", "SHADOW_PROXY"}
         });
         candidate["state"] = "RESOLVED";
         candidate["resolution"] = resolution;
