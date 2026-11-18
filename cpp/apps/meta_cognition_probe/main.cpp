@@ -50,10 +50,17 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
             !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
             !row.at("raw_score").is_number() || !row.at("win").is_boolean() ||
-            !row.at("win_r").is_number() || !row.at("loss_r").is_number() ||
-            !row.at("fee_r").is_number() || !row.at("slippage_r").is_number() ||
-            !row.at("funding_r").is_number())
+            !row.at("win_r").is_number() || !row.at("loss_r").is_number())
             throw std::runtime_error("outcome_field_type_invalid");
+        const bool all_costs_numeric = row.at("fee_r").is_number() &&
+            row.at("slippage_r").is_number() && row.at("funding_r").is_number();
+        const bool all_costs_null = row.at("fee_r").is_null() &&
+            row.at("slippage_r").is_null() && row.at("funding_r").is_null();
+        if (!all_costs_numeric && !all_costs_null)
+            throw std::runtime_error("outcome_cost_fields_must_be_all_numeric_or_all_null");
+        const auto data_class = row.value("data_class", std::string{"PROXY"});
+        if (data_class != "REAL" && data_class != "PROXY")
+            throw std::runtime_error("outcome_data_class_invalid");
         cfss::meta::Outcome item{};
         item.signal_id = row.at("signal_id").get<std::string>();
         item.path = row.at("path").get<std::string>();
@@ -63,9 +70,11 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         item.win = row.at("win").get<bool>();
         item.win_r = row.at("win_r").get<double>();
         item.loss_r = row.at("loss_r").get<double>();
-        item.fee_r = row.at("fee_r").get<double>();
-        item.slippage_r = row.at("slippage_r").get<double>();
-        item.funding_r = row.at("funding_r").get<double>();
+        item.costs_available = all_costs_numeric;
+        item.fee_r = all_costs_numeric ? row.at("fee_r").get<double>() : 0.0;
+        item.slippage_r = all_costs_numeric ? row.at("slippage_r").get<double>() : 0.0;
+        item.funding_r = all_costs_numeric ? row.at("funding_r").get<double>() : 0.0;
+        item.data_class = data_class;
         out.push_back(item);
     }
     return out;
@@ -119,7 +128,9 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
             report.reason = "OUTCOME_LEDGER_MISSING";
             reason = report.reason;
         } else {
-            report = cfss::meta::calibrate(outcomes, path, regime, *score, decision_time);
+            report = cfss::meta::calibrate(
+                outcomes, path, regime, *score, decision_time,
+                candidate.value("data_class", std::string{"UNAVAILABLE"}));
             reason = report.reason;
             if (report.status == "INVALID_OUTCOME_LEDGER") {
                 status = "INSUFFICIENT_DATA";
