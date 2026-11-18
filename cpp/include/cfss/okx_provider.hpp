@@ -776,7 +776,10 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
             const auto id = item.value("instrument_id", std::string{});
             if (id.empty()) continue;
             std::int64_t retained_start_ms = window_start_ms;
-            if (cache_entries.contains(id) && cache_entries.at(id).is_object()) {
+            if (cache_entries.contains(id) && cache_entries.at(id).is_object() &&
+                by_instrument.contains(id) &&
+                valid_cache_entry(cache_entries, by_instrument.at(id), id,
+                                  window_start_ms, window_end_ms)) {
                 const auto previous_start = cache_entries.at(id).value("window_start_ms", std::int64_t{0});
                 if (previous_start > 0 && previous_start <= window_start_ms)
                     retained_start_ms = previous_start;
