@@ -2,7 +2,7 @@ name: C++ Stage 6 Meta-Cognition Calibration and Shadow Outcomes
 
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "17 */4 * * *"
   workflow_dispatch:
   push:
     branches: [feat/cpp-stage6-meta-calibration-v1]
