@@ -363,7 +363,8 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             {"execution_status", "NOT_EXECUTED"},
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
-            {"resolution_timeframe", "1h"}, {"source_scan_id", candidate.at("source_scan_id")},
+            {"resolution_timeframe", is_lrt ? "15m" : "1h"},
+            {"source_scan_id", candidate.at("source_scan_id")},
             {"source_l1_sha256", candidate.at("source_l1_sha256")},
             {"source_universe_status", candidate.at("source_universe_status")},
             {"outcome_kind", "HYPOTHESIS_PROXY"}
