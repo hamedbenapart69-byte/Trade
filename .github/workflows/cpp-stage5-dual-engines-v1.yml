@@ -1,0 +1,135 @@
+name: C++ Stage 5 Independent LRT NMT Engines
+
+on:
+  push:
+    branches: [feat/cpp-stage5-dual-engines-v1]
+    paths:
+      - "docs/evidence/publish-stage5-dual-engine-report.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage5-dual-engine-report-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deliver:
+    if: ${{ contains(github.event.head_commit.message, '[DUAL_ENGINE_STAGE5_REPORT]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+      - name: Configure and build C++20
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Collect fresh real OKX BTC and ETH market inputs
+        run: |
+          mkdir -p stage5-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage5-evidence/l1-market-data.v1.json \
+            stage5-evidence/l2-status.v1.json
+          sha256sum stage5-evidence/l1-market-data.v1.json stage5-evidence/l2-status.v1.json
+      - name: Compute LFS v2 using the exact L1 decision timestamp
+        run: |
+          ./build/lfs_v2_probe stage5-evidence/l1-market-data.v1.json stage5-evidence/lfs-v2.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/lfs-v2-proxy.v1.schema.json -d stage5-evidence/lfs-v2.json --all-errors
+      - name: Collect real spot basis and compute NSS v2
+        run: |
+          ./build/nss_basis_collector stage5-evidence/l1-market-data.v1.json stage5-evidence/nss-basis.v1.json
+          ./build/nss_v2_probe stage5-evidence/l1-market-data.v1.json stage5-evidence/nss-basis.v1.json stage5-evidence/nss-v2.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/nss-v2-proxy.v1.schema.json -d stage5-evidence/nss-v2.json --all-errors
+      - name: Compute confirmed liquidity zones and market phase
+        run: |
+          ./build/liquidity_phase_probe stage5-evidence/l1-market-data.v1.json stage5-evidence/liquidity-phase.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/liquidity-phase.v1.schema.json -d stage5-evidence/liquidity-phase.v1.json --all-errors
+      - name: Evaluate independent LRT and NMT engines with hard Golden Rule veto
+        run: |
+          ./build/dual_engine_probe \
+            stage5-evidence/l1-market-data.v1.json \
+            stage5-evidence/lfs-v2.json \
+            stage5-evidence/nss-v2.json \
+            stage5-evidence/liquidity-phase.v1.json \
+            stage5-evidence/lrt-candidates.v1.json \
+            stage5-evidence/nmt-candidates.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/lrt-candidates.v1.schema.json -d stage5-evidence/lrt-candidates.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/nmt-candidates.v1.schema.json -d stage5-evidence/nmt-candidates.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/dual-engine-report.v1.schema.json -d stage5-evidence/dual-engine-report.v1.json --all-errors
+          jq -r '.instruments[] | [.symbol, .lrt.status, .lrt.direction, .nmt.status, .nmt.direction, .golden_rule.decision] | @tsv' stage5-evidence/dual-engine-report.v1.json
+      - name: Checkout persistent Telegram receipt state
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Persist independent path artifacts
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          cp stage5-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage5_v2.json
+          cp stage5-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage5_v2.json
+          cp stage5-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage5_v1.json
+          cp stage5-evidence/lrt-candidates.v1.json signals-state/cpp_runtime/lrt_candidates_stage5_v1.json
+          cp stage5-evidence/nmt-candidates.v1.json signals-state/cpp_runtime/nmt_candidates_stage5_v1.json
+          cp stage5-evidence/dual-engine-report.v1.json signals-state/cpp_runtime/dual_engine_stage5_v1.json
+      - name: Reserve Telegram report idempotently
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          ./build/dual_engine_telegram_report --prepare \
+            stage5-evidence/dual-engine-report.v1.json \
+            signals-state/cpp_runtime/dual_engine_stage5_telegram_outbox.v1.json
+      - name: Persist evidence and reservation before Telegram send
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/lfs_stage5_v2.json cpp_runtime/nss_stage5_v2.json \
+            cpp_runtime/liquidity_stage5_v1.json cpp_runtime/lrt_candidates_stage5_v1.json \
+            cpp_runtime/nmt_candidates_stage5_v1.json cpp_runtime/dual_engine_stage5_v1.json \
+            cpp_runtime/dual_engine_stage5_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage5): persist independent LRT NMT outputs and reservation"
+            git push origin HEAD:signals
+          fi
+      - name: Send non-actionable dual-engine report through C++ Telegram L3
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
+          ./build/dual_engine_telegram_report --send \
+            stage5-evidence/dual-engine-report.v1.json \
+            signals-state/cpp_runtime/dual_engine_stage5_telegram_outbox.v1.json
+      - name: Persist Telegram delivery receipt
+        if: ${{ always() }}
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f cpp_runtime/dual_engine_stage5_telegram_outbox.v1.json ]; then
+            git add cpp_runtime/dual_engine_stage5_telegram_outbox.v1.json
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage5): persist dual-engine Telegram receipt"
+            git push origin HEAD:signals
+          fi
+      - name: Assert no Actions artifact storage is used
+        run: |
+          if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage5-dual-engines-v1.yml; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "ZERO_COST_TELEGRAM_ONLY_REPORT_PATH"
