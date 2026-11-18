@@ -1,0 +1,13 @@
+{
+  "receipts": [
+    {
+      "attempts": 0,
+      "created_at_utc": "2026-11-18T12:29:43Z",
+      "http_status": null,
+      "message_id": null,
+      "report_id": "b95bc14044eff5e65cee7613e62df64398e132b3937af21f871f0fbbce6d6a57",
+      "status": "RESERVED"
+    }
+  ],
+  "schema_version": "1.0.0"
+}
