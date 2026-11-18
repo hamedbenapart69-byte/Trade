@@ -98,6 +98,22 @@ int main() {
     require(no_basis[0].status == "UNAVAILABLE" && no_basis[0].missing_count > 0U,
             "missing basis blocks the complete five-component aggregate");
 
+    const json funding_intervals = json::array({
+        {{"timestamp_ms", 8 * hour}, {"funding_rate", 0.0008}},
+        {{"timestamp_ms", 16 * hour}, {"funding_rate", 0.0008}},
+        {{"timestamp_ms", 20 * hour}, {"funding_rate", 0.0004}},
+        {{"timestamp_ms", 36 * hour}, {"funding_rate", 0.0016}}
+    });
+    const auto normalized = cfss::nss::normalize_funding_to_8h(
+        funding_intervals, 36 * hour);
+    require(normalized.observations.size() == 2U,
+            "funding interval gaps are excluded from normalization");
+    require(std::abs(normalized.observations[0].second - 0.0008) < 1e-12 &&
+            std::abs(normalized.observations[1].second - 0.0008) < 1e-12,
+            "four-hour and eight-hour funding rates normalize to the same eight-hour equivalent");
+    require(normalized.skipped_gap_count == 1U,
+            "missing funding interval is counted and excluded");
+
     std::cout << "NSS_V2_PROXY_TESTS_PASS\n";
     return 0;
 }
