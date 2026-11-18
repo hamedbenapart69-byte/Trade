@@ -23,9 +23,10 @@
           "win": {"type": "boolean"},
           "win_r": {"type": "number", "minimum": 0},
           "loss_r": {"type": "number", "minimum": 0},
-          "fee_r": {"type": "number", "minimum": 0},
-          "slippage_r": {"type": "number", "minimum": 0},
-          "funding_r": {"type": "number", "minimum": 0}
+          "fee_r": {"type": ["number", "null"], "minimum": 0},
+          "slippage_r": {"type": ["number", "null"], "minimum": 0},
+          "funding_r": {"type": ["number", "null"], "minimum": 0},
+          "data_class": {"enum": ["REAL", "PROXY"]}
         }
       }
     }
