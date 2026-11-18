@@ -277,6 +277,7 @@ inline std::array<V2DirectionResult, 2> calculate_v2(
                                          const std::string& id,
                                          const std::string& definition,
                                          std::int64_t timestamp,
+                                         std::int64_t max_age_ms,
                                          const std::string& reason) {
             V2Component component{};
             component.id = id;
@@ -284,11 +285,14 @@ inline std::array<V2DirectionResult, 2> calculate_v2(
             component.available_at_ms = timestamp;
             component.definition_id = definition;
             component.reason = reason;
-            if (values.size() >= 21U) {
+            const bool fresh = timestamp > 0 && timestamp <= decision_time_ms &&
+                               decision_time_ms - timestamp <= max_age_ms;
+            if (fresh && values.size() >= 21U) {
                 std::vector<double> prior(values.begin(), values.end() - 1);
                 component.score = logistic_zscore(prior, values.back());
             }
-            if (!component.score) component.reason = "INSUFFICIENT_OR_CONSTANT_REFERENCE";
+            if (!fresh) component.reason = "STALE_OR_INVALID_COMPONENT_TIMESTAMP";
+            else if (!component.score) component.reason = "INSUFFICIENT_OR_CONSTANT_REFERENCE";
             return component;
         };
         const auto choose = [&](const std::vector<double>& long_values,
@@ -297,15 +301,15 @@ inline std::array<V2DirectionResult, 2> calculate_v2(
         };
         result.components = {{
             component_score(choose(oi_long, oi_short), "NSS1_OPEN_INTEREST_GROWTH",
-                            "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H", oi_time, "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION"),
+                            "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H", oi_time, 2LL * hour_ms, "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION"),
             component_score(choose(funding_long, funding_short), "NSS2_HEALTHY_FUNDING",
-                            "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID", funding_time, "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=" + std::to_string(normalized_funding.median_interval_ms) + ";SKIPPED_GAPS=" + std::to_string(normalized_funding.skipped_gap_count)),
+                            "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID", funding_time, 24LL * hour_ms, "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=" + std::to_string(normalized_funding.median_interval_ms) + ";SKIPPED_GAPS=" + std::to_string(normalized_funding.skipped_gap_count)),
             component_score(choose(basis_long, basis_short), "NSS3_BASIS_EXPANSION",
-                            "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H", basis_time, "REAL_BASIS_INPUT_PROXY_TRANSFORM"),
+                            "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H", basis_time, 2LL * hour_ms, "REAL_BASIS_INPUT_PROXY_TRANSFORM"),
             component_score(choose(volume_long, volume_short), "NSS4_VOLUME_EXPANSION",
-                            "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID", volume_time, "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION"),
+                            "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID", volume_time, 2LL * hour_ms, "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION"),
             component_score(compression, "NSS5_PRE_BREAKOUT_COMPRESSION",
-                            "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H", compression_time, "LOWER_BB_WIDTH_SCORES_HIGHER")
+                            "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H", compression_time, 2LL * hour_ms, "LOWER_BB_WIDTH_SCORES_HIGHER")
         }};
         result.missing_count = 0U;
         for (const auto& component : result.components) if (!component.score) ++result.missing_count;
