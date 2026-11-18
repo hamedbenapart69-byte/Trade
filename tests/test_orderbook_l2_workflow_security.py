@@ -25,7 +25,7 @@ class OrderbookWorkflowSecurityTests(unittest.TestCase):
         persist = read("persist-orderbook-l2.yml")
         self.assertIn("workflow_dispatch:", persist)
         self.assertNotIn("workflow_run:", persist)
-        self.assertIn("persist:\n    if: \${{ false }}", persist)
+        self.assertIn("persist:\n    if: ${{ false }}", persist)
         self.assertNotIn("contents: write", persist)
         self.assertNotIn("actions/download-artifact", persist)
 
