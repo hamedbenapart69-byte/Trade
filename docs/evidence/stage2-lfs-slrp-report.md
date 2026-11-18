@@ -33,7 +33,7 @@ All scores must be deterministic, versioned, point-in-time available and normali
 10. Stage handoff requires a versioned report and Telegram receipt; no actionable trade is emitted.
 
 ## v1 implementation
-- Added `cpp/include/cfss/lfs.hpp`: strict five-component weighted aggregator.
+- Added `cpp/include/cfss/lfs.hpp`: strict five-component REAL-only weighted aggregator.
 - Added `cpp/tests/lfs_v1_test.cpp`: complete-score, missing-input, range, future-timestamp, definition-version and provenance tests.
 - Registered standalone test target in `cpp/CMakeLists.txt`.
 - No Python production/release authority.
@@ -91,8 +91,18 @@ V2 acceptance gates:
 7. C++ build, unit tests and JSON schema validation pass.
 8. No actionable trade is emitted; V2 is a research score only.
 9. Final stage report is delivered through Telegram with a real receipt.
+10. Telegram report delivery is idempotent by report hash; an interrupted or uncertain send is blocked from automatic replay.
 
 Calibration remains NOT_CALIBRATED. The 30-day funding, long/short and OI distributions are shorter than the 90-day research reference. V2 does not claim statistical optimality, probability or profitability. The LFS score alone is not a trade signal.
+
+## L3 Telegram delivery
+
+- Added `cpp/include/cfss/lfs_delivery.hpp` and `cpp/apps/lfs_telegram_report/main.cpp`.
+- Report ID is SHA-256 of the canonical LFS v2 report.
+- Outbox is persisted before sending; `DELIVERED` records Telegram message ID.
+- Interrupted/uncertain attempts become `DELIVERY_UNKNOWN` and are not automatically resent.
+- Delivery is gated by a dedicated `[LFS_STAGE2_REPORT]` commit marker; routine CI runs do not send messages.
+- Receipt state is persisted on the `signals` branch. Live Telegram receipt is pending final v2 validation.
 
 ## SLRP diagnosis codes
 D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 Regime; D6 Expectations.
