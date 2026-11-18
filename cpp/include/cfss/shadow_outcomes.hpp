@@ -101,6 +101,13 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             if (candidate.value("status", std::string{}) != "CANDIDATE") continue;
             const auto path = candidate.value("path", std::string{});
             const auto direction = candidate.value("direction", std::string{});
+            if (!candidate.contains("score") || !candidate.at("score").is_number() ||
+                !candidate.contains("entry_reference") || !candidate.at("entry_reference").is_number() ||
+                !candidate.contains("invalidation_reference") || !candidate.at("invalidation_reference").is_number() ||
+                !candidate.contains("target_reference") || !candidate.at("target_reference").is_number()) {
+                ++rejected;
+                continue;
+            }
             const auto score = required_number(candidate, "score");
             const auto entry = required_number(candidate, "entry_reference");
             const auto stop = required_number(candidate, "invalidation_reference");
