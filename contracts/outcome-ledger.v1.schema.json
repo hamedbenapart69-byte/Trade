@@ -47,11 +47,11 @@
   "allOf": [
     {
       "if": {"properties": {"ledger_status": {"const": "EMPTY"}}},
-      "then": {"properties": {"outcomes": {"maxItems": 0}}}
+      "then": {"properties": {"outcomes": {"type": "array", "maxItems": 0}}}
     },
     {
       "if": {"properties": {"ledger_status": {"const": "AVAILABLE"}}},
-      "then": {"properties": {"outcomes": {"minItems": 1}}}
+      "then": {"properties": {"outcomes": {"type": "array", "minItems": 1}}}
     }
   ]
 }
