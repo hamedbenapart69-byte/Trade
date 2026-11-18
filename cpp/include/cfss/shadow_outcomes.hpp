@@ -97,8 +97,26 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
     std::size_t registered = 0U;
     std::size_t rejected = 0U;
     for (auto& old_candidate : registry["candidates"]) {
-        if (old_candidate.value("state", std::string{}) == "PENDING" &&
-            old_candidate.value("source_universe_status", std::string{"UNVERIFIED"}) != "VERIFIED") {
+        if (old_candidate.value("state", std::string{}) != "PENDING") continue;
+        const auto old_path = old_candidate.value("path", std::string{});
+        const bool legacy_entry_contract =
+            !old_candidate.contains("profile") ||
+            !old_candidate.contains("entry_model") ||
+            !old_candidate.contains("execution_status") ||
+            !old_candidate.contains("entry_fill_reference");
+        if (legacy_entry_contract) {
+            old_candidate["profile"] = "DAILY_SWING";
+            old_candidate["resolution_timeframe"] =
+                old_path == "PLAN_A_LRT" ? "15m" : "1h";
+            old_candidate["entry_fill_reference"] = nullptr;
+            old_candidate["entry_model"] = "NEXT_BAR_OPEN_PROXY";
+            old_candidate["execution_status"] = "NOT_EXECUTED";
+            old_candidate["state"] = "REJECTED";
+            old_candidate["skip_reason"] = "LEGACY_CANDIDATE_QUARANTINED_AFTER_ENTRY_MODEL_CHANGE";
+            ++rejected;
+            continue;
+        }
+        if (old_candidate.value("source_universe_status", std::string{"UNVERIFIED"}) != "VERIFIED") {
             old_candidate["state"] = "REJECTED";
             old_candidate["skip_reason"] = "SOURCE_UNIVERSE_NOT_VERIFIED";
             ++rejected;
