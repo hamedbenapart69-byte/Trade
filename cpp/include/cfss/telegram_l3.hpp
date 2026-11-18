@@ -205,8 +205,34 @@ inline SendResult classify_send_response(CURLcode transport, long http_status,
     }
 }
 
+inline SendResult validate_bot_token(const std::string& token) {
+    if (token.empty() || token.find_first_of(" \\t\\r\\n\\\\") != std::string::npos ||
+        token.find(':') == std::string::npos)
+        return {"PERMANENT_FAILURE", 0, 0, "telegram_bot_token_format_invalid"};
+    const std::string endpoint = "https://api.telegram.org/bot" + token + "/getMe";
+    const auto response = perform_http(endpoint);
+    if (response.transport != CURLE_OK || response.http_status != 200)
+        return classify_send_response(response.transport, response.http_status,
+                                       response.body, response.error);
+    try {
+        const auto parsed = nlohmann::json::parse(response.body);
+        if (parsed.value("ok", false) && parsed.contains("result") &&
+            parsed.at("result").value("is_bot", false))
+            return {"BOT_VALIDATED", 200, 0, {}};
+        return {"PERMANENT_FAILURE", 200, 0, "telegram_getme_did_not_confirm_bot"};
+    } catch (const std::exception&) {
+        return {"DELIVERY_UNKNOWN", 200, 0, "telegram_getme_response_parse_failed"};
+    }
+}
+
 inline SendResult send_message(const std::string& token, const std::string& chat_id,
                                const std::string& message) {
+    const auto preflight = validate_bot_token(token);
+    if (preflight.status != "BOT_VALIDATED") {
+        std::cerr << "TELEGRAM_BOT_PREFLIGHT=FAIL HTTP=" << preflight.http_status << '\\n';
+        return preflight;
+    }
+    std::cerr << "TELEGRAM_BOT_PREFLIGHT=PASS HTTP=200\\n";
     const std::string endpoint = "https://api.telegram.org/bot" + token + "/sendMessage";
     const nlohmann::json payload = {{"chat_id", chat_id}, {"text", message}, {"disable_web_page_preview", true}};
     const std::string body = payload.dump();
