@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("l1_instruments_missing");
 
         json instruments = json::array();
+        std::size_t calculated_count = 0U;
         for (const auto& instrument : l1.at("instruments")) {
             const auto id = instrument.value("instrument_id", std::string{});
             const auto symbol = instrument.value("unified_symbol", std::string{"UNKNOWN"});
@@ -108,6 +109,7 @@ int main(int argc, char** argv) {
             }};
             const auto result = cfss::lfs::aggregate_v2(components, decision_time);
 
+            if (result.status == "CALCULATED") ++calculated_count;
             json component_rows = json::array();
             for (const auto& c : components) component_rows.push_back(component_json(c));
             instruments.push_back({
@@ -127,7 +129,7 @@ int main(int argc, char** argv) {
             {"version", "LFS_V2_PROXY"},
             {"source_run_id", l1.value("run_id", std::string{"UNKNOWN"})},
             {"source_scan_id", l1.value("scan_id", std::string{"UNKNOWN"})},
-            {"status", "CALCULATED"},
+            {"status", calculated_count == instruments.size() ? "CALCULATED" : (calculated_count == 0U ? "UNAVAILABLE" : "PARTIAL")},
             {"note", "Research feature score only. PROXY is not REAL and is not an actionable trade signal."},
             {"instruments", instruments}
         };
