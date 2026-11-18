@@ -80,7 +80,10 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         l1_15m.value("source_l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}) ||
         l1_15m.value("window", json::object()).value("timeframe", std::string{}) != "15m" ||
         l1_15m.value("window", json::object()).value("end_ms", std::int64_t{0}) != current_time ||
-        l1_15m.value("candles_sha256", std::string{}).size() != 64U)
+        !l1_15m.contains("instruments") || !l1_15m.at("instruments").is_array() ||
+        l1_15m.value("candles_sha256", std::string{}).size() != 64U ||
+        cfss::sha256_hex(l1_15m.at("instruments").dump()) !=
+            l1_15m.value("candles_sha256", std::string{}))
         throw std::runtime_error("shadow_cross_artifact_provenance_mismatch");
 
     if (registry.is_null() || registry.empty()) registry = empty_registry();
