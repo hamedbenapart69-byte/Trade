@@ -101,6 +101,11 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             if (candidate.value("status", std::string{}) != "CANDIDATE") continue;
             const auto path = candidate.value("path", std::string{});
             const auto direction = candidate.value("direction", std::string{});
+            const auto candidate_data_class = candidate.value("data_class", std::string{"UNAVAILABLE"});
+            if (candidate_data_class != "REAL" && candidate_data_class != "PROXY") {
+                ++rejected;
+                continue;
+            }
             if (!candidate.contains("score") || !candidate.at("score").is_number() ||
                 !candidate.contains("entry_reference") || !candidate.at("entry_reference").is_number() ||
                 !candidate.contains("invalidation_reference") || !candidate.at("invalidation_reference").is_number() ||
@@ -150,7 +155,7 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
                 {"direction", direction}, {"regime", regime},
                 {"decision_time_ms", decision_time}, {"expiry_time_ms", decision_time + horizon},
                 {"entry_reference", entry}, {"stop_reference", stop}, {"target_reference", target},
-                {"raw_score", score}, {"data_class", candidate.value("data_class", std::string{"PROXY"})},
+                {"raw_score", score}, {"data_class", candidate_data_class},
                 {"hypothesis", candidate.at("hypothesis")}, {"falsification", candidate.at("falsification")},
                 {"source_run_id", dual.at("source_run_id")}, {"source_scan_id", scan_id},
                 {"source_l1_sha256", dual.at("l1_sha256")}, {"resolution_timeframe", "1h"},
