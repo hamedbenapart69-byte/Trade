@@ -26,27 +26,57 @@ void persist(const std::filesystem::path& path, const json& value) {
 }
 
 std::string report_text(const json& report) {
-    std::string out = "گزارش فنی مرحله ۳ سامانه CFSS | NSS v1\n";
+    const auto type = report.value("artifact_type", std::string{});
+    std::string out = "گزارش فنی مرحله ۳ سامانه CFSS | NSS\n";
     out += "این گزارش پژوهشی است؛ هیچ سیگنال یا دستور معامله‌ای صادر نمی‌کند.\n";
-    out += "وضعیت کل: " + report.value("status", std::string{"UNAVAILABLE"}) + "\n";
-    out += "نسخه: " + report.value("version", std::string{"NSS_V1_FORMULA"}) + "\n";
+    out += "نسخه: " + report.value("version", std::string{"UNKNOWN"}) + "\n";
     out += "شناسه اجرا: " + report.value("source_run_id", std::string{"UNKNOWN"}) + "\n";
-    out += "علت: " + report.value("reason", std::string{"علت ثبت نشده"}) + "\n\n";
-    if (report.contains("instruments") && report.at("instruments").is_array()) {
-        for (const auto& item : report.at("instruments")) {
-            out += item.value("symbol", std::string{"UNKNOWN"}) + " | " +
-                   item.value("status", std::string{"UNAVAILABLE"}) + " | پوشش امتیاز: " +
-                   std::to_string(item.value("component_coverage", json::object()).value("available_scores", 0)) +
-                   "/5\n";
-            if (item.contains("components") && item.at("components").is_array()) {
-                for (const auto& component : item.at("components")) {
-                    out += "  - " + component.value("id", std::string{"UNKNOWN"}) + ": " +
-                           component.value("reason", std::string{"UNSPECIFIED"}) + "\n";
+    out += "وضعیت کل: " + report.value("status", std::string{"UNAVAILABLE"}) + "\n";
+    if (type == "cfss_nss_v1_formula") {
+        out += "علت: " + report.value("reason", std::string{"علت ثبت نشده"}) + "\n\n";
+        if (report.contains("instruments") && report.at("instruments").is_array()) {
+            for (const auto& item : report.at("instruments")) {
+                out += item.value("symbol", std::string{"UNKNOWN"}) + " | " +
+                       item.value("status", std::string{"UNAVAILABLE"}) + " | پوشش امتیاز: " +
+                       std::to_string(item.value("component_coverage", json::object()).value("available_scores", 0)) +
+                       "/5\n";
+                if (item.contains("components") && item.at("components").is_array()) {
+                    for (const auto& component : item.at("components"))
+                        out += "  - " + component.value("id", std::string{"UNKNOWN"}) + ": " +
+                               component.value("reason", std::string{"UNSPECIFIED"}) + "\n";
                 }
             }
         }
+        return out;
     }
-    return out;
+    if (type == "cfss_nss_v2_proxy") {
+        out += "برچسب همهٔ امتیازها: PROXY | کالیبراسیون: NOT_CALIBRATED\n\n";
+        if (report.contains("instruments") && report.at("instruments").is_array()) {
+            for (const auto& item : report.at("instruments")) {
+                out += item.value("symbol", std::string{"UNKNOWN"}) + " | " +
+                       item.value("status", std::string{"UNAVAILABLE"}) + "\n";
+                for (const auto* key : {"nss_long", "nss_short"}) {
+                    if (!item.contains(key) || !item.at(key).is_object()) continue;
+                    const auto& direction = item.at(key);
+                    out += "  " + direction.value("direction", std::string{"UNKNOWN"}) +
+                           " NSS: " + (direction.at("score").is_number()
+                               ? direction.at("score").dump() : std::string{"UNAVAILABLE"}) +
+                           " | پوشش: " +
+                           std::to_string(direction.value("component_coverage", json::object()).value("available_scores", 0)) +
+                           "/5\n";
+                    if (direction.contains("components") && direction.at("components").is_array()) {
+                        for (const auto& component : direction.at("components")) {
+                            out += "    - " + component.value("id", std::string{"UNKNOWN"}) + ": " +
+                                   (component.at("score").is_number() ? component.at("score").dump() : std::string{"UNAVAILABLE"}) +
+                                   " [" + component.value("reason", std::string{"UNSPECIFIED"}) + "]\n";
+                        }
+                    }
+                }
+            }
+        }
+        return out;
+    }
+    throw std::runtime_error("nss_report_type_invalid");
 }
 
 json load_outbox(const std::filesystem::path& path) {
