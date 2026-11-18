@@ -4,7 +4,7 @@
 **Base:** `feat/cpp-stage1-clean` at `190b0270ccb1425f4ed77503825aeaf26668baa4`  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 FAIL (D1 + D2); v2 implementation added and awaiting live CI/data validation. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
+**Status:** v1 FAIL (D1 + D2); v2 L1/L2 PASS on real BTC+ETH data; v2 L3 Telegram receipt is still pending. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -64,9 +64,21 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 
 ## Version control
 - v1: strict REAL-only v1 aggregator contract.
-- v2: BUILT after the measured v1 FAIL under R11. Live validation pending.
+- v2: BUILT after the measured v1 FAIL under R11. Live L1/L2 validation PASS in GitHub Actions run `44245558287`, C++ run ID `okx-cpp-1794980311216`. A first compile attempt exposed D3 (a constexpr string type error); the v2 implementation was corrected and the subsequent build passed. Live Telegram L3 is pending.
 - v3: NOT_BUILT; only after an actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
+
+## v2 — LFS_V2_PROXY
+
+Measured real run `44245558287` / `okx-cpp-1794980311216`:
+- BTC/USDT:USDT: score `0.3594750349014508`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
+- ETH/USDT:USDT: score `0.43494248311325506`, `CALCULATED`, `PROXY`, coverage 5/5, 720 contract-level long/short rows.
+- L1 SHA-256: `34a3ac0f2d59b038bf897b049af539809fb6fd5b31e9f757b893c684aa5eb4b3`.
+- L2 SHA-256: `8a37633b1d959e2042706504c0517937d5d23d151457b5885d79dcf0fe6929ee`.
+- LFS v2 SHA-256: `8dc176bb80394b7c498e9041aa13d01d729e2a9eb593427717e07e935e5d1170`.
+- JSON Schema validation: PASS.
+- CTest: 4/4 PASS; no Actions artifact upload: PASS.
+- The report is a feature score only. It does not create BUY/SELL states, trade instructions, or calibrated confidence.
 
 ## v2 — LFS_V2_PROXY
 
