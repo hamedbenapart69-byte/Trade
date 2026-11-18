@@ -33,7 +33,11 @@
       "minLength": 1
     },
     "status": {
-      "const": "CALCULATED"
+      "enum": [
+        "CALCULATED",
+        "PARTIAL",
+        "UNAVAILABLE"
+      ]
     },
     "note": {
       "type": "string"
