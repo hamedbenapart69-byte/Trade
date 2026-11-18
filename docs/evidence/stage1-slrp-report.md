@@ -3,7 +3,7 @@
 **Canonical specification:** UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER  
 **Implementation branch:** `feat/cpp-stage1-clean`  
 **PR:** #150 (draft; not merged)  
-**Status:** PENDING FINAL S1-08 REPLAY EVIDENCE — S1-01 through S1-07 and S1-09 through S1-12 have project-scope evidence. Controlled replay run 44246767969 is in progress; Stage 2 remains a separate unreleased branch.
+**Status:** PASS — all S1-01 through S1-12 acceptance criteria have project-scope evidence. Controlled inbound replay/dedupe verification passed in run 44246767969. Stage 2 remains a separate unreleased draft branch.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Deliver one real C++20 vertical slice from public market-data acquisition throug
 | S1-05 | Frozen universe and per-symbol coverage report | 529 declared active USDT swaps; 90 passed metadata and >USD 10M 24h quote-notional gate; frozen selected ID list and per-symbol coverage emitted | PASS |
 | S1-06 | L1/L2/output/run-manifest schemas, deterministic tests and hashes | L1, L2, signals, performance, coverage, system-status and run-manifest AJV validations passed; L1/L2 hashes logged; eight persisted output SHA-256 values independently recomputed and matched; deterministic scan ID and delivery key tests | PASS |
 | S1-07 | Real Telegram outbound with positive response and message ID | Runs 44135013370 and 44149930383; HTTP 200; Telegram message IDs 39 and 40; one send attempt each; both receipts persisted | PASS |
-| S1-08 | Real Telegram inbound, update processing, offset persistence and duplicate suppression | Live run 44240412741 processed update 610176013, persisted offset 610176013, and replied with Telegram message ID 43 (`DELIVERED`). C++ unit test in run 44242513881 verifies that `PROCESSED` cannot resume a reply. A second live poll/replay verification is running in 44246767969; it snapshots the persisted update and outbox before polling and asserts unchanged update ID, reply count, reply message ID 43, and outbox count, while poll_count increases. | PENDING |
+| S1-08 | Real Telegram inbound, update processing, offset persistence and duplicate suppression | Live run 44240412741 processed update 610176013, persisted offset 610176013, and replied with Telegram message ID 43 (`DELIVERED`). C++ unit test in run 44242513881 verifies that `PROCESSED` cannot resume a reply. Controlled live re-poll run 44246767969 passed: `last_update_id` remained 610176013; `poll_count` increased 36→48; delivered reply count remained 1; reply message ID remained 43; outbound outbox count remained 4; no second reply was sent. Workflow emitted `CPP_TELEGRAM_INBOUND_REPLAY_DEDUPE_PASS`. | PASS |
 | S1-09 | Two consecutive complete L1/L2/L3 runs with integrity and manifests | Runs 44135013370 and 44149930383 both have L1_L2_L3_PASS and DELIVERED receipts; scan IDs differ; second run's eight persisted artifact hashes independently matched | PASS |
 | S1-10 | Failure honesty and degraded/no-signal reporting | Partial funding/OI is classified MARKET_DATA_DEGRADED; complete data with no strategy admitted is NO_QUALIFIED_SETUP; actionable=false; confidence NOT_CALIBRATED | PASS |
 | S1-11 | No user-side provider connectivity | GitHub Actions fetches public data; user receives Telegram only; no exchange account keys or account connection | PASS |
