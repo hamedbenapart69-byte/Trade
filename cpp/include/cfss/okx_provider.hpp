@@ -835,6 +835,13 @@ inline json collect(int symbol_count, int years,
                 }
             }
         }
+        if (cached_instrument) {
+            const bool has_entries = cached_market_data && cached_market_data->contains("cache_entries") &&
+                cached_market_data->at("cache_entries").is_object();
+            if (!has_entries || !valid_cache_entry(cached_market_data->at("cache_entries"),
+                    *cached_instrument, item.id, start_ms, end_ms))
+                cached_instrument = nullptr;
+        }
         bool has_valid_candle_cache = cached_instrument &&
             cached_instrument->contains("candles") && cached_instrument->at("candles").is_array() &&
             !cached_instrument->at("candles").empty();
