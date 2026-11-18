@@ -1,4 +1,4 @@
-name: Publish Stage 1B LRT Dashboard
+name: Stage 1B Dashboard Publisher (Quarantined by V18.2)
 
 on:
   workflow_dispatch:
@@ -6,116 +6,17 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: stage1b-dashboard-publication
-  cancel-in-progress: false
-
 jobs:
   publish-dashboard:
     if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      actions: read
-      contents: read
     steps:
-      - name: Checkout trusted publisher from production-v1
-        uses: actions/checkout@v4
-        with:
-          ref: production-v1
-          persist-credentials: false
-
-      - name: Checkout data-only signals branch
-        uses: actions/checkout@v4
-        with:
-          ref: signals
-          path: signals-repo
-          persist-credentials: true
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Run dashboard publisher unit tests
-        run: python -m unittest discover -s signal_autopilot/tests -p 'test_publish_stage1b_dashboard.py' -v
-
-      - name: Run degraded-report publisher unit tests
-        run: python -m unittest discover -s signal_autopilot/tests -p 'test_publish_degraded_stage1b_report.py' -v
-
-      - name: Validate and publish LRT dashboard snapshot and history
-        run: |
-          python signal_autopilot/scripts/publish_stage1b_dashboard.py \
-            --report incoming/stage1_lrt_report.json \
-            --universe config/universe.json \
-            --output-dir signals-repo
-
-      - name: Persist only LRT dashboard files
-        run: |
-          set -euo pipefail
-          git -C signals-repo config user.name "github-actions[bot]"
-          git -C signals-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C signals-repo add lrt15m_signals.json lrt15m_history.csv
-          if git -C signals-repo diff --cached --quiet; then
-            echo "LRT_DASHBOARD_UNCHANGED"
-          else
-            git -C signals-repo commit -m "dashboard: publish validated Stage 1B LRT report [skip ci]"
-            git -C signals-repo push origin HEAD:signals
-          fi
+      - name: Confirm legacy dashboard publication is disabled
+        run: echo "STAGE1B_DASHBOARD=DISABLED_BY_V18_2"
 
   publish-degraded-report:
     if: ${{ false }}
-    if: ${{ contains(fromJSON('["failure","timed_out","startup_failure","cancelled"]'), github.event.workflow_run.conclusion) && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
     steps:
-      - name: Checkout trusted publisher from production-v1
-        uses: actions/checkout@v4
-        with:
-          ref: production-v1
-          persist-credentials: false
-
-      - name: Checkout data-only signals branch
-        uses: actions/checkout@v4
-        with:
-          ref: signals
-          path: signals-repo
-          persist-credentials: true
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Run degraded-report publisher tests
-        run: |
-          python -m unittest discover -s signal_autopilot/tests -p 'test_publish_stage1b_dashboard.py' -v
-          python -m unittest discover -s signal_autopilot/tests -p 'test_publish_degraded_stage1b_report.py' -v
-
-      - name: Publish explicit MARKET_DATA_DEGRADED snapshot
-        env:
-          UPSTREAM_UPDATED_AT: ${{ github.event.workflow_run.updated_at }}
-          UPSTREAM_RUN_ID: ${{ github.event.workflow_run.id }}
-          UPSTREAM_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-        run: |
-          python signal_autopilot/scripts/publish_degraded_stage1b_report.py \
-            --universe config/universe.json \
-            --output-dir signals-repo \
-            --generated-at "$UPSTREAM_UPDATED_AT" \
-            --run-id "$UPSTREAM_RUN_ID" \
-            --conclusion "$UPSTREAM_CONCLUSION"
-
-      - name: Persist only LRT dashboard files
-        run: |
-          set -euo pipefail
-          git -C signals-repo config user.name "github-actions[bot]"
-          git -C signals-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C signals-repo add lrt15m_signals.json lrt15m_history.csv
-          if git -C signals-repo diff --cached --quiet; then
-            echo "LRT_DEGRADED_DASHBOARD_UNCHANGED"
-          else
-            git -C signals-repo commit -m "dashboard: publish Stage 1B degraded status [skip ci]"
-            git -C signals-repo push origin HEAD:signals
-          fi
+      - name: Confirm legacy degraded dashboard publication is disabled
+        run: echo "STAGE1B_DEGRADED_DASHBOARD=DISABLED_BY_V18_2"
