@@ -107,6 +107,11 @@ target_include_directories(liquidity_phase_v1_tests PRIVATE include)
 target_compile_features(liquidity_phase_v1_tests PRIVATE cxx_std_20)
 add_test(NAME liquidity_phase_v1_tests COMMAND liquidity_phase_v1_tests)
 
+add_executable(liquidity_telegram_report apps/liquidity_telegram_report/main.cpp)
+target_include_directories(liquidity_telegram_report PRIVATE include)
+target_compile_features(liquidity_telegram_report PRIVATE cxx_std_20)
+target_link_libraries(liquidity_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
 add_executable(nss_v1_tests tests/nss_v1_test.cpp)
 target_include_directories(nss_v1_tests PRIVATE include)
 target_compile_features(nss_v1_tests PRIVATE cxx_std_20)
