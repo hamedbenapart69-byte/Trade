@@ -233,7 +233,19 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
         }
 
         if (data_gap) {
-            ++still_pending;
+            if (current_time >= expiry) {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE";
+                ++rejected;
+            } else {
+                ++still_pending;
+            }
+            continue;
+        }
+        if (!closed && current_time >= expiry && expected_next_bar_ms < expiry) {
+            candidate["state"] = "REJECTED";
+            candidate["skip_reason"] = "FUTURE_DATA_COVERAGE_DID_NOT_REACH_EXPIRY";
+            ++rejected;
             continue;
         }
         if (!closed && current_time >= expiry && expected_next_bar_ms >= expiry &&
