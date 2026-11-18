@@ -21,7 +21,7 @@ std::array<Component, 5> complete(DataClass kind = DataClass::REAL) {
 
 void require(bool condition, const char* message) {
     if (!condition) {
-        std::cerr << "FAIL: " << message << '\\n';
+        std::cerr << "FAIL: " << message << '\n';
         std::exit(1);
     }
 }
@@ -62,6 +62,6 @@ int main() {
     require(aggregate_v1(rows, 2000).status == "UNAVAILABLE",
             "undefined component formula is rejected");
 
-    std::cout << "LFS_V1_CONTRACT_TESTS_PASS\\n";
+    std::cout << "LFS_V1_CONTRACT_TESTS_PASS\n";
     return 0;
 }
