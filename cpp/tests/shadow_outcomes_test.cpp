@@ -28,6 +28,7 @@ nlohmann::json fixture_l1(std::initializer_list<nlohmann::json> candles,
     return {
         {"schema_version", "1.0.0"}, {"run_id", "run-1"}, {"scan_id", "scan-1"},
         {"window", {{"timeframe", "1h"}, {"end_ms", end_ms}}},
+        {"crypto_universe", {{"status", "VERIFIED"}, {"provider_id", "coinpaprika"}}},
         {"instruments", {{
             {"unified_symbol", "BTC/USDT:USDT"},
             {"candles", candles}
