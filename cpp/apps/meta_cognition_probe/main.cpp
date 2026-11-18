@@ -186,6 +186,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
     const auto score = candidate.contains("score") && candidate.at("score").is_number()
         ? std::optional<double>{candidate.at("score").get<double>()} : std::nullopt;
     cfss::meta::CalibrationReport report{};
+    report.score_model_version = score_model_version;
     std::string reason = "NO_CANDIDATE_TO_CALIBRATE";
 
     if (status == "CANDIDATE") {
