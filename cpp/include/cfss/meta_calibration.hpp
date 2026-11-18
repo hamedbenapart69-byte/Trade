@@ -34,6 +34,7 @@ struct Outcome {
     std::string execution_status{"NOT_EXECUTED"};
     std::string source_scan_id;
     std::string symbol;
+    std::string score_model_version;
 };
 
 struct PlattModel {
@@ -72,6 +73,7 @@ struct ReliabilityBin {
 };
 
 struct CalibrationReport {
+    std::string score_model_version;
     std::string status{"NOT_CALIBRATED"};
     std::string reason{"INSUFFICIENT_OUTCOMES"};
     std::string method{"NONE"};
@@ -354,8 +356,13 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                                    const std::string& regime,
                                    double current_score, std::int64_t as_of_ms,
                                    const std::string& data_class = "PROXY",
-                                   const std::string& profile = "DAILY_SWING") {
+                                   const std::string& profile = "DAILY_SWING",
+                                   const std::string& score_model_version = "") {
     CalibrationReport report{};
+    const std::string expected_score_model_version = score_model_version.empty()
+        ? (path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY")
+        : score_model_version;
+    report.score_model_version = expected_score_model_version;
     std::set<std::string> ids;
     std::vector<Outcome> selected;
     if (as_of_ms <= 0 || !std::isfinite(current_score) || current_score < 0.0 || current_score > 1.0) {
@@ -364,7 +371,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     }
     for (const auto& item : outcomes) {
         if (item.path != path || item.regime != regime || item.data_class != data_class ||
-            item.profile != profile || item.outcome_kind != "HYPOTHESIS_PROXY" ||
+            item.profile != profile || item.score_model_version != expected_score_model_version ||
+            item.outcome_kind != "HYPOTHESIS_PROXY" ||
             item.execution_status != "NOT_EXECUTED" || item.closed_at_ms >= as_of_ms) continue;
         if (item.signal_id.empty() || !ids.insert(item.signal_id).second ||
             item.source_scan_id.empty() || item.symbol.empty() ||
