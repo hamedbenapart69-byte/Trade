@@ -222,17 +222,24 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const auto symbol = candidate.value("symbol", std::string{});
         const auto path = candidate.value("path", std::string{});
         const bool is_lrt = path == "PLAN_A_LRT";
+        const auto decision = candidate.value("decision_time_ms", std::int64_t{0});
+        const auto expiry = candidate.value("expiry_time_ms", std::int64_t{0});
         const auto* instrument = find_instrument(is_lrt ? l1_15m : l1, symbol);
-        if (!instrument || !instrument->contains("candles") || !instrument->at("candles").is_array()) {
-            ++still_pending;
+        if (!instrument || !instrument->contains("candles") ||
+            !instrument->at("candles").is_array() || instrument->at("candles").empty()) {
+            if (current_time >= expiry) {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY";
+                ++rejected;
+            } else {
+                ++still_pending;
+            }
             continue;
         }
         const auto direction = candidate.value("direction", std::string{});
         const double entry_reference = required_number(candidate, "entry_reference");
         const double stop = required_number(candidate, "stop_reference");
         const double target = required_number(candidate, "target_reference");
-        const auto decision = candidate.value("decision_time_ms", std::int64_t{0});
-        const auto expiry = candidate.value("expiry_time_ms", std::int64_t{0});
         const std::int64_t bar_ms = is_lrt ? 900'000LL : kOneHourMs;
         if (candidate.value("resolution_timeframe", std::string{}) != (is_lrt ? "15m" : "1h") ||
             expiry <= decision) {
@@ -331,7 +338,13 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             continue;
         }
         if (!entry_checked) {
-            ++still_pending;
+            if (current_time >= expiry) {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "NO_FUTURE_ENTRY_BAR_BEFORE_EXPIRY";
+                ++rejected;
+            } else {
+                ++still_pending;
+            }
             continue;
         }
         if (!closed && current_time >= expiry && expected_next_bar_ms < expiry) {
