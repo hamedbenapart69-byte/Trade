@@ -43,7 +43,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         const std::vector<std::string> required{
             "signal_id", "path", "regime", "closed_at_ms", "raw_score",
             "profile", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind",
-            "resolution_data_sha256", "resolution_bars",
+            "resolution_data_sha256", "resolution_bars", "source_scan_id", "symbol",
             "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
         };
         for (const auto& key : required)
@@ -56,6 +56,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             !row.at("outcome_kind").is_string() ||
             !row.at("resolution_data_sha256").is_string() ||
             !row.at("resolution_bars").is_array() || row.at("resolution_bars").empty() ||
+            !row.at("source_scan_id").is_string() || !row.at("symbol").is_string() ||
             !row.at("raw_score").is_number() || !row.at("win").is_boolean() ||
             !row.at("win_r").is_number() || !row.at("loss_r").is_number())
             throw std::runtime_error("outcome_field_type_invalid");
@@ -90,6 +91,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         item.profile = row.at("profile").get<std::string>();
         item.outcome_kind = row.at("outcome_kind").get<std::string>();
         item.execution_status = row.at("execution_status").get<std::string>();
+        item.source_scan_id = row.at("source_scan_id").get<std::string>();
+        item.symbol = row.at("symbol").get<std::string>();
         out.push_back(item);
     }
     return out;
