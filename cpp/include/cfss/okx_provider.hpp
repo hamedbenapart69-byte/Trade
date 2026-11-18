@@ -704,9 +704,62 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
     return result;
 }
 
+inline json cache_key_material(const std::string& instrument_id,
+                                std::int64_t window_start_ms) {
+    return {
+        {"provider_id", "okx"},
+        {"venue", "OKX"},
+        {"instrument_id", instrument_id},
+        {"market_type", "LINEAR_PERPETUAL"},
+        {"timeframes", {
+            {"candles", "1H"},
+            {"funding", "8H"},
+            {"open_interest", "1H"}
+        }},
+        {"window_start_ms", window_start_ms},
+        {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
+        {"normalization_schema_version", "1.0.0"}
+    };
+}
+
+inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
+                             std::int64_t window_end_ms) {
+    const auto id = instrument.value("instrument_id", std::string{});
+    auto metadata = cache_key_material(id, window_start_ms);
+    metadata["window_end_ms"] = window_end_ms;
+    metadata["data_revision"] = sha256_hex(instrument.dump());
+    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms).dump());
+    return metadata;
+}
+
+inline bool valid_cache_entry(const json& cache_entries, const json& instrument,
+                              const std::string& instrument_id,
+                              std::int64_t current_start_ms, std::int64_t current_end_ms) {
+    if (!cache_entries.is_object() || !cache_entries.contains(instrument_id) ||
+        !instrument.is_object()) return false;
+    const auto& metadata = cache_entries.at(instrument_id);
+    if (!metadata.is_object()) return false;
+    const auto expected = cache_key_material(instrument_id,
+        metadata.value("window_start_ms", std::int64_t{0}));
+    for (const auto& [key, value] : expected.items()) {
+        if (!metadata.contains(key) || metadata.at(key) != value) return false;
+    }
+    const auto window_start = metadata.value("window_start_ms", std::int64_t{0});
+    const auto window_end = metadata.value("window_end_ms", std::int64_t{0});
+    if (window_start <= 0 || window_start > current_start_ms ||
+        window_end <= 0 || window_end > current_end_ms ||
+        current_end_ms - window_end > 10LL * 86'400'000LL) return false;
+    const auto expected_key = sha256_hex(expected.dump());
+    if (metadata.value("cache_key", std::string{}) != expected_key) return false;
+    return metadata.value("data_revision", std::string{}) == sha256_hex(instrument.dump());
+}
+
 inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
-                                       const json& refreshed_instruments) {
+                                       const json& refreshed_instruments,
+                                       std::int64_t window_start_ms,
+                                       std::int64_t window_end_ms) {
     std::map<std::string, json> by_instrument;
+    json cache_entries = json::object();
     if (old_cache && old_cache->is_object() && old_cache->contains("instruments") &&
         old_cache->at("instruments").is_array()) {
         for (const auto& item : old_cache->at("instruments")) {
@@ -714,19 +767,38 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
             const auto id = item.value("instrument_id", std::string{});
             if (!id.empty()) by_instrument[id] = item;
         }
+        if (old_cache->contains("cache_entries") && old_cache->at("cache_entries").is_object())
+            cache_entries = old_cache->at("cache_entries");
     }
     if (refreshed_instruments.is_array()) {
         for (const auto& item : refreshed_instruments) {
             if (!item.is_object()) continue;
             const auto id = item.value("instrument_id", std::string{});
-            if (!id.empty()) by_instrument[id] = item;
+            if (id.empty()) continue;
+            std::int64_t retained_start_ms = window_start_ms;
+            if (cache_entries.contains(id) && cache_entries.at(id).is_object()) {
+                const auto previous_start = cache_entries.at(id).value("window_start_ms", std::int64_t{0});
+                if (previous_start > 0 && previous_start <= window_start_ms)
+                    retained_start_ms = previous_start;
+            }
+            by_instrument[id] = item;
+            cache_entries[id] = make_cache_entry(item, retained_start_ms, window_end_ms);
         }
     }
     json instruments = json::array();
     for (const auto& [id, item] : by_instrument) { (void)id; instruments.push_back(item); }
     return {
         {"schema_version", "1.0.0"},
+        {"cache_contract_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},
+        {"cache_policy", {
+            {"venue", "OKX"},
+            {"market_type", "LINEAR_PERPETUAL"},
+            {"timeframes", {{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}}},
+            {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
+            {"normalization_schema_version", "1.0.0"}
+        }},
+        {"cache_entries", std::move(cache_entries)},
         {"instruments", std::move(instruments)}
     };
 }
@@ -880,7 +952,8 @@ inline json collect(int symbol_count, int years,
                   << " errors=" << errors.size() << std::endl;
         if (market_cache_path &&
             (instrument_index % 25U == 0U || instrument_index == selected.size())) {
-            const auto snapshot = make_market_cache_snapshot(cached_market_data, instruments);
+            const auto snapshot = make_market_cache_snapshot(cached_market_data, instruments,
+                                                          start_ms, end_ms);
             cfss::write_file_atomic(*market_cache_path, snapshot.dump(2) + "\n", true);
             std::cout << "L1_CACHE_CHECKPOINT instruments="
                       << snapshot.at("instruments").size() << std::endl;
