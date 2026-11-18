@@ -1,0 +1,45 @@
+name: C++ Stage 2 Telegram Read-Only Diagnostic
+
+on:
+  push:
+    branches: [feat/cpp-stage2-lfs-v1]
+    paths:
+      - "docs/evidence/run-stage2-telegram-diagnostic.txt"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage2-telegram-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify bot token with getMe (read-only)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "${TELEGRAM_TOKEN}"
+          code="$(curl --silent --show-error --output /tmp/getme.json --write-out "%{http_code}" --max-time 20 "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getMe")"
+          echo "getMe_http_status=${code}"
+          jq -c '{ok, description, result: {is_bot: .result.is_bot, username: .result.username, first_name: .result.first_name}}' /tmp/getme.json
+          test "${code}" = "200"
+          jq -e '.ok == true and .result.is_bot == true' /tmp/getme.json >/dev/null
+
+      - name: Verify configured destination with getChat (read-only)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
+          code="$(curl --silent --show-error --get --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --output /tmp/getchat.json --write-out "%{http_code}" --max-time 20 "https://api.telegram.org/bot${TELEGRAM_TOKEN}/getChat")"
+          echo "getChat_http_status=${code}"
+          jq -c '{ok, description, result: {type: .result.type, title: .result.title, username: .result.username, first_name: .result.first_name}}' /tmp/getchat.json
+          test "${code}" = "200"
+          jq -e '.ok == true and (.result.id != null)' /tmp/getchat.json >/dev/null
