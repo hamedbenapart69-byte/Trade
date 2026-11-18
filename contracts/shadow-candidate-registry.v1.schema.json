@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Shadow Candidate Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "candidates"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_type": {"const": "cfss_shadow_candidate_registry_v1"},
+    "updated_at_ms": {"type": "integer", "minimum": 1},
+    "summary": {"type": "object"},
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "signal_id", "path", "symbol", "direction", "regime",
+          "decision_time_ms", "expiry_time_ms", "entry_reference",
+          "stop_reference", "target_reference", "raw_score", "data_class",
+          "hypothesis", "falsification", "source_run_id", "source_scan_id",
+          "source_l1_sha256", "resolution_timeframe", "state",
+          "resolution", "closed_at_ms", "gross_r", "skip_reason"
+        ],
+        "properties": {
+          "signal_id": {"type": "string", "minLength": 64, "maxLength": 64},
+          "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT"]},
+          "symbol": {"type": "string", "minLength": 1},
+          "direction": {"enum": ["LONG", "SHORT"]},
+          "regime": {"type": "string", "minLength": 1},
+          "decision_time_ms": {"type": "integer", "minimum": 1},
+          "expiry_time_ms": {"type": "integer", "minimum": 1},
+          "entry_reference": {"type": "number", "exclusiveMinimum": 0},
+          "stop_reference": {"type": "number", "exclusiveMinimum": 0},
+          "target_reference": {"type": "number", "exclusiveMinimum": 0},
+          "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "data_class": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
+          "hypothesis": {"type": "string", "minLength": 1},
+          "falsification": {"type": "string", "minLength": 1},
+          "source_run_id": {"type": "string", "minLength": 1},
+          "source_scan_id": {"type": "string", "minLength": 1},
+          "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "resolution_timeframe": {"const": "1h"},
+          "state": {"enum": ["PENDING", "RESOLVED", "REJECTED"]},
+          "resolution": {"type": ["string", "null"]},
+          "closed_at_ms": {"type": ["integer", "null"]},
+          "gross_r": {"type": ["number", "null"]},
+          "skip_reason": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}
