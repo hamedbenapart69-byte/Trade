@@ -4,7 +4,7 @@
 **Base:** `feat/cpp-stage1-clean` at `190b0270ccb1425f4ed77503825aeaf26668baa4`  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 implemented; runtime validation pending. No v2/v3 has been built.
+**Status:** v1 FAIL (D1 + D2) on the first real two-symbol run. The C++ build and unit tests passed, but the complete LFS score is unavailable because required inputs and raw-to-score definitions are missing. v2 is now eligible under R11; implementation has not yet been claimed.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -39,7 +39,19 @@ All scores must be deterministic, versioned, point-in-time available and normali
 - No Python production/release authority.
 
 ## v1 evidence / diagnosis
-Pending GitHub Actions execution against the new branch.
+Measured GitHub Actions run: `44244101096`; run ID: `okx-cpp-1794979539131`.
+
+- C++ configure/build: PASS.
+- Existing C++ unit tests: PASS.
+- New LFS v1 contract tests: PASS (2/2 total CTest targets, 100%).
+- Real OKX L1 collection: PASS for BTC/USDT:USDT and ETH/USDT:USDT.
+- BTC and ETH each returned 17,532 completed 1h candles, 90 funding rows and 720 OI rows.
+- L1 SHA-256: `1c184b36a86a478131f363667629c6c7b43411861243d1af1be6149fa3634a79`.
+- L2 SHA-256: `c3834f7718dc8aa0ce76f6c714a3b7db3d610b41281938720704e0540ff9cdeb`.
+- For both symbols, orderbook and long/short arrays are absent from the current L1 contract.
+- The probe in this first run predates the C++ LFS probe executable; the updated workflow will run it in the next attempt.
+
+**v1 result: FAIL for full-score availability, not for the aggregator's arithmetic contract.** The 5/5 score gate cannot be met. D1: LFS1 order-book and LFS3 long/short inputs are absent. D2: canonical raw-to-score transforms are not fully specified for all five components. No missing component is set to zero and no weights are redistributed.
 
 Directly inspected Stage 1 C++ L1 contract:
 - OHLCV, funding and open-interest series exist.
@@ -52,7 +64,7 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 
 ## Version control
 - v1: strict REAL-only v1 aggregator contract.
-- v2: NOT_BUILT; only after actual v1 FAIL and specific D-code evidence.
+- v2: ELIGIBLE under R11 after the measured v1 FAIL above; conservative PROXY design/implementation is next.
 - v3: NOT_BUILT; only after actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
 
