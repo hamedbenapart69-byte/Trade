@@ -68,6 +68,11 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             row.at("slippage_r").is_null() && row.at("funding_r").is_null();
         if (!all_costs_numeric && !all_costs_null)
             throw std::runtime_error("outcome_cost_fields_must_be_all_numeric_or_all_null");
+        const auto cost_status = row.at("cost_status").get<std::string>();
+        if ((cost_status == "UNAVAILABLE" && !all_costs_null) ||
+            ((cost_status == "REAL" || cost_status == "PROXY") && !all_costs_numeric) ||
+            (cost_status != "UNAVAILABLE" && cost_status != "REAL" && cost_status != "PROXY"))
+            throw std::runtime_error("outcome_cost_status_does_not_match_cost_fields");
         if (row.at("profile").get<std::string>() != ledger.value("profile", std::string{}) ||
             row.at("entry_model") != "NEXT_BAR_OPEN_PROXY" ||
             row.at("execution_status") != "NOT_EXECUTED" ||
