@@ -43,8 +43,13 @@ target_compile_features(cfss_unit_tests PRIVATE cxx_std_20)
 target_link_libraries(cfss_unit_tests PRIVATE nlohmann_json::nlohmann_json CURL::libcurl OpenSSL::Crypto)
 add_test(NAME cfss_unit_tests COMMAND cfss_unit_tests)
 
+add_executable(lfs_v1_tests tests/lfs_v1_test.cpp)
+target_include_directories(lfs_v1_tests PRIVATE include)
+target_compile_features(lfs_v1_tests PRIVATE cxx_std_20)
+add_test(NAME lfs_v1_tests COMMAND lfs_v1_tests)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests)
+    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_v1_tests)
         target_compile_options(${target} PRIVATE
             -Wall
             -Wextra
