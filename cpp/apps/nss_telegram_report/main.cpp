@@ -177,7 +177,8 @@ int main(int argc, char** argv) {
     try {
         const std::string mode{argv[1]};
         const auto report = read_json(argv[2]);
-        if (report.value("artifact_type", std::string{}) != "cfss_nss_v1_formula")
+        const auto report_type = report.value("artifact_type", std::string{});
+        if (report_type != "cfss_nss_v1_formula" && report_type != "cfss_nss_v2_proxy")
             throw std::runtime_error("nss_report_type_invalid");
         if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
             throw std::runtime_error("curl_global_init_failed");
