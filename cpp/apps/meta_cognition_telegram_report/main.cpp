@@ -2,6 +2,7 @@
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
 
+#include <cstddef>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
