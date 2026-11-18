@@ -43,9 +43,9 @@ int main() {
     require(missing.real_count == 4U, "coverage count is retained");
 
     rows = complete(DataClass::PROXY);
-    const auto proxy = aggregate_v1(rows, 2000);
-    require(proxy.status == "CALCULATED" && proxy.data_class == "PROXY",
-            "proxy provenance is preserved");
+    const auto proxy_rejected = aggregate_v1(rows, 2000);
+    require(proxy_rejected.status == "UNAVAILABLE" && !proxy_rejected.score.has_value(),
+            "v1 formula rejects proxy inputs; proxy belongs to v2");
 
     rows = complete();
     rows[0].score = 1.01;
