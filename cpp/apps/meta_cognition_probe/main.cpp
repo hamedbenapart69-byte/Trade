@@ -225,6 +225,12 @@ int main(int argc, char** argv) {
             {"schema_version", "1.0.0"},
             {"artifact_type", "cfss_meta_cognition_v1"},
             {"profile", "DAILY_SWING"},
+            {"calibration_scope", {
+                {"outcome_kind", "HYPOTHESIS_PROXY"},
+                {"execution_status", "NOT_EXECUTED"},
+                {"entry_model", "NEXT_BAR_OPEN_PROXY"},
+                {"ev_policy", "BLOCK_WHEN_COSTS_UNAVAILABLE"}
+            }},
             {"version", "META_COGNITION_V1"},
             {"source_run_id", run_id},
             {"source_scan_id", scan_id},
