@@ -43,6 +43,7 @@ nlohmann::json fixture_l1_15m(std::initializer_list<nlohmann::json> candles,
         {"artifact_type", "cfss_intraday_15m_market_data_v1"},
         {"source_run_id", "run-1"}, {"source_scan_id", "scan-1"},
         {"source_l1_sha256", std::string(64, 'a')},
+        {"candles_sha256", std::string(64, 'b')},
         {"decision_time_ms", 3'600'000LL},
         {"window", {{"timeframe", "15m"}, {"end_ms", end_ms}}},
         {"instruments", {{
