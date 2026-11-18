@@ -70,6 +70,16 @@ int main() {
     const auto l = ratio_rows(100U);
     const auto oi = oi_rows(720U);
 
+    const auto decision_time = 2200LL * 3'600'000LL;
+    auto future_candles = c;
+    future_candles.push_back({
+        {"timestamp_ms", decision_time + 3'600'000LL},
+        {"open", 100.0}, {"high", 102.0}, {"low", 99.0}, {"close", 101.0}, {"volume", 5000.0}
+    });
+    const auto filtered_base = cfss::lfs::filter_time_series(c, decision_time);
+    const auto filtered_future = cfss::lfs::filter_time_series(future_candles, decision_time);
+    require(filtered_base == filtered_future, "future candle perturbations are excluded at decision time");
+
     const auto s1 = cfss::lfs::lfs1_proxy_score(c);
     const auto s2 = cfss::lfs::funding_extreme_score(f);
     const auto s3 = cfss::lfs::long_short_extreme_score(l);
