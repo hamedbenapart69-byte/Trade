@@ -1,3 +1,5 @@
 Run read-only Telegram getMe/getChat diagnostics only. Do not send messages or mutate Telegram state.
 
 Repeat read-only diagnostic after adding getChatMember posting-permission check.
+
+Check the latest public channel preview for the Stage 2 report header; read-only, no Telegram send.
