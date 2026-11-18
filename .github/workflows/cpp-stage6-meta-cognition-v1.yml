@@ -85,6 +85,12 @@ jobs:
             -s contracts/crypto-universe.v1.schema.json -d stage6-evidence/crypto-universe.v1.json --all-errors
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/l2-status.v1.schema.json -d stage6-evidence/l2-status.v1.json --all-errors
+          ./build/intraday_15m_collector \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/l1-market-data-15m.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/intraday-15m-market-data.v1.schema.json \
+            -d stage6-evidence/l1-market-data-15m.v1.json --all-errors
           sha256sum stage6-evidence/l1-market-data.v1.json stage6-evidence/dual-engine-report.v1.json
 
       - name: Initialize explicit empty state only when no state exists
@@ -105,6 +111,7 @@ jobs:
           set -euo pipefail
           ./build/shadow_outcome_tracker \
             stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/l1-market-data-15m.v1.json \
             stage6-evidence/dual-engine-report.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
             signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
