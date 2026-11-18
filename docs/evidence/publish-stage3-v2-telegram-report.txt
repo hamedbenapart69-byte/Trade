@@ -3,3 +3,5 @@ The C++ workflow collects real OKX perpetual and spot candles, computes synchron
 The report is research-only, PROXY, NOT_CALIBRATED and never actionable.
 
 Recovery note: the first v2 run calculated and schema-validated both directional scores, but the Telegram sender rejected the v2 artifact type. The sender guard is corrected, and the final receipt step now safely skips when no reservation was created.
+
+Final validation note: v2 now normalizes funding to an 8-hour equivalent using observed event intervals, excludes interval gaps, rejects funding older than 24 hours, and rejects stale hourly OI/basis/volume/compression inputs. The run also persists the inspectable NSS score artifact and basis-coverage summary to the signals branch.
