@@ -32,20 +32,21 @@ void write_json(const std::filesystem::path& path, const json& value) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 8) {
+    if (argc != 9) {
         std::cerr << "usage: shadow_outcome_tracker <l1.json> <dual-engine.json> <liquidity.json> "
                      "<registry.json> <ledger.json> <registry-out.json> <ledger-out.json>\n";
         return 2;
     }
     try {
         const auto l1 = read_required(argv[1]);
-        const auto dual = read_required(argv[2]);
-        const auto liquidity = read_required(argv[3]);
-        const auto registry = read_json_or_empty(argv[4], cfss::shadow::empty_registry());
-        const auto ledger = read_json_or_empty(argv[5], cfss::shadow::empty_ledger());
-        const auto output = cfss::shadow::process(l1, dual, liquidity, registry, ledger);
-        write_json(argv[6], output.at("registry"));
-        write_json(argv[7], output.at("ledger"));
+        const auto l1_15m = read_required(argv[2]);
+        const auto dual = read_required(argv[3]);
+        const auto liquidity = read_required(argv[4]);
+        const auto registry = read_json_or_empty(argv[5], cfss::shadow::empty_registry());
+        const auto ledger = read_json_or_empty(argv[6], cfss::shadow::empty_ledger());
+        const auto output = cfss::shadow::process(l1, l1_15m, dual, liquidity, registry, ledger);
+        write_json(argv[7], output.at("registry"));
+        write_json(argv[8], output.at("ledger"));
         const auto& summary = output.at("registry").at("summary");
         std::cout << "SHADOW_TRACKER_STATUS=PASS"
                   << " REGISTERED=" << summary.at("registered_this_run")
