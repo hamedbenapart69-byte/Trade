@@ -17,6 +17,12 @@
       "report_id": "90de08487d0b4af481d1877e238d8211f7efcbe3f987302a37fe02efb2e069cb",
       "started_at_utc": "2026-11-18T11:03:04Z",
       "status": "RECONCILED_NOT_DELIVERED"
+    },
+    {
+      "attempts": 1,
+      "report_id": "061fddcc33bbbcfa1ca3f43ead32f4f60b52233364aedcda7aab443b0c808413",
+      "started_at_utc": "2026-11-18T11:16:46Z",
+      "status": "SENDING"
     }
   ],
   "schema_version": "1.0.0"
