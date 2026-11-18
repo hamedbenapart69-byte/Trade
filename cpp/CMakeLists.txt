@@ -77,6 +77,26 @@ target_include_directories(nss_telegram_report PRIVATE include)
 target_compile_features(nss_telegram_report PRIVATE cxx_std_20)
 target_link_libraries(nss_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
 
+add_executable(nss_basis_collector apps/nss_basis_collector/main.cpp)
+target_include_directories(nss_basis_collector PRIVATE include)
+target_compile_features(nss_basis_collector PRIVATE cxx_std_20)
+target_link_libraries(nss_basis_collector PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(nss_v2_probe apps/nss_v2_probe/main.cpp)
+target_include_directories(nss_v2_probe PRIVATE include)
+target_compile_features(nss_v2_probe PRIVATE cxx_std_20)
+target_link_libraries(nss_v2_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(nss_basis_tests tests/nss_basis_test.cpp)
+target_include_directories(nss_basis_tests PRIVATE include)
+target_compile_features(nss_basis_tests PRIVATE cxx_std_20)
+add_test(NAME nss_basis_tests COMMAND nss_basis_tests)
+
+add_executable(nss_v2_tests tests/nss_v2_test.cpp)
+target_include_directories(nss_v2_tests PRIVATE include)
+target_compile_features(nss_v2_tests PRIVATE cxx_std_20)
+add_test(NAME nss_v2_tests COMMAND nss_v2_tests)
+
 add_executable(nss_v1_tests tests/nss_v1_test.cpp)
 target_include_directories(nss_v1_tests PRIVATE include)
 target_compile_features(nss_v1_tests PRIVATE cxx_std_20)
