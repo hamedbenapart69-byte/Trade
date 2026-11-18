@@ -109,7 +109,7 @@
             "oos_period_end_ms": {"type": "integer", "minimum": 0},
             "oos_symbol_distribution": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
             "oos_daily_distribution": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-            "confidence_interval_method": {"const": "TWO_WAY_CLUSTER_ROBUST"},
+            "confidence_interval_method": {"const": "THREE_WAY_CLUSTER_ROBUST"},
             "win_rate_interval_method": {"const": "WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"},
             "brier_raw_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
             "brier_calibrated_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
