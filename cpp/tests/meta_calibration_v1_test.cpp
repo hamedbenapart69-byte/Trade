@@ -70,7 +70,7 @@ int main() {
             calibrated.oos_symbol_clusters == 50U &&
             calibrated.oos_utc_day_clusters == 50U &&
             std::abs(calibrated.oos_effective_sample_size - 50.0) < 1e-9,
-            "effective independent OOS sample size accounts for scan and symbol clusters");
+            "effective independent OOS sample size accounts for scan, symbol and UTC-day clusters");
 
     auto correlated = outcomes;
     for (std::size_t i = 0U; i < correlated.size(); ++i) {
