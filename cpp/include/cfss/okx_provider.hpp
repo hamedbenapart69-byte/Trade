@@ -691,7 +691,9 @@ inline json collect(int symbol_count, int years,
     const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
     json instruments = json::array();
+    std::size_t instrument_index = 0U;
     for (const auto& item : selected) {
+        ++instrument_index;
         json candles = json::array(), funding = json::array(), oi = json::array();
         json errors = json::array();
         const json* cached_instrument = nullptr;
@@ -735,6 +737,10 @@ inline json collect(int symbol_count, int years,
                 last_oi_ms - first_oi_ms >= 25LL * 86'400'000LL &&
                 end_ms >= last_oi_ms && end_ms - last_oi_ms <= 3LL * 86'400'000LL;
         }
+        std::cout << "L1_COLLECT_START " << instrument_index << "/" << selected.size()
+                  << " instrument=" << item.id
+                  << " ohlcv_cache=" << (has_valid_candle_cache ? "HIT" : "BACKFILL")
+                  << " oi_cache=" << (oi_cache_complete ? "HIT" : "BACKFILL") << std::endl;
         try {
             if (has_valid_candle_cache) {
                 const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
@@ -810,6 +816,12 @@ inline json collect(int symbol_count, int years,
             }},
             {"errors", errors}
         });
+        std::cout << "L1_COLLECT_DONE " << instrument_index << "/" << selected.size()
+                  << " instrument=" << item.id
+                  << " candles=" << candles.size()
+                  << " funding=" << funding.size()
+                  << " oi=" << oi.size()
+                  << " errors=" << errors.size() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
     const char* commit = std::getenv("GITHUB_SHA");
