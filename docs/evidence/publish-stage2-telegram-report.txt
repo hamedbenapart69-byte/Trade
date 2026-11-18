@@ -1,2 +1,4 @@
 One-time publication trigger for the Stage 2 LFS_V2_PROXY validation report.
 The dedicated workflow performs a fresh real-data collection, reserves the report hash in the signals-branch outbox before sending, and persists the Telegram receipt. Duplicate or uncertain delivery is blocked.
+
+Recovery attempt: reconcile the previous non-delivery from public channel history, then send a fresh plain-text LFS v2 report exactly once.
