@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <set>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -109,7 +110,8 @@ json build_run_manifest(const json& contract, const json& artifact,
 int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 const std::filesystem::path& l2_path,
                 const std::optional<std::filesystem::path>& crypto_universe_cache_path,
-                const std::optional<std::filesystem::path>& market_data_cache_path) {
+                const std::optional<std::filesystem::path>& market_data_cache_path,
+                const std::optional<std::filesystem::path>& pending_symbols_path) {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
         throw std::runtime_error("curl_global_init_failed");
     try {
@@ -132,8 +134,23 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 !cached_market_data->at("instruments").is_array())
                 throw std::runtime_error("market_data_cache_schema_or_provider_invalid");
         }
+        std::set<std::string> required_symbols;
+        if (pending_symbols_path && std::filesystem::exists(*pending_symbols_path)) {
+            std::ifstream pending_input(*pending_symbols_path, std::ios::binary);
+            if (!pending_input) throw std::runtime_error("pending_symbols_open_failed");
+            const auto pending_json = json::parse(pending_input);
+            if (!pending_json.is_array()) throw std::runtime_error("pending_symbols_must_be_array");
+            for (const auto& value : pending_json) {
+                if (!value.is_string()) continue;
+                const auto unified = value.get<std::string>();
+                const auto slash = unified.find('/');
+                const auto base = cfss::okx::uppercase_symbol(
+                    slash == std::string::npos ? unified : unified.substr(0U, slash));
+                if (!base.empty()) required_symbols.insert(base);
+            }
+        }
         const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
-                                                  cached_market_data);
+                                                  cached_market_data, required_symbols);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
         if (market_data_cache_path)
@@ -302,17 +319,19 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
 int main(int argc, char** argv) {
     try {
-        if ((argc == 6 || argc == 7 || argc == 8) && std::string{argv[1]} == "--collect-okx") {
+        if ((argc >= 6 && argc <= 9) && std::string{argv[1]} == "--collect-okx") {
             const std::optional<std::filesystem::path> universe_cache_path =
                 argc >= 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
             const std::optional<std::filesystem::path> market_cache_path =
-                argc == 8 ? std::optional<std::filesystem::path>{argv[7]} : std::nullopt;
+                argc >= 8 ? std::optional<std::filesystem::path>{argv[7]} : std::nullopt;
+            const std::optional<std::filesystem::path> pending_symbols_path =
+                argc == 9 ? std::optional<std::filesystem::path>{argv[8]} : std::nullopt;
             return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5],
-                                universe_cache_path, market_cache_path);
+                                universe_cache_path, market_cache_path, pending_symbols_path);
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json]\n";
+                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};
