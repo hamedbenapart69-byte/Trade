@@ -138,7 +138,7 @@ jobs:
     needs: persist
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      actions: read
       contents: read
     steps:
       - name: Prune older Stage 1b P0 artifacts to stay within free storage
