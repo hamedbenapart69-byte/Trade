@@ -1,0 +1,1 @@
+Run read-only Telegram getMe/getChat diagnostics only. Do not send messages or mutate Telegram state.
