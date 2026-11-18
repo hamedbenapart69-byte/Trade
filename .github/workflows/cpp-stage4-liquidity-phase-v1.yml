@@ -1,0 +1,104 @@
+name: C++ Stage 4 Liquidity Zones and Market Phase v1
+
+on:
+  push:
+    branches: [feat/cpp-stage4-liquidity-phase-v1]
+    paths:
+      - "docs/evidence/publish-stage4-liquidity-report.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage4-liquidity-report-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deliver:
+    if: ${{ contains(github.event.head_commit.message, '[LIQUIDITY_STAGE4_REPORT]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+      - name: Configure and build C++20
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Collect fresh real OKX BTC and ETH OHLCV
+        run: |
+          mkdir -p stage4-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage4-evidence/l1-market-data.v1.json \
+            stage4-evidence/l2-status.v1.json
+          sha256sum stage4-evidence/l1-market-data.v1.json stage4-evidence/l2-status.v1.json
+      - name: Compute confirmed liquidity zones and market phase
+        run: |
+          ./build/liquidity_phase_probe \
+            stage4-evidence/l1-market-data.v1.json \
+            stage4-evidence/liquidity-phase.v1.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
+            -s contracts/liquidity-phase.v1.schema.json \
+            -d stage4-evidence/liquidity-phase.v1.json --all-errors
+          jq -r '.instruments[] | [.symbol, .phase, (.zones|length|tostring), (.nearest_support.low // "NONE"), (.nearest_resistance.high // "NONE")] | @tsv' stage4-evidence/liquidity-phase.v1.json
+      - name: Checkout persistent Telegram receipt state
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Persist inspectable liquidity and phase evidence
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          cp stage4-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage4_v1.json
+      - name: Reserve Telegram report idempotently
+        run: |
+          mkdir -p signals-state/cpp_runtime
+          ./build/liquidity_telegram_report --prepare \
+            stage4-evidence/liquidity-phase.v1.json \
+            signals-state/cpp_runtime/liquidity_stage4_telegram_outbox.v1.json
+      - name: Persist evidence and reservation before Telegram send
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/liquidity_stage4_v1.json cpp_runtime/liquidity_stage4_telegram_outbox.v1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage4): persist liquidity phase evidence and report reservation"
+            git push origin HEAD:signals
+          fi
+      - name: Send non-actionable Stage 4 report through C++ Telegram L3
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
+          ./build/liquidity_telegram_report --send \
+            stage4-evidence/liquidity-phase.v1.json \
+            signals-state/cpp_runtime/liquidity_stage4_telegram_outbox.v1.json
+      - name: Persist Telegram delivery receipt
+        if: ${{ always() }}
+        run: |
+          cd signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f cpp_runtime/liquidity_stage4_telegram_outbox.v1.json ]; then
+            git add cpp_runtime/liquidity_stage4_telegram_outbox.v1.json
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "audit(stage4): persist Telegram delivery receipt"
+            git push origin HEAD:signals
+          fi
+      - name: Assert no Actions artifact storage is used
+        run: |
+          if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage4-liquidity-phase-v1.yml; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "ZERO_COST_TELEGRAM_ONLY_REPORT_PATH"
