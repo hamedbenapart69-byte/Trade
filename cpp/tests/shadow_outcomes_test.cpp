@@ -132,6 +132,16 @@ int main() {
             target_row.at("resolution_bars").size() == 2U,
             "LRT outcome retains profile, 15m source fingerprint and exact resolution bars");
 
+    auto legacy_ledger = target.at("ledger");
+    legacy_ledger["outcomes"][0].erase("score_model_version");
+    const auto migrated_ledger = cfss::shadow::process(
+        fixture_l1({}, 18'000'000LL), fixture_l1_15m({}, 18'000'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        target.at("registry"), legacy_ledger);
+    require(migrated_ledger.at("ledger").at("outcomes").front().at("score_model_version") ==
+                "LFS_V2_PROXY",
+            "legacy closed outcomes are assigned their original path-specific score model version");
+
     const auto nmt_outcome = cfss::shadow::process(
         fixture_l1({
             candle(3'600'000LL, 105.0, 99.0, 104.0),
