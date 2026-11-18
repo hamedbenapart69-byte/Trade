@@ -110,7 +110,7 @@ jobs:
               > signals-state/cpp_runtime/scalp_outcome_ledger.v1.json
           fi
 
-      - name: Register candidates and resolve only future closed 1H candles
+      - name: Register candidates and resolve future 15m LRT / 1h NMT candles
         run: |
           set -euo pipefail
           ./build/shadow_outcome_tracker \
