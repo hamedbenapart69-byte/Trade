@@ -83,12 +83,14 @@ int main(int argc, char** argv) {
             if (id.empty()) throw std::runtime_error("instrument_id_missing");
             const json long_short = fetch_long_short(id);
 
-            const auto candles = instrument.value("candles", json::array());
-            const auto funding = instrument.value("funding", json::array());
-            const auto oi = instrument.value("open_interest", json::array());
+            const auto decision_time = cfss::okx::now_ms();
+            const auto candles = cfss::lfs::filter_time_series(instrument.value("candles", json::array()), decision_time);
+            const auto funding = cfss::lfs::filter_time_series(instrument.value("funding", json::array()), decision_time);
+            const auto oi = cfss::lfs::filter_time_series(instrument.value("open_interest", json::array()), decision_time);
+            const auto long_short_as_json = cfss::lfs::filter_time_series(long_short, decision_time);
             const auto lfs1 = cfss::lfs::lfs1_proxy_score(candles);
             const auto lfs2 = cfss::lfs::funding_extreme_score(funding);
-            const auto lfs3 = cfss::lfs::long_short_extreme_score(long_short);
+            const auto lfs3 = cfss::lfs::long_short_extreme_score(long_short_as_json);
             const auto lfs4 = cfss::lfs::bb_width_compression_score(candles);
             const auto lfs5 = cfss::lfs::oi_change_score(oi);
 
@@ -104,7 +106,6 @@ int main(int argc, char** argv) {
                 {"LFS5_OPEN_INTEREST_CHANGE", lfs5, "REAL", latest_ts(oi), "lfs5_abs_24h_oi_change_percentile_v2",
                  "Absolute 24-hour OI change percentile over available REAL OI history"}
             }};
-            const auto decision_time = cfss::okx::now_ms();
             const auto result = cfss::lfs::aggregate_v2(components, decision_time);
 
             json component_rows = json::array();
@@ -116,7 +117,7 @@ int main(int argc, char** argv) {
                 {"data_class", result.data_class},
                 {"component_coverage", {{"available_scores", 5U - result.missing_count}, {"required_scores", 5}}},
                 {"components", component_rows},
-                {"long_short_rows", long_short.size()},
+                {"long_short_rows", long_short_as_json.size()},
                 {"long_short_scope", "OKX contract-level all-trader account ratio"}
             });
         }
