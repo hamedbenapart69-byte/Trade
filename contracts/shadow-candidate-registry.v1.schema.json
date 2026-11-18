@@ -36,6 +36,7 @@
           "target_reference": {"type": "number", "exclusiveMinimum": 0},
           "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
           "data_class": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
+          "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY"]},
           "hypothesis": {"type": "string", "minLength": 1},
           "falsification": {"type": "string", "minLength": 1},
           "source_run_id": {"type": "string", "minLength": 1},
