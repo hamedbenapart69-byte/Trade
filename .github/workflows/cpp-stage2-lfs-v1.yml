@@ -1,0 +1,81 @@
+name: C++ Stage 2 LFS Resilience
+
+on:
+  push:
+    branches: [feat/cpp-stage2-lfs-v1]
+    paths:
+      - "cpp/**"
+      - "docs/evidence/stage2-lfs-slrp-report.md"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage2-lfs-v1.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - "docs/evidence/stage2-lfs-slrp-report.md"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage2-lfs-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpp-stage2-lfs-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lfs-v1-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+      - name: Configure C++ build
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build all C++ targets
+        run: cmake --build build --parallel 2
+      - name: Collect real OKX BTC and liquid altcoin sample
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mkdir -p stage2-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage2-evidence/l1-market-data.v1.json \
+            stage2-evidence/l2-status.v1.json
+          sha256sum stage2-evidence/l1-market-data.v1.json stage2-evidence/l2-status.v1.json
+      - name: Execute LFS v1 against real L1 inputs
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          ./build/lfs_v1_probe stage2-evidence/l1-market-data.v1.json stage2-evidence/lfs-v1.json
+          jq -r '.instruments[] | [.symbol, .status, (.components[] | (.id + "=" + .raw_input + ":" + .data_class))] | @tsv' stage2-evidence/lfs-v1.json
+          sha256sum stage2-evidence/lfs-v1.json
+      - name: Record LFS component source coverage
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          jq -r '.instruments[] | [
+            .unified_symbol,
+            (if has("orderbook") then "ORDERBOOK_PRESENT" else "ORDERBOOK_UNAVAILABLE" end),
+            (if has("long_short") then "LONG_SHORT_PRESENT" else "LONG_SHORT_UNAVAILABLE" end),
+            ("FUNDING_ROWS=" + ((.funding | length) | tostring)),
+            ("OHLCV_ROWS=" + ((.candles | length) | tostring)),
+            ("OI_ROWS=" + ((.open_interest | length) | tostring))
+          ] | @tsv' stage2-evidence/l1-market-data.v1.json
+      - name: Execute LFS v2 proxy against real OHLCV funding OI and public long-short data
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          ./build/lfs_v2_probe stage2-evidence/l1-market-data.v1.json stage2-evidence/lfs-v2.json
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/lfs-v2-proxy.v1.schema.json -d stage2-evidence/lfs-v2.json --all-errors
+          jq -r '.instruments[] | [.symbol, .status, .data_class, (.score // "UNAVAILABLE"), ("coverage=" + (.component_coverage.available_scores|tostring) + "/5"), ("long_short_rows=" + (.long_short_rows|tostring))] | @tsv' stage2-evidence/lfs-v2.json
+          sha256sum stage2-evidence/lfs-v2.json
+      - name: Run unit and LFS v1 contract tests
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Assert no Actions artifact upload is configured
+        run: |
+          if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage2-lfs-v1.yml; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "NO_ACTIONS_ARTIFACT_UPLOAD"
