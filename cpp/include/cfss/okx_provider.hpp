@@ -743,6 +743,11 @@ inline json collect(int symbol_count, int years,
         }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
+        const auto has_error_prefix = [&](const std::string& prefix) {
+            return std::any_of(errors.begin(), errors.end(), [&](const json& error) {
+                return error.is_string() && error.get<std::string>().rfind(prefix, 0U) == 0U;
+            });
+        };
         instruments.push_back({
             {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
             {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
@@ -762,8 +767,8 @@ inline json collect(int symbol_count, int years,
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
-                {"funding", availability(funding, "funding_rate", 29.0)},
-                {"open_interest", open_interest_availability(oi, 29.0)}
+                {"funding", has_error_prefix("funding:") ? "PARTIAL" : availability(funding, "funding_rate", 29.0)},
+                {"open_interest", has_error_prefix("open_interest:") ? "PARTIAL" : open_interest_availability(oi, 29.0)}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
