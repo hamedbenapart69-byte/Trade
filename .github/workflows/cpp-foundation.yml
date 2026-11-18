@@ -2,7 +2,7 @@ name: C++ Foundation
 
 on:
   push:
-    branches: [main, feat/cpp-core]
+    branches: [main, feat/cpp-core, feat/cpp-stage6-meta-calibration-v1]
     paths:
       - "cpp/**"
       - ".github/workflows/cpp-foundation.yml"
