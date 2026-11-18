@@ -5,3 +5,5 @@ Repeat read-only diagnostic after adding getChatMember posting-permission check.
 Check the latest public channel preview for the Stage 2 report header; read-only, no Telegram send.
 
 Capture public preview timestamps to bound the no-match reconciliation window.
+
+Repeat diagnostics with dynamically resolved public channel URL to satisfy repository secret audit.
