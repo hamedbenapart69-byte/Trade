@@ -33,7 +33,7 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
             slippage,
             funding,
             true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
-            "scan-" + std::to_string(i), "SYMBOL-" + std::to_string(i)
+            "scan-" + std::to_string(i), "SYMBOL-" + std::to_string(i), "LFS_V2_PROXY"
         };
         out.push_back(row);
     }
@@ -98,7 +98,7 @@ int main() {
         "signal-250", "PLAN_A_LRT", "DOWNTREND", 251LL * 86'400'000LL,
         0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01,
         true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
-        "scan-future", "SYMBOL-FUTURE"
+        "scan-future", "SYMBOL-FUTURE", "LFS_V2_PROXY"
     });
     const auto with_future = cfss::meta::calibrate(
         future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 86'400'000LL);
@@ -165,6 +165,15 @@ int main() {
         duplicate, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 86'400'000LL);
     require(duplicate_result.status == "INVALID_OUTCOME_LEDGER",
             "duplicate signal IDs invalidate the calibration ledger");
+
+    auto wrong_score_version = outcomes;
+    for (auto& row : wrong_score_version) row.score_model_version = "LFS_V1_FORMULA";
+    const auto isolated_score_version = cfss::meta::calibrate(
+        wrong_score_version, "PLAN_A_LRT", "DOWNTREND", 0.80,
+        251LL * 86'400'000LL);
+    require(isolated_score_version.status == "NOT_CALIBRATED" &&
+            isolated_score_version.sample_count == 0U,
+            "outcomes from a different score formula version are never pooled");
 
     const auto other_regime = cfss::meta::calibrate(
         outcomes, "PLAN_A_LRT", "UPTREND", 0.80, 251LL * 86'400'000LL);
