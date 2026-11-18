@@ -143,6 +143,10 @@ int main() {
     require(result.status == "CALCULATED" && result.score.has_value(), "complete v2 aggregate calculates");
     require(*result.score >= 0.0 && *result.score <= 1.0, "aggregate remains in [0,1]");
     require(result.data_class == "PROXY", "any proxy component marks aggregate PROXY");
+    const auto repeated_result = cfss::lfs::aggregate_v2(components, 3000LL * 3'600'000LL);
+    require(repeated_result.score && std::abs(*result.score - *repeated_result.score) < 1e-12 &&
+            repeated_result.status == result.status,
+            "identical component inputs produce deterministic aggregate output");
 
     auto missing = components;
     missing[2].score.reset();
