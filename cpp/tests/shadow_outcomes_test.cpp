@@ -121,6 +121,8 @@ int main() {
             target_row.at("cost_status") == "UNAVAILABLE",
             "missing costs remain explicitly unavailable, never fabricated");
     require(target_row.at("profile") == "DAILY_SWING" &&
+            target_row.at("score_model_version") == "LFS_V2_PROXY" &&
+            target.at("registry").at("candidates").front().at("score_model_version") == "LFS_V2_PROXY" &&
             target_row.at("entry_fill_reference") == 100.0 &&
             target_row.at("entry_model") == "NEXT_BAR_OPEN_PROXY" &&
             target_row.at("execution_status") == "NOT_EXECUTED" &&
@@ -140,6 +142,7 @@ int main() {
                      candidate("PLAN_A_NMT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(nmt_outcome.at("ledger").at("outcomes").size() == 1U &&
+            nmt_outcome.at("ledger").at("outcomes").front().at("score_model_version") == "NSS_V2_PROXY" &&
             nmt_outcome.at("ledger").at("outcomes").front().at("resolution_timeframe") == "1h",
             "NMT outcome resolution uses completed 1h candles, independently of LRT 15m");
 
