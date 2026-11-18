@@ -66,9 +66,9 @@
         "confidence_status": {"enum": ["CALIBRATED", "NOT_CALIBRATED"]},
         "confidence_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
         "calibration": {"type": "object"},
-        "ev_status": {"enum": ["CALCULATED", "NOT_CALCULATED"]},
+        "ev_status": {"enum": ["CALCULATED", "NOT_CALCULATED", "COSTS_UNAVAILABLE"]},
         "ev_net": {"type": ["number", "null"]},
-        "ev_decision": {"enum": ["NOT_CALCULATED", "NO_TRADE", "EV_POSITIVE_RESEARCH_ONLY"]},
+        "ev_decision": {"enum": ["NOT_CALCULATED", "NOT_CALCULATED_COSTS_UNAVAILABLE", "NO_TRADE", "EV_POSITIVE_RESEARCH_ONLY"]},
         "reason": {"type": "string"},
         "regime": {"type": "string"},
         "actionable": {"const": false}
