@@ -150,7 +150,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             }
         }
         const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
-                                                  cached_market_data, required_symbols);
+                                                  cached_market_data, required_symbols,
+                                                  market_data_cache_path);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
         if (market_data_cache_path)
