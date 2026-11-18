@@ -116,8 +116,10 @@ int main() {
             target_row.at("entry_model") == "NEXT_BAR_OPEN_PROXY" &&
             target_row.at("execution_status") == "NOT_EXECUTED" &&
             target_row.at("outcome_kind") == "HYPOTHESIS_PROXY" &&
-            target_row.at("resolution_timeframe") == "15m",
-            "LRT outcome is a profile-scoped 15m hypothesis proxy, never an executed trade");
+            target_row.at("resolution_timeframe") == "15m" &&
+            target_row.at("resolution_data_sha256") == std::string(64, 'b') &&
+            target_row.at("resolution_bars").size() == 2U,
+            "LRT outcome retains profile, 15m source fingerprint and exact resolution bars");
 
     const auto nmt_outcome = cfss::shadow::process(
         fixture_l1({
