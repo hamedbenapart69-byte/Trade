@@ -103,6 +103,10 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
     for (auto& old_candidate : registry["candidates"]) {
         if (old_candidate.value("state", std::string{}) != "PENDING") continue;
         const auto old_path = old_candidate.value("path", std::string{});
+        if (!old_candidate.contains("score_model_version")) {
+            old_candidate["score_model_version"] =
+                old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
+        }
         const bool universe_unverified =
             old_candidate.value("source_universe_status", std::string{"UNVERIFIED"}) != "VERIFIED";
         const bool legacy_entry_contract =
@@ -128,6 +132,14 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             old_candidate["state"] = "REJECTED";
             old_candidate["skip_reason"] = "SOURCE_UNIVERSE_NOT_VERIFIED";
             ++rejected;
+        }
+    }
+
+    for (auto& old_outcome : ledger["outcomes"]) {
+        if (!old_outcome.contains("score_model_version")) {
+            const auto old_path = old_outcome.value("path", std::string{});
+            old_outcome["score_model_version"] =
+                old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
         }
     }
 
@@ -206,6 +218,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
                 {"decision_time_ms", decision_time}, {"expiry_time_ms", decision_time + horizon},
                 {"entry_reference", entry}, {"stop_reference", stop}, {"target_reference", target},
                 {"raw_score", score}, {"data_class", candidate_data_class},
+                {"score_model_version", path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY"},
                 {"hypothesis", candidate.at("hypothesis")}, {"falsification", candidate.at("falsification")},
                 {"source_run_id", dual.at("source_run_id")}, {"source_scan_id", scan_id},
                 {"source_l1_sha256", dual.at("l1_sha256")}, {"source_universe_status", "VERIFIED"},
@@ -380,6 +393,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         ledger["outcomes"].push_back({
             {"signal_id", signal_id}, {"profile", "DAILY_SWING"},
             {"path", candidate.at("path")},
+            {"score_model_version", candidate.at("score_model_version")},
             {"regime", candidate.at("regime")}, {"closed_at_ms", close_time},
             {"raw_score", candidate.at("raw_score")}, {"win", win},
             {"win_r", win ? gross_r : 0.0}, {"loss_r", win ? 0.0 : std::abs(gross_r)},
