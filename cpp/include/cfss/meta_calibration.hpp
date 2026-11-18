@@ -83,6 +83,10 @@ struct CalibrationReport {
     double train_effective_sample_size{};
     double validation_effective_sample_size{};
     double oos_effective_sample_size{};
+    std::int64_t oos_period_start_ms{};
+    std::int64_t oos_period_end_ms{};
+    std::map<std::string, std::size_t> oos_symbol_distribution;
+    std::map<std::string, std::size_t> oos_daily_distribution;
     std::string confidence_interval_method{"THREE_WAY_CLUSTER_ROBUST"};
     std::string win_rate_interval_method{"WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"};
     std::string win_rate_interval_method{"WILSON_95_PLUS_THREE_WAY_CLUSTER_ROBUST"};
@@ -374,6 +378,15 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.train_effective_sample_size = train_clusters.effective_n;
     report.validation_effective_sample_size = validation_clusters.effective_n;
     report.oos_effective_sample_size = oos_clusters.effective_n;
+    if (!oos.empty()) {
+        report.oos_period_start_ms = oos.front().closed_at_ms;
+        report.oos_period_end_ms = oos.back().closed_at_ms;
+        for (const auto& row : oos) {
+            ++report.oos_symbol_distribution[row.symbol];
+            ++report.oos_daily_distribution[
+                std::to_string(row.closed_at_ms / 86'400'000LL)];
+        }
+    }
     if (oos_clusters.effective_n < 30.0) {
         report.reason = "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_AND_SYMBOL_CLUSTERING";
         return report;
