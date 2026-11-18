@@ -1,4 +1,4 @@
-name: Railway Deployment (Manual Opt-In Only)
+name: Railway Deployment (Quarantined by V18.2)
 
 on:
   workflow_dispatch:
@@ -8,74 +8,8 @@ permissions:
 
 jobs:
   deploy:
-    name: Optional Railway deployment (requires ENABLE_RAILWAY_DEPLOY=true)
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - name: Check out the manually selected branch commit
-        uses: actions/checkout@v4
-
-      - name: Require explicit Railway deployment opt-in
-        env:
-          ENABLE_RAILWAY_DEPLOY: ${{ vars.ENABLE_RAILWAY_DEPLOY }}
-        shell: bash
-        run: |
-          if [[ "${ENABLE_RAILWAY_DEPLOY:-}" != "true" ]]; then
-            echo "::error::DEPLOYMENT_BLOCKED: set repository variable ENABLE_RAILWAY_DEPLOY=true before manually requesting Railway deployment."
-            exit 1
-          fi
-
-      - name: Check for Railway project token without printing it
-        id: token
-        shell: bash
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          if [[ -n "${RAILWAY_TOKEN:-}" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            echo "Railway token is configured."
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "BLOCKED: create a Railway Project Token scoped to the production environment and save it as GitHub Actions secret RAILWAY_TOKEN." >> "$GITHUB_STEP_SUMMARY"
-            echo "::notice::Railway deployment skipped: required secret RAILWAY_TOKEN is not configured."
-          fi
-
-      - name: Fail clearly when Railway deployment is blocked by a missing token
-        if: steps.token.outputs.available != 'true'
-        shell: bash
-        run: |
-          echo "::error::DEPLOYMENT_BLOCKED: RAILWAY_TOKEN is not configured; no deployment was attempted."
-          exit 1
-
-      - name: Install Railway CLI
-        if: steps.token.outputs.available == 'true'
-        run: npm install --global @railway/cli
-
-      - name: Deploy tested commit to existing Railway service
-        if: steps.token.outputs.available == 'true'
-        shell: bash
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          set -euo pipefail
-          echo "Source commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          railway up --project 7e596c1a-f402-45fb-be4a-461b0748f865 --environment production --service control-plane-v2 --ci
-
-      - name: Verify production health and CSP
-        if: steps.token.outputs.available == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          URL="https://control-plane-v2-production-8d31.up.railway.app"
-          STATUS="$(curl --silent --show-error --output /tmp/health.json --write-out '%{http_code}' "$URL/health")"
-          test "$STATUS" = "200"
-          grep -q '"status":"ok"' /tmp/health.json
-          HEADERS="$(curl --silent --show-error --head "$URL/")"
-          printf '%s\n' "$HEADERS" | grep -iq '^content-security-policy:'
-          {
-            echo "Health HTTP status: $STATUS"
-            echo "Health response: $(cat /tmp/health.json)"
-            echo "CSP header: present"
-            echo "Source commit submitted by this workflow: $GITHUB_SHA"
-            echo "IMPORTANT: verify the deployed commit in Railway deployment metadata before marking EV-004 PASS."
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Confirm paid deployment path is disabled
+        run: echo "RAILWAY_DEPLOYMENT=DISABLED_BY_V18_2_ZERO_COST_POLICY"

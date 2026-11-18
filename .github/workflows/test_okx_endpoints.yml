@@ -1,14 +1,7 @@
 name: OKX Public Endpoint Phase 0
 
 on:
-  push:
-    branches: [stage1b-lrt15m]
-    paths:
-      - "scripts/test_okx_endpoints.py"
-      - ".github/workflows/test_okx_endpoints.yml"
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * 0"
 
 permissions:
   contents: write
@@ -34,15 +27,6 @@ jobs:
 
       - name: Run 15 public endpoint checks
         run: python scripts/test_okx_endpoints.py
-
-      - name: Upload endpoint evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: okx-endpoints-phase0-${{ github.run_id }}
-          path: diagnostics/okx_api_test_result.json
-          if-no-files-found: error
-          retention-days: 30
 
       - name: Commit diagnostics JSON to feature branch
         if: always()
