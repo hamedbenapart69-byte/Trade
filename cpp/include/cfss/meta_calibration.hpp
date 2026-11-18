@@ -25,6 +25,8 @@ struct Outcome {
     double fee_r{};
     double slippage_r{};
     double funding_r{};
+    bool costs_available{true};
+    std::string data_class{"PROXY"};
 };
 
 struct PlattModel {
@@ -192,7 +194,8 @@ inline std::pair<double, double> wilson_interval(std::size_t wins, std::size_t t
 inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                                    const std::string& path,
                                    const std::string& regime,
-                                   double current_score, std::int64_t as_of_ms) {
+                                   double current_score, std::int64_t as_of_ms,
+                                   const std::string& data_class = "PROXY") {
     CalibrationReport report{};
     std::set<std::string> ids;
     std::vector<Outcome> selected;
@@ -201,15 +204,16 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         return report;
     }
     for (const auto& item : outcomes) {
-        if (item.path != path || item.regime != regime || item.closed_at_ms >= as_of_ms) continue;
+        if (item.path != path || item.regime != regime || item.data_class != data_class ||
+            item.closed_at_ms >= as_of_ms) continue;
         if (item.signal_id.empty() || !ids.insert(item.signal_id).second ||
             item.closed_at_ms <= 0 || !std::isfinite(item.raw_score) ||
             item.raw_score < 0.0 || item.raw_score > 1.0 ||
             !std::isfinite(item.win_r) || !std::isfinite(item.loss_r) ||
-            !std::isfinite(item.fee_r) || !std::isfinite(item.slippage_r) ||
-            !std::isfinite(item.funding_r) ||
             item.win_r < 0.0 || item.loss_r < 0.0 ||
-            item.fee_r < 0.0 || item.slippage_r < 0.0 || item.funding_r < 0.0 ||
+            (item.costs_available && (!std::isfinite(item.fee_r) ||
+             !std::isfinite(item.slippage_r) || !std::isfinite(item.funding_r) ||
+             item.fee_r < 0.0 || item.slippage_r < 0.0 || item.funding_r < 0.0)) ||
             (item.win && (item.win_r <= 0.0 || item.loss_r != 0.0)) ||
             (!item.win && (item.loss_r <= 0.0 || item.win_r != 0.0))) {
             report.status = "INVALID_OUTCOME_LEDGER";
@@ -278,6 +282,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     std::size_t wins = 0U;
     double win_sum = 0.0, loss_sum = 0.0;
     double fee_sum = 0.0, slippage_sum = 0.0, funding_sum = 0.0;
+    bool oos_costs_available = true;
     for (const auto& item : oos) {
         const double calibrated = use_platt ? platt.predict(item.raw_score) : isotonic.predict(item.raw_score);
         oos_raw.push_back(item.raw_score);
@@ -289,9 +294,13 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         } else {
             loss_sum += item.loss_r;
         }
-        fee_sum += item.fee_r;
-        slippage_sum += item.slippage_r;
-        funding_sum += item.funding_r;
+        if (item.costs_available) {
+            fee_sum += item.fee_r;
+            slippage_sum += item.slippage_r;
+            funding_sum += item.funding_r;
+        } else {
+            oos_costs_available = false;
+        }
     }
     const double raw_brier = brier_score(oos_raw, oos_labels);
     const double calibrated_brier = brier_score(oos_calibrated, oos_labels);
@@ -326,6 +335,11 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.probability_win = use_platt ? platt.predict(current_score) : isotonic.predict(current_score);
 
     if (wins == 0U || wins == oos.size()) return report;
+    if (!oos_costs_available) {
+        report.ev_status = "COSTS_UNAVAILABLE";
+        report.ev_decision = "NOT_CALCULATED_COSTS_UNAVAILABLE";
+        return report;
+    }
     report.avg_win_r = win_sum / static_cast<double>(wins);
     report.avg_loss_r = loss_sum / static_cast<double>(oos.size() - wins);
     report.avg_fee_r = fee_sum / static_cast<double>(oos.size());
