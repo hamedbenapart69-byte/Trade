@@ -55,9 +55,10 @@ inline json empty_ledger() {
     };
 }
 
-inline json process(const json& l1, const json& dual, const json& liquidity,
+inline json process(const json& l1, const json& l1_15m, const json& dual, const json& liquidity,
                     json registry, json ledger) {
     if (l1.value("schema_version", std::string{}) != "1.0.0" ||
+        l1_15m.value("artifact_type", std::string{}) != "cfss_intraday_15m_market_data_v1" ||
         dual.value("artifact_type", std::string{}) != "cfss_dual_engine_report_v1" ||
         liquidity.value("artifact_type", std::string{}) != "cfss_liquidity_phase_v1")
         throw std::runtime_error("shadow_input_artifact_type_mismatch");
@@ -72,7 +73,12 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
         liquidity.value("source_run_id", std::string{}) != dual.value("source_run_id", std::string{}) ||
         liquidity.value("source_scan_id", std::string{}) != dual.value("source_scan_id", std::string{}) ||
         liquidity.value("decision_time_ms", std::int64_t{0}) != decision_time ||
-        liquidity.value("l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}))
+        liquidity.value("l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}) ||
+        l1_15m.value("source_run_id", std::string{}) != dual.value("source_run_id", std::string{}) ||
+        l1_15m.value("source_scan_id", std::string{}) != dual.value("source_scan_id", std::string{}) ||
+        l1_15m.value("source_l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}) ||
+        l1_15m.value("window", json::object()).value("timeframe", std::string{}) != "15m" ||
+        l1_15m.value("window", json::object()).value("end_ms", std::int64_t{0}) != current_time)
         throw std::runtime_error("shadow_cross_artifact_provenance_mismatch");
 
     if (registry.is_null() || registry.empty()) registry = empty_registry();
@@ -175,7 +181,11 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
                 {"hypothesis", candidate.at("hypothesis")}, {"falsification", candidate.at("falsification")},
                 {"source_run_id", dual.at("source_run_id")}, {"source_scan_id", scan_id},
                 {"source_l1_sha256", dual.at("l1_sha256")}, {"source_universe_status", "VERIFIED"},
-                {"resolution_timeframe", "1h"},
+                {"profile", "DAILY_SWING"},
+                {"resolution_timeframe", path == "PLAN_A_LRT" ? "15m" : "1h"},
+                {"entry_fill_reference", nullptr},
+                {"entry_model", "NEXT_BAR_OPEN_PROXY"},
+                {"execution_status", "NOT_EXECUTED"},
                 {"state", "PENDING"}, {"resolution", nullptr}, {"closed_at_ms", nullptr},
                 {"gross_r", nullptr}, {"skip_reason", nullptr}
             });
@@ -189,27 +199,32 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
     for (auto& candidate : registry["candidates"]) {
         if (candidate.value("state", std::string{}) != "PENDING") continue;
         const auto symbol = candidate.value("symbol", std::string{});
-        const auto* instrument = find_instrument(l1, symbol);
+        const auto path = candidate.value("path", std::string{});
+        const bool is_lrt = path == "PLAN_A_LRT";
+        const auto* instrument = find_instrument(is_lrt ? l1_15m : l1, symbol);
         if (!instrument || !instrument->contains("candles") || !instrument->at("candles").is_array()) {
             ++still_pending;
             continue;
         }
         const auto direction = candidate.value("direction", std::string{});
-        const double entry = required_number(candidate, "entry_reference");
+        const double entry_reference = required_number(candidate, "entry_reference");
         const double stop = required_number(candidate, "stop_reference");
         const double target = required_number(candidate, "target_reference");
         const auto decision = candidate.value("decision_time_ms", std::int64_t{0});
         const auto expiry = candidate.value("expiry_time_ms", std::int64_t{0});
-        const double risk = std::abs(entry - stop);
-        if (risk <= 0.0 || expiry <= decision) {
+        const std::int64_t bar_ms = is_lrt ? 900'000LL : kOneHourMs;
+        if (candidate.value("resolution_timeframe", std::string{}) != (is_lrt ? "15m" : "1h") ||
+            expiry <= decision) {
             candidate["state"] = "REJECTED";
-            candidate["skip_reason"] = "INVALID_RISK_OR_HORIZON";
+            candidate["skip_reason"] = "INVALID_RESOLUTION_TIMEFRAME_OR_HORIZON";
             ++rejected;
             continue;
         }
 
         bool closed = false;
         bool data_gap = false;
+        bool entry_checked = false;
+        double entry_fill = 0.0;
         double exit_price = 0.0;
         std::int64_t close_time = 0;
         std::int64_t expected_next_bar_ms = decision;
@@ -221,7 +236,7 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             const auto ts = candle.value("timestamp_ms", std::int64_t{0});
             if (ts < decision) continue;
             if (ts >= expiry) break;
-            const auto bar_close_time = ts + kOneHourMs;
+            const auto bar_close_time = ts + bar_ms;
             if (bar_close_time > current_time) break;
             if (ts != expected_next_bar_ms) {
                 data_gap = true;
@@ -229,8 +244,35 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             }
             expected_next_bar_ms = bar_close_time;
             last_contiguous_bar = &candle;
+            const double open = required_number(candle, "open");
             const double high = required_number(candle, "high");
             const double low = required_number(candle, "low");
+            if (!entry_checked) {
+                entry_checked = true;
+                if ((direction == "LONG" && open <= stop) ||
+                    (direction == "SHORT" && open >= stop)) {
+                    candidate["state"] = "REJECTED";
+                    candidate["skip_reason"] = "INVALIDATED_BEFORE_PROXY_ENTRY";
+                    ++rejected;
+                    break;
+                }
+                if ((direction == "LONG" && open >= target) ||
+                    (direction == "SHORT" && open <= target)) {
+                    candidate["state"] = "MISSED_ENTRY";
+                    candidate["skip_reason"] = "TARGET_GAPPED_BEFORE_PROXY_ENTRY";
+                    ++rejected;
+                    break;
+                }
+                entry_fill = open;
+                candidate["entry_fill_reference"] = entry_fill;
+            }
+            const double risk = std::abs(entry_fill - stop);
+            if (risk <= 0.0) {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "INVALID_PROXY_FILL_RISK";
+                ++rejected;
+                break;
+            }
             const bool stop_hit = direction == "LONG" ? low <= stop : high >= stop;
             const bool target_hit = direction == "LONG" ? high >= target : low <= target;
             if (stop_hit) {
@@ -249,6 +291,8 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             }
         }
 
+        if (candidate.value("state", std::string{}) == "REJECTED" ||
+            candidate.value("state", std::string{}) == "MISSED_ENTRY") continue;
         if (data_gap) {
             if (current_time >= expiry) {
                 candidate["state"] = "REJECTED";
@@ -257,6 +301,10 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             } else {
                 ++still_pending;
             }
+            continue;
+        }
+        if (!entry_checked) {
+            ++still_pending;
             continue;
         }
         if (!closed && current_time >= expiry && expected_next_bar_ms < expiry) {
@@ -277,24 +325,28 @@ inline json process(const json& l1, const json& dual, const json& liquidity,
             ++still_pending;
             continue;
         }
+        const double risk = std::abs(entry_fill - stop);
         const double sign = direction == "LONG" ? 1.0 : -1.0;
-        const double gross_r = ((exit_price - entry) * sign) / risk;
+        const double gross_r = ((exit_price - entry_fill) * sign) / risk;
         const bool win = gross_r > 0.0;
         const auto signal_id = candidate.at("signal_id").get<std::string>();
         ledger["outcomes"].push_back({
-            {"signal_id", signal_id}, {"path", candidate.at("path")},
+            {"signal_id", signal_id}, {"profile", "DAILY_SWING"},
+            {"path", candidate.at("path")},
             {"regime", candidate.at("regime")}, {"closed_at_ms", close_time},
             {"raw_score", candidate.at("raw_score")}, {"win", win},
             {"win_r", win ? gross_r : 0.0}, {"loss_r", win ? 0.0 : std::abs(gross_r)},
             {"fee_r", nullptr}, {"slippage_r", nullptr}, {"funding_r", nullptr},
             {"data_class", candidate.at("data_class")}, {"cost_status", "UNAVAILABLE"},
-            {"symbol", symbol}, {"direction", direction}, {"entry_reference", entry},
+            {"symbol", symbol}, {"direction", direction}, {"entry_reference", entry_reference},
+            {"entry_fill_reference", entry_fill}, {"entry_model", "NEXT_BAR_OPEN_PROXY"},
+            {"execution_status", "NOT_EXECUTED"},
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
             {"resolution_timeframe", "1h"}, {"source_scan_id", candidate.at("source_scan_id")},
             {"source_l1_sha256", candidate.at("source_l1_sha256")},
             {"source_universe_status", candidate.at("source_universe_status")},
-            {"outcome_kind", "SHADOW_PROXY"}
+            {"outcome_kind", "HYPOTHESIS_PROXY"}
         });
         candidate["state"] = "RESOLVED";
         candidate["resolution"] = resolution;
