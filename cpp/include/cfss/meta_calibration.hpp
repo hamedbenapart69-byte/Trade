@@ -81,6 +81,7 @@ struct CalibrationReport {
     double validation_effective_sample_size{};
     double oos_effective_sample_size{};
     std::string confidence_interval_method{"TWO_WAY_CLUSTER_ROBUST"};
+    std::string win_rate_interval_method{"WILSON_95_PLUS_TWO_WAY_CLUSTER_ROBUST"};
     std::optional<double> brier_raw_oos;
     std::optional<double> brier_calibrated_oos;
     std::optional<double> brier_ci_low;
