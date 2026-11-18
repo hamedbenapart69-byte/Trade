@@ -1,12 +1,15 @@
 {
   "receipts": [
     {
-      "attempts": 0,
+      "attempts": 1,
+      "completed_at_utc": "2026-11-18T13:22:24Z",
       "created_at_utc": "2026-11-18T13:22:23Z",
-      "http_status": null,
-      "message_id": null,
+      "detail": null,
+      "http_status": 200,
+      "message_id": 56,
       "report_id": "69067ef0adfd56dd45e93bfa4458b6109631fad67d4992f9d3525d4c83246b6e",
-      "status": "RESERVED"
+      "send_started_at_utc": "2026-11-18T13:22:24Z",
+      "status": "DELIVERED"
     }
   ],
   "schema_version": "1.0.0"
