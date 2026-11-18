@@ -18,6 +18,61 @@
       "telegram_message_id": 38,
       "updated_at_epoch_ms": 1794933951195
     },
+    "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "c7a595ab38e7a9cb",
+      "scan_id": "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434",
+      "source_run_id": "okx-cpp-1795020916551",
+      "status": "DELIVERED",
+      "telegram_message_id": 57,
+      "updated_at_epoch_ms": 1795022020526
+    },
+    "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434:status:2": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "36a15d694940f958",
+      "scan_id": "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434",
+      "source_run_id": "okx-cpp-1795020916551",
+      "status": "DELIVERED",
+      "telegram_message_id": 58,
+      "updated_at_epoch_ms": 1795022021410
+    },
+    "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434:status:3": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "784b1f7669e2cedd",
+      "scan_id": "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434",
+      "source_run_id": "okx-cpp-1795020916551",
+      "status": "DELIVERED",
+      "telegram_message_id": 59,
+      "updated_at_epoch_ms": 1795022022364
+    },
+    "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434:status:4": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "ee192ea5512be6c6",
+      "scan_id": "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434",
+      "source_run_id": "okx-cpp-1795020916551",
+      "status": "DELIVERED",
+      "telegram_message_id": 60,
+      "updated_at_epoch_ms": 1795022026584
+    },
+    "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434:status:5": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "72cacb9901ef35f4",
+      "scan_id": "scan-07b405982901dac21982cf7ba3fc54b99300c429f0db13b97c0f620c43d31434",
+      "source_run_id": "okx-cpp-1795020916551",
+      "status": "DELIVERED",
+      "telegram_message_id": 61,
+      "updated_at_epoch_ms": 1795022027443
+    },
     "scan-3b61df4b5612af77b1b364b82f0363da8d2764514d9abcd76acd837486ce2279:status:1": {
       "attempts": 1,
       "http_status": 200,
