@@ -15,7 +15,6 @@ jobs:
     if: ${{ false }}
     # The trusted writer runs from the main branch and accepts only successful,
     # same-repository captures. Feature-branch runs never receive write access.
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
