@@ -87,7 +87,8 @@ int main() {
             "future candle perturbations do not alter the earlier LFS1 score");
     require(base_lfs4 && future_lfs4 && std::abs(*base_lfs4 - *future_lfs4) < 1e-12,
             "future candle perturbations do not alter the earlier LFS4 score");
-    require(base_lfs1 && s1 && std::abs(*base_lfs1 - *s1) < 1e-12,
+    const auto repeated_lfs1 = cfss::lfs::lfs1_proxy_score(filtered_base);
+    require(base_lfs1 && repeated_lfs1 && std::abs(*base_lfs1 - *repeated_lfs1) < 1e-12,
             "identical LFS1 inputs are deterministic");
     auto future_funding = f;
     future_funding.push_back({{"timestamp_ms", 100LL * 28'800'000LL + 1LL}, {"funding_rate", 0.5}});
