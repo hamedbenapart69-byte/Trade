@@ -16,6 +16,12 @@ void require(bool value, const char* message) {
 
 int main() {
     const std::set<std::string> verified{"BTC", "ETH", "SOL", "DOGE"};
+    require(cfss::okx::valid_crypto_symbol("BTC") &&
+            cfss::okx::valid_crypto_symbol("1INCH") &&
+            !cfss::okx::valid_crypto_symbol("ABC.DEF") &&
+            !cfss::okx::valid_crypto_symbol("ABC-DEF") &&
+            !cfss::okx::valid_crypto_symbol("ABCDEFGHIJKLMNOPQRSTU"),
+            "universe symbols match the exact schema-safe uppercase alphanumeric contract");
     require(cfss::okx::is_verified_crypto_underlying("BTC", verified),
             "verified crypto base symbol is admitted");
     require(cfss::okx::is_verified_crypto_underlying("eth", verified),
