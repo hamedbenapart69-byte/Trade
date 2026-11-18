@@ -16,7 +16,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", scanner)
         self.assertNotIn("schedule:", scanner)
         self.assertNotIn("push:", scanner)
-        self.assertIn("live-scan:\n    if: \${{ false }}", scanner)
+        self.assertIn("live-scan:\n    if: ${{ false }}", scanner)
         self.assertNotIn("actions/upload-artifact", scanner)
         self.assertNotIn("TELEGRAM_TOKEN:", scanner)
         self.assertNotIn("TELEGRAM_CHAT_ID:", scanner)
@@ -24,7 +24,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
     def test_legacy_trusted_telegram_notifier_is_disabled(self):
         notifier = read("trusted-stage1b-telegram.yml")
         self.assertNotIn("workflow_run:", notifier)
-        self.assertIn("notify:\n    if: \${{ false }}", notifier)
+        self.assertIn("notify:\n    if: ${{ false }}", notifier)
         self.assertNotIn("secrets.TELEGRAM_TOKEN", notifier)
         self.assertNotIn("secrets.TELEGRAM_CHAT_ID", notifier)
         self.assertNotIn("contents: write", notifier)
@@ -32,22 +32,22 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
     def test_legacy_state_writer_is_disabled(self):
         writer = read("persist-stage1b-state.yml")
         self.assertNotIn("workflow_run:", writer)
-        self.assertIn("persist-state:\n    if: \${{ false }}", writer)
+        self.assertIn("persist-state:\n    if: ${{ false }}", writer)
         self.assertNotIn("contents: write", writer)
         self.assertNotIn("actions/download-artifact", writer)
 
     def test_legacy_p0_persistence_is_disabled(self):
         writer = read("persist-stage1b-p0-data.yml")
         self.assertNotIn("workflow_run:", writer)
-        self.assertIn("persist:\n    if: \${{ false }}", writer)
+        self.assertIn("persist:\n    if: ${{ false }}", writer)
         self.assertNotIn("contents: write", writer)
         self.assertNotIn("actions/download-artifact", writer)
 
     def test_legacy_dashboard_publisher_is_disabled(self):
         publisher = read("publish-stage1b-dashboard.yml")
         self.assertNotIn("workflow_run:", publisher)
-        self.assertIn("publish-dashboard:\n    if: \${{ false }}", publisher)
-        self.assertIn("publish-degraded-report:\n    if: \${{ false }}", publisher)
+        self.assertIn("publish-dashboard:\n    if: ${{ false }}", publisher)
+        self.assertIn("publish-degraded-report:\n    if: ${{ false }}", publisher)
         self.assertNotIn("pages: write", publisher)
 
     def test_remaining_legacy_maintenance_is_manual_only(self):
