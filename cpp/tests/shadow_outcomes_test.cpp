@@ -52,14 +52,16 @@ nlohmann::json fixture_l1_15m(std::initializer_list<nlohmann::json> candles,
     };
 }
 
-nlohmann::json fixture_dual(const nlohmann::json& lrt) {
+nlohmann::json fixture_dual(
+    const nlohmann::json& lrt,
+    const nlohmann::json& nmt = nlohmann::json{{"status", "NO_QUALIFIED_SETUP"}}) {
     return {
         {"artifact_type", "cfss_dual_engine_report_v1"},
         {"source_run_id", "run-1"}, {"source_scan_id", "scan-1"},
         {"decision_time_ms", 3'600'000LL}, {"l1_sha256", std::string(64, 'a')},
         {"instruments", {{
             {"symbol", "BTC/USDT:USDT"}, {"lrt", lrt},
-            {"nmt", {{"status", "NO_QUALIFIED_SETUP"}}}
+            {"nmt", nmt}
         }}}
     };
 }
@@ -115,6 +117,19 @@ int main() {
             target_row.at("outcome_kind") == "HYPOTHESIS_PROXY" &&
             target_row.at("resolution_timeframe") == "15m",
             "LRT outcome is a profile-scoped 15m hypothesis proxy, never an executed trade");
+
+    const auto nmt_outcome = cfss::shadow::process(
+        fixture_l1({
+            candle(3'600'000LL, 105.0, 99.0, 104.0),
+            candle(7'200'000LL, 103.0, 99.5, 102.0)
+        }, 10'800'000LL),
+        fixture_l1_15m({}, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}},
+                     candidate("PLAN_A_NMT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    require(nmt_outcome.at("ledger").at("outcomes").size() == 1U &&
+            nmt_outcome.at("ledger").at("outcomes").front().at("resolution_timeframe") == "1h",
+            "NMT outcome resolution uses completed 1h candles, independently of LRT 15m");
 
     const auto ambiguous_l1 = fixture_l1({
         candle(3'600'000LL, 105.0, 97.0, 101.0)
