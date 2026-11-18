@@ -74,6 +74,19 @@ int main() {
             checkpoint.at("instruments").at(1).at("instrument_id") == "ETH-USDT-SWAP" &&
             checkpoint.at("instruments").at(1).at("candles").at(0) == 5,
             "partial checkpoints preserve untouched instruments and replace refreshed instrument data");
+    require(cfss::okx::retryable_http_failure(CURLE_OPERATION_TIMEDOUT, 0L) &&
+            cfss::okx::retryable_http_failure(CURLE_OK, 429L) &&
+            cfss::okx::retryable_http_failure(CURLE_OK, 503L) &&
+            !cfss::okx::retryable_http_failure(CURLE_OK, 400L) &&
+            !cfss::okx::retryable_http_failure(CURLE_OK, 404L),
+            "provider retries are limited to transport, timeout, rate-limit and server failures");
+    require(cfss::okx::retryable_okx_error_code("50011") &&
+            cfss::okx::retryable_okx_error_code("50013") &&
+            !cfss::okx::retryable_okx_error_code("51001"),
+            "invalid instrument and parameter errors are not retried");
+    require(cfss::okx::retry_delay("https://www.okx.com/api", 1) >
+            cfss::okx::retry_delay("https://www.okx.com/api", 0),
+            "retry backoff grows exponentially with bounded deterministic jitter");
     std::cout << "CRYPTO_UNIVERSE_TESTS_PASS\n";
     return 0;
 }
