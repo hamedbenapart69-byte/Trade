@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <symbols:1..100> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json]\n";
+                      << "   or: market_pipeline --collect-okx <non_btc_symbols:1..100_plus_BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json]\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};
