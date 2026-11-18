@@ -1,11 +1,7 @@
 name: Publish Stage 1B LRT Dashboard
 
 on:
-  workflow_run:
-    workflows:
-      - "Trader_me Stage 1B LRT-15m Signal Bot"
-    types: [completed]
-    branches: [main, production-v1]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,12 +12,13 @@ concurrency:
 
 jobs:
   publish-dashboard:
+    if: ${{ false }}
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       actions: read
-      contents: write
+      contents: read
     steps:
       - name: Checkout trusted publisher from production-v1
         uses: actions/checkout@v4
@@ -77,11 +74,12 @@ jobs:
           fi
 
   publish-degraded-report:
+    if: ${{ false }}
     if: ${{ contains(fromJSON('["failure","timed_out","startup_failure","cancelled"]'), github.event.workflow_run.conclusion) && github.event.workflow_run.head_repository.full_name == github.repository && (github.event.workflow_run.head_branch == 'production-v1' || github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout trusted publisher from production-v1
         uses: actions/checkout@v4
