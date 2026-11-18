@@ -1,4 +1,4 @@
-name: C++ Stage 2 LFS v1 Contract
+name: C++ Stage 2 LFS Resilience
 
 on:
   push:
@@ -6,21 +6,22 @@ on:
     paths:
       - "cpp/**"
       - "docs/evidence/stage2-lfs-slrp-report.md"
-      - "docs/evidence/publish-stage2-telegram-report.txt"
+      - "contracts/**"
       - ".github/workflows/cpp-stage2-lfs-v1.yml"
   pull_request:
     branches: [feat/cpp-stage1-clean]
     paths:
       - "cpp/**"
       - "docs/evidence/stage2-lfs-slrp-report.md"
+      - "contracts/**"
       - ".github/workflows/cpp-stage2-lfs-v1.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: cpp-stage2-lfs-v1-\${{ github.ref }}
+  group: cpp-stage2-lfs-v1-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -67,48 +68,6 @@ jobs:
           sha256sum stage2-evidence/lfs-v2.json
       - name: Run unit and LFS v1 contract tests
         run: ctest --test-dir build --output-on-failure --no-tests=error
-      - name: Checkout Telegram receipt state
-        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
-        uses: actions/checkout@v4
-        with:
-          ref: signals
-          path: signals-state
-          fetch-depth: 0
-          persist-credentials: true
-      - name: Prepare Stage 2 Telegram outbox
-        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
-        run: |
-          mkdir -p signals-state/cpp_runtime
-          ./build/lfs_telegram_report --prepare stage2-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage2_telegram_outbox.v1.json
-      - name: Persist reserved Telegram send before network delivery
-        if: ${{ success() && github.event_name == 'push' && contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
-        run: |
-          cd signals-state
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/lfs_stage2_telegram_outbox.v1.json
-          if ! git diff --cached --quiet; then
-            git commit -m "audit(stage2): reserve Telegram report delivery"
-            git push origin HEAD:signals
-          fi
-      - name: Send Stage 2 report via C++ Telegram L3
-        if: ${{ success() && github.event_name == 'push' && contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          ./build/lfs_telegram_report --send stage2-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage2_telegram_outbox.v1.json
-      - name: Persist final Telegram receipt
-        if: ${{ always() && github.event_name == 'push' && contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
-        run: |
-          cd signals-state
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/lfs_stage2_telegram_outbox.v1.json
-          if ! git diff --cached --quiet; then
-            git commit -m "audit(stage2): persist Telegram report receipt"
-            git push origin HEAD:signals
-          fi
       - name: Assert no Actions artifact upload is configured
         run: |
           if grep -qE "^[[:space:]]*-[[:space:]]*uses:[[:space:]]*actions/upload-artifact" .github/workflows/cpp-stage2-lfs-v1.yml; then
