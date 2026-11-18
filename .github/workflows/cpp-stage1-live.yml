@@ -109,7 +109,7 @@ jobs:
           persist-credentials: true
 
       - name: Real Telegram outbound through C++ L3
-        if: github.event_name != 'pull_request'
+        if: ${{ github.event_name != 'pull_request' && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]')) }}
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
