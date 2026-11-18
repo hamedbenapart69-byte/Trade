@@ -96,7 +96,7 @@ int main() {
         target_l1, fixture_l1_15m({
             candle(3'600'000LL, 101.0, 99.0, 100.5),
             candle(4'500'000LL, 105.0, 99.5, 104.0)
-        }, 5'400'000LL),
+        }, 10'800'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(target.at("ledger").at("outcomes").size() == 1U,
@@ -138,7 +138,7 @@ int main() {
         candle(3'600'000LL, 105.0, 97.0, 101.0)
     }, 7'200'000LL);
     const auto ambiguous = cfss::shadow::process(
-        ambiguous_l1, fixture_l1_15m({candle(3'600'000LL, 105.0, 97.0, 101.0)}, 4'500'000LL),
+        ambiguous_l1, fixture_l1_15m({candle(3'600'000LL, 105.0, 97.0, 101.0)}, 7'200'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(ambiguous.at("ledger").at("outcomes").front().at("resolution") ==
@@ -165,7 +165,7 @@ int main() {
         gap_l1, fixture_l1_15m({
             candle(3'600'000LL, 101.0, 99.0, 100.5),
             candle(5'400'000LL, 105.0, 99.5, 104.0)
-        }, 6'300'000LL),
+        }, 14'400'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(gap_result.at("ledger").at("outcomes").empty() &&
@@ -204,7 +204,7 @@ int main() {
             "legacy pending candidates without crypto-universe provenance are quarantined");
 
     const auto missed_entry = cfss::shadow::process(
-        target_l1, fixture_l1_15m({candle(3'600'000LL, 106.0, 104.5, 105.0, 105.0)}, 4'500'000LL),
+        target_l1, fixture_l1_15m({candle(3'600'000LL, 106.0, 104.5, 105.0, 105.0)}, 10'800'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(missed_entry.at("ledger").at("outcomes").empty() &&
@@ -212,7 +212,7 @@ int main() {
             "target gap before proxy entry is recorded as missed, never as a filled win");
 
     const auto invalidated_entry = cfss::shadow::process(
-        target_l1, fixture_l1_15m({candle(3'600'000LL, 99.0, 96.0, 97.0, 97.0)}, 4'500'000LL),
+        target_l1, fixture_l1_15m({candle(3'600'000LL, 99.0, 96.0, 97.0, 97.0)}, 10'800'000LL),
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(invalidated_entry.at("ledger").at("outcomes").empty() &&
