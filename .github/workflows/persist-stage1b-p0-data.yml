@@ -1,10 +1,7 @@
 name: Persist Stage 1b P0 Dataset
 
 on:
-  workflow_run:
-    workflows: ["Stage 1b - LRT 15m data maintenance (P0 data-only)"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,12 +12,13 @@ concurrency:
 
 jobs:
   persist:
+    if: ${{ false }}
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       actions: read
-      contents: write
+      contents: read
     steps:
       - name: Checkout trusted validator from main
         uses: actions/checkout@v4
@@ -135,6 +133,7 @@ jobs:
           exit 1
   
   cleanup-artifacts:
+    if: ${{ false }}
     if: always()
     needs: persist
     runs-on: ubuntu-latest
