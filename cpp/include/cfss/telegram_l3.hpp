@@ -230,6 +230,11 @@ inline std::string reconcile_inbound_status(const std::string& status) {
     return status == "REPLY_SENDING" ? "DELIVERY_UNKNOWN" : status;
 }
 
+// A replayed update may resume only a reply durably marked pending; completed updates are never sent twice.
+inline bool inbound_duplicate_should_resume_reply(const std::string& status) {
+    return status == "REPLY_PENDING";
+}
+
 inline bool outbox_should_send(const nlohmann::json& entry) {
     const auto status = entry.value("status", std::string{"PENDING"});
     const int attempts = entry.value("attempts", 0);
