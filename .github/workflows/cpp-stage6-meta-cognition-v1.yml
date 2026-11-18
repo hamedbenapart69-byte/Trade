@@ -101,9 +101,13 @@ jobs:
             printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' \
               > signals-state/cpp_runtime/shadow_candidate_registry.v1.json
           fi
-          if [ ! -s signals-state/cpp_runtime/outcome_ledger.v1.json ]; then
-            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","ledger_status":"EMPTY","outcomes":[]}' \
-              > signals-state/cpp_runtime/outcome_ledger.v1.json
+          if [ ! -s signals-state/cpp_runtime/daily_outcome_ledger.v1.json ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' \
+              > signals-state/cpp_runtime/daily_outcome_ledger.v1.json
+          fi
+          if [ ! -s signals-state/cpp_runtime/scalp_outcome_ledger.v1.json ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"INTRADAY_SCALP","ledger_status":"UNAVAILABLE","outcomes":[],"reason":"SCALP_DISABLED_UNTIL_PROFILE_ACTIVATION_GATE"}' \
+              > signals-state/cpp_runtime/scalp_outcome_ledger.v1.json
           fi
 
       - name: Register candidates and resolve only future closed 1H candles
@@ -115,16 +119,16 @@ jobs:
             stage6-evidence/dual-engine-report.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
             signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
-            signals-state/cpp_runtime/outcome_ledger.v1.json \
+            signals-state/cpp_runtime/daily_outcome_ledger.v1.json \
             stage6-evidence/shadow_candidate_registry.v1.json \
-            stage6-evidence/outcome_ledger.v1.json
+            stage6-evidence/daily_outcome_ledger.v1.json
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/shadow-candidate-registry.v1.schema.json \
             -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/outcome-ledger.v1.schema.json \
-            -d stage6-evidence/outcome_ledger.v1.json --all-errors
-          jq '{ledger_status, outcome_count:(.outcomes|length)}' stage6-evidence/outcome_ledger.v1.json
+            -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
+          jq '{ledger_status, outcome_count:(.outcomes|length)}' stage6-evidence/daily_outcome_ledger.v1.json
 
       - name: Compute meta-cognition with path, regime and data-class isolation
         run: |
@@ -132,7 +136,7 @@ jobs:
           ./build/meta_cognition_probe \
             stage6-evidence/dual-engine-report.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
-            stage6-evidence/outcome_ledger.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json \
             stage6-evidence/meta_cognition_stage6_v1.json
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/meta-cognition.v1.schema.json \
@@ -149,7 +153,7 @@ jobs:
           cp stage6-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage5_v1.json
           cp stage6-evidence/dual-engine-report.v1.json signals-state/cpp_runtime/dual_engine_stage5_v1.json
           cp stage6-evidence/shadow_candidate_registry.v1.json signals-state/cpp_runtime/shadow_candidate_registry.v1.json
-          cp stage6-evidence/outcome_ledger.v1.json signals-state/cpp_runtime/outcome_ledger.v1.json
+          cp stage6-evidence/daily_outcome_ledger.v1.json signals-state/cpp_runtime/daily_outcome_ledger.v1.json
           cp stage6-evidence/meta_cognition_stage6_v1.json signals-state/cpp_runtime/meta_cognition_stage6_v1.json
           ./build/meta_cognition_telegram_report --prepare \
             stage6-evidence/meta_cognition_stage6_v1.json \
@@ -163,7 +167,8 @@ jobs:
             cpp_runtime/liquidity_stage5_v1.json \
             cpp_runtime/dual_engine_stage5_v1.json \
             cpp_runtime/shadow_candidate_registry.v1.json \
-            cpp_runtime/outcome_ledger.v1.json \
+            cpp_runtime/daily_outcome_ledger.v1.json \
+            cpp_runtime/scalp_outcome_ledger.v1.json \
             cpp_runtime/meta_cognition_stage6_v1.json \
             cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           if ! git diff --cached --quiet; then
