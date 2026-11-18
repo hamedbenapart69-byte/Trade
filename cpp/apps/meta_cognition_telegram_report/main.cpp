@@ -59,6 +59,7 @@ std::string report_text(const json& report) {
         }
     }
     out += "\nتا زمانی که داده نتیجه معتبر و کافی وجود نداشته باشد، احتمال برد و EV عددی منتشر نمی‌شود.";
+    out += "\nمرجع طبقه‌بندی نمادهای رمزارزی: CoinPaprika.";
     return out;
 }
 int prepare(const json& report, const std::filesystem::path& path) {
