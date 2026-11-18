@@ -89,6 +89,8 @@ struct CalibrationReport {
     std::optional<double> win_rate_oos;
     std::optional<double> win_rate_ci_low;
     std::optional<double> win_rate_ci_high;
+    std::optional<double> win_rate_cluster_ci_low;
+    std::optional<double> win_rate_cluster_ci_high;
     std::optional<double> probability_win;
     std::optional<double> avg_win_r;
     std::optional<double> avg_loss_r;
@@ -417,6 +419,9 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.brier_calibrated_oos = calibrated_brier;
     report.log_loss_oos = calibrated_logloss;
     report.win_rate_oos = static_cast<double>(wins) / static_cast<double>(oos.size());
+    const auto win_ci = wilson_interval(wins, oos.size());
+    report.win_rate_ci_low = win_ci.first;
+    report.win_rate_ci_high = win_ci.second;
     std::vector<double> win_values, brier_values;
     win_values.reserve(oos.size());
     brier_values.reserve(oos.size());
@@ -432,8 +437,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         report.reason = "CLUSTER_ROBUST_CONFIDENCE_INTERVAL_UNAVAILABLE";
         return report;
     }
-    report.win_rate_ci_low = std::max(0.0, *report.win_rate_oos - 1.96 * win_se);
-    report.win_rate_ci_high = std::min(1.0, *report.win_rate_oos + 1.96 * win_se);
+    report.win_rate_cluster_ci_low = std::max(0.0, *report.win_rate_oos - 1.96 * win_se);
+    report.win_rate_cluster_ci_high = std::min(1.0, *report.win_rate_oos + 1.96 * win_se);
     report.brier_ci_low = std::max(0.0, calibrated_brier - 1.96 * brier_se);
     report.brier_ci_high = std::min(1.0, calibrated_brier + 1.96 * brier_se);
 
