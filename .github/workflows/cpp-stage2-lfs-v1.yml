@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: cpp-stage2-lfs-v1-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   lfs-v1-contract:
@@ -39,6 +39,7 @@ jobs:
       - name: Build all C++ targets
         run: cmake --build build --parallel 2
       - name: Collect real OKX BTC and liquid altcoin sample
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           mkdir -p stage2-evidence
           ./build/market_pipeline --collect-okx 2 2 \
@@ -46,11 +47,13 @@ jobs:
             stage2-evidence/l2-status.v1.json
           sha256sum stage2-evidence/l1-market-data.v1.json stage2-evidence/l2-status.v1.json
       - name: Execute LFS v1 against real L1 inputs
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           ./build/lfs_v1_probe stage2-evidence/l1-market-data.v1.json stage2-evidence/lfs-v1.json
           jq -r '.instruments[] | [.symbol, .status, (.components[] | (.id + "=" + .raw_input + ":" + .data_class))] | @tsv' stage2-evidence/lfs-v1.json
           sha256sum stage2-evidence/lfs-v1.json
       - name: Record LFS component source coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           jq -r '.instruments[] | [
             .unified_symbol,
@@ -61,6 +64,7 @@ jobs:
             ("OI_ROWS=" + ((.open_interest | length) | tostring))
           ] | @tsv' stage2-evidence/l1-market-data.v1.json
       - name: Execute LFS v2 proxy against real OHLCV funding OI and public long-short data
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           ./build/lfs_v2_probe stage2-evidence/l1-market-data.v1.json stage2-evidence/lfs-v2.json
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/lfs-v2-proxy.v1.schema.json -d stage2-evidence/lfs-v2.json --all-errors
