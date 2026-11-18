@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Intraday 15m Market Data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "source_run_id", "source_scan_id", "source_l1_sha256", "decision_time_ms", "window", "provider_id", "instruments", "coverage"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_type": {"const": "cfss_intraday_15m_market_data_v1"},
+    "source_run_id": {"type": "string", "minLength": 1},
+    "source_scan_id": {"type": "string", "minLength": 1},
+    "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "decision_time_ms": {"type": "integer", "minimum": 1},
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timeframe", "end_ms"],
+      "properties": {"timeframe": {"const": "15m"}, "end_ms": {"type": "integer", "minimum": 1}}
+    },
+    "provider_id": {"const": "okx"},
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["instrument_id", "unified_symbol", "timeframe", "data_quality", "candles"],
+        "properties": {
+          "instrument_id": {"type": "string", "minLength": 1},
+          "unified_symbol": {"type": "string", "minLength": 1},
+          "timeframe": {"const": "15m"},
+          "data_quality": {"enum": ["REAL", "UNAVAILABLE"]},
+          "candles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["timestamp_ms", "open", "high", "low", "close", "price_currency", "volume", "volume_unit", "volume_base", "volume_base_currency", "volume_quote", "volume_quote_currency", "closed", "retrieved_at_utc"],
+              "properties": {
+                "timestamp_ms": {"type": "integer", "minimum": 1},
+                "open": {"type": "number", "exclusiveMinimum": 0},
+                "high": {"type": "number", "exclusiveMinimum": 0},
+                "low": {"type": "number", "exclusiveMinimum": 0},
+                "close": {"type": "number", "exclusiveMinimum": 0},
+                "price_currency": {"type": "string", "minLength": 1},
+                "volume": {"type": "number", "minimum": 0},
+                "volume_unit": {"const": "contracts"},
+                "volume_base": {"type": "number", "minimum": 0},
+                "volume_base_currency": {"type": "string", "minLength": 1},
+                "volume_quote": {"type": "number", "minimum": 0},
+                "volume_quote_currency": {"type": "string", "minLength": 1},
+                "closed": {"const": true},
+                "retrieved_at_utc": {"type": "string", "format": "date-time"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_count", "available_count", "unavailable_count"],
+      "properties": {
+        "selected_count": {"type": "integer", "minimum": 1},
+        "available_count": {"type": "integer", "minimum": 0},
+        "unavailable_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
