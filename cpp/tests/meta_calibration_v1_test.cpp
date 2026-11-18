@@ -69,6 +69,10 @@ int main() {
     require(calibrated.oos_scan_clusters == 50U &&
             calibrated.oos_symbol_clusters == 50U &&
             calibrated.oos_utc_day_clusters == 50U &&
+            calibrated.oos_symbol_distribution.size() == 50U &&
+            calibrated.oos_daily_distribution.size() == 50U &&
+            calibrated.oos_period_start_ms > 0 &&
+            calibrated.oos_period_end_ms >= calibrated.oos_period_start_ms &&
             std::abs(calibrated.oos_effective_sample_size - 50.0) < 1e-9,
             "effective independent OOS sample size accounts for scan, symbol and UTC-day clusters");
 
