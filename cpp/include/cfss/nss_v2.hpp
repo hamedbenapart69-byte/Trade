@@ -89,6 +89,51 @@ inline std::optional<double> logistic_zscore(const std::vector<double>& prior,
     return score;
 }
 
+struct NormalizedFundingSeries {
+    std::vector<std::pair<std::int64_t, double>> observations;
+    std::int64_t median_interval_ms{};
+    std::size_t skipped_gap_count{};
+};
+
+inline NormalizedFundingSeries normalize_funding_to_8h(const nlohmann::json& rows,
+                                                        std::int64_t decision_time_ms) {
+    using json = nlohmann::json;
+    NormalizedFundingSeries result{};
+    const auto filtered = point_in_time_rows(rows, decision_time_ms);
+    if (filtered.size() < 2U) return result;
+    std::vector<std::int64_t> intervals;
+    intervals.reserve(filtered.size() - 1U);
+    for (std::size_t i = 1U; i < filtered.size(); ++i) {
+        const auto current = filtered[i].at("timestamp_ms").get<std::int64_t>();
+        const auto previous = filtered[i - 1U].at("timestamp_ms").get<std::int64_t>();
+        const auto interval = current - previous;
+        if (interval >= 30LL * 60'000LL && interval <= 24LL * 3'600'000LL)
+            intervals.push_back(interval);
+    }
+    if (intervals.empty()) return result;
+    std::sort(intervals.begin(), intervals.end());
+    result.median_interval_ms = intervals[intervals.size() / 2U];
+    constexpr std::int64_t min_interval_ms = 30LL * 60'000LL;
+    constexpr std::int64_t max_interval_ms = 24LL * 3'600'000LL;
+    constexpr std::int64_t standard_interval_ms = 8LL * 3'600'000LL;
+    for (std::size_t i = 1U; i < filtered.size(); ++i) {
+        const auto ts = filtered[i].at("timestamp_ms").get<std::int64_t>();
+        const auto previous = filtered[i - 1U].at("timestamp_ms").get<std::int64_t>();
+        const auto interval = ts - previous;
+        const auto rate = v2_number(filtered[i].value("funding_rate", json{}));
+        if (!rate || interval < min_interval_ms || interval > max_interval_ms ||
+            (result.median_interval_ms > 0 &&
+             static_cast<double>(interval) > 1.5 * static_cast<double>(result.median_interval_ms))) {
+            ++result.skipped_gap_count;
+            continue;
+        }
+        const double normalized = *rate *
+            (static_cast<double>(standard_interval_ms) / static_cast<double>(interval));
+        if (std::isfinite(normalized)) result.observations.emplace_back(ts, normalized);
+    }
+    return result;
+}
+
 inline std::optional<double> weighted_score(const std::array<V2Component, 5>& components,
                                              std::int64_t decision_time_ms) {
     double total = 0.0;
@@ -152,12 +197,11 @@ inline std::array<V2DirectionResult, 2> calculate_v2(
         oi_time = ts;
     }
 
-    for (const auto& row : funding) {
-        const auto rate = v2_number(row.value("funding_rate", json{}));
-        if (!rate) continue;
-        funding_long.push_back(-*rate);
-        funding_short.push_back(*rate);
-        funding_time = row.at("timestamp_ms").get<std::int64_t>();
+    const auto normalized_funding = normalize_funding_to_8h(funding, decision_time_ms);
+    for (const auto& [ts, rate] : normalized_funding.observations) {
+        funding_long.push_back(-rate);
+        funding_short.push_back(rate);
+        funding_time = ts;
     }
 
     for (const auto& [ts, current_basis] : basis_by_time) {
@@ -255,7 +299,7 @@ inline std::array<V2DirectionResult, 2> calculate_v2(
             component_score(choose(oi_long, oi_short), "NSS1_OPEN_INTEREST_GROWTH",
                             "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H", oi_time, "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION"),
             component_score(choose(funding_long, funding_short), "NSS2_HEALTHY_FUNDING",
-                            "NSS_V2_DIRECTIONAL_FUNDING_ZSIGMOID", funding_time, "FUNDING_COST_RELATIVE_TO_DIRECTION"),
+                            "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID", funding_time, "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=" + std::to_string(normalized_funding.median_interval_ms) + ";SKIPPED_GAPS=" + std::to_string(normalized_funding.skipped_gap_count)),
             component_score(choose(basis_long, basis_short), "NSS3_BASIS_EXPANSION",
                             "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H", basis_time, "REAL_BASIS_INPUT_PROXY_TRANSFORM"),
             component_score(choose(volume_long, volume_short), "NSS4_VOLUME_EXPANSION",
