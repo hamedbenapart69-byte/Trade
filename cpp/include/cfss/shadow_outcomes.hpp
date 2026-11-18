@@ -180,8 +180,8 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
 
             const auto horizon = path == "PLAN_A_LRT" ? 4LL * kOneHourMs : 7LL * 24LL * kOneHourMs;
             const auto scan_id = dual.value("source_scan_id", std::string{});
-            const auto material = path + "|" + symbol + "|" + direction + "|" +
-                std::to_string(decision_time) + "|" + scan_id;
+            const auto material = std::string{"DAILY_SWING|"} + path + "|" + symbol + "|" +
+                direction + "|" + std::to_string(decision_time) + "|" + scan_id;
             const auto signal_id = cfss::sha256_hex(material);
             if (known_ids.contains(signal_id)) continue;
 
