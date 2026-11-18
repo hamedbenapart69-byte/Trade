@@ -274,6 +274,42 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
+inline std::vector<Instrument> select_instruments(
+    int target_count, std::vector<Instrument> eligible,
+    const std::vector<Instrument>& all_valid_crypto,
+    const std::set<std::string>& required_symbols = {}) {
+    if (target_count < 1 || target_count > 100)
+        throw std::invalid_argument("target_count_invalid");
+    std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
+        const bool a_btc = a.base == "BTC";
+        const bool b_btc = b.base == "BTC";
+        if (a_btc != b_btc) return a_btc;
+        return a.turnover > b.turnover;
+    });
+    const auto btc = std::find_if(eligible.begin(), eligible.end(),
+        [](const Instrument& item) { return item.base == "BTC"; });
+    if (btc == eligible.end())
+        throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
+    const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
+    const auto selection_limit = std::min(requested_total, eligible.size());
+    std::vector<Instrument> selected{*btc};
+    for (const auto& item : eligible) {
+        if (selected.size() >= selection_limit) break;
+        if (item.id != btc->id) selected.push_back(item);
+    }
+    for (const auto& required_base : required_symbols) {
+        const auto found = std::find_if(all_valid_crypto.begin(), all_valid_crypto.end(),
+            [&](const Instrument& item) { return item.base == required_base; });
+        if (found == all_valid_crypto.end()) continue;
+        const bool already_selected = std::any_of(selected.begin(), selected.end(),
+            [&](const Instrument& item) { return item.id == found->id; });
+        if (!already_selected) selected.push_back(*found);
+    }
+    if (selected.size() < selection_limit)
+        throw std::runtime_error("instrument_universe_selection_inconsistent");
+    return selected;
+}
+
 inline std::vector<Instrument> discover(int target_count, const std::set<std::string>& crypto_symbols,
                                        const std::set<std::string>& required_symbols = {},
                                        std::size_t* eligible_count = nullptr,
@@ -335,35 +371,8 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
               << " settle_usdt=" << usdt_settle_rows << " linear_or_unspecified=" << linear_rows
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
-    std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
-        if (a.base == "BTC") return true;
-        if (b.base == "BTC") return false;
-        return a.turnover > b.turnover;
-    });
-    const auto btc = std::find_if(eligible.begin(), eligible.end(), [](const Instrument& x) {
-        return x.base == "BTC";
-    });
-    if (btc == eligible.end()) throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
-    std::vector<Instrument> selected;
-    // target_count counts non-BTC contracts; BTC is an additional mandatory reference.
-    const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
-    const auto selection_limit = std::min(requested_total, eligible.size());
-    selected.push_back(*btc);
-    for (const auto& item : eligible) {
-        if (selected.size() >= selection_limit) break;
-        if (item.id != btc->id) selected.push_back(item);
-    }
-    for (const auto& required_base : required_symbols) {
-        const auto found = std::find_if(all_valid_crypto.begin(), all_valid_crypto.end(),
-            [&](const Instrument& item) { return item.base == required_base; });
-        if (found == all_valid_crypto.end()) continue;
-        const bool already_selected = std::any_of(selected.begin(), selected.end(),
-            [&](const Instrument& item) { return item.id == found->id; });
-        if (!already_selected) selected.push_back(*found);
-    }
-    if (selected.size() < selection_limit)
-        throw std::runtime_error("instrument_universe_selection_inconsistent");
-    return selected;
+    // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
