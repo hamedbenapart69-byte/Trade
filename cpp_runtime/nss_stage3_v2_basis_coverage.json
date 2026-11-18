@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_type": "cfss_nss_basis_v1",
+  "source_run_id": "okx-cpp-1795004458735",
+  "source_scan_id": "scan-246d8795472a954f053704771015ad588ead9e78334f612fdf566c3c48af25c7",
+  "decision_time_ms": 1795003200000,
+  "window_days": 90,
+  "instruments": [
+    {
+      "symbol": "BTC/USDT:USDT",
+      "status": "AVAILABLE",
+      "source_quality": "REAL",
+      "definition_id": "OKX_SPOT_PERP_CLOSE_BASIS_BPS_V1",
+      "spot_rows": 2160,
+      "basis_rows": 2160
+    },
+    {
+      "symbol": "ETH/USDT:USDT",
+      "status": "AVAILABLE",
+      "source_quality": "REAL",
+      "definition_id": "OKX_SPOT_PERP_CLOSE_BASIS_BPS_V1",
+      "spot_rows": 2160,
+      "basis_rows": 2160
+    }
+  ]
+}
