@@ -43,14 +43,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Restore incremental market data cache
+        uses: actions/cache@v4
+        with:
+          path: stage6-cache/market_data_cache.v1.json
+          key: stage6-market-data-${{ github.run_id }}
+          restore-keys: |
+            stage6-market-data-
+
       - name: Collect fresh market data and recompute Stage 4/5 in C++
         run: |
           set -euo pipefail
-          mkdir -p stage6-evidence
+          mkdir -p stage6-evidence stage6-cache
           ./build/market_pipeline --collect-okx 100 2 \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l2-status.v1.json \
-            signals-state/cpp_runtime/crypto_universe.v1.json
+            signals-state/cpp_runtime/crypto_universe.v1.json \
+            stage6-cache/market_data_cache.v1.json
           ./build/lfs_v2_probe \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/lfs-v2.json
