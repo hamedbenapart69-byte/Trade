@@ -4,7 +4,7 @@
 **Base:** `feat/cpp-stage1-clean` at `190b0270ccb1425f4ed77503825aeaf26668baa4`  
 **Implementation language:** C++20  
 **Delivery:** Telegram only  
-**Status:** v1 FAIL (D1 + D2) on the first real two-symbol run. The C++ build and unit tests passed, but the complete LFS score is unavailable because required inputs and raw-to-score definitions are missing. v2 is now eligible under R11; implementation has not yet been claimed.
+**Status:** v1 FAIL (D1 + D2); v2 implementation added and awaiting live CI/data validation. v3 is NOT_BUILT. The v2 output remains research-only and cannot emit trades.
 
 ## Objective
 Implement and validate the canonical five-component LFS contract without inventing missing component values, changing weights, or confusing REAL and PROXY data.
@@ -64,9 +64,36 @@ Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component de
 
 ## Version control
 - v1: strict REAL-only v1 aggregator contract.
-- v2: ELIGIBLE under R11 after the measured v1 FAIL above; conservative PROXY design/implementation is next.
+- v2: BUILT after the measured v1 FAIL under R11. Live validation pending.
+- v3: NOT_BUILT; only after an actual v2 FAIL and specific D-code evidence.
 - v3: NOT_BUILT; only after actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
+
+## v2 — LFS_V2_PROXY
+
+v2 was created only after the measured v1 FAIL and D1/D2 diagnosis above.
+
+Component transforms:
+- LFS1 PROXY: 14-period ATR as a fraction of close, ranked against the preceding 90-day ATR history; plus rolling 24-hour contract volume ranked against the preceding 90-day history. Score = 0.5 × ATR percentile + 0.5 × (1 − volume percentile). This is explicitly an OHLCV proxy, not REAL order-book depth.
+- LFS2 REAL: percentile rank of absolute funding rate against the available 30-day REAL funding history.
+- LFS3 REAL: percentile rank of absolute log(long/short account ratio) from OKX's public contract-level long/short account ratio endpoint; 1H observations, up to 30 days.
+- LFS4 REAL: inverse percentile rank of 20-period Bollinger Band width against the preceding 90-day REAL OHLCV history. Band width = 4 × population standard deviation / 20-period mean.
+- LFS5 REAL: percentile rank of absolute 24-hour percentage change in USD open interest against available REAL OI history (approximately 30 days).
+
+Percentile rank uses only prior observations; the current observation is ranked against that prior history. A minimum of 20 prior finite observations is required. The V2 aggregate retains the canonical weights and requires 5/5 valid components. If any component is missing, no aggregate is emitted. If any component is PROXY, the aggregate is PROXY.
+
+V2 acceptance gates:
+1. BTC and at least one eligible altcoin have 5/5 component scores.
+2. Every component and aggregate is finite and within [0,1].
+3. All component timestamps are no later than decision time.
+4. LFS1 is explicitly PROXY; no claim of REAL order-book depth is made.
+5. Identical inputs produce identical output.
+6. Prefix/future-perturbation tests show no change to earlier scores.
+7. C++ build, unit tests and JSON schema validation pass.
+8. No actionable trade is emitted; V2 is a research score only.
+9. Final stage report is delivered through Telegram with a real receipt.
+
+Calibration remains NOT_CALIBRATED. The 30-day funding, long/short and OI distributions are shorter than the 90-day research reference. V2 does not claim statistical optimality, probability or profitability. The LFS score alone is not a trade signal.
 
 ## SLRP diagnosis codes
 D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 Regime; D6 Expectations.
