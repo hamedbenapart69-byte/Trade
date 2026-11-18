@@ -27,6 +27,9 @@ struct Outcome {
     double funding_r{};
     bool costs_available{true};
     std::string data_class{"PROXY"};
+    std::string profile{"DAILY_SWING"};
+    std::string outcome_kind{"HYPOTHESIS_PROXY"};
+    std::string execution_status{"NOT_EXECUTED"};
 };
 
 struct PlattModel {
@@ -195,7 +198,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                                    const std::string& path,
                                    const std::string& regime,
                                    double current_score, std::int64_t as_of_ms,
-                                   const std::string& data_class = "PROXY") {
+                                   const std::string& data_class = "PROXY",
+                                   const std::string& profile = "DAILY_SWING") {
     CalibrationReport report{};
     std::set<std::string> ids;
     std::vector<Outcome> selected;
@@ -205,7 +209,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     }
     for (const auto& item : outcomes) {
         if (item.path != path || item.regime != regime || item.data_class != data_class ||
-            item.closed_at_ms >= as_of_ms) continue;
+            item.profile != profile || item.outcome_kind != "HYPOTHESIS_PROXY" ||
+            item.execution_status != "NOT_EXECUTED" || item.closed_at_ms >= as_of_ms) continue;
         if (item.signal_id.empty() || !ids.insert(item.signal_id).second ||
             item.closed_at_ms <= 0 || !std::isfinite(item.raw_score) ||
             item.raw_score < 0.0 || item.raw_score > 1.0 ||
