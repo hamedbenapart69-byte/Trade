@@ -47,6 +47,16 @@ nlohmann::json hourly_fixture(bool breakout, bool sweep) {
     return rows;
 }
 
+nlohmann::json instrument_fixture(bool breakout, bool sweep,
+                                         double turnover = 20'000'000.0) {
+    return {
+        {"candles", hourly_fixture(breakout, sweep)},
+        {"turnover_24h_usd", turnover},
+        {"liquidity_threshold_usd", 10'000'000.0},
+        {"liquidity_status", turnover > 10'000'000.0 ? "ELIGIBLE" : "BELOW_THRESHOLD_PINNED"}
+    };
+}
+
 nlohmann::json lfs(double score) {
     return {
         {"status", "CALCULATED"}, {"score", score}, {"data_class", "PROXY"},
@@ -91,7 +101,7 @@ int main() {
 
     const auto lrt = cfss::engines::evaluate(
         "BTC/USDT:USDT",
-        {{"candles", hourly_fixture(false, true)}},
+        instrument_fixture(false, true),
         lfs(0.75), nss(0.60, 0.65), liquidity("RANGE", true), decision);
     require(lrt.lrt.status == "CANDIDATE" && lrt.lrt.direction == "LONG",
             "LRT independently recognizes a demand sweep and reclaim");
@@ -111,7 +121,7 @@ int main() {
 
     const auto nmt = cfss::engines::evaluate(
         "ETH/USDT:USDT",
-        {{"candles", hourly_fixture(true, false)}},
+        instrument_fixture(true, false),
         lfs(0.60), nss(0.75, 0.40), liquidity("UPTREND", false), decision);
     require(nmt.nmt.status == "CANDIDATE" && nmt.nmt.direction == "LONG",
             "NMT independently requires trend-aligned breakout, volume and directional NSS");
@@ -127,7 +137,7 @@ int main() {
 
     const auto veto = cfss::engines::evaluate(
         "BTC/USDT:USDT",
-        {{"candles", hourly_fixture(true, true)}},
+        instrument_fixture(true, true),
         lfs(0.71), nss(0.71, 0.40), liquidity("UPTREND", true), decision);
     require(veto.golden_rule_evaluated && veto.golden_rule_veto,
             "simultaneous strict scores above 0.70 trigger the Golden Rule");
@@ -150,6 +160,22 @@ int main() {
             missing.lrt.status == "INSUFFICIENT_DATA" &&
             missing.nmt.status == "INSUFFICIENT_DATA",
             "missing Golden Rule inputs block both engines rather than bypassing the veto");
+
+    const auto below_liquidity = cfss::engines::evaluate(
+        "LOW-LIQUIDITY/USDT:USDT",
+        instrument_fixture(false, true, 9'999'999.0),
+        lfs(0.90), nss(0.20, 0.10), liquidity("RANGE", true), decision);
+    require(below_liquidity.lrt.status == "INSUFFICIENT_DATA" &&
+            below_liquidity.nmt.status == "INSUFFICIENT_DATA" &&
+            below_liquidity.lrt.reason == "CURRENT_LIQUIDITY_BELOW_CONFIGURED_THRESHOLD",
+            "pinned resolution-only symbols cannot generate fresh LRT/NMT candidates below the liquidity gate");
+
+    const auto exact_liquidity_boundary = cfss::engines::evaluate(
+        "BOUNDARY/USDT:USDT",
+        instrument_fixture(false, true, 10'000'000.0),
+        lfs(0.90), nss(0.20, 0.10), liquidity("RANGE", true), decision);
+    require(exact_liquidity_boundary.lrt.status == "INSUFFICIENT_DATA",
+            "liquidity gate uses strict greater-than at the configured threshold");
 
     std::cout << "DUAL_ENGINE_V1_INDEPENDENCE_AND_VETO_TESTS_PASS\n";
     return 0;
