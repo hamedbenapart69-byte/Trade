@@ -15,7 +15,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind", "resolution_data_sha256", "resolution_bars", "source_scan_id", "symbol"],
+        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "data_class", "cost_status", "symbol", "direction", "entry_reference", "entry_fill_reference", "entry_model", "execution_status", "stop_reference", "target_reference", "exit_reference", "decision_time_ms", "resolution", "resolution_timeframe", "source_scan_id", "source_l1_sha256", "outcome_kind", "resolution_data_sha256", "resolution_bars"],
         "properties": {
           "signal_id": {"type": "string", "minLength": 1},
           "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
