@@ -1,0 +1,12 @@
+# Stage 1 Historical Artifact Cleanup
+
+- Artifact ID: 14352156550
+- Original workflow run: 44135013370
+- Original size: 866,358 bytes
+- Cleanup workflow run: 44246854270
+- Cleanup result: DELETE accepted; subsequent GET returned HTTP 404
+- Independent verification: workflow artifact listing for run 44135013370 returned an empty artifact list
+- Verified at: 2026-11-18T05:49:03Z
+- Current Stage 1 workflow: no Actions artifact uploads
+
+The one-time cleanup workflow and its trigger marker were removed after successful verification. No recurring cleanup workflow remains.
