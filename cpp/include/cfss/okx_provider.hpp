@@ -683,14 +683,22 @@ inline json collect(int symbol_count, int years,
             } else {
                 candles = fetch_candles(item, start_ms, end_ms);
             }
-        } catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"ohlcv:"} + e.what());
+            if (has_valid_candle_cache) candles = cached_instrument->at("candles");
+        }
         try {
             const auto fresh = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
             const auto old = cached_instrument && cached_instrument->contains("funding")
                 ? cached_instrument->at("funding") : json::array();
             funding = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
                                             end_ms, 1LL);
-        } catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"funding:"} + e.what());
+            if (cached_instrument && cached_instrument->contains("funding") &&
+                cached_instrument->at("funding").is_array())
+                funding = cached_instrument->at("funding");
+        }
         try {
             const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
                                                    has_valid_candle_cache ? 1 : 12);
@@ -698,7 +706,12 @@ inline json collect(int symbol_count, int years,
                 ? cached_instrument->at("open_interest") : json::array();
             oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
                                        end_ms, 1LL);
-        } catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"open_interest:"} + e.what());
+            if (cached_instrument && cached_instrument->contains("open_interest") &&
+                cached_instrument->at("open_interest").is_array())
+                oi = cached_instrument->at("open_interest");
+        }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
         instruments.push_back({
