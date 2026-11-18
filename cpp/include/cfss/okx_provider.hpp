@@ -169,6 +169,9 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
         if (!cached || !cached->is_object() ||
             cached->value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
             cached->value("status", std::string{}) != "VERIFIED" ||
+            cached->value("provider_id", std::string{}) != "coinpaprika" ||
+            cached->value("source_endpoint", std::string{}) != "https://api.coinpaprika.com/v1/coins" ||
+            cached->value("attribution", std::string{}) != "CoinPaprika" ||
             !cached->contains("symbols") || !cached->at("symbols").is_array())
             throw std::runtime_error("crypto_universe_live_reference_failed_and_no_valid_cache");
         const auto fetched_at = cached->value("fetched_at_ms", std::int64_t{0});
@@ -181,8 +184,13 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             const auto symbol = uppercase_symbol(value.get<std::string>());
             if (!symbol.empty()) symbols.insert(symbol);
         }
-        if (symbols.size() < 500U || !symbols.contains("BTC"))
+        if (symbols.size() < 500U || !symbols.contains("BTC") ||
+            cached->value("symbol_count", std::size_t{0}) != symbols.size())
             throw std::runtime_error("crypto_universe_cache_coverage_insufficient");
+        std::string hash_material;
+        for (const auto& symbol : symbols) hash_material += symbol + "\n";
+        if (cached->value("symbols_sha256", std::string{}) != cfss::sha256_hex(hash_material))
+            throw std::runtime_error("crypto_universe_cache_hash_mismatch");
         auto artifact = *cached;
         artifact["freshness_status"] = "CACHED";
         artifact["retrieved_at_ms"] = retrieved_at;
