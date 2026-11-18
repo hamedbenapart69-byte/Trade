@@ -1,0 +1,1 @@
+Second distinct live C++ Stage 1 run after linker, artifact-contract and zero-artifact-storage fixes. Requires a new hourly scan_id, real public OKX data, complete C++ L1/L2 validation and Telegram outbound receipt. Telegram inbound is intentionally not requested in this run.

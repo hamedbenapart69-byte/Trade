@@ -1,240 +1,299 @@
-#include <curl/curl.h>
-#include "cfss/http_utils.hpp"
-#include "cfss/signal.hpp"
+#include "cfss/l1_contract.hpp"
+#include "cfss/hash.hpp"
+#include "cfss/atomic_file.hpp"
+#include "cfss/okx_provider.hpp"
 
-#include <algorithm>
-#include <array>
 #include <chrono>
-#include <cmath>
 #include <cstdlib>
-#include <ctime>
-#include <iomanip>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <optional>
-#include <sstream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
 
 namespace {
-struct HttpResult { CURLcode transport{CURLE_FAILED_INIT}; long status_code{0}; std::string response; };
-struct Provider { std::string_view name; std::string_view endpoint; std::string_view row_marker; bool okx_confirm_field; };
-struct Candle { long long timestamp_ms; double low; double close; };
-struct MarketData { std::vector<Candle> candles; std::string provider; };
+using json = nlohmann::json;
 
-HttpResult get(std::string_view url) {
-    HttpResult result;
-    CURL* curl = curl_easy_init();
-    if (!curl) return result;
-    const std::string url_text{url};
-    curl_easy_setopt(curl, CURLOPT_URL, url_text.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cfss::append_response);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result.response);
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 25L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "CFSS-CPP/0.6");
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-    result.transport = curl_easy_perform(curl);
-    if (result.transport == CURLE_OK) curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &result.status_code);
-    curl_easy_cleanup(curl);
-    return result;
-}
-
-std::string trim_json_value(std::string value) {
-    const auto first = value.find_first_not_of(" \t\r\n\\\"");
-    if (first == std::string::npos) return {};
-    const auto last = value.find_last_not_of(" \t\r\n\\\"");
-    return value.substr(first, last - first + 1U);
-}
-
-std::vector<std::string> split_json_row(std::string_view row) {
-    std::vector<std::string> fields;
-    bool in_string = false;
-    bool escaped = false;
-    std::size_t start = 0;
-    for (std::size_t i = 0; i < row.size(); ++i) {
-        const char ch = row[i];
-        if (in_string && escaped) { escaped = false; continue; }
-        if (in_string && ch == '\\') { escaped = true; continue; }
-        if (ch == '"') { in_string = !in_string; continue; }
-        if (ch == ',' && !in_string) {
-            fields.emplace_back(trim_json_value(std::string{row.substr(start, i - start)}));
-            start = i + 1U;
-        }
-    }
-    if (start <= row.size()) fields.emplace_back(trim_json_value(std::string{row.substr(start)}));
-    return fields;
-}
-
-std::vector<Candle> parse_candles(std::string_view json, std::string_view marker,
-                                  bool require_okx_confirmation) {
-    std::vector<Candle> candles;
-    const std::size_t marker_pos = json.find(marker);
-    if (marker_pos == std::string_view::npos) return candles;
-    const std::size_t outer = json.find('[', marker_pos + marker.size());
-    if (outer == std::string_view::npos) return candles;
-
-    const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+std::int64_t now_epoch_ms() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
-    int depth = 0;
-    bool in_string = false;
-    bool escaped = false;
-    std::size_t row_start = std::string_view::npos;
-    for (std::size_t i = outer; i < json.size(); ++i) {
-        const char ch = json[i];
-        if (in_string && escaped) { escaped = false; continue; }
-        if (in_string && ch == '\\') { escaped = true; continue; }
-        if (ch == '"') { in_string = !in_string; continue; }
-        if (in_string) continue;
-        if (ch == '[') {
-            ++depth;
-            if (depth == 2) row_start = i + 1U;
-        } else if (ch == ']') {
-            if (depth == 2 && row_start != std::string_view::npos) {
-                const auto fields = split_json_row(json.substr(row_start, i - row_start));
-                if (fields.size() >= 5U) {
-                    try {
-                        const long long ts = std::stoll(fields[0]);
-                        const double low = std::stod(fields[3]);
-                        const double close = std::stod(fields[4]);
-                        const bool confirmed = !require_okx_confirmation ||
-                            (fields.size() > 8U && fields[8] == "1");
-                        const bool candle_closed = ts + 900000LL <= now_ms;
-                        if (ts > 0 && candle_closed && confirmed &&
-                            std::isfinite(low) && low > 0.0 &&
-                            std::isfinite(close) && close > 0.0) {
-                            candles.push_back({ts, low, close});
-                        }
-                    } catch (...) {
-                        // ردیف خراب حذف می‌شود؛ دادهٔ ناقص پذیرفته نمی‌شود.
-                    }
-                }
-                row_start = std::string_view::npos;
-            }
-            --depth;
-            if (depth == 0) break;
-        }
+}
+
+void write_json(const std::filesystem::path& path, const json& value) {
+    cfss::write_file_atomic(path, value.dump(2) + "\n", true);
+}
+
+std::string csv_escape(const std::string& value) {
+    if (value.find_first_of(",\"\n\r") == std::string::npos) return value;
+    std::string escaped = "\"";
+    for (const char ch : value) {
+        if (ch == '"') escaped += "\"\"";
+        else escaped += ch;
     }
-    std::sort(candles.begin(), candles.end(), [](const Candle& a, const Candle& b) {
-        return a.timestamp_ms < b.timestamp_ms;
-    });
-    candles.erase(std::unique(candles.begin(), candles.end(), [](const Candle& a, const Candle& b) {
-        return a.timestamp_ms == b.timestamp_ms;
-    }), candles.end());
-    if (candles.size() > 50U) candles.erase(candles.begin(), candles.end() - 50);
-    return candles;
+    escaped += "\"";
+    return escaped;
 }
 
-std::optional<MarketData> fetch_ohlcv() {
-    constexpr std::array<Provider, 2> providers{{
-        {"OKX", "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=15m&limit=51", "\"data\"", true},
-        {"Bybit", "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=15&limit=51", "\"list\"", false}
-    }};
-    for (const auto& provider : providers) {
-        const HttpResult response = get(provider.endpoint);
-        if (response.transport != CURLE_OK || response.status_code != 200) {
-            std::cerr << provider.name << " candle fetch failed; HTTP=" << response.status_code
-                      << " transport=" << curl_easy_strerror(response.transport) << '\n';
-            continue;
-        }
-        auto candles = parse_candles(response.response, provider.row_marker, provider.okx_confirm_field);
-        if (candles.size() != 50U) {
-            std::cerr << provider.name << " rejected: expected 50 valid, closed, unique candles, got "
-                      << candles.size() << '\n';
-            continue;
-        }
-        std::cout << "Validated 50 closed 15m OHLCV candles from " << provider.name << '\n';
-        return MarketData{std::move(candles), std::string{provider.name}};
+json artifact_entry(const std::filesystem::path& path, const std::string& raw,
+                    bool retained_in_workflow, int retention_days,
+                    bool retained_in_signals) {
+    return {
+        {"path", path.generic_string()}, {"sha256", cfss::sha256_hex(raw)},
+        {"bytes", raw.size()}, {"retained_in_workflow_artifacts", retained_in_workflow},
+        {"retention_days", retention_days}, {"retained_in_signals_branch", retained_in_signals}
+    };
+}
+
+json build_run_manifest(const json& contract, const json& artifact,
+                        const json& artifact_manifest, int symbols, int years,
+                        const std::string& l1_raw) {
+    const json config = {
+        {"symbol_target", symbols}, {"years", years}, {"timeframe", "1h"},
+        {"liquidity_threshold_usd", 10000000.0}, {"ohlcv_closed_bars_only", true}
+    };
+    bool all_real = true;
+    json errors = json::array();
+    for (const auto& item : artifact.at("instruments")) {
+        if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
     }
-    return std::nullopt;
-}
-
-double calculate_sma20(const std::vector<Candle>& candles) {
-    if (candles.size() < 20U) throw std::invalid_argument("SMA20 requires at least 20 closes");
-    long double sum = 0.0L;
-    for (auto it = candles.end() - 20; it != candles.end(); ++it) sum += static_cast<long double>(it->close);
-    return static_cast<double>(sum / 20.0L);
-}
-
-double lowest_low_last_five(const std::vector<Candle>& candles) {
-    if (candles.size() < 5U) throw std::invalid_argument("Five closed candles are required for stop-loss");
-    double lowest = candles.back().low;
-    for (auto it = candles.end() - 5; it != candles.end(); ++it) lowest = std::min(lowest, it->low);
-    return lowest;
-}
-
-std::string utc_now_iso() {
-    const auto now = std::chrono::system_clock::now();
-    const std::time_t time = std::chrono::system_clock::to_time_t(now);
-    std::tm utc{};
-#if defined(_WIN32)
-    gmtime_s(&utc, &time);
-#else
-    gmtime_r(&time, &utc);
-#endif
-    std::ostringstream out;
-    out << std::put_time(&utc, "%Y-%m-%dT%H:%M:%SZ");
-    return out.str();
-}
-} // namespace
-
-int main() {
-    if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) return EXIT_FAILURE;
-    const auto fetched = fetch_ohlcv();
-    if (!fetched) {
-        std::cerr << "OHLCV unavailable from OKX and Bybit; MARKET_DATA_DEGRADED\n";
-        curl_global_cleanup();
-        return EXIT_FAILURE;
+    for (const auto& item : contract.at("instruments")) {
+        for (const auto& error : item.at("errors"))
+            errors.push_back(item.at("instrument_id").get<std::string>() + ":" + error.get<std::string>());
+    }
+    for (const auto& provider : contract.at("provider_health").at("providers")) {
+        if (provider.value("fallback_status", std::string{}) == "UNAVAILABLE")
+            errors.push_back(provider.at("provider_id").get<std::string>() + ":" +
+                             provider.value("fallback_reason", std::string{"fallback_unavailable"}));
     }
 
-    const auto& candles = fetched->candles;
-    std::vector<double> closes;
-    closes.reserve(candles.size());
-    for (const auto& candle : candles) closes.push_back(candle.close);
-    const double current_close = closes.back();
-    const double sma20 = calculate_sma20(candles);
-    const std::string bias = current_close > sma20 ? "BULLISH" :
-                             current_close < sma20 ? "BEARISH" : "NEUTRAL";
-    std::cout << "SMA20=" << std::setprecision(15) << sma20 << " CLOSE=" << current_close
-              << " BIAS=" << bias << '\n';
+    const char* commit = std::getenv("GITHUB_SHA");
+    const char* branch = std::getenv("GITHUB_REF_NAME");
+    const char* build_id = std::getenv("CFSS_BUILD_ID");
+    const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
+    auto retry_summary = cfss::okx::request_metrics();
+    retry_summary["telegram_send_attempts_total_for_scan"] = 0;
+    retry_summary["telegram_retry_attempts_total_for_scan"] = 0;
+    retry_summary["telegram_inbound_polls"] = 0;
 
-    if (bias != "BULLISH") {
-        std::cout << "NO_QUALIFIED_SETUP: LRT SMA20 proxy requires BULLISH bias; no actionable LONG sent.\n";
+    return {
+        {"run_id", contract.at("run_id")}, {"scan_id", contract.at("scan_id")},
+        {"run_timestamp_utc", contract.at("acquired_at_utc")},
+        {"repository_commit", commit ? std::string{commit} : std::string{"UNKNOWN"}},
+        {"branch", branch ? std::string{branch} : std::string{"UNKNOWN"}},
+        {"document_version", "V18.2"},
+        {"compiler_id", "GCC"}, {"compiler_version", __VERSION__},
+        {"build_id", build_id ? std::string{build_id} : std::string{"UNAVAILABLE"}},
+        {"configuration_version", "1.0.0"},
+        {"configuration_hash", cfss::sha256_hex(config.dump())},
+        {"dataset_version", contract.at("schema_version")},
+        {"dataset_hash", cfss::sha256_hex(l1_raw)},
+        {"provider_status", contract.at("provider_health")},
+        {"profile", {{"symbol_target", symbols}, {"selected_symbols", contract.at("instruments").size()},
+                     {"years", years}, {"timeframe", "1h"}, {"liquidity_threshold_usd", 10000000.0}}},
+        {"path_statuses", {{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}}},
+        {"generator_statuses", {{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
+                                {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}}},
+        {"run_status", all_real ? "L1_L2_PASS" : "DATA_DEGRADED"},
+        {"start_time_utc", contract.at("acquired_at_utc")}, {"end_time_utc", now_text},
+        {"error_summary", errors}, {"retry_summary", retry_summary},
+        {"artifact_manifest", artifact_manifest},
+        {"telegram_send_status", "NOT_ATTEMPTED"},
+        {"telegram_receive_test_status", "NOT_REQUESTED"},
+        {"telegram_message_ids", json::array()},
+        {"telegram_last_update_id", 0}
+    };
+}
+
+int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
+                const std::filesystem::path& l2_path) {
+    if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
+        throw std::runtime_error("curl_global_init_failed");
+    try {
+        const auto contract = cfss::okx::collect(symbols, years);
+        const std::string l1_raw = contract.dump(2) + "\n";
+        cfss::write_file_atomic(l1_path, l1_raw, true);
+
+        auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        cfss::add_artifact_hash(artifact);
+        const std::string l2_raw = artifact.dump(2) + "\n";
+        const auto evidence_dir = l1_path.parent_path().empty() ? std::filesystem::path{"."} : l1_path.parent_path();
+        cfss::write_file_atomic(l2_path, l2_raw, true);
+
+        const auto provider_path = evidence_dir / "provider-health.v1.json";
+        const auto fear_path = evidence_dir / "fear-greed.v1.json";
+        const auto signals_path = evidence_dir / "signals.json";
+        const auto history_path = evidence_dir / "history.csv";
+        const auto performance_path = evidence_dir / "performance.json";
+        const auto coverage_path = evidence_dir / "coverage.json";
+        const auto system_path = evidence_dir / "system_status.json";
+        const auto manifest_path = evidence_dir / "run-manifest.v1.json";
+
+        const std::string provider_raw = contract.at("provider_health").dump(2) + "\n";
+        const std::string fear_raw = contract.at("fear_greed").dump(2) + "\n";
+        write_json(provider_path, contract.at("provider_health"));
+        write_json(fear_path, contract.at("fear_greed"));
+
+        bool any_degraded = false;
+        json signals = json::array();
+        json status_report = json::array();
+        for (const auto& item : artifact.at("instruments")) {
+            status_report.push_back(item);
+            if (item.value("state", std::string{}) == "MARKET_DATA_DEGRADED") any_degraded = true;
+        }
+        const auto generated_at = cfss::okx::utc_iso(now_epoch_ms());
+        const std::string report_status = any_degraded ? "MARKET_DATA_DEGRADED" : "NO_QUALIFIED_SETUP";
+        const json signals_json = {
+            {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
+            {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
+            {"report_status", report_status}, {"signal_count", signals.size()},
+            {"signals", signals}, {"status_report_count", status_report.size()},
+            {"status_report", status_report},
+            {"note", "Stage 1 has no admitted strategy engine; an empty signals array is intentional and is not a BUY or SELL recommendation."}
+        };
+        const std::string signals_raw = signals_json.dump(2) + "\n";
+        write_json(signals_path, signals_json);
+
+        json coverage_rows = json::array();
+        std::size_t full_count = 0U, partial_count = 0U, unavailable_count = 0U;
+        for (const auto& item : contract.at("instruments")) {
+            const auto& availability = item.at("availability");
+            const bool all_available = availability.value("ohlcv", std::string{}) == "AVAILABLE" &&
+                                       availability.value("funding", std::string{}) == "AVAILABLE" &&
+                                       availability.value("open_interest", std::string{}) == "AVAILABLE";
+            const bool any_unavailable = availability.value("ohlcv", std::string{}) == "UNAVAILABLE" ||
+                                         availability.value("funding", std::string{}) == "UNAVAILABLE" ||
+                                         availability.value("open_interest", std::string{}) == "UNAVAILABLE";
+            if (all_available) ++full_count;
+            else if (any_unavailable) ++unavailable_count;
+            else ++partial_count;
+            coverage_rows.push_back({
+                {"instrument_id", item.at("instrument_id")}, {"symbol", item.at("unified_symbol")},
+                {"availability", availability}, {"coverage", item.at("coverage")}, {"errors", item.at("errors")}
+            });
+        }
+        const json coverage_json = {
+            {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
+            {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
+            {"universe", contract.at("universe")},
+            {"summary", {{"fully_available_count", full_count}, {"partial_count", partial_count},
+                         {"unavailable_count", unavailable_count}, {"selected_count", coverage_rows.size()}}},
+            {"instruments", coverage_rows}
+        };
+        const std::string coverage_raw = coverage_json.dump(2) + "\n";
+        write_json(coverage_path, coverage_json);
+
+        const json performance_json = {
+            {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
+            {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
+            {"status", "NOT_CALCULATED"}, {"trade_count", 0},
+            {"metrics", {{"win_rate", nullptr}, {"profit_factor", nullptr}, {"sharpe", nullptr},
+                         {"max_drawdown", nullptr}, {"expectancy", nullptr}}},
+            {"reason", "NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1"}
+        };
+        const std::string performance_raw = performance_json.dump(2) + "\n";
+        write_json(performance_path, performance_json);
+
+        const json path_statuses = {{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}};
+        const json generator_statuses = {{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
+                                              {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}};
+        bool all_real = true;
+        for (const auto& item : artifact.at("instruments"))
+            if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
+        const std::string run_status = all_real ? "L1_L2_PASS" : "DATA_DEGRADED";
+        json system_errors = json::array();
+        for (const auto& item : contract.at("instruments"))
+            for (const auto& error : item.at("errors"))
+                system_errors.push_back(item.at("instrument_id").get<std::string>() + ":" + error.get<std::string>());
+        for (const auto& provider : contract.at("provider_health").at("providers"))
+            if (provider.value("fallback_status", std::string{}) == "UNAVAILABLE")
+                system_errors.push_back(provider.at("provider_id").get<std::string>() + ":" +
+                                         provider.value("fallback_reason", std::string{"fallback_unavailable"}));
+        const json system_status_json = {
+            {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
+            {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
+            {"run_status", run_status}, {"provider_status", contract.at("provider_health")},
+            {"path_statuses", path_statuses}, {"generator_statuses", generator_statuses},
+            {"telegram_send_status", "NOT_ATTEMPTED"},
+            {"telegram_receive_test_status", "NOT_REQUESTED"},
+            {"telegram_message_ids", json::array()}, {"telegram_last_update_id", 0},
+            {"error_summary", system_errors}
+        };
+        const std::string system_raw = system_status_json.dump(2) + "\n";
+        write_json(system_path, system_status_json);
+
+        std::string history_raw = "timestamp_utc,run_id,scan_id,instrument_id,symbol,state,reason_code,data_quality,confidence_status,actionable,latest_candle_timestamp_ms\n";
+        for (const auto& item : artifact.at("instruments")) {
+            history_raw += csv_escape(generated_at) + "," +
+                csv_escape(contract.at("run_id").get<std::string>()) + "," +
+                csv_escape(contract.at("scan_id").get<std::string>()) + "," +
+                csv_escape(item.at("instrument_id").get<std::string>()) + "," +
+                csv_escape(item.at("symbol").get<std::string>()) + "," +
+                csv_escape(item.at("state").get<std::string>()) + "," +
+                csv_escape(item.at("reason_code").get<std::string>()) + "," +
+                csv_escape(item.at("data_quality").get<std::string>()) + "," +
+                csv_escape(item.at("confidence_status").get<std::string>()) + "," +
+                (item.at("actionable").get<bool>() ? "true" : "false") + "," +
+                std::to_string(item.at("latest_candle_timestamp_ms").get<std::int64_t>()) + "\n";
+        }
+        cfss::write_file_atomic(history_path, history_raw, true);
+
+        const char* event_name = std::getenv("GITHUB_EVENT_NAME");
+        const bool persist_signals = event_name && std::string{event_name} != "pull_request";
+        const bool retain_full_evidence = false;
+        const bool retain_non_l1_workflow = false;
+        const int full_retention_days = 0;
+        json artifact_manifest = {
+            {"l1_market_data", artifact_entry(l1_path, l1_raw, retain_full_evidence, retain_full_evidence ? 1 : 0, false)},
+            {"l2_status", artifact_entry(l2_path, l2_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"provider_health", artifact_entry(provider_path, provider_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"fear_greed", artifact_entry(fear_path, fear_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"signals", artifact_entry(signals_path, signals_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"history", artifact_entry(history_path, history_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"performance", artifact_entry(performance_path, performance_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"coverage", artifact_entry(coverage_path, coverage_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"system_status", artifact_entry(system_path, system_raw, retain_non_l1_workflow, full_retention_days, persist_signals)}
+        };
+        const auto manifest = build_run_manifest(contract, artifact, artifact_manifest, symbols, years, l1_raw);
+        write_json(manifest_path, manifest);
+
+        std::cout << "CPP_L1_COLLECTED provider=okx symbols=" << contract.at("instruments").size()
+                  << " run_id=" << contract.at("run_id") << '\n';
+        std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
+        std::cout << "REQUIRED_ARTIFACTS_CREATED signals.json history.csv performance.json coverage.json system_status.json run-manifest.v1.json\n";
         curl_global_cleanup();
         return EXIT_SUCCESS;
-    }
-
-    const double lowest_low = lowest_low_last_five(candles);
-    const cfss::LongLevels levels = cfss::calculate_long_levels(current_close, lowest_low);
-    const auto epoch = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    const std::string timestamp = utc_now_iso();
-    const cfss::ActionableSignal signal{
-        "SIG-BTC-LONG-" + std::to_string(epoch), "BTC-USDT-SWAP", "BUY_NOW", "LONG",
-        levels.entry_price, levels.stop_loss, levels.take_profit, levels.risk_reward,
-        "LRT_SMA20_PROXY", fetched->provider, timestamp, "PROXY", "15m",
-        "15m close is above SMA20; basic LRT proxy LONG candidate.",
-        "A subsequent 15m close at or below SMA20 invalidates the bias; stop-loss is the price-risk boundary.",
-        levels.used_fallback
-    };
-    const std::string signal_json = cfss::format_signal_json(signal);
-    const std::string telegram_markdown = cfss::format_signal_markdown(signal);
-    std::cout << "SIGNAL_JSON=" << signal_json << '\n';
-    std::cout << "TELEGRAM_MARKDOWN_BEGIN\n" << telegram_markdown << "\nTELEGRAM_MARKDOWN_END\n";
-
-    const char* token = std::getenv("TELEGRAM_TOKEN");
-    const char* chat_id = std::getenv("TELEGRAM_CHAT_ID");
-    if (!token || !chat_id || token[0] == '\0' || chat_id[0] == '\0') {
-        std::cerr << "Telegram secrets unavailable; signal not delivered\n";
+    } catch (...) {
         curl_global_cleanup();
+        throw;
+    }
+}
+}
+
+int main(int argc, char** argv) {
+    try {
+        if (argc == 6 && std::string{argv[1]} == "--collect-okx") {
+            return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5]);
+        }
+        if (argc != 3) {
+            std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
+                      << "   or: market_pipeline --collect-okx <symbols:1..100> <years:1..2> <l1.json> <l2.json>\n";
+            return EXIT_FAILURE;
+        }
+        const std::filesystem::path input_path{argv[1]};
+        const std::filesystem::path output_path{argv[2]};
+        std::ifstream input(input_path, std::ios::binary);
+        if (!input) throw std::runtime_error("l1_contract_open_failed");
+        const std::string raw{std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
+        const auto contract = nlohmann::json::parse(raw);
+        auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        cfss::add_artifact_hash(artifact);
+        write_json(output_path, artifact);
+        std::cout << "L2_ARTIFACT_CREATED run_id=" << contract.at("run_id")
+                  << " instruments=" << artifact.at("instruments").size() << '\n';
+        return EXIT_SUCCESS;
+    } catch (const std::exception& error) {
+        std::cerr << "PIPELINE_REJECTED: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
-    const bool delivered = cfss::send_telegram_message(token, chat_id, telegram_markdown);
-    curl_global_cleanup();
-    return delivered ? EXIT_SUCCESS : EXIT_FAILURE;
 }

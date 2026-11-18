@@ -26,12 +26,12 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
       - name: Record toolchain
         run: |
           cmake --version
           g++ --version
-          pkg-config --modversion libcurl
+          pkg-config --modversion libcurl openssl
       - name: Configure
         run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
@@ -40,8 +40,10 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure --no-tests=error
           ./build/cfss_unit_tests
-      - name: Exercise OHLCV SMA20 and Telegram signal POST
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: ./build/market_pipeline
+      - name: Verify market pipeline requires an explicit L1 contract or live collection command
+        run: |
+          if ./build/market_pipeline >/tmp/market_pipeline_usage.log 2>&1; then
+            echo "Unexpected zero-argument market pipeline success"
+            exit 1
+          fi
+          grep -q "Usage: market_pipeline" /tmp/market_pipeline_usage.log

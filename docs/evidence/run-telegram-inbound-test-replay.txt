@@ -1,0 +1,4 @@
+purpose=controlled_inbound_replay
+expected_last_update_id=610176013
+expected_reply_message_id=43
+expected_duplicate_reply_count=0

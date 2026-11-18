@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Performance Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "scan_id",
+    "generated_at_utc",
+    "status",
+    "trade_count",
+    "metrics",
+    "reason"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scan_id": {
+      "type": "string",
+      "pattern": "^scan-[0-9a-f]{64}$"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "status": {
+      "enum": [
+        "NOT_CALCULATED",
+        "CALCULATED"
+      ]
+    },
+    "trade_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "win_rate",
+        "profit_factor",
+        "sharpe",
+        "max_drawdown",
+        "expectancy"
+      ],
+      "properties": {
+        "win_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "profit_factor": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sharpe": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "max_drawdown": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "expectancy": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

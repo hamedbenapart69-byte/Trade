@@ -1,0 +1,1 @@
+Owner confirmed a fresh /status command was sent to the configured Telegram bot after the previous outbound delivery (message id 40). This marker requests the controlled C++ inbound-only verification; ordinary outbound market delivery is intentionally skipped for this run.
