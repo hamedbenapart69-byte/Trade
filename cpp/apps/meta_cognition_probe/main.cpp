@@ -43,6 +43,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         const std::vector<std::string> required{
             "signal_id", "path", "regime", "closed_at_ms", "raw_score",
             "profile", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind",
+            "data_class", "cost_status",
             "resolution_data_sha256", "resolution_bars", "source_scan_id", "symbol",
             "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
         };
@@ -51,7 +52,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
                 throw std::runtime_error("outcome_required_field_missing:" + key);
         if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
             !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
-            !row.at("profile").is_string() || !row.at("entry_fill_reference").is_number() ||
+            !row.at("profile").is_string() || !row.at("data_class").is_string() ||
+            !row.at("cost_status").is_string() || !row.at("entry_fill_reference").is_number() ||
             !row.at("entry_model").is_string() || !row.at("execution_status").is_string() ||
             !row.at("outcome_kind").is_string() ||
             !row.at("resolution_data_sha256").is_string() ||
@@ -71,7 +73,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             row.at("execution_status") != "NOT_EXECUTED" ||
             row.at("outcome_kind") != "HYPOTHESIS_PROXY")
             throw std::runtime_error("outcome_profile_or_proxy_contract_mismatch");
-        const auto data_class = row.value("data_class", std::string{"PROXY"});
+        const auto data_class = row.at("data_class").get<std::string>();
         if (data_class != "REAL" && data_class != "PROXY")
             throw std::runtime_error("outcome_data_class_invalid");
         cfss::meta::Outcome item{};
