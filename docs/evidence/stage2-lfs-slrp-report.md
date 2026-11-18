@@ -28,7 +28,7 @@ All scores must be deterministic, versioned, point-in-time available and normali
 5. A full LFS score is emitted only with 5/5 valid components.
 6. Missing IDs are reported; no zero fill or weight renormalization.
 7. Identical inputs produce identical scores.
-8. Provenance preserved: all REAL -> REAL; all PROXY -> PROXY; mixed -> MIXED.
+8. Provenance preserved: v1 accepts REAL components only; PROXY components are rejected and reserved for v2.
 9. C++ unit/contract tests pass under warning-enabled build.
 10. Stage handoff requires a versioned report and Telegram receipt; no actionable trade is emitted.
 
@@ -51,7 +51,7 @@ Directly inspected Stage 1 C++ L1 contract:
 Expected failure condition: if live L1 lacks LFS1/LFS3 and complete component definitions, v1 must return UNAVAILABLE. This is a measured data/assumption limitation, not permission to fill missing values.
 
 ## Version control
-- v1: strict REAL/PROXY-aware aggregator contract.
+- v1: strict REAL-only v1 aggregator contract.
 - v2: NOT_BUILT; only after actual v1 FAIL and specific D-code evidence.
 - v3: NOT_BUILT; only after actual v2 FAIL and specific D-code evidence.
 - Maximum three versions. No parameter-only rewrites.
