@@ -1,7 +1,7 @@
 {
   "artifact_type": "cfss_nss_v2_proxy",
-  "basis_sha256": "ce47d2246b1758bee175b474c7ecd014045ed2e27629a3492ab70e40cbe04b47",
-  "decision_time_ms": 1795003200000,
+  "basis_sha256": "10964b054fa502e550e705849514f9b30fd053c237e8c163ba8a9734c2940c39",
+  "decision_time_ms": 1795006800000,
   "instruments": [
     {
       "actionable": false,
@@ -15,12 +15,12 @@
         },
         "components": [
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
             "id": "NSS1_OPEN_INTEREST_GROWTH",
             "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.42504254258327095
+            "score": 0.4698528685638633
           },
           {
             "available_at_ms": 1794988800000,
@@ -31,35 +31,35 @@
             "score": 0.7238463289467009
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
             "id": "NSS3_BASIS_EXPANSION",
             "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
-            "score": 0.5884210825364687
+            "score": 0.47842600985089384
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
             "id": "NSS4_VOLUME_EXPANSION",
             "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.5267182691542859
+            "score": 0.5292322064097631
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
             "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
             "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
-            "score": 0.550105037841643
+            "score": 0.5660040106925108
           }
         ],
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
         "direction": "LONG",
         "missing_count": 0,
-        "score": 0.5514897411210046,
+        "score": 0.545695760894019,
         "status": "CALCULATED"
       },
       "nss_short": {
@@ -70,12 +70,12 @@
         },
         "components": [
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
             "id": "NSS1_OPEN_INTEREST_GROWTH",
             "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.5749574574167291
+            "score": 0.5301471314361367
           },
           {
             "available_at_ms": 1794988800000,
@@ -86,35 +86,35 @@
             "score": 0.276153671053299
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
             "id": "NSS3_BASIS_EXPANSION",
             "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
-            "score": 0.4115789174635313
+            "score": 0.5215739901491061
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
             "id": "NSS4_VOLUME_EXPANSION",
             "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.47328173084571407
+            "score": 0.4707677935902369
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
             "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
             "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
-            "score": 0.550105037841643
+            "score": 0.5660040106925108
           }
         ],
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
         "direction": "SHORT",
         "missing_count": 0,
-        "score": 0.46354177023148835,
+        "score": 0.4741054423137342,
         "status": "CALCULATED"
       },
       "status": "CALCULATED",
@@ -133,12 +133,12 @@
         },
         "components": [
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
             "id": "NSS1_OPEN_INTEREST_GROWTH",
             "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.36421200137763693
+            "score": 0.36753747899897904
           },
           {
             "available_at_ms": 1794988800000,
@@ -149,35 +149,35 @@
             "score": 0.6486926844804559
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
             "id": "NSS3_BASIS_EXPANSION",
             "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
-            "score": 0.3696274173479512
+            "score": 0.5107518132416412
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
             "id": "NSS4_VOLUME_EXPANSION",
             "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.5285251719852292
+            "score": 0.5341836757684462
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
             "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
             "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
-            "score": 0.6280448791866624
+            "score": 0.6529300470947098
           }
         ],
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
         "direction": "LONG",
         "missing_count": 0,
-        "score": 0.48641312845475626,
+        "score": 0.5202172016735866,
         "status": "CALCULATED"
       },
       "nss_short": {
@@ -188,12 +188,12 @@
         },
         "components": [
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
             "id": "NSS1_OPEN_INTEREST_GROWTH",
             "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.635787998622363
+            "score": 0.632462521001021
           },
           {
             "available_at_ms": 1794988800000,
@@ -204,47 +204,991 @@
             "score": 0.351307315519544
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
             "id": "NSS3_BASIS_EXPANSION",
             "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
-            "score": 0.6303725826520489
+            "score": 0.4892481867583588
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
             "id": "NSS4_VOLUME_EXPANSION",
             "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
-            "score": 0.4714748280147709
+            "score": 0.4658163242315538
           },
           {
-            "available_at_ms": 1794999600000,
+            "available_at_ms": 1795003200000,
             "data_class": "PROXY",
             "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
             "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
             "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
-            "score": 0.6280448791866624
+            "score": 0.6529300470947098
           }
         ],
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
         "direction": "SHORT",
         "missing_count": 0,
-        "score": 0.5520003353012424,
+        "score": 0.5256618124548265,
         "status": "CALCULATED"
       },
       "status": "CALCULATED",
       "symbol": "ETH/USDT:USDT",
       "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "UNAVAILABLE",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.4881997021906023
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.5507581346032976
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.555089834205936
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.27855051578890766
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "LONG",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5118002978093976
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.4492418653967024
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.44491016579406395
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.27855051578890766
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "SHORT",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "status": "UNAVAILABLE",
+      "symbol": "SOXL/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "UNAVAILABLE",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5382324332720579
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.6015460926172762
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.4871163519075176
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.4344825397423371
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "LONG",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.46176756672794206
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.3984539073827238
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5128836480924824
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.4344825397423371
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "SHORT",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "status": "UNAVAILABLE",
+      "symbol": "SNDK/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "PROXY",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.3693247911705651
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.5718430135219377
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.18396335628897223
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.47929058769123156
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5984342002985629
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "LONG",
+        "missing_count": 0,
+        "score": 0.4236174295118207,
+        "status": "CALCULATED"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.630675208829435
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.42815698647806233
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.8160366437110278
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5207094123087684
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5984342002985629
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "SHORT",
+        "missing_count": 0,
+        "score": 0.6059128305777481,
+        "status": "CALCULATED"
+      },
+      "status": "CALCULATED",
+      "symbol": "ZEC/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "PROXY",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.3807926746023009
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.94351060039934
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.9027631143571059
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.48859419892782613
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5046576582140169
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "LONG",
+        "missing_count": 0,
+        "score": 0.6324803239032558,
+        "status": "CALCULATED"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.6192073253976992
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.05648939960065994
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.09723688564289422
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5114058010721738
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5046576582140169
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "SHORT",
+        "missing_count": 0,
+        "score": 0.36891697356094916,
+        "status": "CALCULATED"
+      },
+      "status": "CALCULATED",
+      "symbol": "SOL/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "UNAVAILABLE",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.5221826891584773
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.4726997073835983
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.6933444277157697
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.09369756303111981
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "LONG",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.4778173108415227
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.5273002926164017
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.30665557228423024
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.09369756303111981
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "SHORT",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "status": "UNAVAILABLE",
+      "symbol": "NVDA/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "UNAVAILABLE",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 3,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.6713377709694409
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "INSUFFICIENT_OR_CONSTANT_REFERENCE",
+            "score": null
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.682129019363552
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5108157675691646
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "LONG",
+        "missing_count": 2,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 3,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.3286622290305591
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "INSUFFICIENT_OR_CONSTANT_REFERENCE",
+            "score": null
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.31787098063644803
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.5108157675691646
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "SHORT",
+        "missing_count": 2,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "status": "UNAVAILABLE",
+      "symbol": "ANTHROPIC/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "UNAVAILABLE",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.05122701196373023
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.13854224502090887
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.23072511790801264
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.12480214720569942
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "LONG",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 4,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.9487729880362697
+          },
+          {
+            "available_at_ms": 1794988800000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=28800000;SKIPPED_GAPS=0",
+            "score": 0.8614577549790912
+          },
+          {
+            "available_at_ms": 0,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "STALE_OR_INVALID_COMPONENT_TIMESTAMP",
+            "score": null
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.7692748820919874
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.12480214720569942
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "UNAVAILABLE",
+        "direction": "SHORT",
+        "missing_count": 1,
+        "score": null,
+        "status": "UNAVAILABLE"
+      },
+      "status": "UNAVAILABLE",
+      "symbol": "XAU/USDT:USDT",
+      "version": "NSS_V2_PROXY"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_class": "PROXY",
+      "nss_long": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.9979385820131064
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=14400000;SKIPPED_GAPS=0",
+            "score": 0.9943136264482939
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.5167017943687755
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.9996646498695336
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.0003353501304664781
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "LONG",
+        "missing_count": 0,
+        "score": 0.7515846587673458,
+        "status": "CALCULATED"
+      },
+      "nss_short": {
+        "actionable": false,
+        "component_coverage": {
+          "available_scores": 5,
+          "required_scores": 5
+        },
+        "components": [
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_OI_PRICE_ALIGNMENT_ZSIGMOID_24H",
+            "id": "NSS1_OPEN_INTEREST_GROWTH",
+            "reason": "OI_GROWTH_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.0020614179868935403
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_FUNDING_8H_NORMALIZED_ZSIGMOID",
+            "id": "NSS2_HEALTHY_FUNDING",
+            "reason": "FUNDING_COST_NORMALIZED_TO_8H;MEDIAN_INTERVAL_MS=14400000;SKIPPED_GAPS=0",
+            "score": 0.005686373551706157
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_SPOT_PERP_BASIS_CHANGE_ZSIGMOID_24H",
+            "id": "NSS3_BASIS_EXPANSION",
+            "reason": "REAL_BASIS_INPUT_PROXY_TRANSFORM",
+            "score": 0.48329820563122444
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_DIRECTIONAL_VOLUME_EXPANSION_ZSIGMOID",
+            "id": "NSS4_VOLUME_EXPANSION",
+            "reason": "VOLUME_EXPANSION_ALIGNED_WITH_PRICE_DIRECTION",
+            "score": 0.0003353501304664781
+          },
+          {
+            "available_at_ms": 1795003200000,
+            "data_class": "PROXY",
+            "definition_id": "NSS_V2_INVERSE_BB_WIDTH_ZSIGMOID_20H",
+            "id": "NSS5_PRE_BREAKOUT_COMPRESSION",
+            "reason": "LOWER_BB_WIDTH_SCORES_HIGHER",
+            "score": 0.0003353501304664781
+          }
+        ],
+        "confidence_status": "NOT_CALIBRATED",
+        "data_class": "PROXY",
+        "direction": "SHORT",
+        "missing_count": 0,
+        "score": 0.09851594627179414,
+        "status": "CALCULATED"
+      },
+      "status": "CALCULATED",
+      "symbol": "MMT/USDT:USDT",
+      "version": "NSS_V2_PROXY"
     }
   ],
-  "l1_sha256": "155d1c41ea27f57c25d46f826275fa43917ea029d87df4c8882f9bc5714881e8",
+  "l1_sha256": "9964b2ade1177a88b529fc933acc3691b41a55462b1f34c2e8b4715f0e38ae50",
   "reason": "V2 uses explicit directional z-score/sigmoid proxy transforms; all outputs remain research-only and NOT_CALIBRATED.",
   "schema_version": "1.0.0",
-  "source_run_id": "okx-cpp-1795005637653",
-  "source_scan_id": "scan-246d8795472a954f053704771015ad588ead9e78334f612fdf566c3c48af25c7",
-  "status": "CALCULATED",
+  "source_run_id": "okx-cpp-1795010079077",
+  "source_scan_id": "scan-8f3021423e9b4561818f2f4fdc3af41d2106c19425cbec6fac67b90135527770",
+  "status": "PARTIAL_OR_UNAVAILABLE",
   "version": "NSS_V2_PROXY"
 }

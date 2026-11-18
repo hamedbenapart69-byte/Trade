@@ -1,0 +1,40 @@
+{
+  "artifact_type": "cfss_shadow_candidate_registry_v1",
+  "candidates": [
+    {
+      "closed_at_ms": null,
+      "data_class": "PROXY",
+      "decision_time_ms": 1795006800000,
+      "direction": "LONG",
+      "entry_reference": 0.2532,
+      "expiry_time_ms": 1795611600000,
+      "falsification": "A subsequent 4H close returns below the 20-bar breakout level or the phase is no longer UPTREND.",
+      "gross_r": null,
+      "hypothesis": "A UPTREND structure has a 20-bar 4H breakout with volume_ratio=86.412669 and directional NSS=0.751585. A 1-7d narrative-momentum continuation is testable using market-derived participation proxies.",
+      "path": "PLAN_A_NMT",
+      "raw_score": 0.7515846587673458,
+      "regime": "UPTREND",
+      "resolution": null,
+      "resolution_timeframe": "1h",
+      "signal_id": "7e9fc36598266c8f6d0c22a5d32bc8ddb0c78f13e16860aff1787ac90ab75806",
+      "skip_reason": null,
+      "source_l1_sha256": "9964b2ade1177a88b529fc933acc3691b41a55462b1f34c2e8b4715f0e38ae50",
+      "source_run_id": "okx-cpp-1795010079077",
+      "source_scan_id": "scan-8f3021423e9b4561818f2f4fdc3af41d2106c19425cbec6fac67b90135527770",
+      "state": "PENDING",
+      "stop_reference": 0.2487,
+      "symbol": "MMT/USDT:USDT",
+      "target_reference": 0.295
+    }
+  ],
+  "schema_version": "1.0.0",
+  "summary": {
+    "pending_count": 1,
+    "registered_this_run": 1,
+    "rejected_this_run": 0,
+    "resolved_this_run": 0,
+    "total_candidates": 1,
+    "total_outcomes": 0
+  },
+  "updated_at_ms": 1795006800000
+}
