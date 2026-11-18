@@ -1,0 +1,47 @@
+name: C++ Stage 2 LFS v1 Contract
+
+on:
+  push:
+    branches: [feat/cpp-stage2-lfs-v1]
+    paths:
+      - "cpp/**"
+      - "docs/evidence/stage2-lfs-slrp-report.md"
+      - ".github/workflows/cpp-stage2-lfs-v1.yml"
+  pull_request:
+    branches: [feat/cpp-stage1-clean]
+    paths:
+      - "cpp/**"
+      - "docs/evidence/stage2-lfs-slrp-report.md"
+      - ".github/workflows/cpp-stage2-lfs-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpp-stage2-lfs-v1-\${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  lfs-v1-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+      - name: Configure C++ build
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build all C++ targets
+        run: cmake --build build --parallel 2
+      - name: Run unit and LFS v1 contract tests
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Assert no Actions artifact upload is configured
+        run: |
+          if grep -R "actions/upload-artifact" .github/workflows; then
+            echo "Unexpected Actions artifact upload dependency detected"
+            exit 1
+          fi
+          echo "NO_ACTIONS_ARTIFACT_UPLOAD"
