@@ -1,4 +1,0 @@
-artifact_id=14352156550
-run_id=44135013370
-size_bytes=866358
-reason=remove_the_only_historical_actions_artifact_from_v18_2_stage1_validation
