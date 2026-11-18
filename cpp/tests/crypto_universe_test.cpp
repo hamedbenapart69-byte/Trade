@@ -77,6 +77,16 @@ int main() {
             cfss::okx::valid_cache_entry(checkpoint.at("cache_entries"),
                 checkpoint.at("instruments").at(1), "ETH-USDT-SWAP", 1000, 2000),
             "partial checkpoints preserve data and attach a verifiable provider/venue/market/timeframe/window cache key");
+    auto tampered_data = checkpoint.at("instruments").at(1);
+    tampered_data["candles"][0] = 999;
+    require(!cfss::okx::valid_cache_entry(checkpoint.at("cache_entries"),
+                tampered_data, "ETH-USDT-SWAP", 1000, 2000),
+            "modified cached data is rejected by the data revision hash");
+    auto tampered_metadata = checkpoint.at("cache_entries");
+    tampered_metadata["ETH-USDT-SWAP"]["venue"] = "OTHER";
+    require(!cfss::okx::valid_cache_entry(tampered_metadata,
+                checkpoint.at("instruments").at(1), "ETH-USDT-SWAP", 1000, 2000),
+            "cache entries with a mismatched venue are rejected");
     require(cfss::okx::retryable_http_failure(CURLE_OPERATION_TIMEDOUT, 0L) &&
             cfss::okx::retryable_http_failure(CURLE_OK, 429L) &&
             cfss::okx::retryable_http_failure(CURLE_OK, 503L) &&
