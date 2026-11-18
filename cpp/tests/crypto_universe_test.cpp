@@ -69,11 +69,14 @@ int main() {
         {{"instrument_id", "ETH-USDT-SWAP"}, {"candles", nlohmann::json::array({5, 6})}},
         {{"instrument_id", "SOL-USDT-SWAP"}, {"candles", nlohmann::json::array({7, 8})}}
     });
-    const auto checkpoint = cfss::okx::make_market_cache_snapshot(old_cache, refreshed);
+    const auto checkpoint = cfss::okx::make_market_cache_snapshot(old_cache, refreshed, 1000, 2000);
     require(checkpoint.at("instruments").size() == 3U &&
             checkpoint.at("instruments").at(1).at("instrument_id") == "ETH-USDT-SWAP" &&
-            checkpoint.at("instruments").at(1).at("candles").at(0) == 5,
-            "partial checkpoints preserve untouched instruments and replace refreshed instrument data");
+            checkpoint.at("instruments").at(1).at("candles").at(0) == 5 &&
+            checkpoint.at("cache_entries").contains("ETH-USDT-SWAP") &&
+            cfss::okx::valid_cache_entry(checkpoint.at("cache_entries"),
+                checkpoint.at("instruments").at(1), "ETH-USDT-SWAP", 1000, 2000),
+            "partial checkpoints preserve data and attach a verifiable provider/venue/market/timeframe/window cache key");
     require(cfss::okx::retryable_http_failure(CURLE_OPERATION_TIMEDOUT, 0L) &&
             cfss::okx::retryable_http_failure(CURLE_OK, 429L) &&
             cfss::okx::retryable_http_failure(CURLE_OK, 503L) &&
