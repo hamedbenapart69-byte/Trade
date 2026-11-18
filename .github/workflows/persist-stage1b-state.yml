@@ -1,4 +1,4 @@
-name: Persist Stage 1B Scanner State
+name: Legacy Stage 1B State Persistence (Quarantined by V18.2)
 
 on:
   workflow_dispatch:
@@ -6,121 +6,9 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: research-state-writes
-  cancel-in-progress: false
-
 jobs:
   persist-state:
     if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    permissions:
-      actions: read
-      contents: read
     steps:
-      - name: Checkout open-signal state branch
-        uses: actions/checkout@v4
-        with:
-          ref: signal-state
-          path: state-repo
-          persist-credentials: true
-
-      - name: Checkout research-data branch
-        uses: actions/checkout@v4
-        with:
-          ref: stage1-research-data
-          path: research-repo
-          persist-credentials: true
-
-      - name: Validate untrusted JSON artifacts and stage state-only updates
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          def load_object(path: Path) -> dict:
-              if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
-                  raise SystemExit(f"invalid_artifact_file:{path.name}")
-              value = json.loads(path.read_text(encoding="utf-8"))
-              if not isinstance(value, dict):
-                  raise SystemExit(f"invalid_json_root:{path.name}")
-              return value
-
-          def validate_time(value: object, label: str) -> None:
-              if not isinstance(value, str):
-                  raise SystemExit(f"missing_timestamp:{label}")
-              parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-              if parsed.tzinfo is None:
-                  raise SystemExit(f"naive_timestamp:{label}")
-              if parsed > datetime.now(timezone.utc).replace(microsecond=0):
-                  raise SystemExit(f"future_timestamp:{label}")
-
-          open_source = Path("incoming-open/open_signals.json")
-          open_state = load_object(open_source)
-          if open_state.get("schema_version") != 1:
-              raise SystemExit("unsupported_open_state_schema")
-          for key in ("open_signals", "closed_signals"):
-              rows = open_state.get(key)
-              if not isinstance(rows, dict) or len(rows) > 5000:
-                  raise SystemExit(f"invalid_open_state_{key}")
-              if any(not isinstance(k, str) or len(k) > 128 or not isinstance(v, dict)
-                     for k, v in rows.items()):
-                  raise SystemExit(f"invalid_open_state_entry:{key}")
-          validate_time(open_state.get("updated_at_utc"), "open_state")
-
-          research_source = Path("incoming-research/research_signals.json")
-          research_state = load_object(research_source)
-          signals = research_state.get("signals")
-          if research_state.get("schema_version") != 1:
-              raise SystemExit("unsupported_research_state_schema")
-          if not isinstance(signals, list) or len(signals) > 5000:
-              raise SystemExit("invalid_research_signals")
-          if research_state.get("signal_count") != len(signals):
-              raise SystemExit("research_signal_count_mismatch")
-          for row in signals:
-              if not isinstance(row, dict):
-                  raise SystemExit("invalid_research_signal_row")
-              if not isinstance(row.get("signal_id"), str) or not isinstance(row.get("symbol"), str):
-                  raise SystemExit("research_signal_identity_missing")
-          validate_time(research_state.get("updated_at_utc"), "research_state")
-
-          open_target = Path("state-repo/signal_autopilot/state/open_signals.json")
-          open_target.parent.mkdir(parents=True, exist_ok=True)
-          open_target.write_text(json.dumps(open_state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-          research_target = Path("research-repo/signal_autopilot/state/research_signals.json")
-          research_target.parent.mkdir(parents=True, exist_ok=True)
-          research_target.write_text(json.dumps(research_state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print("OPEN_SIGNAL_STATE_VALIDATED")
-          print("RESEARCH_STATE_VALIDATED")
-          PY
-
-      - name: Persist validated open-signal state
-        run: |
-          set -euo pipefail
-          git -C state-repo config user.name "github-actions[bot]"
-          git -C state-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C state-repo add signal_autopilot/state/open_signals.json
-          if git -C state-repo diff --cached --quiet; then
-            echo "SIGNAL_STATE_UNCHANGED"
-          else
-            git -C state-repo commit -m "state: persist validated Stage 1B open signals [skip ci]"
-            git -C state-repo push origin HEAD:signal-state
-          fi
-
-      - name: Persist validated research collection
-        run: |
-          set -euo pipefail
-          git -C research-repo config user.name "github-actions[bot]"
-          git -C research-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C research-repo add signal_autopilot/state/research_signals.json
-          if git -C research-repo diff --cached --quiet; then
-            echo "RESEARCH_STATE_UNCHANGED"
-          else
-            git -C research-repo commit -m "data(research): persist validated Stage 1B observations [skip ci]"
-            git -C research-repo push origin HEAD:stage1-research-data
-          fi
+      - run: echo "LEGACY_STAGE1B_STATE_PERSISTENCE=DISABLED"
