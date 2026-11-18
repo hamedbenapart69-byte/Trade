@@ -520,6 +520,11 @@
           "type": "integer",
           "minimum": 0
         },
+        "crypto_universe_status": {"const": "VERIFIED"},
+        "crypto_universe_source": {"const": "coinpaprika"},
+        "crypto_universe_symbol_count": {"type": "integer", "minimum": 500},
+        "crypto_universe_symbols_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "excluded_non_crypto_count": {"type": "integer", "minimum": 0},
         "selected_count": {
           "type": "integer",
           "minimum": 0
@@ -550,6 +555,25 @@
             "minLength": 1
           }
         }
+      }
+    },
+    "crypto_universe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "artifact_type", "status", "provider_id", "source_endpoint", "attribution", "freshness_status", "fetched_at_ms", "retrieved_at_ms", "symbol_count", "symbols_sha256", "symbols"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "artifact_type": {"const": "cfss_crypto_universe_v1"},
+        "status": {"const": "VERIFIED"},
+        "provider_id": {"const": "coinpaprika"},
+        "source_endpoint": {"const": "https://api.coinpaprika.com/v1/coins"},
+        "attribution": {"const": "CoinPaprika"},
+        "freshness_status": {"enum": ["LIVE", "CACHED"]},
+        "fetched_at_ms": {"type": "integer", "minimum": 1},
+        "retrieved_at_ms": {"type": "integer", "minimum": 1},
+        "symbol_count": {"type": "integer", "minimum": 500},
+        "symbols_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "symbols": {"type": "array", "minItems": 500, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z0-9]{1,20}$"}}
       }
     },
     "provider_health": {
