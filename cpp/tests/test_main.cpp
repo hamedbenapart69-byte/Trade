@@ -252,6 +252,12 @@ int main() {
         cfss::telegram::reconcile_inbound_status("PROCESSED") != "PROCESSED") {
         std::cerr << "Telegram crash-recovery state reconciliation failed\n"; return EXIT_FAILURE;
     }
+    if (!cfss::telegram::inbound_duplicate_should_resume_reply("REPLY_PENDING") ||
+        cfss::telegram::inbound_duplicate_should_resume_reply("PROCESSED") ||
+        cfss::telegram::inbound_duplicate_should_resume_reply("IGNORED_UNKNOWN_COMMAND") ||
+        cfss::telegram::inbound_duplicate_should_resume_reply("DELIVERY_UNKNOWN")) {
+        std::cerr << "Telegram inbound duplicate replay gate failed\\n"; return EXIT_FAILURE;
+    }
     const auto inbound_default = cfss::telegram::default_inbound_state();
     if (inbound_default.value("last_poll_status", std::string{}) != "NEVER_POLLED" ||
         inbound_default.value("poll_count", -1LL) != 0LL ||
