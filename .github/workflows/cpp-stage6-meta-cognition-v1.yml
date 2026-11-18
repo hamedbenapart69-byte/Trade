@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence
-          ./build/market_pipeline --collect-okx 10 2 \
+          ./build/market_pipeline --collect-okx 100 2 \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l2-status.v1.json \
             signals-state/cpp_runtime/crypto_universe.v1.json
