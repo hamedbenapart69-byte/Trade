@@ -341,7 +341,9 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
     });
     if (btc == eligible.end()) throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
     std::vector<Instrument> selected;
-    const auto selection_limit = std::min(static_cast<std::size_t>(target_count), eligible.size());
+    // target_count counts non-BTC contracts; BTC is an additional mandatory reference.
+    const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
+    const auto selection_limit = std::min(requested_total, eligible.size());
     selected.push_back(*btc);
     for (const auto& item : eligible) {
         if (selected.size() >= selection_limit) break;
