@@ -64,5 +64,32 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
                 self.assertNotIn("actions/upload-artifact", content)
 
 
+    def test_paid_railway_deployment_is_disabled(self):
+        workflow = read("deploy-railway.yml")
+        self.assertIn("deploy:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("RAILWAY_TOKEN", workflow)
+        self.assertNotIn("railway up", workflow)
+
+    def test_legacy_v5_autopilot_and_pages_deployment_are_disabled(self):
+        workflow = read("v5-signal-autopilot.yml")
+        self.assertIn("scan-and-build:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("actions/upload-artifact", workflow)
+        self.assertNotIn("actions/deploy-pages", workflow)
+        self.assertNotIn("pages: write", workflow)
+
+    def test_legacy_telegram_probe_is_disabled(self):
+        workflow = read("telegram_probe.yml")
+        self.assertIn("probe:\n    if: ${{ false }}", workflow)
+        self.assertNotIn("TELEGRAM_TOKEN", workflow)
+        self.assertNotIn("TELEGRAM_AUDIENCE_CHANNEL_ID", workflow)
+        self.assertNotIn("V9 PROBE", workflow)
+
+    def test_legacy_channel_check_is_manual_only(self):
+        workflow = read("telegram_channel_check.yml")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertNotIn("schedule:", workflow)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
