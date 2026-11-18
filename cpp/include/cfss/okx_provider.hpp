@@ -405,7 +405,7 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
 inline json fetch_recent_candles(const Instrument& instrument, const std::string& bar,
                                     std::int64_t interval_ms, std::int64_t end_ms,
                                     int limit = 100) {
-    if ((bar != "15m" && bar != "5m") || interval_ms <= 0 || limit < 1 || limit > 300)
+    if ((bar != "1H" && bar != "15m" && bar != "5m") || interval_ms <= 0 || limit < 1 || limit > 300)
         throw std::invalid_argument("recent_candle_request_invalid");
     const auto payload = request("/api/v5/market/candles?instId=" + encode(instrument.id) +
                                   "&bar=" + encode(bar) + "&limit=" + std::to_string(limit));
@@ -476,11 +476,13 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
     return out;
 }
 
-inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
+inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms,
+                                int max_pages = 12) {
+    if (max_pages < 1 || max_pages > 12) throw std::invalid_argument("open_interest_max_pages_invalid");
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
-    for (int page = 0; page < 12; ++page) {
+    for (int page = 0; page < max_pages; ++page) {
         std::string path = "/api/v5/rubik/stat/contracts/open-interest-history?instId=" +
                            encode(instrument.id) + "&period=1H&limit=100";
         if (after) path += "&end=" + std::to_string(*after);
@@ -622,7 +624,29 @@ inline json fetch_fear_greed() {
     }
 }
 
-inline json collect(int symbol_count, int years, const std::optional<json>& cached_crypto_universe = std::nullopt) {
+inline json merge_timestamp_rows(const json& historical, const json& recent,
+                                  std::int64_t start_ms, std::int64_t end_ms,
+                                  std::int64_t interval_ms) {
+    std::map<std::int64_t, json> merged;
+    const auto add = [&](const json& rows) {
+        if (!rows.is_array()) return;
+        for (const auto& row : rows) {
+            if (!row.is_object()) continue;
+            const auto ts = row.value("timestamp_ms", std::int64_t{0});
+            if (ts > 0 && ts >= start_ms && ts < end_ms && ts % interval_ms == 0)
+                merged[ts] = row;
+        }
+    };
+    add(historical);
+    add(recent);
+    json result = json::array();
+    for (const auto& [ts, row] : merged) { (void)ts; result.push_back(row); }
+    return result;
+}
+
+inline json collect(int symbol_count, int years,
+                       const std::optional<json>& cached_crypto_universe = std::nullopt,
+                       const std::optional<json>& cached_market_data = std::nullopt) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
     const auto acquired_ms = now_ms();
@@ -637,12 +661,44 @@ inline json collect(int symbol_count, int years, const std::optional<json>& cach
     for (const auto& item : selected) {
         json candles = json::array(), funding = json::array(), oi = json::array();
         json errors = json::array();
-        try { candles = fetch_candles(item, start_ms, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
-        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
-        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
+        const json* cached_instrument = nullptr;
+        if (cached_market_data && cached_market_data->is_object() &&
+            cached_market_data->contains("instruments") &&
+            cached_market_data->at("instruments").is_array()) {
+            for (const auto& cached_item : cached_market_data->at("instruments")) {
+                if (cached_item.value("instrument_id", std::string{}) == item.id) {
+                    cached_instrument = &cached_item;
+                    break;
+                }
+            }
+        }
+        const bool has_valid_candle_cache = cached_instrument &&
+            cached_instrument->contains("candles") && cached_instrument->at("candles").is_array() &&
+            !cached_instrument->at("candles").empty();
+        try {
+            if (has_valid_candle_cache) {
+                const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
+                candles = merge_timestamp_rows(cached_instrument->at("candles"), recent,
+                                                start_ms, end_ms, 3'600'000LL);
+            } else {
+                candles = fetch_candles(item, start_ms, end_ms);
+            }
+        } catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
+        try {
+            const auto fresh = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
+            const auto old = cached_instrument && cached_instrument->contains("funding")
+                ? cached_instrument->at("funding") : json::array();
+            funding = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                            end_ms, 1LL);
+        } catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
+        try {
+            const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
+                                                   has_valid_candle_cache ? 1 : 12);
+            const auto old = cached_instrument && cached_instrument->contains("open_interest")
+                ? cached_instrument->at("open_interest") : json::array();
+            oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                       end_ms, 1LL);
+        } catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
         instruments.push_back({
