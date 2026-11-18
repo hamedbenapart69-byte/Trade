@@ -108,7 +108,8 @@ json build_run_manifest(const json& contract, const json& artifact,
 
 int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 const std::filesystem::path& l2_path,
-                const std::optional<std::filesystem::path>& crypto_universe_cache_path) {
+                const std::optional<std::filesystem::path>& crypto_universe_cache_path,
+                const std::optional<std::filesystem::path>& market_data_cache_path) {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
         throw std::runtime_error("curl_global_init_failed");
     try {
@@ -118,7 +119,18 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             if (!cache_input) throw std::runtime_error("crypto_universe_cache_open_failed");
             cached_crypto_universe = json::parse(cache_input);
         }
-        const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe);
+        std::optional<json> cached_market_data;
+        if (market_data_cache_path && std::filesystem::exists(*market_data_cache_path)) {
+            std::ifstream market_cache_input(*market_data_cache_path, std::ios::binary);
+            if (!market_cache_input) throw std::runtime_error("market_data_cache_open_failed");
+            cached_market_data = json::parse(market_cache_input);
+            if (!cached_market_data->is_object() ||
+                !cached_market_data->contains("instruments") ||
+                !cached_market_data->at("instruments").is_array())
+                throw std::runtime_error("market_data_cache_schema_invalid");
+        }
+        const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
+                                                  cached_market_data);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
 
@@ -285,10 +297,13 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
 int main(int argc, char** argv) {
     try {
-        if ((argc == 6 || argc == 7) && std::string{argv[1]} == "--collect-okx") {
-            const std::optional<std::filesystem::path> cache_path =
-                argc == 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
-            return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5], cache_path);
+        if ((argc == 6 || argc == 7 || argc == 8) && std::string{argv[1]} == "--collect-okx") {
+            const std::optional<std::filesystem::path> universe_cache_path =
+                argc >= 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
+            const std::optional<std::filesystem::path> market_cache_path =
+                argc == 8 ? std::optional<std::filesystem::path>{argv[7]} : std::nullopt;
+            return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5],
+                                universe_cache_path, market_cache_path);
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
