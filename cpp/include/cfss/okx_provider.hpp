@@ -672,9 +672,16 @@ inline json collect(int symbol_count, int years,
                 }
             }
         }
-        const bool has_valid_candle_cache = cached_instrument &&
+        bool has_valid_candle_cache = cached_instrument &&
             cached_instrument->contains("candles") && cached_instrument->at("candles").is_array() &&
             !cached_instrument->at("candles").empty();
+        if (has_valid_candle_cache) {
+            const auto& cached_candles = cached_instrument->at("candles");
+            const auto last_cached_ms = cached_candles.back().value("timestamp_ms", std::int64_t{0});
+            has_valid_candle_cache = last_cached_ms > 0 &&
+                end_ms >= last_cached_ms + 3'600'000LL &&
+                end_ms - (last_cached_ms + 3'600'000LL) <= 10LL * 86'400'000LL;
+        }
         try {
             if (has_valid_candle_cache) {
                 const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
