@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Immutable Closed Outcome Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "ledger_status", "outcomes"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_type": {"const": "cfss_outcome_ledger_v1"},
+    "ledger_status": {"enum": ["EMPTY", "AVAILABLE", "UNAVAILABLE"]},
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["signal_id", "path", "regime", "closed_at_ms", "raw_score", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"],
+        "properties": {
+          "signal_id": {"type": "string", "minLength": 1},
+          "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT", "PLAN_B", "PLAN_C", "PLAN_H"]},
+          "regime": {"type": "string", "minLength": 1},
+          "closed_at_ms": {"type": "integer", "minimum": 1},
+          "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "win": {"type": "boolean"},
+          "win_r": {"type": "number", "minimum": 0},
+          "loss_r": {"type": "number", "minimum": 0},
+          "fee_r": {"type": "number", "minimum": 0},
+          "slippage_r": {"type": "number", "minimum": 0},
+          "funding_r": {"type": "number", "minimum": 0}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"ledger_status": {"const": "EMPTY"}}},
+      "then": {"properties": {"outcomes": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"ledger_status": {"const": "AVAILABLE"}}},
+      "then": {"properties": {"outcomes": {"minItems": 1}}}
+    }
+  ]
+}
