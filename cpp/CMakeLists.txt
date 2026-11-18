@@ -43,6 +43,17 @@ target_compile_features(cfss_unit_tests PRIVATE cxx_std_20)
 target_link_libraries(cfss_unit_tests PRIVATE nlohmann_json::nlohmann_json CURL::libcurl OpenSSL::Crypto)
 add_test(NAME cfss_unit_tests COMMAND cfss_unit_tests)
 
+add_executable(lfs_telegram_report apps/lfs_telegram_report/main.cpp)
+target_include_directories(lfs_telegram_report PRIVATE include)
+target_compile_features(lfs_telegram_report PRIVATE cxx_std_20)
+target_link_libraries(lfs_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(lfs_delivery_tests tests/lfs_delivery_test.cpp)
+target_include_directories(lfs_delivery_tests PRIVATE include)
+target_compile_features(lfs_delivery_tests PRIVATE cxx_std_20)
+target_link_libraries(lfs_delivery_tests PRIVATE OpenSSL::Crypto nlohmann_json::nlohmann_json)
+add_test(NAME lfs_delivery_tests COMMAND lfs_delivery_tests)
+
 add_executable(lfs_v2_probe apps/lfs_v2_probe/main.cpp)
 target_include_directories(lfs_v2_probe PRIVATE include)
 target_compile_features(lfs_v2_probe PRIVATE cxx_std_20)
@@ -64,7 +75,7 @@ target_compile_features(lfs_v1_tests PRIVATE cxx_std_20)
 add_test(NAME lfs_v1_tests COMMAND lfs_v1_tests)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests)
+    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_telegram_report lfs_delivery_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests)
         target_compile_options(${target} PRIVATE
             -Wall
             -Wextra
