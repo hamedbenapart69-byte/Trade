@@ -1,13 +1,6 @@
 name: Stage 1b - LRT 15m data maintenance (P0 data-only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/stage1b-scheduled.yml"
-      - "signal_autopilot/scripts/maintain_lrt15m_dataset.py"
-  schedule:
-    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -134,15 +127,3 @@ jobs:
           print("P0_DATA_ONLY_MANIFEST=PASS")
           PY
 
-      - name: Upload validated P0 dataset for trusted persistence
-        if: steps.maintain15m.outcome == 'success' && steps.verifyP0.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage1b-p0-dataset-${{ github.run_id }}
-          path: |
-            market-data/datasets/stage1b/lrt15m/
-            market-data/datasets/stage1b/manifest.json
-            signal_autopilot/data/stage1b_15m_data_report.json
-            signal_autopilot/data/stage1b_compute/ephemeral_tail/
-          if-no-files-found: error
-          retention-days: 1
