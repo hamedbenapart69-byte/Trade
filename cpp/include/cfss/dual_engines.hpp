@@ -51,6 +51,13 @@ inline std::optional<double> numeric(const nlohmann::json& object, const char* k
     return std::isfinite(value) ? std::optional<double>{value} : std::nullopt;
 }
 
+inline bool passes_current_liquidity(const nlohmann::json& instrument) {
+    const auto turnover = numeric(instrument, "turnover_24h_usd");
+    const auto threshold = numeric(instrument, "liquidity_threshold_usd");
+    return turnover && threshold && *threshold > 0.0 && *turnover > *threshold &&
+        instrument.value("liquidity_status", std::string{"ELIGIBLE"}) != "BELOW_THRESHOLD_PINNED";
+}
+
 inline std::optional<double> direction_score(const nlohmann::json& nss,
                                              const char* key) {
     if (!nss.is_object() || !nss.contains(key) || !nss.at(key).is_object() ||
@@ -115,6 +122,11 @@ inline Candidate build_lrt(const nlohmann::json& instrument,
     result.decision_time_ms = decision_time_ms;
     result.reason = "NO_CONFIRMED_LIQUIDITY_SWEEP_RECLAIM";
 
+    if (!passes_current_liquidity(instrument)) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "CURRENT_LIQUIDITY_BELOW_CONFIGURED_THRESHOLD";
+        return result;
+    }
     if (lfs.value("status", std::string{}) != "CALCULATED" ||
         lfs.value("component_coverage", nlohmann::json::object()).value("available_scores", 0) != 5 ||
         lfs.value("component_coverage", nlohmann::json::object()).value("required_scores", 0) != 5) {
@@ -217,6 +229,11 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
     result.decision_time_ms = decision_time_ms;
     result.reason = "NO_TREND_BREAKOUT_WITH_VOLUME";
 
+    if (!passes_current_liquidity(instrument)) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "CURRENT_LIQUIDITY_BELOW_CONFIGURED_THRESHOLD";
+        return result;
+    }
     if (liquidity.value("status", std::string{}) != "AVAILABLE" ||
         nss.value("status", std::string{}) == "UNAVAILABLE") {
         result.status = "INSUFFICIENT_DATA";
