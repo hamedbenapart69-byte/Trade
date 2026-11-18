@@ -130,6 +130,21 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
         {"brier_ci_low", optional_number(report.brier_ci_low)},
         {"brier_ci_high", optional_number(report.brier_ci_high)},
         {"log_loss_oos", optional_number(report.log_loss_oos)},
+        {"ece_raw_oos", optional_number(report.ece_raw_oos)},
+        {"ece_calibrated_oos", optional_number(report.ece_calibrated_oos)},
+        {"reliability_bins", [&]() {
+            json bins = json::array();
+            for (const auto& bin : report.reliability_bins) {
+                bins.push_back({
+                    {"lower_bound", bin.lower_bound},
+                    {"upper_bound", bin.upper_bound},
+                    {"count", bin.count},
+                    {"mean_probability", bin.mean_probability},
+                    {"observed_win_rate", bin.observed_win_rate}
+                });
+            }
+            return bins;
+        }()},
         {"win_rate_oos", optional_number(report.win_rate_oos)},
         {"win_rate_ci_low", optional_number(report.win_rate_ci_low)},
         {"win_rate_ci_high", optional_number(report.win_rate_ci_high)},
