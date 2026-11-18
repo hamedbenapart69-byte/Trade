@@ -31,10 +31,10 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
             win ? 0.0 : loss_r,
             fee,
             slippage,
-            funding
+            funding,
+            true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
+            "scan-" + std::to_string(i), "SYMBOL-" + std::to_string(i)
         };
-        row.source_scan_id = "scan-" + std::to_string(i);
-        row.symbol = "SYMBOL-" + std::to_string(i);
         out.push_back(row);
     }
     return out;
@@ -65,7 +65,7 @@ int main() {
     require(calibrated.brier_ci_low && calibrated.brier_ci_high &&
             calibrated.win_rate_ci_low && calibrated.win_rate_ci_high &&
             calibrated.win_rate_cluster_ci_low && calibrated.win_rate_cluster_ci_high,
-            "Wilson and two-way clustered OOS confidence intervals are both reported");
+            "Wilson and three-way clustered OOS confidence intervals are both reported");
     require(calibrated.oos_scan_clusters == 50U &&
             calibrated.oos_symbol_clusters == 50U &&
             calibrated.oos_utc_day_clusters == 50U &&
@@ -96,7 +96,9 @@ int main() {
     auto future_extended = outcomes;
     future_extended.push_back({
         "signal-250", "PLAN_A_LRT", "DOWNTREND", 251LL * 86'400'000LL,
-        0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01
+        0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01,
+        true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
+        "scan-future", "SYMBOL-FUTURE"
     });
     const auto with_future = cfss::meta::calibrate(
         future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80, 251LL * 86'400'000LL);
