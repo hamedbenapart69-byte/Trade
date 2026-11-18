@@ -25,17 +25,34 @@ concurrency:
 jobs:
   lfs-v1-contract:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
       - name: Install free runner dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
       - name: Configure C++ build
         run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build all C++ targets
         run: cmake --build build --parallel 2
+      - name: Collect real OKX BTC and liquid altcoin sample
+        run: |
+          mkdir -p stage2-evidence
+          ./build/market_pipeline --collect-okx 2 2 \
+            stage2-evidence/l1-market-data.v1.json \
+            stage2-evidence/l2-status.v1.json
+          sha256sum stage2-evidence/l1-market-data.v1.json stage2-evidence/l2-status.v1.json
+      - name: Record LFS component source coverage
+        run: |
+          jq -r '.instruments[] | [
+            .unified_symbol,
+            (if has("orderbook") then "ORDERBOOK_PRESENT" else "ORDERBOOK_UNAVAILABLE" end),
+            (if has("long_short") then "LONG_SHORT_PRESENT" else "LONG_SHORT_UNAVAILABLE" end),
+            ("FUNDING_ROWS=" + ((.funding | length) | tostring)),
+            ("OHLCV_ROWS=" + ((.candles | length) | tostring)),
+            ("OI_ROWS=" + ((.open_interest | length) | tostring))
+          ] | @tsv' stage2-evidence/l1-market-data.v1.json
       - name: Run unit and LFS v1 contract tests
         run: ctest --test-dir build --output-on-failure --no-tests=error
       - name: Assert no Actions artifact upload is configured
