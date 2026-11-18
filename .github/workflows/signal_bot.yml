@@ -1,16 +1,6 @@
 name: Trader_me Stage 1B LRT-15m Signal Bot
 
 on:
-  push:
-    branches: [production-v1]
-    paths:
-      - "config/universe.json"
-      - "signal_autopilot/main.py"
-      - "signal_autopilot/modules/**"
-      - "signal_autopilot/telegram_bot.py"
-      - ".github/workflows/signal_bot.yml"
-  schedule:
-    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -22,6 +12,7 @@ concurrency:
 
 jobs:
   live-scan:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
