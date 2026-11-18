@@ -56,6 +56,24 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         throw std::invalid_argument("contract_window_out_of_range");
     if (!contract.contains("provider") || !contract.at("provider").is_object())
         throw std::invalid_argument("contract_provider_missing");
+    std::unordered_set<std::string> verified_crypto_symbols;
+    if (contract.contains("crypto_universe")) {
+        const auto& crypto_universe = contract.at("crypto_universe");
+        if (!crypto_universe.is_object() ||
+            crypto_universe.value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
+            crypto_universe.value("status", std::string{}) != "VERIFIED" ||
+            crypto_universe.value("provider_id", std::string{}) != "coinpaprika" ||
+            !crypto_universe.contains("symbols") || !crypto_universe.at("symbols").is_array() ||
+            crypto_universe.at("symbols").size() < 500U)
+            throw std::invalid_argument("crypto_universe_reference_invalid");
+        for (const auto& symbol : crypto_universe.at("symbols")) {
+            if (!symbol.is_string() || symbol.get<std::string>().empty() ||
+                !verified_crypto_symbols.insert(symbol.get<std::string>()).second)
+                throw std::invalid_argument("crypto_universe_symbol_invalid_or_duplicate");
+        }
+        if (!verified_crypto_symbols.contains("BTC"))
+            throw std::invalid_argument("crypto_universe_btc_missing");
+    }
     require_string(contract.at("provider"), "primary_provider_id");
     if (!contract.contains("instruments") || !contract.at("instruments").is_array() || contract.at("instruments").empty())
         throw std::invalid_argument("contract_instruments_missing");
@@ -73,6 +91,9 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         if (instrument.at("contract_type") != "linear_perpetual" ||
             instrument.at("quote") != "USDT" || instrument.at("settle") != "USDT")
             throw std::invalid_argument("instrument_contract_identity_not_supported");
+        if (!verified_crypto_symbols.empty() &&
+            !verified_crypto_symbols.contains(instrument.at("base").get<std::string>()))
+            throw std::invalid_argument("instrument_base_not_in_verified_crypto_universe");
         if (!seen_instrument_ids.insert(instrument.at("instrument_id").get<std::string>()).second ||
             !seen_symbols.insert(instrument.at("unified_symbol").get<std::string>()).second)
             throw std::invalid_argument("duplicate_instrument_identity");
