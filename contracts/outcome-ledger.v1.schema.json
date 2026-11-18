@@ -28,7 +28,7 @@
           "loss_r": {"type": "number", "minimum": 0},
           "fee_r": {"type": ["number", "null"], "minimum": 0},
           "slippage_r": {"type": ["number", "null"], "minimum": 0},
-          "funding_r": {"type": ["number", "null"], "minimum": 0},
+          "funding_r": {"type": ["number", "null"]},
           "data_class": {"enum": ["REAL", "PROXY"]},
           "cost_status": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
           "symbol": {"type": "string", "minLength": 1},
