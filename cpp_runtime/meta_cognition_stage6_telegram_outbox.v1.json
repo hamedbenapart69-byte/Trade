@@ -21,6 +21,14 @@
       "report_id": "151352ddf778b14d3f18b897a4f6e485891154796509af9b6e3556e1f2d9e62e",
       "send_started_at_utc": "2026-11-18T13:58:17Z",
       "status": "PERMANENT_FAILURE"
+    },
+    {
+      "attempts": 0,
+      "created_at_utc": "2026-11-18T20:54:25Z",
+      "http_status": null,
+      "message_id": null,
+      "report_id": "8cf9f21ddf0a73db0d7bd2468c97f0d7fce43d3476ecff8f90ab2bf99aea9eac",
+      "status": "RESERVED"
     }
   ],
   "schema_version": "1.0.0"

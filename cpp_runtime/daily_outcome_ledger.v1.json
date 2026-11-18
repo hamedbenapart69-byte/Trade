@@ -1,0 +1,7 @@
+{
+  "artifact_type": "cfss_outcome_ledger_v1",
+  "ledger_status": "EMPTY",
+  "outcomes": [],
+  "profile": "DAILY_SWING",
+  "schema_version": "1.0.0"
+}
