@@ -493,7 +493,7 @@
             "exclusiveMinimum": 0
           },
           "liquidity_status": {
-            "const": "ELIGIBLE"
+            "enum": ["ELIGIBLE", "BELOW_THRESHOLD_PINNED"]
           }
         }
       }
