@@ -79,16 +79,47 @@ int main() {
     const auto filtered_base = cfss::lfs::filter_time_series(c, decision_time);
     const auto filtered_future = cfss::lfs::filter_time_series(future_candles, decision_time);
     require(filtered_base == filtered_future, "future candle perturbations are excluded at decision time");
+    const auto base_lfs1 = cfss::lfs::lfs1_proxy_score(filtered_base);
+    const auto future_lfs1 = cfss::lfs::lfs1_proxy_score(filtered_future);
+    const auto base_lfs4 = cfss::lfs::bb_width_compression_score(filtered_base);
+    const auto future_lfs4 = cfss::lfs::bb_width_compression_score(filtered_future);
+    require(base_lfs1 && future_lfs1 && std::abs(*base_lfs1 - *future_lfs1) < 1e-12,
+            "future candle perturbations do not alter the earlier LFS1 score");
+    require(base_lfs4 && future_lfs4 && std::abs(*base_lfs4 - *future_lfs4) < 1e-12,
+            "future candle perturbations do not alter the earlier LFS4 score");
+    require(base_lfs1 && s1 && std::abs(*base_lfs1 - *s1) < 1e-12,
+            "identical LFS1 inputs are deterministic");
     auto future_funding = f;
     future_funding.push_back({{"timestamp_ms", 100LL * 28'800'000LL + 1LL}, {"funding_rate", 0.5}});
-    require(cfss::lfs::filter_time_series(f, 100LL * 28'800'000LL) ==
-            cfss::lfs::filter_time_series(future_funding, 100LL * 28'800'000LL),
+    const auto filtered_funding = cfss::lfs::filter_time_series(f, 100LL * 28'800'000LL);
+    const auto filtered_future_funding = cfss::lfs::filter_time_series(future_funding, 100LL * 28'800'000LL);
+    require(filtered_funding == filtered_future_funding,
             "future funding perturbations are excluded at decision time");
+    const auto base_lfs2 = cfss::lfs::funding_extreme_score(filtered_funding);
+    const auto future_lfs2 = cfss::lfs::funding_extreme_score(filtered_future_funding);
+    require(base_lfs2 && future_lfs2 && std::abs(*base_lfs2 - *future_lfs2) < 1e-12,
+            "future funding perturbations do not alter the earlier LFS2 score");
     auto future_oi = oi;
     future_oi.push_back({{"timestamp_ms", 720LL * 3'600'000LL + 1LL}, {"open_interest_value_usd", 1e12}});
-    require(cfss::lfs::filter_time_series(oi, 720LL * 3'600'000LL) ==
-            cfss::lfs::filter_time_series(future_oi, 720LL * 3'600'000LL),
+    const auto filtered_oi = cfss::lfs::filter_time_series(oi, 720LL * 3'600'000LL);
+    const auto filtered_future_oi = cfss::lfs::filter_time_series(future_oi, 720LL * 3'600'000LL);
+    require(filtered_oi == filtered_future_oi,
             "future OI perturbations are excluded at decision time");
+    const auto base_lfs5 = cfss::lfs::oi_change_score(filtered_oi);
+    const auto future_lfs5 = cfss::lfs::oi_change_score(filtered_future_oi);
+    require(base_lfs5 && future_lfs5 && std::abs(*base_lfs5 - *future_lfs5) < 1e-12,
+            "future OI perturbations do not alter the earlier LFS5 score");
+
+    auto future_long_short = l;
+    future_long_short.push_back({{"timestamp_ms", 100LL * 3'600'000LL + 1LL}, {"ratio", 50.0}});
+    const auto filtered_long_short = cfss::lfs::filter_time_series(l, 100LL * 3'600'000LL);
+    const auto filtered_future_long_short = cfss::lfs::filter_time_series(future_long_short, 100LL * 3'600'000LL);
+    require(filtered_long_short == filtered_future_long_short,
+            "future long-short perturbations are excluded at decision time");
+    const auto base_lfs3 = cfss::lfs::long_short_extreme_score(filtered_long_short);
+    const auto future_lfs3 = cfss::lfs::long_short_extreme_score(filtered_future_long_short);
+    require(base_lfs3 && future_lfs3 && std::abs(*base_lfs3 - *future_lfs3) < 1e-12,
+            "future long-short perturbations do not alter the earlier LFS3 score");
 
     const auto s1 = cfss::lfs::lfs1_proxy_score(c);
     const auto s2 = cfss::lfs::funding_extreme_score(f);
