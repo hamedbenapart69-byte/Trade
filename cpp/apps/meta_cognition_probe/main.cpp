@@ -47,9 +47,13 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             "resolution_data_sha256", "resolution_bars", "source_scan_id", "symbol",
             "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
         };
-        for (const auto& key : required)
-            if (!row.contains(key) || row.at(key).is_null())
+        for (const auto& key : required) {
+            if (!row.contains(key))
                 throw std::runtime_error("outcome_required_field_missing:" + key);
+            const bool nullable_cost = key == "fee_r" || key == "slippage_r" || key == "funding_r";
+            if (row.at(key).is_null() && !nullable_cost)
+                throw std::runtime_error("outcome_required_field_null:" + key);
+        }
         if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
             !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
             !row.at("profile").is_string() || !row.at("data_class").is_string() ||
