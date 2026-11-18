@@ -119,6 +119,19 @@ int main() {
             gap_result.at("registry").at("candidates").front().at("state") == "PENDING",
             "missing hourly candles block outcome resolution instead of assuming no barrier hit");
 
+    const auto expired_gap_l1 = fixture_l1({
+        candle(3'600'000LL, 101.0, 99.0, 100.5),
+        candle(10'800'000LL, 105.0, 99.5, 104.0)
+    }, 18'000'000LL);
+    const auto expired_gap = cfss::shadow::process(
+        expired_gap_l1, fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    require(expired_gap.at("ledger").at("outcomes").empty() &&
+            expired_gap.at("registry").at("candidates").front().at("state") == "REJECTED" &&
+            expired_gap.at("registry").at("candidates").front().at("skip_reason") ==
+                "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE",
+            "expired candidate with missing future candles is rejected, not converted to an outcome");
+
     auto missing_target = candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0);
     missing_target["target_reference"] = nullptr;
     const auto rejected = cfss::shadow::process(
