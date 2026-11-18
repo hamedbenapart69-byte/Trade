@@ -38,6 +38,21 @@ inline constexpr std::array<std::string, 5> v2_component_ids{
 };
 inline constexpr std::array<double, 5> v2_weights{0.25, 0.20, 0.20, 0.20, 0.15};
 
+inline nlohmann::json filter_time_series(const nlohmann::json& rows, std::int64_t decision_time_ms) {
+    if (!rows.is_array()) return nlohmann::json::array();
+    nlohmann::json filtered = nlohmann::json::array();
+    std::int64_t previous = 0;
+    for (const auto& row : rows) {
+        if (!row.is_object() || !row.contains("timestamp_ms") ||
+            !row.at("timestamp_ms").is_number_integer()) continue;
+        const auto ts = row.at("timestamp_ms").get<std::int64_t>();
+        if (ts <= 0 || ts <= previous) continue;
+        previous = ts;
+        if (ts <= decision_time_ms) filtered.push_back(row);
+    }
+    return filtered;
+}
+
 inline std::optional<double> percentile_rank(const std::vector<double>& prior, double current) {
     if (prior.size() < 20U || !std::isfinite(current)) return std::nullopt;
     std::size_t less = 0U;
