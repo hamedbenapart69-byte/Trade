@@ -79,7 +79,8 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         l1_15m.value("source_scan_id", std::string{}) != dual.value("source_scan_id", std::string{}) ||
         l1_15m.value("source_l1_sha256", std::string{}) != dual.value("l1_sha256", std::string{}) ||
         l1_15m.value("window", json::object()).value("timeframe", std::string{}) != "15m" ||
-        l1_15m.value("window", json::object()).value("end_ms", std::int64_t{0}) != current_time)
+        l1_15m.value("window", json::object()).value("end_ms", std::int64_t{0}) != current_time ||
+        l1_15m.value("candles_sha256", std::string{}).size() != 64U)
         throw std::runtime_error("shadow_cross_artifact_provenance_mismatch");
 
     if (registry.is_null() || registry.empty()) registry = empty_registry();
@@ -250,6 +251,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         std::int64_t expected_next_bar_ms = decision;
         const json* last_contiguous_bar = nullptr;
         std::string resolution;
+        json resolution_bars = json::array();
         const auto& candles = instrument->at("candles");
         for (const auto& candle : candles) {
             if (!candle.value("closed", false)) continue;
@@ -267,6 +269,11 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             const double open = required_number(candle, "open");
             const double high = required_number(candle, "high");
             const double low = required_number(candle, "low");
+            const double close = required_number(candle, "close");
+            resolution_bars.push_back({
+                {"timestamp_ms", ts}, {"open", open}, {"high", high},
+                {"low", low}, {"close", close}
+            });
             if (!entry_checked) {
                 entry_checked = true;
                 if ((direction == "LONG" && open <= stop) ||
@@ -364,6 +371,10 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
             {"resolution_timeframe", is_lrt ? "15m" : "1h"},
+            {"resolution_data_sha256", is_lrt
+                ? l1_15m.at("candles_sha256")
+                : dual.at("l1_sha256")},
+            {"resolution_bars", resolution_bars},
             {"source_scan_id", candidate.at("source_scan_id")},
             {"source_l1_sha256", candidate.at("source_l1_sha256")},
             {"source_universe_status", candidate.at("source_universe_status")},
