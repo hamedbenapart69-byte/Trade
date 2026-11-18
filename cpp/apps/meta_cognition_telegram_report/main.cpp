@@ -49,17 +49,23 @@ std::string report_text(const json& report) {
     out += "شناسه اجرا: " + report.value("source_run_id", std::string{"UNKNOWN"}) + "\n";
     out += "وضعیت دفتر نتایج: " + report.value("outcome_ledger_status", std::string{"UNKNOWN"}) +
            " | تعداد نتایج بسته‌شده: " + std::to_string(report.value("outcome_ledger_count", 0)) + "\n";
+    std::size_t lrt_candidates = 0U, nmt_candidates = 0U;
+    std::size_t calibrated = 0U, ev_calculated = 0U;
     for (const auto& item : report.at("instruments")) {
-        out += "\n" + item.value("symbol", std::string{"UNKNOWN"}) + "\n";
-        for (const auto* key : {"lrt", "nmt"}) {
-            const auto& engine = item.at(key);
-            out += std::string(key == std::string("lrt") ? "LRT" : "NMT");
-            out += " | وضعیت: " + engine.value("candidate_status", std::string{"UNKNOWN"});
-            out += " | اطمینان: " + engine.value("confidence_status", std::string{"NOT_CALIBRATED"});
-            out += " | EV: " + engine.value("ev_status", std::string{"NOT_CALCULATED"}) + "\n";
-            out += "علت: " + engine.value("reason", std::string{"UNSPECIFIED"}) + "\n";
-        }
+        const auto& lrt = item.at("lrt");
+        const auto& nmt = item.at("nmt");
+        if (lrt.value("candidate_status", std::string{}) == "CANDIDATE") ++lrt_candidates;
+        if (nmt.value("candidate_status", std::string{}) == "CANDIDATE") ++nmt_candidates;
+        if (lrt.value("confidence_status", std::string{}) == "CALIBRATED") ++calibrated;
+        if (nmt.value("confidence_status", std::string{}) == "CALIBRATED") ++calibrated;
+        if (lrt.value("ev_status", std::string{}) == "CALCULATED") ++ev_calculated;
+        if (nmt.value("ev_status", std::string{}) == "CALCULATED") ++ev_calculated;
     }
+    out += "نمادهای بررسی‌شده: " + std::to_string(report.at("instruments").size()) + "\n";
+    out += "کاندیدای پژوهشی: LRT=" + std::to_string(lrt_candidates) +
+           " | NMT=" + std::to_string(nmt_candidates) + "\n";
+    out += "کالیبراسیون معتبر: " + std::to_string(calibrated) +
+           " | EV محاسبه‌شده: " + std::to_string(ev_calculated) + "\n";
     out += "\nتا زمانی که داده نتیجه معتبر و کافی وجود نداشته باشد، احتمال برد و EV عددی منتشر نمی‌شود.";
     out += "\nمرجع طبقه‌بندی نمادهای رمزارزی: CoinPaprika.";
     return out;
