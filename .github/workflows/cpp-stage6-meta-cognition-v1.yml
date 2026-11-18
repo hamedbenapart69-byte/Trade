@@ -13,12 +13,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: stage6-meta-cognition-\${{ github.ref }}
+  group: stage6-meta-cognition-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   validate-and-deliver:
-    if: \${{ github.event_name != 'push' || contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
+    if: ${{ github.event_name != 'push' || contains(github.event.head_commit.message, '[META_COGNITION_STAGE6_REPORT]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
@@ -161,17 +161,17 @@ jobs:
 
       - name: Deliver Stage 6 report through Telegram only
         env:
-          TELEGRAM_TOKEN: \${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          test -n "\${TELEGRAM_TOKEN}"
-          test -n "\${TELEGRAM_CHAT_ID}"
+          test -n "${TELEGRAM_TOKEN}"
+          test -n "${TELEGRAM_CHAT_ID}"
           ./build/meta_cognition_telegram_report --send \
             stage6-evidence/meta_cognition_stage6_v1.json \
             signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
 
       - name: Persist Telegram receipt
-        if: \${{ always() }}
+        if: ${{ always() }}
         run: |
           cd signals-state
           git config user.name "github-actions[bot]"
