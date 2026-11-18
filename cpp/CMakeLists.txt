@@ -16,23 +16,17 @@ find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.11 REQUIRED)
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 
-add_executable(market_pipeline
-    apps/market_pipeline/main.cpp
-)
+add_executable(market_pipeline apps/market_pipeline/main.cpp)
 target_include_directories(market_pipeline PRIVATE include)
 target_link_libraries(market_pipeline PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
 target_compile_features(market_pipeline PRIVATE cxx_std_20)
 
-add_executable(telegram_delivery
-    apps/telegram_delivery/main.cpp
-)
+add_executable(telegram_delivery apps/telegram_delivery/main.cpp)
 target_include_directories(telegram_delivery PRIVATE include)
 target_link_libraries(telegram_delivery PRIVATE CURL::libcurl OpenSSL::Crypto)
 target_compile_features(telegram_delivery PRIVATE cxx_std_20)
 
-add_executable(telegram_inbound
-    apps/telegram_inbound/main.cpp
-)
+add_executable(telegram_inbound apps/telegram_inbound/main.cpp)
 target_include_directories(telegram_inbound PRIVATE include)
 target_link_libraries(telegram_inbound PRIVATE CURL::libcurl OpenSSL::Crypto)
 target_compile_features(telegram_inbound PRIVATE cxx_std_20)
@@ -62,7 +56,6 @@ target_link_libraries(lfs_v2_probe PRIVATE CURL::libcurl nlohmann_json::nlohmann
 add_executable(lfs_v2_tests tests/lfs_v2_test.cpp)
 target_include_directories(lfs_v2_tests PRIVATE include)
 target_compile_features(lfs_v2_tests PRIVATE cxx_std_20)
-target_link_libraries(lfs_v2_tests PRIVATE nlohmann_json::nlohmann_json)
 add_test(NAME lfs_v2_tests COMMAND lfs_v2_tests)
 
 add_executable(lfs_v1_probe apps/lfs_v1_probe/main.cpp)
@@ -74,15 +67,44 @@ target_include_directories(lfs_v1_tests PRIVATE include)
 target_compile_features(lfs_v1_tests PRIVATE cxx_std_20)
 add_test(NAME lfs_v1_tests COMMAND lfs_v1_tests)
 
+add_executable(nss_v1_probe apps/nss_v1_probe/main.cpp)
+target_include_directories(nss_v1_probe PRIVATE include)
+target_compile_features(nss_v1_probe PRIVATE cxx_std_20)
+target_link_libraries(nss_v1_probe PRIVATE nlohmann_json::nlohmann_json)
+
+add_executable(nss_telegram_report apps/nss_telegram_report/main.cpp)
+target_include_directories(nss_telegram_report PRIVATE include)
+target_compile_features(nss_telegram_report PRIVATE cxx_std_20)
+target_link_libraries(nss_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(nss_basis_collector apps/nss_basis_collector/main.cpp)
+target_include_directories(nss_basis_collector PRIVATE include)
+target_compile_features(nss_basis_collector PRIVATE cxx_std_20)
+target_link_libraries(nss_basis_collector PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(nss_v2_probe apps/nss_v2_probe/main.cpp)
+target_include_directories(nss_v2_probe PRIVATE include)
+target_compile_features(nss_v2_probe PRIVATE cxx_std_20)
+target_link_libraries(nss_v2_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(nss_basis_tests tests/nss_basis_test.cpp)
+target_include_directories(nss_basis_tests PRIVATE include)
+target_compile_features(nss_basis_tests PRIVATE cxx_std_20)
+add_test(NAME nss_basis_tests COMMAND nss_basis_tests)
+
+add_executable(nss_v2_tests tests/nss_v2_test.cpp)
+target_include_directories(nss_v2_tests PRIVATE include)
+target_compile_features(nss_v2_tests PRIVATE cxx_std_20)
+add_test(NAME nss_v2_tests COMMAND nss_v2_tests)
+
+add_executable(nss_v1_tests tests/nss_v1_test.cpp)
+target_include_directories(nss_v1_tests PRIVATE include)
+target_compile_features(nss_v1_tests PRIVATE cxx_std_20)
+add_test(NAME nss_v1_tests COMMAND nss_v1_tests)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_telegram_report lfs_delivery_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests)
-        target_compile_options(${target} PRIVATE
-            -Wall
-            -Wextra
-            -Wpedantic
-            -Wconversion
-            -Wsign-conversion
-        )
+    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_telegram_report lfs_delivery_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests nss_v1_probe nss_v1_tests)
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion)
     endforeach()
 endif()
 
