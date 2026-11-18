@@ -55,6 +55,9 @@ jobs:
             echo "STAGE2_REPORT_HEADER_VISIBLE_IN_RECENT_CHANNEL_PREVIEW=false"
           fi
           echo "preview_bytes=$(wc -c < /tmp/channel-preview.html)"
+          echo "recent_channel_message_timestamps:"
+          grep -oE 'datetime="[0-9T:+.-]+"' /tmp/channel-preview.html | tail -n 5 || true
+          echo "recent_channel_message_count=$(grep -o 'tgme_widget_message_wrap' /tmp/channel-preview.html | wc -l)"
 
       - name: Verify configured destination with getChat (read-only)
         env:
