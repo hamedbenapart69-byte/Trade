@@ -1,0 +1,2 @@
+One-time Stage 4 v1 publication trigger.
+The C++ workflow builds and runs causal tests, fetches real BTC and ETH hourly OHLCV, aggregates closed 4H bars, computes confirmed non-repainting liquidity zones and a rule-based market structure phase, validates the JSON schema, persists the inspectable result and Telegram receipt on the signals branch, and sends a non-actionable table report through Telegram.
