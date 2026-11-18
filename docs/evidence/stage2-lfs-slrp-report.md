@@ -128,12 +128,11 @@ Calibration remains NOT_CALIBRATED. The 30-day funding, long/short and OI distri
 - Code-level diagnosis (inference): the original sender used Telegram Markdown while the report contained underscore-delimited status strings such as `NOT_CALIBRATED`. The sender was corrected to send this report as plain text and to log the HTTP response safely.
 - Recovery/final run `44292775092`: fresh report reserved before network delivery; Telegram returned HTTP `200`, `ok=true`, and `message_id=50`; C++ persisted `DELIVERED` at `2026-11-18T11:16:48Z`.
 - Final report ID: `061fddcc33bbbcfa1ca3f43ead32f4f60b52233364aedcda7aab443b0c808413`.
-- 
 ## SLRP diagnosis codes
 D1 Data; D2 Assumption/formula; D3 Implementation; D4 Threshold/Calibration; D5 Regime; D6 Expectations.
 
 ## Five-question self-critique
-1. Future data used? No; timestamps checked against decision time.
+1. Future data used? No; point-in-time filtering and future-perturbation tests cover candles, funding, long/short and OI.
 2. Parameters tuned on test? No tunable parameters introduced.
 3. Costs included? No trade or EV is generated in Stage 2.
 4. No-signal report? Missing/invalid inputs produce UNAVAILABLE, never a trade.
@@ -152,13 +151,6 @@ STAGE 2 — LFS RESILIENCE
 ```
 
 Budget: 2 of 3 versions used; 1 remains unused. No parameter-only rewrite was made.
-
-## Five-question self-critique
-1. Future data used? No. Inputs are filtered to decision time; future-perturbation tests cover candles, funding, long/short and OI.
-2. Parameters tuned on test? No test-set tuning or parameter search was performed.
-3. Costs included? No trades or EV are produced by Stage 2; trading-cost accounting is therefore not claimed here.
-4. No-signal case? Missing components produce UNAVAILABLE; the report is still generated and explicitly says the score is not a trade signal.
-5. Weakest assumption? LFS1 uses ATR/volume as an OHLCV proxy for book thinness; it is not order-book depth. Funding, long/short and OI histories are about 30 days, shorter than the 90-day research reference.
 
 ## Delivery policy note
 The GitHub PR received an automatic Cloudflare Pages preview deployment comment from the repository's existing Cloudflare integration. This was not used by the Stage 2 pipeline or as a user delivery channel; Telegram remained the only report delivery. The current session has no Cloudflare account control to disable that pre-existing preview integration. It remains a C16 governance cleanup item before treating the repository's deployment surface as fully aligned with the Telegram-only rule.
