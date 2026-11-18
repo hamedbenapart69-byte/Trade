@@ -42,6 +42,7 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         if (!row.is_object()) throw std::runtime_error("outcome_row_not_object");
         const std::vector<std::string> required{
             "signal_id", "path", "regime", "closed_at_ms", "raw_score",
+            "profile", "entry_fill_reference", "entry_model", "execution_status", "outcome_kind",
             "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r"
         };
         for (const auto& key : required)
@@ -49,6 +50,9 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
                 throw std::runtime_error("outcome_required_field_missing:" + key);
         if (!row.at("signal_id").is_string() || !row.at("path").is_string() ||
             !row.at("regime").is_string() || !row.at("closed_at_ms").is_number_integer() ||
+            !row.at("profile").is_string() || !row.at("entry_fill_reference").is_number() ||
+            !row.at("entry_model").is_string() || !row.at("execution_status").is_string() ||
+            !row.at("outcome_kind").is_string() ||
             !row.at("raw_score").is_number() || !row.at("win").is_boolean() ||
             !row.at("win_r").is_number() || !row.at("loss_r").is_number())
             throw std::runtime_error("outcome_field_type_invalid");
@@ -75,6 +79,9 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
         item.slippage_r = all_costs_numeric ? row.at("slippage_r").get<double>() : 0.0;
         item.funding_r = all_costs_numeric ? row.at("funding_r").get<double>() : 0.0;
         item.data_class = data_class;
+        item.profile = row.at("profile").get<std::string>();
+        item.outcome_kind = row.at("outcome_kind").get<std::string>();
+        item.execution_status = row.at("execution_status").get<std::string>();
         out.push_back(item);
     }
     return out;
@@ -130,7 +137,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         } else {
             report = cfss::meta::calibrate(
                 outcomes, path, regime, *score, decision_time,
-                candidate.value("data_class", std::string{"UNAVAILABLE"}));
+                candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING");
             reason = report.reason;
             if (report.status == "INVALID_OUTCOME_LEDGER") {
                 status = "INSUFFICIENT_DATA";
@@ -175,7 +182,8 @@ int main(int argc, char** argv) {
         const auto dual = read_json(dual_path);
         const auto liquidity = read_json(liquidity_path);
         const auto ledger = read_json(outcomes_path);
-        if (dual.value("artifact_type", std::string{}) != "cfss_dual_engine_report_v1" ||
+        if (ledger.value("profile", std::string{}) != "DAILY_SWING" ||
+            dual.value("artifact_type", std::string{}) != "cfss_dual_engine_report_v1" ||
             liquidity.value("artifact_type", std::string{}) != "cfss_liquidity_phase_v1" ||
             ledger.value("artifact_type", std::string{}) != "cfss_outcome_ledger_v1")
             throw std::runtime_error("input_artifact_type_mismatch");
@@ -211,6 +219,7 @@ int main(int argc, char** argv) {
         const json output = {
             {"schema_version", "1.0.0"},
             {"artifact_type", "cfss_meta_cognition_v1"},
+            {"profile", "DAILY_SWING"},
             {"version", "META_COGNITION_V1"},
             {"source_run_id", run_id},
             {"source_scan_id", scan_id},
