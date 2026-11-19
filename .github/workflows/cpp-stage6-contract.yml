@@ -34,7 +34,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
-          npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
       - name: Configure, compile, and run complete CTest
         run: |
           cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
@@ -48,4 +47,6 @@ jobs:
           grep -Fq 'NOT_EXECUTED' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'cost_status' cpp/include/cfss/shadow_outcomes.hpp
 grep -Fq 'fee_r' cpp/include/cfss/shadow_outcomes.hpp
+          for schema in contracts/*.schema.json; do jq -e . "$schema" >/dev/null; done
+          echo "ALL_SCHEMA_JSON_PARSE_PASS"
           echo "STAGE6_POLICY_GUARDS_PASS"
