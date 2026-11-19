@@ -10,6 +10,14 @@
       "report_id": "2a5e6418a8fd8243c080a6ce52399b8371f1cb2657e99764e8e24e20b7138dcc",
       "send_started_at_utc": "2026-11-18T12:41:56Z",
       "status": "DELIVERED"
+    },
+    {
+      "attempts": 0,
+      "created_at_utc": "2026-11-19T20:34:04Z",
+      "http_status": null,
+      "message_id": null,
+      "report_id": "c81ab786b6d1e283683f3cd0fbcb081ce5e71bcb6263ede53fe51a87171d4f42",
+      "status": "RESERVED"
     }
   ],
   "schema_version": "1.0.0"

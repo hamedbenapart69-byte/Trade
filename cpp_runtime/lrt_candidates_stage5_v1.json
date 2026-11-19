@@ -2,7 +2,7 @@
   "actionable": false,
   "artifact_type": "cfss_lrt_candidates_v1",
   "data_class": "PROXY",
-  "decision_time_ms": 1795003200000,
+  "decision_time_ms": 1795118400000,
   "instruments": [
     {
       "actionable": false,
@@ -10,7 +10,7 @@
         "actionable": false,
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
-        "decision_time_ms": 1795003200000,
+        "decision_time_ms": 1795118400000,
         "direction": "NONE",
         "entry_reference": null,
         "falsification": "",
@@ -19,11 +19,11 @@
         "invalidation_reference": null,
         "path": "PLAN_A_LRT",
         "reason": "NO_CONFIRMED_LIQUIDITY_SWEEP_RECLAIM",
-        "score": 0.3888944060185584,
+        "score": 0.5070820329582117,
         "status": "NO_QUALIFIED_SETUP",
         "target_reference": null
       },
-      "decision_time_ms": 1795003200000,
+      "decision_time_ms": 1795118400000,
       "golden_rule": {
         "condition": "LFS > 0.70 AND max(NSS_LONG,NSS_SHORT) > 0.70",
         "decision": "NOT_TRIGGERED",
@@ -38,7 +38,7 @@
         "actionable": false,
         "confidence_status": "NOT_CALIBRATED",
         "data_class": "PROXY",
-        "decision_time_ms": 1795003200000,
+        "decision_time_ms": 1795118400000,
         "direction": "NONE",
         "entry_reference": null,
         "falsification": "",
@@ -47,11 +47,11 @@
         "invalidation_reference": null,
         "path": "PLAN_A_LRT",
         "reason": "NO_CONFIRMED_LIQUIDITY_SWEEP_RECLAIM",
-        "score": 0.45259610957981306,
+        "score": 0.47432932877036793,
         "status": "NO_QUALIFIED_SETUP",
         "target_reference": null
       },
-      "decision_time_ms": 1795003200000,
+      "decision_time_ms": 1795118400000,
       "golden_rule": {
         "condition": "LFS > 0.70 AND max(NSS_LONG,NSS_SHORT) > 0.70",
         "decision": "NOT_TRIGGERED",
@@ -61,10 +61,10 @@
       "symbol": "ETH/USDT:USDT"
     }
   ],
-  "l1_sha256": "155d1c41ea27f57c25d46f826275fa43917ea029d87df4c8882f9bc5714881e8",
+  "l1_sha256": "911e1d02530b4eb3906f1201119552522785dcc98fb67e48e95c806fcab37c1c",
   "path": "PLAN_A_LRT",
   "schema_version": "1.0.0",
-  "source_run_id": "okx-cpp-1795005637653",
-  "source_scan_id": "scan-246d8795472a954f053704771015ad588ead9e78334f612fdf566c3c48af25c7",
+  "source_run_id": "okx-cpp-1795120367649",
+  "source_scan_id": "scan-652b71208bf23ab78a77b421b047f05ce4193f25b2e8a00367bc1d17015db947",
   "version": "LRT_V1"
 }
