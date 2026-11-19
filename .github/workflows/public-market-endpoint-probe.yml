@@ -17,7 +17,7 @@ jobs:
           set -o pipefail
           python scripts/public_market_endpoint_probe.py | tee public-market-endpoint-probe.json
       - name: Upload probe evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: public-market-endpoint-probe
           path: public-market-endpoint-probe.json

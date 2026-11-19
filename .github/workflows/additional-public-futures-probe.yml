@@ -16,7 +16,7 @@ jobs:
         run: |
           set -o pipefail
           python scripts/public_market_endpoint_probe_v2.py | tee public-market-endpoint-probe-v2.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: public-market-endpoint-probe-v2
           path: public-market-endpoint-probe-v2.json
