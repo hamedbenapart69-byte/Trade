@@ -1,0 +1,1583 @@
+{
+  "generated_at_utc": "2026-11-19T02:03:57Z",
+  "instruments": [
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BTC-USDT-SWAP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ETH-USDT-SWAP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 25.14259639516313,
+        "ohlcv_rows": 4408,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SOXL-USDT-SWAP",
+      "symbol": "SOXL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55783709787816,
+        "ohlcv_rows": 6234,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SNDK-USDT-SWAP",
+      "symbol": "SNDK/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 51.733972165183665,
+        "ohlcv_rows": 9070,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZEC-USDT-SWAP",
+      "symbol": "ZEC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SOL-USDT-SWAP",
+      "symbol": "SOL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 80.57837097878166,
+        "ohlcv_rows": 14127,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "XAU-USDT-SWAP",
+      "symbol": "XAU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55783709787816,
+        "ohlcv_rows": 6234,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NVDA-USDT-SWAP",
+      "symbol": "NVDA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 26.78530686744239,
+        "ohlcv_rows": 4696,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ANTHROPIC-USDT-SWAP",
+      "symbol": "ANTHROPIC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 51.95642254163815,
+        "ohlcv_rows": 9109,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MMT-USDT-SWAP",
+      "symbol": "MMT/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "XRP-USDT-SWAP",
+      "symbol": "XRP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55783709787816,
+        "ohlcv_rows": 6234,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MU-USDT-SWAP",
+      "symbol": "MU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 22.15377595254392,
+        "ohlcv_rows": 3884,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SKHYNIX-USDT-SWAP",
+      "symbol": "SKHYNIX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 50.365046771617614,
+        "ohlcv_rows": 8830,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PIEVERSE-USDT-SWAP",
+      "symbol": "PIEVERSE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 87.02943189596166,
+        "ohlcv_rows": 15258,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "HYPE-USDT-SWAP",
+      "symbol": "HYPE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 40.32055669632672,
+        "ohlcv_rows": 7069,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "XAG-USDT-SWAP",
+      "symbol": "XAG/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 17.06593657312343,
+        "ohlcv_rows": 2992,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SOXS-USDT-SWAP",
+      "symbol": "SOXS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DOGE-USDT-SWAP",
+      "symbol": "DOGE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 20.21446497832535,
+        "ohlcv_rows": 3544,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "KORU-USDT-SWAP",
+      "symbol": "KORU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 48.10631987223363,
+        "ohlcv_rows": 8434,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PIPPIN-USDT-SWAP",
+      "symbol": "PIPPIN/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 26.78530686744239,
+        "ohlcv_rows": 4696,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SPCX-USDT-SWAP",
+      "symbol": "SPCX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PEPE-USDT-SWAP",
+      "symbol": "PEPE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 203,
+        "ohlcv_coverage_pct": 44.284736481861735,
+        "ohlcv_rows": 7764,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BREV-USDT-SWAP",
+      "symbol": "BREV/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NEAR-USDT-SWAP",
+      "symbol": "NEAR/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 35.52931781884554,
+        "ohlcv_rows": 6229,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "CL-USDT-SWAP",
+      "symbol": "CL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 17.45950262377367,
+        "ohlcv_rows": 3061,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SNXX-USDT-SWAP",
+      "symbol": "SNXX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 67.3967602099019,
+        "ohlcv_rows": 11816,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PUMP-USDT-SWAP",
+      "symbol": "PUMP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 36.49897330595483,
+        "ohlcv_rows": 6399,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MSTR-USDT-SWAP",
+      "symbol": "MSTR/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "UNI-USDT-SWAP",
+      "symbol": "UNI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 184,
+        "ohlcv_coverage_pct": 8.726899383983573,
+        "ohlcv_rows": 1530,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AKE-USDT-SWAP",
+      "symbol": "AKE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 17.98425735797399,
+        "ohlcv_rows": 3153,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SKHY-USDT-SWAP",
+      "symbol": "SKHY/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55213324207164,
+        "ohlcv_rows": 6233,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "QQQ-USDT-SWAP",
+      "symbol": "QQQ/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "WLD-USDT-SWAP",
+      "symbol": "WLD/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SUI-USDT-SWAP",
+      "symbol": "SUI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 187,
+        "ohlcv_coverage_pct": 24.03604836869724,
+        "ohlcv_rows": 4214,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "IRYS-USDT-SWAP",
+      "symbol": "IRYS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 58.55578370978782,
+        "ohlcv_rows": 10266,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ENA-USDT-SWAP",
+      "symbol": "ENA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 45.163130276066624,
+        "ohlcv_rows": 7918,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LIT-USDT-SWAP",
+      "symbol": "LIT/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "FIL-USDT-SWAP",
+      "symbol": "FIL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BNB-USDT-SWAP",
+      "symbol": "BNB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 34.582477754962355,
+        "ohlcv_rows": 6063,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AMD-USDT-SWAP",
+      "symbol": "AMD/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 91.55829340634268,
+        "ohlcv_rows": 16052,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TRUMP-USDT-SWAP",
+      "symbol": "TRUMP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 197,
+        "ohlcv_coverage_pct": 74.12731006160165,
+        "ohlcv_rows": 12996,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "HUMA-USDT-SWAP",
+      "symbol": "HUMA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 9.690851015286334,
+        "ohlcv_rows": 1699,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZHONGJI-USDT-SWAP",
+      "symbol": "ZHONGJI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 36.379192334017795,
+        "ohlcv_rows": 6378,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "INTC-USDT-SWAP",
+      "symbol": "INTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AAVE-USDT-SWAP",
+      "symbol": "AAVE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 36.37348847821127,
+        "ohlcv_rows": 6377,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "CRCL-USDT-SWAP",
+      "symbol": "CRCL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ADA-USDT-SWAP",
+      "symbol": "ADA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 25.14259639516313,
+        "ohlcv_rows": 4408,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NBIS-USDT-SWAP",
+      "symbol": "NBIS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 24.184348619666896,
+        "ohlcv_rows": 4240,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AAOI-USDT-SWAP",
+      "symbol": "AAOI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LINK-USDT-SWAP",
+      "symbol": "LINK/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 12.571298197581566,
+        "ohlcv_rows": 2204,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "UNITREE-USDT-SWAP",
+      "symbol": "UNITREE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 19.119324663472508,
+        "ohlcv_rows": 3352,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TQQQ-USDT-SWAP",
+      "symbol": "TQQQ/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 32.80287474332649,
+        "ohlcv_rows": 5751,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BZ-USDT-SWAP",
+      "symbol": "BZ/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55783709787816,
+        "ohlcv_rows": 6234,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "GOOGL-USDT-SWAP",
+      "symbol": "GOOGL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LTC-USDT-SWAP",
+      "symbol": "LTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BCH-USDT-SWAP",
+      "symbol": "BCH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AVAX-USDT-SWAP",
+      "symbol": "AVAX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "STRK-USDT-SWAP",
+      "symbol": "STRK/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "INJ-USDT-SWAP",
+      "symbol": "INJ/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 26.09514031485284,
+        "ohlcv_rows": 4575,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MRVL-USDT-SWAP",
+      "symbol": "MRVL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 36.50467716176135,
+        "ohlcv_rows": 6400,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TSLA-USDT-SWAP",
+      "symbol": "TSLA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZRO-USDT-SWAP",
+      "symbol": "ZRO/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 27.98882044261921,
+        "ohlcv_rows": 4907,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PROS-USDT-SWAP",
+      "symbol": "PROS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 57.88272872461784,
+        "ohlcv_rows": 10148,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ASTER-USDT-SWAP",
+      "symbol": "ASTER/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 30.743782797170887,
+        "ohlcv_rows": 5390,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "UP-USDT-SWAP",
+      "symbol": "UP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TAO-USDT-SWAP",
+      "symbol": "TAO/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 26.648414328085785,
+        "ohlcv_rows": 4672,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LITE-USDT-SWAP",
+      "symbol": "LITE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 18.99954369153548,
+        "ohlcv_rows": 3331,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "VVV-USDT-SWAP",
+      "symbol": "VVV/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ARB-USDT-SWAP",
+      "symbol": "ARB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZIL-USDT-SWAP",
+      "symbol": "ZIL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 60.36390600045631,
+        "ohlcv_rows": 10583,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "OKB-USDT-SWAP",
+      "symbol": "OKB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 96.0187086470454,
+        "ohlcv_rows": 16834,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PENGU-USDT-SWAP",
+      "symbol": "PENGU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 20.2258726899384,
+        "ohlcv_rows": 3546,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZHIPU-USDT-SWAP",
+      "symbol": "ZHIPU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 61.270819073693815,
+        "ohlcv_rows": 10742,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "XPL-USDT-SWAP",
+      "symbol": "XPL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ONDO-USDT-SWAP",
+      "symbol": "ONDO/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 20.191649555099247,
+        "ohlcv_rows": 3540,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NES-USDT-SWAP",
+      "symbol": "NES/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 26.648414328085785,
+        "ohlcv_rows": 4672,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DRAM-USDT-SWAP",
+      "symbol": "DRAM/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TRX-USDT-SWAP",
+      "symbol": "TRX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 22.15377595254392,
+        "ohlcv_rows": 3884,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SAMSUNG-USDT-SWAP",
+      "symbol": "SAMSUNG/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 207,
+        "ohlcv_coverage_pct": 73.85352498288843,
+        "ohlcv_rows": 12948,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SOPH-USDT-SWAP",
+      "symbol": "SOPH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 10.52931781884554,
+        "ohlcv_rows": 1846,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DGAI-USDT-SWAP",
+      "symbol": "DGAI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "PARTIAL",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 35.55213324207164,
+        "ohlcv_rows": 6233,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AAPL-USDT-SWAP",
+      "symbol": "AAPL/USDT:USDT"
+    }
+  ],
+  "run_id": "okx-cpp-1795052817897",
+  "scan_id": "scan-b81f0d2a47656014d572d4d1ccf1e2f382d297031f7ffddbfb793e3266cf6287",
+  "schema_version": "1.0.0",
+  "summary": {
+    "fully_available_count": 26,
+    "partial_count": 56,
+    "selected_count": 82,
+    "unavailable_count": 0
+  },
+  "universe": {
+    "declared_usdt_swap_count": 532,
+    "eligible_count": 82,
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_count": 82,
+    "selected_instrument_ids": [
+      "BTC-USDT-SWAP",
+      "ETH-USDT-SWAP",
+      "SOXL-USDT-SWAP",
+      "SNDK-USDT-SWAP",
+      "ZEC-USDT-SWAP",
+      "SOL-USDT-SWAP",
+      "XAU-USDT-SWAP",
+      "NVDA-USDT-SWAP",
+      "ANTHROPIC-USDT-SWAP",
+      "MMT-USDT-SWAP",
+      "XRP-USDT-SWAP",
+      "MU-USDT-SWAP",
+      "SKHYNIX-USDT-SWAP",
+      "PIEVERSE-USDT-SWAP",
+      "HYPE-USDT-SWAP",
+      "XAG-USDT-SWAP",
+      "SOXS-USDT-SWAP",
+      "DOGE-USDT-SWAP",
+      "KORU-USDT-SWAP",
+      "PIPPIN-USDT-SWAP",
+      "SPCX-USDT-SWAP",
+      "PEPE-USDT-SWAP",
+      "BREV-USDT-SWAP",
+      "NEAR-USDT-SWAP",
+      "CL-USDT-SWAP",
+      "SNXX-USDT-SWAP",
+      "PUMP-USDT-SWAP",
+      "MSTR-USDT-SWAP",
+      "UNI-USDT-SWAP",
+      "AKE-USDT-SWAP",
+      "SKHY-USDT-SWAP",
+      "QQQ-USDT-SWAP",
+      "WLD-USDT-SWAP",
+      "SUI-USDT-SWAP",
+      "IRYS-USDT-SWAP",
+      "ENA-USDT-SWAP",
+      "LIT-USDT-SWAP",
+      "FIL-USDT-SWAP",
+      "BNB-USDT-SWAP",
+      "AMD-USDT-SWAP",
+      "TRUMP-USDT-SWAP",
+      "HUMA-USDT-SWAP",
+      "ZHONGJI-USDT-SWAP",
+      "INTC-USDT-SWAP",
+      "AAVE-USDT-SWAP",
+      "CRCL-USDT-SWAP",
+      "ADA-USDT-SWAP",
+      "NBIS-USDT-SWAP",
+      "AAOI-USDT-SWAP",
+      "LINK-USDT-SWAP",
+      "UNITREE-USDT-SWAP",
+      "TQQQ-USDT-SWAP",
+      "BZ-USDT-SWAP",
+      "GOOGL-USDT-SWAP",
+      "LTC-USDT-SWAP",
+      "BCH-USDT-SWAP",
+      "AVAX-USDT-SWAP",
+      "STRK-USDT-SWAP",
+      "INJ-USDT-SWAP",
+      "MRVL-USDT-SWAP",
+      "TSLA-USDT-SWAP",
+      "ZRO-USDT-SWAP",
+      "PROS-USDT-SWAP",
+      "ASTER-USDT-SWAP",
+      "UP-USDT-SWAP",
+      "TAO-USDT-SWAP",
+      "LITE-USDT-SWAP",
+      "VVV-USDT-SWAP",
+      "ARB-USDT-SWAP",
+      "ZIL-USDT-SWAP",
+      "OKB-USDT-SWAP",
+      "PENGU-USDT-SWAP",
+      "ZHIPU-USDT-SWAP",
+      "XPL-USDT-SWAP",
+      "ONDO-USDT-SWAP",
+      "NES-USDT-SWAP",
+      "DRAM-USDT-SWAP",
+      "TRX-USDT-SWAP",
+      "SAMSUNG-USDT-SWAP",
+      "SOPH-USDT-SWAP",
+      "DGAI-USDT-SWAP",
+      "AAPL-USDT-SWAP"
+    ],
+    "selection_method": "top_turnover_usd_desc_with_btc_first",
+    "selection_timestamp_utc": "2026-11-19T01:46:57Z",
+    "target_count": 100
+  }
+}
