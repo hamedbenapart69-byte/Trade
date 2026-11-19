@@ -41,6 +41,10 @@ jobs:
           ./build/lfs_v2_probe stage5-evidence/l1-market-data.v1.json stage5-evidence/lfs-v2.json
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 \
             -s contracts/lfs-v2-proxy.v1.schema.json -d stage5-evidence/lfs-v2.json --all-errors
+          jq -e --arg hash "$(sha256sum stage5-evidence/l1-market-data.v1.json | awk '{print $1})" \
+            --argjson ts "$(jq -r '.window.end_ms' stage5-evidence/l1-market-data.v1.json)" \
+            '.l1_sha256 == $hash and .decision_time_ms == $ts' stage5-evidence/lfs-v2.json >/dev/null
+          echo "LFS_V2_PROVENANCE_MATCHES_L1=PASS"
       - name: Collect real spot basis and compute NSS v2
         run: |
           ./build/nss_basis_collector stage5-evidence/l1-market-data.v1.json stage5-evidence/nss-basis.v1.json
