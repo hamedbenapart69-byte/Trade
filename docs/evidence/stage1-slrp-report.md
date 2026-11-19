@@ -115,8 +115,8 @@ Second-run real data:
 
 ## Handoff
 
-Stage 1 acceptance matrix S1-01 through S1-12 is not yet fully closed: S1-08 is PASS: the controlled live replay in run 44246767969 verified unchanged `last_update_id`, increased poll count, unchanged delivered reply count/message ID, and no duplicate response. S1-12 is PASS at project scope: the sole historical artifact was deleted and no current Stage 1 artifact uploads remain. The live inbound update was processed and acknowledged. The controlled replay verified duplicate suppression.
+Stage 1 acceptance matrix S1-01 through S1-12 is PASS based on the evidence recorded above. S1-08 replay/deduplication verification is complete in run 44246767969. S1-12 is PASS at project scope: the sole historical artifact was deleted and no current Stage 1 artifact uploads remain. The live inbound update was processed and acknowledged. The controlled replay verified duplicate suppression.
 
 The project footprint is within GitHub Free allowances on measured project evidence. Account-wide unrelated Packages usage remains outside repository observability.
 
-**Handoff:** Do not merge PR #150 or release Stage 2 until the S1-08 replay verification passes. Stage 2 code exists in a separate draft branch but is not released.
+**Handoff:** PR #150 is merged. S1-08 replay/deduplication is verified. Stage 2 and Stage 3 are merged and separately versioned. Stage 1 engineering acceptance is PASS; this is not evidence of calibrated strategy performance or actionable signals.
