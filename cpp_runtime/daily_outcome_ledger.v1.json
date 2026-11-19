@@ -1,7 +1,101 @@
 {
   "artifact_type": "cfss_outcome_ledger_v1",
-  "ledger_status": "EMPTY",
-  "outcomes": [],
+  "ledger_status": "AVAILABLE",
+  "outcomes": [
+    {
+      "closed_at_ms": 1795035600000,
+      "cost_status": "UNAVAILABLE",
+      "data_class": "PROXY",
+      "decision_time_ms": 1795032000000,
+      "direction": "SHORT",
+      "entry_fill_reference": 62724.9,
+      "entry_model": "NEXT_BAR_OPEN_PROXY",
+      "entry_reference": 62724.9,
+      "execution_status": "NOT_EXECUTED",
+      "exit_reference": 62524.9,
+      "fee_r": null,
+      "funding_r": null,
+      "loss_r": 0.0,
+      "outcome_kind": "HYPOTHESIS_PROXY",
+      "path": "PLAN_A_NMT",
+      "profile": "DAILY_SWING",
+      "raw_score": 0.4898811354624968,
+      "regime": "DOWNTREND",
+      "resolution": "TARGET",
+      "resolution_bars": [
+        {
+          "close": 62606.3,
+          "high": 62783.6,
+          "low": 62412.1,
+          "open": 62724.9,
+          "timestamp_ms": 1795032000000
+        }
+      ],
+      "resolution_data_sha256": "45c4a17e67616a2ac1a7b2b22ada211d2c98002101ec90fe636a3a52bcc79597",
+      "resolution_timeframe": "1h",
+      "score_model_version": "NSS_V2_PROXY",
+      "signal_id": "3c7348f310d2cd7e34838c9575c95327532ec0b2261a0d0423e9c11ce9ffd27e",
+      "slippage_r": null,
+      "source_l1_sha256": "44388751e290a5dc10e1d47632aaf325040e1cff027e9c61b0c11ce216dc5cee",
+      "source_scan_id": "scan-25215707a21f1332939b1ac8589e5af1197bc95c8bc3d2fa3f6733716f114b8c",
+      "source_universe_status": "VERIFIED",
+      "stop_reference": 62968.9,
+      "symbol": "BTC/USDT:USDT",
+      "target_reference": 62524.9,
+      "win": true,
+      "win_r": 0.819672131147541
+    },
+    {
+      "closed_at_ms": 1795039200000,
+      "cost_status": "UNAVAILABLE",
+      "data_class": "PROXY",
+      "decision_time_ms": 1795032000000,
+      "direction": "SHORT",
+      "entry_fill_reference": 0.002548,
+      "entry_model": "NEXT_BAR_OPEN_PROXY",
+      "entry_reference": 0.002547,
+      "execution_status": "NOT_EXECUTED",
+      "exit_reference": 0.002557,
+      "fee_r": null,
+      "funding_r": null,
+      "loss_r": 1.0,
+      "outcome_kind": "HYPOTHESIS_PROXY",
+      "path": "PLAN_A_NMT",
+      "profile": "DAILY_SWING",
+      "raw_score": 0.524438825358093,
+      "regime": "DOWNTREND",
+      "resolution": "STOP",
+      "resolution_bars": [
+        {
+          "close": 0.002549,
+          "high": 0.002554,
+          "low": 0.002522,
+          "open": 0.002548,
+          "timestamp_ms": 1795032000000
+        },
+        {
+          "close": 0.002537,
+          "high": 0.002557,
+          "low": 0.00253,
+          "open": 0.00255,
+          "timestamp_ms": 1795035600000
+        }
+      ],
+      "resolution_data_sha256": "45c4a17e67616a2ac1a7b2b22ada211d2c98002101ec90fe636a3a52bcc79597",
+      "resolution_timeframe": "1h",
+      "score_model_version": "NSS_V2_PROXY",
+      "signal_id": "f06440a45d7c6d57d6e301ad9aff273502e82427569c389182634b262299f3af",
+      "slippage_r": null,
+      "source_l1_sha256": "44388751e290a5dc10e1d47632aaf325040e1cff027e9c61b0c11ce216dc5cee",
+      "source_scan_id": "scan-25215707a21f1332939b1ac8589e5af1197bc95c8bc3d2fa3f6733716f114b8c",
+      "source_universe_status": "VERIFIED",
+      "stop_reference": 0.002557,
+      "symbol": "PUMP/USDT:USDT",
+      "target_reference": 0.002106,
+      "win": false,
+      "win_r": 0.0
+    }
+  ],
   "profile": "DAILY_SWING",
   "schema_version": "1.0.0"
 }
