@@ -4,7 +4,7 @@
 using namespace cfss::risk;
 Input ready(){Input x;x.candidate_present=true;x.data_real=true;x.liquidity_ok=true;x.calibration_valid=true;x.net_ev_r=.15;x.costs_complete=true;x.risk_snapshot_valid=true;x.daily_loss_pct=1.;x.weekly_loss_pct=2.;x.portfolio_drawdown_pct=10.;x.correlated_open_exposures=1;return x;}
 int main(){
- auto x=evaluate(Input{});assert(x.reason=="NO_QUALIFIED_CANDIDATE");
+ assert(evaluate(Input{}).reason=="NO_QUALIFIED_CANDIDATE"); Input x=ready();
  x=ready();x.golden_rule_veto=true;assert(evaluate(x).reason=="GOLDEN_RULE_HARD_VETO");
  x=ready();x.candidate_actionable=true;assert(evaluate(x).reason=="UPSTREAM_ACTIONABILITY_FORBIDDEN");
  x=ready();x.calibration_valid=false;assert(evaluate(x).reason=="CALIBRATION_NOT_VALID");
@@ -18,5 +18,5 @@ int main(){
  x=ready();x.data_real=false;assert(evaluate(x).reason=="REAL_DATA_REQUIRED");
  x=ready();x.liquidity_ok=false;assert(evaluate(x).reason=="LIQUIDITY_GATE_NOT_PASSED");
  x=ready();auto d=evaluate(x);assert(d.status=="RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY"&&!d.trade_execution_allowed&&d.manual_review_required);
- stdcout<<"STAGE7_RISK_GATE_TESTS_PASS\n";
+ std::cout<<"STAGE7_RISK_GATE_TESTS_PASS\n";
 }
