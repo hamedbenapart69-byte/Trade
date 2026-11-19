@@ -107,8 +107,20 @@ int main(int argc, char** argv) {
                       << " GOLDEN_RULE_VETO=" << result.golden_rule_veto << '\n';
         }
 
+        const auto universe = l1.value("universe", json::object());
+        const auto universe_target = universe.value("target_count", 0U);
+        const auto universe_selected = universe.value("selected_count", 0U);
+        const auto universe_status = universe_selected >= universe_target + 1U
+            ? "PASS" : "PARTIAL";
+        const json universe_summary = {
+            {"target_non_btc_count", universe_target},
+            {"selected_total_count", universe_selected},
+            {"eligible_count", universe.value("eligible_count", 0U)},
+            {"status", universe_status}
+        };
         const json common = {
             {"schema_version", "1.0.0"},
+            {"universe", universe_summary},
             {"source_run_id", run_id},
             {"source_scan_id", scan_id},
             {"decision_time_ms", decision_time},

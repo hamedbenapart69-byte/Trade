@@ -378,6 +378,7 @@
         "l2_status",
         "provider_health",
         "fear_greed",
+        "crypto_universe",
         "signals",
         "history",
         "performance",
@@ -395,6 +396,9 @@
           "$ref": "#/$defs/artifact"
         },
         "fear_greed": {
+          "$ref": "#/$defs/artifact"
+        },
+        "crypto_universe": {
           "$ref": "#/$defs/artifact"
         },
         "signals": {

@@ -7,7 +7,7 @@ on:
       - "docs/evidence/run-cpp-stage1-live*.txt"
       - "docs/evidence/run-telegram-inbound-test*.txt"
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "0 3 * * *"
   pull_request:
     branches: [main]
     paths:
@@ -19,7 +19,7 @@ on:
       symbols:
         description: "Frozen linear USDT perpetual universe size (BTC included)"
         required: true
-        default: "10"
+        default: "100"
         type: choice
         options: ["1", "5", "10", "25", "50", "100"]
       years:
@@ -72,19 +72,55 @@ jobs:
           BUILD_ID=$(sha256sum build/market_pipeline | awk '{print $1}')
           echo "CFSS_BUILD_ID=$BUILD_ID" >> "$GITHUB_ENV"
 
+      - name: Checkout persistent signals branch
+        id: checkout_signals
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore shared market-data cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            shared-cache/market_data_cache.v1.json
+            shared-cache/crypto-universe.v1.json
+          key: cfss-market-cache-${{ github.run_id }}
+          restore-keys: |
+            cfss-market-cache-
+
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
           SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '1') }}
           YEARS: ${{ inputs.years || '2' }}
         run: |
-          mkdir -p artifacts
+          mkdir -p artifacts shared-cache
+          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
+            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
+              signals-state/cpp_runtime/shadow_candidate_registry.v1.json > artifacts/pending-symbols.v1.json
+          else
+            printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
+          fi
           ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
-            artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json
+            artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
+            shared-cache/crypto-universe.v1.json \
+            shared-cache/market_data_cache.v1.json \
+            artifacts/pending-symbols.v1.json
+          cp artifacts/crypto-universe.v1.json shared-cache/crypto-universe.v1.json
           sha256sum artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json
 
       - name: Validate L1 against the versioned JSON Schema
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
+      - name: Validate verified crypto universe
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d artifacts/crypto-universe.v1.json --all-errors
+
+      - name: Validate run manifest
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
 
       - name: Validate L2 against the versioned JSON Schema
         run: |
@@ -98,15 +134,6 @@ jobs:
           grep -q '"NO_QUALIFIED_SETUP"\|"MARKET_DATA_DEGRADED"' artifacts/l2-status.v1.json
           echo "CPP_L1_L2_ARTIFACTS_PRESENT"
 
-      - name: Checkout persistent signals branch
-        id: checkout_signals
-        if: github.event_name != 'pull_request'
-        uses: actions/checkout@v4
-        with:
-          ref: signals
-          path: signals-state
-          fetch-depth: 0
-          persist-credentials: true
 
       - name: Real Telegram outbound through C++ L3
         if: ${{ github.event_name != 'pull_request' && !(github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
@@ -192,6 +219,7 @@ jobs:
         if: github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         run: |
           RUN_ID=$(jq -r .run_id artifacts/run-manifest.v1.json)
+          cp artifacts/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
           cp artifacts/run-manifest.v1.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
           cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
           cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"

@@ -136,6 +136,16 @@ int main() {
         std::filesystem::remove_all(atomic_test_dir);
         return EXIT_FAILURE;
     }
+    const std::string refreshed_cache = std::string{R"({"revision":2})"} + "\n";
+    cfss::write_file_atomic(atomic_test_file, refreshed_cache, false);
+    std::ifstream refreshed_input(atomic_test_file, std::ios::binary);
+    const std::string refreshed_content{std::istreambuf_iterator<char>{refreshed_input},
+                                        std::istreambuf_iterator<char>{}};
+    if (refreshed_content != refreshed_cache) {
+        std::cerr << "Atomic refresh of mutable cache failed\n";
+        std::filesystem::remove_all(atomic_test_dir);
+        return EXIT_FAILURE;
+    }
     std::filesystem::remove_all(atomic_test_dir);
     auto hashed_artifact = artifact;
     cfss::add_artifact_hash(hashed_artifact);
