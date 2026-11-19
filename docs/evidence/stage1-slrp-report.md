@@ -1,9 +1,9 @@
 # STAGE 1 — C++ End-to-End Data + Compute + Telegram Delivery
 
 **Canonical specification:** UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER  
-**Implementation branch:** `feat/cpp-stage1-clean`  
-**PR:** #150 (draft; not merged)  
-**Status:** PASS — all S1-01 through S1-12 acceptance criteria have project-scope evidence. Controlled inbound replay/dedupe verification passed in run 44246767969. Stage 2 remains a separate unreleased draft branch.
+**Implementation branch:** `feat/cpp-stage1-clean` (PR #150 merged into main)  
+**PR:** #150 (MERGED; commit `16cb5e874e89649e049abb6debc6300572e24f09`)  
+**Status:** PASS — all S1-01 through S1-12 acceptance criteria have project-scope evidence. Controlled inbound replay/dedupe verification passed in run 44246767969. Stage 2 and Stage 3 are now merged into main; Stage 2 LFS resilience and Stage 3 NSS resilience remain versioned separately.
 
 ## Objective
 
@@ -103,7 +103,7 @@ Second-run real data:
 - Provider health: OKX primary HTTP 200; Bybit 403; Binance 451; KuCoin/MEXC/Bitget reachable but fallback remains UNAVAILABLE without an equivalence-verified C++ adapter; CoinGecko reference-only.
 - Eight persisted artifacts (L2, provider health, Fear & Greed, signals, history, performance, coverage, system status) were independently SHA-256 recomputed from the `signals` branch and matched the manifest exactly. L1/L2 raw file hashes were printed by the runner and matched their manifest entries.
 
-**S1-09 is now PASS.** The second complete run is independently verified and the two scan IDs differ.
+**S1-09 is PASS.** The second complete run is independently verified and the two scan IDs differ. **S1-08 is also PASS** after controlled replay.
 
 ## Self-critique
 
@@ -115,7 +115,7 @@ Second-run real data:
 
 ## Handoff
 
-Stage 1 acceptance matrix S1-01 through S1-12 is not yet fully closed: S1-08 awaits the controlled second-poll result from run 44246767969. S1-12 is PASS at project scope: the sole historical artifact was deleted and no current Stage 1 artifact uploads remain. The live inbound update was processed and acknowledged; the replay run must still prove no duplicate reply.
+Stage 1 acceptance matrix S1-01 through S1-12 is not yet fully closed: S1-08 is PASS: the controlled live replay in run 44246767969 verified unchanged `last_update_id`, increased poll count, unchanged delivered reply count/message ID, and no duplicate response. S1-12 is PASS at project scope: the sole historical artifact was deleted and no current Stage 1 artifact uploads remain. The live inbound update was processed and acknowledged. The controlled replay verified duplicate suppression.
 
 The project footprint is within GitHub Free allowances on measured project evidence. Account-wide unrelated Packages usage remains outside repository observability.
 
