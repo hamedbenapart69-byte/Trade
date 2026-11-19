@@ -1,0 +1,7 @@
+[META_COGNITION_STAGE6_REPORT]
+Retry Stage 6 after correcting the confirmed immutable_artifact_already_exists failure: restored incremental market cache checkpoints are mutable state and must be atomically refreshed, while immutable evidence outputs continue to reject overwrite. Validate C++20 and full CTest, collect real OKX data for up to 100 non-BTC perpetual contracts plus BTC, recompute Stage 4/5, register only actual candidates, resolve only future completed candles (15m LRT / 1h NMT), keep SHADOW/PROXY labels and cost availability strict, persist evidence to signals branch, and send Telegram report only. No fabricated outcomes, no forced signals, no Stage 7 until Stage 6 statistical acceptance is met.
+
+
+AJV validator repair: pin ajv-cli 5.0.0 and ajv-formats 3.0.1; validate RFC3339 date-time formats explicitly. Keep the outcome ledger immutable and do not fabricate outcomes.
+
+Trigger Stage 6 again after installing the pinned AJV RFC3339 format plugin; no statistical acceptance is implied by this rerun.

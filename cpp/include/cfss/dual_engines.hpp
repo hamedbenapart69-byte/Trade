@@ -51,6 +51,13 @@ inline std::optional<double> numeric(const nlohmann::json& object, const char* k
     return std::isfinite(value) ? std::optional<double>{value} : std::nullopt;
 }
 
+inline bool passes_current_liquidity(const nlohmann::json& instrument) {
+    const auto turnover = numeric(instrument, "turnover_24h_usd");
+    const auto threshold = numeric(instrument, "liquidity_threshold_usd");
+    return turnover && threshold && *threshold > 0.0 && *turnover > *threshold &&
+        instrument.value("liquidity_status", std::string{"ELIGIBLE"}) != "BELOW_THRESHOLD_PINNED";
+}
+
 inline std::optional<double> direction_score(const nlohmann::json& nss,
                                              const char* key) {
     if (!nss.is_object() || !nss.contains(key) || !nss.at(key).is_object() ||
@@ -79,6 +86,22 @@ inline std::optional<cfss::liquidity::Bar4H> last_closed_bar(
     return bars.back();
 }
 
+inline std::optional<double> latest_closed_hourly_close(
+    const nlohmann::json& instrument, std::int64_t decision_time_ms) {
+    if (!instrument.contains("candles") || !instrument.at("candles").is_array())
+        return std::nullopt;
+    std::optional<std::pair<std::int64_t, double>> latest;
+    for (const auto& candle : instrument.at("candles")) {
+        if (!candle.value("closed", false)) continue;
+        const auto ts = candle.value("timestamp_ms", std::int64_t{0});
+        if (ts <= 0 || ts + 3'600'000LL > decision_time_ms) continue;
+        const auto close = numeric(candle, "close");
+        if (!close || *close <= 0.0) continue;
+        if (!latest || ts > latest->first) latest = std::make_pair(ts, *close);
+    }
+    return latest ? std::optional<double>{latest->second} : std::nullopt;
+}
+
 inline double median_prior_4h_volume(const std::vector<cfss::liquidity::Bar4H>& bars) {
     if (bars.size() < 21U) return 0.0;
     std::vector<double> volumes;
@@ -99,6 +122,11 @@ inline Candidate build_lrt(const nlohmann::json& instrument,
     result.decision_time_ms = decision_time_ms;
     result.reason = "NO_CONFIRMED_LIQUIDITY_SWEEP_RECLAIM";
 
+    if (!passes_current_liquidity(instrument)) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "CURRENT_LIQUIDITY_BELOW_CONFIGURED_THRESHOLD";
+        return result;
+    }
     if (lfs.value("status", std::string{}) != "CALCULATED" ||
         lfs.value("component_coverage", nlohmann::json::object()).value("available_scores", 0) != 5 ||
         lfs.value("component_coverage", nlohmann::json::object()).value("required_scores", 0) != 5) {
@@ -159,9 +187,15 @@ inline Candidate build_lrt(const nlohmann::json& instrument,
     }
     if (!long_sweep && !short_sweep) return result;
 
+    const auto current_entry = latest_closed_hourly_close(instrument, decision_time_ms);
+    if (!current_entry) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "LATEST_CLOSED_1H_ENTRY_REFERENCE_UNAVAILABLE";
+        return result;
+    }
     result.status = "CANDIDATE";
     result.direction = long_sweep ? "LONG" : "SHORT";
-    result.entry_reference = last.close;
+    result.entry_reference = *current_entry;
     if (long_sweep) {
         const auto sweep_low = last.low;
         result.invalidation_reference = sweep_low;
@@ -195,6 +229,11 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
     result.decision_time_ms = decision_time_ms;
     result.reason = "NO_TREND_BREAKOUT_WITH_VOLUME";
 
+    if (!passes_current_liquidity(instrument)) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "CURRENT_LIQUIDITY_BELOW_CONFIGURED_THRESHOLD";
+        return result;
+    }
     if (liquidity.value("status", std::string{}) != "AVAILABLE" ||
         nss.value("status", std::string{}) == "UNAVAILABLE") {
         result.status = "INSUFFICIENT_DATA";
@@ -243,8 +282,14 @@ inline Candidate build_nmt(const nlohmann::json& instrument,
     const bool breakout = long_phase ? last.close > prior_high : last.close < prior_low;
     if (!breakout || volume_ratio < 1.20) return result;
 
+    const auto current_entry = latest_closed_hourly_close(instrument, decision_time_ms);
+    if (!current_entry) {
+        result.status = "INSUFFICIENT_DATA";
+        result.reason = "LATEST_CLOSED_1H_ENTRY_REFERENCE_UNAVAILABLE";
+        return result;
+    }
     result.status = "CANDIDATE";
-    result.entry_reference = last.close;
+    result.entry_reference = *current_entry;
     result.invalidation_reference = long_phase ? prior_high : prior_low;
     if (long_phase && liquidity.contains("nearest_resistance") && liquidity.at("nearest_resistance").is_object())
         result.target_reference = numeric(liquidity.at("nearest_resistance"), "low");

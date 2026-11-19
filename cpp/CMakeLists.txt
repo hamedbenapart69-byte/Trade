@@ -102,11 +102,47 @@ target_include_directories(liquidity_phase_probe PRIVATE include)
 target_compile_features(liquidity_phase_probe PRIVATE cxx_std_20)
 target_link_libraries(liquidity_phase_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
 
-
 add_executable(dual_engine_probe apps/dual_engine_probe/main.cpp)
 target_include_directories(dual_engine_probe PRIVATE include)
 target_compile_features(dual_engine_probe PRIVATE cxx_std_20)
 target_link_libraries(dual_engine_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(meta_calibration_v1_tests tests/meta_calibration_v1_test.cpp)
+target_include_directories(meta_calibration_v1_tests PRIVATE include)
+target_compile_features(meta_calibration_v1_tests PRIVATE cxx_std_20)
+add_test(NAME meta_calibration_v1_tests COMMAND meta_calibration_v1_tests)
+
+add_executable(meta_cognition_probe apps/meta_cognition_probe/main.cpp)
+target_include_directories(meta_cognition_probe PRIVATE include)
+target_compile_features(meta_cognition_probe PRIVATE cxx_std_20)
+target_link_libraries(meta_cognition_probe PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(meta_cognition_telegram_report apps/meta_cognition_telegram_report/main.cpp)
+target_include_directories(meta_cognition_telegram_report PRIVATE include)
+target_compile_features(meta_cognition_telegram_report PRIVATE cxx_std_20)
+target_link_libraries(meta_cognition_telegram_report PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(intraday_15m_collector apps/intraday_15m_collector/main.cpp)
+target_include_directories(intraday_15m_collector PRIVATE include)
+target_compile_features(intraday_15m_collector PRIVATE cxx_std_20)
+target_link_libraries(intraday_15m_collector PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(shadow_outcome_tracker apps/shadow_outcome_tracker/main.cpp)
+target_include_directories(shadow_outcome_tracker PRIVATE include)
+target_compile_features(shadow_outcome_tracker PRIVATE cxx_std_20)
+target_link_libraries(shadow_outcome_tracker PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+
+add_executable(shadow_outcomes_tests tests/shadow_outcomes_test.cpp)
+target_include_directories(shadow_outcomes_tests PRIVATE include)
+target_compile_features(shadow_outcomes_tests PRIVATE cxx_std_20)
+target_link_libraries(shadow_outcomes_tests PRIVATE nlohmann_json::nlohmann_json OpenSSL::Crypto)
+add_test(NAME shadow_outcomes_tests COMMAND shadow_outcomes_tests)
+
+add_executable(crypto_universe_tests tests/crypto_universe_test.cpp)
+target_include_directories(crypto_universe_tests PRIVATE include)
+target_compile_features(crypto_universe_tests PRIVATE cxx_std_20)
+target_link_libraries(crypto_universe_tests PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+add_test(NAME crypto_universe_tests COMMAND crypto_universe_tests)
 
 add_executable(dual_engine_v1_tests tests/dual_engine_v1_test.cpp)
 target_include_directories(dual_engine_v1_tests PRIVATE include)
@@ -134,7 +170,7 @@ target_compile_features(nss_v1_tests PRIVATE cxx_std_20)
 add_test(NAME nss_v1_tests COMMAND nss_v1_tests)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    foreach(target market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_telegram_report lfs_delivery_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests nss_v1_probe nss_v1_tests)
+    foreach(target intraday_15m_collector market_pipeline telegram_delivery telegram_inbound cfss_unit_tests lfs_telegram_report lfs_delivery_tests lfs_v2_probe lfs_v2_tests lfs_v1_probe lfs_v1_tests nss_v1_probe nss_v1_tests nss_basis_collector nss_v2_probe nss_basis_tests nss_v2_tests nss_telegram_report liquidity_phase_probe liquidity_phase_v1_tests liquidity_telegram_report dual_engine_probe dual_engine_v1_tests meta_calibration_v1_tests meta_cognition_probe meta_cognition_telegram_report shadow_outcome_tracker shadow_outcomes_tests crypto_universe_tests)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion)
     endforeach()
 endif()

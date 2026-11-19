@@ -2,8 +2,8 @@
 
 **Canonical specification:** UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER  
 **Implementation branch:** `feat/cpp-stage1-clean`  
-**PR:** #150 (merged to `main`; merge commit `16cb5e8`)  
-**Status:** PASS — all S1-01 through S1-12 acceptance criteria have project-scope evidence. Controlled inbound replay/dedupe verification passed in run 44246767969. PR #150 was merged to `main` at `16cb5e8`. Stage 2 was subsequently merged via PR #151; its separate SLRP evidence is in `stage2-lfs-slrp-report.md`.
+**PR:** #150 (draft; not merged)  
+**Status:** PASS — all S1-01 through S1-12 acceptance criteria have project-scope evidence. Controlled inbound replay/dedupe verification passed in run 44246767969. Stage 2 remains a separate unreleased draft branch.
 
 ## Objective
 
