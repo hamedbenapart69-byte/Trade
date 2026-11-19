@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/contracts/liquidity-phase.v1.schema.json",
+  "title": "CFSS Liquidity Zones and Market Phase v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "algorithm_version",
+    "source_run_id",
+    "source_scan_id",
+    "decision_time_ms",
+    "l1_sha256",
+    "status",
+    "method_class",
+    "actionable",
+    "instruments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_liquidity_phase_v1"
+    },
+    "algorithm_version": {
+      "const": "LIQUIDITY_PHASE_V1"
+    },
+    "source_run_id": {
+      "type": "string"
+    },
+    "source_scan_id": {
+      "type": "string"
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "l1_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": [
+        "AVAILABLE",
+        "PARTIAL_OR_UNAVAILABLE"
+      ]
+    },
+    "method_class": {
+      "const": "RULE_BASED_PROXY"
+    },
+    "actionable": {
+      "const": false
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "symbol",
+          "status",
+          "phase",
+          "phase_model",
+          "phase_reason",
+          "as_of_ms",
+          "current_price",
+          "zones",
+          "nearest_support",
+          "nearest_resistance",
+          "actionable"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ]
+          },
+          "phase": {
+            "enum": [
+              "UPTREND",
+              "DOWNTREND",
+              "RANGE",
+              "TRANSITION",
+              "UNAVAILABLE"
+            ]
+          },
+          "phase_model": {
+            "const": "STRUCTURE_EMA_RULES_V1"
+          },
+          "phase_reason": {
+            "type": "string"
+          },
+          "as_of_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "current_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/zone"
+            }
+          },
+          "nearest_support": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/nearest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nearest_resistance": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/nearest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actionable": {
+            "const": false
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "zone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "side",
+        "low",
+        "high",
+        "wick_ratio",
+        "volume_ratio",
+        "atr14",
+        "pivot_time_ms",
+        "confirmed_at_ms",
+        "invalidated_at_ms",
+        "touch_count",
+        "status",
+        "input_quality",
+        "method_class",
+        "timeframe"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "side": {
+          "enum": [
+            "SUPPLY",
+            "DEMAND"
+          ]
+        },
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "wick_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "volume_ratio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "atr14": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pivot_time_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "confirmed_at_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "invalidated_at_ms": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "touch_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "ACTIVE",
+            "INVALIDATED"
+          ]
+        },
+        "input_quality": {
+          "const": "REAL"
+        },
+        "method_class": {
+          "const": "RULE_BASED_PROXY"
+        },
+        "timeframe": {
+          "const": "4H"
+        }
+      }
+    },
+    "nearest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "low",
+        "high",
+        "distance_from_price",
+        "side",
+        "confirmed_at_ms",
+        "input_quality",
+        "method_class"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "distance_from_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "side": {
+          "enum": [
+            "SUPPLY",
+            "DEMAND"
+          ]
+        },
+        "confirmed_at_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "input_quality": {
+          "const": "REAL"
+        },
+        "method_class": {
+          "const": "RULE_BASED_PROXY"
+        }
+      }
+    }
+  }
+}
