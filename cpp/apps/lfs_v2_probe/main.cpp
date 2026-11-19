@@ -19,11 +19,11 @@ std::string read_raw(const std::string& path) {
     if (!input) throw std::runtime_error("lfs_hash_input_open_failed");
     return {std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
 }
-json fetch_long_short(const std::string& instrument_id) {
+json fetch_long_short(const std::string& instrument_id, std::int64_t decision_time_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> end;
     std::int64_t previous_oldest = std::numeric_limits<std::int64_t>::max();
-    const auto start_ms = cfss::okx::now_ms() - 30LL * 86'400'000LL;
+    const auto start_ms = decision_time_ms - 30LL * 86'400'000LL;
     for (int page = 0; page < 8; ++page) {
         std::string path = "/api/v5/rubik/stat/contracts/long-short-account-ratio-contract?instId=" +
                            cfss::okx::encode(instrument_id) + "&period=1H&limit=100";
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
             const auto id = instrument.value("instrument_id", std::string{});
             const auto symbol = instrument.value("unified_symbol", std::string{"UNKNOWN"});
             if (id.empty()) throw std::runtime_error("instrument_id_missing");
-            const json long_short = fetch_long_short(id);
+            const json long_short = fetch_long_short(id, decision_time);
 
             const auto candles = cfss::lfs::filter_time_series(instrument.value("candles", json::array()), decision_time);
             const auto funding = cfss::lfs::filter_time_series(instrument.value("funding", json::array()), decision_time);
