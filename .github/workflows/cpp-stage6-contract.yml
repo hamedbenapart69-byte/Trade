@@ -7,6 +7,8 @@ on:
       - "cpp/**"
       - "contracts/**"
       - ".github/workflows/cpp-stage6-contract.yml"
+      - ".github/workflows/cpp-stage6-meta-cognition-v1.yml"
+      - ".github/workflows/cpp-stage1-live.yml"
   push:
     branches: [integration/stage6-meta-calibration-clean]
     paths:
