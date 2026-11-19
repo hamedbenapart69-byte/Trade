@@ -69,6 +69,7 @@ jobs:
             -s contracts/dual-engine-report.v1.schema.json -d stage5-evidence/dual-engine-report.v1.json --all-errors
           jq -r '.instruments[] | [.symbol, .lrt.status, .lrt.direction, .nmt.status, .nmt.direction, .golden_rule.decision] | @tsv' stage5-evidence/dual-engine-report.v1.json
       - name: Checkout persistent Telegram receipt state
+        if: always()
         uses: actions/checkout@v4
         with:
           ref: signals

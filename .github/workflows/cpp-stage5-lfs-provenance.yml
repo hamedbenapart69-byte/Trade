@@ -1,0 +1,37 @@
+name: C++ Stage 5 LFS Provenance Contract
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/apps/lfs_v2_probe/main.cpp"
+      - "contracts/lfs-v2-proxy.v1.schema.json"
+      - ".github/workflows/cpp-stage5-lfs-provenance.yml"
+  push:
+    branches: [fix/stage5-lfs-provenance]
+    paths:
+      - "cpp/apps/lfs_v2_probe/main.cpp"
+      - "contracts/lfs-v2-proxy.v1.schema.json"
+      - ".github/workflows/cpp-stage5-lfs-provenance.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provenance-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+      - name: Configure build
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build LFS probe and full tree
+        run: cmake --build build --parallel 2
+      - name: Run full CTest
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Static provenance contract
+        run: |
+          grep -Fq 'decision_time_ms' cpp/apps/lfs_v2_probe/main.cpp
+          grep -Fq 'l1_sha256' cpp/apps/lfs_v2_probe/main.cpp
+          grep -Fq 'l1_decision_time_missing' cpp/apps/lfs_v2_probe/main.cpp
+          echo "LFS_V2_PROVENANCE_CONTRACT_PASS"

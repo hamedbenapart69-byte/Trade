@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS LRT Candidate Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_run_id",
+    "source_scan_id",
+    "decision_time_ms",
+    "l1_sha256",
+    "data_class",
+    "actionable",
+    "artifact_type",
+    "version",
+    "path",
+    "instruments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_scan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "l1_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "data_class": {
+      "const": "PROXY"
+    },
+    "actionable": {
+      "const": false
+    },
+    "artifact_type": {
+      "const": "cfss_lrt_candidates_v1"
+    },
+    "version": {
+      "const": "LRT_V1"
+    },
+    "path": {
+      "const": "PLAN_A_LRT"
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "symbol",
+          "decision_time_ms",
+          "candidate",
+          "golden_rule",
+          "actionable"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision_time_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "candidate": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "status",
+              "direction",
+              "score",
+              "data_class",
+              "hypothesis",
+              "falsification",
+              "reason",
+              "horizon",
+              "entry_reference",
+              "invalidation_reference",
+              "target_reference",
+              "decision_time_ms",
+              "confidence_status",
+              "actionable"
+            ],
+            "properties": {
+              "path": {
+                "enum": [
+                  "PLAN_A_LRT",
+                  "PLAN_A_NMT"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "CANDIDATE",
+                  "NO_QUALIFIED_SETUP",
+                  "INSUFFICIENT_DATA",
+                  "GOLDEN_RULE_NO_TRADE"
+                ]
+              },
+              "direction": {
+                "enum": [
+                  "NONE",
+                  "LONG",
+                  "SHORT"
+                ]
+              },
+              "score": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "data_class": {
+                "enum": [
+                  "REAL",
+                  "PROXY",
+                  "UNAVAILABLE"
+                ]
+              },
+              "hypothesis": {
+                "type": "string"
+              },
+              "falsification": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "horizon": {
+                "type": "string"
+              },
+              "entry_reference": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "invalidation_reference": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "target_reference": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "decision_time_ms": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "confidence_status": {
+                "const": "NOT_CALIBRATED"
+              },
+              "actionable": {
+                "const": false
+              }
+            }
+          },
+          "golden_rule": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evaluated",
+              "veto",
+              "condition",
+              "decision"
+            ],
+            "properties": {
+              "evaluated": {
+                "type": "boolean"
+              },
+              "veto": {
+                "type": "boolean"
+              },
+              "condition": {
+                "const": "LFS > 0.70 AND max(NSS_LONG,NSS_SHORT) > 0.70"
+              },
+              "decision": {
+                "enum": [
+                  "NO_TRADE",
+                  "NOT_TRIGGERED"
+                ]
+              }
+            }
+          },
+          "actionable": {
+            "const": false
+          }
+        }
+      }
+    }
+  }
+}

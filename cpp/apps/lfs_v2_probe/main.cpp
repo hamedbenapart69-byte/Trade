@@ -1,9 +1,11 @@
 #include "cfss/lfs_v2.hpp"
+#include "cfss/hash.hpp"
 #include "cfss/okx_provider.hpp"
 
 #include <algorithm>
 #include <curl/curl.h>
 #include <fstream>
+#include <iterator>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -12,11 +14,16 @@
 using json = nlohmann::json;
 
 namespace {
-json fetch_long_short(const std::string& instrument_id) {
+std::string read_raw(const std::string& path) {
+    std::ifstream input(path, std::ios::binary);
+    if (!input) throw std::runtime_error("lfs_hash_input_open_failed");
+    return {std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
+}
+json fetch_long_short(const std::string& instrument_id, std::int64_t decision_time_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> end;
     std::int64_t previous_oldest = std::numeric_limits<std::int64_t>::max();
-    const auto start_ms = cfss::okx::now_ms() - 30LL * 86'400'000LL;
+    const auto start_ms = decision_time_ms - 30LL * 86'400'000LL;
     for (int page = 0; page < 8; ++page) {
         std::string path = "/api/v5/rubik/stat/contracts/long-short-account-ratio-contract?instId=" +
                            cfss::okx::encode(instrument_id) + "&period=1H&limit=100";
@@ -76,15 +83,18 @@ int main(int argc, char** argv) {
         if (!l1.is_object() || !l1.contains("instruments") || !l1.at("instruments").is_array())
             throw std::runtime_error("l1_instruments_missing");
 
+        if (!l1.contains("window") || !l1.at("window").contains("end_ms"))
+            throw std::runtime_error("l1_decision_time_missing");
+        const auto decision_time = l1.at("window").at("end_ms").get<std::int64_t>();
+        const auto l1_hash = cfss::sha256_hex(read_raw(argv[1]));
         json instruments = json::array();
         std::size_t calculated_count = 0U;
         for (const auto& instrument : l1.at("instruments")) {
             const auto id = instrument.value("instrument_id", std::string{});
             const auto symbol = instrument.value("unified_symbol", std::string{"UNKNOWN"});
             if (id.empty()) throw std::runtime_error("instrument_id_missing");
-            const json long_short = fetch_long_short(id);
+            const json long_short = fetch_long_short(id, decision_time);
 
-            const auto decision_time = cfss::okx::now_ms();
             const auto candles = cfss::lfs::filter_time_series(instrument.value("candles", json::array()), decision_time);
             const auto funding = cfss::lfs::filter_time_series(instrument.value("funding", json::array()), decision_time);
             const auto oi = cfss::lfs::filter_time_series(instrument.value("open_interest", json::array()), decision_time);
@@ -129,6 +139,8 @@ int main(int argc, char** argv) {
             {"version", "LFS_V2_PROXY"},
             {"source_run_id", l1.value("run_id", std::string{"UNKNOWN"})},
             {"source_scan_id", l1.value("scan_id", std::string{"UNKNOWN"})},
+            {"decision_time_ms", decision_time},
+            {"l1_sha256", l1_hash},
             {"status", calculated_count == instruments.size() ? "CALCULATED" : (calculated_count == 0U ? "UNAVAILABLE" : "PARTIAL")},
             {"note", "Research feature score only. PROXY is not REAL and is not an actionable trade signal."},
             {"instruments", instruments}
