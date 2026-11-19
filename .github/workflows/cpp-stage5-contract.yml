@@ -1,0 +1,46 @@
+name: C++ Stage 5 Dual Engines Contract
+
+on:
+  push:
+    branches: [integration/stage5-dual-engine-clean]
+    paths:
+      - "cpp/**"
+      - "contracts/dual-engine-report.v1.schema.json"
+      - ".github/workflows/cpp-stage5-contract.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - "contracts/dual-engine-report.v1.schema.json"
+      - ".github/workflows/cpp-stage5-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage5-dual-engine-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage5-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install C++ dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+      - name: Configure C++20
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build complete C++ tree
+        run: cmake --build build --parallel 2
+      - name: Run all CTest contracts
+        run: ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Verify Stage 5 policy invariants
+        run: |
+          grep -Fq 'LFS > 0.70 AND max(NSS_LONG,NSS_SHORT) > 0.70' cpp/include/cfss/dual_engines.hpp
+          grep -Fq 'NOT_CALIBRATED' cpp/include/cfss/dual_engines.hpp
+          grep -Fq 'actionable' cpp/include/cfss/dual_engines.hpp
+          echo "STAGE5_POLICY_STATIC_GUARDS_PASS"
