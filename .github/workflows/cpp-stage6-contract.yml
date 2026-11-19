@@ -1,0 +1,48 @@
+name: C++ Stage 6 Calibration Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage6-contract.yml"
+  push:
+    branches: [integration/stage6-meta-calibration-clean]
+    paths:
+      - "cpp/**"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage6-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage6-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage6-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install C++ and schema dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+          npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+      - name: Configure, compile, and run complete CTest
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Static policy guards
+        run: |
+          grep -Fq 'NOT_CALIBRATED' cpp/include/cfss/meta_calibration.hpp
+          grep -Fq 'NOT_CALCULATED' cpp/include/cfss/meta_calibration.hpp
+          grep -Fq 'closed_at_ms' cpp/include/cfss/meta_calibration.hpp
+          grep -Fq 'NOT_EXECUTED' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'costs_available' cpp/include/cfss/shadow_outcomes.hpp
+          echo "STAGE6_POLICY_GUARDS_PASS"

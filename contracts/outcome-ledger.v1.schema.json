@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Immutable Closed Outcome Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "artifact_type", "profile", "ledger_status", "outcomes"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_type": {"const": "cfss_outcome_ledger_v1"},
+    "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
+    "reason": {"type": "string"},
+    "ledger_status": {"enum": ["EMPTY", "AVAILABLE", "UNAVAILABLE"]},
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["signal_id", "profile", "path", "regime", "closed_at_ms", "raw_score", "score_model_version", "win", "win_r", "loss_r", "fee_r", "slippage_r", "funding_r", "data_class", "cost_status", "symbol", "direction", "entry_reference", "entry_fill_reference", "entry_model", "execution_status", "stop_reference", "target_reference", "exit_reference", "decision_time_ms", "resolution", "resolution_timeframe", "source_scan_id", "source_l1_sha256", "outcome_kind", "resolution_data_sha256", "resolution_bars"],
+        "properties": {
+          "signal_id": {"type": "string", "minLength": 1},
+          "profile": {"enum": ["DAILY_SWING", "INTRADAY_SCALP"]},
+          "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT", "PLAN_B", "PLAN_C", "PLAN_H"]},
+          "regime": {"type": "string", "minLength": 1},
+          "closed_at_ms": {"type": "integer", "minimum": 1},
+          "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY"]},
+          "win": {"type": "boolean"},
+          "win_r": {"type": "number", "minimum": 0},
+          "loss_r": {"type": "number", "minimum": 0},
+          "fee_r": {"type": ["number", "null"], "minimum": 0},
+          "slippage_r": {"type": ["number", "null"], "minimum": 0},
+          "funding_r": {"type": ["number", "null"]},
+          "data_class": {"enum": ["REAL", "PROXY"]},
+          "cost_status": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
+          "symbol": {"type": "string", "minLength": 1},
+          "direction": {"enum": ["LONG", "SHORT"]},
+          "entry_reference": {"type": "number", "exclusiveMinimum": 0},
+          "entry_fill_reference": {"type": "number", "exclusiveMinimum": 0},
+          "entry_model": {"const": "NEXT_BAR_OPEN_PROXY"},
+          "execution_status": {"const": "NOT_EXECUTED"},
+          "stop_reference": {"type": "number", "exclusiveMinimum": 0},
+          "target_reference": {"type": "number", "exclusiveMinimum": 0},
+          "exit_reference": {"type": "number", "exclusiveMinimum": 0},
+          "decision_time_ms": {"type": "integer", "minimum": 1},
+          "resolution": {"enum": ["STOP", "TARGET", "STOP_FIRST_SAME_BAR_AMBIGUITY", "TIME_EXPIRY"]},
+          "resolution_timeframe": {"enum": ["15m", "1h"]},
+          "source_scan_id": {"type": "string", "minLength": 1},
+          "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "source_universe_status": {"const": "VERIFIED"},
+          "outcome_kind": {"const": "HYPOTHESIS_PROXY"},
+          "resolution_data_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "resolution_bars": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["timestamp_ms", "open", "high", "low", "close"],
+              "properties": {
+                "timestamp_ms": {"type": "integer", "minimum": 1},
+                "open": {"type": "number", "exclusiveMinimum": 0},
+                "high": {"type": "number", "exclusiveMinimum": 0},
+                "low": {"type": "number", "exclusiveMinimum": 0},
+                "close": {"type": "number", "exclusiveMinimum": 0}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"ledger_status": {"const": "EMPTY"}}},
+      "then": {"properties": {"outcomes": {"type": "array", "maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"ledger_status": {"const": "AVAILABLE"}}},
+      "then": {"properties": {"outcomes": {"type": "array", "minItems": 1}}}
+    }
+  ]
+}
