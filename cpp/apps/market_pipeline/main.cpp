@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
+#include <set>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -106,11 +108,69 @@ json build_run_manifest(const json& contract, const json& artifact,
 }
 
 int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
-                const std::filesystem::path& l2_path) {
+                const std::filesystem::path& l2_path,
+                const std::optional<std::filesystem::path>& crypto_universe_cache_path,
+                const std::optional<std::filesystem::path>& market_data_cache_path,
+                const std::optional<std::filesystem::path>& pending_symbols_path) {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
         throw std::runtime_error("curl_global_init_failed");
     try {
-        const auto contract = cfss::okx::collect(symbols, years);
+        std::optional<json> cached_crypto_universe;
+        if (crypto_universe_cache_path && std::filesystem::exists(*crypto_universe_cache_path)) {
+            std::ifstream cache_input(*crypto_universe_cache_path, std::ios::binary);
+            if (!cache_input) throw std::runtime_error("crypto_universe_cache_open_failed");
+            cached_crypto_universe = json::parse(cache_input);
+        }
+        std::optional<json> cached_market_data;
+        if (market_data_cache_path && std::filesystem::exists(*market_data_cache_path)) {
+            try {
+                std::ifstream market_cache_input(*market_data_cache_path, std::ios::binary);
+                if (!market_cache_input) throw std::runtime_error("market_data_cache_open_failed");
+                cached_market_data = json::parse(market_cache_input);
+                const auto policy = cached_market_data->value("cache_policy", json::object());
+                const bool valid_cache =
+                    cached_market_data->is_object() &&
+                    cached_market_data->value("schema_version", std::string{}) == "1.0.0" &&
+                    cached_market_data->value("cache_contract_version", std::string{}) == "1.0.0" &&
+                    cached_market_data->value("provider", json::object())
+                        .value("primary_provider_id", std::string{}) == "okx" &&
+                    policy.value("venue", std::string{}) == "OKX" &&
+                    policy.value("market_type", std::string{}) == "LINEAR_PERPETUAL" &&
+                    policy.value("window_policy", std::string{}) == "ROLLING_2Y_OHLCV_30D_DERIVATIVES" &&
+                    policy.value("normalization_schema_version", std::string{}) == "1.0.0" &&
+                    policy.value("timeframes", json::object()) ==
+                        json{{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}} &&
+                    cached_market_data->contains("cache_entries") &&
+                    cached_market_data->at("cache_entries").is_object() &&
+                    cached_market_data->contains("instruments") &&
+                    cached_market_data->at("instruments").is_array();
+                if (!valid_cache) {
+                    std::cerr << "MARKET_CACHE_MISS reason=cache_contract_mismatch\n";
+                    cached_market_data.reset();
+                }
+            } catch (const std::exception& error) {
+                std::cerr << "MARKET_CACHE_MISS reason=" << error.what() << '\n';
+                cached_market_data.reset();
+            }
+        }
+        std::set<std::string> required_symbols;
+        if (pending_symbols_path && std::filesystem::exists(*pending_symbols_path)) {
+            std::ifstream pending_input(*pending_symbols_path, std::ios::binary);
+            if (!pending_input) throw std::runtime_error("pending_symbols_open_failed");
+            const auto pending_json = json::parse(pending_input);
+            if (!pending_json.is_array()) throw std::runtime_error("pending_symbols_must_be_array");
+            for (const auto& value : pending_json) {
+                if (!value.is_string()) continue;
+                const auto unified = value.get<std::string>();
+                const auto slash = unified.find('/');
+                const auto base = cfss::okx::uppercase_symbol(
+                    slash == std::string::npos ? unified : unified.substr(0U, slash));
+                if (!base.empty()) required_symbols.insert(base);
+            }
+        }
+        const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
+                                                  cached_market_data, required_symbols,
+                                                  market_data_cache_path);
         const std::string l1_raw = contract.dump(2) + "\n";
         cfss::write_file_atomic(l1_path, l1_raw, true);
 
@@ -122,6 +182,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
         const auto provider_path = evidence_dir / "provider-health.v1.json";
         const auto fear_path = evidence_dir / "fear-greed.v1.json";
+        const auto crypto_universe_path = evidence_dir / "crypto-universe.v1.json";
         const auto signals_path = evidence_dir / "signals.json";
         const auto history_path = evidence_dir / "history.csv";
         const auto performance_path = evidence_dir / "performance.json";
@@ -131,8 +192,10 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
         const std::string provider_raw = contract.at("provider_health").dump(2) + "\n";
         const std::string fear_raw = contract.at("fear_greed").dump(2) + "\n";
+        const std::string crypto_universe_raw = contract.at("crypto_universe").dump(2) + "\n";
         write_json(provider_path, contract.at("provider_health"));
         write_json(fear_path, contract.at("fear_greed"));
+        write_json(crypto_universe_path, contract.at("crypto_universe"));
 
         bool any_degraded = false;
         json signals = json::array();
@@ -248,6 +311,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             {"l2_status", artifact_entry(l2_path, l2_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
             {"provider_health", artifact_entry(provider_path, provider_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
             {"fear_greed", artifact_entry(fear_path, fear_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
+            {"crypto_universe", artifact_entry(crypto_universe_path, crypto_universe_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
             {"signals", artifact_entry(signals_path, signals_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
             {"history", artifact_entry(history_path, history_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
             {"performance", artifact_entry(performance_path, performance_raw, retain_non_l1_workflow, full_retention_days, persist_signals)},
@@ -258,6 +322,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         write_json(manifest_path, manifest);
 
         std::cout << "CPP_L1_COLLECTED provider=okx symbols=" << contract.at("instruments").size()
+                  << " crypto_universe=VERIFIED source=coinpaprika"
                   << " run_id=" << contract.at("run_id") << '\n';
         std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
         std::cout << "REQUIRED_ARTIFACTS_CREATED signals.json history.csv performance.json coverage.json system_status.json run-manifest.v1.json\n";
@@ -272,12 +337,19 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
 int main(int argc, char** argv) {
     try {
-        if (argc == 6 && std::string{argv[1]} == "--collect-okx") {
-            return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5]);
+        if ((argc >= 6 && argc <= 9) && std::string{argv[1]} == "--collect-okx") {
+            const std::optional<std::filesystem::path> universe_cache_path =
+                argc >= 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
+            const std::optional<std::filesystem::path> market_cache_path =
+                argc >= 8 ? std::optional<std::filesystem::path>{argv[7]} : std::nullopt;
+            const std::optional<std::filesystem::path> pending_symbols_path =
+                argc == 9 ? std::optional<std::filesystem::path>{argv[8]} : std::nullopt;
+            return run_collect(std::stoi(argv[2]), std::stoi(argv[3]), argv[4], argv[5],
+                                universe_cache_path, market_cache_path, pending_symbols_path);
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <symbols:1..100> <years:1..2> <l1.json> <l2.json>\n";
+                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};

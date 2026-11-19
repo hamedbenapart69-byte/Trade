@@ -1,23 +1,29 @@
 #pragma once
 #include "cfss/hash.hpp"
+#include "cfss/atomic_file.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <ctime>
 #include <limits>
 #include <iostream>
+#include <filesystem>
+#include <functional>
 #include <cstdlib>
 #include <map>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
+#include <utility>
 
 namespace cfss::okx {
 using json = nlohmann::json;
@@ -76,25 +82,50 @@ inline std::string encode(const std::string& value) {
     return result;
 }
 
+inline bool retryable_http_failure(CURLcode transport, long status) {
+    return transport != CURLE_OK || status == 408L || status == 429L ||
+        (status >= 500L && status <= 599L);
+}
+
+inline bool retryable_okx_error_code(const std::string& code) {
+    return code == "50011" || code == "50013";
+}
+
+inline std::chrono::milliseconds retry_delay(const std::string& url, int attempt) {
+    const auto exponent = std::min(attempt, 4);
+    const auto base_ms = std::min(8000, 500 * (1 << exponent));
+    const auto jitter_seed = std::hash<std::string>{}(url + ":" + std::to_string(attempt));
+    const auto jitter_ms = static_cast<int>(jitter_seed % 251U);
+    return std::chrono::milliseconds(base_ms + jitter_ms);
+}
+
 inline json request(const std::string& path, int attempts = 3) {
     const std::string url = "https://www.okx.com" + path;
     std::string last_error = "provider_request_failed";
     for (int attempt = 0; attempt < attempts; ++attempt) {
         if (attempt > 0) http_retry_attempts().fetch_add(1U);
         const auto response = get(url);
+        bool retryable = false;
         if (response.transport == CURLE_OK && response.status == 200) {
+            json parsed;
             try {
-                auto parsed = json::parse(response.body);
-                if (parsed.value("code", std::string{}) == "0" && parsed.contains("data") && parsed["data"].is_array())
-                    return parsed;
-                last_error = "okx_api_error:" + parsed.value("code", std::string{"missing_code"}) + ":" +
-                             parsed.value("msg", std::string{});
-            } catch (const std::exception& e) { last_error = std::string{"json_parse_failed:"} + e.what(); }
+                parsed = json::parse(response.body);
+            } catch (const std::exception& e) {
+                last_error = std::string{"json_parse_failed:"} + e.what();
+                break;
+            }
+            const auto code = parsed.value("code", std::string{"missing_code"});
+            if (code == "0" && parsed.contains("data") && parsed["data"].is_array())
+                return parsed;
+            last_error = "okx_api_error:" + code + ":" + parsed.value("msg", std::string{});
+            retryable = retryable_okx_error_code(code);
         } else {
             last_error = "http_or_transport_error:" + std::to_string(response.status) + ":" +
                          curl_easy_strerror(response.transport);
+            retryable = retryable_http_failure(response.transport, response.status);
         }
-        if (attempt + 1 < attempts) std::this_thread::sleep_for(std::chrono::milliseconds(500 * (attempt + 1)));
+        if (!retryable || attempt + 1 >= attempts) break;
+        std::this_thread::sleep_for(retry_delay(url, attempt));
     }
     exhausted_requests().fetch_add(1U);
     throw std::runtime_error(last_error);
@@ -103,6 +134,114 @@ inline json request(const std::string& path, int attempts = 3) {
 inline std::int64_t now_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+inline std::string uppercase_symbol(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(),
+        [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+    return value;
+}
+
+inline bool valid_crypto_symbol(const std::string& symbol) {
+    return !symbol.empty() && symbol.size() <= 20U &&
+        std::all_of(symbol.begin(), symbol.end(), [](unsigned char ch) {
+            return (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+        });
+}
+
+inline bool is_known_non_crypto_underlying(const std::string& raw_symbol) {
+    static const std::set<std::string> blocked{
+        "SOXL", "SNDK", "NVDA", "ANTHROPIC", "XAU", "XAG", "GOLD", "SILVER",
+        "TSLA", "AAPL", "MSFT", "META", "AMZN", "GOOGL", "GOOG", "NFLX",
+        "MSTR", "COIN", "SPY", "QQQ", "USO", "UNG", "TLT", "GDX", "SMH",
+        "NVDL", "NVDX", "TSLL", "TSLT", "AAPU", "AMZU", "MSFU", "METU",
+        "PLTR", "AMD", "INTC", "AVGO", "ORCL", "CRM", "CRWD", "SMCI", "ARM",
+        "BABA", "PDD", "JD", "NIO", "XOM", "CVX", "BAC", "JPM", "GS", "WFC",
+        "DIS", "UBER", "ABNB", "PYPL", "HOOD", "VIX", "DXY", "WTI", "BRENT"
+    };
+    return blocked.contains(uppercase_symbol(raw_symbol));
+}
+
+struct CryptoUniverse {
+    std::set<std::string> symbols;
+    json artifact;
+};
+
+inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = std::nullopt) {
+    const auto retrieved_at = now_ms();
+    try {
+        const auto response = get("https://api.coinpaprika.com/v1/coins", 30L);
+        if (response.transport != CURLE_OK || response.status != 200)
+            throw std::runtime_error("coinpaprika_http_or_transport_unavailable");
+        const auto payload = json::parse(response.body);
+        if (!payload.is_array()) throw std::runtime_error("coinpaprika_coin_list_shape_invalid");
+        std::set<std::string> symbols;
+        for (const auto& row : payload) {
+            if (!row.is_object() || !row.value("is_active", false)) continue;
+            const auto symbol = uppercase_symbol(row.value("symbol", std::string{}));
+            const auto type = row.value("type", std::string{});
+            if (valid_crypto_symbol(symbol) && (type == "coin" || type == "token"))
+                symbols.insert(symbol);
+        }
+        if (symbols.size() < 500U || !symbols.contains("BTC"))
+            throw std::runtime_error("coinpaprika_coin_list_coverage_insufficient");
+        json symbol_array = json::array();
+        std::string hash_material;
+        for (const auto& symbol : symbols) {
+            symbol_array.push_back(symbol);
+            hash_material += symbol + "\n";
+        }
+        json artifact{
+            {"schema_version", "1.0.0"}, {"artifact_type", "cfss_crypto_universe_v1"},
+            {"status", "VERIFIED"}, {"provider_id", "coinpaprika"},
+            {"source_endpoint", "https://api.coinpaprika.com/v1/coins"},
+            {"attribution", "CoinPaprika"}, {"freshness_status", "LIVE"},
+            {"fetched_at_ms", retrieved_at}, {"retrieved_at_ms", retrieved_at},
+            {"symbol_count", symbols.size()}, {"symbols_sha256", cfss::sha256_hex(hash_material)},
+            {"symbols", symbol_array}
+        };
+        return {std::move(symbols), std::move(artifact)};
+    } catch (const std::exception&) {
+        if (!cached || !cached->is_object() ||
+            cached->value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
+            cached->value("status", std::string{}) != "VERIFIED" ||
+            cached->value("provider_id", std::string{}) != "coinpaprika" ||
+            cached->value("source_endpoint", std::string{}) != "https://api.coinpaprika.com/v1/coins" ||
+            cached->value("attribution", std::string{}) != "CoinPaprika" ||
+            !cached->contains("symbols") || !cached->at("symbols").is_array())
+            throw std::runtime_error("crypto_universe_live_reference_failed_and_no_valid_cache");
+        const auto fetched_at = cached->value("fetched_at_ms", std::int64_t{0});
+        if (fetched_at <= 0 || retrieved_at < fetched_at ||
+            retrieved_at - fetched_at > 7LL * 86'400'000LL)
+            throw std::runtime_error("crypto_universe_cache_stale");
+        std::set<std::string> symbols;
+        for (const auto& value : cached->at("symbols")) {
+            if (!value.is_string())
+                throw std::runtime_error("crypto_universe_cache_symbol_type_invalid");
+            const auto symbol = uppercase_symbol(value.get<std::string>());
+            if (!valid_crypto_symbol(symbol))
+                throw std::runtime_error("crypto_universe_cache_symbol_format_invalid");
+            symbols.insert(symbol);
+        }
+        if (symbols.size() < 500U || !symbols.contains("BTC") ||
+            cached->value("symbol_count", std::size_t{0}) != symbols.size())
+            throw std::runtime_error("crypto_universe_cache_coverage_insufficient");
+        std::string hash_material;
+        for (const auto& symbol : symbols) hash_material += symbol + "\n";
+        if (cached->value("symbols_sha256", std::string{}) != cfss::sha256_hex(hash_material))
+            throw std::runtime_error("crypto_universe_cache_hash_mismatch");
+        auto artifact = *cached;
+        artifact["freshness_status"] = "CACHED";
+        artifact["retrieved_at_ms"] = retrieved_at;
+        return {std::move(symbols), std::move(artifact)};
+    }
+}
+
+inline bool is_verified_crypto_underlying(const std::string& raw_symbol,
+                                          const std::set<std::string>& crypto_symbols) {
+    const auto symbol = uppercase_symbol(raw_symbol);
+    return !symbol.empty() && crypto_symbols.contains(symbol) &&
+           !is_known_non_crypto_underlying(symbol);
 }
 inline std::string utc_iso(std::int64_t epoch_ms) {
     const auto seconds = static_cast<std::time_t>(epoch_ms / 1000);
@@ -174,8 +313,47 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
-inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_count = nullptr,
-                                       std::size_t* declared_count = nullptr) {
+inline std::vector<Instrument> select_instruments(
+    int target_count, std::vector<Instrument> eligible,
+    const std::vector<Instrument>& all_valid_crypto,
+    const std::set<std::string>& required_symbols = {}) {
+    if (target_count < 1 || target_count > 100)
+        throw std::invalid_argument("target_count_invalid");
+    std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
+        const bool a_btc = a.base == "BTC";
+        const bool b_btc = b.base == "BTC";
+        if (a_btc != b_btc) return a_btc;
+        return a.turnover > b.turnover;
+    });
+    const auto btc = std::find_if(eligible.begin(), eligible.end(),
+        [](const Instrument& item) { return item.base == "BTC"; });
+    if (btc == eligible.end())
+        throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
+    const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
+    const auto selection_limit = std::min(requested_total, eligible.size());
+    std::vector<Instrument> selected{*btc};
+    for (const auto& item : eligible) {
+        if (selected.size() >= selection_limit) break;
+        if (item.id != btc->id) selected.push_back(item);
+    }
+    for (const auto& required_base : required_symbols) {
+        const auto found = std::find_if(all_valid_crypto.begin(), all_valid_crypto.end(),
+            [&](const Instrument& item) { return item.base == required_base; });
+        if (found == all_valid_crypto.end()) continue;
+        const bool already_selected = std::any_of(selected.begin(), selected.end(),
+            [&](const Instrument& item) { return item.id == found->id; });
+        if (!already_selected) selected.push_back(*found);
+    }
+    if (selected.size() < selection_limit)
+        throw std::runtime_error("instrument_universe_selection_inconsistent");
+    return selected;
+}
+
+inline std::vector<Instrument> discover(int target_count, const std::set<std::string>& crypto_symbols,
+                                       const std::set<std::string>& required_symbols = {},
+                                       std::size_t* eligible_count = nullptr,
+                                       std::size_t* declared_count = nullptr,
+                                       std::size_t* excluded_non_crypto_count = nullptr) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
@@ -186,7 +364,9 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
     }
 
     std::vector<Instrument> eligible;
+    std::vector<Instrument> all_valid_crypto;
     std::size_t swap_rows = 0U, live_rows = 0U, usdt_settle_rows = 0U, linear_rows = 0U;
+    std::size_t excluded_non_crypto = 0U;
     for (const auto& item : instruments["data"]) {
         const auto id = text(item, "instId");
         if (id.size() < 10U || id.substr(id.size() - 10U) != "-USDT-SWAP") continue;
@@ -201,9 +381,13 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         const std::string parsed_base = first_dash == std::string::npos ? std::string{} : id.substr(0U, first_dash);
         const std::string base = text(item, "baseCcy").empty() ? parsed_base : text(item, "baseCcy");
         const std::string quote = text(item, "quoteCcy").empty() ? "USDT" : text(item, "quoteCcy");
+        if (!is_verified_crypto_underlying(base, crypto_symbols)) {
+            ++excluded_non_crypto;
+            continue;
+        }
         const auto vol = turnover.find(id);
         const double quote_turnover = vol == turnover.end() ? 0.0 : vol->second;
-        if (!valid_linear_usdt_contract(item, base) || !passes_liquidity(quote_turnover)) continue;
+        if (!valid_linear_usdt_contract(item, base)) continue;
         ++linear_rows;
         const auto ct = number(item.value("ctVal", json{}));
         const auto mult = number(item.value("ctMult", json{}));
@@ -212,35 +396,22 @@ inline std::vector<Instrument> discover(int target_count, std::size_t* eligible_
         const auto minimum = number(item.value("minSz", json{}));
         const auto listing = timestamp(item.value("listTime", json{}));
         const auto value_ccy = text(item, "ctValCcy");
-        eligible.push_back({id, base, quote, "USDT", *ct, *mult,
-                            *tick, *lot, *minimum, quote_turnover, listing, value_ccy});
+        const Instrument parsed{id, base, quote, "USDT", *ct, *mult,
+                                *tick, *lot, *minimum, quote_turnover, listing, value_ccy};
+        all_valid_crypto.push_back(parsed);
+        if (passes_liquidity(quote_turnover)) eligible.push_back(parsed);
         (void)second_dash;
     }
     if (eligible_count) *eligible_count = eligible.size();
     if (declared_count) *declared_count = usdt_settle_rows;
+    if (excluded_non_crypto_count) *excluded_non_crypto_count = excluded_non_crypto;
     std::cerr << "OKX_UNIVERSE_DIAGNOSTICS total=" << instruments["data"].size()
               << " usdt_swap_suffix=" << swap_rows << " live=" << live_rows
               << " settle_usdt=" << usdt_settle_rows << " linear_or_unspecified=" << linear_rows
+              << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
-    std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
-        if (a.base == "BTC") return true;
-        if (b.base == "BTC") return false;
-        return a.turnover > b.turnover;
-    });
-    const auto btc = std::find_if(eligible.begin(), eligible.end(), [](const Instrument& x) {
-        return x.base == "BTC";
-    });
-    if (btc == eligible.end()) throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
-    std::vector<Instrument> selected;
-    const auto selection_limit = std::min(static_cast<std::size_t>(target_count), eligible.size());
-    selected.push_back(*btc);
-    for (const auto& item : eligible) {
-        if (selected.size() >= selection_limit) break;
-        if (item.id != btc->id) selected.push_back(item);
-    }
-    if (selected.size() != selection_limit)
-        throw std::runtime_error("instrument_universe_selection_inconsistent");
-    return selected;
+    // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
@@ -292,50 +463,37 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
 }
 
 inline json fetch_recent_candles(const Instrument& instrument, const std::string& bar,
-                                  std::int64_t interval_ms, std::int64_t end_ms, std::size_t limit) {
-    if (interval_ms <= 0 || limit == 0U || limit > 100U || end_ms <= 0)
-        throw std::invalid_argument("recent_candle_window_invalid");
-    const auto start_ms = end_ms - interval_ms * static_cast<std::int64_t>(limit);
+                                    std::int64_t interval_ms, std::int64_t end_ms,
+                                    int limit = 100) {
+    if ((bar != "1H" && bar != "15m" && bar != "5m") || interval_ms <= 0 || limit < 1 || limit > 300)
+        throw std::invalid_argument("recent_candle_request_invalid");
+    const auto payload = request("/api/v5/market/candles?instId=" + encode(instrument.id) +
+                                  "&bar=" + encode(bar) + "&limit=" + std::to_string(limit));
+    const auto retrieved_at = utc_iso(now_ms());
     std::map<std::int64_t, json> rows;
-    std::optional<std::int64_t> after;
-    std::int64_t previous_oldest = end_ms + 1;
-    for (int page = 0; page < 3; ++page) {
-        std::string path = "/api/v5/market/history-candles?instId=" + encode(instrument.id) +
-                           "&bar=" + encode(bar) + "&limit=100";
-        if (after) path += "&after=" + std::to_string(*after);
-        const auto payload = request(path);
-        const auto page_retrieved_at = utc_iso(now_ms());
-        if (payload["data"].empty()) break;
-        std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
-        for (const auto& row : payload["data"]) {
-            if (!row.is_array() || row.size() < 9U) continue;
-            const auto ts = timestamp(row[0]);
-            if (ts <= 0) continue;
-            oldest = std::min(oldest, ts);
-            const auto open = number(row[1]), high = number(row[2]), low = number(row[3]);
-            const auto close = number(row[4]);
-            const auto volume_contracts = number(row[5]);
-            const auto volume_base = number(row[6]);
-            const auto volume_quote = number(row[7]);
-            const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
-            if (ts < start_ms || ts >= end_ms || ts % interval_ms != 0 || !confirmed || ts + interval_ms > end_ms ||
-                !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
-                *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
-                *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
-                *high < std::max({*open, *low, *close}) || *low > std::min({*open, *high, *close}))
-                continue;
-            rows[ts] = {{"timestamp_ms", ts}, {"open", *open}, {"high", *high},
-                        {"low", *low}, {"close", *close}, {"price_currency", instrument.quote},
-                        {"volume", *volume_contracts}, {"volume_unit", "contracts"}, {"volume_base", *volume_base},
-                        {"volume_base_currency", instrument.base}, {"volume_quote", *volume_quote},
-                        {"volume_quote_currency", instrument.quote},
-                        {"closed", true}, {"retrieved_at_utc", page_retrieved_at}};
-        }
-        if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
-            break;
-        previous_oldest = oldest;
-        after = oldest;
-        std::this_thread::sleep_for(std::chrono::milliseconds(110));
+    for (const auto& row : payload["data"]) {
+        if (!row.is_array() || row.size() < 9U) continue;
+        const auto ts = timestamp(row[0]);
+        const auto open = number(row[1]), high = number(row[2]), low = number(row[3]);
+        const auto close = number(row[4]);
+        const auto volume_contracts = number(row[5]);
+        const auto volume_base = number(row[6]);
+        const auto volume_quote = number(row[7]);
+        const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
+        if (ts <= 0 || ts % interval_ms != 0 || ts + interval_ms > end_ms || !confirmed ||
+            !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
+            *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
+            *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
+            *high < std::max({*open, *low, *close}) ||
+            *low > std::min({*open, *high, *close})) continue;
+        rows[ts] = {
+            {"timestamp_ms", ts}, {"open", *open}, {"high", *high},
+            {"low", *low}, {"close", *close}, {"price_currency", instrument.quote},
+            {"volume", *volume_contracts}, {"volume_unit", "contracts"},
+            {"volume_base", *volume_base}, {"volume_base_currency", instrument.base},
+            {"volume_quote", *volume_quote}, {"volume_quote_currency", instrument.quote},
+            {"closed", true}, {"retrieved_at_utc", retrieved_at}
+        };
     }
     json out = json::array();
     for (const auto& [ts, row] : rows) { (void)ts; out.push_back(row); }
@@ -378,11 +536,13 @@ inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, s
     return out;
 }
 
-inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
+inline json fetch_open_interest(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms,
+                                int max_pages = 12) {
+    if (max_pages < 1 || max_pages > 12) throw std::invalid_argument("open_interest_max_pages_invalid");
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
     std::int64_t previous_oldest = end_ms + 1;
-    for (int page = 0; page < 12; ++page) {
+    for (int page = 0; page < max_pages; ++page) {
         std::string path = "/api/v5/rubik/stat/contracts/open-interest-history?instId=" +
                            encode(instrument.id) + "&period=1H&limit=100";
         if (after) path += "&end=" + std::to_string(*after);
@@ -524,27 +684,259 @@ inline json fetch_fear_greed() {
     }
 }
 
-inline json collect(int symbol_count, int years) {
+inline json merge_timestamp_rows(const json& historical, const json& recent,
+                                  std::int64_t start_ms, std::int64_t end_ms,
+                                  std::int64_t interval_ms) {
+    std::map<std::int64_t, json> merged;
+    const auto add = [&](const json& rows) {
+        if (!rows.is_array()) return;
+        for (const auto& row : rows) {
+            if (!row.is_object()) continue;
+            const auto ts = row.value("timestamp_ms", std::int64_t{0});
+            if (ts > 0 && ts >= start_ms && ts < end_ms && ts % interval_ms == 0)
+                merged[ts] = row;
+        }
+    };
+    add(historical);
+    add(recent);
+    json result = json::array();
+    for (const auto& [ts, row] : merged) { (void)ts; result.push_back(row); }
+    return result;
+}
+
+inline json cache_key_material(const std::string& instrument_id,
+                                std::int64_t window_start_ms) {
+    return {
+        {"provider_id", "okx"},
+        {"venue", "OKX"},
+        {"instrument_id", instrument_id},
+        {"market_type", "LINEAR_PERPETUAL"},
+        {"timeframes", {
+            {"candles", "1H"},
+            {"funding", "8H"},
+            {"open_interest", "1H"}
+        }},
+        {"window_start_ms", window_start_ms},
+        {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
+        {"normalization_schema_version", "1.0.0"}
+    };
+}
+
+inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
+                             std::int64_t window_end_ms) {
+    const auto id = instrument.value("instrument_id", std::string{});
+    auto metadata = cache_key_material(id, window_start_ms);
+    metadata["window_end_ms"] = window_end_ms;
+    metadata["data_revision"] = sha256_hex(instrument.dump());
+    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms).dump());
+    return metadata;
+}
+
+inline bool valid_cache_entry(const json& cache_entries, const json& instrument,
+                              const std::string& instrument_id,
+                              std::int64_t current_start_ms, std::int64_t current_end_ms) {
+    if (!cache_entries.is_object() || !cache_entries.contains(instrument_id) ||
+        !instrument.is_object()) return false;
+    const auto& metadata = cache_entries.at(instrument_id);
+    if (!metadata.is_object()) return false;
+    const auto expected = cache_key_material(instrument_id,
+        metadata.value("window_start_ms", std::int64_t{0}));
+    for (const auto& [key, value] : expected.items()) {
+        if (!metadata.contains(key) || metadata.at(key) != value) return false;
+    }
+    const auto window_start = metadata.value("window_start_ms", std::int64_t{0});
+    const auto window_end = metadata.value("window_end_ms", std::int64_t{0});
+    if (window_start <= 0 || window_start > current_start_ms ||
+        window_end <= 0 || window_end > current_end_ms ||
+        current_end_ms - window_end > 10LL * 86'400'000LL) return false;
+    const auto expected_key = sha256_hex(expected.dump());
+    if (metadata.value("cache_key", std::string{}) != expected_key) return false;
+    return metadata.value("data_revision", std::string{}) == sha256_hex(instrument.dump());
+}
+
+inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
+                                       const json& refreshed_instruments,
+                                       std::int64_t window_start_ms,
+                                       std::int64_t window_end_ms) {
+    std::map<std::string, json> by_instrument;
+    json cache_entries = json::object();
+    if (old_cache && old_cache->is_object() && old_cache->contains("instruments") &&
+        old_cache->at("instruments").is_array()) {
+        for (const auto& item : old_cache->at("instruments")) {
+            if (!item.is_object()) continue;
+            const auto id = item.value("instrument_id", std::string{});
+            if (!id.empty()) by_instrument[id] = item;
+        }
+        if (old_cache->contains("cache_entries") && old_cache->at("cache_entries").is_object())
+            cache_entries = old_cache->at("cache_entries");
+    }
+    if (refreshed_instruments.is_array()) {
+        for (const auto& item : refreshed_instruments) {
+            if (!item.is_object()) continue;
+            const auto id = item.value("instrument_id", std::string{});
+            if (id.empty()) continue;
+            std::int64_t retained_start_ms = window_start_ms;
+            if (cache_entries.contains(id) && cache_entries.at(id).is_object() &&
+                by_instrument.contains(id) &&
+                valid_cache_entry(cache_entries, by_instrument.at(id), id,
+                                  window_start_ms, window_end_ms)) {
+                const auto& old_item = by_instrument.at(id);
+                const bool old_has_candles = old_item.contains("candles") &&
+                    old_item.at("candles").is_array() && !old_item.at("candles").empty();
+                if (old_has_candles) {
+                    const auto first_old = old_item.at("candles").front().value("timestamp_ms", std::int64_t{0});
+                    const auto expected_old = std::max<std::int64_t>(
+                        1, (window_end_ms - window_start_ms) / 3'600'000LL);
+                    const double old_coverage = 100.0 *
+                        static_cast<double>(old_item.at("candles").size()) /
+                        static_cast<double>(expected_old);
+                    const auto previous_start =
+                        cache_entries.at(id).value("window_start_ms", std::int64_t{0});
+                    if (first_old > 0 && first_old <= window_start_ms + 3LL * 3'600'000LL &&
+                        old_coverage >= 98.0 && previous_start > 0 &&
+                        previous_start <= window_start_ms)
+                        retained_start_ms = previous_start;
+                }
+            }
+            by_instrument[id] = item;
+            cache_entries[id] = make_cache_entry(item, retained_start_ms, window_end_ms);
+        }
+    }
+    json instruments = json::array();
+    for (const auto& [id, item] : by_instrument) { (void)id; instruments.push_back(item); }
+    return {
+        {"schema_version", "1.0.0"},
+        {"cache_contract_version", "1.0.0"},
+        {"provider", {{"primary_provider_id", "okx"}}},
+        {"cache_policy", {
+            {"venue", "OKX"},
+            {"market_type", "LINEAR_PERPETUAL"},
+            {"timeframes", {{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}}},
+            {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
+            {"normalization_schema_version", "1.0.0"}
+        }},
+        {"cache_entries", std::move(cache_entries)},
+        {"instruments", std::move(instruments)}
+    };
+}
+
+inline json collect(int symbol_count, int years,
+                       const std::optional<json>& cached_crypto_universe = std::nullopt,
+                       const std::optional<json>& cached_market_data = std::nullopt,
+                       const std::set<std::string>& required_symbols = {},
+                       const std::optional<std::filesystem::path>& market_cache_path = std::nullopt) {
     if (symbol_count < 1 || symbol_count > 100 || years < 1 || years > 2)
         throw std::invalid_argument("symbols_must_be_1_to_100_and_years_1_to_2");
     const auto acquired_ms = now_ms();
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    std::size_t eligible_count = 0U, declared_count = 0U;
-    const auto selected = discover(symbol_count, &eligible_count, &declared_count);
+    const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
+    std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
+    const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
+                                    &eligible_count, &declared_count, &excluded_non_crypto_count);
     json instruments = json::array();
+    std::size_t instrument_index = 0U;
     for (const auto& item : selected) {
+        ++instrument_index;
         json candles = json::array(), funding = json::array(), oi = json::array();
         json errors = json::array();
-        try { candles = fetch_candles(item, start_ms, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"ohlcv:"} + e.what()); }
-        try { funding = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"funding:"} + e.what()); }
-        try { oi = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms); }
-        catch (const std::exception& e) { errors.push_back(std::string{"open_interest:"} + e.what()); }
+        const json* cached_instrument = nullptr;
+        if (cached_market_data && cached_market_data->is_object() &&
+            cached_market_data->contains("instruments") &&
+            cached_market_data->at("instruments").is_array()) {
+            for (const auto& cached_item : cached_market_data->at("instruments")) {
+                if (cached_item.value("instrument_id", std::string{}) == item.id) {
+                    cached_instrument = &cached_item;
+                    break;
+                }
+            }
+        }
+        if (cached_instrument) {
+            const bool has_entries = cached_market_data && cached_market_data->contains("cache_entries") &&
+                cached_market_data->at("cache_entries").is_object();
+            if (!has_entries || !valid_cache_entry(cached_market_data->at("cache_entries"),
+                    *cached_instrument, item.id, start_ms, end_ms))
+                cached_instrument = nullptr;
+        }
+        bool has_valid_candle_cache = cached_instrument &&
+            cached_instrument->contains("candles") && cached_instrument->at("candles").is_array() &&
+            !cached_instrument->at("candles").empty();
+        if (has_valid_candle_cache) {
+            const auto& cached_candles = cached_instrument->at("candles");
+            const auto first_cached_ms = cached_candles.front().value("timestamp_ms", std::int64_t{0});
+            const auto last_cached_ms = cached_candles.back().value("timestamp_ms", std::int64_t{0});
+            const auto effective_start_ms = item.listing_time_ms > start_ms
+                ? item.listing_time_ms : start_ms;
+            const auto expected_rows = std::max<std::int64_t>(
+                1, (end_ms - effective_start_ms) / 3'600'000LL);
+            const double cached_coverage = 100.0 * static_cast<double>(cached_candles.size()) /
+                                           static_cast<double>(expected_rows);
+            has_valid_candle_cache = first_cached_ms > 0 &&
+                first_cached_ms <= effective_start_ms + 3LL * 3'600'000LL &&
+                last_cached_ms > 0 && end_ms >= last_cached_ms + 3'600'000LL &&
+                end_ms - (last_cached_ms + 3'600'000LL) <= 10LL * 86'400'000LL &&
+                cached_coverage >= 98.0;
+        }
+        bool oi_cache_complete = false;
+        if (cached_instrument && cached_instrument->contains("open_interest") &&
+            cached_instrument->at("open_interest").is_array() &&
+            !cached_instrument->at("open_interest").empty()) {
+            const auto& cached_oi = cached_instrument->at("open_interest");
+            const auto first_oi_ms = cached_oi.front().value("timestamp_ms", std::int64_t{0});
+            const auto last_oi_ms = cached_oi.back().value("timestamp_ms", std::int64_t{0});
+            oi_cache_complete = first_oi_ms > 0 && last_oi_ms > first_oi_ms &&
+                last_oi_ms - first_oi_ms >= 25LL * 86'400'000LL &&
+                end_ms >= last_oi_ms && end_ms - last_oi_ms <= 3LL * 86'400'000LL;
+        }
+        std::cout << "L1_COLLECT_START " << instrument_index << "/" << selected.size()
+                  << " instrument=" << item.id
+                  << " ohlcv_cache=" << (has_valid_candle_cache ? "HIT" : "BACKFILL")
+                  << " oi_cache=" << (oi_cache_complete ? "HIT" : "BACKFILL") << std::endl;
+        try {
+            if (has_valid_candle_cache) {
+                const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
+                candles = merge_timestamp_rows(cached_instrument->at("candles"), recent,
+                                                start_ms, end_ms, 3'600'000LL);
+            } else {
+                candles = fetch_candles(item, start_ms, end_ms);
+            }
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"ohlcv:"} + e.what());
+            if (has_valid_candle_cache) candles = cached_instrument->at("candles");
+        }
+        try {
+            const auto fresh = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
+            const auto old = cached_instrument && cached_instrument->contains("funding")
+                ? cached_instrument->at("funding") : json::array();
+            funding = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                            end_ms, 1LL);
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"funding:"} + e.what());
+            if (cached_instrument && cached_instrument->contains("funding") &&
+                cached_instrument->at("funding").is_array())
+                funding = cached_instrument->at("funding");
+        }
+        try {
+            const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
+                                                   oi_cache_complete ? 1 : 12);
+            const auto old = cached_instrument && cached_instrument->contains("open_interest")
+                ? cached_instrument->at("open_interest") : json::array();
+            oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                       end_ms, 1LL);
+        } catch (const std::exception& e) {
+            errors.push_back(std::string{"open_interest:"} + e.what());
+            if (cached_instrument && cached_instrument->contains("open_interest") &&
+                cached_instrument->at("open_interest").is_array())
+                oi = cached_instrument->at("open_interest");
+        }
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
+        const auto has_error_prefix = [&](const std::string& prefix) {
+            return std::any_of(errors.begin(), errors.end(), [&](const json& error) {
+                return error.is_string() && error.get<std::string>().rfind(prefix, 0U) == 0U;
+            });
+        };
         instruments.push_back({
             {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
             {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
@@ -553,7 +945,8 @@ inline json collect(int symbol_count, int years) {
             {"contract_value_currency", item.contract_value_currency}, {"tick_size", item.tick_size},
             {"lot_size", item.lot_size}, {"min_size", item.min_size},
             {"listing_time_ms", item.listing_time_ms}, {"turnover_24h_usd", item.turnover},
-            {"liquidity_threshold_usd", 10000000.0}, {"liquidity_status", "ELIGIBLE"},
+            {"liquidity_threshold_usd", 10000000.0},
+            {"liquidity_status", passes_liquidity(item.turnover) ? "ELIGIBLE" : "BELOW_THRESHOLD_PINNED"},
             {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
             {"provenance", {{"instrument_endpoint", "/api/v5/public/instruments?instType=SWAP"},
                             {"ticker_endpoint", "/api/v5/market/tickers?instType=SWAP"},
@@ -564,8 +957,8 @@ inline json collect(int symbol_count, int years) {
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
-                {"funding", availability(funding, "funding_rate", 29.0)},
-                {"open_interest", open_interest_availability(oi, 29.0)}
+                {"funding", has_error_prefix("funding:") ? "PARTIAL" : availability(funding, "funding_rate", 29.0)},
+                {"open_interest", has_error_prefix("open_interest:") ? "PARTIAL" : open_interest_availability(oi, 29.0)}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
@@ -575,6 +968,20 @@ inline json collect(int symbol_count, int years) {
             }},
             {"errors", errors}
         });
+        std::cout << "L1_COLLECT_DONE " << instrument_index << "/" << selected.size()
+                  << " instrument=" << item.id
+                  << " candles=" << candles.size()
+                  << " funding=" << funding.size()
+                  << " oi=" << oi.size()
+                  << " errors=" << errors.size() << std::endl;
+        if (market_cache_path &&
+            (instrument_index % 25U == 0U || instrument_index == selected.size())) {
+            const auto snapshot = make_market_cache_snapshot(cached_market_data, instruments,
+                                                          start_ms, end_ms);
+            cfss::write_file_atomic(*market_cache_path, snapshot.dump(2) + "\n", false);
+            std::cout << "L1_CACHE_CHECKPOINT instruments="
+                      << snapshot.at("instruments").size() << std::endl;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(120));
     }
     const char* commit = std::getenv("GITHUB_SHA");
@@ -595,7 +1002,14 @@ inline json collect(int symbol_count, int years) {
         {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public market-data API"},
                       {"fallback_used", false}}},
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
-        {"universe", {{"declared_usdt_swap_count", declared_count}, {"eligible_count", eligible_count},
+        {"crypto_universe", crypto_universe.artifact},
+        {"universe", {{"declared_usdt_swap_count", declared_count},
+                      {"crypto_universe_status", "VERIFIED"},
+                      {"crypto_universe_source", "coinpaprika"},
+                      {"crypto_universe_symbol_count", crypto_universe.symbols.size()},
+                      {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
+                      {"excluded_non_crypto_count", excluded_non_crypto_count},
+                      {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
                       {"liquidity_threshold_usd", 10000000.0},
                       {"selection_method", "top_turnover_usd_desc_with_btc_first"},
