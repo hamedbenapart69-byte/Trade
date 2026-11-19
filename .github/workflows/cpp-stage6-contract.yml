@@ -46,5 +46,6 @@ jobs:
           grep -Fq 'NOT_CALCULATED' cpp/include/cfss/meta_calibration.hpp
           grep -Fq 'closed_at_ms' cpp/include/cfss/meta_calibration.hpp
           grep -Fq 'NOT_EXECUTED' cpp/include/cfss/shadow_outcomes.hpp
-          grep -Fq 'costs_available' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'cost_status' cpp/include/cfss/shadow_outcomes.hpp
+grep -Fq 'fee_r' cpp/include/cfss/shadow_outcomes.hpp
           echo "STAGE6_POLICY_GUARDS_PASS"
