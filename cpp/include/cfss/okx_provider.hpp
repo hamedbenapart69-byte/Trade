@@ -291,6 +291,57 @@ inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
     return out;
 }
 
+inline json fetch_recent_candles(const Instrument& instrument, const std::string& bar,
+                                  std::int64_t interval_ms, std::int64_t end_ms, std::size_t limit) {
+    if (interval_ms <= 0 || limit == 0U || limit > 100U || end_ms <= 0)
+        throw std::invalid_argument("recent_candle_window_invalid");
+    const auto start_ms = end_ms - interval_ms * static_cast<std::int64_t>(limit);
+    std::map<std::int64_t, json> rows;
+    std::optional<std::int64_t> after;
+    std::int64_t previous_oldest = end_ms + 1;
+    for (int page = 0; page < 3; ++page) {
+        std::string path = "/api/v5/market/history-candles?instId=" + encode(instrument.id) +
+                           "&bar=" + encode(bar) + "&limit=100";
+        if (after) path += "&after=" + std::to_string(*after);
+        const auto payload = request(path);
+        const auto page_retrieved_at = utc_iso(now_ms());
+        if (payload["data"].empty()) break;
+        std::int64_t oldest = std::numeric_limits<std::int64_t>::max();
+        for (const auto& row : payload["data"]) {
+            if (!row.is_array() || row.size() < 9U) continue;
+            const auto ts = timestamp(row[0]);
+            if (ts <= 0) continue;
+            oldest = std::min(oldest, ts);
+            const auto open = number(row[1]), high = number(row[2]), low = number(row[3]);
+            const auto close = number(row[4]);
+            const auto volume_contracts = number(row[5]);
+            const auto volume_base = number(row[6]);
+            const auto volume_quote = number(row[7]);
+            const bool confirmed = text(json{{"v", row[8]}}, "v") == "1";
+            if (ts < start_ms || ts >= end_ms || ts % interval_ms != 0 || !confirmed || ts + interval_ms > end_ms ||
+                !open || !high || !low || !close || !volume_contracts || !volume_base || !volume_quote ||
+                *open <= 0.0 || *high <= 0.0 || *low <= 0.0 || *close <= 0.0 ||
+                *volume_contracts < 0.0 || *volume_base < 0.0 || *volume_quote < 0.0 ||
+                *high < std::max({*open, *low, *close}) || *low > std::min({*open, *high, *close}))
+                continue;
+            rows[ts] = {{"timestamp_ms", ts}, {"open", *open}, {"high", *high},
+                        {"low", *low}, {"close", *close}, {"price_currency", instrument.quote},
+                        {"volume", *volume_contracts}, {"volume_unit", "contracts"}, {"volume_base", *volume_base},
+                        {"volume_base_currency", instrument.base}, {"volume_quote", *volume_quote},
+                        {"volume_quote_currency", instrument.quote},
+                        {"closed", true}, {"retrieved_at_utc", page_retrieved_at}};
+        }
+        if (oldest == std::numeric_limits<std::int64_t>::max() || oldest >= previous_oldest || oldest <= start_ms)
+            break;
+        previous_oldest = oldest;
+        after = oldest;
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));
+    }
+    json out = json::array();
+    for (const auto& [ts, row] : rows) { (void)ts; out.push_back(row); }
+    return out;
+}
+
 inline json fetch_funding(const Instrument& instrument, std::int64_t start_ms, std::int64_t end_ms) {
     std::map<std::int64_t, json> rows;
     std::optional<std::int64_t> after;
