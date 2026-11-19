@@ -1,2 +1,5 @@
 One-time Stage 5 publication trigger.
 The C++ workflow collects one shared L1 snapshot, computes LFS v2 and NSS v2 at the exact same decision timestamp, computes Stage 4 liquidity/phase, evaluates independent LRT and NMT candidate engines, applies the mandatory Golden Rule veto, validates all three output schemas, persists separate path artifacts and the Telegram receipt on the signals branch, and sends a non-actionable report.
+
+[LFS_PROVENANCE_FIX]
+Recompute LFS v2 from the exact L1 snapshot with decision_time_ms and l1_sha256 required; validate provenance before evaluating Stage 5.
