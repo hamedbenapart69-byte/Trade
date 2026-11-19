@@ -46,7 +46,7 @@ jobs:
           grep -Fq 'closed_at_ms' cpp/include/cfss/meta_calibration.hpp
           grep -Fq 'NOT_EXECUTED' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'cost_status' cpp/include/cfss/shadow_outcomes.hpp
-grep -Fq 'fee_r' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'fee_r' cpp/include/cfss/shadow_outcomes.hpp
           for schema in contracts/*.schema.json; do jq -e . "$schema" >/dev/null; done
           echo "ALL_SCHEMA_JSON_PARSE_PASS"
           echo "STAGE6_POLICY_GUARDS_PASS"
