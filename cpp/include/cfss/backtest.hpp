@@ -36,11 +36,11 @@ struct Report { std::string status{"ENGINEERING_REPORT_ONLY"},dataset_id,data_cl
 inline std::int64_t add_months(std::int64_t ms,int count) {
  using namespace std::chrono;
  const sys_time<milliseconds> p{milliseconds{ms}};
- const auto day=floor<days>(p); const auto tod=p-day; const year_month_day ymd{day};
+ const auto day_floor=floor<days>(p); const auto tod=p-day_floor; const year_month_day ymd{day_floor};
  const year_month ym=ymd.year()/ymd.month()+months{count};
- const year_month_day_last last{ym/year_month_day_last::day_last};
+ const year_month_day_last last{ym/std::chrono::last};
  const unsigned d=std::min(unsigned(ymd.day()),unsigned(last.day()));
- return duration_cast<milliseconds>((sys_days{ym/day{d}}).time_since_epoch()+tod).count();
+ return duration_cast<milliseconds>((sys_days{ym/std::chrono::day{d}}).time_since_epoch()+tod).count();
 }
 inline void validate(const Input& x) {
  if(x.dataset_id.empty()) throw std::invalid_argument("DATASET_ID_REQUIRED");
@@ -59,6 +59,7 @@ inline void validate(const Input& x) {
  std::set<std::string> ids;
  for(const auto& c:x.candidates) {
   if(c.id.empty()||!ids.insert(c.id).second) throw std::invalid_argument("CANDIDATE_ID_DUPLICATE");
+  if(c.data_class!="REAL"&&c.data_class!="PROXY") throw std::invalid_argument("CANDIDATE_DATA_CLASS_INVALID");
   if((c.path!="PLAN_A_LRT"&&c.path!="PLAN_A_NMT")||(c.direction!="LONG"&&c.direction!="SHORT")) throw std::invalid_argument("PATH_OR_DIRECTION_INVALID");
   if(!x.bars.contains(c.symbol)||c.signal_ms<=0||c.registered_ms<=0||c.registered_ms>c.signal_ms||c.parameter_hash.size()!=64||c.max_bars==0||!std::isfinite(c.entry)||!std::isfinite(c.stop)||!std::isfinite(c.target)||c.entry<=0||c.stop<=0||c.target<=0) throw std::invalid_argument("CANDIDATE_CONTRACT_INVALID");
   const bool geometry=c.direction=="LONG"?(c.stop<c.entry&&c.target>c.entry):(c.target<c.entry&&c.stop>c.entry);
