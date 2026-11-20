@@ -24,6 +24,8 @@ Connect the Stage 6 meta-cognition output to a deterministic C++ risk gate, pres
 - Uses the existing fail-closed policy core.
 - Rejects proxy data, unavailable liquidity, uncalibrated confidence, missing/non-positive EV, incomplete costs and missing internal shadow-risk snapshot.
 - Preserves Golden Rule veto.
+- Computes same-direction candidate correlation from aligned, closed 1h returns over a rolling 90-day window; requires at least 50 paired observations and blocks when correlation evidence is unavailable.
+- Counts only other same-direction candidate symbols with Pearson correlation >0.70; blocks a candidate when three or more such peers already exist.
 - Emits per-symbol and per-engine reason codes.
 - `actionable=false` and `trade_execution_allowed=false` are invariant in every output.
 
@@ -39,7 +41,7 @@ Connect the Stage 6 meta-cognition output to a deterministic C++ risk gate, pres
 2. Full CTest passes with nonzero test collection.
 3. Both Stage 7 JSON schemas compile and the produced artifact validates.
 4. Provenance mismatch is rejected.
-5. Tests cover no-candidate, PROXY block, missing risk snapshot, eligible manual-review-only state, prohibition on user-account data, and immutable no-execution output.
+5. Tests cover no-candidate, PROXY block, missing risk snapshot, eligible manual-review-only state, prohibition on user-account data, immutable no-execution output, aligned correlation, and the four-exposure G5 boundary.
 6. The production Stage 6 workflow produces and persists the Stage 7 artifact before Telegram delivery.
 7. The combined Telegram report must return a real successful Telegram response and message ID; mock delivery is insufficient.
 
@@ -79,7 +81,7 @@ V1 only. Maximum three versions under the governing SLRP. No threshold relaxatio
 
 ## Self-critique
 
-1. Future data used? Provenance and Stage 6 decision-time matching are enforced; historical candidate-correlation calculation remains a separate requirement to validate.
+1. Future data used? Provenance and Stage 6 decision-time matching are enforced; only closed candles available by decision time enter the 90-day correlation window.
 2. Parameters tuned on test? No strategy parameter fitting is performed here.
 3. Costs included? The gate requires fee, slippage and funding fields before EV can pass.
 4. No-signal case reported? Yes; each engine receives a deterministic reason code.
