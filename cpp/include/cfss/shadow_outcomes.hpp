@@ -5,8 +5,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <optional>
+#include <limits>
 #include <set>
+#include <utility>
 #include <stdexcept>
 #include <string>
 
@@ -552,6 +553,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
     }
 
     ledger["ledger_status"] = ledger["outcomes"].empty() ? "EMPTY" : "AVAILABLE";
+    ledger["cost_backfilled_this_run"] = cost_backfilled;
     ledger["cost_model"] = {
         {"id", "SHADOW_COST_PROXY_V1"},
         {"data_class", "PROXY"},
@@ -565,8 +567,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         {"registered_this_run", registered}, {"resolved_this_run", resolved},
         {"pending_count", still_pending}, {"rejected_this_run", rejected},
         {"total_candidates", registry["candidates"].size()},
-        {"total_outcomes", ledger["outcomes"].size()},
-        {"cost_backfilled_this_run", cost_backfilled}
+undefined
     };
     return {{"registry", registry}, {"ledger", ledger}};
 }
