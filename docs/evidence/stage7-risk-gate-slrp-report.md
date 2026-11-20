@@ -42,7 +42,7 @@ Earlier live evidence from run `44726308730` (baseline):
 - **D1/D3 — Dependency:** Stage 6 has only 5 outcomes and costs are unavailable; a reliable shadow equity curve cannot yet be calculated.
 
 No user account data may be substituted for these missing internal records.
-Latest cross-check from Stage 6 PR live-validation run `44759484737` on head `38c3dff7781fc888c5c3a1078091de5a099f19ea`:
+Earlier cross-check from Stage 6 PR live-validation run `44759484737` on head `38c3dff7781fc888c5c3a1078091de5a099f19ea`:
 - The PR validation workspace produced 2 strategy candidates and the Stage 7 gate blocked both.
 - `risk_snapshot_status=UNAVAILABLE`, `actionable=0`, `trade_execution_allowed=false`.
 - The PR workspace transiently backfilled 5 historical outcomes with cost status `PROXY`; it did not persist these costs to the production `signals` branch.
@@ -53,7 +53,7 @@ Latest cross-check from Stage 6 PR live-validation run `44759484737` on head `38
 
 ## Additional acceptance blocker — risk denominator
 
-V18.2 §37.3 explicitly requires the loss-series denominator to be defined as simulated equity, strategy NAV or another fixed research capital base, then frozen for the experiment. The current implementation has no registered shadow-NAV/risk-unit configuration. The outcome ledger's R-multiples are normalized by each candidate's entry-to-stop distance; that alone does not define portfolio equity or convert aggregate R into daily/weekly/drawdown percentages. No percentage risk snapshot may be inferred from these R values without a declared portfolio sizing model.
+V18.2 §10.4 requires precise definitions for the measurement basis, start/end timestamps, realized versus simulated equity, fees/funding, open versus closed trade treatment, and reset rules. The current implementation has no registered shadow-NAV/risk-unit configuration. The outcome ledger's R-multiples are normalized by each candidate's entry-to-stop distance; that alone does not define portfolio equity or convert aggregate R into daily/weekly/drawdown percentages. No percentage risk snapshot may be inferred from these R values without a declared portfolio sizing model.
 
 This is a D2 design gap in addition to the D1/D3 evidence gaps above. A Stage 7 v2 snapshot builder must accept a versioned, immutable risk-basis configuration and fail closed when it is absent or mismatched. A fixture-only configuration may test arithmetic but must never be treated as the production risk basis.
 
@@ -79,3 +79,22 @@ Not built. R11 prohibits v3 unless v2 records a real FAIL with specific evidence
 - v1 policy core remains active and fail-closed.
 - Overall Stage 7 remains BLOCKED until L1 shadow-risk snapshot and open-exposure coverage pass.
 - No BUY/SELL promotion, no user account connection, no trading keys and no order execution.
+
+
+## Latest-head evidence — 2026-11-20
+
+Stage 6 PR live-validation run `44773010525` completed successfully on head `ad0e855754c13dea159e61dbed484f0b1daa1740`.
+- 61 instruments were selected for 15m resolution data; this remains below the approximate 100-symbol target.
+- The PR-only shadow tracker transiently backfilled costs for 5 historical outcomes as `PROXY`; no persistent ledger write occurred.
+- Stage 7 generated 27 candidate rows and blocked all 27.
+- `risk_snapshot_status=UNAVAILABLE`, `actionable=0`, `trade_execution_allowed=false`.
+- Telegram preparation was validated, but the workflow explicitly sent no Telegram message.
+- Direct persistent-ledger inspection after the run still shows 5 outcomes, all `cost_status=UNAVAILABLE`, `execution_status=NOT_EXECUTED`, `outcome_kind=HYPOTHESIS_PROXY`; 1 TARGET and 4 STOP.
+
+### Source-clause correction
+
+The risk-basis acceptance blocker is grounded in **V18.2 §10.4 — Risk Circuit Breakers**, not §37.3. Section 10.4 lists the required measurement-basis, timestamp, equity, cost, open/closed-position and reset definitions. The versioned immutable risk-basis configuration is an implementation control derived from those requirements; it is not quoted as a literal V18.2 clause.
+
+### Current v2 readiness
+
+The live PR run proves that the current pipeline can generate the Stage 7 artifact and block candidates, but it does not provide persistent costed shadow history or a registered sizing/denominator model. Therefore the planned v2 snapshot builder still lacks valid production inputs. No arbitrary NAV, 1R percentage or reset convention is being inserted. A test fixture may exercise arithmetic only and must remain explicitly non-production. The v2 implementation and any production risk basis remain unapproved/unavailable until their inputs are properly specified and evidenced.
