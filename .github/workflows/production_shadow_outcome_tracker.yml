@@ -1,0 +1,115 @@
+name: Track Stage 1B Production Shadow Outcomes
+
+on:
+  workflow_run:
+    workflows:
+      - "Persist Stage 1B Scanner State"
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-state-writes
+  cancel-in-progress: false
+
+jobs:
+  track-production-outcomes:
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch == 'main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout trusted tracker from production-v1
+        uses: actions/checkout@v4
+        with:
+          ref: production-v1
+          persist-credentials: false
+
+      - name: Checkout signal-state branch
+        uses: actions/checkout@v4
+        with:
+          ref: signal-state
+          path: signal-state
+          persist-credentials: true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: signal_autopilot/requirements.txt
+
+      - name: Install public-data runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r signal_autopilot/requirements.txt
+
+      - name: Run production shadow tracker tests
+        run: python -m unittest signal_autopilot.tests.test_production_outcome_tracker -v
+
+      - name: Evaluate production WATCHLIST outcomes using public OHLCV only
+        run: |
+          python signal_autopilot/modules/production_outcome_tracker.py \
+            --state signal-state/signal_autopilot/state/open_signals.json \
+            --outcomes signal-state/signal_autopilot/state/production_outcomes.json
+
+      - name: Validate production shadow coverage and non-execution labels
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, "signal_autopilot")
+          from modules.production_outcome_tracker import _collect_signals
+
+          state_path = Path("signal-state/signal_autopilot/state/open_signals.json")
+          outcomes_path = Path("signal-state/signal_autopilot/state/production_outcomes.json")
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          outcomes_payload = json.loads(outcomes_path.read_text(encoding="utf-8"))
+          signals = _collect_signals(state)
+          outcomes = outcomes_payload.get("outcomes")
+          if not isinstance(outcomes, list):
+              raise SystemExit("PRODUCTION_OUTCOME_SCHEMA_INVALID")
+          source_ids = {row["signal_id"] for row in signals}
+          outcome_ids = [str(row.get("signal_id") or "") for row in outcomes if isinstance(row, dict)]
+          if len(outcome_ids) != len(outcomes) or len(set(outcome_ids)) != len(outcome_ids):
+              raise SystemExit("PRODUCTION_OUTCOME_ID_INVALID")
+          if set(outcome_ids) != source_ids:
+              raise SystemExit("PRODUCTION_OUTCOME_COVERAGE_MISMATCH")
+          excluded = outcomes_payload.get("excluded_legacy_signals")
+          excluded_count = outcomes_payload.get("excluded_legacy_signals_count")
+          if not isinstance(excluded, list) or excluded_count != len(excluded):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_SCHEMA_INVALID")
+          excluded_ids = [str(row.get("signal_id") or "") for row in excluded if isinstance(row, dict)]
+          if len(excluded_ids) != len(excluded) or len(set(excluded_ids)) != len(excluded_ids):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_ID_INVALID")
+          if set(excluded_ids) & source_ids:
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_OVERLAP")
+          if any(row.get("status") != "EXCLUDED_LEGACY_POLICY_UNVERIFIED" for row in excluded):
+              raise SystemExit("PRODUCTION_LEGACY_EXCLUSION_STATUS_INVALID")
+          if any(row.get("execution_status") != "NOT_EXECUTED" for row in outcomes):
+              raise SystemExit("PRODUCTION_OUTCOME_EXECUTION_LABEL_INVALID")
+          if any(row.get("statistics_status") != "NOT_CALCULATED" for row in outcomes):
+              raise SystemExit("PRODUCTION_OUTCOME_STATISTICS_LABEL_INVALID")
+          print(f"PRODUCTION_SHADOW_COVERAGE={len(outcome_ids)}/{len(source_ids)}")
+          print(f"PRODUCTION_LEGACY_POLICY_EXCLUDED={len(excluded)}")
+          print("PRODUCTION_SHADOW_NON_EXECUTION_VALIDATED=PASS")
+          PY
+
+      - name: Persist only production shadow outcomes
+        run: |
+          set -euo pipefail
+          git -C signal-state config user.name "github-actions[bot]"
+          git -C signal-state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C signal-state add signal_autopilot/state/production_outcomes.json
+          if git -C signal-state diff --cached --quiet; then
+            echo "PRODUCTION_SHADOW_OUTCOMES_UNCHANGED"
+          else
+            git -C signal-state commit -m "data(production): update WATCHLIST shadow outcomes [skip ci]"
+            git -C signal-state push origin HEAD:signal-state
+          fi
