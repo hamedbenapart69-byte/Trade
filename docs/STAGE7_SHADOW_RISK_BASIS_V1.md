@@ -25,9 +25,9 @@ The source defines the required measurement basis but does not prescribe a norma
 ## Current acceptance
 
 - L1: **BLOCKED** — persistent ledger still contains outcomes with unavailable costs; complete open-position marks/provenance are not yet evidenced.
-- L2: **CONTRACT ONLY** — schema is versioned; no production snapshot builder is claimed by this change.
+- L2: **IMPLEMENTED IN PR / CI PENDING** — C++ snapshot builder, CLI probe, schema and fail-closed tests are present on the unmerged PR branch; production use is not claimed.
 - L3: unchanged — Telegram remains the only user-facing channel; no production message is sent by this change.
-- Stage 7 remains **BLOCKED** until the builder consumes this frozen basis and real persistent shadow inputs.
+- Stage 7 remains **BLOCKED** until persistent cost provenance, non-overlapping entry/close history or explicit entry-NAV accounting, open-position mark-to-market, and the upstream Stage 6 calibration gate are satisfied.
 - Stage 6 remains **NOT_CALIBRATED**; Stage 7 cannot promote candidates while that upstream gate is blocked.
 
 ## C++ v2 snapshot builder
