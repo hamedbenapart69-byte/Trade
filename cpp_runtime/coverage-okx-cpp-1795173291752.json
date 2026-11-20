@@ -1,0 +1,144 @@
+{
+  "generated_at_utc": "2026-11-20T11:15:11Z",
+  "instruments": [
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BTC-USDT-SWAP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ETH-USDT-SWAP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ARB-USDT-SWAP",
+      "symbol": "ARB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BNB-USDT-SWAP",
+      "symbol": "BNB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "UNI-USDT-SWAP",
+      "symbol": "UNI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "WLD-USDT-SWAP",
+      "symbol": "WLD/USDT:USDT"
+    }
+  ],
+  "run_id": "okx-cpp-1795173291752",
+  "scan_id": "scan-769a3dd1b1ec25ba3caa86493c536f37e800916971ca744049dddd7171203f1e",
+  "schema_version": "1.0.0",
+  "summary": {
+    "fully_available_count": 6,
+    "partial_count": 0,
+    "selected_count": 6,
+    "unavailable_count": 0
+  },
+  "universe": {
+    "crypto_universe_source": "coinpaprika",
+    "crypto_universe_status": "VERIFIED",
+    "crypto_universe_symbol_count": 9034,
+    "crypto_universe_symbols_sha256": "5496bb594bd43090e28a6098d9bba9eee997a7ac53981a39d3a1ad6f94f842bc",
+    "declared_usdt_swap_count": 531,
+    "eligible_count": 59,
+    "excluded_non_crypto_count": 195,
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_count": 6,
+    "selected_instrument_ids": [
+      "BTC-USDT-SWAP",
+      "ETH-USDT-SWAP",
+      "ARB-USDT-SWAP",
+      "BNB-USDT-SWAP",
+      "UNI-USDT-SWAP",
+      "WLD-USDT-SWAP"
+    ],
+    "selection_method": "top_turnover_usd_desc_with_btc_first",
+    "selection_timestamp_utc": "2026-11-20T11:14:51Z",
+    "target_count": 1
+  }
+}

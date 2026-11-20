@@ -1,0 +1,79 @@
+{
+  "generated_at_utc": "2026-11-20T11:15:11Z",
+  "note": "Stage 1 has no admitted strategy engine; an empty signals array is intentional and is not a BUY or SELL recommendation.",
+  "report_status": "NO_QUALIFIED_SETUP",
+  "run_id": "okx-cpp-1795173291752",
+  "scan_id": "scan-769a3dd1b1ec25ba3caa86493c536f37e800916971ca744049dddd7171203f1e",
+  "schema_version": "1.0.0",
+  "signal_count": 0,
+  "signals": [],
+  "status_report": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ETH-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ARB-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ARB/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BNB-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BNB/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "UNI-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "UNI/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "WLD-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795168800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "WLD/USDT:USDT"
+    }
+  ],
+  "status_report_count": 6
+}
