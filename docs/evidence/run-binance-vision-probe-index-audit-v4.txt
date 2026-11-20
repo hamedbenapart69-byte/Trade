@@ -1,0 +1,1 @@
+Validate exact 730-day daily metrics archive coverage and 24-month funding/futures/spot archive coverage for six symbols, with strict count assertions.
