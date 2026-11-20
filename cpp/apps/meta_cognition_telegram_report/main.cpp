@@ -88,6 +88,9 @@ std::string report_text(const json& report, const json& gate) {
            " | مسدود=" + std::to_string(gate_summary.at("blocked_count").get<std::size_t>()) +
            " | بررسی دستی=" + std::to_string(gate_summary.at("manual_review_count").get<std::size_t>()) +
            " | مجاز برای اجرا=۰";
+    out += "\nوضعیت گیت مرحله ۷: " + gate.value("gate_status", std::string{"DEGRADED"});
+    if (gate.contains("error_code") && gate.at("error_code").is_string())
+        out += "\nکد خطای گیت: " + gate.at("error_code").get<std::string>();
     out += "\nوضعیت ریسک پرتفوی شَدو: " + gate.value("risk_snapshot_status", std::string{"UNAVAILABLE"});
     out += "\nاطلاعات حساب واقعی کاربر دریافت یا استفاده نشده است.";
     out += "\nمرجع طبقه‌بندی نمادهای رمزارزی: CoinPaprika.";
