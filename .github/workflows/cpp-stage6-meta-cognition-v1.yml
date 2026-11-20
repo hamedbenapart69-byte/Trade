@@ -181,33 +181,44 @@ jobs:
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
             -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
-          jq '{risk_snapshot_status,summary,actionable,trade_execution_allowed}' \
+          jq '{risk_snapshot_status,correlation_data_status,gate_status,summary,actionable,trade_execution_allowed}' \
             stage6-evidence/stage7-risk-gate.v1.json
 
       - name: Reserve Telegram report idempotently and persist evidence before send
-        env:
-          CFSS_RISK_GATE_ARTIFACT: stage6-evidence/stage7-risk-gate.v1.json
         run: |
           set -euo pipefail
+          jq -e '.status == "VERIFIED" and .provider_id == "coinpaprika" and .fetched_at_ms > 0' \
+            stage6-evidence/crypto-universe.v1.json >/dev/null
           cp stage6-evidence/crypto-universe.v1.json shared-cache/crypto-universe.v1.json
+          cp stage6-evidence/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
           cp stage6-evidence/lfs-v2.json signals-state/cpp_runtime/lfs_stage5_v2.json
           cp stage6-evidence/nss-v2.json signals-state/cpp_runtime/nss_stage5_v2.json
-          cp stage6-evidence/liquidity-phase.v1.json signals-state/cpp_runtime/liquidity_stage5_v1.json
           cp stage6-evidence/dual-engine-report.v1.json signals-state/cpp_runtime/dual_engine_stage5_v1.json
           cp stage6-evidence/shadow_candidate_registry.v1.json signals-state/cpp_runtime/shadow_candidate_registry.v1.json
           cp stage6-evidence/daily_outcome_ledger.v1.json signals-state/cpp_runtime/daily_outcome_ledger.v1.json
           cp stage6-evidence/meta_cognition_stage6_v1.json signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+          gzip -n -9 -c stage6-evidence/liquidity-phase.v1.json \
+            > signals-state/cpp_runtime/liquidity_stage5_v1.json.gz
+          sha256sum stage6-evidence/liquidity-phase.v1.json | awk '{print $1}' \
+            > signals-state/cpp_runtime/liquidity_stage5_v1.json.sha256
+          gzip -t signals-state/cpp_runtime/liquidity_stage5_v1.json.gz
+          test "$(gzip -cd signals-state/cpp_runtime/liquidity_stage5_v1.json.gz | sha256sum | awk '{print $1}')" = \
+            "$(cat signals-state/cpp_runtime/liquidity_stage5_v1.json.sha256)"
+          rm -f signals-state/cpp_runtime/liquidity_stage5_v1.json
           cp stage6-evidence/stage7-risk-gate.v1.json signals-state/cpp_runtime/stage7_risk_gate.v1.json
-          ./build/meta_cognition_telegram_report --prepare \
-            stage6-evidence/meta_cognition_stage6_v1.json \
-            signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
+          CFSS_RISK_GATE_ARTIFACT=stage6-evidence/stage7-risk-gate.v1.json \
+            ./build/meta_cognition_telegram_report --prepare \
+              stage6-evidence/meta_cognition_stage6_v1.json \
+              signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/crypto_universe.v1.json \
+          git add -A -- cpp_runtime/crypto_universe.v1.json \
             cpp_runtime/lfs_stage5_v2.json \
             cpp_runtime/nss_stage5_v2.json \
             cpp_runtime/liquidity_stage5_v1.json \
+            cpp_runtime/liquidity_stage5_v1.json.gz \
+            cpp_runtime/liquidity_stage5_v1.json.sha256 \
             cpp_runtime/dual_engine_stage5_v1.json \
             cpp_runtime/shadow_candidate_registry.v1.json \
             cpp_runtime/daily_outcome_ledger.v1.json \
@@ -216,7 +227,7 @@ jobs:
             cpp_runtime/stage7_risk_gate.v1.json \
             cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           if ! git diff --cached --quiet; then
-            git commit -m "audit(stage6): persist fresh C++ shadow outcomes and calibration"
+            git commit -m "audit(stage6): persist compact reproducible shadow evidence"
             git push origin HEAD:signals
           fi
 
