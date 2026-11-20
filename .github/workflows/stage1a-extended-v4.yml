@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload Stage 1a v4 evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stage1a-extended-v4-evidence
           path: signal_autopilot/data/stage1a_extended_v4_report.json

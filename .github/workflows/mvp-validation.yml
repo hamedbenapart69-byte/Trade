@@ -38,7 +38,7 @@ jobs:
             --data-dir parquet/okx_swap/ohlcv_1h \
             --output artifacts/mvp-validation.json
       - name: Upload reproducible validation report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mvp-walk-forward-report
           path: artifacts/mvp-validation.json
