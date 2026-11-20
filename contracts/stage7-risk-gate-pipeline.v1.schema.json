@@ -20,7 +20,9 @@
     "actionable",
     "trade_execution_allowed",
     "instruments",
-    "correlation_data_status"
+    "correlation_data_status",
+    "gate_status",
+    "error_code"
   ],
   "properties": {
     "schema_version": {
@@ -140,6 +142,18 @@
       "enum": [
         "AVAILABLE",
         "UNAVAILABLE"
+      ]
+    },
+    "gate_status": {
+      "enum": [
+        "GENERATED",
+        "DEGRADED"
+      ]
+    },
+    "error_code": {
+      "type": [
+        "string",
+        "null"
       ]
     }
   },
