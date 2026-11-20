@@ -1,7 +1,7 @@
 # STAGE 6 — META-COGNITION / CALIBRATION / EV
 
 **Canonical source:** V18.2  
-**Active candidate:** v2 (engineering changes committed; validation pending)  
+**Active candidate:** v2 (engineering changes committed; latest PR live validation completed)  
 **Overall status:** BLOCKED / NOT_CALIBRATED / NO_SIGNAL_PROMOTION  
 **Production release:** NOT APPROVED
 
@@ -79,7 +79,7 @@ Committed changes:
 9. Add negative tests for missing hashes/methods/assumption references, stale cost snapshot time, mislabelled fee, missing numeric cost components and unsupported `REAL` cost status.
 10. Preserve null cost values when total cost coverage is unavailable.
 
-**Validation status (latest head 38c3dff7781fc888c5c3a1078091de5a099f19ea):** C++ build, CTest, schema validation and the Stage 6 PR live-validation workflow completed successfully in GitHub Actions run 44759484737. This verifies execution and artifact contracts, not statistical calibration or release readiness.
+**Validation status (latest head `ad0e855754c13dea159e61dbed484f0b1daa1740`):** all 12 GitHub checks passed, including C++ build, CTest, schema validation, Stage 6 contract and PR live validation run `44773010525`. This verifies engineering execution and artifact contracts, not statistical calibration or release readiness.
 
 Live evidence from run 44759484737 on head `38c3dff7781fc888c5c3a1078091de5a099f19ea`:
 - OKX reported 546 total instruments, 531 live USDT-suffix swaps, 336 linear-or-unspecified contracts, 195 excluded non-crypto instruments and 60 eligible instruments. The run selected 60, below the approximate 100-symbol target; the eligibility filter was not relaxed.
@@ -133,3 +133,19 @@ These are historical shadow hypotheses, not executed trades or evidence of profi
 - **Stage 7:** remains BLOCKED / fail-closed while its internal shadow-risk snapshot is unavailable.
 - **Next action:** continue collecting independently resolved, cost-provenance-backed shadow outcomes through the production scheduled pipeline; verify the exact cohort, effective sample sizes, cluster counts, OOS confidence interval and Brier improvement before any calibration claim. Investigate provider fallback and the 60/100 eligible-universe shortfall without relaxing liquidity or contract-equivalence rules.
 - **Merge / production release:** not approved.
+
+
+## 12. Latest-head live validation — 2026-11-20
+
+GitHub Actions run `44773010525`, head `ad0e855754c13dea159e61dbed484f0b1daa1740`, completed with conclusion `success`.
+
+Observed job evidence:
+- The C++ build and all C++ tests completed successfully before the live data steps.
+- Fresh public OKX collection and Stage 4/5 C++ computation completed; the 15m collector reported `AVAILABLE`, `AVAILABLE=61`, `SELECTED=61`. The selection remains below the approximate 100-symbol target; no liquidity/contract filter was relaxed.
+- The PR workspace shadow tracker reported `REGISTERED=15`, `RESOLVED=0`, `PENDING=16`, `TOTAL_OUTCOMES=5`, `COST_PROXY=5`, `COST_UNAVAILABLE=0`, `COST_BACKFILLED=5`, `COST_MODEL=SHADOW_COST_PROXY_V1`. The five cost backfills were made in the ephemeral PR validation workspace only.
+- Meta-Cognition generated from five historical outcomes. BTC, ETH, SOL and other listed engines remained `NOT_CALIBRATED`; no calibrated probability or valid net-EV promotion was established.
+- Stage 7 reported `CANDIDATES=27`, `BLOCKED=27`, `MANUAL_REVIEW=0`, `ACTIONABLE=0`, `RISK_SNAPSHOT=UNAVAILABLE`.
+- The workflow summary explicitly states: no Telegram message was sent and no persistent `signals` branch was written.
+- A separate direct read of `signals/cpp_runtime/daily_outcome_ledger.v1.json` after this run still returns 5 outcomes: all 5 have `cost_status=UNAVAILABLE`, `execution_status=NOT_EXECUTED`, `outcome_kind=HYPOTHESIS_PROXY`; resolutions are 1 TARGET and 4 STOP. Thus the PR-only cost backfill did not change persistent production state.
+
+**Updated decision:** Stage 6 v2 engineering validation = PASS for this PR run; calibration/statistical acceptance = BLOCKED; production release = NOT APPROVED. No OOS calibration PASS is claimed.
