@@ -104,7 +104,7 @@ inline ShadowCostResult calculate_shadow_costs(
     const auto expected_interval_ms = std::min(
         funding_gaps[funding_gaps.size() / 2U], kFundingCoverageToleranceMs);
     const auto maximum_gap_ms = std::min(
-        kFundingCoverageToleranceMs, expected_interval_ms + expected_interval_ms / 2LL);
+        kFundingCoverageToleranceMs, expected_interval_ms + expected_interval_ms / 2);
 
     // شکاف بزرگ‌تر از یک‌ونیم دوره، پوشش ناقص است و هزینه funding نباید صفر فرض شود.
     if (first_time > entry_time_ms ||
