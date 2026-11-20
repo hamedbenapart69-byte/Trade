@@ -173,11 +173,26 @@ jobs:
       - name: Apply integrated Stage 7 risk gate to immutable Stage 6 artifacts
         run: |
           set -euo pipefail
+          if [ -s signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json ]; then
+            cp signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json \
+              stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          else
+            printf '%s\\n' '{}' > stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          fi
+          ./build/shadow_risk_snapshot_probe \
+            stage6-evidence/shadow-risk-basis.daily_swing.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json \
+            stage6-evidence/shadow_candidate_registry.v1.json \
+            "$(jq -r '.source_run_id' stage6-evidence/meta_cognition_stage6_v1.json)" \
+            "$(jq -r '.source_scan_id' stage6-evidence/meta_cognition_stage6_v1.json)" \
+            "$(jq -r '.decision_time_ms' stage6-evidence/meta_cognition_stage6_v1.json)" \
+            0 stage6-evidence/shadow-risk-snapshot.v1.json
           ./build/risk_gate_probe \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
             stage6-evidence/meta_cognition_stage6_v1.json \
-            stage6-evidence/stage7-risk-gate.v1.json
+            stage6-evidence/stage7-risk-gate.v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
             -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
@@ -206,6 +221,7 @@ jobs:
             "$(cat signals-state/cpp_runtime/liquidity_stage5_v1.json.sha256)"
           rm -f signals-state/cpp_runtime/liquidity_stage5_v1.json
           cp stage6-evidence/stage7-risk-gate.v1.json signals-state/cpp_runtime/stage7_risk_gate.v1.json
+          cp stage6-evidence/shadow-risk-snapshot.v1.json signals-state/cpp_runtime/shadow_risk_snapshot.v1.json
           CFSS_RISK_GATE_ARTIFACT=stage6-evidence/stage7-risk-gate.v1.json \
             ./build/meta_cognition_telegram_report --prepare \
               stage6-evidence/meta_cognition_stage6_v1.json \
@@ -225,6 +241,7 @@ jobs:
             cpp_runtime/scalp_outcome_ledger.v1.json \
             cpp_runtime/meta_cognition_stage6_v1.json \
             cpp_runtime/stage7_risk_gate.v1.json \
+            cpp_runtime/shadow_risk_snapshot.v1.json \
             cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           if ! git diff --cached --quiet; then
             git commit -m "audit(stage6): persist compact reproducible shadow evidence"
