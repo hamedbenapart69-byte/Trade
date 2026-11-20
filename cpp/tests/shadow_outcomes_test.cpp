@@ -159,6 +159,31 @@ int main() {
             std::abs(costed_row.at("funding_r").get<double>() - 0.005) < 1e-9,
             "proxy costs use explicit fee, conservative slippage and signed real funding in R");
 
+    require(cfss::shadow::valid_cost_provenance(costed_row),
+            "proxy cost record requires complete and valid assumption and source provenance");
+    auto missing_cost_hash = costed_row;
+    missing_cost_hash.erase("cost_source_l1_sha256");
+    require(!cfss::shadow::valid_cost_provenance(missing_cost_hash),
+            "proxy costs without source L1 hash are rejected");
+    auto missing_slippage_method = costed_row;
+    missing_slippage_method.erase("slippage_proxy_method");
+    require(!cfss::shadow::valid_cost_provenance(missing_slippage_method),
+            "proxy slippage without explicit method is rejected");
+    auto mislabelled_fee = costed_row;
+    mislabelled_fee["fee_assumption_class"] = "REAL";
+    require(!cfss::shadow::valid_cost_provenance(mislabelled_fee),
+            "assumed fee cannot be represented as real");
+    auto missing_cost_value = costed_row;
+    missing_cost_value["funding_r"] = nullptr;
+    require(!cfss::shadow::valid_cost_provenance(missing_cost_value),
+            "proxy cost status requires all three numeric cost components");
+    auto false_real_cost = costed_row;
+    false_real_cost["cost_status"] = "REAL";
+    require(!cfss::shadow::valid_cost_provenance(false_real_cost),
+            "unimplemented real-cost status is rejected");
+    require(cfss::shadow::valid_cost_provenance(target_row),
+            "unavailable cost rows are valid only with explicitly null cost values");
+
     const auto short_costs = cfss::shadow::calculate_shadow_costs(
         costed_l1.at("instruments").front(), "SHORT", 100.0, 102.0,
         3'600'000LL, 5'400'000LL);
