@@ -73,7 +73,7 @@ json registry() {
 int main() {
     constexpr std::int64_t day=86'400'000LL;
     auto b=basis(); auto l=ledger(); auto r=registry();
-    auto s=cfss::shadow_risk::build_snapshot(b,l,r,day*2+20'000,0);
+    auto s=cfss::shadow_risk::build_snapshot(b,l,r,"run-1","scan-1",day*2+20'000,0);
     check(s["status"]=="AVAILABLE","complete costed closed ledger creates snapshot");
     check(s["data_class"]=="PROXY","proxy costs remain explicitly labelled");
     check(s["user_account_data_used"]==false,"snapshot never uses user account data");
@@ -88,7 +88,7 @@ int main() {
 
     auto bad_ledger=l;
     bad_ledger["outcomes"][0]["cost_status"]="UNAVAILABLE";
-    auto blocked=cfss::shadow_risk::build_snapshot(b,bad_ledger,r,day*2+20'000,0);
+    auto blocked=cfss::shadow_risk::build_snapshot(b,bad_ledger,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OUTCOME_COST_OR_PROVENANCE_UNAVAILABLE",
           "unavailable costs fail closed rather than becoming zero");
@@ -96,19 +96,19 @@ int main() {
     auto open_registry=r;
     open_registry["candidates"].push_back({
         {"state","PENDING"},{"entry_fill_reference",100.0}});
-    blocked=cfss::shadow_risk::build_snapshot(b,l,open_registry,day*2+20'000,0);
+    blocked=cfss::shadow_risk::build_snapshot(b,l,open_registry,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OPEN_SHADOW_POSITION_MARK_UNAVAILABLE",
           "filled open shadow position blocks without mark-to-market data");
 
     auto unfrozen=b; unfrozen["basis_status"]="DRAFT";
-    blocked=cfss::shadow_risk::build_snapshot(unfrozen,l,r,day*2+20'000,0);
+    blocked=cfss::shadow_risk::build_snapshot(unfrozen,l,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="RISK_BASIS_INVALID_OR_NOT_FROZEN",
           "unfrozen risk basis is rejected");
 
     auto future=l; future["outcomes"][1]["closed_at_ms"]=day*3;
-    blocked=cfss::shadow_risk::build_snapshot(b,future,r,day*2+20'000,0);
+    blocked=cfss::shadow_risk::build_snapshot(b,future,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OUTCOME_TIME_OR_ID_INVALID",
           "future outcome is rejected");
