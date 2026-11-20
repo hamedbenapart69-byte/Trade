@@ -58,7 +58,9 @@
         "weekly_loss_pct",
         "portfolio_drawdown_pct",
         "correlated_candidate_exposures",
-        "correlation_data_valid"
+        "correlation_data_valid",
+        "consensus_valid",
+        "consensus_reason"
       ],
       "properties": {
         "candidate_present": {
@@ -121,6 +123,13 @@
         },
         "correlation_data_valid": {
           "type": "boolean"
+        },
+        "consensus_valid": {
+          "type": "boolean"
+        },
+        "consensus_reason": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }
