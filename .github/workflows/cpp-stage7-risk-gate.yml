@@ -5,7 +5,7 @@ on:
     paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
   push:
     branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
   workflow_dispatch:
 permissions:
   contents: read
