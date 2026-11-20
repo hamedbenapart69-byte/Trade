@@ -180,7 +180,10 @@ inline json build_snapshot(const json& basis, const json& ledger,
         i = j;
     }
 
-    if (active_day != utc_day(decision_time_ms)) day_start_nav = nav;\n    if (active_week != utc_week(decision_time_ms)) week_start_nav = nav;\n\n    const double daily_loss = std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0);
+    if (active_day != utc_day(decision_time_ms)) day_start_nav = nav;
+    if (active_week != utc_week(decision_time_ms)) week_start_nav = nav;
+
+    const double daily_loss = std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0);
     const double weekly_loss = std::max(0.0, (week_start_nav - nav) / week_start_nav * 100.0);
     const double drawdown = std::max(0.0, (high_water - nav) / high_water * 100.0);
     if (!std::isfinite(daily_loss) || !std::isfinite(weekly_loss) ||
