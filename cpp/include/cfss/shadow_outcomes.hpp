@@ -8,6 +8,7 @@
 #include <limits>
 #include <set>
 #include <utility>
+#include <vector>
 #include <stdexcept>
 #include <string>
 
@@ -78,7 +79,7 @@ inline ShadowCostResult calculate_shadow_costs(
     std::int64_t first_time = std::numeric_limits<std::int64_t>::max();
     std::int64_t last_time = 0;
     std::int64_t previous_time = 0;
-    std::int64_t max_interval_ms = kFundingCoverageToleranceMs;
+    std::vector<std::int64_t> funding_gaps;
     double signed_funding_sum = 0.0;
     for (const auto& row : instrument.at("funding")) {
         if (!row.is_object() || !row.contains("timestamp_ms") ||
@@ -90,7 +91,7 @@ inline ShadowCostResult calculate_shadow_costs(
         if (timestamp <= 0 || !std::isfinite(rate) || timestamp < previous_time)
             return result;
         if (previous_time > 0 && timestamp > previous_time)
-            max_interval_ms = std::max(max_interval_ms, timestamp - previous_time);
+            funding_gaps.push_back(timestamp - previous_time);
         previous_time = timestamp;
         first_time = std::min(first_time, timestamp);
         last_time = std::max(last_time, timestamp);
@@ -98,9 +99,18 @@ inline ShadowCostResult calculate_shadow_costs(
             signed_funding_sum += rate * (direction == "LONG" ? 1.0 : -1.0);
     }
 
-    // پوشش funding باید کل بازه نگهداری را با حاشیه یک دوره تسویه پوشش دهد.
+    if (funding_gaps.empty()) return result;
+    std::sort(funding_gaps.begin(), funding_gaps.end());
+    const auto expected_interval_ms = std::min(
+        funding_gaps[funding_gaps.size() / 2U], kFundingCoverageToleranceMs);
+    const auto maximum_gap_ms = std::min(
+        kFundingCoverageToleranceMs, expected_interval_ms + expected_interval_ms / 2LL);
+
+    // شکاف بزرگ‌تر از یک‌ونیم دوره، پوشش ناقص است و هزینه funding نباید صفر فرض شود.
     if (first_time > entry_time_ms ||
-        last_time + max_interval_ms < close_time_ms)
+        last_time + expected_interval_ms < close_time_ms ||
+        std::any_of(funding_gaps.begin(), funding_gaps.end(),
+            [maximum_gap_ms](std::int64_t gap) { return gap > maximum_gap_ms; }))
         return result;
 
     result.fee_r = (2.0 * kShadowFeeRatePerSide) / risk_fraction;
