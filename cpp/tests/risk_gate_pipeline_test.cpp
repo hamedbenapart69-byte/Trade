@@ -95,6 +95,13 @@ int main() {
     check(provenance_rejected,"provenance mismatch is rejected");
 
 
+    const auto degraded=cfss::risk::build_fallback_report(base_meta(),"STAGE7_PROVENANCE_MISMATCH");
+    check(degraded["gate_status"]=="DEGRADED","risk-gate failure produces an explicit degraded artifact");
+    check(degraded["instruments"][0]["engines"]["lrt"]["reason"]=="STAGE7_INPUT_UNAVAILABLE",
+          "degraded artifact blocks every engine with a stable reason code");
+    check(degraded["trade_execution_allowed"]==false && degraded["actionable"]==false,
+          "degraded artifact cannot authorize action or execution");
+
     // Four same-direction candidates with 60 aligned hourly returns and rho=1
     // must each see three correlated peers and fail the G5 cap.
     constexpr std::int64_t hour_ms = 3'600'000LL;
