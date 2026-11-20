@@ -42,7 +42,7 @@ nlohmann::json fixture_l1_with_funding(nlohmann::json l1) {
     instrument["coverage"] = {{"funding_coverage_days", 30.0}};
     instrument["funding"] = nlohmann::json::array({
         {{"timestamp_ms", 3'600'000LL}, {"funding_rate", 0.0001}},
-        {{"timestamp_ms", 7'200'000LL}, {"funding_rate", 0.0001}}
+        {{"timestamp_ms", 32'400'000LL}, {"funding_rate", 0.0001}}
     });
     return l1;
 }
