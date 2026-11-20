@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install free runner dependencies
         run: |
           sudo apt-get update
@@ -54,7 +54,7 @@ jobs:
             -d stage3-v2-evidence/nss-v2.json --all-errors
           jq -r '.instruments[] | [.symbol, .status, (.nss_long.score // "UNAVAILABLE"), (.nss_short.score // "UNAVAILABLE"), .data_class] | @tsv' stage3-v2-evidence/nss-v2.json
       - name: Checkout persistent Telegram receipt state
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signals
           path: signals-state

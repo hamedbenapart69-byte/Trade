@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install C++ production dependencies
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Checkout persistent signals branch
         id: checkout_signals
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signals
           path: signals-state
