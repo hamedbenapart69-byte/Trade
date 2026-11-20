@@ -43,8 +43,8 @@ inline json unavailable(const std::string& reason, const json& basis,
         {"status", "UNAVAILABLE"},
         {"data_class", "PROXY"},
         {"reason", reason},
-        {"source_run_id", ledger.value("source_run_id", std::string{})},
-        {"source_scan_id", ledger.value("source_scan_id", std::string{})},
+        {"source_run_id", source_run_id},
+        {"source_scan_id", source_scan_id},
         {"decision_time_ms", decision_time_ms},
         {"risk_basis_sha256", cfss::sha256_hex(basis.dump())},
         {"ledger_sha256", cfss::sha256_hex(ledger.dump())},
@@ -54,12 +54,13 @@ inline json unavailable(const std::string& reason, const json& basis,
 
 // محاسبه فقط از دفتر Shadow پایدار؛ هیچ داده‌ای از حساب واقعی کاربر خوانده نمی‌شود.
 inline json build_snapshot(const json& basis, const json& ledger,
-                           const json& registry, std::int64_t decision_time_ms,
+                           const json& registry, const std::string& source_run_id,
+                           const std::string& source_scan_id, std::int64_t decision_time_ms,
                            int correlated_candidate_exposures) {
     const auto fail = [&](const std::string& reason) {
-        return unavailable(reason, basis, ledger, registry, decision_time_ms);
+        return unavailable(reason, basis, ledger, registry, source_run_id, source_scan_id, decision_time_ms);
     };
-    if (decision_time_ms <= 0 || correlated_candidate_exposures < 0)
+    if (decision_time_ms <= 0 || source_run_id.empty() || source_scan_id.empty() || correlated_candidate_exposures < 0)
         return fail("RISK_SNAPSHOT_INPUT_INVALID");
 
     if (basis.value("artifact_type", std::string{}) != "cfss_shadow_risk_basis_v1" ||
@@ -177,7 +178,7 @@ inline json build_snapshot(const json& basis, const json& ledger,
         i = j;
     }
 
-    const double daily_loss = std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0);
+    if (active_day != utc_day(decision_time_ms)) day_start_nav = nav;\n    if (active_week != utc_week(decision_time_ms)) week_start_nav = nav;\n\n    const double daily_loss = std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0);
     const double weekly_loss = std::max(0.0, (week_start_nav - nav) / week_start_nav * 100.0);
     const double drawdown = std::max(0.0, (high_water - nav) / high_water * 100.0);
     if (!std::isfinite(daily_loss) || !std::isfinite(weekly_loss) ||
@@ -195,8 +196,8 @@ inline json build_snapshot(const json& basis, const json& ledger,
         {"risk_basis_sha256", cfss::sha256_hex(basis.dump())},
         {"ledger_sha256", cfss::sha256_hex(ledger.dump())},
         {"registry_sha256", cfss::sha256_hex(registry.dump())},
-        {"source_run_id", ledger.value("source_run_id", std::string{})},
-        {"source_scan_id", ledger.value("source_scan_id", std::string{})},
+        {"source_run_id", source_run_id},
+        {"source_scan_id", source_scan_id},
         {"decision_time_ms", decision_time_ms},
         {"initial_nav_units", basis.at("initial_nav_units")},
         {"current_nav_units", nav},
