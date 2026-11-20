@@ -105,7 +105,7 @@ int main() {
 
     auto future_extended = outcomes;
     future_extended.push_back({
-        "signal-250", "PLAN_A_LRT", "DOWNTREND", 20'001LL * 86'400'000LL,
+        "signal-20000", "PLAN_A_LRT", "DOWNTREND", 20'001LL * 86'400'000LL,
         0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01,
         true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
         "scan-future", "SYMBOL-FUTURE", "LFS_V2_PROXY"
@@ -198,7 +198,7 @@ int main() {
     };
     const auto refreshed_without_candidate = cfss::meta::evaluate_calibration_continuously(
         no_candidate, "DOWNTREND", outcomes, true, 20'001LL * 86'400'000LL);
-    require(refreshed_without_candidate.calibration.sample_count == 250U &&
+    require(refreshed_without_candidate.calibration.sample_count == 20'000U &&
             refreshed_without_candidate.calibration.status == "CALIBRATED" &&
             refreshed_without_candidate.candidate_status == "NO_QUALIFIED_SETUP",
             "path-regime calibration refreshes without promoting a no-setup symbol");
