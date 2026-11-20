@@ -83,6 +83,13 @@ std::string report_text(const json& report, const json& gate) {
     out += "کالیبراسیون معتبر: " + std::to_string(calibrated) +
            " | EV محاسبه‌شده: " + std::to_string(ev_calculated) + "\n";
     out += "\nتا زمانی که داده نتیجه معتبر و کافی وجود نداشته باشد، احتمال برد و EV عددی منتشر نمی‌شود.";
+    const auto& gate_summary = gate.at("summary");
+    out += "\nگیت ریسک مرحله ۷: کاندیدا=" + std::to_string(gate_summary.at("candidate_count").get<std::size_t>()) +
+           " | مسدود=" + std::to_string(gate_summary.at("blocked_count").get<std::size_t>()) +
+           " | بررسی دستی=" + std::to_string(gate_summary.at("manual_review_count").get<std::size_t>()) +
+           " | مجاز برای اجرا=۰";
+    out += "\nوضعیت ریسک پرتفوی شَدو: " + gate.value("risk_snapshot_status", std::string{"UNAVAILABLE"});
+    out += "\nاطلاعات حساب واقعی کاربر دریافت یا استفاده نشده است.";
     out += "\nمرجع طبقه‌بندی نمادهای رمزارزی: CoinPaprika.";
     return out;
 }
