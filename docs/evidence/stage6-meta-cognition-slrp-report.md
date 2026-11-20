@@ -7,9 +7,9 @@
 ## Acceptance criteria
 
 - Calibration is isolated by path, regime, data class, profile and score-model version.
-- V18.2 does not prescribe a fixed minimum outcome count or a 60/20/20 calibration split. A cohort-specific sample-size and uncertainty plan must be pre-registered before evaluation, accounting for the target effect, baseline rate, temporal dependence, clustering and confidence interval width.
+- V18.2 does not prescribe a fixed minimum calibration count or a 60/20/20 calibration split. The current 250-row floor and chronological 60/20/20 partition are explicitly provisional engineering guards, not canonical acceptance criteria and not sufficient to pass calibration. The v2 power estimate uses validation-only three-way cluster-robust uncertainty, a provisional 0.01 Brier improvement target, alpha 0.05 and 80% power; it computes a cohort-specific required OOS effective sample size. These assumptions must remain visible in output and must not be described as V18.2 requirements.
 - Calibration must use independent, chronological evaluation data; training/validation/OOS boundaries must be documented and frozen before results are inspected. The V18.2 Walk-Forward reference of 6m train / 2m test / 1m step applies where suitable, subject to the stated horizon/data-frequency/sample-size checks.
-- Report raw count, effective independent sample size, confidence intervals, Brier score, reliability/calibration diagnostics and cohort distribution. The Gate H 150–200 outcome checkpoint is not a standalone PASS criterion for Stage 6.
+- Report raw count, effective independent sample size, the validation-derived required OOS effective sample size, clustered confidence intervals for paired Brier improvement, Brier score, reliability/calibration diagnostics and cohort distribution. Calibration is blocked unless the OOS effective sample reaches the calculated requirement and the 95% clustered confidence interval for Brier improvement is strictly above zero. The Gate H 150–200 outcome checkpoint is not a standalone PASS criterion for Stage 6.
 - Net EV is calculated only when fee, slippage and funding costs are all numeric and provenance-backed.
 - Uncalibrated or non-positive EV never becomes actionable.
 - Proxy costs and proxy outcomes remain explicitly labelled PROXY.
@@ -48,7 +48,7 @@ Implemented changes:
    - All three costs are converted to R using the original entry-to-stop risk distance.
 5. If funding coverage is incomplete, costs remain UNAVAILABLE; zero cost is never assumed.
 6. Preserve `HYPOTHESIS_PROXY`, `NOT_EXECUTED` and `data_class=PROXY`.
-7. Do not treat 250 outcomes or 60/20/20 as V18.2 requirements. Replace them with a pre-registered, cohort-specific power/uncertainty plan. No acceptance threshold is relaxed.
+7. Keep 250 outcomes and 60/20/20 only as provisional internal guards, never as V18.2 requirements or standalone PASS evidence. Add a per-cohort validation-derived power estimate and require a positive clustered OOS Brier-improvement confidence interval. The 0.01 Brier target, alpha 0.05 and 80% power are explicit provisional engineering assumptions.
 
 New provenance fields include cost model ID, fee/slippage assumptions and classifications, proxy method, funding source, source run/scan IDs, source L1 hash and the source snapshot as-of timestamp. The timestamp is market-data event time, not wall-clock processing time.
 
