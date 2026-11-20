@@ -144,7 +144,7 @@ inline json build_snapshot(const json& basis, const json& ledger,
     }
 
     // بدون NAV در لحظهٔ ورود، معاملات هم‌پوشان قابل ارزش‌گذاری صحیح نیستند.
-    // فقط توالی‌های غیرهم‌پوشان اجازهٔ بازسازی NAV از دفتر بسته‌شده را می‌دهند.
+    // فقط توالی‌های غیرهم‌پوشان اجازهٔ بازسازی NAV از دفتر بسته‌شده را می‌دهند؛ این مقدار جایگزین mark-to-market درون‌معامله‌ای نیست.
     auto intervals = events;
     std::sort(intervals.begin(), intervals.end(), [](const Event& left, const Event& right) {
         if (left.entry_at_ms != right.entry_at_ms)
