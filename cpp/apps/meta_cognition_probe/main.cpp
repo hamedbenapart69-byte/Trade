@@ -2,6 +2,7 @@
 #include "cfss/meta_cognition.hpp"
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
+#include "cfss/shadow_outcomes.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -79,6 +80,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             ((cost_status == "REAL" || cost_status == "PROXY") && !all_costs_numeric) ||
             (cost_status != "UNAVAILABLE" && cost_status != "REAL" && cost_status != "PROXY"))
             throw std::runtime_error("outcome_cost_status_does_not_match_cost_fields");
+        if (!cfss::shadow::valid_cost_provenance(row))
+            throw std::runtime_error("outcome_cost_provenance_invalid");
         if (row.at("profile").get<std::string>() != ledger.value("profile", std::string{}) ||
             row.at("entry_model") != "NEXT_BAR_OPEN_PROXY" ||
             row.at("execution_status") != "NOT_EXECUTED" ||
