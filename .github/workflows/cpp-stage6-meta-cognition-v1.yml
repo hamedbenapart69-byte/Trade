@@ -48,7 +48,7 @@ jobs:
           persist-credentials: true
 
       - name: Restore incremental market data cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             shared-cache/market_data_cache.v1.json
