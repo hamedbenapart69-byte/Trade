@@ -5,3 +5,5 @@ Retry Stage 6 after correcting the confirmed immutable_artifact_already_exists f
 AJV validator repair: pin ajv-cli 5.0.0 and ajv-formats 3.0.1; validate RFC3339 date-time formats explicitly. Keep the outcome ledger immutable and do not fabricate outcomes.
 
 Trigger Stage 6 again after installing the pinned AJV RFC3339 format plugin; no statistical acceptance is implied by this rerun.
+
+Post-merge integration verification 2026-11-20: execute the complete C++ Stage 6 + Stage 7 workflow against the frozen 100-symbol universe, persist all immutable evidence, and verify Telegram delivery. [META_COGNITION_STAGE6_REPORT]
