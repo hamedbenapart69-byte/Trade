@@ -1,0 +1,27 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "$id":"https://cfss.invalid/contracts/risk-gate.v1.schema.json",
+ "title":"CFSS Stage 7 Risk Gate","type":"object","additionalProperties":false,
+ "required":["schema_version","artifact_type","decision_time_ms","status","reason","manual_review_required","trade_execution_allowed","inputs"],
+ "properties":{
+  "schema_version":{"const":"1.0.0"},
+  "artifact_type":{"const":"cfss_risk_gate_v1"},
+  "decision_time_ms":{"type":"integer","minimum":0},
+  "status":{"enum":["BLOCKED","RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY"]},
+  "reason":{"type":"string","minLength":1},
+  "manual_review_required":{"const":true},
+  "trade_execution_allowed":{"const":false},
+  "inputs":{"type":"object","additionalProperties":false,
+   "required":["candidate_present","candidate_actionable","golden_rule_veto","data_real","liquidity_ok","calibration_valid","net_ev_r","costs_complete","risk_snapshot_valid","daily_loss_pct","weekly_loss_pct","portfolio_drawdown_pct","correlated_open_exposures"],
+   "properties":{
+    "candidate_present":{"type":"boolean"},"candidate_actionable":{"const":false},"golden_rule_veto":{"type":"boolean"},
+    "data_real":{"type":"boolean"},"liquidity_ok":{"type":"boolean"},"calibration_valid":{"type":"boolean"},
+    "net_ev_r":{"type":["number","null"]},"costs_complete":{"type":"boolean"},"risk_snapshot_valid":{"type":"boolean"},
+    "daily_loss_pct":{"type":["number","null"],"minimum":0,"maximum":100},
+    "weekly_loss_pct":{"type":["number","null"],"minimum":0,"maximum":100},
+    "portfolio_drawdown_pct":{"type":["number","null"],"minimum":0,"maximum":100},
+    "correlated_open_exposures":{"type":"integer","minimum":0}
+   }
+  }
+ }
+}

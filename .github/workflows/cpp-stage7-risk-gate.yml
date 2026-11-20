@@ -1,0 +1,40 @@
+name: C++ Stage 7 Risk Gate Contract
+on:
+  pull_request:
+    branches: [main]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+  push:
+    branches: [integration/stage7-risk-gate-v1]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: stage7-risk-gate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  stage7-risk-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+          npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+      - name: Full C++ build and CTest
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Compile schema
+        run: npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
+      - name: Fail-closed guards
+        run: |
+          grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'G7_WEEKLY_KILL_SWITCH_10_PERCENT' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'G5_CORRELATED_EXPOSURE_CAP' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'trade_execution_allowed{false}' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'RISK_SNAPSHOT_INVALID_OR_MISSING' cpp/include/cfss/risk_gate.hpp
+          echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"
