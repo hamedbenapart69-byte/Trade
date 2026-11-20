@@ -397,7 +397,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     });
     report.sample_count = selected.size();
     if (selected.size() < 250U) {
-        report.reason = "INSUFFICIENT_PATH_REGIME_OUTCOMES_MIN_250_FOR_60_20_20_SPLIT";
+        report.reason = "PROVISIONAL_SAMPLE_GUARD_250_PENDING_COHORT_POWER_ANALYSIS";
         return report;
     }
 
@@ -405,7 +405,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.validation_count = (selected.size() * 20U) / 100U;
     report.oos_count = selected.size() - report.train_count - report.validation_count;
     if (report.train_count < 100U || report.validation_count < 30U || report.oos_count < 50U) {
-        report.reason = "CHRONOLOGICAL_SPLIT_BELOW_MINIMUM_SAMPLE";
+        report.reason = "PROVISIONAL_CHRONOLOGICAL_SPLIT_GUARD_NOT_MET";
         return report;
     }
 
