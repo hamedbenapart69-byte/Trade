@@ -155,11 +155,62 @@ inline void apply_shadow_costs(
     outcome["cost_status"] = "PROXY";
     outcome["cost_model_id"] = "SHADOW_COST_PROXY_V1";
     outcome["fee_rate_per_side"] = kShadowFeeRatePerSide;
+    outcome["fee_assumption_class"] = "ASSUMED";
+    outcome["fee_assumption_ref"] = "OWNER_ENGINEERING_DECISION_2026-11-20";
     outcome["slippage_rate_per_side"] = kShadowSlippageRatePerSide;
+    outcome["slippage_assumption_class"] = "PROXY";
+    outcome["slippage_proxy_method"] = "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK";
+    outcome["slippage_source_status"] = "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT";
     outcome["funding_source"] = "OKX_PUBLIC_FUNDING_HISTORY";
     outcome["cost_source_run_id"] = source_run_id;
     outcome["cost_source_scan_id"] = source_scan_id;
     outcome["cost_source_l1_sha256"] = source_l1_sha256;
+    outcome["cost_calculated_at_ms"] = closed;
+}
+
+inline bool valid_cost_provenance(const json& outcome) {
+    const auto status = outcome.value("cost_status", std::string{"UNAVAILABLE"});
+    const auto is_null_or_missing = [&outcome](const char* key) {
+        return !outcome.contains(key) || outcome.at(key).is_null();
+    };
+    if (status == "UNAVAILABLE") {
+        return is_null_or_missing("fee_r") &&
+            is_null_or_missing("slippage_r") &&
+            is_null_or_missing("funding_r");
+    }
+    if (status != "PROXY") return false; // REAL costs are not implemented in this stage.
+    const auto finite_number = [&outcome](const char* key) {
+        return outcome.contains(key) && outcome.at(key).is_number() &&
+            std::isfinite(outcome.at(key).get<double>());
+    };
+    const auto nonempty_string = [&outcome](const char* key) {
+        return outcome.contains(key) && outcome.at(key).is_string() &&
+            !outcome.at(key).get<std::string>().empty();
+    };
+    const auto hash = outcome.value("cost_source_l1_sha256", std::string{});
+    const bool valid_hash = hash.size() == 64U &&
+        std::all_of(hash.begin(), hash.end(), [](unsigned char ch) {
+            return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f');
+        });
+    return finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
+        finite_number("slippage_r") && outcome.at("slippage_r").get<double>() >= 0.0 &&
+        finite_number("funding_r") &&
+        finite_number("fee_rate_per_side") &&
+        std::abs(outcome.at("fee_rate_per_side").get<double>() - kShadowFeeRatePerSide) < 1e-12 &&
+        outcome.value("fee_assumption_class", std::string{}) == "ASSUMED" &&
+        outcome.value("fee_assumption_ref", std::string{}) == "OWNER_ENGINEERING_DECISION_2026-11-20" &&
+        finite_number("slippage_rate_per_side") &&
+        std::abs(outcome.at("slippage_rate_per_side").get<double>() - kShadowSlippageRatePerSide) < 1e-12 &&
+        outcome.value("slippage_assumption_class", std::string{}) == "PROXY" &&
+        outcome.value("slippage_proxy_method", std::string{}) == "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK" &&
+        outcome.value("slippage_source_status", std::string{}) == "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT" &&
+        outcome.value("cost_model_id", std::string{}) == "SHADOW_COST_PROXY_V1" &&
+        outcome.value("funding_source", std::string{}) == "OKX_PUBLIC_FUNDING_HISTORY" &&
+        nonempty_string("cost_source_run_id") && nonempty_string("cost_source_scan_id") &&
+        valid_hash && outcome.contains("cost_calculated_at_ms") &&
+        outcome.at("cost_calculated_at_ms").is_number_integer() &&
+        outcome.at("cost_calculated_at_ms").get<std::int64_t>() >=
+            outcome.value("closed_at_ms", std::int64_t{0});
 }
 
 inline json empty_registry() {
@@ -566,6 +617,11 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         candidate["closed_at_ms"] = close_time;
         candidate["gross_r"] = gross_r;
         ++resolved;
+    }
+
+    for (const auto& outcome : ledger["outcomes"]) {
+        if (!valid_cost_provenance(outcome))
+            throw std::runtime_error("shadow_outcome_cost_provenance_invalid");
     }
 
     ledger["ledger_status"] = ledger["outcomes"].empty() ? "EMPTY" : "AVAILABLE";
