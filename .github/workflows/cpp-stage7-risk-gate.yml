@@ -29,7 +29,8 @@ jobs:
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
       - name: Compile schema
-        run: npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
+        run: |
+          npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/stage7-risk-gate-pipeline.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
