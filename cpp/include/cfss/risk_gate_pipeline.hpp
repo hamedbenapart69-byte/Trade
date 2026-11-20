@@ -234,8 +234,8 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                 input.portfolio_drawdown_pct = risk_snapshot.at("portfolio_drawdown_pct").get<double>();
             }
             const auto decision = evaluate(input);
-            if (decision.status == "BLOCKED") ++blocked;
-            else ++manual_review;
+            if (present && decision.status == "BLOCKED") ++blocked;
+            else if (present) ++manual_review;
             engine_rows[key] = {
                 {"path", engine.value("path", std::string{"UNKNOWN"})},
                 {"candidate_status", status.empty() ? "UNAVAILABLE" : status},
@@ -325,7 +325,7 @@ inline json build_fallback_report(const json& meta, const std::string& error_cod
         {"snapshot_scope", "CFSS_SHADOW_PORTFOLIO_ONLY"}, {"user_account_data_used", false},
         {"risk_snapshot_status", "UNAVAILABLE"}, {"correlation_data_status", "UNAVAILABLE"},
         {"gate_status", "DEGRADED"}, {"error_code", code},
-        {"summary", {{"candidate_count", candidates}, {"blocked_count", rows.size() * 2U},
+        {"summary", {{"candidate_count", candidates}, {"blocked_count", candidates},
                      {"manual_review_count", 0}, {"actionable_count", 0}}},
         {"actionable", false}, {"trade_execution_allowed", false}, {"instruments", rows}
     };
