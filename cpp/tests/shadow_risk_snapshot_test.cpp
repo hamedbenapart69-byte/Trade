@@ -93,7 +93,7 @@ int main() {
 
     auto overlapping=l;
     overlapping["outcomes"][1]["entry_fill_time_ms"] =
-        overlapping["outcomes"][0]["entry_fill_time_ms"].get<std::int64_t>() + 1'000LL;
+        overlapping["outcomes"][0]["entry_fill_time_ms"].get<std::int64_t>() + 500LL;
     blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE",
