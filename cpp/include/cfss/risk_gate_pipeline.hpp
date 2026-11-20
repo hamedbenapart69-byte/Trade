@@ -172,13 +172,11 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
         risk_snapshot.at("daily_loss_pct").get<double>() >= 0.0 && risk_snapshot.at("daily_loss_pct").get<double>() <= 100.0 &&
         risk_snapshot.at("weekly_loss_pct").get<double>() >= 0.0 && risk_snapshot.at("weekly_loss_pct").get<double>() <= 100.0 &&
         risk_snapshot.at("portfolio_drawdown_pct").get<double>() >= 0.0 && risk_snapshot.at("portfolio_drawdown_pct").get<double>() <= 100.0 &&
-        risk_snapshot.contains("correlated_candidate_exposures") &&
-        risk_snapshot.at("correlated_candidate_exposures").is_number_integer() &&
-        risk_snapshot.at("correlated_candidate_exposures").get<int>() >= 0 &&
         risk_snapshot.value("source_run_id", std::string{}) == run_id &&
         risk_snapshot.value("source_scan_id", std::string{}) == scan_id &&
         risk_snapshot.value("decision_time_ms", std::int64_t{0}) == decision_time;
 
+    const auto correlations = candidate_correlations(l1, meta, decision_time);
     json rows = json::array();
     std::size_t candidates = 0U, blocked = 0U, manual_review = 0U;
     for (const auto& instrument : meta.at("instruments")) {
@@ -219,13 +217,15 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                 has_number(calibration, "avg_slippage_r") &&
                 has_number(calibration, "avg_funding_r") &&
                 engine.value("ev_status", std::string{}) == "CALCULATED";
+            input.correlation_data_valid = !present || correlations.valid;
+            const CandidateKey candidate_key{symbol, engine.value("direction", std::string{})};
+            const auto peer_it = correlations.peer_counts.find(candidate_key);
+            input.correlated_candidate_exposures = peer_it == correlations.peer_counts.end() ? 0 : peer_it->second;
             input.risk_snapshot_valid = snapshot_available;
             if (snapshot_available) {
                 input.daily_loss_pct = risk_snapshot.at("daily_loss_pct").get<double>();
                 input.weekly_loss_pct = risk_snapshot.at("weekly_loss_pct").get<double>();
                 input.portfolio_drawdown_pct = risk_snapshot.at("portfolio_drawdown_pct").get<double>();
-                input.correlated_open_exposures =
-                    risk_snapshot.at("correlated_candidate_exposures").get<int>();
             }
             const auto decision = evaluate(input);
             if (decision.status == "BLOCKED") ++blocked;
@@ -244,6 +244,8 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                     {"calibration_valid", input.calibration_valid},
                     {"net_ev_r", input.net_ev_r ? json(*input.net_ev_r) : json(nullptr)},
                     {"costs_complete", input.costs_complete},
+                    {"correlation_data_status", input.correlation_data_valid ? "AVAILABLE" : "UNAVAILABLE"},
+                    {"correlated_candidate_exposures", input.correlated_candidate_exposures},
                     {"shadow_risk_snapshot_status", snapshot_available ? "AVAILABLE" : "UNAVAILABLE"}
                 }}
             };
@@ -264,6 +266,7 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
         {"snapshot_scope", "CFSS_SHADOW_PORTFOLIO_ONLY"},
         {"user_account_data_used", false},
         {"risk_snapshot_status", snapshot_available ? "AVAILABLE" : "UNAVAILABLE"},
+        {"correlation_data_status", correlations.valid ? "AVAILABLE" : "UNAVAILABLE"},
         {"summary", {{"candidate_count", candidates}, {"blocked_count", blocked},
                      {"manual_review_count", manual_review}, {"actionable_count", 0}}},
         {"actionable", false}, {"trade_execution_allowed", false},
