@@ -196,7 +196,7 @@ int main() {
 
     auto small_ledger = outcomes;
     small_ledger.resize(5U);
-    const auto partial_without_candidate = cfss::meta::evaluate_candidate(
+    const auto partial_without_candidate = cfss::meta::evaluate_calibration_continuously(
         no_candidate, "DOWNTREND", small_ledger, true, 251LL * 86'400'000LL);
     require(partial_without_candidate.calibration.sample_count == 5U &&
             partial_without_candidate.calibration.reason ==
