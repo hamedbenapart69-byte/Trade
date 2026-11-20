@@ -29,3 +29,21 @@ The source defines the required measurement basis but does not prescribe a norma
 - L3: unchanged — Telegram remains the only user-facing channel; no production message is sent by this change.
 - Stage 7 remains **BLOCKED** until the builder consumes this frozen basis and real persistent shadow inputs.
 - Stage 6 remains **NOT_CALIBRATED**; Stage 7 cannot promote candidates while that upstream gate is blocked.
+
+## C++ v2 snapshot builder
+
+The implementation is in `cpp/include/cfss/shadow_risk_snapshot.hpp`, with the CLI probe in `cpp/apps/shadow_risk_snapshot_probe/main.cpp`.
+
+- Uses `net_R = win_R - loss_R - fee_R - slippage_R - funding_R`; funding may be negative when the simulated position receives funding.
+- Applies the frozen `risk_per_trade_pct` to the pre-event NAV. Outcomes with identical close timestamps use the same pre-event NAV and are aggregated before NAV is updated.
+- Daily buckets are UTC calendar days; weekly buckets begin Monday 00:00 UTC.
+- Portfolio drawdown uses the running NAV high-water mark.
+- The builder rejects duplicate/future/out-of-basis outcomes, non-finite values, missing cost provenance, nonpositive NAV and any filled PENDING candidate.
+- The current version deliberately does not estimate unrealized PnL. A filled open Shadow candidate therefore makes the snapshot `UNAVAILABLE` until a fresh mark-to-market input is implemented.
+- A computed snapshot is labelled `data_class=PROXY`; it is not evidence of executed trades or REAL execution costs.
+
+The scheduled Stage 6 workflow now invokes the builder before Stage 7 and persists the resulting snapshot on the `signals` branch. If no frozen basis file exists at `signals/cpp_runtime/shadow_risk_basis.daily_swing.v1.json`, the workflow passes an empty basis and the builder emits an explicit `UNAVAILABLE` snapshot. No implicit basis is created.
+
+## Current stage disposition
+
+The builder and contract are implementation work, not a Stage 7 PASS. Acceptance still requires a valid frozen basis, complete costed persistent history, open-position mark-to-market coverage, independent C++/CI evidence, and an upstream Stage 6 calibration gate that is no longer `NOT_CALIBRATED`.
