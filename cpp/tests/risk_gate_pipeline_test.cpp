@@ -59,6 +59,7 @@ int main() {
           "global execution and actionability remain disabled");
 
     meta["instruments"][0]["lrt"]["candidate_status"]="CANDIDATE";
+    meta["instruments"][0]["lrt"]["direction"]="LONG";
     meta["instruments"][0]["lrt"]["data_class"]="PROXY";
     report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object());
     check(report["instruments"][0]["engines"]["lrt"]["reason"]=="REAL_DATA_REQUIRED",
