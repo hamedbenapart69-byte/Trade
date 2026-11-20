@@ -318,6 +318,17 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             old_outcome["score_model_version"] =
                 old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
         }
+        // زمان ورود فقط از کندل ثبت‌شدهٔ واقعیِ پروکسی بازیابی می‌شود؛ حدس از decision_time ممنوع است.
+        if (!old_outcome.contains("entry_fill_time_ms") &&
+            old_outcome.contains("resolution_bars") &&
+            old_outcome.at("resolution_bars").is_array() &&
+            !old_outcome.at("resolution_bars").empty() &&
+            old_outcome.at("resolution_bars").front().is_object() &&
+            old_outcome.at("resolution_bars").front().contains("timestamp_ms") &&
+            old_outcome.at("resolution_bars").front().at("timestamp_ms").is_number_integer()) {
+            old_outcome["entry_fill_time_ms"] =
+                old_outcome.at("resolution_bars").front().at("timestamp_ms");
+        }
     }
 
     // بک‌فیل هزینه‌های نتایج قبلی؛ هزینه ناموجود هرگز صفر فرض نمی‌شود.
@@ -594,7 +605,9 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             {"fee_r", nullptr}, {"slippage_r", nullptr}, {"funding_r", nullptr},
             {"data_class", candidate.at("data_class")}, {"cost_status", "UNAVAILABLE"},
             {"symbol", symbol}, {"direction", direction}, {"entry_reference", entry_reference},
-            {"entry_fill_reference", entry_fill}, {"entry_model", "NEXT_BAR_OPEN_PROXY"},
+            {"entry_fill_reference", entry_fill},
+            {"entry_fill_time_ms", candidate.value("entry_fill_time_ms", std::int64_t{0})},
+            {"entry_model", "NEXT_BAR_OPEN_PROXY"},
             {"execution_status", "NOT_EXECUTED"},
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
