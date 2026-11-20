@@ -1,0 +1,1 @@
+Re-run paginated S3 index audit. Count ZIP archives only, exclude .CHECKSUM sidecars, and verify complete two-year daily metrics plus monthly funding/futures/spot coverage for six symbols.
