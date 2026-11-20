@@ -450,11 +450,6 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                 std::to_string(row.closed_at_ms / 86'400'000LL)];
         }
     }
-    if (oos_clusters.effective_n < report.required_oos_effective_sample_size) {
-        report.reason = "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN";
-        return report;
-    }
-
     const auto class_counts_valid = [](const std::vector<Outcome>& rows) {
         std::size_t wins = 0U;
         for (const auto& row : rows) if (row.win) ++wins;
@@ -522,6 +517,15 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.required_oos_effective_sample_size =
         std::max(30.0, std::ceil(required_n));
     report.power_analysis_status = "PROVISIONAL_VALIDATION_CLUSTER_PROXY_ALPHA_0_05_POWER_0_80";
+    if (validation_cluster_metrics.effective_n < 30.0 ||
+        conservative_validation_se <= 1e-12) {
+        report.reason = "VALIDATION_POWER_ESTIMATE_BELOW_EFFECTIVE_SAMPLE_OR_VARIANCE_FLOOR";
+        return report;
+    }
+    if (oos_clusters.effective_n < report.required_oos_effective_sample_size) {
+        report.reason = "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN";
+        return report;
+    }
     const bool use_platt = platt_validation_brier <= isotonic_validation_brier;
     report.method = use_platt ? "PLATT" : "ISOTONIC";
 
