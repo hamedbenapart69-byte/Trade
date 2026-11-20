@@ -273,10 +273,61 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
         {"user_account_data_used", false},
         {"risk_snapshot_status", snapshot_available ? "AVAILABLE" : "UNAVAILABLE"},
         {"correlation_data_status", correlations.valid ? "AVAILABLE" : "UNAVAILABLE"},
+        {"gate_status", "GENERATED"}, {"error_code", nullptr},
         {"summary", {{"candidate_count", candidates}, {"blocked_count", blocked},
                      {"manual_review_count", manual_review}, {"actionable_count", 0}}},
         {"actionable", false}, {"trade_execution_allowed", false},
         {"instruments", rows}
+    };
+}
+
+inline json build_fallback_report(const json& meta, const std::string& error_code) {
+    const auto run_id = meta.value("source_run_id", std::string{"UNKNOWN"});
+    const auto scan_id = meta.value("source_scan_id", std::string{"UNKNOWN"});
+    const auto decision_time = meta.value("decision_time_ms", std::int64_t{0});
+    json rows = json::array();
+    std::size_t candidates = 0U;
+    if (meta.contains("instruments") && meta.at("instruments").is_array()) {
+        for (const auto& instrument : meta.at("instruments")) {
+            const auto symbol = instrument.value("symbol", std::string{"UNKNOWN"});
+            json engines = json::object();
+            for (const auto* key : {"lrt", "nmt"}) {
+                const auto engine = instrument.value(key, json::object());
+                const auto status = engine.value("candidate_status", std::string{"UNAVAILABLE"});
+                if (status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY") ++candidates;
+                engines[key] = {
+                    {"path", engine.value("path", std::string{"UNKNOWN"})},
+                    {"candidate_status", status}, {"decision", "BLOCKED"},
+                    {"reason", "STAGE7_INPUT_UNAVAILABLE"},
+                    {"manual_review_required", true}, {"trade_execution_allowed", false},
+                    {"inputs", {
+                        {"candidate_present", status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY"},
+                        {"golden_rule_veto", instrument.value("golden_rule", json::object()).value("veto", true)},
+                        {"data_class", engine.value("data_class", std::string{"UNAVAILABLE"})},
+                        {"liquidity_ok", false}, {"calibration_valid", false}, {"net_ev_r", nullptr},
+                        {"costs_complete", false}, {"correlation_data_status", "UNAVAILABLE"},
+                        {"correlated_candidate_exposures", 0}, {"shadow_risk_snapshot_status", "UNAVAILABLE"}
+                    }}
+                };
+            }
+            rows.push_back({{"symbol", symbol},
+                {"golden_rule_veto", instrument.value("golden_rule", json::object()).value("veto", true)},
+                {"engines", engines}});
+        }
+    }
+    std::string code = error_code.empty() ? "STAGE7_INPUT_UNAVAILABLE" : error_code.substr(0, 96U);
+    return {
+        {"schema_version", "1.0.0"}, {"artifact_type", "cfss_stage7_risk_gate_v1"},
+        {"source_run_id", run_id}, {"source_scan_id", scan_id}, {"decision_time_ms", decision_time},
+        {"l1_sha256", meta.value("l1_sha256", std::string(64U, '0'))},
+        {"liquidity_report_sha256", meta.value("liquidity_report_sha256", std::string(64U, '0'))},
+        {"meta_cognition_sha256", cfss::sha256_hex(meta.dump())},
+        {"snapshot_scope", "CFSS_SHADOW_PORTFOLIO_ONLY"}, {"user_account_data_used", false},
+        {"risk_snapshot_status", "UNAVAILABLE"}, {"correlation_data_status", "UNAVAILABLE"},
+        {"gate_status", "DEGRADED"}, {"error_code", code},
+        {"summary", {{"candidate_count", candidates}, {"blocked_count", rows.size() * 2U},
+                     {"manual_review_count", 0}, {"actionable_count", 0}}},
+        {"actionable", false}, {"trade_execution_allowed", false}, {"instruments", rows}
     };
 }
 } // namespace cfss::risk
