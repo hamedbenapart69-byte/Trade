@@ -107,6 +107,8 @@ struct CalibrationReport {
     std::optional<double> brier_improvement_ci_low;
     std::optional<double> brier_improvement_ci_high;
     double target_brier_improvement{0.01};
+    double power_alpha{0.05};
+    double target_power{0.80};
     double validation_brier_improvement_se{};
     double required_oos_effective_sample_size{};
     std::string power_analysis_status{"NOT_ESTABLISHED"};
@@ -506,9 +508,9 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         return report;
     }
     report.validation_brier_improvement_se = conservative_validation_se;
-    constexpr double kPowerAlpha = 0.05;
-    constexpr double kPowerTarget = 0.80;
     constexpr double kPowerZSum = 2.801585; // z(1-alpha/2) + z(power)
+    report.power_alpha = 0.05;
+    report.target_power = 0.80;
     const double validation_sd_proxy =
         conservative_validation_se * std::sqrt(validation_cluster_metrics.effective_n);
     const double required_n = std::pow(
