@@ -2,7 +2,7 @@ name: C++ Stage 7 Risk Gate Contract
 on:
   pull_request:
     branches: [main]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
   push:
     branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
     paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
@@ -23,6 +23,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
           npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+      - name: Validate Stage 6 workflow YAML
+        run: |
+          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/cpp-stage6-meta-cognition-v1.yml"); puts "STAGE6_WORKFLOW_YAML_PASS"'
       - name: Full C++ build and CTest
         run: |
           cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
