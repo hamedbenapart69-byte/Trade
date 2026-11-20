@@ -110,6 +110,7 @@ inline json build_snapshot(const json& basis, const json& ledger,
     }
 
     struct Event {
+        std::int64_t entry_at_ms{};
         std::int64_t closed_at_ms{};
         std::string signal_id;
         double net_r{};
@@ -118,9 +119,11 @@ inline json build_snapshot(const json& basis, const json& ledger,
     std::set<std::string> ids;
     for (const auto& outcome : ledger.at("outcomes")) {
         const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
+        const auto entry_at = outcome.value("entry_fill_time_ms", std::int64_t{0});
         const auto signal_id = outcome.value("signal_id", std::string{});
-        if (closed < basis.at("effective_from_ms").get<std::int64_t>() ||
-            closed > decision_time_ms || signal_id.empty() || !ids.insert(signal_id).second)
+        if (entry_at < basis.at("effective_from_ms").get<std::int64_t>() ||
+            entry_at <= 0 || closed < entry_at || closed > decision_time_ms ||
+            signal_id.empty() || !ids.insert(signal_id).second)
             return fail("OUTCOME_TIME_OR_ID_INVALID");
         if (outcome.value("execution_status", std::string{}) != "NOT_EXECUTED" ||
             outcome.value("outcome_kind", std::string{}) != "HYPOTHESIS_PROXY" ||
@@ -137,8 +140,24 @@ inline json build_snapshot(const json& basis, const json& ledger,
             outcome.at("slippage_r").get<double>() -
             outcome.at("funding_r").get<double>();
         if (!std::isfinite(net_r)) return fail("OUTCOME_NET_R_NONFINITE");
-        events.push_back({closed, signal_id, net_r});
+        events.push_back({entry_at, closed, signal_id, net_r});
     }
+
+    // بدون NAV در لحظهٔ ورود، معاملات هم‌پوشان قابل ارزش‌گذاری صحیح نیستند.
+    // فقط توالی‌های غیرهم‌پوشان اجازهٔ بازسازی NAV از دفتر بسته‌شده را می‌دهند.
+    auto intervals = events;
+    std::sort(intervals.begin(), intervals.end(), [](const Event& left, const Event& right) {
+        if (left.entry_at_ms != right.entry_at_ms)
+            return left.entry_at_ms < right.entry_at_ms;
+        return left.closed_at_ms < right.closed_at_ms;
+    });
+    std::int64_t latest_close = 0;
+    for (const auto& event : intervals) {
+        if (event.entry_at_ms < latest_close)
+            return fail("OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE");
+        latest_close = std::max(latest_close, event.closed_at_ms);
+    }
+
     std::sort(events.begin(), events.end(), [](const Event& left, const Event& right) {
         if (left.closed_at_ms != right.closed_at_ms)
             return left.closed_at_ms < right.closed_at_ms;
