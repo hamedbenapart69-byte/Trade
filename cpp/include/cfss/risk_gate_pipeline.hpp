@@ -2,7 +2,14 @@
 #include "cfss/risk_gate.hpp"
 #include "cfss/hash.hpp"
 #include <nlohmann/json.hpp>
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <map>
+#include <numeric>
+#include <iterator>
+#include <set>
+#include <vector>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -21,6 +28,115 @@ inline const json* find_symbol(const json& rows, const std::string& symbol,
 inline bool has_number(const json& value, const char* key) {
     return value.is_object() && value.contains(key) && value.at(key).is_number() &&
            std::isfinite(value.at(key).get<double>());
+}
+
+struct CandidateKey {
+    std::string symbol;
+    std::string direction;
+    bool operator<(const CandidateKey& other) const {
+        return symbol < other.symbol || (symbol == other.symbol && direction < other.direction);
+    }
+};
+
+inline std::map<std::int64_t, double> hourly_returns(const json& instrument,
+                                                      std::int64_t decision_time_ms) {
+    constexpr std::int64_t hour_ms = 3'600'000LL;
+    constexpr std::int64_t lookback_ms = 90LL * 24LL * hour_ms;
+    const auto cutoff = decision_time_ms - lookback_ms;
+    std::map<std::int64_t, double> closes;
+    if (!instrument.contains("candles") || !instrument.at("candles").is_array()) return {};
+    for (const auto& candle : instrument.at("candles")) {
+        if (!candle.is_object() || !candle.value("closed", false) ||
+            !candle.contains("timestamp_ms") || !candle.at("timestamp_ms").is_number_integer() ||
+            !has_number(candle, "close")) continue;
+        const auto ts = candle.at("timestamp_ms").get<std::int64_t>();
+        const double close = candle.at("close").get<double>();
+        if (ts <= 0 || ts + hour_ms > decision_time_ms || close <= 0.0) continue;
+        closes[ts] = close;
+    }
+    std::map<std::int64_t, double> returns;
+    if (closes.size() < 2U) return returns;
+    auto previous = closes.begin();
+    for (auto current = std::next(previous); current != closes.end(); ++current) {
+        if (current->first - previous->first == hour_ms && current->first >= cutoff) {
+            const double value = std::log(current->second / previous->second);
+            if (std::isfinite(value)) returns.emplace(current->first, value);
+        }
+        previous = current;
+    }
+    return returns;
+}
+
+inline std::optional<double> aligned_pearson(const std::map<std::int64_t, double>& left,
+                                              const std::map<std::int64_t, double>& right) {
+    std::vector<double> x, y;
+    for (const auto& [timestamp, value] : left) {
+        const auto it = right.find(timestamp);
+        if (it == right.end()) continue;
+        x.push_back(value);
+        y.push_back(it->second);
+    }
+    if (x.size() < 50U) return std::nullopt;
+    const double mx = std::accumulate(x.begin(), x.end(), 0.0) / static_cast<double>(x.size());
+    const double my = std::accumulate(y.begin(), y.end(), 0.0) / static_cast<double>(y.size());
+    double covariance = 0.0, vx = 0.0, vy = 0.0;
+    for (std::size_t i = 0U; i < x.size(); ++i) {
+        const double dx = x[i] - mx, dy = y[i] - my;
+        covariance += dx * dy;
+        vx += dx * dx;
+        vy += dy * dy;
+    }
+    if (vx <= 0.0 || vy <= 0.0) return std::nullopt;
+    const double correlation = covariance / std::sqrt(vx * vy);
+    return std::isfinite(correlation) ? std::optional<double>{correlation} : std::nullopt;
+}
+
+struct CorrelationSummary {
+    bool valid{true};
+    std::map<CandidateKey, int> peer_counts;
+};
+
+inline CorrelationSummary candidate_correlations(const json& l1, const json& meta,
+                                                  std::int64_t decision_time_ms) {
+    std::set<CandidateKey> candidates;
+    for (const auto& instrument : meta.at("instruments")) {
+        const auto symbol = instrument.value("symbol", std::string{});
+        for (const auto* key : {"lrt", "nmt"}) {
+            const auto& engine = instrument.at(key);
+            const auto status = engine.value("candidate_status", std::string{});
+            const bool present = status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY";
+            if (!present) continue;
+            const auto direction = engine.value("direction", std::string{});
+            if (symbol.empty() || (direction != "BUY" && direction != "SELL"))
+                return {false, {}};
+            candidates.insert({symbol, direction});
+        }
+    }
+    CorrelationSummary summary{};
+    if (candidates.size() < 2U) return summary;
+    std::map<std::string, std::map<std::int64_t, double>> returns_by_symbol;
+    for (const auto& candidate : candidates) {
+        if (returns_by_symbol.contains(candidate.symbol)) continue;
+        const auto* market = find_symbol(l1.at("instruments"), candidate.symbol, "unified_symbol");
+        if (!market) return {false, {}};
+        auto returns = hourly_returns(*market, decision_time_ms);
+        if (returns.size() < 50U) return {false, {}};
+        returns_by_symbol.emplace(candidate.symbol, std::move(returns));
+    }
+    for (auto left = candidates.begin(); left != candidates.end(); ++left) {
+        auto right = std::next(left);
+        for (; right != candidates.end(); ++right) {
+            if (left->direction != right->direction || left->symbol == right->symbol) continue;
+            const auto corr = aligned_pearson(returns_by_symbol.at(left->symbol),
+                                              returns_by_symbol.at(right->symbol));
+            if (!corr) return {false, {}};
+            if (*corr > 0.70) {
+                ++summary.peer_counts[*left];
+                ++summary.peer_counts[*right];
+            }
+        }
+    }
+    return summary;
 }
 
 inline json build_report(const json& l1, const json& liquidity, const json& meta,
