@@ -88,6 +88,23 @@ std::string report_text(const json& report, const json& gate) {
            " | مسدود=" + std::to_string(gate_summary.at("blocked_count").get<std::size_t>()) +
            " | بررسی دستی=" + std::to_string(gate_summary.at("manual_review_count").get<std::size_t>()) +
            " | مجاز برای اجرا=۰";
+    std::size_t gate_rows_shown = 0U;
+    for (const auto& item : gate.at("instruments")) {
+        for (const auto* key : {"lrt", "nmt"}) {
+            const auto& engine = item.at("engines").at(key);
+            if (!engine.at("inputs").value("candidate_present", false)) continue;
+            out += "\n" + item.value("symbol", std::string{"UNKNOWN"}) + " | " + key +
+                   " | " + engine.value("decision", std::string{"BLOCKED"}) +
+                   " | " + engine.value("reason", std::string{"UNAVAILABLE"});
+            ++gate_rows_shown;
+            if (gate_rows_shown >= 12U) break;
+        }
+        if (gate_rows_shown >= 12U) break;
+    }
+    if (gate_rows_shown == 0U)
+        out += "\nهیچ کاندیدای پژوهشی به گیت نهایی نرسید.";
+    else if (gate_summary.at("candidate_count").get<std::size_t>() > gate_rows_shown)
+        out += "\nجزئیات سایر کاندیداها در فایل ثبت‌شده موجود است.";
     out += "\nوضعیت گیت مرحله ۷: " + gate.value("gate_status", std::string{"DEGRADED"});
     if (gate.contains("error_code") && gate.at("error_code").is_string())
         out += "\nکد خطای گیت: " + gate.at("error_code").get<std::string>();
