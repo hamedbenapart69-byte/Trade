@@ -130,7 +130,7 @@ int main() {
             "risk percentage over 100 blocks");
 
     x = ready();
-    x.correlated_open_exposures = -1;
+    x.correlated_candidate_exposures = -1;
     t.check(evaluate(x).reason == "RISK_SNAPSHOT_INVALID_OR_MISSING",
             "negative correlated exposure count blocks");
 
@@ -165,12 +165,12 @@ int main() {
             "portfolio drawdown at 20 percent is boundary-eligible");
 
     x = ready();
-    x.correlated_open_exposures = 3;
+    x.correlated_candidate_exposures = 3;
     t.check(evaluate(x).reason == "G5_CORRELATED_EXPOSURE_CAP",
             "correlated exposure cap blocks");
 
     x = ready();
-    x.correlated_open_exposures = 2;
+    x.correlated_candidate_exposures = 2;
     t.check(evaluate(x).status == "RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY",
             "two correlated exposures remain boundary-eligible");
 
