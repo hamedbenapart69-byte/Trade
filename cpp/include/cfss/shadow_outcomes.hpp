@@ -128,6 +128,12 @@ inline void apply_shadow_costs(
     const std::string& source_run_id,
     const std::string& source_scan_id,
     const std::string& source_l1_sha256) {
+    const bool valid_hash = source_l1_sha256.size() == 64U &&
+        std::all_of(source_l1_sha256.begin(), source_l1_sha256.end(), [](unsigned char c) {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+        });
+    if (source_run_id.empty() || source_scan_id.empty() || !valid_hash) return;
+
     const auto direction = outcome.value("direction", std::string{});
     const auto entry = outcome.value("entry_fill_reference", json{});
     const auto stop = outcome.value("stop_reference", json{});
