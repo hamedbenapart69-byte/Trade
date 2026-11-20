@@ -32,6 +32,7 @@ Connect the Stage 6 meta-cognition output to a deterministic C++ risk gate, pres
 ### L3 — Delivery
 - The Stage 7 artifact is persisted to the `signals` branch before notification.
 - The existing C++ Telegram report now includes Stage 7 gate counts and shadow-risk snapshot status.
+- If Stage 7 inputs fail validation while the Stage 6 artifact is available, the probe emits a schema-valid DEGRADED artifact with explicit block reasons so the daily report is not silently suppressed.
 - Telegram outbox identity includes both Stage 6 and Stage 7 artifacts.
 - Actual Telegram delivery for this new combined report is NOT VERIFIED until the updated workflow completes with a real Telegram message ID.
 
@@ -43,7 +44,8 @@ Connect the Stage 6 meta-cognition output to a deterministic C++ risk gate, pres
 4. Provenance mismatch is rejected.
 5. Tests cover no-candidate, PROXY block, missing risk snapshot, eligible manual-review-only state, prohibition on user-account data, immutable no-execution output, aligned correlation, and the four-exposure G5 boundary.
 6. The production Stage 6 workflow produces and persists the Stage 7 artifact before Telegram delivery.
-7. The combined Telegram report must return a real successful Telegram response and message ID; mock delivery is insufficient.
+7. A Stage 7 input failure must still produce a DEGRADED, non-actionable report artifact; it must not silently suppress the Stage 6 daily report.
+8. The combined Telegram report must return a real successful Telegram response and message ID; mock delivery is insufficient.
 
 ## Strategy / release acceptance
 
