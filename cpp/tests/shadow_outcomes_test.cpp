@@ -177,6 +177,15 @@ int main() {
     missing_cost_value["funding_r"] = nullptr;
     require(!cfss::shadow::valid_cost_provenance(missing_cost_value),
             "proxy cost status requires all three numeric cost components");
+    auto missing_fee_decision = costed_row;
+    missing_fee_decision.erase("fee_assumption_ref");
+    require(!cfss::shadow::valid_cost_provenance(missing_fee_decision),
+            "assumed fee must retain its owner-decision reference");
+    auto stale_cost_snapshot = costed_row;
+    stale_cost_snapshot["cost_as_of_time_ms"] =
+        stale_cost_snapshot.at("closed_at_ms").get<std::int64_t>() - 1LL;
+    require(!cfss::shadow::valid_cost_provenance(stale_cost_snapshot),
+            "cost snapshot event time cannot precede the outcome close time");
     auto false_real_cost = costed_row;
     false_real_cost["cost_status"] = "REAL";
     require(!cfss::shadow::valid_cost_provenance(false_real_cost),
