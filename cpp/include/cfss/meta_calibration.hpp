@@ -206,7 +206,7 @@ inline double cluster_robust_se(const std::vector<double>& values,
     return std::sqrt(std::max(0.0, variance));
 }
 
-inline double three_way_cluster_robust_se(const std::vector<double>& values,
+inline double max_of_one_way_cluster_se(const std::vector<double>& values,
                                           const std::vector<Outcome>& rows) {
     const double scan_se = cluster_robust_se(values, rows, 0);
     const double symbol_se = cluster_robust_se(values, rows, 1);
@@ -490,9 +490,9 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         validation_isotonic_improvements.push_back(raw_error * raw_error - isotonic_error * isotonic_error);
     }
     const double platt_validation_se =
-        three_way_cluster_robust_se(validation_platt_improvements, validation);
+        max_of_one_way_cluster_se(validation_platt_improvements, validation);
     const double isotonic_validation_se =
-        three_way_cluster_robust_se(validation_isotonic_improvements, validation);
+        max_of_one_way_cluster_se(validation_isotonic_improvements, validation);
     const double conservative_validation_se =
         std::max(platt_validation_se, isotonic_validation_se);
     const auto validation_cluster_metrics = cluster_metrics(validation);
@@ -582,10 +582,10 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         brier_improvement_values.push_back(
             raw_error * raw_error - calibrated_error * calibrated_error);
     }
-    const double win_se = three_way_cluster_robust_se(win_values, oos);
-    const double brier_se = three_way_cluster_robust_se(brier_values, oos);
+    const double win_se = max_of_one_way_cluster_se(win_values, oos);
+    const double brier_se = max_of_one_way_cluster_se(brier_values, oos);
     const double brier_improvement_se =
-        three_way_cluster_robust_se(brier_improvement_values, oos);
+        max_of_one_way_cluster_se(brier_improvement_values, oos);
     if (!std::isfinite(win_se) || !std::isfinite(brier_se) ||
         !std::isfinite(brier_improvement_se)) {
         report.reason = "CLUSTER_ROBUST_CONFIDENCE_INTERVAL_UNAVAILABLE";
