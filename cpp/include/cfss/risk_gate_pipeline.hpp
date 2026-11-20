@@ -30,6 +30,12 @@ inline bool has_number(const json& value, const char* key) {
            std::isfinite(value.at(key).get<double>());
 }
 
+inline std::string normalize_direction(std::string direction) {
+    if (direction == "BUY") return "LONG";
+    if (direction == "SELL") return "SHORT";
+    return direction;
+}
+
 struct CandidateKey {
     std::string symbol;
     std::string direction;
@@ -106,9 +112,7 @@ inline CorrelationSummary candidate_correlations(const json& l1, const json& met
             const auto status = engine.value("candidate_status", std::string{});
             const bool present = status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY";
             if (!present) continue;
-            auto direction = engine.value("direction", std::string{});
-            if (direction == "BUY") direction = "LONG";
-            if (direction == "SELL") direction = "SHORT";
+            const auto direction = normalize_direction(engine.value("direction", std::string{}));
             if (symbol.empty() || (direction != "LONG" && direction != "SHORT"))
                 return {false, {}};
             candidates.insert({symbol, direction});
@@ -220,7 +224,7 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                 has_number(calibration, "avg_funding_r") &&
                 engine.value("ev_status", std::string{}) == "CALCULATED";
             input.correlation_data_valid = !present || correlations.valid;
-            const CandidateKey candidate_key{symbol, engine.value("direction", std::string{})};
+            const CandidateKey candidate_key{symbol, normalize_direction(engine.value("direction", std::string{}))};
             const auto peer_it = correlations.peer_counts.find(candidate_key);
             input.correlated_candidate_exposures = peer_it == correlations.peer_counts.end() ? 0 : peer_it->second;
             input.risk_snapshot_valid = snapshot_available;
