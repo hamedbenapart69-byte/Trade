@@ -94,6 +94,56 @@ int main() {
     catch (const std::invalid_argument&) { provenance_rejected=true; }
     check(provenance_rejected,"provenance mismatch is rejected");
 
+
+    // Four same-direction candidates with 60 aligned hourly returns and rho=1
+    // must each see three correlated peers and fail the G5 cap.
+    constexpr std::int64_t hour_ms = 3'600'000LL;
+    constexpr std::int64_t decision_ms = 1'800'000'000'000LL;
+    json l1_corr={{"schema_version","1.0.0"},{"run_id","run-1"},{"scan_id","scan-1"},{"instruments",json::array()}};
+    json liq_corr={{"artifact_type","cfss_liquidity_phase_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",decision_ms},{"instruments",json::array()}};
+    json meta_corr={{"artifact_type","cfss_meta_cognition_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",decision_ms},
+        {"l1_sha256",cfss::sha256_hex(l1_raw)},
+        {"liquidity_report_sha256",cfss::sha256_hex(liquidity_raw)},
+        {"instruments",json::array()}};
+    const auto good_engine=[](const std::string& path) {
+        return json{{"path",path},{"candidate_status",path=="PLAN_A_LRT"?"CANDIDATE":"NO_QUALIFIED_SETUP"},
+            {"direction",path=="PLAN_A_LRT"?"LONG":"NONE"},{"actionable",false},
+            {"data_class","REAL"},{"confidence_status",path=="PLAN_A_LRT"?"CALIBRATED":"NOT_CALIBRATED"},
+            {"calibration",{{"status",path=="PLAN_A_LRT"?"CALIBRATED":"NOT_CALIBRATED"},
+                {"avg_fee_r",0.0004},{"avg_slippage_r",0.001},{"avg_funding_r",0.0}}},
+            {"ev_status",path=="PLAN_A_LRT"?"CALCULATED":"NOT_CALCULATED"},
+            {"ev_net",path=="PLAN_A_LRT"?json(0.12):json(nullptr)}};
+    };
+    for (int symbol_index=0; symbol_index<4; ++symbol_index) {
+        const std::string symbol="COIN"+std::to_string(symbol_index)+"/USDT:USDT";
+        json candles=json::array();
+        for (int k=0; k<=60; ++k) {
+            const auto ts=decision_ms-61LL*hour_ms+static_cast<std::int64_t>(k)*hour_ms;
+            const double close=100.0+static_cast<double>(k)*0.25+
+                0.03*static_cast<double>((k*k)%7);
+            candles.push_back({{"timestamp_ms",ts},{"closed",true},{"close",close}});
+        }
+        l1_corr["instruments"].push_back({{"unified_symbol",symbol},
+            {"liquidity_status","ELIGIBLE"},{"turnover_24h_usd",20000000.0},
+            {"liquidity_threshold_usd",10000000.0},{"candles",candles}});
+        liq_corr["instruments"].push_back({{"symbol",symbol},{"status","AVAILABLE"},{"phase","RANGE"}});
+        meta_corr["instruments"].push_back({{"symbol",symbol},{"golden_rule",{{"veto",false}}},
+            {"lrt",good_engine("PLAN_A_LRT")},{"nmt",good_engine("PLAN_A_NMT")}});
+    }
+    // Recompute matching provenance against the fixture bytes.
+    meta_corr["l1_sha256"]=cfss::sha256_hex(l1_raw);
+    meta_corr["liquidity_report_sha256"]=cfss::sha256_hex(liquidity_raw);
+    auto corr_snapshot=available_snapshot();
+    corr_snapshot["decision_time_ms"]=decision_ms;
+    auto corr_report=cfss::risk::build_report(l1_corr,liq_corr,meta_corr,l1_raw,liquidity_raw,corr_snapshot);
+    check(corr_report["correlation_data_status"]=="AVAILABLE","aligned correlation data is available");
+    check(corr_report["instruments"][0]["engines"]["lrt"]["inputs"]["correlated_candidate_exposures"]==3,
+          "each of four correlated candidates has three same-direction peers");
+    check(corr_report["instruments"][0]["engines"]["lrt"]["reason"]=="G5_CORRELATED_EXPOSURE_CAP",
+          "four correlated same-direction candidates fail the G5 cap");
+
     std::cout << (failures==0 ? "STAGE7_PIPELINE_TESTS_PASS: " : "STAGE7_PIPELINE_TESTS_FAIL: ")
               << failures << "/" << checks << " failed\n";
     return failures==0 ? 0 : 1;
