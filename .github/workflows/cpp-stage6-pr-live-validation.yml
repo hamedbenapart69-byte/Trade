@@ -1,0 +1,186 @@
+name: C++ Stage 6 PR Live Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - "contracts/**"
+      - ".github/workflows/cpp-stage6-pr-live-validation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage6-pr-live-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  stage6-pr-live-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Install C++ and schema dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev jq
+
+      - name: Install pinned AJV CLI
+        run: npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+
+      - name: Configure, compile and run all C++ tests
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+
+      - name: Read-only checkout of persistent shadow state
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Restore free-tier market cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            shared-cache/market_data_cache.v1.json
+            shared-cache/crypto-universe.v1.json
+          key: cfss-stage6-pr-cache-${{ github.run_id }}
+          restore-keys: |
+            cfss-market-cache-
+            cfss-stage6-pr-cache-
+
+      - name: Collect fresh public L1 and compute C++ Stage 4/5 inputs
+        run: |
+          set -euo pipefail
+          mkdir -p stage6-evidence shared-cache
+          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
+            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
+              signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
+              > stage6-evidence/pending-symbols.v1.json
+          else
+            printf '%s\\n' '[]' > stage6-evidence/pending-symbols.v1.json
+          fi
+          if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
+            cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
+          fi
+          ./build/market_pipeline --collect-okx 100 2 \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/l2-status.v1.json \
+            shared-cache/crypto-universe.v1.json \
+            shared-cache/market_data_cache.v1.json \
+            stage6-evidence/pending-symbols.v1.json
+          ./build/lfs_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/lfs-v2.json
+          ./build/nss_basis_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json
+          ./build/nss_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json stage6-evidence/nss-v2.json
+          ./build/liquidity_phase_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/liquidity-phase.v1.json
+          ./build/dual_engine_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/lfs-v2.json \
+            stage6-evidence/nss-v2.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/lrt-candidates.v1.json \
+            stage6-evidence/nmt-candidates.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d stage6-evidence/l1-market-data.v1.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/l2-status.v1.schema.json -d stage6-evidence/l2-status.v1.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/lfs-v2-proxy.v1.schema.json -d stage6-evidence/lfs-v2.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/nss-v2-proxy.v1.schema.json -d stage6-evidence/nss-v2.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/liquidity-phase.v1.schema.json -d stage6-evidence/liquidity-phase.v1.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/dual-engine-report.v1.schema.json -d stage6-evidence/dual-engine-report.v1.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d stage6-evidence/crypto-universe.v1.json --all-errors
+
+      - name: Collect 15m LRT resolution data
+        run: |
+          set -euo pipefail
+          ./build/intraday_15m_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/l1-market-data-15m.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 -c ajv-formats \
+            -s contracts/intraday-15m-market-data.v1.schema.json \
+            -d stage6-evidence/l1-market-data-15m.v1.json --all-errors
+
+      - name: Initialize empty state only when persistent state is absent
+        run: |
+          set -euo pipefail
+          mkdir -p signals-state/cpp_runtime
+          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
+            cp signals-state/cpp_runtime/shadow_candidate_registry.v1.json stage6-evidence/shadow_candidate_registry.input.json
+          else
+            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
+          fi
+          if [ -s signals-state/cpp_runtime/daily_outcome_ledger.v1.json ]; then
+            cp signals-state/cpp_runtime/daily_outcome_ledger.v1.json stage6-evidence/daily_outcome_ledger.input.json
+          else
+            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
+          fi
+
+      - name: Resolve shadow outcomes and enforce cost provenance
+        run: |
+          set -euo pipefail
+          ./build/shadow_outcome_tracker \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/l1-market-data-15m.v1.json \
+            stage6-evidence/dual-engine-report.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/shadow_candidate_registry.input.json \
+            stage6-evidence/daily_outcome_ledger.input.json \
+            stage6-evidence/shadow_candidate_registry.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/shadow-candidate-registry.v1.schema.json -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
+          ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/outcome-ledger.v1.schema.json -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
+
+      - name: Compute and validate Stage 6 Meta-Cognition
+        run: |
+          set -euo pipefail
+          ./build/meta_cognition_probe \
+            stage6-evidence/dual-engine-report.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
+            -s contracts/meta-cognition.v1.schema.json \
+            -d stage6-evidence/meta_cognition_stage6_v1.json --all-errors
+
+      - name: Apply Stage 7 fail-closed risk gate
+        run: |
+          set -euo pipefail
+          ./build/risk_gate_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/stage7-risk-gate.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
+            -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
+            -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
+
+      - name: Validate Telegram report preparation without sending
+        env:
+          CFSS_RISK_GATE_ARTIFACT: stage6-evidence/stage7-risk-gate.v1.json
+        run: |
+          set -euo pipefail
+          ./build/meta_cognition_telegram_report --prepare \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/meta_cognition_telegram_outbox.v1.json
+
+      - name: Publish compact live evidence in the job summary
+        if: always()
+        run: |
+          {
+            echo "## Stage 6 PR live validation"
+            if [ -s stage6-evidence/daily_outcome_ledger.v1.json ]; then
+              jq '{ledger_status, outcome_count:(.outcomes|length), cost_status_counts:(.outcomes|group_by(.cost_status)|map({status:.[0].cost_status,count:length}))}' stage6-evidence/daily_outcome_ledger.v1.json
+            fi
+            if [ -s stage6-evidence/meta_cognition_stage6_v1.json ]; then
+              jq '{run_id:.source_run_id, outcome_ledger_count, engines:(.instruments|length), sample:(.instruments[:3]|map({symbol,lrt:{candidate_status:.lrt.candidate_status,confidence_status:.lrt.confidence_status,ev_status:.lrt.ev_status,reason:.lrt.reason},nmt:{candidate_status:.nmt.candidate_status,confidence_status:.nmt.confidence_status,ev_status:.nmt.ev_status,reason:.nmt.reason}}))}' stage6-evidence/meta_cognition_stage6_v1.json
+            fi
+            if [ -s stage6-evidence/stage7-risk-gate.v1.json ]; then
+              jq '{risk_snapshot_status,summary,actionable,trade_execution_allowed}' stage6-evidence/stage7-risk-gate.v1.json
+            fi
+            echo "No Telegram message was sent. No persistent signals branch was written."
+          } >> "$GITHUB_STEP_SUMMARY"
