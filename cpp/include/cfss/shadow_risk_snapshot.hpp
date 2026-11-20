@@ -30,7 +30,7 @@ inline std::int64_t utc_week(std::int64_t timestamp_ms) {
     constexpr std::int64_t day_ms = 86'400'000LL;
     constexpr std::int64_t monday_offset_days = 3LL; // 1970-01-01 was Thursday.
     const auto day = utc_day(timestamp_ms);
-    return (day - monday_offset_days) / 7LL;
+    return (day + monday_offset_days) / 7LL;
 }
 
 inline json unavailable(const std::string& reason, const json& basis,
