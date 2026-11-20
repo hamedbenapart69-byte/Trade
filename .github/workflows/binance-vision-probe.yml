@@ -57,13 +57,13 @@ jobs:
               if [[ -z "$token" ]]; then echo "INDEX_PAGINATION_TOKEN_MISSING label=$label"; return 1; fi
             done
             echo "ARCHIVE_INDEX label=$label count=$count expected=$expected pages=$pages first=$first last=$last"
-            if [[ "$count" -ne "$expected" ]]; then echo "ARCHIVE_INDEX_COVERAGE_FAIL label=$label"; return 1; fi
+            if [[ "$count" -ne "$expected" ]]; then echo "ARCHIVE_INDEX_COVERAGE_FAIL label=$label"; exit 1; fi
           }
           expected_daily=$(( ( $(date -u -d 2026-11-19 +%s) - $(date -u -d 2024-11-20 +%s) ) / 86400 + 1 ))
           for symbol in BTCUSDT ETHUSDT BNBUSDT UNIUSDT ARBUSDT WLDUSDT; do
             audit_prefix "${symbol}_METRICS_5M" \
               "data/futures/um/daily/metrics/${symbol}/" \
-              "data/futures/um/daily/metrics/${symbol}/${symbol}-metrics-2024-11-18.zip.CHECKSUM" \
+              "data/futures/um/daily/metrics/${symbol}/${symbol}-metrics-2024-11-19.zip.CHECKSUM" \
               "$expected_daily"
             audit_prefix "${symbol}_FUNDING_MONTHLY" \
               "data/futures/um/monthly/fundingRate/${symbol}/" \
