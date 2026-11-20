@@ -327,9 +327,10 @@
           "slippage_source_status": {
             "const": "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT"
           },
-          "cost_calculated_at_ms": {
+          "cost_as_of_time_ms": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "description": "L1 source snapshot event-time upper bound used for this cost calculation; not wall-clock processing time."
           }
         },
         "allOf": [
@@ -358,7 +359,7 @@
                 "cost_source_run_id",
                 "cost_source_scan_id",
                 "cost_source_l1_sha256",
-                "cost_calculated_at_ms"
+                "cost_as_of_time_ms"
               ],
               "properties": {
                 "fee_r": {
@@ -390,7 +391,7 @@
                   "type": "string",
                   "pattern": "^[a-f0-9]{64}$"
                 },
-                "cost_calculated_at_ms": {
+                "cost_as_of_time_ms": {
                   "type": "integer",
                   "minimum": 1
                 }
