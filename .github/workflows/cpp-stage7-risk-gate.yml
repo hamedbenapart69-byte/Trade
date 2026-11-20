@@ -1,7 +1,7 @@
 name: C++ Stage 7 Risk Gate Contract
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/l1-open-interest-zero-normalization-20261120]
     paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", "contracts/shadow-risk-basis.v1.schema.json", "contracts/shadow-risk-snapshot.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
   push:
     branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
