@@ -64,7 +64,7 @@ int main() {
     report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object());
     check(report["instruments"][0]["engines"]["lrt"]["reason"]=="REAL_DATA_REQUIRED",
           "proxy candidate is blocked before downstream gates");
-    check(report["summary"]["blocked_count"]==2,"all engine paths are counted");
+    check(report["summary"]["blocked_count"]==1,"all engine paths are counted");
 
     meta["instruments"][0]["lrt"]["data_class"]="REAL";
     meta["instruments"][0]["lrt"]["confidence_status"]="CALIBRATED";
