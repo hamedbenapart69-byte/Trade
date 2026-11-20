@@ -29,7 +29,7 @@ Engineering evidence:
 - Fail-closed guards passed.
 - Integrated Stage 6 + Stage 7 Telegram delivery succeeded.
 
-Live evidence from run `44726308730`:
+Earlier live evidence from run `44726308730` (baseline):
 - `risk_snapshot_status=UNAVAILABLE`.
 - `candidate_count=0`; `actionable_count=0`.
 - `trade_execution_allowed=false`.
@@ -42,6 +42,12 @@ Live evidence from run `44726308730`:
 - **D1/D3 — Dependency:** Stage 6 has only 5 outcomes and costs are unavailable; a reliable shadow equity curve cannot yet be calculated.
 
 No user account data may be substituted for these missing internal records.
+Latest cross-check from Stage 6 PR live-validation run `44754721823` on head `3c6cbb46a1f51d4dd4d7622d0d6970afd7ed598e`:
+- The current run produced 2 strategy candidates and the Stage 7 gate blocked both.
+- `risk_snapshot_status=UNAVAILABLE`, `actionable=0`, `trade_execution_allowed=false`.
+- The persistent shadow ledger supplied 5 outcomes; all 5 received provenance-backed `PROXY` costs during this run. This does not establish a sufficiently long or complete shadow equity curve.
+- Telegram report preparation was validated without sending a message from this PR workflow.
+- No user account data was requested or used.
 
 ## v2 — planned after Stage 6 v2 costed ledger
 
@@ -54,7 +60,7 @@ Planned implementation:
 4. Keep the gate blocked if cost coverage, risk-unit definition, portfolio history or position state is incomplete.
 5. Preserve all kill-switch thresholds; no relaxation.
 
-**v2 status:** not yet built. Stage 6 v2 must first provide auditable costs and a valid shadow outcome ledger.
+**v2 status:** not yet built. Stage 6 v2 now demonstrated cost-proxy backfill for 5 historical outcomes, but the Stage 6 cohort remains `NOT_CALIBRATED` and the available ledger is not sufficient to establish a reliable shadow equity curve. Build v2 only when the costed ledger, risk-unit definition, portfolio history and open-position state are adequate; otherwise preserve `UNAVAILABLE`.
 
 ## v3
 
