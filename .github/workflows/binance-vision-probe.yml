@@ -118,6 +118,15 @@ jobs:
             done
           done
           echo "ALTCOIN_ARCHIVE_FAILURE_COUNT=${failures}"
+          fetch_verify "data/spot/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.zip"
+          echo "METRICS_CSV_SAMPLE_BEGIN"
+          unzip -p BTCUSDT-metrics-2025-01-01.zip | awk 'NR <= 3 { print }'
+          echo "FUNDING_CSV_SAMPLE_BEGIN"
+          unzip -p BTCUSDT-fundingRate-2025-01.zip | awk 'NR <= 3 { print }'
+          echo "FUTURES_KLINE_CSV_SAMPLE_BEGIN"
+          unzip -p BTCUSDT-1h-2025-01.zip | awk 'NR <= 3 { print }'
+          echo "SPOT_KLINE_CSV_SAMPLE_BEGIN"
+          unzip -p BTCUSDT-1h-2025-01.zip | awk 'NR <= 3 { print }'
           echo "BINANCE_VISION_PROBE_PASS"
 
           echo "ACTIONS_ARTIFACT_UPLOAD_DISABLED=true"
