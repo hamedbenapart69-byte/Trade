@@ -28,6 +28,8 @@ Input ready() {
     x.calibration_valid = true;
     x.net_ev_r = 0.15;
     x.costs_complete = true;
+    x.consensus_valid = true;
+    x.consensus_reason = "CONSENSUS_CONFIRMED";
     x.correlation_data_valid = true;
     x.risk_snapshot_valid = true;
     x.daily_loss_pct = 1.0;
