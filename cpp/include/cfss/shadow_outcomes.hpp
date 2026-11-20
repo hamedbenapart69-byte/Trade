@@ -127,7 +127,8 @@ inline void apply_shadow_costs(
     const json& instrument,
     const std::string& source_run_id,
     const std::string& source_scan_id,
-    const std::string& source_l1_sha256) {
+    const std::string& source_l1_sha256,
+    std::int64_t cost_as_of_time_ms) {
     const bool valid_hash = source_l1_sha256.size() == 64U &&
         std::all_of(source_l1_sha256.begin(), source_l1_sha256.end(), [](unsigned char c) {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
@@ -165,7 +166,7 @@ inline void apply_shadow_costs(
     outcome["cost_source_run_id"] = source_run_id;
     outcome["cost_source_scan_id"] = source_scan_id;
     outcome["cost_source_l1_sha256"] = source_l1_sha256;
-    outcome["cost_calculated_at_ms"] = closed;
+    outcome["cost_as_of_time_ms"] = cost_as_of_time_ms;
 }
 
 inline bool valid_cost_provenance(const json& outcome) {
@@ -207,9 +208,9 @@ inline bool valid_cost_provenance(const json& outcome) {
         outcome.value("cost_model_id", std::string{}) == "SHADOW_COST_PROXY_V1" &&
         outcome.value("funding_source", std::string{}) == "OKX_PUBLIC_FUNDING_HISTORY" &&
         nonempty_string("cost_source_run_id") && nonempty_string("cost_source_scan_id") &&
-        valid_hash && outcome.contains("cost_calculated_at_ms") &&
-        outcome.at("cost_calculated_at_ms").is_number_integer() &&
-        outcome.at("cost_calculated_at_ms").get<std::int64_t>() >=
+        valid_hash && outcome.contains("cost_as_of_time_ms") &&
+        outcome.at("cost_as_of_time_ms").is_number_integer() &&
+        outcome.at("cost_as_of_time_ms").get<std::int64_t>() >=
             outcome.value("closed_at_ms", std::int64_t{0});
 }
 
@@ -329,7 +330,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         apply_shadow_costs(old_outcome, *instrument,
             l1.value("run_id", std::string{}),
             l1.value("scan_id", std::string{}),
-            dual.value("l1_sha256", std::string{}));
+            dual.value("l1_sha256", std::string{}), current_time);
         if (old_outcome.value("cost_status", std::string{}) == "PROXY")
             ++cost_backfilled;
     }
@@ -610,7 +611,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             apply_shadow_costs(outcome, *cost_instrument,
                 l1.value("run_id", std::string{}),
                 l1.value("scan_id", std::string{}),
-                dual.value("l1_sha256", std::string{}));
+                dual.value("l1_sha256", std::string{}), current_time);
         ledger["outcomes"].push_back(std::move(outcome));
         candidate["state"] = "RESOLVED";
         candidate["resolution"] = resolution;
