@@ -3,65 +3,226 @@
   "title": "CFSS Stage 6 Meta Cognition Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "version", "profile", "calibration_scope", "source_run_id", "source_scan_id", "decision_time_ms", "l1_sha256", "stage5_report_sha256", "liquidity_report_sha256", "outcome_ledger_sha256", "outcome_ledger_status", "outcome_ledger_count", "calibration_policy", "actionable", "instruments"],
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "version",
+    "profile",
+    "calibration_scope",
+    "source_run_id",
+    "source_scan_id",
+    "decision_time_ms",
+    "l1_sha256",
+    "stage5_report_sha256",
+    "liquidity_report_sha256",
+    "outcome_ledger_sha256",
+    "outcome_ledger_status",
+    "outcome_ledger_count",
+    "calibration_policy",
+    "actionable",
+    "instruments"
+  ],
   "properties": {
-    "schema_version": {"const": "1.0.0"},
-    "artifact_type": {"const": "cfss_meta_cognition_v1"},
-    "version": {"const": "META_COGNITION_V1"},
-    "profile": {"const": "DAILY_SWING"},
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_meta_cognition_v1"
+    },
+    "version": {
+      "const": "META_COGNITION_V1"
+    },
+    "profile": {
+      "const": "DAILY_SWING"
+    },
     "calibration_scope": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["outcome_kind", "execution_status", "entry_model", "ev_policy"],
+      "required": [
+        "outcome_kind",
+        "execution_status",
+        "entry_model",
+        "ev_policy"
+      ],
       "properties": {
-        "outcome_kind": {"const": "HYPOTHESIS_PROXY"},
-        "execution_status": {"const": "NOT_EXECUTED"},
-        "entry_model": {"const": "NEXT_BAR_OPEN_PROXY"},
-        "ev_policy": {"const": "BLOCK_WHEN_COSTS_UNAVAILABLE"}
+        "outcome_kind": {
+          "const": "HYPOTHESIS_PROXY"
+        },
+        "execution_status": {
+          "const": "NOT_EXECUTED"
+        },
+        "entry_model": {
+          "const": "NEXT_BAR_OPEN_PROXY"
+        },
+        "ev_policy": {
+          "const": "BLOCK_WHEN_COSTS_UNAVAILABLE"
+        }
       }
     },
-    "source_run_id": {"type": "string", "minLength": 1},
-    "source_scan_id": {"type": "string", "minLength": 1},
-    "decision_time_ms": {"type": "integer", "minimum": 1},
-    "l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "stage5_report_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "liquidity_report_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "outcome_ledger_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "outcome_ledger_status": {"enum": ["EMPTY", "AVAILABLE", "UNAVAILABLE"]},
-    "outcome_ledger_count": {"type": "integer", "minimum": 0},
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_scan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "l1_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stage5_report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "liquidity_report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "outcome_ledger_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "outcome_ledger_status": {
+      "enum": [
+        "EMPTY",
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "outcome_ledger_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "calibration_policy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["split", "minimum_total", "minimum_oos_effective_sample_size", "cluster_dimensions", "confidence_interval_method", "win_rate_interval_method", "minimum_train", "minimum_validation", "minimum_oos", "methods", "selection", "final_evaluation"],
+      "required": [
+        "split",
+        "split_is_canonical_requirement",
+        "sample_size_policy",
+        "power_analysis_method",
+        "power_analysis_status",
+        "target_brier_improvement_provisional",
+        "power_alpha",
+        "target_power",
+        "minimum_total_provisional",
+        "minimum_oos_effective_sample_size_floor_provisional",
+        "cluster_dimensions",
+        "confidence_interval_method",
+        "win_rate_interval_method",
+        "minimum_train_provisional",
+        "minimum_validation_provisional",
+        "minimum_oos_provisional",
+        "methods",
+        "selection",
+        "final_evaluation"
+      ],
       "properties": {
-        "split": {"const": "CHRONOLOGICAL_60_20_20"},
-        "minimum_total": {"const": 250},
-        "minimum_oos_effective_sample_size": {"const": 30.0},
-        "cluster_dimensions": {"const": ["source_scan_id", "symbol", "utc_day"]},
-        "confidence_interval_method": {"const": "MAX_OF_ONE_WAY_CLUSTER_SE"},
-        "win_rate_interval_method": {"const": "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"},
-        "minimum_train": {"const": 100},
-        "minimum_validation": {"const": 30},
-        "minimum_oos": {"const": 50},
-        "methods": {"const": ["PLATT", "ISOTONIC"]},
-        "selection": {"const": "VALIDATION_BRIER_ONLY"},
-        "final_evaluation": {"const": "UNTOUCHED_OOS"}
+        "split": {
+          "const": "CHRONOLOGICAL_60_20_20_PROVISIONAL_INTERNAL"
+        },
+        "split_is_canonical_requirement": {
+          "const": false
+        },
+        "sample_size_policy": {
+          "const": "PROVISIONAL_INTERNAL_GUARD_WITH_VALIDATION_BASED_POWER_ESTIMATE"
+        },
+        "power_analysis_method": {
+          "const": "MAX_OF_ONE_WAY_CLUSTER_SE_VALIDATION_PROXY"
+        },
+        "power_analysis_status": {
+          "const": "PER_COHORT_AT_RUNTIME"
+        },
+        "target_brier_improvement_provisional": {
+          "const": 0.01
+        },
+        "power_alpha": {
+          "const": 0.05
+        },
+        "target_power": {
+          "const": 0.8
+        },
+        "minimum_total_provisional": {
+          "const": 250
+        },
+        "minimum_oos_effective_sample_size_floor_provisional": {
+          "const": 0
+        },
+        "cluster_dimensions": {
+          "const": [
+            "source_scan_id",
+            "symbol",
+            "utc_day"
+          ]
+        },
+        "confidence_interval_method": {
+          "const": "MAX_OF_ONE_WAY_CLUSTER_SE"
+        },
+        "win_rate_interval_method": {
+          "const": "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"
+        },
+        "minimum_train_provisional": {
+          "const": 100
+        },
+        "minimum_validation_provisional": {
+          "const": 30
+        },
+        "minimum_oos_provisional": {
+          "const": 50
+        },
+        "methods": {
+          "const": [
+            "PLATT",
+            "ISOTONIC"
+          ]
+        },
+        "selection": {
+          "const": "VALIDATION_BRIER_ONLY"
+        },
+        "final_evaluation": {
+          "const": "UNTOUCHED_OOS"
+        }
       }
     },
-    "actionable": {"const": false},
+    "actionable": {
+      "const": false
+    },
     "instruments": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["symbol", "regime", "golden_rule", "lrt", "nmt"],
+        "required": [
+          "symbol",
+          "regime",
+          "golden_rule",
+          "lrt",
+          "nmt"
+        ],
         "properties": {
-          "symbol": {"type": "string", "minLength": 1},
-          "regime": {"type": "string", "minLength": 1},
-          "golden_rule": {"type": "object"},
-          "lrt": {"$ref": "#/$defs/engine"},
-          "nmt": {"$ref": "#/$defs/engine"}
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "regime": {
+            "type": "string",
+            "minLength": 1
+          },
+          "golden_rule": {
+            "type": "object"
+          },
+          "lrt": {
+            "$ref": "#/$defs/engine"
+          },
+          "nmt": {
+            "$ref": "#/$defs/engine"
+          }
         }
       }
     }
@@ -70,93 +231,527 @@
     "engine": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "candidate_status", "direction", "raw_score", "data_class", "score_model_version", "hypothesis", "falsification", "confidence_status", "confidence_probability", "calibration", "ev_status", "ev_net", "ev_decision", "reason", "regime", "actionable"],
+      "required": [
+        "path",
+        "candidate_status",
+        "direction",
+        "raw_score",
+        "data_class",
+        "score_model_version",
+        "hypothesis",
+        "falsification",
+        "confidence_status",
+        "confidence_probability",
+        "calibration",
+        "ev_status",
+        "ev_net",
+        "ev_decision",
+        "reason",
+        "regime",
+        "actionable"
+      ],
       "properties": {
-        "path": {"type": "string"},
-        "candidate_status": {"type": "string"},
-        "direction": {"type": "string"},
-        "raw_score": {"type": ["number", "null"]},
-        "data_class": {"type": "string"},
-        "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY", "UNAVAILABLE"]},
-        "hypothesis": {"type": "string"},
-        "falsification": {"type": "string"},
-        "confidence_status": {"enum": ["CALIBRATED", "NOT_CALIBRATED"]},
-        "confidence_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "path": {
+          "type": "string"
+        },
+        "candidate_status": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "raw_score": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "data_class": {
+          "type": "string"
+        },
+        "score_model_version": {
+          "enum": [
+            "LFS_V2_PROXY",
+            "NSS_V2_PROXY",
+            "UNAVAILABLE"
+          ]
+        },
+        "hypothesis": {
+          "type": "string"
+        },
+        "falsification": {
+          "type": "string"
+        },
+        "confidence_status": {
+          "enum": [
+            "CALIBRATED",
+            "NOT_CALIBRATED"
+          ]
+        },
+        "confidence_probability": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
         "calibration": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["status", "reason", "method", "score_model_version", "sample_count", "train_count", "validation_count", "oos_count", "train_scan_clusters", "train_symbol_clusters", "train_utc_day_clusters", "validation_scan_clusters", "validation_symbol_clusters", "validation_utc_day_clusters", "oos_scan_clusters", "oos_symbol_clusters", "oos_utc_day_clusters", "train_effective_sample_size", "validation_effective_sample_size", "oos_effective_sample_size", "oos_period_start_ms", "oos_period_end_ms", "oos_symbol_distribution", "oos_daily_distribution", "confidence_interval_method", "win_rate_interval_method", "brier_raw_oos", "brier_calibrated_oos", "brier_ci_low", "brier_ci_high", "log_loss_oos", "ece_raw_oos", "ece_calibrated_oos", "reliability_bins", "win_rate_oos", "win_rate_ci_low", "win_rate_ci_high", "win_rate_cluster_ci_low", "win_rate_cluster_ci_high", "probability_win", "avg_win_r", "avg_loss_r", "avg_fee_r", "avg_slippage_r", "avg_funding_r", "ev_net", "ev_status", "ev_decision"],
+          "required": [
+            "status",
+            "reason",
+            "method",
+            "score_model_version",
+            "sample_count",
+            "train_count",
+            "validation_count",
+            "oos_count",
+            "train_scan_clusters",
+            "train_symbol_clusters",
+            "train_utc_day_clusters",
+            "validation_scan_clusters",
+            "validation_symbol_clusters",
+            "validation_utc_day_clusters",
+            "oos_scan_clusters",
+            "oos_symbol_clusters",
+            "oos_utc_day_clusters",
+            "train_effective_sample_size",
+            "validation_effective_sample_size",
+            "oos_effective_sample_size",
+            "oos_period_start_ms",
+            "oos_period_end_ms",
+            "oos_symbol_distribution",
+            "oos_daily_distribution",
+            "confidence_interval_method",
+            "win_rate_interval_method",
+            "brier_raw_oos",
+            "brier_calibrated_oos",
+            "brier_ci_low",
+            "brier_ci_high",
+            "log_loss_oos",
+            "ece_raw_oos",
+            "ece_calibrated_oos",
+            "reliability_bins",
+            "win_rate_oos",
+            "win_rate_ci_low",
+            "win_rate_ci_high",
+            "win_rate_cluster_ci_low",
+            "win_rate_cluster_ci_high",
+            "probability_win",
+            "avg_win_r",
+            "avg_loss_r",
+            "avg_fee_r",
+            "avg_slippage_r",
+            "avg_funding_r",
+            "ev_net",
+            "ev_status",
+            "ev_decision",
+            "brier_improvement_oos",
+            "brier_improvement_ci_low",
+            "brier_improvement_ci_high",
+            "power_analysis_status",
+            "target_brier_improvement_provisional",
+            "power_alpha",
+            "target_power",
+            "validation_brier_improvement_se",
+            "required_oos_effective_sample_size"
+          ],
           "properties": {
-            "status": {"enum": ["NOT_CALIBRATED", "CALIBRATED", "INVALID_OUTCOME_LEDGER"]},
-            "reason": {"type": "string"},
-            "method": {"enum": ["NONE", "PLATT", "ISOTONIC"]},
-            "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY", "UNAVAILABLE"]},
-            "sample_count": {"type": "integer", "minimum": 0},
-            "train_count": {"type": "integer", "minimum": 0},
-            "validation_count": {"type": "integer", "minimum": 0},
-            "oos_count": {"type": "integer", "minimum": 0},
-            "train_scan_clusters": {"type": "integer", "minimum": 0},
-            "train_symbol_clusters": {"type": "integer", "minimum": 0},
-            "train_utc_day_clusters": {"type": "integer", "minimum": 0},
-            "validation_scan_clusters": {"type": "integer", "minimum": 0},
-            "validation_symbol_clusters": {"type": "integer", "minimum": 0},
-            "validation_utc_day_clusters": {"type": "integer", "minimum": 0},
-            "oos_scan_clusters": {"type": "integer", "minimum": 0},
-            "oos_symbol_clusters": {"type": "integer", "minimum": 0},
-            "oos_utc_day_clusters": {"type": "integer", "minimum": 0},
-            "train_effective_sample_size": {"type": "number", "minimum": 0},
-            "validation_effective_sample_size": {"type": "number", "minimum": 0},
-            "oos_effective_sample_size": {"type": "number", "minimum": 0},
-            "oos_period_start_ms": {"type": "integer", "minimum": 0},
-            "oos_period_end_ms": {"type": "integer", "minimum": 0},
-            "oos_symbol_distribution": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-            "oos_daily_distribution": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
-            "confidence_interval_method": {"const": "MAX_OF_ONE_WAY_CLUSTER_SE"},
-            "win_rate_interval_method": {"const": "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"},
-            "brier_raw_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "brier_calibrated_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "brier_ci_low": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "brier_ci_high": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "log_loss_oos": {"type": ["number", "null"], "minimum": 0},
-            "ece_raw_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "ece_calibrated_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+            "status": {
+              "enum": [
+                "NOT_CALIBRATED",
+                "CALIBRATED",
+                "INVALID_OUTCOME_LEDGER"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                "NONE",
+                "PLATT",
+                "ISOTONIC"
+              ]
+            },
+            "score_model_version": {
+              "enum": [
+                "LFS_V2_PROXY",
+                "NSS_V2_PROXY",
+                "UNAVAILABLE"
+              ]
+            },
+            "sample_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "train_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "validation_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "train_scan_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "train_symbol_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "train_utc_day_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "validation_scan_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "validation_symbol_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "validation_utc_day_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_scan_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_symbol_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_utc_day_clusters": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "train_effective_sample_size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "validation_effective_sample_size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "oos_effective_sample_size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "oos_period_start_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_period_end_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "oos_symbol_distribution": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "oos_daily_distribution": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "confidence_interval_method": {
+              "const": "MAX_OF_ONE_WAY_CLUSTER_SE"
+            },
+            "win_rate_interval_method": {
+              "const": "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"
+            },
+            "brier_raw_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "brier_calibrated_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "brier_ci_low": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "brier_ci_high": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "log_loss_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "ece_raw_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "ece_calibrated_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
             "reliability_bins": {
               "type": "array",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["lower_bound", "upper_bound", "count", "mean_probability", "observed_win_rate"],
+                "required": [
+                  "lower_bound",
+                  "upper_bound",
+                  "count",
+                  "mean_probability",
+                  "observed_win_rate"
+                ],
                 "properties": {
-                  "lower_bound": {"type": "number", "minimum": 0, "maximum": 1},
-                  "upper_bound": {"type": "number", "minimum": 0, "maximum": 1},
-                  "count": {"type": "integer", "minimum": 0},
-                  "mean_probability": {"type": "number", "minimum": 0, "maximum": 1},
-                  "observed_win_rate": {"type": "number", "minimum": 0, "maximum": 1}
+                  "lower_bound": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "upper_bound": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "mean_probability": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "observed_win_rate": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
                 }
               }
             },
-            "win_rate_oos": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "win_rate_ci_low": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "win_rate_ci_high": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "win_rate_cluster_ci_low": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "win_rate_cluster_ci_high": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "probability_win": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-            "avg_win_r": {"type": ["number", "null"], "minimum": 0},
-            "avg_loss_r": {"type": ["number", "null"], "minimum": 0},
-            "avg_fee_r": {"type": ["number", "null"], "minimum": 0},
-            "avg_slippage_r": {"type": ["number", "null"], "minimum": 0},
-            "avg_funding_r": {"type": ["number", "null"]},
-            "ev_net": {"type": ["number", "null"]},
-            "ev_status": {"enum": ["NOT_CALCULATED", "COSTS_UNAVAILABLE", "CALCULATED"]},
-            "ev_decision": {"enum": ["NOT_CALCULATED", "NOT_CALCULATED_COSTS_UNAVAILABLE", "NO_TRADE", "EV_POSITIVE_RESEARCH_ONLY"]}
+            "win_rate_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "win_rate_ci_low": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "win_rate_ci_high": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "win_rate_cluster_ci_low": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "win_rate_cluster_ci_high": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "probability_win": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "avg_win_r": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "avg_loss_r": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "avg_fee_r": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "avg_slippage_r": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "avg_funding_r": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ev_net": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ev_status": {
+              "enum": [
+                "NOT_CALCULATED",
+                "COSTS_UNAVAILABLE",
+                "CALCULATED"
+              ]
+            },
+            "ev_decision": {
+              "enum": [
+                "NOT_CALCULATED",
+                "NOT_CALCULATED_COSTS_UNAVAILABLE",
+                "NO_TRADE",
+                "EV_POSITIVE_RESEARCH_ONLY"
+              ]
+            },
+            "brier_improvement_oos": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -1,
+              "maximum": 1
+            },
+            "brier_improvement_ci_low": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -1,
+              "maximum": 1
+            },
+            "brier_improvement_ci_high": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -1,
+              "maximum": 1
+            },
+            "power_analysis_status": {
+              "enum": [
+                "NOT_ESTABLISHED",
+                "PROVISIONAL_VALIDATION_CLUSTER_PROXY_ALPHA_0_05_POWER_0_80"
+              ]
+            },
+            "target_brier_improvement_provisional": {
+              "const": 0.01
+            },
+            "power_alpha": {
+              "const": 0.05
+            },
+            "target_power": {
+              "const": 0.8
+            },
+            "validation_brier_improvement_se": {
+              "type": "number",
+              "minimum": 0
+            },
+            "required_oos_effective_sample_size": {
+              "type": "number",
+              "minimum": 0
+            }
           }
         },
-        "ev_status": {"enum": ["CALCULATED", "NOT_CALCULATED", "COSTS_UNAVAILABLE"]},
-        "ev_net": {"type": ["number", "null"]},
-        "ev_decision": {"enum": ["NOT_CALCULATED", "NOT_CALCULATED_COSTS_UNAVAILABLE", "NO_TRADE", "EV_POSITIVE_RESEARCH_ONLY"]},
-        "reason": {"type": "string"},
-        "regime": {"type": "string"},
-        "actionable": {"const": false}
+        "ev_status": {
+          "enum": [
+            "CALCULATED",
+            "NOT_CALCULATED",
+            "COSTS_UNAVAILABLE"
+          ]
+        },
+        "ev_net": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ev_decision": {
+          "enum": [
+            "NOT_CALCULATED",
+            "NOT_CALCULATED_COSTS_UNAVAILABLE",
+            "NO_TRADE",
+            "EV_POSITIVE_RESEARCH_ONLY"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "regime": {
+          "type": "string"
+        },
+        "actionable": {
+          "const": false
+        }
       }
     }
   }

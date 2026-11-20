@@ -2,9 +2,13 @@
 
 #include "cfss/hash.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <set>
+#include <utility>
+#include <vector>
 #include <stdexcept>
 #include <string>
 
@@ -36,6 +40,178 @@ inline double required_number(const json& value, const char* key) {
     const double result = value.at(key).get<double>();
     if (!std::isfinite(result)) throw std::runtime_error(std::string{"shadow_candidate_nonfinite:"} + key);
     return result;
+}
+
+constexpr double kShadowFeeRatePerSide = 0.0004;
+constexpr double kShadowSlippageRatePerSide = 0.0010;
+constexpr std::int64_t kFundingCoverageToleranceMs = 8LL * kOneHourMs;
+
+struct ShadowCostResult {
+    bool available{false};
+    double fee_r{};
+    double slippage_r{};
+    double funding_r{};
+};
+
+inline ShadowCostResult calculate_shadow_costs(
+    const json& instrument,
+    const std::string& direction,
+    double entry_fill,
+    double stop,
+    std::int64_t entry_time_ms,
+    std::int64_t close_time_ms) {
+    ShadowCostResult result{};
+    if ((direction != "LONG" && direction != "SHORT") ||
+        !std::isfinite(entry_fill) || entry_fill <= 0.0 ||
+        !std::isfinite(stop) || stop <= 0.0 ||
+        entry_time_ms <= 0 || close_time_ms < entry_time_ms)
+        return result;
+
+    const double risk_fraction = std::abs(entry_fill - stop) / entry_fill;
+    if (!std::isfinite(risk_fraction) || risk_fraction <= 1e-9) return result;
+
+    const auto availability = instrument.value("availability", json::object());
+    if (availability.value("funding", std::string{"UNAVAILABLE"}) != "AVAILABLE" ||
+        !instrument.contains("funding") || !instrument.at("funding").is_array() ||
+        instrument.at("funding").empty())
+        return result;
+
+    std::int64_t first_time = std::numeric_limits<std::int64_t>::max();
+    std::int64_t last_time = 0;
+    std::int64_t previous_time = 0;
+    std::vector<std::int64_t> funding_gaps;
+    double signed_funding_sum = 0.0;
+    for (const auto& row : instrument.at("funding")) {
+        if (!row.is_object() || !row.contains("timestamp_ms") ||
+            !row.at("timestamp_ms").is_number_integer() ||
+            !row.contains("funding_rate") || !row.at("funding_rate").is_number())
+            return result;
+        const auto timestamp = row.at("timestamp_ms").get<std::int64_t>();
+        const double rate = row.at("funding_rate").get<double>();
+        if (timestamp <= 0 || !std::isfinite(rate) || timestamp < previous_time)
+            return result;
+        if (previous_time > 0 && timestamp > previous_time)
+            funding_gaps.push_back(timestamp - previous_time);
+        previous_time = timestamp;
+        first_time = std::min(first_time, timestamp);
+        last_time = std::max(last_time, timestamp);
+        if (timestamp >= entry_time_ms && timestamp <= close_time_ms)
+            signed_funding_sum += rate * (direction == "LONG" ? 1.0 : -1.0);
+    }
+
+    if (funding_gaps.empty()) return result;
+    std::sort(funding_gaps.begin(), funding_gaps.end());
+    const auto expected_interval_ms = std::min(
+        funding_gaps[funding_gaps.size() / 2U], kFundingCoverageToleranceMs);
+    const auto maximum_gap_ms = std::min(
+        kFundingCoverageToleranceMs, expected_interval_ms + expected_interval_ms / 2);
+
+    // شکاف بزرگ‌تر از یک‌ونیم دوره، پوشش ناقص است و هزینه funding نباید صفر فرض شود.
+    if (first_time > entry_time_ms ||
+        last_time + expected_interval_ms < close_time_ms ||
+        std::any_of(funding_gaps.begin(), funding_gaps.end(),
+            [maximum_gap_ms](std::int64_t gap) { return gap > maximum_gap_ms; }))
+        return result;
+
+    result.fee_r = (2.0 * kShadowFeeRatePerSide) / risk_fraction;
+    result.slippage_r = (2.0 * kShadowSlippageRatePerSide) / risk_fraction;
+    result.funding_r = signed_funding_sum / risk_fraction;
+    result.available = std::isfinite(result.fee_r) &&
+        std::isfinite(result.slippage_r) && std::isfinite(result.funding_r) &&
+        result.fee_r >= 0.0 && result.slippage_r >= 0.0;
+    return result;
+}
+
+inline void apply_shadow_costs(
+    json& outcome,
+    const json& instrument,
+    const std::string& source_run_id,
+    const std::string& source_scan_id,
+    const std::string& source_l1_sha256,
+    std::int64_t cost_as_of_time_ms) {
+    const bool valid_hash = source_l1_sha256.size() == 64U &&
+        std::all_of(source_l1_sha256.begin(), source_l1_sha256.end(), [](unsigned char c) {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+        });
+    if (source_run_id.empty() || source_scan_id.empty() || !valid_hash) return;
+
+    const auto direction = outcome.value("direction", std::string{});
+    const auto entry = outcome.value("entry_fill_reference", json{});
+    const auto stop = outcome.value("stop_reference", json{});
+    const auto decision = outcome.value("decision_time_ms", std::int64_t{0});
+    const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
+    std::int64_t entry_time = decision;
+    if (outcome.contains("resolution_bars") && outcome.at("resolution_bars").is_array() &&
+        !outcome.at("resolution_bars").empty())
+        entry_time = outcome.at("resolution_bars").front().value("timestamp_ms", decision);
+
+    if (!entry.is_number() || !stop.is_number()) return;
+    const auto costs = calculate_shadow_costs(
+        instrument, direction, entry.get<double>(), stop.get<double>(), entry_time, closed);
+    if (!costs.available) return;
+
+    outcome["fee_r"] = costs.fee_r;
+    outcome["slippage_r"] = costs.slippage_r;
+    outcome["funding_r"] = costs.funding_r;
+    outcome["cost_status"] = "PROXY";
+    outcome["cost_model_id"] = "SHADOW_COST_PROXY_V1";
+    outcome["fee_rate_per_side"] = kShadowFeeRatePerSide;
+    outcome["fee_assumption_class"] = "ASSUMED";
+    outcome["fee_assumption_ref"] = "OWNER_ENGINEERING_DECISION_2026-11-20";
+    outcome["slippage_rate_per_side"] = kShadowSlippageRatePerSide;
+    outcome["slippage_assumption_class"] = "PROXY";
+    outcome["slippage_proxy_method"] = "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK";
+    outcome["slippage_source_status"] = "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT";
+    outcome["funding_source"] = "OKX_PUBLIC_FUNDING_HISTORY";
+    outcome["cost_source_run_id"] = source_run_id;
+    outcome["cost_source_scan_id"] = source_scan_id;
+    outcome["cost_source_l1_sha256"] = source_l1_sha256;
+    outcome["cost_as_of_time_ms"] = cost_as_of_time_ms;
+}
+
+inline bool valid_cost_provenance(const json& outcome) {
+    const auto status = outcome.value("cost_status", std::string{"UNAVAILABLE"});
+    const auto is_null_or_missing = [&outcome](const char* key) {
+        return !outcome.contains(key) || outcome.at(key).is_null();
+    };
+    if (status == "UNAVAILABLE") {
+        return is_null_or_missing("fee_r") &&
+            is_null_or_missing("slippage_r") &&
+            is_null_or_missing("funding_r");
+    }
+    if (status != "PROXY") return false; // REAL costs are not implemented in this stage.
+    const auto finite_number = [&outcome](const char* key) {
+        return outcome.contains(key) && outcome.at(key).is_number() &&
+            std::isfinite(outcome.at(key).get<double>());
+    };
+    const auto nonempty_string = [&outcome](const char* key) {
+        return outcome.contains(key) && outcome.at(key).is_string() &&
+            !outcome.at(key).get<std::string>().empty();
+    };
+    const auto hash = outcome.value("cost_source_l1_sha256", std::string{});
+    const bool valid_hash = hash.size() == 64U &&
+        std::all_of(hash.begin(), hash.end(), [](unsigned char ch) {
+            return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f');
+        });
+    return finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
+        finite_number("slippage_r") && outcome.at("slippage_r").get<double>() >= 0.0 &&
+        finite_number("funding_r") &&
+        finite_number("fee_rate_per_side") &&
+        std::abs(outcome.at("fee_rate_per_side").get<double>() - kShadowFeeRatePerSide) < 1e-12 &&
+        outcome.value("fee_assumption_class", std::string{}) == "ASSUMED" &&
+        outcome.value("fee_assumption_ref", std::string{}) == "OWNER_ENGINEERING_DECISION_2026-11-20" &&
+        finite_number("slippage_rate_per_side") &&
+        std::abs(outcome.at("slippage_rate_per_side").get<double>() - kShadowSlippageRatePerSide) < 1e-12 &&
+        outcome.value("slippage_assumption_class", std::string{}) == "PROXY" &&
+        outcome.value("slippage_proxy_method", std::string{}) == "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK" &&
+        outcome.value("slippage_source_status", std::string{}) == "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT" &&
+        outcome.value("cost_model_id", std::string{}) == "SHADOW_COST_PROXY_V1" &&
+        outcome.value("funding_source", std::string{}) == "OKX_PUBLIC_FUNDING_HISTORY" &&
+        nonempty_string("cost_source_run_id") && nonempty_string("cost_source_scan_id") &&
+        valid_hash && outcome.contains("cost_as_of_time_ms") &&
+        outcome.at("cost_as_of_time_ms").is_number_integer() &&
+        outcome.at("cost_as_of_time_ms").get<std::int64_t>() >=
+            outcome.value("closed_at_ms", std::int64_t{0});
 }
 
 inline json empty_registry() {
@@ -141,6 +317,22 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             old_outcome["score_model_version"] =
                 old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
         }
+    }
+
+    // بک‌فیل هزینه‌های نتایج قبلی؛ هزینه ناموجود هرگز صفر فرض نمی‌شود.
+    std::size_t cost_backfilled = 0U;
+    for (auto& old_outcome : ledger["outcomes"]) {
+        if (old_outcome.value("cost_status", std::string{"UNAVAILABLE"}) != "UNAVAILABLE")
+            continue;
+        const auto symbol = old_outcome.value("symbol", std::string{});
+        const auto* instrument = find_instrument(l1, symbol);
+        if (!instrument) continue;
+        apply_shadow_costs(old_outcome, *instrument,
+            l1.value("run_id", std::string{}),
+            l1.value("scan_id", std::string{}),
+            dual.value("l1_sha256", std::string{}), current_time);
+        if (old_outcome.value("cost_status", std::string{}) == "PROXY")
+            ++cost_backfilled;
     }
 
     std::set<std::string> known_ids;
@@ -390,7 +582,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const double gross_r = ((exit_price - entry_fill) * sign) / risk;
         const bool win = gross_r > 0.0;
         const auto signal_id = candidate.at("signal_id").get<std::string>();
-        ledger["outcomes"].push_back({
+        json outcome = {
             {"signal_id", signal_id}, {"profile", "DAILY_SWING"},
             {"path", candidate.at("path")},
             {"score_model_version", candidate.at("score_model_version")},
@@ -413,7 +605,14 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             {"source_l1_sha256", candidate.at("source_l1_sha256")},
             {"source_universe_status", candidate.at("source_universe_status")},
             {"outcome_kind", "HYPOTHESIS_PROXY"}
-        });
+        };
+        const auto* cost_instrument = find_instrument(l1, symbol);
+        if (cost_instrument)
+            apply_shadow_costs(outcome, *cost_instrument,
+                l1.value("run_id", std::string{}),
+                l1.value("scan_id", std::string{}),
+                dual.value("l1_sha256", std::string{}), current_time);
+        ledger["outcomes"].push_back(std::move(outcome));
         candidate["state"] = "RESOLVED";
         candidate["resolution"] = resolution;
         candidate["closed_at_ms"] = close_time;
@@ -421,13 +620,26 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         ++resolved;
     }
 
+    for (const auto& outcome : ledger["outcomes"]) {
+        if (!valid_cost_provenance(outcome))
+            throw std::runtime_error("shadow_outcome_cost_provenance_invalid");
+    }
+
     ledger["ledger_status"] = ledger["outcomes"].empty() ? "EMPTY" : "AVAILABLE";
+    ledger["cost_backfilled_this_run"] = cost_backfilled;
+    ledger["cost_model"] = {
+        {"id", "SHADOW_COST_PROXY_V1"},
+        {"data_class", "PROXY"},
+        {"fee_rate_per_side", kShadowFeeRatePerSide},
+        {"slippage_rate_per_side", kShadowSlippageRatePerSide},
+        {"funding_source", "OKX_PUBLIC_FUNDING_HISTORY"},
+        {"funding_coverage_tolerance_hours", 8}
+    };
     registry["updated_at_ms"] = current_time;
     registry["summary"] = {
         {"registered_this_run", registered}, {"resolved_this_run", resolved},
         {"pending_count", still_pending}, {"rejected_this_run", rejected},
         {"total_candidates", registry["candidates"].size()},
-        {"total_outcomes", ledger["outcomes"].size()}
     };
     return {{"registry", registry}, {"ledger", ledger}};
 }

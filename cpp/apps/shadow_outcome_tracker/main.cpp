@@ -48,12 +48,25 @@ int main(int argc, char** argv) {
         write_json(argv[7], output.at("registry"));
         write_json(argv[8], output.at("ledger"));
         const auto& summary = output.at("registry").at("summary");
+        const auto& ledger_out = output.at("ledger");
+        std::size_t proxy_costs = 0U;
+        std::size_t unavailable_costs = 0U;
+        for (const auto& outcome : ledger_out.at("outcomes")) {
+            if (outcome.value("cost_status", std::string{"UNAVAILABLE"}) == "PROXY")
+                ++proxy_costs;
+            else
+                ++unavailable_costs;
+        }
         std::cout << "SHADOW_TRACKER_STATUS=PASS"
                   << " REGISTERED=" << summary.at("registered_this_run")
                   << " RESOLVED=" << summary.at("resolved_this_run")
                   << " PENDING=" << summary.at("pending_count")
-                  << " TOTAL_OUTCOMES=" << summary.at("total_outcomes")
-                  << " COSTS=UNAVAILABLE_UNTIL_VERIFIED\n";
+                  << " TOTAL_OUTCOMES=" << ledger_out.at("outcomes").size()
+                  << " COST_PROXY=" << proxy_costs
+                  << " COST_UNAVAILABLE=" << unavailable_costs
+                  << " COST_BACKFILLED=" << ledger_out.value("cost_backfilled_this_run", 0U)
+                  << " COST_MODEL=" << ledger_out.value("cost_model", json::object()).value("id", "UNAVAILABLE")
+                  << "\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "SHADOW_TRACKER_ERROR=" << error.what() << '\n';

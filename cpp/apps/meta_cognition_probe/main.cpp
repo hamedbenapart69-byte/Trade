@@ -1,6 +1,8 @@
 #include "cfss/meta_calibration.hpp"
+#include "cfss/meta_cognition.hpp"
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
+#include "cfss/shadow_outcomes.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -78,6 +80,8 @@ std::vector<cfss::meta::Outcome> parse_outcomes(const json& ledger) {
             ((cost_status == "REAL" || cost_status == "PROXY") && !all_costs_numeric) ||
             (cost_status != "UNAVAILABLE" && cost_status != "REAL" && cost_status != "PROXY"))
             throw std::runtime_error("outcome_cost_status_does_not_match_cost_fields");
+        if (!cfss::shadow::valid_cost_provenance(row))
+            throw std::runtime_error("outcome_cost_provenance_invalid");
         if (row.at("profile").get<std::string>() != ledger.value("profile", std::string{}) ||
             row.at("entry_model") != "NEXT_BAR_OPEN_PROXY" ||
             row.at("execution_status") != "NOT_EXECUTED" ||
@@ -143,6 +147,15 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
         {"brier_calibrated_oos", optional_number(report.brier_calibrated_oos)},
         {"brier_ci_low", optional_number(report.brier_ci_low)},
         {"brier_ci_high", optional_number(report.brier_ci_high)},
+        {"brier_improvement_oos", optional_number(report.brier_improvement_oos)},
+        {"brier_improvement_ci_low", optional_number(report.brier_improvement_ci_low)},
+        {"brier_improvement_ci_high", optional_number(report.brier_improvement_ci_high)},
+        {"power_analysis_status", report.power_analysis_status},
+        {"target_brier_improvement_provisional", report.target_brier_improvement},
+        {"power_alpha", report.power_alpha},
+        {"target_power", report.target_power},
+        {"validation_brier_improvement_se", report.validation_brier_improvement_se},
+        {"required_oos_effective_sample_size", report.required_oos_effective_sample_size},
         {"log_loss_oos", optional_number(report.log_loss_oos)},
         {"ece_raw_oos", optional_number(report.ece_raw_oos)},
         {"ece_calibrated_oos", optional_number(report.ece_calibrated_oos)},
@@ -178,45 +191,19 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
 json evaluate_candidate(const json& candidate, const std::string& regime,
                         const std::vector<cfss::meta::Outcome>& outcomes,
                         bool ledger_available, std::int64_t decision_time) {
-    auto status = candidate.value("status", std::string{"INSUFFICIENT_DATA"});
+    const auto evaluated = cfss::meta::evaluate_calibration_continuously(
+        candidate, regime, outcomes, ledger_available, decision_time);
+    const auto& report = evaluated.calibration;
     const auto path = candidate.value("path", std::string{"UNKNOWN"});
-    const auto score_model_version = candidate.value("score_model_version",
+    const auto score_model_version = candidate.value(
+        "score_model_version",
         path == "PLAN_A_LRT" ? std::string{"LFS_V2_PROXY"} :
         (path == "PLAN_A_NMT" ? std::string{"NSS_V2_PROXY"} : std::string{"UNAVAILABLE"}));
     const auto score = candidate.contains("score") && candidate.at("score").is_number()
         ? std::optional<double>{candidate.at("score").get<double>()} : std::nullopt;
-    cfss::meta::CalibrationReport report{};
-    report.score_model_version = score_model_version;
-    std::string reason = "NO_CANDIDATE_TO_CALIBRATE";
-
-    if (status == "CANDIDATE") {
-        if (candidate.value("hypothesis", std::string{}).empty() ||
-            candidate.value("falsification", std::string{}).empty() ||
-            !score || *score < 0.0 || *score > 1.0) {
-            status = "INSUFFICIENT_DATA";
-            reason = "CANDIDATE_MISSING_HYPOTHESIS_FALSIFICATION_OR_SCORE";
-        } else if (!ledger_available) {
-            report.reason = "OUTCOME_LEDGER_MISSING";
-            reason = report.reason;
-        } else {
-            report = cfss::meta::calibrate(
-                outcomes, path, regime, *score, decision_time,
-                candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING",
-                score_model_version);
-            reason = report.reason;
-            if (report.status == "INVALID_OUTCOME_LEDGER") {
-                status = "INSUFFICIENT_DATA";
-            } else if (report.ev_decision == "NO_TRADE") {
-                status = "NO_TRADE";
-            } else if (report.ev_decision == "EV_POSITIVE_RESEARCH_ONLY") {
-                status = "EV_POSITIVE_RESEARCH_ONLY";
-            }
-        }
-    }
-
     return {
         {"path", path},
-        {"candidate_status", status},
+        {"candidate_status", evaluated.candidate_status},
         {"direction", candidate.value("direction", std::string{"NONE"})},
         {"raw_score", optional_number(score)},
         {"data_class", candidate.value("data_class", std::string{"UNAVAILABLE"})},
@@ -229,7 +216,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         {"ev_status", report.ev_status},
         {"ev_net", optional_number(report.ev_net)},
         {"ev_decision", report.ev_decision},
-        {"reason", reason},
+        {"reason", evaluated.reason},
         {"regime", regime},
         {"actionable", false}
     };
@@ -303,15 +290,22 @@ int main(int argc, char** argv) {
             {"outcome_ledger_status", ledger.value("ledger_status", std::string{"UNAVAILABLE"})},
             {"outcome_ledger_count", outcomes.size()},
             {"calibration_policy", {
-                {"split", "CHRONOLOGICAL_60_20_20"},
-                {"minimum_total", 250},
-                {"minimum_oos_effective_sample_size", 30.0},
+                {"split", "CHRONOLOGICAL_60_20_20_PROVISIONAL_INTERNAL"},
+                {"split_is_canonical_requirement", false},
+                {"sample_size_policy", "PROVISIONAL_INTERNAL_GUARD_WITH_VALIDATION_BASED_POWER_ESTIMATE"},
+                {"power_analysis_method", "MAX_OF_ONE_WAY_CLUSTER_SE_VALIDATION_PROXY"},
+                {"power_analysis_status", "PER_COHORT_AT_RUNTIME"},
+                {"target_brier_improvement_provisional", 0.01},
+                {"power_alpha", 0.05},
+                {"target_power", 0.80},
+                {"minimum_total_provisional", 250},
+                {"minimum_oos_effective_sample_size_floor_provisional", 0.0},
                 {"cluster_dimensions", json::array({"source_scan_id", "symbol", "utc_day"})},
                 {"confidence_interval_method", "MAX_OF_ONE_WAY_CLUSTER_SE"},
                 {"win_rate_interval_method", "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"},
-                {"minimum_train", 100},
-                {"minimum_validation", 30},
-                {"minimum_oos", 50},
+                {"minimum_train_provisional", 100},
+                {"minimum_validation_provisional", 30},
+                {"minimum_oos_provisional", 50},
                 {"methods", {"PLATT", "ISOTONIC"}},
                 {"selection", "VALIDATION_BRIER_ONLY"},
                 {"final_evaluation", "UNTOUCHED_OOS"}
