@@ -4,7 +4,7 @@ on:
   push:
     branches: [ops/binance-vision-probe-20261120]
     paths:
-      - "docs/evidence/run-binance-vision-probe.txt"
+      - "docs/evidence/run-binance-vision-probe*.txt"
 
 permissions:
   contents: read
@@ -40,5 +40,24 @@ jobs:
           fetch_verify "data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.zip"
           unzip -p BTCUSDT-metrics-2025-01-01.zip | sed -n '1,3p'
           unzip -p BTCUSDT-fundingRate-2025-01.zip | sed -n '1,3p'
+          echo "ALTCOIN_ARCHIVE_PROBE_BEGIN"
+          failures=0
+          for symbol in ETHUSDT BNBUSDT UNIUSDT ARBUSDT WLDUSDT; do
+            for relative in \
+              "data/futures/um/daily/metrics/${symbol}/${symbol}-metrics-2025-01-01.zip" \
+              "data/futures/um/daily/metrics/${symbol}/${symbol}-metrics-2026-11-18.zip" \
+              "data/futures/um/monthly/fundingRate/${symbol}/${symbol}-fundingRate-2025-01.zip" \
+              "data/futures/um/monthly/klines/${symbol}/1h/${symbol}-1h-2025-01.zip" \
+              "data/spot/monthly/klines/${symbol}/1h/${symbol}-1h-2025-01.zip"; do
+              if fetch_verify "$relative"; then
+                echo "ALTCOIN_ARCHIVE_AVAILABLE=${relative}"
+              else
+                echo "ALTCOIN_ARCHIVE_UNAVAILABLE=${relative}"
+                failures=$((failures+1))
+              fi
+            done
+          done
+          echo "ALTCOIN_ARCHIVE_FAILURE_COUNT=${failures}"
           echo "BINANCE_VISION_PROBE_PASS"
+
           echo "ACTIONS_ARTIFACT_UPLOAD_DISABLED=true"
