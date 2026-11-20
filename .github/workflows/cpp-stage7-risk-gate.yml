@@ -43,5 +43,7 @@ jobs:
           grep -Fq 'RISK_SNAPSHOT_INVALID_OR_MISSING' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'CFSS_SHADOW_PORTFOLIO_ONLY' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'user_account_data_used' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'build_fallback_report' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'STAGE7_INPUT_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'trade_execution_allowed' cpp/include/cfss/risk_gate_pipeline.hpp
           echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"
