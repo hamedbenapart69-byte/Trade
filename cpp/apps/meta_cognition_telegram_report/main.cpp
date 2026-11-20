@@ -42,7 +42,7 @@ json* find_receipt(json& outbox, const std::string& id) {
 }
 json load_risk_gate(const json& report) {
     const char* configured = std::getenv("CFSS_RISK_GATE_ARTIFACT");
-    if (!configured || configured[0] == '\\0')
+    if (!configured || configured[0] == '\0')
         throw std::runtime_error("STAGE7_RISK_GATE_ARTIFACT_REQUIRED");
     const auto gate = read_json(configured);
     if (gate.value("artifact_type", std::string{}) != "cfss_stage7_risk_gate_v1" ||
@@ -55,7 +55,7 @@ json load_risk_gate(const json& report) {
     return gate;
 }
 std::string report_id(const json& report, const json& gate) {
-    return cfss::sha256_hex(report.dump() + "\\n" + gate.dump());
+    return cfss::sha256_hex(report.dump() + "\n" + gate.dump());
 }
 std::string report_text(const json& report, const json& gate) {
     std::string out = "گزارش مرحله ۶ | فراشناخت، کالیبراسیون و EV\n";
