@@ -311,8 +311,118 @@
               "null"
             ],
             "pattern": "^[a-f0-9]{64}$"
+          },
+          "fee_assumption_class": {
+            "const": "ASSUMED"
+          },
+          "fee_assumption_ref": {
+            "const": "OWNER_ENGINEERING_DECISION_2026-11-20"
+          },
+          "slippage_assumption_class": {
+            "const": "PROXY"
+          },
+          "slippage_proxy_method": {
+            "const": "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK"
+          },
+          "slippage_source_status": {
+            "const": "UNAVAILABLE_MARKET_IMPACT_MEASUREMENT"
+          },
+          "cost_calculated_at_ms": {
+            "type": "integer",
+            "minimum": 1
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "cost_status": {
+                  "const": "PROXY"
+                }
+              },
+              "required": [
+                "cost_status"
+              ]
+            },
+            "then": {
+              "required": [
+                "cost_model_id",
+                "fee_rate_per_side",
+                "fee_assumption_class",
+                "fee_assumption_ref",
+                "slippage_rate_per_side",
+                "slippage_assumption_class",
+                "slippage_proxy_method",
+                "slippage_source_status",
+                "funding_source",
+                "cost_source_run_id",
+                "cost_source_scan_id",
+                "cost_source_l1_sha256",
+                "cost_calculated_at_ms"
+              ],
+              "properties": {
+                "fee_r": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "slippage_r": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "funding_r": {
+                  "type": "number"
+                },
+                "fee_rate_per_side": {
+                  "const": 0.0004
+                },
+                "slippage_rate_per_side": {
+                  "const": 0.001
+                },
+                "cost_source_run_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cost_source_scan_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cost_source_l1_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "cost_calculated_at_ms": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "cost_status": {
+                  "const": "UNAVAILABLE"
+                }
+              },
+              "required": [
+                "cost_status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "fee_r": {
+                  "type": "null"
+                },
+                "slippage_r": {
+                  "type": "null"
+                },
+                "funding_r": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "cost_backfilled_this_run": {
