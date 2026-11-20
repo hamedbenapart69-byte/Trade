@@ -103,6 +103,15 @@ int main() {
     }
     const auto correlated_result = cfss::meta::calibrate(
         correlated, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
+    if (correlated_result.reason != "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN") {
+        std::cerr << "CORRELATED_DIAGNOSTIC status=" << correlated_result.status
+                  << " reason=" << correlated_result.reason
+                  << " required_oos_effective_n=" << correlated_result.required_oos_effective_sample_size
+                  << " observed_oos_effective_n=" << correlated_result.oos_effective_sample_size
+                  << " validation_effective_n=" << correlated_result.validation_effective_sample_size
+                  << " validation_se=" << correlated_result.validation_brier_improvement_se
+                  << "\\n";
+    }
     require(correlated_result.status == "NOT_CALIBRATED" &&
             correlated_result.reason ==
                 "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN",
