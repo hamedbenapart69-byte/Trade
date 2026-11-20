@@ -1,10 +1,10 @@
 {
   "artifact_type": "cfss_crypto_universe_v1",
   "attribution": "CoinPaprika",
-  "fetched_at_ms": 1795173291752,
+  "fetched_at_ms": 1795173574873,
   "freshness_status": "LIVE",
   "provider_id": "coinpaprika",
-  "retrieved_at_ms": 1795173291752,
+  "retrieved_at_ms": 1795173574873,
   "schema_version": "1.0.0",
   "source_endpoint": "https://api.coinpaprika.com/v1/coins",
   "status": "VERIFIED",
