@@ -1,4 +1,5 @@
 #include "cfss/meta_calibration.hpp"
+#include "cfss/meta_cognition.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -180,6 +181,28 @@ int main() {
     require(other_regime.status == "NOT_CALIBRATED" &&
             other_regime.sample_count == 0U,
             "calibration is isolated by path and regime");
+
+    const nlohmann::json no_candidate{
+        {"status", "NO_QUALIFIED_SETUP"}, {"path", "PLAN_A_LRT"},
+        {"score", 0.80}, {"data_class", "PROXY"},
+        {"score_model_version", "LFS_V2_PROXY"}
+    };
+    const auto refreshed_without_candidate = cfss::meta::evaluate_candidate(
+        no_candidate, "DOWNTREND", outcomes, true, 251LL * 86'400'000LL);
+    require(refreshed_without_candidate.calibration.sample_count == 250U &&
+            refreshed_without_candidate.calibration.status == "CALIBRATED" &&
+            refreshed_without_candidate.candidate_status == "NO_QUALIFIED_SETUP",
+            "path-regime calibration refreshes without promoting a no-setup symbol");
+
+    auto small_ledger = outcomes;
+    small_ledger.resize(5U);
+    const auto partial_without_candidate = cfss::meta::evaluate_candidate(
+        no_candidate, "DOWNTREND", small_ledger, true, 251LL * 86'400'000LL);
+    require(partial_without_candidate.calibration.sample_count == 5U &&
+            partial_without_candidate.calibration.reason ==
+                "INSUFFICIENT_PATH_REGIME_OUTCOMES_MIN_250_FOR_60_20_20_SPLIT" &&
+            partial_without_candidate.candidate_status == "NO_QUALIFIED_SETUP",
+            "sub-threshold historical samples are reported but never promoted");
 
     std::cout << "META_CALIBRATION_V1_TESTS_PASS\n";
     return 0;
