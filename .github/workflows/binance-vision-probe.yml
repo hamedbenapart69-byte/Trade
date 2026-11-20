@@ -1,0 +1,44 @@
+name: Binance Vision Historical Futures Data Probe
+
+on:
+  push:
+    branches: [ops/binance-vision-probe-20261120]
+    paths:
+      - "docs/evidence/run-binance-vision-probe.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public archive access, checksums and historical coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/binance-vision
+          cd /tmp/binance-vision
+          fetch_verify() {
+            local relative="$1"
+            local filename="${relative##*/}"
+            echo "PROBE_URL=https://data.binance.vision/${relative}"
+            curl --fail --silent --show-error --location --retry 2 --retry-delay 2 \
+              "https://data.binance.vision/${relative}" -o "$filename"
+            curl --fail --silent --show-error --location --retry 2 --retry-delay 2 \
+              "https://data.binance.vision/${relative}.CHECKSUM" -o "$filename.CHECKSUM"
+            sha256sum -c "$filename.CHECKSUM"
+            unzip -l "$filename" | tail -n 3
+            echo "ARCHIVE_PASS=$filename BYTES=$(stat -c%s "$filename")"
+          }
+          fetch_verify "data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2025-01-01.zip"
+          fetch_verify "data/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-11-18.zip"
+          fetch_verify "data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2025-01.zip"
+          fetch_verify "data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2026-10.zip"
+          fetch_verify "data/futures/um/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.zip"
+          unzip -p BTCUSDT-metrics-2025-01-01.zip | sed -n '1,3p'
+          unzip -p BTCUSDT-fundingRate-2025-01.zip | sed -n '1,3p'
+          echo "BINANCE_VISION_PROBE_PASS"
+          echo "ACTIONS_ARTIFACT_UPLOAD_DISABLED=true"
