@@ -42,12 +42,20 @@ Earlier live evidence from run `44726308730` (baseline):
 - **D1/D3 — Dependency:** Stage 6 has only 5 outcomes and costs are unavailable; a reliable shadow equity curve cannot yet be calculated.
 
 No user account data may be substituted for these missing internal records.
-Latest cross-check from Stage 6 PR live-validation run `44754721823` on head `3c6cbb46a1f51d4dd4d7622d0d6970afd7ed598e`:
-- The current run produced 2 strategy candidates and the Stage 7 gate blocked both.
+Latest cross-check from Stage 6 PR live-validation run `44759484737` on head `38c3dff7781fc888c5c3a1078091de5a099f19ea`:
+- The PR validation workspace produced 2 strategy candidates and the Stage 7 gate blocked both.
 - `risk_snapshot_status=UNAVAILABLE`, `actionable=0`, `trade_execution_allowed=false`.
-- The persistent shadow ledger supplied 5 outcomes; all 5 received provenance-backed `PROXY` costs during this run. This does not establish a sufficiently long or complete shadow equity curve.
+- The PR workspace transiently backfilled 5 historical outcomes with cost status `PROXY`; it did not persist these costs to the production `signals` branch.
+- A direct read of the persistent `signals` branch shows 5 ledger outcomes, all `cost_status=UNAVAILABLE`, all `execution_status=NOT_EXECUTED`, all `outcome_kind=HYPOTHESIS_PROXY`; 1 TARGET and 4 STOP. The 10-row candidate registry has 5 RESOLVED, 4 REJECTED and 1 PENDING.
+- These are hypothetical shadow resolutions, not executed trades or a validated shadow NAV series.
 - Telegram report preparation was validated without sending a message from this PR workflow.
 - No user account data was requested or used.
+
+## Additional acceptance blocker — risk denominator
+
+V18.2 §37.3 explicitly requires the loss-series denominator to be defined as simulated equity, strategy NAV or another fixed research capital base, then frozen for the experiment. The current implementation has no registered shadow-NAV/risk-unit configuration. The outcome ledger's R-multiples are normalized by each candidate's entry-to-stop distance; that alone does not define portfolio equity or convert aggregate R into daily/weekly/drawdown percentages. No percentage risk snapshot may be inferred from these R values without a declared portfolio sizing model.
+
+This is a D2 design gap in addition to the D1/D3 evidence gaps above. A Stage 7 v2 snapshot builder must accept a versioned, immutable risk-basis configuration and fail closed when it is absent or mismatched. A fixture-only configuration may test arithmetic but must never be treated as the production risk basis.
 
 ## v2 — planned after Stage 6 v2 costed ledger
 
@@ -60,7 +68,7 @@ Planned implementation:
 4. Keep the gate blocked if cost coverage, risk-unit definition, portfolio history or position state is incomplete.
 5. Preserve all kill-switch thresholds; no relaxation.
 
-**v2 status:** not yet built. Stage 6 v2 now demonstrated cost-proxy backfill for 5 historical outcomes, but the Stage 6 cohort remains `NOT_CALIBRATED` and the available ledger is not sufficient to establish a reliable shadow equity curve. Build v2 only when the costed ledger, risk-unit definition, portfolio history and open-position state are adequate; otherwise preserve `UNAVAILABLE`.
+**v2 status:** not yet built. The PR-only cost-proxy backfill is transient and the persistent ledger still has 5 `UNAVAILABLE` cost rows. The cohort remains `NOT_CALIBRATED`; no validated shadow NAV exists; and V18.2's loss denominator/risk unit is not configured. V2 may be built only around an explicit versioned risk-basis input, with no default capital or sizing assumption. Until then the production snapshot remains `UNAVAILABLE`.
 
 ## v3
 
