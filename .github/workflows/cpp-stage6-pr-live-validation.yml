@@ -67,7 +67,7 @@ jobs:
               signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
               > stage6-evidence/pending-symbols.v1.json
           else
-            printf '%s\\n' '[]' > stage6-evidence/pending-symbols.v1.json
+            printf '%s\n' '[]' > stage6-evidence/pending-symbols.v1.json
           fi
           if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
             cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
@@ -112,12 +112,12 @@ jobs:
           if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
             cp signals-state/cpp_runtime/shadow_candidate_registry.v1.json stage6-evidence/shadow_candidate_registry.input.json
           else
-            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
           fi
           if [ -s signals-state/cpp_runtime/daily_outcome_ledger.v1.json ]; then
             cp signals-state/cpp_runtime/daily_outcome_ledger.v1.json stage6-evidence/daily_outcome_ledger.input.json
           else
-            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
           fi
 
       - name: Resolve shadow outcomes and enforce cost provenance
