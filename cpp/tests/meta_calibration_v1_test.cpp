@@ -52,6 +52,16 @@ int main() {
     auto outcomes = fixture(2.0, 1.0, 0.04, 0.02, 0.01);
     const auto calibrated = cfss::meta::calibrate(
         outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+    if (calibrated.status != "CALIBRATED") {
+        std::cerr << "CALIBRATION_DIAGNOSTIC status=" << calibrated.status
+                  << " reason=" << calibrated.reason
+                  << " required_oos_effective_n=" << calibrated.required_oos_effective_sample_size
+                  << " observed_oos_effective_n=" << calibrated.oos_effective_sample_size
+                  << " validation_se=" << calibrated.validation_brier_improvement_se
+                  << " brier_improvement=" << calibrated.brier_improvement_oos.value_or(-1.0)
+                  << " brier_improvement_ci_low=" << calibrated.brier_improvement_ci_low.value_or(-1.0)
+                  << "\\n";
+    }
     require(calibrated.status == "CALIBRATED",
             "chronological Platt/isotonic calibration improves held-out Brier");
     require(calibrated.train_count == 12'000U &&
