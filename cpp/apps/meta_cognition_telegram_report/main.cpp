@@ -3,6 +3,7 @@
 #include "cfss/atomic_file.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
