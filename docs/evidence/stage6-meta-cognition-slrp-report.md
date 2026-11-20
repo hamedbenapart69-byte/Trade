@@ -79,17 +79,19 @@ Committed changes:
 9. Add negative tests for missing hashes/methods/assumption references, stale cost snapshot time, mislabelled fee, missing numeric cost components and unsupported `REAL` cost status.
 10. Preserve null cost values when total cost coverage is unavailable.
 
-**Validation status (latest head 3c6cbb46a1f51d4dd4d7622d0d6970afd7ed598e):** C++ build, CTest, schema validation and the Stage 6 PR live-validation workflow completed successfully in GitHub Actions run 44754721823. This verifies execution and artifact contracts, not statistical calibration or release readiness.
+**Validation status (latest head 38c3dff7781fc888c5c3a1078091de5a099f19ea):** C++ build, CTest, schema validation and the Stage 6 PR live-validation workflow completed successfully in GitHub Actions run 44759484737. This verifies execution and artifact contracts, not statistical calibration or release readiness.
 
-Live evidence from run 44754721823:
-- OKX reported 546 total instruments, 531 live USDT-suffix swaps, 337 linear-or-unspecified contracts, 194 excluded non-crypto instruments and 60 eligible instruments. The run selected 60, below the approximate 100-symbol target; the eligibility filter was not relaxed.
-- All 60 selected instruments had 15m resolution data available. OHLCV, funding and OI histories were collected from the public OKX source/cache; per-instrument coverage varied with listing history. Example BTC/ETH: 17,532 hourly candles, 90 funding observations and 720 OI observations. Newer instruments had shorter OHLCV histories.
-- Shadow tracker: 1 registered candidate, 0 resolved in this run, 2 pending candidates, 5 total ledger outcomes. Five prior outcomes were backfilled with cost `PROXY`; zero remained `UNAVAILABLE`. This is cost coverage, not real measured execution cost.
-- Meta-Cognition generated successfully with 5 outcomes. Confidence remained `NOT_CALIBRATED`; no probability calibration or net EV promotion was established. Current no-setup states remained non-actionable. SUI and TRUMP appeared as NMT candidates but remained uncalibrated.
+Live evidence from run 44759484737 on head `38c3dff7781fc888c5c3a1078091de5a099f19ea`:
+- OKX reported 546 total instruments, 531 live USDT-suffix swaps, 336 linear-or-unspecified contracts, 195 excluded non-crypto instruments and 60 eligible instruments. The run selected 60, below the approximate 100-symbol target; the eligibility filter was not relaxed.
+- All 60 selected instruments had 15m resolution data available. OHLCV, funding and OI were collected from the public OKX source/cache; per-instrument coverage varies with listing history. BTC/ETH examples had 17,532 hourly candles, 90 funding observations and 720 OI observations.
+- Shadow tracker in the PR validation workspace: 1 registered candidate, 0 resolved in that run, 2 pending candidates, 5 total ledger outcomes. All 5 historical outcomes were transiently backfilled with cost `PROXY`; this was not persisted to the production `signals` branch. The backfill is cost modelling, not measured execution cost.
+- Independent read of the persistent `signals` branch after the main scheduled runs: 5 outcomes, all `cost_status=UNAVAILABLE`, all `execution_status=NOT_EXECUTED`, all `outcome_kind=HYPOTHESIS_PROXY`; 1 TARGET and 4 STOP. They are five NMT outcomes, not executed trades.
+- The same persistent registry contains 10 candidates: 5 RESOLVED, 4 REJECTED and 1 PENDING. Rejections include `SOURCE_UNIVERSE_NOT_VERIFIED` and `FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE`.
+- Meta-Cognition generated successfully with 5 rows, but confidence remained `NOT_CALIBRATED`; no valid calibrated probability or net EV promotion was established. SUI and TRUMP appeared as NMT candidates but remained uncalibrated.
 - Stage 7 produced 2 candidate rows, both blocked; `risk_snapshot_status=UNAVAILABLE`, `actionable=0`.
-- Telegram report preparation was schema/runtime checked only. No Telegram message was sent by this PR validation, and no persistent signals branch was written.
+- Telegram report preparation was schema/runtime checked only. No Telegram message was sent by this PR validation, and no persistent `signals` branch state was written.
 
-The workflow result is therefore **engineering execution PASS / statistical acceptance BLOCKED / production release NOT APPROVED**. Five outcomes cannot establish the required chronological calibration, OOS Brier improvement or validation-derived sample power. The L1 target shortfall and single-provider live collection remain open data/provider coverage issues.
+The workflow result is therefore **engineering execution PASS / statistical acceptance BLOCKED / production release NOT APPROVED**. The five persistent hypothetical outcomes are insufficient for chronological calibration and all still lack persistent cost provenance. The 60/100 eligible-universe shortfall and single-provider live collection remain open data/provider coverage issues.
 
 ## 6. v3
 
@@ -127,7 +129,7 @@ These are historical shadow hypotheses, not executed trades or evidence of profi
 ## 11. Active version and handoff
 
 - **Active:** v2 engineering candidate.
-- **Stage 6:** BLOCKED pending adequate independent cohort outcomes, valid chronological train/validation/OOS splits, power/OOS assessment and supported cluster-uncertainty methodology. Latest-head build, CTest, schemas and one live PR run are complete.
+- **Stage 6:** BLOCKED pending persistent cost-provenance-backed independent cohort outcomes, valid chronological train/validation/OOS splits, power/OOS assessment and supported cluster-uncertainty methodology. Latest-head build, CTest, schemas and one live PR run are complete.
 - **Stage 7:** remains BLOCKED / fail-closed while its internal shadow-risk snapshot is unavailable.
 - **Next action:** continue collecting independently resolved, cost-provenance-backed shadow outcomes through the production scheduled pipeline; verify the exact cohort, effective sample sizes, cluster counts, OOS confidence interval and Brier improvement before any calibration claim. Investigate provider fallback and the 60/100 eligible-universe shortfall without relaxing liquidity or contract-equivalence rules.
 - **Merge / production release:** not approved.
