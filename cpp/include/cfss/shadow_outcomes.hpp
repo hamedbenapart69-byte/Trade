@@ -295,6 +295,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             old_candidate["resolution_timeframe"] =
                 old_path == "PLAN_A_LRT" ? "15m" : "1h";
             old_candidate["entry_fill_reference"] = nullptr;
+            old_candidate["entry_fill_time_ms"] = nullptr;
             old_candidate["entry_model"] = "NEXT_BAR_OPEN_PROXY";
             old_candidate["execution_status"] = "NOT_EXECUTED";
             old_candidate["state"] = "REJECTED";
@@ -416,7 +417,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
                 {"source_l1_sha256", dual.at("l1_sha256")}, {"source_universe_status", "VERIFIED"},
                 {"profile", "DAILY_SWING"},
                 {"resolution_timeframe", path == "PLAN_A_LRT" ? "15m" : "1h"},
-                {"entry_fill_reference", nullptr},
+                {"entry_fill_reference", nullptr}, {"entry_fill_time_ms", nullptr},
                 {"entry_model", "NEXT_BAR_OPEN_PROXY"},
                 {"execution_status", "NOT_EXECUTED"},
                 {"state", "PENDING"}, {"resolution", nullptr}, {"closed_at_ms", nullptr},
@@ -511,6 +512,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
                 }
                 entry_fill = open;
                 candidate["entry_fill_reference"] = entry_fill;
+                candidate["entry_fill_time_ms"] = ts;
             }
             const double risk = std::abs(entry_fill - stop);
             if (risk <= 0.0) {
