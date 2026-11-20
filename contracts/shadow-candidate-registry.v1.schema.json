@@ -3,55 +3,208 @@
   "title": "CFSS Shadow Candidate Registry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "candidates"],
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "candidates"
+  ],
   "properties": {
-    "schema_version": {"const": "1.0.0"},
-    "artifact_type": {"const": "cfss_shadow_candidate_registry_v1"},
-    "updated_at_ms": {"type": "integer", "minimum": 1},
-    "summary": {"type": "object"},
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_shadow_candidate_registry_v1"
+    },
+    "updated_at_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "summary": {
+      "type": "object"
+    },
     "candidates": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "signal_id", "profile", "path", "symbol", "direction", "regime",
-          "decision_time_ms", "expiry_time_ms", "entry_reference",
-          "stop_reference", "target_reference", "raw_score", "data_class",
-          "hypothesis", "falsification", "source_run_id", "source_scan_id",
-          "source_l1_sha256", "resolution_timeframe", "entry_fill_reference", "entry_model", "execution_status", "state",
-          "resolution", "closed_at_ms", "gross_r", "skip_reason"
+          "signal_id",
+          "profile",
+          "path",
+          "symbol",
+          "direction",
+          "regime",
+          "decision_time_ms",
+          "expiry_time_ms",
+          "entry_reference",
+          "stop_reference",
+          "target_reference",
+          "raw_score",
+          "data_class",
+          "hypothesis",
+          "falsification",
+          "source_run_id",
+          "source_scan_id",
+          "source_l1_sha256",
+          "resolution_timeframe",
+          "entry_fill_reference",
+          "entry_model",
+          "execution_status",
+          "state",
+          "resolution",
+          "closed_at_ms",
+          "gross_r",
+          "skip_reason"
         ],
         "properties": {
-          "signal_id": {"type": "string", "minLength": 64, "maxLength": 64},
-          "profile": {"const": "DAILY_SWING"},
-          "path": {"enum": ["PLAN_A_LRT", "PLAN_A_NMT"]},
-          "symbol": {"type": "string", "minLength": 1},
-          "direction": {"enum": ["LONG", "SHORT"]},
-          "regime": {"type": "string", "minLength": 1},
-          "decision_time_ms": {"type": "integer", "minimum": 1},
-          "expiry_time_ms": {"type": "integer", "minimum": 1},
-          "entry_reference": {"type": "number", "exclusiveMinimum": 0},
-          "stop_reference": {"type": "number", "exclusiveMinimum": 0},
-          "target_reference": {"type": "number", "exclusiveMinimum": 0},
-          "raw_score": {"type": "number", "minimum": 0, "maximum": 1},
-          "data_class": {"enum": ["REAL", "PROXY", "UNAVAILABLE"]},
-          "score_model_version": {"enum": ["LFS_V2_PROXY", "NSS_V2_PROXY"]},
-          "hypothesis": {"type": "string", "minLength": 1},
-          "falsification": {"type": "string", "minLength": 1},
-          "source_run_id": {"type": "string", "minLength": 1},
-          "source_scan_id": {"type": "string", "minLength": 1},
-          "source_l1_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-          "source_universe_status": {"const": "VERIFIED"},
-          "resolution_timeframe": {"enum": ["15m", "1h"]},
-          "entry_fill_reference": {"type": ["number", "null"], "exclusiveMinimum": 0},
-          "entry_model": {"const": "NEXT_BAR_OPEN_PROXY"},
-          "execution_status": {"const": "NOT_EXECUTED"},
-          "state": {"enum": ["PENDING", "RESOLVED", "REJECTED", "MISSED_ENTRY"]},
-          "resolution": {"type": ["string", "null"]},
-          "closed_at_ms": {"type": ["integer", "null"]},
-          "gross_r": {"type": ["number", "null"]},
-          "skip_reason": {"type": ["string", "null"]}
+          "signal_id": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          },
+          "profile": {
+            "const": "DAILY_SWING"
+          },
+          "path": {
+            "enum": [
+              "PLAN_A_LRT",
+              "PLAN_A_NMT"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "direction": {
+            "enum": [
+              "LONG",
+              "SHORT"
+            ]
+          },
+          "regime": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision_time_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "expiry_time_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "entry_reference": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "stop_reference": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "target_reference": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "raw_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "data_class": {
+            "enum": [
+              "REAL",
+              "PROXY",
+              "UNAVAILABLE"
+            ]
+          },
+          "score_model_version": {
+            "enum": [
+              "LFS_V2_PROXY",
+              "NSS_V2_PROXY"
+            ]
+          },
+          "hypothesis": {
+            "type": "string",
+            "minLength": 1
+          },
+          "falsification": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_run_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_scan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_l1_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "source_universe_status": {
+            "const": "VERIFIED"
+          },
+          "resolution_timeframe": {
+            "enum": [
+              "15m",
+              "1h"
+            ]
+          },
+          "entry_fill_reference": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "entry_model": {
+            "const": "NEXT_BAR_OPEN_PROXY"
+          },
+          "execution_status": {
+            "const": "NOT_EXECUTED"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "RESOLVED",
+              "REJECTED",
+              "MISSED_ENTRY"
+            ]
+          },
+          "resolution": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "closed_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "gross_r": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "skip_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entry_fill_time_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "Timestamp of the first closed resolution bar used as the proxy entry fill."
+          }
         }
       }
     }
