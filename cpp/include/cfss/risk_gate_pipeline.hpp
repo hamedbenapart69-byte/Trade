@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 namespace cfss::risk {
@@ -52,6 +53,9 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
         has_number(risk_snapshot, "daily_loss_pct") &&
         has_number(risk_snapshot, "weekly_loss_pct") &&
         has_number(risk_snapshot, "portfolio_drawdown_pct") &&
+        risk_snapshot.at("daily_loss_pct").get<double>() >= 0.0 && risk_snapshot.at("daily_loss_pct").get<double>() <= 100.0 &&
+        risk_snapshot.at("weekly_loss_pct").get<double>() >= 0.0 && risk_snapshot.at("weekly_loss_pct").get<double>() <= 100.0 &&
+        risk_snapshot.at("portfolio_drawdown_pct").get<double>() >= 0.0 && risk_snapshot.at("portfolio_drawdown_pct").get<double>() <= 100.0 &&
         risk_snapshot.contains("correlated_candidate_exposures") &&
         risk_snapshot.at("correlated_candidate_exposures").is_number_integer() &&
         risk_snapshot.at("correlated_candidate_exposures").get<int>() >= 0 &&
