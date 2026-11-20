@@ -183,10 +183,9 @@ jobs:
             stage6-evidence/shadow-risk-basis.daily_swing.v1.json \
             stage6-evidence/daily_outcome_ledger.v1.json \
             stage6-evidence/shadow_candidate_registry.v1.json \
-            "$(jq -r '.source_run_id' stage6-evidence/meta_cognition_stage6_v1.json)" \
-            "$(jq -r '.source_scan_id' stage6-evidence/meta_cognition_stage6_v1.json)" \
-            "$(jq -r '.decision_time_ms' stage6-evidence/meta_cognition_stage6_v1.json)" \
-            0 stage6-evidence/shadow-risk-snapshot.v1.json
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/shadow-risk-snapshot.v1.schema.json \
             -d stage6-evidence/shadow-risk-snapshot.v1.json --all-errors
