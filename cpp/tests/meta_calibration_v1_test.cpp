@@ -187,7 +187,7 @@ int main() {
         {"score", 0.80}, {"data_class", "PROXY"},
         {"score_model_version", "LFS_V2_PROXY"}
     };
-    const auto refreshed_without_candidate = cfss::meta::evaluate_candidate(
+    const auto refreshed_without_candidate = cfss::meta::evaluate_calibration_continuously(
         no_candidate, "DOWNTREND", outcomes, true, 251LL * 86'400'000LL);
     require(refreshed_without_candidate.calibration.sample_count == 250U &&
             refreshed_without_candidate.calibration.status == "CALIBRATED" &&
