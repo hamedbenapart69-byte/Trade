@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cfss.invalid/contracts/stage7-risk-gate.v1.schema.json",
+  "title": "CFSS Stage 7 Risk Gate Pipeline Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "source_run_id",
+    "source_scan_id",
+    "decision_time_ms",
+    "l1_sha256",
+    "liquidity_report_sha256",
+    "meta_cognition_sha256",
+    "snapshot_scope",
+    "user_account_data_used",
+    "risk_snapshot_status",
+    "summary",
+    "actionable",
+    "trade_execution_allowed",
+    "instruments",
+    "correlation_data_status",
+    "gate_status",
+    "error_code"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_stage7_risk_gate_v1"
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_scan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "l1_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "liquidity_report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "meta_cognition_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "snapshot_scope": {
+      "const": "CFSS_SHADOW_PORTFOLIO_ONLY"
+    },
+    "user_account_data_used": {
+      "const": false
+    },
+    "risk_snapshot_status": {
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "blocked_count",
+        "manual_review_count",
+        "actionable_count"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "manual_review_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actionable_count": {
+          "const": 0
+        }
+      }
+    },
+    "actionable": {
+      "const": false
+    },
+    "trade_execution_allowed": {
+      "const": false
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "symbol",
+          "golden_rule_veto",
+          "engines"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "golden_rule_veto": {
+            "type": "boolean"
+          },
+          "engines": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lrt",
+              "nmt"
+            ],
+            "properties": {
+              "lrt": {
+                "$ref": "#/$defs/engine"
+              },
+              "nmt": {
+                "$ref": "#/$defs/engine"
+              }
+            }
+          }
+        }
+      }
+    },
+    "correlation_data_status": {
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "gate_status": {
+      "enum": [
+        "GENERATED",
+        "DEGRADED"
+      ]
+    },
+    "error_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "candidate_status",
+        "decision",
+        "reason",
+        "manual_review_required",
+        "trade_execution_allowed",
+        "inputs"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "candidate_status": {
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "BLOCKED",
+            "RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manual_review_required": {
+          "const": true
+        },
+        "trade_execution_allowed": {
+          "const": false
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "candidate_present",
+            "golden_rule_veto",
+            "data_class",
+            "liquidity_ok",
+            "calibration_valid",
+            "net_ev_r",
+            "costs_complete",
+            "shadow_risk_snapshot_status",
+            "correlation_data_status",
+            "correlated_candidate_exposures",
+            "consensus_status",
+            "consensus_reason"
+          ],
+          "properties": {
+            "candidate_present": {
+              "type": "boolean"
+            },
+            "golden_rule_veto": {
+              "type": "boolean"
+            },
+            "data_class": {
+              "type": "string"
+            },
+            "liquidity_ok": {
+              "type": "boolean"
+            },
+            "calibration_valid": {
+              "type": "boolean"
+            },
+            "net_ev_r": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "costs_complete": {
+              "type": "boolean"
+            },
+            "shadow_risk_snapshot_status": {
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "correlation_data_status": {
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "correlated_candidate_exposures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "consensus_status": {
+              "enum": [
+                "CONFIRMED",
+                "BLOCKED"
+              ]
+            },
+            "consensus_reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,10 +2,10 @@ name: C++ Stage 7 Risk Gate Contract
 on:
   pull_request:
     branches: [main]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
   push:
-    branches: [integration/stage7-risk-gate-v1]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
+    branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,18 +23,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
           npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+      - name: Validate Stage 6 workflow YAML
+        run: |
+          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/cpp-stage6-meta-cognition-v1.yml"); puts "STAGE6_WORKFLOW_YAML_PASS"'
       - name: Full C++ build and CTest
         run: |
           cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
       - name: Compile schema
-        run: npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
+        run: |
+          npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
+          npx ajv compile -s contracts/stage7-risk-gate-pipeline.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
           grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'G7_WEEKLY_KILL_SWITCH_10_PERCENT' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'G5_CORRELATED_EXPOSURE_CAP' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CORRELATION_DATA_UNAVAILABLE' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CONSENSUS_NOT_CONFIRMED' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CONSENSUS_PHASE_DIRECTION_CONFLICT' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'CONSENSUS_DERIVATIVES_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'correlated_candidate_exposures' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'trade_execution_allowed{false}' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'RISK_SNAPSHOT_INVALID_OR_MISSING' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CFSS_SHADOW_PORTFOLIO_ONLY' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'user_account_data_used' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'build_fallback_report' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'STAGE7_INPUT_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'trade_execution_allowed' cpp/include/cfss/risk_gate_pipeline.hpp
           echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"

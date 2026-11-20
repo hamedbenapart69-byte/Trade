@@ -1,0 +1,199 @@
+#include "cfss/risk_gate_pipeline.hpp"
+#include <iostream>
+#include <string>
+
+using json = nlohmann::json;
+
+namespace {
+int checks = 0;
+int failures = 0;
+void check(bool ok, const std::string& name) {
+    ++checks;
+    if (!ok) { ++failures; std::cerr << "FAIL: " << name << '\n'; }
+}
+json base_l1() {
+    return {{"schema_version","1.0.0"},{"run_id","run-1"},{"scan_id","scan-1"},
+        {"instruments",json::array({{{"unified_symbol","BTC/USDT:USDT"},
+        {"liquidity_status","ELIGIBLE"},{"turnover_24h_usd",20000000.0},
+        {"liquidity_threshold_usd",10000000.0},
+        {"availability",{{"ohlcv","AVAILABLE"},{"funding","AVAILABLE"},{"open_interest","AVAILABLE"}}},
+        {"coverage",{{"funding_coverage_days",30.0},{"open_interest_coverage_days",30.0}}},
+        {"funding",json::array({{{"timestamp_ms",900}}})},
+        {"open_interest",json::array({{{"timestamp_ms",900}}})}}})}};
+}
+json base_liquidity() {
+    return {{"artifact_type","cfss_liquidity_phase_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",1000},
+        {"instruments",json::array({{{"symbol","BTC/USDT:USDT"},
+        {"status","AVAILABLE"},{"phase","RANGE"},
+        {"nearest_support",{{"side","DEMAND"},{"input_quality","REAL"},{"confirmed_at_ms",900}}},
+        {"nearest_resistance",{{"side","SUPPLY"},{"input_quality","REAL"},{"confirmed_at_ms",900}}}}})}};
+}
+json base_meta() {
+    const std::string l1_raw = "l1-fixture";
+    const std::string liquidity_raw = "liquidity-fixture";
+    json engine = {{"path","PLAN_A_LRT"},{"candidate_status","NO_QUALIFIED_SETUP"},
+        {"actionable",false},{"data_class","PROXY"},{"confidence_status","NOT_CALIBRATED"},
+        {"calibration",{{"status","NOT_CALIBRATED"}}},{"ev_status","NOT_CALCULATED"},
+        {"ev_net",nullptr}};
+    json nmt = engine; nmt["path"]="PLAN_A_NMT";
+    return {{"artifact_type","cfss_meta_cognition_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",1000},
+        {"l1_sha256",cfss::sha256_hex(l1_raw)},
+        {"liquidity_report_sha256",cfss::sha256_hex(liquidity_raw)},
+        {"instruments",json::array({{{"symbol","BTC/USDT:USDT"},
+        {"golden_rule",{{"veto",false}}},
+        {"lrt",engine},{"nmt",nmt}}})}};
+}
+json available_snapshot() {
+    return {{"artifact_type","cfss_shadow_risk_snapshot_v1"},
+        {"snapshot_scope","CFSS_SHADOW_PORTFOLIO_ONLY"},{"user_account_data_used",false},
+        {"status","AVAILABLE"},{"source_run_id","run-1"},{"source_scan_id","scan-1"},
+        {"decision_time_ms",1000},{"daily_loss_pct",1.0},{"weekly_loss_pct",2.0},
+        {"portfolio_drawdown_pct",3.0},{"correlated_candidate_exposures",0}};
+}
+}
+
+int main() {
+    const std::string l1_raw="l1-fixture", liquidity_raw="liquidity-fixture";
+    auto l1=base_l1(); auto liq=base_liquidity(); auto meta=base_meta();
+    auto report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object());
+    check(report["summary"]["candidate_count"]==0,"no candidate is reported");
+    check(report["instruments"][0]["engines"]["lrt"]["reason"]=="NO_QUALIFIED_CANDIDATE",
+          "no candidate receives explicit no-candidate reason");
+    check(report["trade_execution_allowed"]==false && report["actionable"]==false,
+          "global execution and actionability remain disabled");
+
+    meta["instruments"][0]["lrt"]["candidate_status"]="CANDIDATE";
+    meta["instruments"][0]["lrt"]["direction"]="LONG";
+    meta["instruments"][0]["lrt"]["data_class"]="PROXY";
+    report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object());
+    check(report["instruments"][0]["engines"]["lrt"]["reason"]=="REAL_DATA_REQUIRED",
+          "proxy candidate is blocked before downstream gates");
+    check(report["summary"]["blocked_count"]==1,"all engine paths are counted");
+
+    meta["instruments"][0]["lrt"]["data_class"]="REAL";
+    meta["instruments"][0]["lrt"]["confidence_status"]="CALIBRATED";
+    meta["instruments"][0]["lrt"]["calibration"]={{"status","CALIBRATED"},
+        {"avg_fee_r",0.0004},{"avg_slippage_r",0.001},{"avg_funding_r",0.0}};
+    meta["instruments"][0]["lrt"]["ev_status"]="CALCULATED";
+    meta["instruments"][0]["lrt"]["ev_net"]=0.12;
+    report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object());
+    check(report["instruments"][0]["engines"]["lrt"]["reason"]=="RISK_SNAPSHOT_INVALID_OR_MISSING",
+          "missing shadow risk snapshot blocks an otherwise eligible candidate");
+
+    auto snapshot=available_snapshot();
+    report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,snapshot);
+    check(report["instruments"][0]["engines"]["lrt"]["decision"]=="RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY",
+          "complete internal shadow snapshot allows manual review only");
+    check(report["summary"]["actionable_count"]==0 && report["trade_execution_allowed"]==false,
+          "risk pass never authorizes action or execution");
+
+    snapshot["user_account_data_used"]=true;
+    report=cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,snapshot);
+    check(report["instruments"][0]["engines"]["lrt"]["reason"]=="RISK_SNAPSHOT_INVALID_OR_MISSING",
+          "user account data cannot be used as a risk snapshot");
+
+    auto lrt_liq=base_liquidity();
+    lrt_liq["instruments"][0]["nearest_support"]=nullptr;
+    auto lrt_consensus=cfss::risk::build_report(base_l1(),lrt_liq,meta,l1_raw,liquidity_raw,available_snapshot());
+    check(lrt_consensus["instruments"][0]["engines"]["lrt"]["reason"]=="CONSENSUS_LIQUIDITY_ZONE_NOT_ALIGNED",
+          "LRT consensus vetoes a missing direction-aligned demand zone");
+
+    // NMT requires a direction-aligned market phase plus 30 days of funding and OI coverage.
+    auto nmt_meta=base_meta();
+    nmt_meta["instruments"][0]["nmt"]["candidate_status"]="CANDIDATE";
+    nmt_meta["instruments"][0]["nmt"]["direction"]="SHORT";
+    nmt_meta["instruments"][0]["nmt"]["data_class"]="REAL";
+    nmt_meta["instruments"][0]["nmt"]["confidence_status"]="CALIBRATED";
+    nmt_meta["instruments"][0]["nmt"]["calibration"]={{"status","CALIBRATED"},
+        {"avg_fee_r",0.0004},{"avg_slippage_r",0.001},{"avg_funding_r",0.0}};
+    nmt_meta["instruments"][0]["nmt"]["ev_status"]="CALCULATED";
+    nmt_meta["instruments"][0]["nmt"]["ev_net"]=0.12;
+    auto nmt_liq=base_liquidity();
+    nmt_liq["instruments"][0]["phase"]="DOWNTREND";
+    auto nmt_report=cfss::risk::build_report(base_l1(),nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["inputs"]["consensus_status"]=="CONFIRMED",
+          "NMT consensus confirms aligned trend and 30-day derivatives evidence");
+    nmt_liq["instruments"][0]["phase"]="UPTREND";
+    nmt_report=cfss::risk::build_report(base_l1(),nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["reason"]=="CONSENSUS_PHASE_DIRECTION_CONFLICT",
+          "NMT consensus vetoes a direction-conflicting market phase");
+    nmt_liq["instruments"][0]["phase"]="DOWNTREND";
+    auto nmt_l1=base_l1();
+    nmt_l1["instruments"][0]["availability"]["funding"]="PARTIAL";
+    nmt_report=cfss::risk::build_report(nmt_l1,nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["reason"]=="CONSENSUS_DERIVATIVES_UNAVAILABLE",
+          "NMT consensus vetoes incomplete funding evidence");
+
+    meta["l1_sha256"]="0000000000000000000000000000000000000000000000000000000000000000";
+    bool provenance_rejected=false;
+    try { (void)cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object()); }
+    catch (const std::invalid_argument&) { provenance_rejected=true; }
+    check(provenance_rejected,"provenance mismatch is rejected");
+
+
+    const auto degraded=cfss::risk::build_fallback_report(base_meta(),"STAGE7_PROVENANCE_MISMATCH");
+    check(degraded["gate_status"]=="DEGRADED","risk-gate failure produces an explicit degraded artifact");
+    check(degraded["instruments"][0]["engines"]["lrt"]["reason"]=="STAGE7_INPUT_UNAVAILABLE",
+          "degraded artifact blocks every engine with a stable reason code");
+    check(degraded["trade_execution_allowed"]==false && degraded["actionable"]==false,
+          "degraded artifact cannot authorize action or execution");
+
+    // Four same-direction candidates with 60 aligned hourly returns and rho=1
+    // must each see three correlated peers and fail the G5 cap.
+    constexpr std::int64_t hour_ms = 3'600'000LL;
+    constexpr std::int64_t decision_ms = 1'800'000'000'000LL;
+    json l1_corr={{"schema_version","1.0.0"},{"run_id","run-1"},{"scan_id","scan-1"},{"instruments",json::array()}};
+    json liq_corr={{"artifact_type","cfss_liquidity_phase_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",decision_ms},{"instruments",json::array()}};
+    json meta_corr={{"artifact_type","cfss_meta_cognition_v1"},{"source_run_id","run-1"},
+        {"source_scan_id","scan-1"},{"decision_time_ms",decision_ms},
+        {"l1_sha256",cfss::sha256_hex(l1_raw)},
+        {"liquidity_report_sha256",cfss::sha256_hex(liquidity_raw)},
+        {"instruments",json::array()}};
+    const auto good_engine=[](const std::string& path) {
+        return json{{"path",path},{"candidate_status",path=="PLAN_A_LRT"?"CANDIDATE":"NO_QUALIFIED_SETUP"},
+            {"direction",path=="PLAN_A_LRT"?"LONG":"NONE"},{"actionable",false},
+            {"data_class","REAL"},{"confidence_status",path=="PLAN_A_LRT"?"CALIBRATED":"NOT_CALIBRATED"},
+            {"calibration",{{"status",path=="PLAN_A_LRT"?"CALIBRATED":"NOT_CALIBRATED"},
+                {"avg_fee_r",0.0004},{"avg_slippage_r",0.001},{"avg_funding_r",0.0}}},
+            {"ev_status",path=="PLAN_A_LRT"?"CALCULATED":"NOT_CALCULATED"},
+            {"ev_net",path=="PLAN_A_LRT"?json(0.12):json(nullptr)}};
+    };
+    for (int symbol_index=0; symbol_index<4; ++symbol_index) {
+        const std::string symbol="COIN"+std::to_string(symbol_index)+"/USDT:USDT";
+        json candles=json::array();
+        for (int k=0; k<=60; ++k) {
+            const auto ts=decision_ms-61LL*hour_ms+static_cast<std::int64_t>(k)*hour_ms;
+            const double close=100.0+static_cast<double>(k)*0.25+
+                0.03*static_cast<double>((k*k)%7);
+            candles.push_back({{"timestamp_ms",ts},{"closed",true},{"close",close}});
+        }
+        l1_corr["instruments"].push_back({{"unified_symbol",symbol},
+            {"liquidity_status","ELIGIBLE"},{"turnover_24h_usd",20000000.0},
+            {"liquidity_threshold_usd",10000000.0},
+            {"availability",{{"ohlcv","AVAILABLE"},{"funding","AVAILABLE"},{"open_interest","AVAILABLE"}}},
+            {"candles",candles}});
+        liq_corr["instruments"].push_back({{"symbol",symbol},{"status","AVAILABLE"},{"phase","RANGE"},
+            {"nearest_support",{{"side","DEMAND"},{"input_quality","REAL"},{"confirmed_at_ms",decision_ms-1000}}},
+            {"nearest_resistance",{{"side","SUPPLY"},{"input_quality","REAL"},{"confirmed_at_ms",decision_ms-1000}}}});
+        meta_corr["instruments"].push_back({{"symbol",symbol},{"golden_rule",{{"veto",false}}},
+            {"lrt",good_engine("PLAN_A_LRT")},{"nmt",good_engine("PLAN_A_NMT")}});
+    }
+    // Recompute matching provenance against the fixture bytes.
+    meta_corr["l1_sha256"]=cfss::sha256_hex(l1_raw);
+    meta_corr["liquidity_report_sha256"]=cfss::sha256_hex(liquidity_raw);
+    auto corr_snapshot=available_snapshot();
+    corr_snapshot["decision_time_ms"]=decision_ms;
+    auto corr_report=cfss::risk::build_report(l1_corr,liq_corr,meta_corr,l1_raw,liquidity_raw,corr_snapshot);
+    check(corr_report["correlation_data_status"]=="AVAILABLE","aligned correlation data is available");
+    check(corr_report["instruments"][0]["engines"]["lrt"]["inputs"]["correlated_candidate_exposures"]==3,
+          "each of four correlated candidates has three same-direction peers");
+    check(corr_report["instruments"][0]["engines"]["lrt"]["reason"]=="G5_CORRELATED_EXPOSURE_CAP",
+          "four correlated same-direction candidates fail the G5 cap");
+
+    std::cout << (failures==0 ? "STAGE7_PIPELINE_TESTS_PASS: " : "STAGE7_PIPELINE_TESTS_FAIL: ")
+              << failures << "/" << checks << " failed\n";
+    return failures==0 ? 0 : 1;
+}

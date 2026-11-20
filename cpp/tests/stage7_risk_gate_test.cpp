@@ -28,11 +28,14 @@ Input ready() {
     x.calibration_valid = true;
     x.net_ev_r = 0.15;
     x.costs_complete = true;
+    x.consensus_valid = true;
+    x.consensus_reason = "CONSENSUS_CONFIRMED";
+    x.correlation_data_valid = true;
     x.risk_snapshot_valid = true;
     x.daily_loss_pct = 1.0;
     x.weekly_loss_pct = 2.0;
     x.portfolio_drawdown_pct = 10.0;
-    x.correlated_open_exposures = 1;
+    x.correlated_candidate_exposures = 1;
     return x;
 }
 } // namespace
@@ -129,7 +132,7 @@ int main() {
             "risk percentage over 100 blocks");
 
     x = ready();
-    x.correlated_open_exposures = -1;
+    x.correlated_candidate_exposures = -1;
     t.check(evaluate(x).reason == "RISK_SNAPSHOT_INVALID_OR_MISSING",
             "negative correlated exposure count blocks");
 
@@ -164,12 +167,12 @@ int main() {
             "portfolio drawdown at 20 percent is boundary-eligible");
 
     x = ready();
-    x.correlated_open_exposures = 3;
+    x.correlated_candidate_exposures = 3;
     t.check(evaluate(x).reason == "G5_CORRELATED_EXPOSURE_CAP",
             "correlated exposure cap blocks");
 
     x = ready();
-    x.correlated_open_exposures = 2;
+    x.correlated_candidate_exposures = 2;
     t.check(evaluate(x).status == "RISK_CHECKS_PASSED_MANUAL_REVIEW_ONLY",
             "two correlated exposures remain boundary-eligible");
 
