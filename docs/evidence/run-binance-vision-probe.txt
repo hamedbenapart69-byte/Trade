@@ -1,0 +1,1 @@
+Probe public Binance Vision historical USD-M futures metrics, funding-rate and kline archives from the GitHub Actions runner. Verify published SHA-256 checksums. No API keys, exchange accounts or Actions artifact uploads.
