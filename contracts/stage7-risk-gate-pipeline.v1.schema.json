@@ -19,7 +19,8 @@
     "summary",
     "actionable",
     "trade_execution_allowed",
-    "instruments"
+    "instruments",
+    "correlation_data_status"
   ],
   "properties": {
     "schema_version": {
@@ -134,6 +135,12 @@
           }
         }
       }
+    },
+    "correlation_data_status": {
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
     }
   },
   "$defs": {
@@ -183,7 +190,9 @@
             "calibration_valid",
             "net_ev_r",
             "costs_complete",
-            "shadow_risk_snapshot_status"
+            "shadow_risk_snapshot_status",
+            "correlation_data_status",
+            "correlated_candidate_exposures"
           ],
           "properties": {
             "candidate_present": {
@@ -215,6 +224,16 @@
                 "AVAILABLE",
                 "UNAVAILABLE"
               ]
+            },
+            "correlation_data_status": {
+              "enum": [
+                "AVAILABLE",
+                "UNAVAILABLE"
+              ]
+            },
+            "correlated_candidate_exposures": {
+              "type": "integer",
+              "minimum": 0
             }
           }
         }
