@@ -151,7 +151,7 @@
           "const": 250
         },
         "minimum_oos_effective_sample_size_floor_provisional": {
-          "const": 200
+          "const": 0
         },
         "cluster_dimensions": {
           "const": [
