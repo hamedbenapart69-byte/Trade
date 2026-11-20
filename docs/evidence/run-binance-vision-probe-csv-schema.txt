@@ -1,0 +1,1 @@
+Print exact first three CSV rows for historical metrics, funding, futures 1h and spot 1h archives to ground the C++ parser.
