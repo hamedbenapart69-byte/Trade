@@ -41,6 +41,9 @@ jobs:
           grep -Fq 'G7_WEEKLY_KILL_SWITCH_10_PERCENT' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'G5_CORRELATED_EXPOSURE_CAP' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'CORRELATION_DATA_UNAVAILABLE' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CONSENSUS_NOT_CONFIRMED' cpp/include/cfss/risk_gate.hpp
+          grep -Fq 'CONSENSUS_PHASE_DIRECTION_CONFLICT' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'CONSENSUS_DERIVATIVES_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'correlated_candidate_exposures' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'trade_execution_allowed{false}' cpp/include/cfss/risk_gate.hpp
           grep -Fq 'RISK_SNAPSHOT_INVALID_OR_MISSING' cpp/include/cfss/risk_gate.hpp
