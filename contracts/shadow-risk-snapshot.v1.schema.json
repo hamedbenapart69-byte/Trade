@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Shadow Risk Snapshot",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "artifact_type",
+    "snapshot_scope",
+    "user_account_data_used",
+    "status",
+    "data_class",
+    "source_run_id",
+    "source_scan_id",
+    "decision_time_ms",
+    "risk_basis_sha256",
+    "ledger_sha256",
+    "registry_sha256"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "cfss_shadow_risk_snapshot_v1"
+    },
+    "snapshot_scope": {
+      "const": "CFSS_SHADOW_PORTFOLIO_ONLY"
+    },
+    "user_account_data_used": {
+      "const": false
+    },
+    "status": {
+      "enum": [
+        "AVAILABLE",
+        "UNAVAILABLE"
+      ]
+    },
+    "data_class": {
+      "const": "PROXY"
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_scan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_time_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "risk_basis_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ledger_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "registry_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "basis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "basis_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "initial_nav_units": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "current_nav_units": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "daily_loss_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "weekly_loss_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "portfolio_drawdown_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "correlated_candidate_exposures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "resolved_outcome_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cost_status": {
+      "const": "PROXY"
+    },
+    "open_position_status": {
+      "const": "NO_FILLED_OPEN_POSITIONS"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "AVAILABLE"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "basis_id",
+          "basis_version",
+          "initial_nav_units",
+          "current_nav_units",
+          "daily_loss_pct",
+          "weekly_loss_pct",
+          "portfolio_drawdown_pct",
+          "correlated_candidate_exposures",
+          "resolved_outcome_count",
+          "cost_status",
+          "open_position_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "UNAVAILABLE"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  ]
+}
