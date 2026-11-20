@@ -15,13 +15,19 @@ json base_l1() {
     return {{"schema_version","1.0.0"},{"run_id","run-1"},{"scan_id","scan-1"},
         {"instruments",json::array({{{"unified_symbol","BTC/USDT:USDT"},
         {"liquidity_status","ELIGIBLE"},{"turnover_24h_usd",20000000.0},
-        {"liquidity_threshold_usd",10000000.0}}})}};
+        {"liquidity_threshold_usd",10000000.0},
+        {"availability",{{"ohlcv","AVAILABLE"},{"funding","AVAILABLE"},{"open_interest","AVAILABLE"}}},
+        {"coverage",{{"funding_coverage_days",30.0},{"open_interest_coverage_days",30.0}}},
+        {"funding",json::array({{{"timestamp_ms",900}}})},
+        {"open_interest",json::array({{{"timestamp_ms",900}}})}}})}};
 }
 json base_liquidity() {
     return {{"artifact_type","cfss_liquidity_phase_v1"},{"source_run_id","run-1"},
         {"source_scan_id","scan-1"},{"decision_time_ms",1000},
         {"instruments",json::array({{{"symbol","BTC/USDT:USDT"},
-        {"status","AVAILABLE"},{"phase","RANGE"}}})}};
+        {"status","AVAILABLE"},{"phase","RANGE"},
+        {"nearest_support",{{"side","DEMAND"},{"input_quality","REAL"},{"confirmed_at_ms",900}}},
+        {"nearest_resistance",{{"side","SUPPLY"},{"input_quality","REAL"},{"confirmed_at_ms",900}}}}})}};
 }
 json base_meta() {
     const std::string l1_raw = "l1-fixture";
@@ -88,6 +94,32 @@ int main() {
     check(report["instruments"][0]["engines"]["lrt"]["reason"]=="RISK_SNAPSHOT_INVALID_OR_MISSING",
           "user account data cannot be used as a risk snapshot");
 
+    // NMT requires a direction-aligned market phase plus 30 days of funding and OI coverage.
+    auto nmt_meta=base_meta();
+    nmt_meta["instruments"][0]["nmt"]["candidate_status"]="CANDIDATE";
+    nmt_meta["instruments"][0]["nmt"]["direction"]="SHORT";
+    nmt_meta["instruments"][0]["nmt"]["data_class"]="REAL";
+    nmt_meta["instruments"][0]["nmt"]["confidence_status"]="CALIBRATED";
+    nmt_meta["instruments"][0]["nmt"]["calibration"]={{"status","CALIBRATED"},
+        {"avg_fee_r",0.0004},{"avg_slippage_r",0.001},{"avg_funding_r",0.0}};
+    nmt_meta["instruments"][0]["nmt"]["ev_status"]="CALCULATED";
+    nmt_meta["instruments"][0]["nmt"]["ev_net"]=0.12;
+    auto nmt_liq=base_liquidity();
+    nmt_liq["instruments"][0]["phase"]="DOWNTREND";
+    auto nmt_report=cfss::risk::build_report(base_l1(),nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["inputs"]["consensus_status"]=="CONFIRMED",
+          "NMT consensus confirms aligned trend and 30-day derivatives evidence");
+    nmt_liq["instruments"][0]["phase"]="UPTREND";
+    nmt_report=cfss::risk::build_report(base_l1(),nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["reason"]=="CONSENSUS_PHASE_DIRECTION_CONFLICT",
+          "NMT consensus vetoes a direction-conflicting market phase");
+    nmt_liq["instruments"][0]["phase"]="DOWNTREND";
+    auto nmt_l1=base_l1();
+    nmt_l1["instruments"][0]["availability"]["funding"]="PARTIAL";
+    nmt_report=cfss::risk::build_report(nmt_l1,nmt_liq,nmt_meta,l1_raw,liquidity_raw,available_snapshot());
+    check(nmt_report["instruments"][0]["engines"]["nmt"]["reason"]=="CONSENSUS_DERIVATIVES_UNAVAILABLE",
+          "NMT consensus vetoes incomplete funding evidence");
+
     meta["l1_sha256"]="0000000000000000000000000000000000000000000000000000000000000000";
     bool provenance_rejected=false;
     try { (void)cfss::risk::build_report(l1,liq,meta,l1_raw,liquidity_raw,json::object()); }
@@ -134,8 +166,12 @@ int main() {
         }
         l1_corr["instruments"].push_back({{"unified_symbol",symbol},
             {"liquidity_status","ELIGIBLE"},{"turnover_24h_usd",20000000.0},
-            {"liquidity_threshold_usd",10000000.0},{"candles",candles}});
-        liq_corr["instruments"].push_back({{"symbol",symbol},{"status","AVAILABLE"},{"phase","RANGE"}});
+            {"liquidity_threshold_usd",10000000.0},
+            {"availability",{{"ohlcv","AVAILABLE"},{"funding","AVAILABLE"},{"open_interest","AVAILABLE"}}},
+            {"candles",candles}});
+        liq_corr["instruments"].push_back({{"symbol",symbol},{"status","AVAILABLE"},{"phase","RANGE"},
+            {"nearest_support",{{"side","DEMAND"},{"input_quality","REAL"},{"confirmed_at_ms",decision_ms-1000}}},
+            {"nearest_resistance",{{"side","SUPPLY"},{"input_quality","REAL"},{"confirmed_at_ms",decision_ms-1000}}}});
         meta_corr["instruments"].push_back({{"symbol",symbol},{"golden_rule",{{"veto",false}}},
             {"lrt",good_engine("PLAN_A_LRT")},{"nmt",good_engine("PLAN_A_NMT")}});
     }
