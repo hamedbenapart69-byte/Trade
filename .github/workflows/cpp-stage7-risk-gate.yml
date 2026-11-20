@@ -2,7 +2,7 @@ name: C++ Stage 7 Risk Gate Contract
 on:
   pull_request:
     branches: [main]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", "contracts/shadow-risk-basis.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
   push:
     branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
     paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
@@ -36,6 +36,7 @@ jobs:
           npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/stage7-risk-gate-pipeline.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/outcome-ledger.v1.schema.json --spec=draft2020 -c ajv-formats
+          npx ajv compile -s contracts/shadow-risk-basis.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
           grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
