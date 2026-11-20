@@ -37,15 +37,20 @@ int main(int argc, char** argv) {
         const std::filesystem::path liquidity_path{argv[2]};
         const std::filesystem::path meta_path{argv[3]};
         const std::filesystem::path output_path{argv[4]};
-        const json snapshot = argc == 6 ? read_json(argv[5]) : json::object();
-        const auto l1 = read_json(l1_path);
-        const auto liquidity = read_json(liquidity_path);
         const auto meta = read_json(meta_path);
-        const auto report = cfss::risk::build_report(
-            l1, liquidity, meta, read_raw(l1_path), read_raw(liquidity_path), snapshot);
+        json report;
+        try {
+            const json snapshot = argc == 6 ? read_json(argv[5]) : json::object();
+            const auto l1 = read_json(l1_path);
+            const auto liquidity = read_json(liquidity_path);
+            report = cfss::risk::build_report(
+                l1, liquidity, meta, read_raw(l1_path), read_raw(liquidity_path), snapshot);
+        } catch (const std::exception& error) {
+            report = cfss::risk::build_fallback_report(meta, error.what());
+        }
         write_json(output_path, report);
         const auto& summary = report.at("summary");
-        std::cout << "STAGE7_RISK_GATE_STATUS=GENERATED"
+        std::cout << "STAGE7_RISK_GATE_STATUS=" << report.at("gate_status")
                   << " CANDIDATES=" << summary.at("candidate_count")
                   << " BLOCKED=" << summary.at("blocked_count")
                   << " MANUAL_REVIEW=" << summary.at("manual_review_count")
