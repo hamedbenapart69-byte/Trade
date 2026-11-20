@@ -133,7 +133,7 @@
           "const": "PROVISIONAL_INTERNAL_GUARD_WITH_VALIDATION_BASED_POWER_ESTIMATE"
         },
         "power_analysis_method": {
-          "const": "THREE_WAY_CLUSTER_SE_VALIDATION_PROXY"
+          "const": "MAX_OF_ONE_WAY_CLUSTER_SE_VALIDATION_PROXY"
         },
         "power_analysis_status": {
           "const": "PER_COHORT_AT_RUNTIME"
