@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
                   << " REGISTERED=" << summary.at("registered_this_run")
                   << " RESOLVED=" << summary.at("resolved_this_run")
                   << " PENDING=" << summary.at("pending_count")
-                  << " TOTAL_OUTCOMES=" << summary.at("total_outcomes")
+                  << " TOTAL_OUTCOMES=" << ledger_out.at("outcomes").size()
                   << " COST_PROXY=" << proxy_costs
                   << " COST_UNAVAILABLE=" << unavailable_costs
                   << " COST_BACKFILLED=" << ledger_out.value("cost_backfilled_this_run", 0U)
