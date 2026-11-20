@@ -299,7 +299,7 @@ int main(int argc, char** argv) {
                 {"power_alpha", 0.05},
                 {"target_power", 0.80},
                 {"minimum_total_provisional", 250},
-                {"minimum_oos_effective_sample_size_floor_provisional", 200.0},
+                {"minimum_oos_effective_sample_size_floor_provisional", 0.0},
                 {"cluster_dimensions", json::array({"source_scan_id", "symbol", "utc_day"})},
                 {"confidence_interval_method", "MAX_OF_ONE_WAY_CLUSTER_SE"},
                 {"win_rate_interval_method", "WILSON_95_PLUS_MAX_OF_ONE_WAY_CLUSTER_SE"},
