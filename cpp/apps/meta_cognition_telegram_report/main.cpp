@@ -39,10 +39,24 @@ json* find_receipt(json& outbox, const std::string& id) {
         if (item.value("report_id", std::string{}) == id) return &item;
     return nullptr;
 }
-std::string report_id(const json& report) {
-    return cfss::sha256_hex(report.dump());
+json load_risk_gate(const json& report) {
+    const char* configured = std::getenv("CFSS_RISK_GATE_ARTIFACT");
+    if (!configured || configured[0] == '\\0')
+        throw std::runtime_error("STAGE7_RISK_GATE_ARTIFACT_REQUIRED");
+    const auto gate = read_json(configured);
+    if (gate.value("artifact_type", std::string{}) != "cfss_stage7_risk_gate_v1" ||
+        gate.value("source_run_id", std::string{}) != report.value("source_run_id", std::string{}) ||
+        gate.value("source_scan_id", std::string{}) != report.value("source_scan_id", std::string{}) ||
+        gate.value("decision_time_ms", std::int64_t{0}) != report.value("decision_time_ms", std::int64_t{0}) ||
+        gate.value("actionable", true) || gate.value("trade_execution_allowed", true) ||
+        gate.value("user_account_data_used", true))
+        throw std::runtime_error("STAGE7_RISK_GATE_PROVENANCE_OR_SAFETY_INVALID");
+    return gate;
 }
-std::string report_text(const json& report) {
+std::string report_id(const json& report, const json& gate) {
+    return cfss::sha256_hex(report.dump() + "\\n" + gate.dump());
+}
+std::string report_text(const json& report, const json& gate) {
     std::string out = "گزارش مرحله ۶ | فراشناخت، کالیبراسیون و EV\n";
     out += "این گزارش تصمیم‌یار پژوهشی است؛ هیچ سفارش یا اجرای معاملاتی ندارد.\n";
     out += "مبنای کالیبراسیون: HYPOTHESIS_PROXY؛ ورود فرضی در بازشدن کندل بعدی؛ اجرا NOT_EXECUTED.\n";
@@ -71,9 +85,9 @@ std::string report_text(const json& report) {
     out += "\nمرجع طبقه‌بندی نمادهای رمزارزی: CoinPaprika.";
     return out;
 }
-int prepare(const json& report, const std::filesystem::path& path) {
+int prepare(const json& report, const json& gate, const std::filesystem::path& path) {
     auto outbox = load_outbox(path);
-    const auto id = report_id(report);
+    const auto id = report_id(report, gate);
     if (auto* receipt = find_receipt(outbox, id)) {
         const auto status = receipt->value("status", std::string{});
         if (status == "SENDING") {
@@ -99,13 +113,13 @@ int prepare(const json& report, const std::filesystem::path& path) {
     std::cout << "META_COGNITION_TELEGRAM_RESERVED report_id=" << id << '\n';
     return 0;
 }
-int send(const json& report, const std::filesystem::path& path) {
+int send(const json& report, const json& gate, const std::filesystem::path& path) {
     const char* token = std::getenv("TELEGRAM_TOKEN");
     const char* chat_id = std::getenv("TELEGRAM_CHAT_ID");
     if (!token || !chat_id || token[0] == '\0' || chat_id[0] == '\0')
         throw std::runtime_error("TELEGRAM_CONFIGURATION_MISSING");
     auto outbox = load_outbox(path);
-    const auto id = report_id(report);
+    const auto id = report_id(report, gate);
     auto* receipt = find_receipt(outbox, id);
     if (!receipt) throw std::runtime_error("report_not_reserved");
     const auto status = receipt->value("status", std::string{});
@@ -116,7 +130,7 @@ int send(const json& report, const std::filesystem::path& path) {
     (*receipt)["attempts"] = receipt->value("attempts", 0) + 1;
     (*receipt)["send_started_at_utc"] = cfss::telegram::utc_now_iso();
     persist(path, outbox);
-    const auto result = cfss::telegram::send_message(token, chat_id, report_text(report));
+    const auto result = cfss::telegram::send_message(token, chat_id, report_text(report, gate));
     (*receipt)["status"] = result.status;
     (*receipt)["http_status"] = result.http_status;
     (*receipt)["message_id"] = result.message_id > 0 ? json(result.message_id) : json(nullptr);
@@ -131,7 +145,7 @@ int send(const json& report, const std::filesystem::path& path) {
 }
 int main(int argc, char** argv) {
     if (argc != 4) {
-        std::cerr << "usage: meta_cognition_telegram_report <prepare|send> <report.json> <outbox.json>\n";
+        std::cerr << "usage: meta_cognition_telegram_report <prepare|send> <report.json> <outbox.json> (CFSS_RISK_GATE_ARTIFACT required)\n";
         return 2;
     }
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) return 1;
@@ -140,9 +154,10 @@ int main(int argc, char** argv) {
         const auto report = read_json(argv[2]);
         if (report.value("artifact_type", std::string{}) != "cfss_meta_cognition_v1")
             throw std::runtime_error("meta_cognition_report_type_invalid");
+        const auto gate = load_risk_gate(report);
         int result = EXIT_FAILURE;
-        if (mode == "--prepare") result = prepare(report, argv[3]);
-        else if (mode == "--send") result = send(report, argv[3]);
+        if (mode == "--prepare") result = prepare(report, gate, argv[3]);
+        else if (mode == "--send") result = send(report, gate, argv[3]);
         else throw std::runtime_error("unknown_mode");
         curl_global_cleanup();
         return result;
