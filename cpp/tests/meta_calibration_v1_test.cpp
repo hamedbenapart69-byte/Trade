@@ -200,7 +200,7 @@ int main() {
         no_candidate, "DOWNTREND", small_ledger, true, 251LL * 86'400'000LL);
     require(partial_without_candidate.calibration.sample_count == 5U &&
             partial_without_candidate.calibration.reason ==
-                "INSUFFICIENT_PATH_REGIME_OUTCOMES_MIN_250_FOR_60_20_20_SPLIT" &&
+                "PROVISIONAL_SAMPLE_GUARD_250_PENDING_COHORT_POWER_ANALYSIS" &&
             partial_without_candidate.candidate_status == "NO_QUALIFIED_SETUP",
             "sub-threshold historical samples are reported but never promoted");
 
