@@ -170,7 +170,23 @@ jobs:
           jq -r '.instruments[] | [.symbol, .lrt.candidate_status, .lrt.confidence_status, .lrt.ev_status, .nmt.candidate_status, .nmt.confidence_status, .nmt.ev_status] | @tsv' \
             stage6-evidence/meta_cognition_stage6_v1.json
 
+      - name: Apply integrated Stage 7 risk gate to immutable Stage 6 artifacts
+        run: |
+          set -euo pipefail
+          ./build/risk_gate_probe \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/liquidity-phase.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/stage7-risk-gate.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
+            -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
+            -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
+          jq '{risk_snapshot_status,summary,actionable,trade_execution_allowed}' \
+            stage6-evidence/stage7-risk-gate.v1.json
+
       - name: Reserve Telegram report idempotently and persist evidence before send
+        env:
+          CFSS_RISK_GATE_ARTIFACT: stage6-evidence/stage7-risk-gate.v1.json
         run: |
           set -euo pipefail
           cp stage6-evidence/crypto-universe.v1.json shared-cache/crypto-universe.v1.json
@@ -181,6 +197,7 @@ jobs:
           cp stage6-evidence/shadow_candidate_registry.v1.json signals-state/cpp_runtime/shadow_candidate_registry.v1.json
           cp stage6-evidence/daily_outcome_ledger.v1.json signals-state/cpp_runtime/daily_outcome_ledger.v1.json
           cp stage6-evidence/meta_cognition_stage6_v1.json signals-state/cpp_runtime/meta_cognition_stage6_v1.json
+          cp stage6-evidence/stage7-risk-gate.v1.json signals-state/cpp_runtime/stage7_risk_gate.v1.json
           ./build/meta_cognition_telegram_report --prepare \
             stage6-evidence/meta_cognition_stage6_v1.json \
             signals-state/cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
@@ -196,14 +213,16 @@ jobs:
             cpp_runtime/daily_outcome_ledger.v1.json \
             cpp_runtime/scalp_outcome_ledger.v1.json \
             cpp_runtime/meta_cognition_stage6_v1.json \
+            cpp_runtime/stage7_risk_gate.v1.json \
             cpp_runtime/meta_cognition_stage6_telegram_outbox.v1.json
           if ! git diff --cached --quiet; then
             git commit -m "audit(stage6): persist fresh C++ shadow outcomes and calibration"
             git push origin HEAD:signals
           fi
 
-      - name: Deliver Stage 6 report through Telegram only
+      - name: Deliver Stage 6 + Stage 7 report through Telegram only
         env:
+          CFSS_RISK_GATE_ARTIFACT: stage6-evidence/stage7-risk-gate.v1.json
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
