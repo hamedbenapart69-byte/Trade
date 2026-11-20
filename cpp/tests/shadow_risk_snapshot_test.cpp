@@ -72,6 +72,10 @@ json registry() {
 
 int main() {
     constexpr std::int64_t day=86'400'000LL;
+    check(cfss::shadow_risk::utc_week(3LL*day+1LL)==0LL,
+          "ISO week includes Sunday before Monday reset");
+    check(cfss::shadow_risk::utc_week(4LL*day+1LL)==1LL,
+          "ISO week resets at Monday 00:00 UTC");
     auto b=basis(); auto l=ledger(); auto r=registry();
     auto s=cfss::shadow_risk::build_snapshot(b,l,r,"run-1","scan-1",day*2+20'000,0);
     check(s["status"]=="AVAILABLE","complete costed closed ledger creates snapshot");
