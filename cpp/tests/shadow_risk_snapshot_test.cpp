@@ -94,7 +94,7 @@ int main() {
     auto overlapping=l;
     overlapping["outcomes"][1]["entry_fill_time_ms"] =
         overlapping["outcomes"][0]["entry_fill_time_ms"].get<std::int64_t>() + 500LL;
-    blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
+    auto blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE",
           "overlapping trades fail closed when entry NAV cannot be reconstructed");
@@ -108,7 +108,7 @@ int main() {
 
     auto bad_ledger=l;
     bad_ledger["outcomes"][0]["cost_status"]="UNAVAILABLE";
-    auto blocked=cfss::shadow_risk::build_snapshot(b,bad_ledger,r,"run-1","scan-1",day*2+20'000,0);
+    blocked=cfss::shadow_risk::build_snapshot(b,bad_ledger,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OUTCOME_COST_OR_PROVENANCE_UNAVAILABLE",
           "unavailable costs fail closed rather than becoming zero");
