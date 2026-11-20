@@ -1,4 +1,5 @@
 #include "cfss/meta_calibration.hpp"
+#include "cfss/meta_cognition.hpp"
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
 
@@ -178,45 +179,19 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
 json evaluate_candidate(const json& candidate, const std::string& regime,
                         const std::vector<cfss::meta::Outcome>& outcomes,
                         bool ledger_available, std::int64_t decision_time) {
-    auto status = candidate.value("status", std::string{"INSUFFICIENT_DATA"});
+    const auto evaluated = cfss::meta::evaluate_candidate(
+        candidate, regime, outcomes, ledger_available, decision_time);
+    const auto& report = evaluated.calibration;
     const auto path = candidate.value("path", std::string{"UNKNOWN"});
-    const auto score_model_version = candidate.value("score_model_version",
+    const auto score_model_version = candidate.value(
+        "score_model_version",
         path == "PLAN_A_LRT" ? std::string{"LFS_V2_PROXY"} :
         (path == "PLAN_A_NMT" ? std::string{"NSS_V2_PROXY"} : std::string{"UNAVAILABLE"}));
     const auto score = candidate.contains("score") && candidate.at("score").is_number()
         ? std::optional<double>{candidate.at("score").get<double>()} : std::nullopt;
-    cfss::meta::CalibrationReport report{};
-    report.score_model_version = score_model_version;
-    std::string reason = "NO_CANDIDATE_TO_CALIBRATE";
-
-    if (status == "CANDIDATE") {
-        if (candidate.value("hypothesis", std::string{}).empty() ||
-            candidate.value("falsification", std::string{}).empty() ||
-            !score || *score < 0.0 || *score > 1.0) {
-            status = "INSUFFICIENT_DATA";
-            reason = "CANDIDATE_MISSING_HYPOTHESIS_FALSIFICATION_OR_SCORE";
-        } else if (!ledger_available) {
-            report.reason = "OUTCOME_LEDGER_MISSING";
-            reason = report.reason;
-        } else {
-            report = cfss::meta::calibrate(
-                outcomes, path, regime, *score, decision_time,
-                candidate.value("data_class", std::string{"UNAVAILABLE"}), "DAILY_SWING",
-                score_model_version);
-            reason = report.reason;
-            if (report.status == "INVALID_OUTCOME_LEDGER") {
-                status = "INSUFFICIENT_DATA";
-            } else if (report.ev_decision == "NO_TRADE") {
-                status = "NO_TRADE";
-            } else if (report.ev_decision == "EV_POSITIVE_RESEARCH_ONLY") {
-                status = "EV_POSITIVE_RESEARCH_ONLY";
-            }
-        }
-    }
-
     return {
         {"path", path},
-        {"candidate_status", status},
+        {"candidate_status", evaluated.candidate_status},
         {"direction", candidate.value("direction", std::string{"NONE"})},
         {"raw_score", optional_number(score)},
         {"data_class", candidate.value("data_class", std::string{"UNAVAILABLE"})},
@@ -229,7 +204,7 @@ json evaluate_candidate(const json& candidate, const std::string& regime,
         {"ev_status", report.ev_status},
         {"ev_net", optional_number(report.ev_net)},
         {"ev_decision", report.ev_decision},
-        {"reason", reason},
+        {"reason", evaluated.reason},
         {"regime", regime},
         {"actionable", false}
     };
