@@ -35,6 +35,7 @@ jobs:
         run: |
           npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/stage7-risk-gate-pipeline.v1.schema.json --spec=draft2020 -c ajv-formats
+          npx ajv compile -s contracts/outcome-ledger.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
           grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
@@ -51,5 +52,10 @@ jobs:
           grep -Fq 'user_account_data_used' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'build_fallback_report' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'STAGE7_INPUT_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'cfss::meta::evaluate_candidate' cpp/apps/meta_cognition_probe/main.cpp
+          grep -Fq 'if (!is_candidate)' cpp/include/cfss/meta_cognition.hpp
+          grep -Fq 'SHADOW_COST_PROXY_V1' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'OKX_PUBLIC_FUNDING_HISTORY' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'cost_backfilled_this_run' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'trade_execution_allowed' cpp/include/cfss/risk_gate_pipeline.hpp
           echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"
