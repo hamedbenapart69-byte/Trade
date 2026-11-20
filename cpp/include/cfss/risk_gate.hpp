@@ -7,7 +7,8 @@ struct Input {
  bool candidate_present{false}, candidate_actionable{false}, golden_rule_veto{false};
  bool data_real{false}, liquidity_ok{false}, calibration_valid{false};
  std::optional<double> net_ev_r;
- bool costs_complete{false}, correlation_data_valid{false}, risk_snapshot_valid{false};
+ bool costs_complete{false}, consensus_valid{false}, correlation_data_valid{false}, risk_snapshot_valid{false};
+ std::string consensus_reason{"CONSENSUS_NOT_CONFIRMED"};
  std::optional<double> daily_loss_pct, weekly_loss_pct, portfolio_drawdown_pct;
  int correlated_candidate_exposures{};
 };
@@ -24,6 +25,7 @@ inline Decision evaluate(const Input& i){
  if(!i.net_ev_r||!std::isfinite(*i.net_ev_r)){d.reason="NET_EV_UNAVAILABLE";return d;}
  if(*i.net_ev_r<=0){d.reason="NET_EV_NON_POSITIVE";return d;}
  if(!i.costs_complete){d.reason="COSTS_INCOMPLETE";return d;}
+ if(!i.consensus_valid){d.reason=i.consensus_reason.empty()?"CONSENSUS_NOT_CONFIRMED":i.consensus_reason;return d;}
  if(!i.correlation_data_valid){d.reason="CORRELATION_DATA_UNAVAILABLE";return d;}
  if(!i.risk_snapshot_valid||!valid_pct(i.daily_loss_pct)||!valid_pct(i.weekly_loss_pct)||!valid_pct(i.portfolio_drawdown_pct)||i.correlated_candidate_exposures<0){d.reason="RISK_SNAPSHOT_INVALID_OR_MISSING";return d;}
  if(*i.daily_loss_pct>=5){d.reason="G7_DAILY_KILL_SWITCH_5_PERCENT";return d;}
