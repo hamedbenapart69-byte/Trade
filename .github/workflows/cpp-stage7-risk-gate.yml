@@ -59,4 +59,8 @@ jobs:
           grep -Fq 'OKX_PUBLIC_FUNDING_HISTORY' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'cost_backfilled_this_run' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'trade_execution_allowed' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'OPEN_SHADOW_POSITION_MARK_UNAVAILABLE' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'OUTCOME_COST_OR_PROVENANCE_UNAVAILABLE' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'RISK_BASIS_INVALID_OR_NOT_FROZEN' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'shadow_risk_snapshot_tests' cpp/CMakeLists.txt
           echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"
