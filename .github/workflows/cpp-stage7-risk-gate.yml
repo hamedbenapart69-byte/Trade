@@ -28,8 +28,8 @@ jobs:
           cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
-      - name: Validate schema
-        run: npx ajv validate -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
+      - name: Compile schema
+        run: npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
           grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
