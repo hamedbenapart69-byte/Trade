@@ -16,7 +16,7 @@ void require(bool value, const char* message) {
 
 std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
                                           double fee, double slippage, double funding,
-                                          std::size_t count = 20'000U) {
+                                          std::size_t count = 30'000U) {
     std::vector<cfss::meta::Outcome> out;
     out.reserve(count);
     for (std::size_t i = 0U; i < count; ++i) {
@@ -44,14 +44,14 @@ std::vector<cfss::meta::Outcome> fixture(double win_r, double loss_r,
 }
 
 int main() {
-    const auto empty = cfss::meta::calibrate({}, "PLAN_A_LRT", "DOWNTREND", 0.7, 20'001LL * 86'400'000LL);
+    const auto empty = cfss::meta::calibrate({}, "PLAN_A_LRT", "DOWNTREND", 0.7, 30'001LL * 86'400'000LL);
     require(empty.status == "NOT_CALIBRATED" && !empty.probability_win &&
             empty.ev_status == "NOT_CALCULATED",
             "empty outcome ledger never produces probability or EV");
 
     auto outcomes = fixture(2.0, 1.0, 0.04, 0.02, 0.01);
     const auto calibrated = cfss::meta::calibrate(
-        outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     if (calibrated.status != "CALIBRATED") {
         std::cerr << "CALIBRATION_DIAGNOSTIC status=" << calibrated.status
                   << " reason=" << calibrated.reason
@@ -64,9 +64,9 @@ int main() {
     }
     require(calibrated.status == "CALIBRATED",
             "chronological Platt/isotonic calibration improves held-out Brier");
-    require(calibrated.train_count == 12'000U &&
-            calibrated.validation_count == 4'000U &&
-            calibrated.oos_count == 4'000U,
+    require(calibrated.train_count == 18'000U &&
+            calibrated.validation_count == 6'000U &&
+            calibrated.oos_count == 6'000U,
             "chronological 60/20/20 split is preserved");
     require(calibrated.probability_win.has_value() &&
             *calibrated.probability_win > 0.0 && *calibrated.probability_win < 1.0,
@@ -86,14 +86,14 @@ int main() {
             calibrated.brier_improvement_ci_high &&
             *calibrated.brier_improvement_ci_low > 0.0,
             "calibration requires validation-derived power planning and positive clustered OOS Brier-improvement CI");
-    require(calibrated.oos_scan_clusters == 4'000U &&
-            calibrated.oos_symbol_clusters == 4'000U &&
-            calibrated.oos_utc_day_clusters == 4'000U &&
-            calibrated.oos_symbol_distribution.size() == 4'000U &&
-            calibrated.oos_daily_distribution.size() == 4'000U &&
+    require(calibrated.oos_scan_clusters == 6'000U &&
+            calibrated.oos_symbol_clusters == 6'000U &&
+            calibrated.oos_utc_day_clusters == 6'000U &&
+            calibrated.oos_symbol_distribution.size() == 6'000U &&
+            calibrated.oos_daily_distribution.size() == 6'000U &&
             calibrated.oos_period_start_ms > 0 &&
             calibrated.oos_period_end_ms >= calibrated.oos_period_start_ms &&
-            std::abs(calibrated.oos_effective_sample_size - 4'000.0) < 1e-9,
+            std::abs(calibrated.oos_effective_sample_size - 6'000.0) < 1e-9,
             "effective independent OOS sample size accounts for scan, symbol and UTC-day clusters");
 
     auto correlated = outcomes;
@@ -102,7 +102,7 @@ int main() {
         correlated[i].symbol = "symbol-block-" + std::to_string(i / 50U);
     }
     const auto correlated_result = cfss::meta::calibrate(
-        correlated, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        correlated, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(correlated_result.status == "NOT_CALIBRATED" &&
             correlated_result.reason ==
                 "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN",
@@ -115,13 +115,13 @@ int main() {
 
     auto future_extended = outcomes;
     future_extended.push_back({
-        "signal-20000", "PLAN_A_LRT", "DOWNTREND", 20'001LL * 86'400'000LL,
+        "signal-30000", "PLAN_A_LRT", "DOWNTREND", 30'001LL * 86'400'000LL,
         0.80, false, 0.0, 1.0, 0.04, 0.02, 0.01,
         true, "PROXY", "DAILY_SWING", "HYPOTHESIS_PROXY", "NOT_EXECUTED",
         "scan-future", "SYMBOL-FUTURE", "LFS_V2_PROXY"
     });
     const auto with_future = cfss::meta::calibrate(
-        future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        future_extended, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(with_future.status == "CALIBRATED" &&
             std::abs(*with_future.probability_win - *calibrated.probability_win) < 1e-9,
             "future OOS outcomes do not change the fitted calibration probability");
@@ -129,7 +129,7 @@ int main() {
     auto no_costs = fixture(2.0, 1.0, 0.0, 0.0, 0.0);
     for (auto& row : no_costs) row.costs_available = false;
     const auto calibrated_without_costs = cfss::meta::calibrate(
-        no_costs, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        no_costs, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(calibrated_without_costs.status == "CALIBRATED" &&
             calibrated_without_costs.ev_status == "COSTS_UNAVAILABLE" &&
             !calibrated_without_costs.ev_net &&
@@ -139,7 +139,7 @@ int main() {
     auto other_data_class = outcomes;
     for (auto& row : other_data_class) row.data_class = "REAL";
     const auto isolated_data_class = cfss::meta::calibrate(
-        other_data_class, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL, "PROXY");
+        other_data_class, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL, "PROXY");
     require(isolated_data_class.status == "NOT_CALIBRATED" &&
             isolated_data_class.sample_count == 0U,
             "REAL and PROXY outcomes are never pooled");
@@ -148,7 +148,7 @@ int main() {
     for (auto& row : scalp_outcomes) row.profile = "INTRADAY_SCALP";
     const auto isolated_profile = cfss::meta::calibrate(
         scalp_outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80,
-        20'001LL * 86'400'000LL, "PROXY", "DAILY_SWING");
+        30'001LL * 86'400'000LL, "PROXY", "DAILY_SWING");
     require(isolated_profile.status == "NOT_CALIBRATED" &&
             isolated_profile.sample_count == 0U,
             "Daily and Scalp calibration samples are never pooled");
@@ -157,14 +157,14 @@ int main() {
     for (auto& row : executed_outcomes) row.execution_status = "EXECUTED";
     const auto isolated_execution = cfss::meta::calibrate(
         executed_outcomes, "PLAN_A_LRT", "DOWNTREND", 0.80,
-        20'001LL * 86'400'000LL);
+        30'001LL * 86'400'000LL);
     require(isolated_execution.status == "NOT_CALIBRATED" &&
             isolated_execution.sample_count == 0U,
             "hypothesis proxy calibration never absorbs executed-trade outcomes");
 
     auto funding_credit = fixture(2.0, 1.0, 0.04, 0.02, -0.01);
     const auto credit_ev = cfss::meta::calibrate(
-        funding_credit, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        funding_credit, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(credit_ev.status == "CALIBRATED" &&
             credit_ev.ev_status == "CALCULATED" &&
             credit_ev.avg_funding_r && *credit_ev.avg_funding_r < 0.0,
@@ -172,7 +172,7 @@ int main() {
 
     auto negative = fixture(0.5, 2.0, 0.10, 0.05, 0.05);
     const auto negative_ev = cfss::meta::calibrate(
-        negative, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        negative, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(negative_ev.status == "CALIBRATED" &&
             negative_ev.ev_status == "CALCULATED" &&
             negative_ev.ev_net && *negative_ev.ev_net <= 0.0 &&
@@ -182,7 +182,7 @@ int main() {
     auto duplicate = outcomes;
     duplicate.push_back(outcomes.front());
     const auto duplicate_result = cfss::meta::calibrate(
-        duplicate, "PLAN_A_LRT", "DOWNTREND", 0.80, 20'001LL * 86'400'000LL);
+        duplicate, "PLAN_A_LRT", "DOWNTREND", 0.80, 30'001LL * 86'400'000LL);
     require(duplicate_result.status == "INVALID_OUTCOME_LEDGER",
             "duplicate signal IDs invalidate the calibration ledger");
 
@@ -190,13 +190,13 @@ int main() {
     for (auto& row : wrong_score_version) row.score_model_version = "LFS_V1_FORMULA";
     const auto isolated_score_version = cfss::meta::calibrate(
         wrong_score_version, "PLAN_A_LRT", "DOWNTREND", 0.80,
-        20'001LL * 86'400'000LL);
+        30'001LL * 86'400'000LL);
     require(isolated_score_version.status == "NOT_CALIBRATED" &&
             isolated_score_version.sample_count == 0U,
             "outcomes from a different score formula version are never pooled");
 
     const auto other_regime = cfss::meta::calibrate(
-        outcomes, "PLAN_A_LRT", "UPTREND", 0.80, 20'001LL * 86'400'000LL);
+        outcomes, "PLAN_A_LRT", "UPTREND", 0.80, 30'001LL * 86'400'000LL);
     require(other_regime.status == "NOT_CALIBRATED" &&
             other_regime.sample_count == 0U,
             "calibration is isolated by path and regime");
@@ -207,8 +207,8 @@ int main() {
         {"score_model_version", "LFS_V2_PROXY"}
     };
     const auto refreshed_without_candidate = cfss::meta::evaluate_calibration_continuously(
-        no_candidate, "DOWNTREND", outcomes, true, 20'001LL * 86'400'000LL);
-    require(refreshed_without_candidate.calibration.sample_count == 20'000U &&
+        no_candidate, "DOWNTREND", outcomes, true, 30'001LL * 86'400'000LL);
+    require(refreshed_without_candidate.calibration.sample_count == 30'000U &&
             refreshed_without_candidate.calibration.status == "CALIBRATED" &&
             refreshed_without_candidate.candidate_status == "NO_QUALIFIED_SETUP",
             "path-regime calibration refreshes without promoting a no-setup symbol");
@@ -216,7 +216,7 @@ int main() {
     auto small_ledger = outcomes;
     small_ledger.resize(5U);
     const auto partial_without_candidate = cfss::meta::evaluate_calibration_continuously(
-        no_candidate, "DOWNTREND", small_ledger, true, 20'001LL * 86'400'000LL);
+        no_candidate, "DOWNTREND", small_ledger, true, 30'001LL * 86'400'000LL);
     require(partial_without_candidate.calibration.sample_count == 5U &&
             partial_without_candidate.calibration.reason ==
                 "PROVISIONAL_SAMPLE_GUARD_250_PENDING_COHORT_POWER_ANALYSIS" &&
