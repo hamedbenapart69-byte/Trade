@@ -103,6 +103,13 @@ struct CalibrationReport {
     std::optional<double> brier_calibrated_oos;
     std::optional<double> brier_ci_low;
     std::optional<double> brier_ci_high;
+    std::optional<double> brier_improvement_oos;
+    std::optional<double> brier_improvement_ci_low;
+    std::optional<double> brier_improvement_ci_high;
+    double target_brier_improvement{0.01};
+    double validation_brier_improvement_se{};
+    double required_oos_effective_sample_size{};
+    std::string power_analysis_status{"NOT_ESTABLISHED"};
     std::optional<double> log_loss_oos;
     std::optional<double> ece_raw_oos;
     std::optional<double> ece_calibrated_oos;
@@ -441,8 +448,8 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
                 std::to_string(row.closed_at_ms / 86'400'000LL)];
         }
     }
-    if (oos_clusters.effective_n < 30.0) {
-        report.reason = "INSUFFICIENT_EFFECTIVE_OOS_SAMPLE_AFTER_SCAN_SYMBOL_AND_UTC_DAY_CLUSTERING";
+    if (oos_clusters.effective_n < report.required_oos_effective_sample_size) {
+        report.reason = "OOS_EFFECTIVE_SAMPLE_BELOW_VALIDATION_POWER_PLAN";
         return report;
     }
 
@@ -472,6 +479,47 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     }
     const double platt_validation_brier = brier_score(val_platt, val_labels);
     const double isotonic_validation_brier = brier_score(val_isotonic, val_labels);
+
+    // برآورد توان فقط از validation استفاده می‌کند؛ OOS برای انتخاب یا برنامه‌ریزی مصرف نمی‌شود.
+    std::vector<double> validation_platt_improvements, validation_isotonic_improvements;
+    validation_platt_improvements.reserve(validation.size());
+    validation_isotonic_improvements.reserve(validation.size());
+    for (std::size_t i = 0U; i < validation.size(); ++i) {
+        const double y = val_labels[i] ? 1.0 : 0.0;
+        const double raw_error = validation[i].raw_score - y;
+        const double platt_error = val_platt[i] - y;
+        const double isotonic_error = val_isotonic[i] - y;
+        validation_platt_improvements.push_back(raw_error * raw_error - platt_error * platt_error);
+        validation_isotonic_improvements.push_back(raw_error * raw_error - isotonic_error * isotonic_error);
+    }
+    const double platt_validation_se =
+        three_way_cluster_robust_se(validation_platt_improvements, validation);
+    const double isotonic_validation_se =
+        three_way_cluster_robust_se(validation_isotonic_improvements, validation);
+    const double conservative_validation_se =
+        std::max(platt_validation_se, isotonic_validation_se);
+    const auto validation_cluster_metrics = cluster_metrics(validation);
+    if (!std::isfinite(conservative_validation_se) ||
+        !std::isfinite(validation_cluster_metrics.effective_n) ||
+        validation_cluster_metrics.effective_n <= 0.0) {
+        report.reason = "POWER_ANALYSIS_VALIDATION_CLUSTER_VARIANCE_UNAVAILABLE";
+        return report;
+    }
+    report.validation_brier_improvement_se = conservative_validation_se;
+    constexpr double kPowerAlpha = 0.05;
+    constexpr double kPowerTarget = 0.80;
+    constexpr double kPowerZSum = 2.801585; // z(1-alpha/2) + z(power)
+    const double validation_sd_proxy =
+        conservative_validation_se * std::sqrt(validation_cluster_metrics.effective_n);
+    const double required_n = std::pow(
+        (kPowerZSum * validation_sd_proxy) / report.target_brier_improvement, 2.0);
+    if (!std::isfinite(required_n)) {
+        report.reason = "POWER_ANALYSIS_REQUIRED_SAMPLE_NONFINITE";
+        return report;
+    }
+    report.required_oos_effective_sample_size =
+        std::max(30.0, std::ceil(required_n));
+    report.power_analysis_status = "PROVISIONAL_VALIDATION_CLUSTER_PROXY_ALPHA_0_05_POWER_0_80";
     const bool use_platt = platt_validation_brier <= isotonic_validation_brier;
     report.method = use_platt ? "PLATT" : "ISOTONIC";
 
@@ -515,18 +563,25 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     const auto win_ci = wilson_interval(wins, oos.size());
     report.win_rate_ci_low = win_ci.first;
     report.win_rate_ci_high = win_ci.second;
-    std::vector<double> win_values, brier_values;
+    std::vector<double> win_values, brier_values, brier_improvement_values;
     win_values.reserve(oos.size());
     brier_values.reserve(oos.size());
+    brier_improvement_values.reserve(oos.size());
     for (std::size_t i = 0U; i < oos_calibrated.size(); ++i) {
         const double y = oos_labels[i] ? 1.0 : 0.0;
         win_values.push_back(y);
-        const double error = oos_calibrated[i] - y;
-        brier_values.push_back(error * error);
+        const double raw_error = oos_raw[i] - y;
+        const double calibrated_error = oos_calibrated[i] - y;
+        brier_values.push_back(calibrated_error * calibrated_error);
+        brier_improvement_values.push_back(
+            raw_error * raw_error - calibrated_error * calibrated_error);
     }
     const double win_se = three_way_cluster_robust_se(win_values, oos);
     const double brier_se = three_way_cluster_robust_se(brier_values, oos);
-    if (!std::isfinite(win_se) || !std::isfinite(brier_se)) {
+    const double brier_improvement_se =
+        three_way_cluster_robust_se(brier_improvement_values, oos);
+    if (!std::isfinite(win_se) || !std::isfinite(brier_se) ||
+        !std::isfinite(brier_improvement_se)) {
         report.reason = "CLUSTER_ROBUST_CONFIDENCE_INTERVAL_UNAVAILABLE";
         return report;
     }
@@ -534,9 +589,15 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
     report.win_rate_cluster_ci_high = std::min(1.0, *report.win_rate_oos + 1.96 * win_se);
     report.brier_ci_low = std::max(0.0, calibrated_brier - 1.96 * brier_se);
     report.brier_ci_high = std::min(1.0, calibrated_brier + 1.96 * brier_se);
+    const double brier_improvement = raw_brier - calibrated_brier;
+    report.brier_improvement_oos = brier_improvement;
+    report.brier_improvement_ci_low = brier_improvement - 1.96 * brier_improvement_se;
+    report.brier_improvement_ci_high = brier_improvement + 1.96 * brier_improvement_se;
 
-    if (!(calibrated_brier < raw_brier) || !std::isfinite(calibrated_logloss)) {
-        report.reason = "OOS_CALIBRATION_DID_NOT_IMPROVE_BRIER";
+    if (!(brier_improvement > 0.0) ||
+        *report.brier_improvement_ci_low <= 0.0 ||
+        !std::isfinite(calibrated_logloss)) {
+        report.reason = "OOS_BRIER_IMPROVEMENT_CONFIDENCE_INTERVAL_INCLUDES_ZERO";
         return report;
     }
     report.status = "CALIBRATED";
