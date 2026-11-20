@@ -18,9 +18,9 @@ For each independent path, regime, data class, profile and score-model version:
 ### Statistical and calibration controls
 - Cohorts are isolated by path, regime, data class, profile and score-model version.
 - V18.2 does not prescribe a fixed minimum calibration count or a 60/20/20 calibration split. The current 250-row floor, 100/30/50 split floors and 60/20/20 partition are provisional engineering guards only. They are not canonical requirements and cannot independently establish PASS.
-- The v2 implementation estimates a cohort-specific required OOS effective sample size from validation-only three-way cluster-robust uncertainty. Provisional assumptions: minimum Brier improvement target 0.01, two-sided alpha 0.05 and power 0.80. The estimate is an engineering approximation and remains labelled PROVISIONAL.
-- The provisional formula is `N_OOS_eff = ceil(((z_0.975 + z_0.80) * s_validation / 0.01)^2)`, where `s_validation` is the conservative three-way cluster-robust standard-deviation proxy estimated on validation data only.
-- OOS effective sample size must meet the calculated requirement. The 95% three-way clustered confidence interval for paired OOS Brier improvement must have a lower bound strictly above zero.
+- The v2 implementation estimates a cohort-specific required OOS effective sample size from validation-only maximum-of-one-way-cluster-SE uncertainty proxy. Provisional assumptions: minimum Brier improvement target 0.01, two-sided alpha 0.05 and power 0.80. The estimate is an engineering approximation and remains labelled PROVISIONAL.
+- The provisional formula is `N_OOS_eff = ceil(((z_0.975 + z_0.80) * s_validation / 0.01)^2)`, where `s_validation` is the maximum-of-one-way-cluster-SE standard-deviation proxy estimated on validation data only.
+- OOS effective sample size must meet the calculated requirement. The 95% cluster uncertainty interval using the maximum of separate one-way cluster SEs for paired OOS Brier improvement must have a lower bound strictly above zero.
 - Both outcome classes must be present in each chronological split. Report raw count, effective sample size, cluster counts, confidence intervals, period and symbol/day distributions.
 - OOS data must not be used to select the calibrator or tune parameters. The selected Platt/Isotonic method is chosen using validation only.
 
@@ -79,7 +79,17 @@ Committed changes:
 9. Add negative tests for missing hashes/methods/assumption references, stale cost snapshot time, mislabelled fee, missing numeric cost components and unsupported `REAL` cost status.
 10. Preserve null cost values when total cost coverage is unavailable.
 
-**Validation status:** the latest code head has not yet produced a completed CI result. A prior run on an earlier head was cancelled when the branch advanced. No v2 live run has been performed. Therefore these changes are committed but not yet verified by build/CTest/schema/runtime evidence.
+**Validation status (latest head 3c6cbb46a1f51d4dd4d7622d0d6970afd7ed598e):** C++ build, CTest, schema validation and the Stage 6 PR live-validation workflow completed successfully in GitHub Actions run 44754721823. This verifies execution and artifact contracts, not statistical calibration or release readiness.
+
+Live evidence from run 44754721823:
+- OKX reported 546 total instruments, 531 live USDT-suffix swaps, 337 linear-or-unspecified contracts, 194 excluded non-crypto instruments and 60 eligible instruments. The run selected 60, below the approximate 100-symbol target; the eligibility filter was not relaxed.
+- All 60 selected instruments had 15m resolution data available. OHLCV, funding and OI histories were collected from the public OKX source/cache; per-instrument coverage varied with listing history. Example BTC/ETH: 17,532 hourly candles, 90 funding observations and 720 OI observations. Newer instruments had shorter OHLCV histories.
+- Shadow tracker: 1 registered candidate, 0 resolved in this run, 2 pending candidates, 5 total ledger outcomes. Five prior outcomes were backfilled with cost `PROXY`; zero remained `UNAVAILABLE`. This is cost coverage, not real measured execution cost.
+- Meta-Cognition generated successfully with 5 outcomes. Confidence remained `NOT_CALIBRATED`; no probability calibration or net EV promotion was established. Current no-setup states remained non-actionable. SUI and TRUMP appeared as NMT candidates but remained uncalibrated.
+- Stage 7 produced 2 candidate rows, both blocked; `risk_snapshot_status=UNAVAILABLE`, `actionable=0`.
+- Telegram report preparation was schema/runtime checked only. No Telegram message was sent by this PR validation, and no persistent signals branch was written.
+
+The workflow result is therefore **engineering execution PASS / statistical acceptance BLOCKED / production release NOT APPROVED**. Five outcomes cannot establish the required chronological calibration, OOS Brier improvement or validation-derived sample power. The L1 target shortfall and single-provider live collection remain open data/provider coverage issues.
 
 ## 6. v3
 
@@ -117,7 +127,7 @@ These are historical shadow hypotheses, not executed trades or evidence of profi
 ## 11. Active version and handoff
 
 - **Active:** v2 engineering candidate.
-- **Stage 6:** BLOCKED pending latest-head C++ build, CTest, schema validation, live run, and a completed cohort power/OOS assessment.
+- **Stage 6:** BLOCKED pending adequate independent cohort outcomes, valid chronological train/validation/OOS splits, power/OOS assessment and supported cluster-uncertainty methodology. Latest-head build, CTest, schemas and one live PR run are complete.
 - **Stage 7:** remains BLOCKED / fail-closed while its internal shadow-risk snapshot is unavailable.
-- **Next action:** complete v2 CI on the exact latest head, fix any evidence-backed failure, then run Stage 6 live and compare the resulting artifacts against this report.
+- **Next action:** continue collecting independently resolved, cost-provenance-backed shadow outcomes through the production scheduled pipeline; verify the exact cohort, effective sample sizes, cluster counts, OOS confidence interval and Brier improvement before any calibration claim. Investigate provider fallback and the 60/100 eligible-universe shortfall without relaxing liquidity or contract-equivalence rules.
 - **Merge / production release:** not approved.
