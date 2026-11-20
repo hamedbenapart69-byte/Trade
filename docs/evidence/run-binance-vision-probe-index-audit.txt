@@ -1,0 +1,1 @@
+Audit Binance Vision public S3 object index for two-year 5m futures metrics coverage across BTC, ETH, BNB, UNI, ARB and WLD.
