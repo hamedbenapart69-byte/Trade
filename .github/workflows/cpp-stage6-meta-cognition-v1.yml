@@ -5,7 +5,7 @@ on:
     - cron: "17 */4 * * *"
   workflow_dispatch:
   push:
-    branches: [main, integration/stage6-meta-calibration-rebased]
+    branches: [main, integration/stage6-meta-calibration-rebased, ops/stage1-live-verification-20261120]
     paths:
       - "docs/evidence/publish-stage6-meta-cognition.txt"
 
