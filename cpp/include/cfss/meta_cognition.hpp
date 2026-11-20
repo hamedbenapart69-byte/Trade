@@ -3,6 +3,7 @@
 #include "cfss/meta_calibration.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
