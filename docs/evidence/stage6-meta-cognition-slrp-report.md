@@ -50,7 +50,7 @@ Implemented changes:
 6. Preserve `HYPOTHESIS_PROXY`, `NOT_EXECUTED` and `data_class=PROXY`.
 7. Do not treat 250 outcomes or 60/20/20 as V18.2 requirements. Replace them with a pre-registered, cohort-specific power/uncertainty plan. No acceptance threshold is relaxed.
 
-New provenance fields include cost model ID, fee/slippage assumptions, funding source, source run/scan IDs and source L1 hash.
+New provenance fields include cost model ID, fee/slippage assumptions and classifications, proxy method, funding source, source run/scan IDs, source L1 hash and the source snapshot as-of timestamp. The timestamp is market-data event time, not wall-clock processing time.
 
 **v2 validation:** source changes now enforce runtime provenance checks and conditional schema requirements. C++ build, CTest, schema validation and a new live Stage 6 run are still pending evidence.
 
