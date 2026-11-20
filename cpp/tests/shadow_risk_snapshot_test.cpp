@@ -81,8 +81,8 @@ int main() {
           "net R is compounded against frozen normalized shadow NAV");
     check(std::abs(s["portfolio_drawdown_pct"].get<double>()-0.6)<1e-8,
           "drawdown is measured from portfolio high-water mark");
-    check(s["daily_loss_pct"].get<double>()==0.0,
-          "profitable current UTC day has no daily loss");
+    check(std::abs(s["daily_loss_pct"].get<double>()-0.6)<1e-8,
+          "current UTC day loss is measured against day-start shadow NAV");
     check(s["weekly_loss_pct"].get<double>()==0.0,
           "profitable current ISO week has no weekly loss");
 
