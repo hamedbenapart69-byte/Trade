@@ -515,7 +515,7 @@ inline CalibrationReport calibrate(std::vector<Outcome> outcomes,
         return report;
     }
     report.required_oos_effective_sample_size =
-        std::max(200.0, std::ceil(required_n));
+        std::ceil(required_n);
     report.power_analysis_status = "PROVISIONAL_VALIDATION_CLUSTER_PROXY_ALPHA_0_05_POWER_0_80";
     if (validation_cluster_metrics.effective_n < 30.0 ||
         conservative_validation_se <= 1e-12) {
