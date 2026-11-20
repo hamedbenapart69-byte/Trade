@@ -3,6 +3,7 @@
 #include "cfss/meta_calibration.hpp"
 
 #include <cstdint>
+#include <cmath>
 #include <optional>
 #include <string>
 #include <vector>
@@ -34,22 +35,25 @@ inline CandidateEvaluation evaluate_calibration_continuously(
         (path == "PLAN_A_NMT" ? std::string{"NSS_V2_PROXY"} : std::string{"UNAVAILABLE"}));
     result.calibration.score_model_version = score_model_version;
 
-    std::optional<double> score;
-    if (candidate.contains("score") && candidate.at("score").is_number())
-        score = candidate.at("score").get<double>();
+    bool has_score = false;
+    double score_value = 0.0;
+    if (candidate.contains("score") && candidate.at("score").is_number()) {
+        score_value = candidate.at("score").get<double>();
+        has_score = std::isfinite(score_value);
+    }
     const bool is_candidate = result.candidate_status == "CANDIDATE";
 
     if (is_candidate &&
         (candidate.value("hypothesis", std::string{}).empty() ||
          candidate.value("falsification", std::string{}).empty() ||
-         !score || *score < 0.0 || *score > 1.0)) {
+         !has_score || score_value < 0.0 || score_value > 1.0)) {
         result.candidate_status = "INSUFFICIENT_DATA";
         result.reason = "CANDIDATE_MISSING_HYPOTHESIS_FALSIFICATION_OR_SCORE";
         result.calibration.reason = result.reason;
         return result;
     }
 
-    if (!score || *score < 0.0 || *score > 1.0) {
+    if (!has_score || score_value < 0.0 || score_value > 1.0) {
         result.reason = "CURRENT_SCORE_UNAVAILABLE_FOR_CALIBRATION";
         result.calibration.reason = result.reason;
         if (is_candidate) result.candidate_status = "INSUFFICIENT_DATA";
@@ -65,7 +69,7 @@ inline CandidateEvaluation evaluate_calibration_continuously(
 
     // حتی در نبود setup، score و regime جاری برای پایش calibration استفاده می‌شوند.
     result.calibration = calibrate(
-        outcomes, path, regime, *score, decision_time_ms,
+        outcomes, path, regime, score_value, decision_time_ms,
         candidate.value("data_class", std::string{"UNAVAILABLE"}),
         "DAILY_SWING", score_model_version);
 
