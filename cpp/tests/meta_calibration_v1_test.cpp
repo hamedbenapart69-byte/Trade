@@ -68,6 +68,14 @@ int main() {
             calibrated.win_rate_ci_low && calibrated.win_rate_ci_high &&
             calibrated.win_rate_cluster_ci_low && calibrated.win_rate_cluster_ci_high,
             "Wilson and three-way clustered OOS confidence intervals are both reported");
+    require(calibrated.power_analysis_status ==
+                "PROVISIONAL_VALIDATION_CLUSTER_PROXY_ALPHA_0_05_POWER_0_80" &&
+            calibrated.required_oos_effective_sample_size >= 30.0 &&
+            calibrated.brier_improvement_oos &&
+            calibrated.brier_improvement_ci_low &&
+            calibrated.brier_improvement_ci_high &&
+            *calibrated.brier_improvement_ci_low > 0.0,
+            "calibration requires validation-derived power planning and positive clustered OOS Brier-improvement CI");
     require(calibrated.oos_scan_clusters == 4'000U &&
             calibrated.oos_symbol_clusters == 4'000U &&
             calibrated.oos_utc_day_clusters == 4'000U &&
