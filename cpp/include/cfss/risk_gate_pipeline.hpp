@@ -10,6 +10,7 @@
 #include <iterator>
 #include <set>
 #include <vector>
+#include <utility>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -95,6 +96,62 @@ inline std::optional<double> aligned_pearson(const std::map<std::int64_t, double
     if (vx <= 0.0 || vy <= 0.0) return std::nullopt;
     const double correlation = covariance / std::sqrt(vx * vy);
     return std::isfinite(correlation) ? std::optional<double>{correlation} : std::nullopt;
+}
+
+inline std::pair<bool, std::string> evaluate_consensus(const json& engine,
+        const json* market, const json* phase, std::int64_t decision_time_ms) {
+    const auto status = engine.value("candidate_status", std::string{});
+    const bool present = status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY";
+    if (!present) return {true, "NOT_APPLICABLE_NO_CANDIDATE"};
+    if (!market || !phase) return {false, "CONSENSUS_EVIDENCE_UNAVAILABLE"};
+    const auto direction = normalize_direction(engine.value("direction", std::string{}));
+    const auto path = engine.value("path", std::string{});
+    if (direction != "LONG" && direction != "SHORT")
+        return {false, "CONSENSUS_DIRECTION_INVALID"};
+    if (phase->value("status", std::string{}) != "AVAILABLE" ||
+        phase->value("phase", std::string{}) == "UNAVAILABLE")
+        return {false, "CONSENSUS_MARKET_PHASE_UNAVAILABLE"};
+    if (!market->contains("availability") || !market->at("availability").is_object())
+        return {false, "CONSENSUS_MARKET_DATA_UNAVAILABLE"};
+
+    if (path == "PLAN_A_LRT") {
+        if (market->at("availability").value("ohlcv", std::string{}) != "AVAILABLE")
+            return {false, "CONSENSUS_MARKET_DATA_UNAVAILABLE"};
+        const char* zone_key = direction == "LONG" ? "nearest_support" : "nearest_resistance";
+        const char* expected_side = direction == "LONG" ? "DEMAND" : "SUPPLY";
+        if (!phase->contains(zone_key) || !phase->at(zone_key).is_object())
+            return {false, "CONSENSUS_LIQUIDITY_ZONE_NOT_ALIGNED"};
+        const auto& zone = phase->at(zone_key);
+        if (zone.value("side", std::string{}) != expected_side ||
+            zone.value("input_quality", std::string{}) != "REAL" ||
+            !zone.contains("confirmed_at_ms") || !zone.at("confirmed_at_ms").is_number_integer() ||
+            zone.at("confirmed_at_ms").get<std::int64_t>() > decision_time_ms)
+            return {false, "CONSENSUS_LIQUIDITY_ZONE_NOT_ALIGNED"};
+        return {true, "CONSENSUS_CONFIRMED_LRT_STRUCTURE_AND_LIQUIDITY"};
+    }
+
+    if (path == "PLAN_A_NMT") {
+        const auto phase_name = phase->value("phase", std::string{});
+        const bool phase_aligned = direction == "LONG" ? phase_name == "UPTREND" :
+                                                         phase_name == "DOWNTREND";
+        if (!phase_aligned) return {false, "CONSENSUS_PHASE_DIRECTION_CONFLICT"};
+        const auto& availability = market->at("availability");
+        const auto& coverage = market->value("coverage", json::object());
+        const bool derivatives_available =
+            availability.value("funding", std::string{}) == "AVAILABLE" &&
+            availability.value("open_interest", std::string{}) == "AVAILABLE" &&
+            has_number(coverage, "funding_coverage_days") &&
+            has_number(coverage, "open_interest_coverage_days") &&
+            coverage.at("funding_coverage_days").get<double>() >= 30.0 &&
+            coverage.at("open_interest_coverage_days").get<double>() >= 30.0 &&
+            market->contains("funding") && market->at("funding").is_array() &&
+            !market->at("funding").empty() &&
+            market->contains("open_interest") && market->at("open_interest").is_array() &&
+            !market->at("open_interest").empty();
+        if (!derivatives_available) return {false, "CONSENSUS_DERIVATIVES_UNAVAILABLE"};
+        return {true, "CONSENSUS_CONFIRMED_NMT_TREND_AND_DERIVATIVES"};
+    }
+    return {false, "CONSENSUS_PATH_UNSUPPORTED"};
 }
 
 struct CorrelationSummary {
@@ -223,6 +280,9 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                 has_number(calibration, "avg_slippage_r") &&
                 has_number(calibration, "avg_funding_r") &&
                 engine.value("ev_status", std::string{}) == "CALCULATED";
+            const auto consensus = evaluate_consensus(engine, market, phase, decision_time);
+            input.consensus_valid = consensus.first;
+            input.consensus_reason = consensus.second;
             input.correlation_data_valid = !present || correlations.valid;
             const CandidateKey candidate_key{symbol, normalize_direction(engine.value("direction", std::string{}))};
             const auto peer_it = correlations.peer_counts.find(candidate_key);
@@ -250,6 +310,8 @@ inline json build_report(const json& l1, const json& liquidity, const json& meta
                     {"calibration_valid", input.calibration_valid},
                     {"net_ev_r", input.net_ev_r ? json(*input.net_ev_r) : json(nullptr)},
                     {"costs_complete", input.costs_complete},
+                    {"consensus_status", input.consensus_valid ? "CONFIRMED" : "BLOCKED"},
+                    {"consensus_reason", input.consensus_reason},
                     {"correlation_data_status", input.correlation_data_valid ? "AVAILABLE" : "UNAVAILABLE"},
                     {"correlated_candidate_exposures", input.correlated_candidate_exposures},
                     {"shadow_risk_snapshot_status", snapshot_available ? "AVAILABLE" : "UNAVAILABLE"}
@@ -305,7 +367,9 @@ inline json build_fallback_report(const json& meta, const std::string& error_cod
                         {"golden_rule_veto", instrument.value("golden_rule", json::object()).value("veto", true)},
                         {"data_class", engine.value("data_class", std::string{"UNAVAILABLE"})},
                         {"liquidity_ok", false}, {"calibration_valid", false}, {"net_ev_r", nullptr},
-                        {"costs_complete", false}, {"correlation_data_status", "UNAVAILABLE"},
+                        {"costs_complete", false}, {"consensus_status", "BLOCKED"},
+                        {"consensus_reason", "STAGE7_INPUT_UNAVAILABLE"},
+                        {"correlation_data_status", "UNAVAILABLE"},
                         {"correlated_candidate_exposures", 0}, {"shadow_risk_snapshot_status", "UNAVAILABLE"}
                     }}
                 };
