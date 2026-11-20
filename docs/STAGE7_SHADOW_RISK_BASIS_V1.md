@@ -1,0 +1,31 @@
+# Stage 7 — Shadow Risk Basis Contract v1
+
+Status: **CONTRACT ADDED — RISK SNAPSHOT STILL BLOCKED**
+
+## Purpose
+
+V18.2 §37.3 requires the system-level 5% daily and 10% weekly kill-switches to use an explicitly defined research/Shadow equity basis. The denominator must be fixed for each experiment. This contract makes that basis an explicit, versioned input instead of silently assuming a user balance or inventing a denominator from R-multiples.
+
+## Contract rules
+
+- The basis applies only to the system's own shadow portfolio. `user_account_data_used` must be `false`.
+- `initial_nav_units` and `risk_per_trade_pct` are mandatory. There is deliberately no default value.
+- `basis_status` must be `FROZEN`; changing either value requires a new `basis_version` and an explicit supersession record.
+- All timestamps and reset boundaries use UTC. Daily reset is 00:00 UTC; weekly reset is Monday 00:00 UTC.
+- Equity means initial normalized NAV plus realized and marked-unrealized net PnL.
+- Open positions require a fresh closed-candle mark and explicit costs. Missing/stale marks or missing cost provenance make the snapshot `UNAVAILABLE`.
+- Closed outcomes with `cost_status=UNAVAILABLE` cannot be silently treated as zero-cost.
+- PROXY costs must retain their source and assumption labels; a snapshot based on them remains PROXY and cannot be represented as REAL.
+- This contract does not change Stage 6 calibration status, signal gates, kill-switch thresholds, or manual-only execution.
+
+## Why no default NAV or risk unit is embedded
+
+The source defines the required measurement basis but does not prescribe a normalized starting NAV or per-trade risk percentage. Those are experiment configuration values, not universal facts. The schema therefore requires explicit values and rejects omission. A fixture may test arithmetic, but it is not a production configuration.
+
+## Current acceptance
+
+- L1: **BLOCKED** — persistent ledger still contains outcomes with unavailable costs; complete open-position marks/provenance are not yet evidenced.
+- L2: **CONTRACT ONLY** — schema is versioned; no production snapshot builder is claimed by this change.
+- L3: unchanged — Telegram remains the only user-facing channel; no production message is sent by this change.
+- Stage 7 remains **BLOCKED** until the builder consumes this frozen basis and real persistent shadow inputs.
+- Stage 6 remains **NOT_CALIBRATED**; Stage 7 cannot promote candidates while that upstream gate is blocked.
