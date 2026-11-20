@@ -1,0 +1,1 @@
+Verify exact 730 daily metrics archives from 2024-11-20 through 2026-11-19, plus 24 monthly funding, futures and spot kline archives for all six symbols.
