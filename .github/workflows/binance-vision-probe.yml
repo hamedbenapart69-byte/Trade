@@ -15,6 +15,22 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Audit two-year archive index coverage for six symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          for symbol in BTCUSDT ETHUSDT BNBUSDT UNIUSDT ARBUSDT WLDUSDT; do
+            prefix="data/futures/um/daily/metrics/${symbol}/"
+            start_after="data/futures/um/daily/metrics/${symbol}/${symbol}-metrics-2024-11-19.zip"
+            url="https://s3-ap-northeast-1.amazonaws.com/data.binance.vision?list-type=2&prefix=${prefix}&start-after=${start_after}"
+            xml="$(curl --fail --silent --show-error --location --retry 2 "$url")"
+            keys="$(printf '%s' "$xml" | grep -oE '<Key>[^<]+' | sed 's/<Key>//' || true)"
+            count="$(printf '%s\n' "$keys" | sed '/^$/d' | wc -l)"
+            first="$(printf '%s\n' "$keys" | sed -n '1p')"
+            last="$(printf '%s\n' "$keys" | tail -n 1)"
+            truncated="$(printf '%s' "$xml" | grep -oE '<IsTruncated>[^<]+' | sed 's/<IsTruncated>//' || true)"
+            echo "METRICS_ARCHIVE_INDEX symbol=${symbol} count=${count} first=${first} last=${last} truncated=${truncated}"
+          done
       - name: Verify public archive access, checksums and historical coverage
         shell: bash
         run: |
