@@ -60,8 +60,10 @@ inline json build_snapshot(const json& basis, const json& ledger,
     const auto fail = [&](const std::string& reason) {
         return unavailable(reason, basis, ledger, registry, source_run_id, source_scan_id, decision_time_ms);
     };
-    if (decision_time_ms <= 0 || source_run_id.empty() || source_scan_id.empty() || correlated_candidate_exposures < 0)
+    if (decision_time_ms <= 0 || source_run_id.empty() || source_scan_id.empty())
         return fail("RISK_SNAPSHOT_INPUT_INVALID");
+    if (correlated_candidate_exposures < 0)
+        return fail("CORRELATION_DATA_UNAVAILABLE");
 
     if (basis.value("artifact_type", std::string{}) != "cfss_shadow_risk_basis_v1" ||
         basis.value("schema_version", std::string{}) != "1.0.0" ||
