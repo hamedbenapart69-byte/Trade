@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
                 {"split", "CHRONOLOGICAL_60_20_20_PROVISIONAL_INTERNAL"},
                 {"split_is_canonical_requirement", false},
                 {"sample_size_policy", "PROVISIONAL_INTERNAL_GUARD_WITH_VALIDATION_BASED_POWER_ESTIMATE"},
-                {"power_analysis_method", "THREE_WAY_CLUSTER_SE_VALIDATION_PROXY"},
+                {"power_analysis_method", "MAX_OF_ONE_WAY_CLUSTER_SE_VALIDATION_PROXY"},
                 {"power_analysis_status", "PER_COHORT_AT_RUNTIME"},
                 {"target_brier_improvement_provisional", 0.01},
                 {"power_alpha", 0.05},
