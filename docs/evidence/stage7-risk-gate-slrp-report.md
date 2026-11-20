@@ -1,32 +1,67 @@
 # STAGE 7 — CONSENSUS, RISK, MANUAL EXECUTION GATE (V18.2)
-**Implementation:** risk-policy core v1 added; CI acceptance pending.
-**Stage status:** BLOCKED — upstream paths and real risk inputs unavailable.
-**Execution:** permanently forbidden by this system; manual review only.
 
-## Scope
-- Fail-closed risk gate: Golden Rule, candidate existence, actionability prohibition, REAL data, liquidity, calibration, positive net EV, explicit costs and valid risk snapshot.
-- G7 daily loss >=5% or weekly loss >=10% blocks.
-- Portfolio drawdown >20% blocks.
-- G5: 3+ correlated open exposures blocks.
-- No order endpoint, account connection, credentials or execution permission.
+**v1 policy core:** ENGINEERING PASS  
+**Overall stage:** BLOCKED — internal shadow-risk L1 is incomplete  
+**Operational status:** FAIL-CLOSED / NO SIGNAL PROMOTION  
+**Execution:** permanently forbidden; the user reviews signals and places any trade manually.
+
+## Acceptance criteria
+
+- Golden Rule precedence and independent LRT/NMT consensus.
+- Candidate existence, REAL/PROXY data classification, liquidity, calibration and positive net EV checks.
+- Daily loss limit 5%, weekly loss limit 10%, portfolio drawdown limit 20%.
+- G5 counts at most three same-direction correlated exposures above 0.70, including already-open internal shadow positions.
+- Risk snapshot must describe only the system's own shadow portfolio.
+- Every output remains `actionable=false` and `trade_execution_allowed=false`.
+- Telegram is the only delivery channel.
 
 ## Three layers
-- L1: Portfolio risk snapshot is UNAVAILABLE. Public market data cannot prove account exposure, losses, or drawdown; no account connector is allowed.
-- L2: deterministic C++ policy gate and tests.
-- L3: Telegram-only intended. No delivery triggered without valid inputs.
 
-## SLRP
-- v1: policy core and deterministic unit tests; CI verifies C++ build, full CTest, JSON schema, static policy guards.
-- Acceptance: engineering CI pending; live-input acceptance blocked.
-- Diagnosis: D1 missing risk snapshot/calibration/EV; D2 user portfolio values cannot be inferred.
-- v2/v3 NOT BUILT; no measured v1 failure (R11).
-- Active: v1 policy core, operationally blocked.
-- Escalation: no promotion until valid non-account-connected risk snapshot and Stage 6 calibrated evidence exist.
-- Budget: maximum three versions, no threshold relaxation.
+- **L1 DATA — INCOMPLETE:** no internal shadow-risk snapshot builder is connected yet. This is not a request for user balances or exchange account data. The snapshot must be derived from the system's own costed shadow outcome ledger and pending/open shadow positions.
+- **L2 COMPUTE — v1 PASS:** deterministic C++ risk gate, Golden Rule precedence, independent LRT/NMT consensus, 90-day same-direction candidate correlation and fail-closed fallback.
+- **L3 DELIVERY — integration PASS:** Stage 6 + Stage 7 workflow run `44726308730` generated and schema-validated the Stage 7 artifact and delivered Telegram message `75` with HTTP 200.
 
-## Self-critique
-1. Future data? Gate receives no time-series; upstream must be as-of.
-2. Parameters tuned? None.
-3. Costs? Mandatory explicit.
-4. No-candidate reporting? Explicit block reason.
-5. Weakest assumption? Risk inputs are unverified without account data; user-provided values would require validation.
+## v1 — PARTIAL PASS / OVERALL FAIL
+
+Engineering evidence:
+- Stage 7 C++ workflow: full build and 14/14 CTest passed.
+- Both Stage 7 JSON Schemas compiled.
+- Fail-closed guards passed.
+- Integrated Stage 6 + Stage 7 Telegram delivery succeeded.
+
+Live evidence from run `44726308730`:
+- `risk_snapshot_status=UNAVAILABLE`.
+- `candidate_count=0`; `actionable_count=0`.
+- `trade_execution_allowed=false`.
+- No live candidate was available to exercise the gate end-to-end.
+
+### Diagnosis
+
+- **D1 — Data:** the internal shadow-risk snapshot is not produced.
+- **D3 — Implementation:** current G5 counts correlated candidates in the current scan but does not yet include already-open shadow positions from the persistent registry.
+- **D1/D3 — Dependency:** Stage 6 has only 5 outcomes and costs are unavailable; a reliable shadow equity curve cannot yet be calculated.
+
+No user account data may be substituted for these missing internal records.
+
+## v2 — planned after Stage 6 v2 costed ledger
+
+Core assumption: risk is measured from the system's own shadow portfolio, not from a user's real exchange account.
+
+Planned implementation:
+1. Build a provenance-bound internal shadow-risk snapshot from costed closed outcomes and open/pending shadow positions.
+2. Record daily and weekly net loss, rolling portfolio drawdown, open exposure count, and source ledger/registry hashes.
+3. Include already-open same-direction exposures in the G5 correlation count.
+4. Keep the gate blocked if cost coverage, risk-unit definition, portfolio history or position state is incomplete.
+5. Preserve all kill-switch thresholds; no relaxation.
+
+**v2 status:** not yet built. Stage 6 v2 must first provide auditable costs and a valid shadow outcome ledger.
+
+## v3
+
+Not built. R11 prohibits v3 unless v2 records a real FAIL with specific evidence.
+
+## Handoff
+
+- v1 policy core remains active and fail-closed.
+- Overall Stage 7 remains BLOCKED until L1 shadow-risk snapshot and open-exposure coverage pass.
+- No BUY/SELL promotion, no user account connection, no trading keys and no order execution.
