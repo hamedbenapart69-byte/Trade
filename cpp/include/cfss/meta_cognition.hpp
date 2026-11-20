@@ -19,7 +19,7 @@ struct CandidateEvaluation {
 };
 
 // کالیبراسیون هر مسیر/رژیم باید مستقل از وجود کاندیدای تازه به‌روزرسانی شود.
-inline CandidateEvaluation evaluate_candidate(
+inline CandidateEvaluation evaluate_calibration_continuously(
     const json& candidate,
     const std::string& regime,
     const std::vector<Outcome>& outcomes,
@@ -34,8 +34,9 @@ inline CandidateEvaluation evaluate_candidate(
         (path == "PLAN_A_NMT" ? std::string{"NSS_V2_PROXY"} : std::string{"UNAVAILABLE"}));
     result.calibration.score_model_version = score_model_version;
 
-    const auto score = candidate.contains("score") && candidate.at("score").is_number()
-        ? std::optional<double>{candidate.at("score").get<double>()} : std::nullopt;
+    std::optional<double> score;
+    if (candidate.contains("score") && candidate.at("score").is_number())
+        score = candidate.at("score").get<double>();
     const bool is_candidate = result.candidate_status == "CANDIDATE";
 
     if (is_candidate &&
