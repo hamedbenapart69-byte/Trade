@@ -107,21 +107,28 @@ inline Metrics summarize(const std::vector<Trade>& trades,double risk_fraction) 
  const double z=1.959963984540054,den=1+z*z/n,center=(*m.win_rate+z*z/(2*n))/den;
  const double margin=z*std::sqrt((*m.win_rate*(1-*m.win_rate)/n)+z*z/(4*n*n))/den;
  m.ci_low=std::max(0.0,center-margin); m.ci_high=std::min(1.0,center+margin);
- if(gl>0)m.pf=gp/gl; m.expectancy_r=sum/n; m.max_dd_pct=dd*100;
+ if(gl>0) { m.pf=gp/gl; }
+ m.expectancy_r=sum/n; m.max_dd_pct=dd*100;
  if(daily.size()>1) {
   std::vector<double> v; const auto first_day=daily.begin()->first, last_day=daily.rbegin()->first;
   for(auto d=first_day;d<=last_day;++d)v.push_back(daily.contains(d)?daily.at(d):0.0);
   const double mean=std::accumulate(v.begin(),v.end(),0.0)/double(v.size()); double var=0;
-  for(double a:v)var+=(a-mean)*(a-mean); var/=double(v.size()-1);
+  for(double a:v) { var+=(a-mean)*(a-mean); }
+  var/=double(v.size()-1);
   if(var>0)m.sharpe=mean/std::sqrt(var)*std::sqrt(365.0);
  }
  return m;
 }
 inline Json metric_json(const Metrics& m) {
  return Json{{"trades",m.trades},{"wins",m.wins},{"losses",m.losses},{"censored",m.censored},
- {"win_rate",m.win_rate},{"win_rate_ci95_low",m.ci_low},{"win_rate_ci95_high",m.ci_high},
- {"net_profit_factor",m.pf},{"net_expectancy_r",m.expectancy_r},{"max_drawdown_pct",m.max_dd_pct},
- {"sharpe_oos",m.sharpe},{"dsr_status",m.dsr},{"pbo_status",m.pbo},{"brier_status",m.brier}};
+ {"win_rate",m.win_rate?Json(*m.win_rate):Json(nullptr)},
+ {"win_rate_ci95_low",m.ci_low?Json(*m.ci_low):Json(nullptr)},
+ {"win_rate_ci95_high",m.ci_high?Json(*m.ci_high):Json(nullptr)},
+ {"net_profit_factor",m.pf?Json(*m.pf):Json(nullptr)},
+ {"net_expectancy_r",m.expectancy_r?Json(*m.expectancy_r):Json(nullptr)},
+ {"max_drawdown_pct",m.max_dd_pct?Json(*m.max_dd_pct):Json(nullptr)},
+ {"sharpe_oos",m.sharpe?Json(*m.sharpe):Json(nullptr)},
+ {"dsr_status",m.dsr},{"pbo_status",m.pbo},{"brier_status",m.brier}};
 }
 inline Report run(const Input& x) {
  validate(x); Report r{}; r.dataset_id=x.dataset_id;
