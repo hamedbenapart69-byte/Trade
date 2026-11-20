@@ -47,3 +47,8 @@ The scheduled Stage 6 workflow now invokes the builder before Stage 7 and persis
 ## Current stage disposition
 
 The builder and contract are implementation work, not a Stage 7 PASS. Acceptance still requires a valid frozen basis, complete costed persistent history, open-position mark-to-market coverage, independent C++/CI evidence, and an upstream Stage 6 calibration gate that is no longer `NOT_CALIBRATED`.
+
+
+### Entry-time provenance
+
+The Shadow candidate registry now records `entry_fill_time_ms` when a proxy fill is first observed. Legacy filled pending candidates without this timestamp remain non-markable and must keep the snapshot `UNAVAILABLE`; no timestamp is inferred from decision time or later candles.
