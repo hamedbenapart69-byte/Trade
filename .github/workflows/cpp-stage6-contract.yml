@@ -47,6 +47,11 @@ jobs:
           grep -Fq 'NOT_EXECUTED' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'cost_status' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'fee_r' cpp/include/cfss/shadow_outcomes.hpp
+          grep -Fq 'cp stage6-evidence/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json' .github/workflows/cpp-stage6-meta-cognition-v1.yml
+          grep -Fq 'gzip -n -9 -c stage6-evidence/liquidity-phase.v1.json' .github/workflows/cpp-stage6-meta-cognition-v1.yml
+          grep -Fq 'gzip -t signals-state/cpp_runtime/liquidity_stage5_v1.json.gz' .github/workflows/cpp-stage6-meta-cognition-v1.yml
+          grep -Fq 'liquidity_stage5_v1.json.sha256' .github/workflows/cpp-stage6-meta-cognition-v1.yml
+          grep -Fq 'rm -f signals-state/cpp_runtime/liquidity_stage5_v1.json' .github/workflows/cpp-stage6-meta-cognition-v1.yml
           for schema in contracts/*.schema.json; do jq -e . "$schema" >/dev/null; done
           echo "ALL_SCHEMA_JSON_PARSE_PASS"
           echo "STAGE6_POLICY_GUARDS_PASS"
