@@ -52,3 +52,10 @@ The builder and contract are implementation work, not a Stage 7 PASS. Acceptance
 ### Entry-time provenance
 
 The Shadow candidate registry now records `entry_fill_time_ms` when a proxy fill is first observed. Legacy filled pending candidates without this timestamp remain non-markable and must keep the snapshot `UNAVAILABLE`; no timestamp is inferred from decision time or later candles.
+
+
+### Entry-NAV reconstruction guard
+
+Each closed Shadow outcome now carries `entry_fill_time_ms`, sourced from the first recorded resolution candle. Legacy outcomes are upgraded only when that timestamp is present in their stored `resolution_bars`; no decision-time substitution is permitted.
+
+The snapshot builder rejects any overlap between closed-position intervals with `OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE`. Without a recorded NAV at each entry, applying the current NAV at close would misstate the position's risk amount whenever another position closes while it is open. Non-overlapping intervals permit sequential reconstruction; overlapping intervals remain unavailable until explicit entry-NAV/risk-unit provenance or a correct portfolio mark-to-market ledger is implemented.
