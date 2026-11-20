@@ -106,8 +106,10 @@ inline CorrelationSummary candidate_correlations(const json& l1, const json& met
             const auto status = engine.value("candidate_status", std::string{});
             const bool present = status == "CANDIDATE" || status == "EV_POSITIVE_RESEARCH_ONLY";
             if (!present) continue;
-            const auto direction = engine.value("direction", std::string{});
-            if (symbol.empty() || (direction != "BUY" && direction != "SELL"))
+            auto direction = engine.value("direction", std::string{});
+            if (direction == "BUY") direction = "LONG";
+            if (direction == "SELL") direction = "SHORT";
+            if (symbol.empty() || (direction != "LONG" && direction != "SHORT"))
                 return {false, {}};
             candidates.insert({symbol, direction});
         }
