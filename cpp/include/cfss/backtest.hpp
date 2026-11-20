@@ -44,8 +44,8 @@ inline std::int64_t add_months(std::int64_t ms,int count) {
 }
 inline void validate(const Input& x) {
  if(x.dataset_id.empty()) throw std::invalid_argument("DATASET_ID_REQUIRED");
- if(!std::isfinite(x.risk_fraction)||x.risk_fraction<=0||x.risk_fraction>0.05) throw std::invalid_argument("RISK_FRACTION_INVALID");
- auto cost=[](double v){return std::isfinite(v)&&v>=0&&v<=0.05;};
+ if(!std::isfinite(x.risk_fraction)||x.risk_fraction<=0) throw std::invalid_argument("RISK_FRACTION_INVALID");
+ auto cost=[](double v){return std::isfinite(v)&&v>=0;};
  if(!cost(x.costs.entry_fee)||!cost(x.costs.exit_fee)||!cost(x.costs.entry_slippage)||!cost(x.costs.exit_slippage)||!cost(x.costs.funding_per_8h)) throw std::invalid_argument("COST_INPUT_INVALID");
  if(x.bars.empty()) throw std::invalid_argument("OHLCV_REQUIRED");
  for(const auto& [s,v]:x.bars) {
@@ -72,7 +72,7 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
  if(it==bars.end()||it->ts>=end_ms) return std::nullopt;
  const bool lng=c.direction=="LONG";
  const double fill=it->open*(lng?1+x.costs.entry_slippage:1-x.costs.entry_slippage);
- const double risk=std::abs(c.entry-c.stop); if(risk<=0||fill<=0) return std::nullopt;
+ const double risk=std::abs(fill-c.stop); if(risk<=0||fill<=0) return std::nullopt;
  double exit=0; std::int64_t exit_ms=0; std::string outcome="TIME_EXIT"; std::size_t held=0;
  const auto available=static_cast<std::size_t>(std::distance(it,bars.end()));
  const auto count=std::min(c.max_bars,available);
@@ -96,8 +96,9 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
 }
 inline Metrics summarize(const std::vector<Trade>& trades,double risk_fraction) {
  Metrics m{}; m.trades=trades.size(); if(trades.empty()) return m;
+ auto ordered=trades; std::sort(ordered.begin(),ordered.end(),[](const Trade& a,const Trade& b){return a.exit_ms<b.exit_ms;});
  double gp=0,gl=0,sum=0,equity=1,peak=1,dd=0; std::map<std::int64_t,double> daily;
- for(const auto& t:trades) {
+ for(const auto& t:ordered) {
   if(t.net_r>0){++m.wins;gp+=t.net_r;} else if(t.net_r<0){++m.losses;gl+=std::abs(t.net_r);}
   sum+=t.net_r; equity*=std::max(0.0,1+t.net_r*risk_fraction); peak=std::max(peak,equity); if(peak>0) dd=std::max(dd,(peak-equity)/peak);
   daily[t.exit_ms/86400000LL]+=t.net_r*risk_fraction;
@@ -108,7 +109,8 @@ inline Metrics summarize(const std::vector<Trade>& trades,double risk_fraction) 
  m.ci_low=std::max(0.0,center-margin); m.ci_high=std::min(1.0,center+margin);
  if(gl>0)m.pf=gp/gl; m.expectancy_r=sum/n; m.max_dd_pct=dd*100;
  if(daily.size()>1) {
-  std::vector<double> v; for(const auto& [d,p]:daily){(void)d;v.push_back(p);}
+  std::vector<double> v; const auto first_day=daily.begin()->first, last_day=daily.rbegin()->first;
+  for(auto d=first_day;d<=last_day;++d)v.push_back(daily.contains(d)?daily.at(d):0.0);
   const double mean=std::accumulate(v.begin(),v.end(),0.0)/double(v.size()); double var=0;
   for(double a:v)var+=(a-mean)*(a-mean); var/=double(v.size()-1);
   if(var>0)m.sharpe=mean/std::sqrt(var)*std::sqrt(365.0);
@@ -127,20 +129,22 @@ inline Report run(const Input& x) {
  for(const auto& [s,v]:x.bars){(void)s;first=std::min(first,v.front().ts);last=std::max(last,v.back().ts);}
  std::vector<Trade> lrt_all,nmt_all; std::set<std::string> seen;
  for(std::int64_t start=add_months(first,6);add_months(start,2)<=last;start=add_months(start,1)) {
-  Fold f{}; f.train_start=first; f.test_start=start; f.test_end=add_months(start,2);
-  std::vector<Trade> lrt,nmt;
+  Fold f{}; f.train_start=add_months(start,-6); f.test_start=start; f.test_end=add_months(start,2);
+  std::vector<Trade> lrt,nmt; std::size_t lrt_censored=0,nmt_censored=0;
   for(const auto& c:x.candidates) {
    if(c.signal_ms<start||c.signal_ms>=f.test_end||c.registered_ms>start) continue;
    const auto t=simulate(x,c,f.test_end);
-   if(!t){if(c.path=="PLAN_A_LRT")++f.lrt.censored;else ++f.nmt.censored;continue;}
+   if(!t){if(c.path=="PLAN_A_LRT")++lrt_censored;else ++nmt_censored;continue;}
    (c.path=="PLAN_A_LRT"?lrt:nmt).push_back(*t);
    if(seen.insert(c.id).second)(c.path=="PLAN_A_LRT"?lrt_all:nmt_all).push_back(*t);
   }
   f.lrt=summarize(lrt,x.risk_fraction); f.nmt=summarize(nmt,x.risk_fraction);
+  f.lrt.censored=lrt_censored; f.nmt.censored=nmt_censored;
   r.folds.push_back(f);
  }
  r.lrt=summarize(lrt_all,x.risk_fraction); r.nmt=summarize(nmt_all,x.risk_fraction);
- r.data_class="REAL_ONLY_IF_EVERY_CANDIDATE_AND_BAR_IS_VERIFIED_REAL";
+ bool any_real=false,any_proxy=false; for(const auto& c:x.candidates){any_real=any_real||c.data_class=="REAL";any_proxy=any_proxy||c.data_class=="PROXY";}
+ r.data_class=any_proxy?(any_real?"MIXED_CANDIDATE_CLASSES":"PROXY_CANDIDATES"):(any_real?"REAL_CANDIDATE_CLASSES_BAR_PROVENANCE_UNVERIFIED":"NO_CANDIDATES");
  r.status="ENGINEERING_REPORT_ONLY";
  return r;
 }
