@@ -1,0 +1,26 @@
+name: Dashboard Webhook Proxy Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "functions/api/dashboard-read-api.js"
+      - "tests/dashboard-read-api.test.mjs"
+      - ".github/workflows/dashboard-proxy-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  proxy-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test proxy authentication and fail-closed behavior
+        run: node --test tests/dashboard-read-api.test.mjs
