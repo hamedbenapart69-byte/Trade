@@ -1,0 +1,1 @@
+Probe historical USD-M futures metrics, funding, futures klines and spot klines for ETH, BNB, UNI, ARB and WLD. Verify SHA-256 for every available archive; record missing files explicitly.
