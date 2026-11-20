@@ -179,7 +179,7 @@ json calibration_json(const cfss::meta::CalibrationReport& report) {
 json evaluate_candidate(const json& candidate, const std::string& regime,
                         const std::vector<cfss::meta::Outcome>& outcomes,
                         bool ledger_available, std::int64_t decision_time) {
-    const auto evaluated = cfss::meta::evaluate_candidate(
+    const auto evaluated = cfss::meta::evaluate_calibration_continuously(
         candidate, regime, outcomes, ledger_available, decision_time);
     const auto& report = evaluated.calibration;
     const auto path = candidate.value("path", std::string{"UNKNOWN"});
