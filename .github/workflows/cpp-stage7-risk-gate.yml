@@ -52,7 +52,7 @@ jobs:
           grep -Fq 'user_account_data_used' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'build_fallback_report' cpp/include/cfss/risk_gate_pipeline.hpp
           grep -Fq 'STAGE7_INPUT_UNAVAILABLE' cpp/include/cfss/risk_gate_pipeline.hpp
-          grep -Fq 'cfss::meta::evaluate_candidate' cpp/apps/meta_cognition_probe/main.cpp
+          grep -Fq 'cfss::meta::evaluate_calibration_continuously' cpp/apps/meta_cognition_probe/main.cpp
           grep -Fq 'if (!is_candidate)' cpp/include/cfss/meta_cognition.hpp
           grep -Fq 'SHADOW_COST_PROXY_V1' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'OKX_PUBLIC_FUNDING_HISTORY' cpp/include/cfss/shadow_outcomes.hpp
