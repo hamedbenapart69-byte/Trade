@@ -36,6 +36,17 @@ nlohmann::json fixture_l1(std::initializer_list<nlohmann::json> candles,
     };
 }
 
+nlohmann::json fixture_l1_with_funding(nlohmann::json l1) {
+    auto& instrument = l1["instruments"][0];
+    instrument["availability"] = {{"funding", "AVAILABLE"}};
+    instrument["coverage"] = {{"funding_coverage_days", 30.0}};
+    instrument["funding"] = nlohmann::json::array({
+        {{"timestamp_ms", 3'600'000LL}, {"funding_rate", 0.0001}},
+        {{"timestamp_ms", 7'200'000LL}, {"funding_rate", 0.0001}}
+    });
+    return l1;
+}
+
 nlohmann::json fixture_l1_15m(std::initializer_list<nlohmann::json> candles,
                               std::int64_t end_ms) {
     const nlohmann::json instruments = nlohmann::json::array({
@@ -131,6 +142,39 @@ int main() {
             target_row.at("resolution_data_sha256").get<std::string>().size() == 64U &&
             target_row.at("resolution_bars").size() == 2U,
             "LRT outcome retains profile, 15m source fingerprint and exact resolution bars");
+
+    const auto costed_l1 = fixture_l1_with_funding(target_l1);
+    const auto costed_target = cfss::shadow::process(
+        costed_l1, fixture_l1_15m({
+            candle(3'600'000LL, 101.0, 99.0, 100.5),
+            candle(4'500'000LL, 105.0, 99.5, 104.0)
+        }, 10'800'000LL),
+        fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    const auto& costed_row = costed_target.at("ledger").at("outcomes").front();
+    require(costed_row.at("cost_status") == "PROXY" &&
+            costed_row.at("cost_model_id") == "SHADOW_COST_PROXY_V1" &&
+            std::abs(costed_row.at("fee_r").get<double>() - 0.04) < 1e-9 &&
+            std::abs(costed_row.at("slippage_r").get<double>() - 0.10) < 1e-9 &&
+            std::abs(costed_row.at("funding_r").get<double>() - 0.005) < 1e-9,
+            "proxy costs use explicit fee, conservative slippage and signed real funding in R");
+
+    const auto short_costs = cfss::shadow::calculate_shadow_costs(
+        costed_l1.at("instruments").front(), "SHORT", 100.0, 102.0,
+        3'600'000LL, 5'400'000LL);
+    require(short_costs.available && short_costs.funding_r < 0.0,
+            "positive funding is a credit, not a cost, for a short position");
+
+    auto backfill_ledger = target.at("ledger");
+    const auto backfilled = cfss::shadow::process(
+        costed_l1, fixture_l1_15m({}, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        target.at("registry"), backfill_ledger);
+    const auto& backfilled_row = backfilled.at("ledger").at("outcomes").front();
+    require(backfilled_row.at("cost_status") == "PROXY" &&
+            backfilled.at("ledger").at("cost_backfilled_this_run") == 1U &&
+            backfilled_row.contains("cost_source_l1_sha256"),
+            "legacy unresolved cost rows are backfilled with traceable current funding provenance");
 
     auto legacy_ledger = target.at("ledger");
     legacy_ledger["outcomes"][0].erase("score_model_version");
