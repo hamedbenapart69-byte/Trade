@@ -94,6 +94,12 @@ int main() {
     check(report["instruments"][0]["engines"]["lrt"]["reason"]=="RISK_SNAPSHOT_INVALID_OR_MISSING",
           "user account data cannot be used as a risk snapshot");
 
+    auto lrt_liq=base_liquidity();
+    lrt_liq["instruments"][0]["nearest_support"]=nullptr;
+    auto lrt_consensus=cfss::risk::build_report(base_l1(),lrt_liq,meta,l1_raw,liquidity_raw,available_snapshot());
+    check(lrt_consensus["instruments"][0]["engines"]["lrt"]["reason"]=="CONSENSUS_LIQUIDITY_ZONE_NOT_ALIGNED",
+          "LRT consensus vetoes a missing direction-aligned demand zone");
+
     // NMT requires a direction-aligned market phase plus 30 days of funding and OI coverage.
     auto nmt_meta=base_meta();
     nmt_meta["instruments"][0]["nmt"]["candidate_status"]="CANDIDATE";
