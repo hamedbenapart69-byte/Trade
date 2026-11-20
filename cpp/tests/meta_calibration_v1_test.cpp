@@ -98,7 +98,7 @@ int main() {
 
     auto correlated = outcomes;
     for (std::size_t i = 0U; i < correlated.size(); ++i) {
-        correlated[i].source_scan_id = "scan-block-" + std::to_string(i / 100U);
+        correlated[i].source_scan_id = "scan-block-" + std::to_string(i / 150U);
         correlated[i].symbol = "symbol-block-" + std::to_string(i / 50U);
     }
     const auto correlated_result = cfss::meta::calibrate(
