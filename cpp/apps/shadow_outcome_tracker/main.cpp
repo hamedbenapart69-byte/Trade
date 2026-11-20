@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
                   << " COST_UNAVAILABLE=" << unavailable_costs
                   << " COST_BACKFILLED=" << ledger_out.value("cost_backfilled_this_run", 0U)
                   << " COST_MODEL=" << ledger_out.value("cost_model", json::object()).value("id", "UNAVAILABLE")
-                  << "\\n";
+                  << "\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "SHADOW_TRACKER_ERROR=" << error.what() << '\n';
