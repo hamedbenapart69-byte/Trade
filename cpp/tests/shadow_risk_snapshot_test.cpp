@@ -37,6 +37,7 @@ json outcome(const std::string& id, std::int64_t closed, double win_r, double lo
         {"slippage_r",0.1},{"funding_r",0.0},{"data_class","PROXY"},
         {"cost_status","PROXY"},{"symbol","BTC/USDT:USDT"},{"direction","LONG"},
         {"entry_reference",100.0},{"entry_fill_reference",100.0},
+        {"entry_fill_time_ms",closed-1'000LL},
         {"entry_model","NEXT_BAR_OPEN_PROXY"},{"execution_status","NOT_EXECUTED"},
         {"stop_reference",99.0},{"target_reference",102.0},{"exit_reference",101.0},
         {"decision_time_ms",closed-3'600'000LL},{"resolution","TARGET"},
@@ -89,6 +90,21 @@ int main() {
           "current UTC day loss is measured against day-start shadow NAV");
     check(s["weekly_loss_pct"].get<double>()==0.0,
           "profitable current ISO week has no weekly loss");
+
+    auto overlapping=l;
+    overlapping["outcomes"][1]["entry_fill_time_ms"] =
+        overlapping["outcomes"][0]["entry_fill_time_ms"].get<std::int64_t>() + 1'000LL;
+    blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE",
+          "overlapping trades fail closed when entry NAV cannot be reconstructed");
+
+    auto missing_entry_time=l;
+    missing_entry_time["outcomes"][0].erase("entry_fill_time_ms");
+    blocked=cfss::shadow_risk::build_snapshot(b,missing_entry_time,r,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="OUTCOME_TIME_OR_ID_INVALID",
+          "missing entry-time provenance cannot be inferred");
 
     auto bad_ledger=l;
     bad_ledger["outcomes"][0]["cost_status"]="UNAVAILABLE";
