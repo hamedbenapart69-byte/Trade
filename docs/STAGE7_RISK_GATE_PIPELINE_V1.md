@@ -2,8 +2,9 @@
 
 **Specification:** V18.2 + explicitly accepted project amendments  
 **Branch:** `integration/stage7-risk-gate-pipeline-v1`  
-**Implementation status:** CI VALIDATION PENDING  
-**Operational status:** FAIL-CLOSED / NOT RELEASE-ELIGIBLE  
+**Implementation status:** ENGINEERING PASS (C++ Stage 7 workflow 44722832317; 14/14 CTest; schema compilation and fail-closed guards passed)  
+**Operational status:** FAIL-CLOSED / SIGNAL PROMOTION BLOCKED
+**Live Telegram delivery:** Pending execution of the updated scheduled workflow on `main`  
 **Production:** No merge or scheduled deployment performed by this change set.
 
 ## Objective
@@ -90,6 +91,12 @@ V1 only. Maximum three versions under the governing SLRP. No threshold relaxatio
 4. No-signal case reported? Yes; each engine receives a deterministic reason code.
 5. Weakest assumption? The internal shadow-risk snapshot is not yet generated from a sufficiently valid shadow portfolio history.
 
+## Evidence
+
+- GitHub Actions run `44722832317`: C++ Stage 7 build, Stage 6 workflow YAML parse, 14/14 CTest, both JSON Schema compiles and fail-closed guards all PASS.
+- GitHub Actions run `44722832344`: repository CI PASS.
+- These are branch CI results. They do not prove that the updated scheduled Stage 6 + Stage 7 workflow has delivered a real Telegram message.
+
 ## Current decision
 
-`ENGINEERING_PENDING`; `STRATEGY_RELEASE_BLOCKED`; `TELEGRAM_LIVE_DELIVERY_NOT_VERIFIED`. No BUY/SELL authorization and no execution.
+`ENGINEERING_PASS`; `STRATEGY_RELEASE_BLOCKED`; `TELEGRAM_LIVE_DELIVERY_PENDING`. No BUY/SELL authorization and no execution.
