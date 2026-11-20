@@ -28,11 +28,12 @@ Input ready() {
     x.calibration_valid = true;
     x.net_ev_r = 0.15;
     x.costs_complete = true;
+    x.correlation_data_valid = true;
     x.risk_snapshot_valid = true;
     x.daily_loss_pct = 1.0;
     x.weekly_loss_pct = 2.0;
     x.portfolio_drawdown_pct = 10.0;
-    x.correlated_open_exposures = 1;
+    x.correlated_candidate_exposures = 1;
     return x;
 }
 } // namespace
