@@ -73,7 +73,7 @@ jobs:
           if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
             cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
           fi
-          ./build/market_pipeline --collect-okx 100 2 \
+          ./build/market_pipeline --collect-okx 10 1 \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
