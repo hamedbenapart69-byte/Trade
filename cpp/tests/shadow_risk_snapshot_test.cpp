@@ -121,6 +121,21 @@ int main() {
           blocked["reason"]=="OPEN_SHADOW_POSITION_MARK_UNAVAILABLE",
           "filled open shadow position blocks without mark-to-market data");
 
+    // افت روزانه/هفتگی حتی پس از بازیابی در همان دوره باید sticky بماند.
+    auto recovery_ledger=ledger();
+    recovery_ledger["outcomes"]=json::array({
+        outcome("loss-before-recovery",day+10'000,0.0,10.0),
+        outcome("win-after-recovery",day+20'000,10.0,0.0)
+    });
+    auto recovered=cfss::shadow_risk::build_snapshot(
+        b,recovery_ledger,r,"run-1","scan-1",day+30'000,0);
+    check(recovered["status"]=="AVAILABLE",
+          "non-overlapping loss and recovery outcomes produce a valid snapshot");
+    check(recovered["daily_loss_pct"].get<double>()>=5.0,
+          "daily kill-switch breach remains visible after same-day recovery");
+    check(recovered["weekly_loss_pct"].get<double>()>=5.0,
+          "weekly loss remains visible after same-week recovery");
+
     auto unfrozen=b; unfrozen["basis_status"]="DRAFT";
     blocked=cfss::shadow_risk::build_snapshot(unfrozen,l,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
