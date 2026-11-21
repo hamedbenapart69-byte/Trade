@@ -102,12 +102,12 @@ inline json build_snapshot(const json& basis, const json& ledger,
         return fail("SHADOW_CANDIDATE_REGISTRY_UNAVAILABLE");
 
     // هر fill باید دقیقاً یک outcome بسته و قابل‌ردیابی داشته باشد؛ state به‌تنهایی کافی نیست.
-    std::set<std::string> candidate_ids;
+    std::map<std::string, const json*> candidate_by_id;
     std::set<std::string> resolved_candidate_ids;
     for (const auto& candidate : registry.at("candidates")) {
         const auto signal_id = candidate.value("signal_id", std::string{});
         const auto state = candidate.value("state", std::string{});
-        if (signal_id.empty() || !candidate_ids.insert(signal_id).second)
+        if (signal_id.empty() || !candidate_by_id.emplace(signal_id, &candidate).second)
             return fail("SHADOW_CANDIDATE_ID_INVALID_OR_DUPLICATE");
         const bool has_fill = candidate.contains("entry_fill_reference") &&
             candidate.at("entry_fill_reference").is_number() &&
@@ -133,11 +133,36 @@ inline json build_snapshot(const json& basis, const json& ledger,
         const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
         const auto entry_at = outcome.value("entry_fill_time_ms", std::int64_t{0});
         const auto signal_id = outcome.value("signal_id", std::string{});
+        const auto candidate_it = candidate_by_id.find(signal_id);
         if (entry_at < basis.at("effective_from_ms").get<std::int64_t>() ||
             entry_at <= 0 || closed < entry_at || closed > decision_time_ms ||
-            signal_id.empty() || !candidate_ids.contains(signal_id) ||
+            signal_id.empty() || candidate_it == candidate_by_id.end() ||
             !ids.insert(signal_id).second)
             return fail("OUTCOME_TIME_OR_ID_INVALID");
+
+        const auto& candidate = *candidate_it->second;
+        if (candidate.value("state", std::string{}) != "RESOLVED")
+            return fail("OUTCOME_CANDIDATE_STATE_MISMATCH");
+        const auto same_price = [](const json& left, const json& right) {
+            if (!left.is_number() || !right.is_number()) return false;
+            const double a = left.get<double>();
+            const double b = right.get<double>();
+            return std::isfinite(a) && std::isfinite(b) &&
+                std::abs(a - b) <= std::max(1e-10, std::abs(a) * 1e-9);
+        };
+        if (candidate.value("symbol", std::string{}) != outcome.value("symbol", std::string{}) ||
+            candidate.value("direction", std::string{}) != outcome.value("direction", std::string{}) ||
+            candidate.value("profile", std::string{}) != outcome.value("profile", std::string{}) ||
+            !same_price(candidate.value("entry_fill_reference", json{}),
+                        outcome.value("entry_fill_reference", json{})) ||
+            !same_price(candidate.value("stop_reference", json{}),
+                        outcome.value("stop_reference", json{})))
+            return fail("OUTCOME_CANDIDATE_FIELD_MISMATCH");
+        if (candidate.contains("entry_fill_time_ms") &&
+            !candidate.at("entry_fill_time_ms").is_null() &&
+            (!candidate.at("entry_fill_time_ms").is_number_integer() ||
+             candidate.at("entry_fill_time_ms").get<std::int64_t>() != entry_at))
+            return fail("OUTCOME_CANDIDATE_FILL_TIME_MISMATCH");
         if (outcome.value("execution_status", std::string{}) != "NOT_EXECUTED" ||
             outcome.value("outcome_kind", std::string{}) != "HYPOTHESIS_PROXY" ||
             outcome.value("profile", std::string{}) != basis.value("profile", std::string{}) ||
@@ -183,6 +208,7 @@ inline json build_snapshot(const json& basis, const json& ledger,
 
     double nav = basis.at("initial_nav_units").get<double>();
     double high_water = nav;
+    double max_portfolio_drawdown_pct = 0.0;
     double day_start_nav = nav;
     double week_start_nav = nav;
     double max_daily_loss_pct = 0.0;
@@ -217,6 +243,8 @@ inline json build_snapshot(const json& basis, const json& ledger,
         nav += pnl;
         if (!std::isfinite(nav) || nav <= 0.0) return fail("SHADOW_NAV_NONPOSITIVE");
         high_water = std::max(high_water, nav);
+        max_portfolio_drawdown_pct = std::max(max_portfolio_drawdown_pct,
+            std::max(0.0, (high_water - nav) / high_water * 100.0));
         // عبور از حد زیان درون‌دوره‌ای تا پایان همان روز/هفته باقی می‌ماند؛ بازیابی بعدی آن را پاک نمی‌کند.
         max_daily_loss_pct = std::max(max_daily_loss_pct,
             std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0));
@@ -237,7 +265,7 @@ inline json build_snapshot(const json& basis, const json& ledger,
     // زیان روزانه/هفتگی، بیشترین افت مشاهده‌شده از NAV ابتدای دوره است، نه فقط مقدار نهایی پس از بازیابی.
     const double daily_loss = max_daily_loss_pct;
     const double weekly_loss = max_weekly_loss_pct;
-    const double drawdown = std::max(0.0, (high_water - nav) / high_water * 100.0);
+    const double drawdown = max_portfolio_drawdown_pct;
     if (!std::isfinite(daily_loss) || !std::isfinite(weekly_loss) ||
         !std::isfinite(drawdown))
         return fail("RISK_METRIC_NONFINITE");

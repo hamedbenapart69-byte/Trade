@@ -68,8 +68,12 @@ json registry() {
     return {{"schema_version","1.0.0"},
         {"artifact_type","cfss_shadow_candidate_registry_v1"},
         {"candidates",json::array({
-            {{"signal_id","signal-a"},{"state","RESOLVED"},{"entry_fill_reference",100.0}},
-            {{"signal_id","signal-b"},{"state","RESOLVED"},{"entry_fill_reference",100.0}}
+            {{"signal_id","signal-a"},{"state","RESOLVED"},{"symbol","BTC/USDT:USDT"},
+             {"direction","LONG"},{"profile","DAILY_SWING"},{"entry_fill_reference",100.0},
+             {"stop_reference",99.0}},
+            {{"signal_id","signal-b"},{"state","RESOLVED"},{"symbol","BTC/USDT:USDT"},
+             {"direction","LONG"},{"profile","DAILY_SWING"},{"entry_fill_reference",100.0},
+             {"stop_reference",99.0}}
         })}};
 }
 }
@@ -85,6 +89,21 @@ int main() {
     check(s["status"]=="AVAILABLE","complete costed closed ledger creates snapshot");
     check(s["data_class"]=="PROXY","proxy costs remain explicitly labelled");
     check(s["user_account_data_used"]==false,"snapshot never uses user account data");
+    auto pending_without_fill_registry=registry();
+    pending_without_fill_registry["candidates"][0]["state"]="PENDING";
+    pending_without_fill_registry["candidates"][0].erase("entry_fill_reference");
+    blocked=cfss::shadow_risk::build_snapshot(
+        b,l,pending_without_fill_registry,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="OUTCOME_CANDIDATE_STATE_MISMATCH",
+          "a ledger outcome cannot map to a candidate that is not RESOLVED");
+    auto mismatched_candidate_registry=registry();
+    mismatched_candidate_registry["candidates"][0]["entry_fill_reference"]=101.0;
+    blocked=cfss::shadow_risk::build_snapshot(
+        b,l,mismatched_candidate_registry,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="OUTCOME_CANDIDATE_FIELD_MISMATCH",
+          "ledger fill price must match the registered immutable candidate fill");
     check(cfss::shadow::valid_cost_provenance(l["outcomes"][0]),
           "cost provenance includes matching immutable entry-fill candle evidence");
     auto mismatched_fill_time=l["outcomes"][0];
@@ -164,7 +183,7 @@ int main() {
     auto recovery_ledger=ledger();
     recovery_ledger["outcomes"]=json::array({
         outcome("loss-before-recovery",day+10'000,0.0,10.0),
-        outcome("win-after-recovery",day+20'000,10.0,0.0)
+        outcome("win-after-recovery",day+20'000,11.0,0.0)
     });
     auto recovery_registry=registry();
     recovery_registry["candidates"][0]["signal_id"]="loss-before-recovery";
@@ -177,6 +196,9 @@ int main() {
           "daily kill-switch breach remains visible after same-day recovery");
     check(recovered["weekly_loss_pct"].get<double>()>=5.0,
           "weekly loss remains visible after same-week recovery");
+    check(recovered["current_nav_units"].get<double>()>=100.0 &&
+          recovered["portfolio_drawdown_pct"].get<double>()>=5.0,
+          "maximum portfolio drawdown remains sticky after NAV recovers above its prior high-water mark");
 
     auto unfrozen=b; unfrozen["basis_status"]="DRAFT";
     blocked=cfss::shadow_risk::build_snapshot(unfrozen,l,r,"run-1","scan-1",day*2+20'000,0);
