@@ -82,6 +82,14 @@ jobs:
             | map(select(type == "string" and length > 0))
             | unique
           ' > stage6-evidence/pending-symbols.v1.json
+          cost_backfill_symbols="$(jq -r '[.outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol] | unique | join(",")' "$ledger_input")"
+          echo "COST_BACKFILL_REQUIRED_SYMBOLS=${cost_backfill_symbols}"
+          while IFS= read -r symbol; do
+            [ -z "$symbol" ] && continue
+            jq -e --arg symbol "$symbol" 'index($symbol) != null' \
+              stage6-evidence/pending-symbols.v1.json >/dev/null
+          done < <(jq -r '.outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol' "$ledger_input" | sort -u)
+          echo "SHADOW_REQUIRED_SYMBOLS_VALIDATION=PASS"
           if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
             cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
           fi
