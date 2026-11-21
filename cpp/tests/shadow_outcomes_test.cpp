@@ -213,6 +213,28 @@ int main() {
             backfilled_row.contains("cost_source_l1_sha256"),
             "legacy unresolved cost rows are backfilled with traceable current funding provenance");
 
+    auto mismatched_legacy_fill = target.at("ledger");
+    mismatched_legacy_fill["outcomes"][0].erase("entry_fill_time_ms");
+    mismatched_legacy_fill["outcomes"][0]["entry_fill_reference"] = 99.5;
+    const auto mismatched_legacy = cfss::shadow::process(
+        costed_l1, fixture_l1_15m({}, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        target.at("registry"), mismatched_legacy_fill);
+    const auto& mismatched_legacy_row = mismatched_legacy.at("ledger").at("outcomes").front();
+    require(mismatched_legacy_row.at("cost_status") == "UNAVAILABLE" &&
+            (!mismatched_legacy_row.contains("entry_fill_time_ms") ||
+             mismatched_legacy_row.at("entry_fill_time_ms").is_null()),
+            "legacy fill timestamp is not backfilled when the stored first-bar open differs from the fill");
+
+    auto mismatched_entry_bar = target.at("ledger");
+    mismatched_entry_bar["outcomes"][0]["resolution_bars"][0]["open"] = 99.5;
+    const auto mismatched_bar_cost = cfss::shadow::process(
+        costed_l1, fixture_l1_15m({}, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        target.at("registry"), mismatched_entry_bar);
+    require(mismatched_bar_cost.at("ledger").at("outcomes").front().at("cost_status") == "UNAVAILABLE",
+            "costs are not attached when first-bar open does not prove the recorded entry fill");
+
     auto legacy_ledger = target.at("ledger");
     legacy_ledger["outcomes"][0].erase("score_model_version");
     const auto migrated_ledger = cfss::shadow::process(
