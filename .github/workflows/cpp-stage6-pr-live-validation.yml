@@ -138,6 +138,21 @@ jobs:
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/shadow-candidate-registry.v1.schema.json -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
           jq '{summary}' stage6-evidence/shadow_candidate_registry.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/outcome-ledger.v1.schema.json -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
+          jq -r --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            .outcomes[] as $o |
+            ($l1[0].instruments[] | select(.unified_symbol == $o.symbol)) as $i |
+            [
+              $o.symbol,
+              ($o.cost_status // "UNAVAILABLE"),
+              ($o.entry_fill_time_ms // 0),
+              ($o.closed_at_ms // 0),
+              ($i.availability.funding // "UNAVAILABLE"),
+              ($i.funding | length),
+              ($i.funding | map(select(.funding_rate != null)) | length),
+              ($i.funding | map(.timestamp_ms) | min // 0),
+              ($i.funding | map(.timestamp_ms) | max // 0)
+            ] | @tsv
+          ' stage6-evidence/daily_outcome_ledger.v1.json
 
       - name: Compute and validate Stage 6 Meta-Cognition
         run: |
