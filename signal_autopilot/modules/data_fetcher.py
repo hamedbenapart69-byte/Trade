@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,7 @@ class MarketDataFetcher:
         self.exchanges = []
         self.exchange = None
         self.universe_diagnostics = {}
+        self.coingecko_market_rows = []
 
     def close(self):
         for exchange in self.exchanges:
@@ -30,6 +32,15 @@ class MarketDataFetcher:
     @staticmethod
     def _utc_ms(value):
         return datetime.fromtimestamp(float(value) / 1000, timezone.utc).isoformat() if value is not None else None
+
+    @staticmethod
+    def _canonical_base_and_scale(base: str) -> tuple[str, float]:
+        """تبدیل قراردادهای دارای ضریب ۱۰۰۰ به واحد قیمت یکسان برای مقایسهٔ بین صرافی‌ها."""
+        normalized = str(base or "").upper()
+        if normalized in {"PEPE", "1000PEPE"}:
+            # قیمت در OKX بر حسب یک PEPE است؛ قراردادهای 1000PEPE بر حسب ۱۰۰۰ واحدند.
+            return "1000PEPE", 1000.0 if normalized == "PEPE" else 1.0
+        return normalized, 1.0
 
     @staticmethod
     def _listing_time_ms(market: dict, provider: str) -> int | None:
@@ -89,6 +100,7 @@ class MarketDataFetcher:
         if len(rows) < min(requested, 100):
             raise RuntimeError("coingecko_crypto_whitelist_incomplete")
         rows = rows[:requested]
+        self.coingecko_market_rows = rows
         counts = {}
         for row in rows:
             symbol = str(row.get("symbol", "")).upper()
@@ -181,7 +193,9 @@ class MarketDataFetcher:
             if not market.get("contract"):
                 rejected["not_contract"] += 1
                 continue
-            base = str(market.get("base") or "").upper()
+            raw_base = str(market.get("base") or "").upper()
+            base, _price_scale = self._canonical_base_and_scale(raw_base)
+            whitelist_base = "PEPE" if base == "1000PEPE" else base
             if base in exclude_bases:
                 rejected["already_covered"] += 1
                 continue
@@ -198,7 +212,7 @@ class MarketDataFetcher:
             if base in blacklist or market_id in blacklist:
                 rejected["blacklisted"] += 1
                 continue
-            if base not in whitelist:
+            if whitelist_base not in whitelist:
                 rejected["not_crypto_whitelist"] += 1
                 continue
             ticker = tickers.get(symbol) or {}
@@ -284,10 +298,17 @@ class MarketDataFetcher:
                 # KuCoin Futures may omit exchange ticker timestamps; receipt time is an explicit PROXY.
                 ticker_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
                 ticker_timestamp_source = "FETCH_TIME_PROXY"
+            market_base = str(exchange.market(symbol).get("base") or "").upper()
+            canonical_base, price_scale = self._canonical_base_and_scale(market_base)
+            try:
+                scaled_last = float(ticker.get("last")) * price_scale
+            except (TypeError, ValueError):
+                scaled_last = None
             row = {
-                "base": str(exchange.market(symbol).get("base") or "").upper(),
+                "base": canonical_base,
                 "provider": provider,
-                "symbol": symbol, "last": ticker.get("last"), "quote_volume_24h": qv,
+                "symbol": f"{canonical_base}/USDT:USDT",
+                "last": scaled_last, "quote_volume_24h": qv,
                 "ticker_timestamp_utc": self._utc_ms(ticker_timestamp),
                 "ticker_timestamp_source": ticker_timestamp_source, "ohlcv": None,
                 "funding_rate": None, "funding_timestamp_utc": None, "funding_interval_hours": None,
@@ -300,8 +321,11 @@ class MarketDataFetcher:
                 completed = self._completed_ohlcv(candles, now_ms)
                 row["ohlcv"] = [{
                     "timestamp": int(c[0]), "timestamp_utc": self._utc_ms(c[0]),
-                    "open": float(c[1]), "high": float(c[2]), "low": float(c[3]),
-                    "close": float(c[4]), "volume": float(c[5]),
+                    "open": float(c[1]) * price_scale,
+                    "high": float(c[2]) * price_scale,
+                    "low": float(c[3]) * price_scale,
+                    "close": float(c[4]) * price_scale,
+                    "volume": float(c[5]) / price_scale,
                 } for c in completed]
                 if len(row["ohlcv"]) >= 52:
                     row["availability"]["ohlcv"] = "OK"
@@ -353,18 +377,84 @@ class MarketDataFetcher:
             return "RATE_LIMITED"
         return "ERROR"
 
+    def _coingecko_spot_proxy_rows(
+        self, existing_bases: set[str], whitelist: set[str], target_count: int,
+    ) -> list[dict]:
+        """آخرین fallback نمایشی؛ قیمت اسپات را هرگز به‌عنوان دادهٔ فیوچرز جا نمی‌زند."""
+        output = []
+        now = datetime.now(timezone.utc)
+        timestamp = now.isoformat()
+        blacklist = {str(x).upper() for x in self.universe.get("blacklist_patterns", [])}
+        for asset in self.coingecko_market_rows:
+            raw_base = str(asset.get("symbol") or "").upper()
+            base, price_scale = self._canonical_base_and_scale(raw_base)
+            if not raw_base or raw_base not in whitelist or base in existing_bases or raw_base in blacklist:
+                continue
+            try:
+                price = float(asset.get("current_price")) * price_scale
+                volume = float(asset.get("total_volume") or 0)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(price) or price <= 0:
+                continue
+            output.append({
+                "base": base,
+                "provider": "coingecko",
+                "symbol": f"{base}/USDT:USDT",
+                "last": price,
+                "quote_volume_24h": volume,
+                "ticker_timestamp_utc": timestamp,
+                "ticker_timestamp_source": "COINGECKO_FETCH_TIME_PROXY",
+                "ohlcv": [],
+                "funding_rate": None,
+                "funding_timestamp_utc": None,
+                "funding_interval_hours": None,
+                "open_interest": None,
+                "open_interest_timestamp_utc": None,
+                "availability": {
+                    "ohlcv": "UNAVAILABLE",
+                    "funding": "UNAVAILABLE",
+                    "open_interest": "UNAVAILABLE",
+                },
+                "data_quality": "PROXY",
+                "trade_signal_eligible": False,
+                "errors": ["ohlcv:coingecko_spot_has_no_futures_ohlcv"],
+            })
+            if len(output) >= target_count:
+                break
+        return output
+
     def fetch(self):
-        # CoinGecko defines eligible crypto assets; exchange fallback fills
-        # missing symbols one-by-one without mixing OHLCV across venues.
-        whitelist = self._coingecko_top_symbols()
+        # CoinGecko فقط whitelist و آخرین قیمت اسپاتِ PROXY را می‌دهد؛
+        # سیگنال فیوچرز فقط از OHLCV معتبر یکی از سه صرافی گرفته می‌شود.
         errors: dict[str, str] = {}
-        selected: dict[str, dict] = {}
-        providers = [
-            "okx", "bybit", "binance", "bitget", "mexc",
-            "kucoinfutures", "gateio", "phemex", "bingx",
-            "whitebit", "xt", "deepcoin", "toobit",
-        ]
         provider_diagnostics: dict[str, dict] = {}
+        try:
+            whitelist = self._coingecko_top_symbols()
+        except Exception as exc:
+            errors["coingecko"] = type(exc).__name__ + ":" + str(exc)[:180]
+            provider_diagnostics["coingecko"] = {
+                "status": "ERROR", "error": errors["coingecko"], "symbols_added": 0,
+            }
+            return {
+                "provider": "none",
+                "provider_sources": [],
+                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "symbols_requested": self.limit,
+                "symbols_processed": 0,
+                "symbols": [],
+                "fallback_used": False,
+                "primary_error": None,
+                "errors": errors,
+                "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
+                "universe_diagnostics": provider_diagnostics,
+                "coingecko_whitelist_count": 0,
+                "universe_under_50": True,
+            }
+
+        selected: dict[str, dict] = {}
+        # ترتیب قطعی: OKX → Binance USD-M → Bybit؛ CoinGecko فقط fallback اسپاتِ PROXY است.
+        providers = ["okx", "binance", "bybit"]
         if os.getenv("DEBUG_BLOCK_OKX", "").strip() == "1":
             errors["okx"] = "DEBUG_BLOCK_OKX_FORCED"
             provider_diagnostics["okx"] = {
@@ -386,6 +476,7 @@ class MarketDataFetcher:
                 added = 0
                 duplicates = 0
                 ohlcv_unavailable = 0
+                ticker_unavailable = 0
                 for row in rows:
                     symbol = str(row.get("symbol") or "")
                     base = str(row.get("base") or symbol.split("/", 1)[0]).upper()
@@ -396,6 +487,13 @@ class MarketDataFetcher:
                         continue
                     if (row.get("availability") or {}).get("ohlcv") != "OK":
                         ohlcv_unavailable += 1
+                        continue
+                    try:
+                        last = float(row.get("last"))
+                    except (TypeError, ValueError):
+                        last = 0.0
+                    if not math.isfinite(last) or last <= 0 or not row.get("ticker_timestamp_utc"):
+                        ticker_unavailable += 1
                         continue
                     row["base"] = base
                     row["provider"] = str(row.get("provider") or provider)
@@ -409,6 +507,7 @@ class MarketDataFetcher:
                     "symbols_added": added,
                     "duplicates_skipped": duplicates,
                     "ohlcv_unavailable": ohlcv_unavailable,
+                    "ticker_unavailable": ticker_unavailable,
                 }
             except Exception as exc:
                 errors[provider] = type(exc).__name__ + ":" + str(exc)[:180]
@@ -418,6 +517,21 @@ class MarketDataFetcher:
                     "error": errors[provider],
                     "symbols_added": 0,
                 }
+
+        remaining = self.limit - len(selected)
+        if remaining > 0:
+            proxy_rows = self._coingecko_spot_proxy_rows(
+                existing_bases=set(selected), whitelist=whitelist, target_count=remaining,
+            )
+            for row in proxy_rows:
+                selected[row["base"]] = row
+            provider_diagnostics["coingecko"] = {
+                "status": "PROXY_ONLY" if proxy_rows else "NO_ADDITIONAL_DATA",
+                "symbols_added": len(proxy_rows),
+                "ohlcv_status": "UNAVAILABLE",
+                "ticker_status": "SPOT_PROXY",
+                "trade_signal_eligible": False,
+            }
 
         rows = list(selected.values())
         provider_sources = list(dict.fromkeys(row["provider"] for row in rows))
@@ -432,7 +546,9 @@ class MarketDataFetcher:
             "symbols_requested": self.limit,
             "symbols_processed": len(rows),
             "symbols": rows,
-            "fallback_used": len(provider_sources) > 1 or (bool(provider_sources) and provider_sources[0] != "okx"),
+            "fallback_used": len(provider_sources) > 1 or (
+                bool(provider_sources) and provider_sources[0] != "okx"
+            ),
             "primary_error": errors.get("okx"),
             "errors": errors,
             "universe_policy": "CRYPTO_USDT_MARGined_PERPETUALS_ONLY",
