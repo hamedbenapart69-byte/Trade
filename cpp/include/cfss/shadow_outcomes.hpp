@@ -321,7 +321,8 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
                 old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
         }
         // زمان ورود فقط از کندل ثبت‌شدهٔ واقعیِ پروکسی بازیابی می‌شود؛ حدس از decision_time ممنوع است.
-        if (!old_outcome.contains("entry_fill_time_ms") &&
+        if ((!old_outcome.contains("entry_fill_time_ms") ||
+             old_outcome.at("entry_fill_time_ms").is_null()) &&
             old_outcome.contains("resolution_bars") &&
             old_outcome.at("resolution_bars").is_array() &&
             !old_outcome.at("resolution_bars").empty() &&
@@ -467,9 +468,15 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         if (!instrument || !instrument->contains("candles") ||
             !instrument->at("candles").is_array() || instrument->at("candles").empty()) {
             if (current_time >= expiry) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY";
-                ++rejected;
+                if (has_recorded_fill) {
+                    candidate["state"] = "UNVERIFIABLE";
+                    candidate["skip_reason"] = "FILLED_CANDIDATE_RESOLUTION_DATA_UNAVAILABLE";
+                    ++unverifiable;
+                } else {
+                    candidate["state"] = "REJECTED";
+                    candidate["skip_reason"] = "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY";
+                    ++rejected;
+                }
             } else {
                 ++still_pending;
             }
@@ -482,9 +489,15 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const std::int64_t bar_ms = is_lrt ? 900'000LL : kOneHourMs;
         if (candidate.value("resolution_timeframe", std::string{}) != (is_lrt ? "15m" : "1h") ||
             expiry <= decision) {
-            candidate["state"] = "REJECTED";
-            candidate["skip_reason"] = "INVALID_RESOLUTION_TIMEFRAME_OR_HORIZON";
-            ++rejected;
+            if (has_recorded_fill) {
+                candidate["state"] = "UNVERIFIABLE";
+                candidate["skip_reason"] = "FILLED_CANDIDATE_INVALID_RESOLUTION_CONTRACT";
+                ++unverifiable;
+            } else {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "INVALID_RESOLUTION_TIMEFRAME_OR_HORIZON";
+                ++rejected;
+            }
             continue;
         }
 
@@ -557,9 +570,9 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             }
             const double risk = std::abs(entry_fill - stop);
             if (risk <= 0.0) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "INVALID_PROXY_FILL_RISK";
-                ++rejected;
+                candidate["state"] = "UNVERIFIABLE";
+                candidate["skip_reason"] = "FILLED_CANDIDATE_INVALID_PROXY_FILL_RISK";
+                ++unverifiable;
                 break;
             }
             const bool stop_hit = direction == "LONG" ? low <= stop : high >= stop;
