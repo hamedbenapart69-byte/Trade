@@ -1,4 +1,4 @@
-"""Telegram delivery for actionable futures signals and daily no-signal status."""
+"""کانال تلگرام تنها رابط تحویل کاربر؛ تمام دریافت و تحلیل داده در سمت سرور انجام می‌شود."""
 from __future__ import annotations
 
 import asyncio
@@ -7,10 +7,7 @@ import json
 import logging
 import os
 
-import smtplib
-import ssl
 from io import BytesIO
-from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -120,7 +117,6 @@ def _format_signal(signal: dict, payload: dict) -> str:
     targets = signal.get("take_profit") or []
     tp1 = targets[0] if len(targets) > 0 else "—"
     tp2 = targets[1] if len(targets) > 1 else "—"
-    dashboard = (os.getenv("DASHBOARD_URL") or "https://trade-3vn.pages.dev/").strip()
     return "\n".join([
         "🔔 سیگنال فیوچرز",
         f"نماد: {signal.get('symbol', '—')}",
@@ -136,7 +132,6 @@ def _format_signal(signal: dict, payload: dict) -> str:
         f"ابطال تحلیل: {signal.get('falsification', '—')}",
         "اطمینان: هنوز کالیبراسیون آماری انجام نشده است",
         f"زمان UTC: {payload.get('generated_at_utc', '—')}",
-        dashboard,
     ])
 
 
@@ -445,52 +440,8 @@ def send_legacy_quarantine_status_test(state: dict) -> dict:
         return {"status": "ERROR", "sent": 0}
 
 def notify_email(payload: dict) -> dict:
-    """ایمیل جایگزین از طریق SMTP رایگانِ ارائه‌دهندهٔ ایمیل کاربر."""
-    if os.getenv("GITHUB_EVENT_NAME") == "pull_request":
-        return {"status": "SKIPPED_CI_VALIDATION", "sent": 0}
-    host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
-    port = int(os.getenv("SMTP_PORT") or "465")
-    username = os.getenv("SMTP_USER", "").strip()
-    password = os.getenv("SMTP_PASSWORD", "").strip()
-    recipient = os.getenv("ALERT_EMAIL_TO", "").strip()
-    sender = (os.getenv("ALERT_EMAIL_FROM") or username).strip()
-    if not all((host, username, password, recipient, sender)):
-        return {"status": "SKIPPED_NOT_CONFIGURED", "sent": 0}
-
-    candidates = [
-        signal for signal in payload.get("signals", [])
-        if signal.get("status") in ("BUY_NOW", "SELL_NOW")
-        and signal.get("entry") is not None
-        and signal.get("stop_loss") is not None
-        and len(signal.get("take_profit") or []) >= 2
-    ]
-    if not candidates:
-        return {"status": "NO_ACTIONABLE_SIGNAL", "sent": 0}
-
-    message = EmailMessage()
-    message["Subject"] = f"Futures signals: {len(candidates)} actionable setup(s)"
-    message["From"] = sender
-    message["To"] = recipient
-    message.set_content((chr(10) * 2).join(
-        _format_signal(signal, payload) for signal in candidates
-    ))
-    try:
-        if port == 465:
-            with smtplib.SMTP_SSL(host, port, context=ssl.create_default_context(), timeout=20) as smtp:
-                smtp.login(username, password)
-                smtp.send_message(message)
-        else:
-            with smtplib.SMTP(host, port, timeout=20) as smtp:
-                smtp.ehlo()
-                smtp.starttls(context=ssl.create_default_context())
-                smtp.ehlo()
-                smtp.login(username, password)
-                smtp.send_message(message)
-        LOG.info("SMTP fallback email sent.")
-        return {"status": "SENT", "sent": 1}
-    except Exception:
-        LOG.exception("SMTP fallback email delivery failed.")
-        return {"status": "ERROR", "sent": 0}
+    """ایمیل عمداً غیرفعال است؛ تنها کانال تحویل کاربر تلگرام است."""
+    return {"status": "SKIPPED_POLICY_DISABLED", "sent": 0}
 
 
 def send_test_message() -> dict:

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "generated_for": "server_side_provider_discovery",
+  "user_access": "telegram_only",
+  "user_location_filter": "FORBIDDEN",
+  "runtime_verification": "PROBE_IMPLEMENTED_BUT_NOT_EXECUTED_FROM_MAIN_RUNNER",
+  "entries": [
+    {
+      "id": "okx_public_perpetual",
+      "category": [
+        "futures_ohlcv",
+        "funding",
+        "open_interest",
+        "trades",
+        "orderbook",
+        "mark_index"
+      ],
+      "provider": "OKX",
+      "access": "public_market_data_no_auth_documented",
+      "cost": "FREE_PUBLIC_ENDPOINTS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "candidate_cex_source",
+      "notes": "Funding history documented up to three months; verify per-endpoint and instrument coverage. Never use private/account/trade endpoints.",
+      "docs": "https://www.okx.com/docs-v5/en/"
+    },
+    {
+      "id": "bybit_v5_linear",
+      "category": [
+        "futures_ohlcv",
+        "funding",
+        "open_interest",
+        "trades",
+        "orderbook",
+        "mark_index"
+      ],
+      "provider": "Bybit",
+      "access": "public_market_endpoints_documented",
+      "cost": "FREE_PUBLIC_ENDPOINTS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "candidate_cex_source",
+      "notes": "Linear category supports kline, orderbook, recent trades, funding and OI endpoints; history depth differs by endpoint.",
+      "docs": "https://bybit-exchange.github.io/docs/v5/market/kline"
+    },
+    {
+      "id": "binance_usdm_public",
+      "category": [
+        "futures_ohlcv",
+        "funding",
+        "open_interest",
+        "aggtrades",
+        "orderbook",
+        "mark_index"
+      ],
+      "provider": "Binance USD-M",
+      "access": "public_market_endpoints_documented",
+      "cost": "FREE_PUBLIC_ENDPOINTS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "candidate_cex_source",
+      "notes": "Klines, aggTrades, funding history, current OI and OI history documented. OI history endpoint is limited to latest one month; historicalTrades endpoint requires API key, so do not assume keyless historical trade archive.",
+      "docs": "https://developers.binance.info/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data"
+    },
+    {
+      "id": "bitget_usdt_futures",
+      "category": [
+        "futures_ticker",
+        "funding",
+        "open_interest",
+        "bid_ask"
+      ],
+      "provider": "Bitget",
+      "access": "public_market_data_documented",
+      "cost": "FREE_PUBLIC_ENDPOINTS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "candidate_cex_source",
+      "notes": "Official market-data schema exposes futures category, mark/index, funding, OI, bid/ask and timestamp. Verify dedicated kline/orderbook/history endpoints separately.",
+      "docs": "https://www.bitget.com/docs/catalog/market/market-data"
+    },
+    {
+      "id": "kucoin_futures_public",
+      "category": [
+        "futures_ohlcv"
+      ],
+      "provider": "KuCoin Futures",
+      "access": "public_permission_documented",
+      "cost": "FREE_PUBLIC_ENDPOINTS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "candidate_cex_source",
+      "notes": "Kline endpoint public; up to 500 records per request and intervals with no ticks may be absent. Verify funding/OI endpoints separately.",
+      "docs": "https://www.kucoin.com/docs-new/rest/futures-trading/market-data/get-klines"
+    },
+    {
+      "id": "mexc_contracts",
+      "category": [
+        "futures_ohlcv",
+        "funding",
+        "open_interest",
+        "orderbook"
+      ],
+      "provider": "MEXC",
+      "access": "NOT_VERIFIED",
+      "cost": "NOT_VERIFIED",
+      "status": "LICENSE_REVIEW_REQUIRED",
+      "role": "discovery_candidate",
+      "notes": "Do not integrate until official current endpoint docs, access terms, schema and runner test are verified.",
+      "docs": null
+    },
+    {
+      "id": "coingecko_demo",
+      "category": [
+        "market_reference",
+        "spot_metadata",
+        "onchain_dex",
+        "token_discovery"
+      ],
+      "provider": "CoinGecko",
+      "access": "free_demo_api_key_required",
+      "cost": "FREE_WITH_LIMITS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "reference_only_not_futures_primary",
+      "notes": "Demo plan: 100 calls/min and 10,000 monthly calls; account/API key required. Do not substitute aggregated spot/DEX data for futures OHLCV, funding or OI.",
+      "docs": "https://www.coingecko.com/en/api/pricing"
+    },
+    {
+      "id": "defillama_free_api",
+      "category": [
+        "onchain_tvl",
+        "protocol_metrics",
+        "chain_metrics",
+        "fees"
+      ],
+      "provider": "DefiLlama",
+      "access": "free_public_endpoints_no_key",
+      "cost": "FREE_ENDPOINTS_WITH_SCOPE_LIMITS",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "onchain_context",
+      "notes": "Free API no key for documented public endpoints. Yield /pools and /chart/{pool} were shut down 2026-11-13; do not use those legacy endpoints. Pro API/MCP and premium endpoints are excluded.",
+      "docs": "https://api-docs.defillama.com/"
+    },
+    {
+      "id": "coinmetrics_community",
+      "category": [
+        "onchain_network_metrics",
+        "reference_rates"
+      ],
+      "provider": "Coin Metrics Community",
+      "access": "community_api_no_key",
+      "cost": "FREE_NONCOMMERCIAL_LICENSE",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "onchain_macro_context",
+      "notes": "Community API has limited metric/history coverage and 10 requests per 6 seconds; verify Creative Commons/terms fit intended use before production.",
+      "docs": "https://docs.coinmetrics.io/packages/coin-metrics-community-data"
+    },
+    {
+      "id": "alternative_me_fng",
+      "category": [
+        "market_sentiment"
+      ],
+      "provider": "Alternative.me Fear and Greed",
+      "access": "public_api_no_key",
+      "cost": "FREE_WITH_ATTRIBUTION",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "sentiment_context",
+      "notes": "API exposes index history; attribution is required. Use as broad sentiment context, not a standalone entry trigger.",
+      "docs": "https://alternative.me/crypto/fear-and-greed-index/"
+    },
+    {
+      "id": "cryptopanic_news",
+      "category": [
+        "news",
+        "sentiment"
+      ],
+      "provider": "CryptoPanic",
+      "access": "auth_token_required",
+      "cost": "NOT_VERIFIED_FOR_ZERO_COST",
+      "status": "COST_REVIEW_REQUIRED",
+      "role": "discovery_candidate",
+      "notes": "API token required; do not assume a free production tier. Keep excluded until price, license and backend credentials are verified.",
+      "docs": "https://cryptopanic.com/developers/api/"
+    },
+    {
+      "id": "coindesk_rss",
+      "category": [
+        "news",
+        "narrative"
+      ],
+      "provider": "CoinDesk RSS",
+      "access": "public_rss",
+      "cost": "NO_API_PLAN_DOCUMENTED_PUBLISHER_TERMS_APPLY",
+      "status": "LICENSE_REVIEW_REQUIRED",
+      "role": "news_discovery_candidate",
+      "notes": "Official RSS exists; headline/content reuse and retention terms must be checked before production use. Deduplicate syndicated stories.",
+      "docs": "https://www.coindesk.com/coindesk-news/2021/09/17/coindesk-rss"
+    },
+    {
+      "id": "tradingview_widgets",
+      "category": [
+        "visual_chart_display"
+      ],
+      "provider": "TradingView Widgets",
+      "access": "embedded_display_only",
+      "cost": "FREE_WIDGETS_WITH_RESTRICTIONS",
+      "status": "REJECTED_FOR_MACHINE_DATA",
+      "role": "display_only",
+      "notes": "TradingView states it has no data API and widget data cannot be exported; its data terms restrict non-display machine processing. Not a signal-engine data source.",
+      "docs": "https://www.tradingview.com/widget-docs/faq/data/"
+    },
+    {
+      "id": "lightweight_charts",
+      "category": [
+        "chart_rendering"
+      ],
+      "provider": "TradingView Lightweight Charts",
+      "access": "open_source_library",
+      "cost": "FREE_OPEN_SOURCE",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "rendering_only",
+      "notes": "Chart renderer only; the system must supply its own validated data feed. It is not a market data provider.",
+      "docs": "https://www.tradingview.com/free-charting-libraries/"
+    },
+    {
+      "id": "freqtrade_backtesting_reference",
+      "category": [
+        "backtesting",
+        "research_engine"
+      ],
+      "provider": "Freqtrade",
+      "access": "open_source_software",
+      "cost": "FREE_OPEN_SOURCE",
+      "status": "DISCOVERED_NOT_RUNTIME_TESTED",
+      "role": "research_reference_only",
+      "notes": "Backtesting and data tooling may be evaluated; disable all live trading, order placement and exchange-account features. Custom project validation gates remain authoritative.",
+      "docs": "https://docs.freqtrade.io/en/latest/backtesting/"
+    },
+    {
+      "id": "coinboss_public_derivatives_aggregator",
+      "category": [
+        "cross_exchange_futures",
+        "open_interest",
+        "funding",
+        "liquidations",
+        "long_short",
+        "orderbook_depth",
+        "basis",
+        "market_sentiment",
+        "onchain_context"
+      ],
+      "provider": "CoinBoss API",
+      "access": "public_rest_websocket_no_key_documented",
+      "cost": "FREE_DURING_CURRENT_PERIOD_NOT_GUARANTEED",
+      "status": "LICENSE_REVIEW_REQUIRED",
+      "role": "secondary_cross_check_and_discovery_candidate",
+      "notes": "Provider docs currently state all data endpoints are public/free with no key and 1200 req/min, but pricing page describes future paid tiers and explicitly says future free-access terms are undecided. Terms of Service must be reviewed. Aggregates are collected/computed by CoinBoss, not raw independent exchange feeds; compare formulas, coverage, contract type, timestamps, one-sided/two-sided OI and freshness against direct venue sources. Never make it the sole source or assume permanent zero cost.",
+      "docs": "https://www.coinboss.com/api-docs"
+    }
+  ],
+  "computed_features": [
+    {
+      "id": "cvd_from_public_trades",
+      "category": "order_flow",
+      "status": "COMPUTED_NOT_RAW",
+      "input": "timestamped_public_trades_with_taker_side",
+      "rules": "aggregate_buy_sell_delta_with_explicit_exchange_and_coverage",
+      "prohibited_claim": "historical_full_order_flow_or_archived_l2_without_source_records"
+    },
+    {
+      "id": "orderbook_imbalance",
+      "category": "order_flow",
+      "status": "REAL_SNAPSHOT_ONLY_WHEN_FETCHED",
+      "input": "timestamped_orderbook_snapshots",
+      "rules": "record_snapshot_time_depth_and_exchange; no synthetic historical reconstruction"
+    }
+  ],
+  "admission_gate": [
+    "official_or_primary_documentation",
+    "zero_cost_and_no_trial_or_card",
+    "permitted_data_use",
+    "backend_runner_live_probe",
+    "schema_and_timestamp_validation",
+    "freshness_and_coverage_measurement",
+    "instrument_equivalence",
+    "fallback_test",
+    "incremental_oos_value_for_signal_features"
+  ],
+  "probe_workflow": ".github/workflows/provider-health-probe.yml",
+  "probe_script": "signal_autopilot/scripts/probe_public_providers.py"
+}

@@ -1,0 +1,41 @@
+name: Server-side Public Provider Health Probe
+
+on:
+  schedule:
+    - cron: "23 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-side-provider-health
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted provider probe
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run offline probe tests
+        working-directory: signal_autopilot
+        run: python -m unittest tests.test_provider_probe -v
+      - name: Probe public providers from GitHub runner
+        working-directory: signal_autopilot
+        run: python scripts/probe_public_providers.py --output artifacts/provider_health.json
+      - name: Upload provider health evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-health-${{ github.run_id }}
+          path: signal_autopilot/artifacts/provider_health.json
+          if-no-files-found: error
+          retention-days: 30
