@@ -61,6 +61,8 @@ The five persisted Stage 6 outcomes documented in the current evidence are hypot
 - [Stage 6 calibration and cost evidence](docs/evidence/stage6-meta-cognition-slrp-report.md)
 - [Stage 7 risk-gate evidence](docs/evidence/stage7-risk-gate-slrp-report.md)
 - [Legacy workflow quarantine evidence](docs/evidence/v18.2-legacy-workflow-quarantine.md)
+- [Operations runbook](docs/OPERATIONS.md)
+- [Stage roadmap and gates](docs/ROADMAP.md)
 - [GitHub Actions](https://github.com/hamedbenapart69-byte/Trade/actions)
 
 Active workflow sources:
