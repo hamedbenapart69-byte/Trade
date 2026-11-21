@@ -149,3 +149,35 @@ Observed job evidence:
 - A separate direct read of `signals/cpp_runtime/daily_outcome_ledger.v1.json` after this run still returns 5 outcomes: all 5 have `cost_status=UNAVAILABLE`, `execution_status=NOT_EXECUTED`, `outcome_kind=HYPOTHESIS_PROXY`; resolutions are 1 TARGET and 4 STOP. Thus the PR-only cost backfill did not change persistent production state.
 
 **Updated decision:** Stage 6 v2 engineering validation = PASS for this PR run; calibration/statistical acceptance = BLOCKED; production release = NOT APPROVED. No OOS calibration PASS is claimed.
+
+
+## 13. Latest scheduled main-branch regression — 2026-11-21
+
+GitHub Actions scheduled run `44850703499` on main commit `5e8257f69d7d5b6fb7eecb8c153dee0d1fa28482` completed the following before failing:
+
+- C++20 configure/build and CTest: **14/14 PASS**.
+- Fresh public OKX L1 collection: **62/62 selected instruments completed**, each reported `errors=0`.
+- C++ Stage 4/5 compute, Stage 6 Meta-Cognition and Stage 7 risk-gate generation completed.
+- Stage 7 output schema validation passed. Runtime summary: `CANDIDATES=2`, `BLOCKED=2`, `ACTIONABLE=0`, `RISK_SNAPSHOT=UNAVAILABLE`, `trade_execution_allowed=false`.
+
+### D3 — scheduled persistence failure
+
+The first failing step was `Reserve Telegram report idempotently and persist evidence before send`. The exact error was:
+
+`fatal: pathspec 'cpp_runtime/liquidity_stage5_v1.json' did not match any files`
+
+The workflow had intentionally deleted the uncompressed liquidity JSON after verifying its compressed artifact and SHA-256 sidecar, but still included the deleted path in the explicit `git add -A` allowlist. Therefore:
+
+- New runtime artifacts and cost backfills from this run were not committed to the persistent `signals` branch.
+- The Telegram send step was skipped; this was not a Telegram HTTP failure.
+- The always-run receipt step persisted report ID `f4135ca509dc45f5531dabdd373ce09c6beafb18413c06769bf959f0d066cc3a` with status `RESERVED`, `attempts=0`, and no message ID.
+- The last confirmed Telegram delivery in the persistent outbox remains message ID `75`, completed at `2026-11-20T11:27:36Z`.
+
+### Correction and disposition
+
+- [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170) removes the deleted path from the staging list and asserts the compressed artifact and checksum exist before staging.
+- PR #170 checks passed: CI, Policy Guard, Stage 6 Calibration Contract and Stage 7 Risk Gate Contract.
+- The same pathspec correction is included in [PR #169](https://github.com/hamedbenapart69-byte/Trade/pull/169) so the Stage 7 integration does not reintroduce the defect.
+- No direct main-branch edit, workflow dispatch or Telegram send was performed. A successful post-merge scheduled run is still required to verify persistent state update and Telegram delivery.
+
+**Current Stage 6 disposition remains BLOCKED / NOT_CALIBRATED.** The latest persistent ledger still contains five hypothetical outcomes with `cost_status=UNAVAILABLE`; no statistical or production-release gate is promoted by this correction.
