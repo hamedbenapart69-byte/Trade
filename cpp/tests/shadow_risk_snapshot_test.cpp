@@ -44,7 +44,7 @@ json outcome(const std::string& id, std::int64_t closed, double win_r, double lo
         {"resolution_timeframe","15m"},{"source_scan_id","scan-1"},
         {"source_l1_sha256",hash},{"source_universe_status","VERIFIED"},
         {"outcome_kind","HYPOTHESIS_PROXY"},{"resolution_data_sha256",hash},
-        {"resolution_bars",json::array({{{"timestamp_ms",closed-900'000LL},
+        {"resolution_bars",json::array({{{"timestamp_ms",closed-1'000LL},
             {"open",100.0},{"high",101.0},{"low",99.5},{"close",100.5}}})},
         {"cost_model_id","SHADOW_COST_PROXY_V1"},
         {"fee_rate_per_side",0.0004},{"fee_assumption_class","ASSUMED"},
@@ -85,6 +85,21 @@ int main() {
     check(s["status"]=="AVAILABLE","complete costed closed ledger creates snapshot");
     check(s["data_class"]=="PROXY","proxy costs remain explicitly labelled");
     check(s["user_account_data_used"]==false,"snapshot never uses user account data");
+    check(cfss::shadow::valid_cost_provenance(l["outcomes"][0]),
+          "cost provenance includes matching immutable entry-fill candle evidence");
+    auto mismatched_fill_time=l["outcomes"][0];
+    mismatched_fill_time["resolution_bars"][0]["timestamp_ms"] =
+        mismatched_fill_time["resolution_bars"][0]["timestamp_ms"].get<std::int64_t>() + 1LL;
+    check(!cfss::shadow::valid_cost_provenance(mismatched_fill_time),
+          "cost provenance rejects a timestamp that does not match the recorded fill candle");
+    auto mismatched_fill_price=l["outcomes"][0];
+    mismatched_fill_price["resolution_bars"][0]["open"] = 100.01;
+    check(!cfss::shadow::valid_cost_provenance(mismatched_fill_price),
+          "cost provenance rejects a first-bar open that differs from the immutable fill reference");
+    auto missing_fill_time=l["outcomes"][0];
+    missing_fill_time.erase("entry_fill_time_ms");
+    check(!cfss::shadow::valid_cost_provenance(missing_fill_time),
+          "cost provenance rejects outcomes without an explicit fill timestamp");
     check(std::abs(s["current_nav_units"].get<double>()-100.2946)<1e-8,
           "net R is compounded against frozen normalized shadow NAV");
     check(std::abs(s["portfolio_drawdown_pct"].get<double>()-0.6)<1e-8,
