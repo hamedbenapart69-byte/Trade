@@ -101,12 +101,24 @@ inline json build_snapshot(const json& basis, const json& ledger,
         !registry.contains("candidates") || !registry.at("candidates").is_array())
         return fail("SHADOW_CANDIDATE_REGISTRY_UNAVAILABLE");
 
-    // تا زمانی که ورودی mark-to-market در این نسخه موجود نیست، هر پوزیشن پرشده باز، snapshot را می‌بندد.
+    // هر fill باید دقیقاً یک outcome بسته و قابل‌ردیابی داشته باشد؛ state به‌تنهایی کافی نیست.
+    std::set<std::string> candidate_ids;
+    std::set<std::string> resolved_candidate_ids;
     for (const auto& candidate : registry.at("candidates")) {
-        if (candidate.value("state", std::string{}) != "PENDING") continue;
-        if (candidate.contains("entry_fill_reference") &&
-            candidate.at("entry_fill_reference").is_number())
-            return fail("OPEN_SHADOW_POSITION_MARK_UNAVAILABLE");
+        const auto signal_id = candidate.value("signal_id", std::string{});
+        const auto state = candidate.value("state", std::string{});
+        if (signal_id.empty() || !candidate_ids.insert(signal_id).second)
+            return fail("SHADOW_CANDIDATE_ID_INVALID_OR_DUPLICATE");
+        const bool has_fill = candidate.contains("entry_fill_reference") &&
+            candidate.at("entry_fill_reference").is_number() &&
+            std::isfinite(candidate.at("entry_fill_reference").get<double>()) &&
+            candidate.at("entry_fill_reference").get<double>() > 0.0;
+        if (has_fill && state != "RESOLVED")
+            return fail("UNACCOUNTED_FILLED_SHADOW_CANDIDATE");
+        if (state == "RESOLVED") {
+            if (!has_fill) return fail("RESOLVED_CANDIDATE_FILL_MISSING");
+            resolved_candidate_ids.insert(signal_id);
+        }
     }
 
     struct Event {
@@ -123,7 +135,8 @@ inline json build_snapshot(const json& basis, const json& ledger,
         const auto signal_id = outcome.value("signal_id", std::string{});
         if (entry_at < basis.at("effective_from_ms").get<std::int64_t>() ||
             entry_at <= 0 || closed < entry_at || closed > decision_time_ms ||
-            signal_id.empty() || !ids.insert(signal_id).second)
+            signal_id.empty() || !candidate_ids.contains(signal_id) ||
+            !ids.insert(signal_id).second)
             return fail("OUTCOME_TIME_OR_ID_INVALID");
         if (outcome.value("execution_status", std::string{}) != "NOT_EXECUTED" ||
             outcome.value("outcome_kind", std::string{}) != "HYPOTHESIS_PROXY" ||
@@ -141,6 +154,10 @@ inline json build_snapshot(const json& basis, const json& ledger,
             outcome.at("funding_r").get<double>();
         if (!std::isfinite(net_r)) return fail("OUTCOME_NET_R_NONFINITE");
         events.push_back({entry_at, closed, signal_id, net_r});
+    }
+    for (const auto& signal_id : resolved_candidate_ids) {
+        if (!ids.contains(signal_id))
+            return fail("RESOLVED_CANDIDATE_OUTCOME_MISSING");
     }
 
     // بدون NAV در لحظهٔ ورود، معاملات هم‌پوشان قابل ارزش‌گذاری صحیح نیستند.
