@@ -14,6 +14,7 @@ int main(){
   x.candidates.push_back({"nmt-001","PLAN_A_NMT","BTC-USDT-SWAP","LONG",std::string(64,'b'),"REAL",t0+201LL*86400000LL,t0+120LL*86400000LL,100,95,110,3});
   x.candidates.push_back({"nmt-overlap-censored","PLAN_A_NMT","BTC-USDT-SWAP","LONG",std::string(64,'c'),"REAL",t0+230LL*86400000LL,t0+100LL*86400000LL,100,95,110,30});
   b[245].high=111; b[245].close=110;
+  Input short_data{}; short_data.dataset_id="short-history-censor-fixture"; short_data.risk_fraction=0.01; short_data.costs=x.costs; short_data.bars["BTC-USDT-SWAP"]={{t0,100,100.5,99.5,100},{t0+86400000LL,100,100.5,99.5,100}}; Candidate short_candidate{"short-history","PLAN_A_LRT","BTC-USDT-SWAP","LONG",std::string(64,'d'),"REAL",t0,t0,100,95,110,3}; auto censored_short=simulate(short_data,short_candidate,t0+10LL*86400000LL); require(!censored_short.has_value(),"insufficient end-of-data bars censor trade instead of shortening holding period");
   const auto r=run(x);require(!r.folds.empty(),"walk-forward folds");require(r.lrt.trades==1,"LRT isolation");require(r.nmt.trades==1,"NMT isolation");require(r.nmt.censored==1,"unique OOS candidate censored in its first eligible fold is not promoted from a later overlapping fold");
   require(r.lrt.wins==1,"target is win");require(r.nmt.losses==1,"ambiguous bar stop-first");
   auto invalid_risk=x; invalid_risk.risk_fraction=1.01; bool risk_rejected=false; try{run(invalid_risk);}catch(const std::invalid_argument&){risk_rejected=true;}require(risk_rejected,"risk fraction above 100% is rejected");
