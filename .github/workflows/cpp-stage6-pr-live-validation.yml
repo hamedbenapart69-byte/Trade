@@ -111,6 +111,29 @@ jobs:
           ' > stage6-evidence/required-symbol-coverage.v1.json
           jq -r '"REQUIRED_SYMBOL_COVERAGE present=\(.present|length)/\(.required|length) missing=\(.missing|join(","))"' \
             stage6-evidence/required-symbol-coverage.v1.json
+          jq -n --slurpfile registry signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
+            --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            [
+              $registry[0].candidates[]?
+              | select(.state == "PENDING" and (.entry_fill_reference | type == "number") and (.entry_fill_time_ms == null))
+              | . as $candidate
+              | ($l1[0].instruments[]? | select(.unified_symbol == $candidate.symbol)) as $instrument
+              | ([$instrument.candles[]? | select(.timestamp_ms == $candidate.decision_time_ms and .closed == true)][0] // null) as $bar
+              | {
+                  signal_id: $candidate.signal_id,
+                  symbol: $candidate.symbol,
+                  decision_time_ms: $candidate.decision_time_ms,
+                  recorded_fill_reference: $candidate.entry_fill_reference,
+                  historical_bar_found: ($bar != null),
+                  historical_bar_timestamp_ms: ($bar.timestamp_ms // null),
+                  historical_bar_open: ($bar.open // null),
+                  exact_open_match: ($bar != null and $bar.open == $candidate.entry_fill_reference),
+                  l1_source_run_id: $l1[0].run_id
+                }
+            ]
+          ' | tee stage6-evidence/legacy-fill-reconciliation-diagnostic.v1.json
+          jq -r '.[] | "LEGACY_FILL_CHECK symbol=\(.symbol) bar_found=\(.historical_bar_found) exact_open_match=\(.exact_open_match) fill=\(.recorded_fill_reference) bar_open=\(.historical_bar_open)"' \
+            stage6-evidence/legacy-fill-reconciliation-diagnostic.v1.json
           ./build/lfs_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/lfs-v2.json
           ./build/nss_basis_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json
           ./build/nss_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json stage6-evidence/nss-v2.json
