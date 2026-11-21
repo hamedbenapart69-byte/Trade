@@ -103,7 +103,7 @@ The live PR run proves that the current pipeline can generate the Stage 7 artifa
 ## v2 — Shadow risk snapshot implementation (PR #169; overall stage remains BLOCKED)
 
 **Implementation branch:** `feat/stage7-shadow-risk-snapshot-v2-20261120`  
-**Latest inspected head:** `ef9759187b14cec8005150b9337f43a6e77fd687`  
+**Latest inspected head:** `89a96ec0fcd37c643fbf4a822ec0758f6bb60548`  
 **PR:** [#169](https://github.com/hamedbenapart69-byte/Trade/pull/169), open and not merged.
 
 ### Implemented L1/L2 contract
@@ -168,7 +168,7 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 - A recorded `entry_fill_reference` and `entry_fill_time_ms` are immutable during replay.
 - A legacy filled candidate without a recorded timestamp is never upgraded from `decision_time_ms` or a later candle. If it resolves without timestamp provenance, it becomes `UNVERIFIABLE`; no outcome-ledger row is fabricated.
 - A filled candidate with a resolution data gap becomes `UNVERIFIABLE` after expiry, not `REJECTED`. The registry schema and run summary expose this state.
-- Cost backfill requires an explicit positive `entry_fill_time_ms` that is not earlier than decision time and matches the first stored resolution-bar timestamp. Legacy closed outcomes are backfilled only from their stored `resolution_bars`.
+- Cost backfill requires an explicit positive `entry_fill_time_ms` that is not earlier than decision time, not later than close time, and matches the first stored resolution-bar timestamp. The first bar's `open` must also match the immutable `entry_fill_reference` within a strict numeric tolerance. Legacy closed outcomes are backfilled only when both timestamp and price are proven by their stored `resolution_bars`.
 - The risk snapshot rejects every filled candidate not in `RESOLVED`, every resolved candidate without a matching ledger row, and every ledger row without a registered candidate.
 - The fee reference no longer claims an owner engineering decision. The V18.2 G3 0.04% reference is explicitly modeled as an assumed per-side proxy; it is not an exchange/account-specific fee tier and the resulting costs remain `PROXY`.
 
@@ -188,4 +188,43 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 **L2 implementation/contract:** PASS on `1edc9d63`; 15/15 CTest, schema and fail-closed guards verified.  
 **L1 persistent risk inputs:** BLOCKED — no frozen risk basis; one filled pending candidate lacks recoverable timestamp; persistent cost backfill has not yet been committed by a successful production run.  
 **L3 live integration:** pending the final bounded read-only PR run; it sends no Telegram message.  
+**Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
+
+## Latest-head validation — 2026-11-21 (PR #169, read-only live run)
+
+**Head:** `89a96ec0fcd37c643fbf4a822ec0758f6bb60548`  
+**Live workflow:** `44892776007` — completed **SUCCESS**.  
+**Stage 7 contract:** `44892775998` — completed **SUCCESS**.  
+**C++ Foundation:** `44892776072` — completed **SUCCESS**.  
+**Stage 6 Calibration Contract:** `44892776005` — completed **SUCCESS**.  
+**Stage 5 Contract:** `44892776001` — completed **SUCCESS**.  
+**Stage 2/3 contract workflows:** `44892776391` / `44892776249` — completed **SUCCESS** for build and CTest; their dedicated real-data v1 diagnostic steps were skipped on the PR event.  
+**Policy Guard / CI:** `44892776134` / `44892776181` — completed **SUCCESS**.
+
+### Live L1/L2 evidence
+
+- Fresh public OKX L1 collection completed with a verified CoinPaprika crypto universe: **16 instruments**, 1-year OHLCV window, 90 funding observations and 720 OI observations per full-coverage instrument; collector reported zero per-instrument errors.
+- All required symbols for the five historical cost rows and the pending UNI candidate were present: **6/6**, no missing symbols.
+- 15m resolution collection: **AVAILABLE, 16/16 instruments**.
+- LFS v2: **15/16 CALCULATED as PROXY**; AKE was explicitly UNAVAILABLE.
+- NSS v2: **13/16 CALCULATED as PROXY**; MU, AKE and SPCX were explicitly UNAVAILABLE.
+- Shadow tracker: **PASS**; 2 new candidates registered, 0 resolved, 3 pending, 5 closed outcomes; the read-only run transiently backfilled all five historical cost rows as PROXY (**5/5**, 0 unavailable).
+- Meta-Cognition artifact: **GENERATED**, 5 outcomes. All LRT/NMT confidence fields remain `NOT_CALIBRATED`; ETH and PEPE had LRT candidates and ARB had an NMT candidate, but none was calibrated.
+- Stage 7 risk snapshot: **UNAVAILABLE**, reason `RISK_BASIS_INVALID_OR_NOT_FROZEN`.
+- Stage 7 gate: **GENERATED**, 3 candidates, 3 blocked, 0 manual-review, 0 actionable. `trade_execution_allowed=false` remains invariant.
+- Telegram report preparation/reservation succeeded. This PR validation explicitly sent **no Telegram message** and wrote **no** state to the persistent `signals` branch.
+
+### Data integrity and remaining blockers
+
+- The five cost rows are now computable when their required symbols are fetched. The 5/5 result above is transient PR evidence only; the persistent `signals` ledger still remains unchanged until a production scheduled run can persist the result after an owner-approved merge.
+- The persistent `UNI/USDT:USDT` candidate still has `entry_fill_reference=4.845` without `entry_fill_time_ms`. Its source run `44693771488` has no retained workflow artifacts; its job log reports the candidate status but does not retain the original fill candle. No timestamp or price is reconstructed.
+- No frozen `shadow_risk_basis.daily_swing.v1.json` exists. The schema requires explicit `initial_nav_units` and `risk_per_trade_pct`; neither is supplied by V18.2 as a universal default, so neither is invented.
+- Open-position mark-to-market is not implemented in this v2 builder; every filled non-resolved candidate remains fail-closed.
+- Stage 6 remains `NOT_CALIBRATED`. Five hypothetical outcomes are not enough to establish calibrated probabilities, positive net EV, or out-of-sample performance.
+
+### Current SLRP disposition
+
+**L2 engineering/contract:** PASS — latest-head full build, 15/15 CTest, schema compilation and fail-closed guards passed.  
+**L1 persistent risk inputs:** BLOCKED — no frozen risk basis; one legacy filled candidate lacks recoverable fill-time provenance; persistent cost backfill has not yet been committed.  
+**L3 read-only integration:** PASS — live L1/L2, risk-gate generation and Telegram report preparation completed; no message sent by the PR test.  
 **Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
