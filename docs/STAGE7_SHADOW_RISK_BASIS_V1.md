@@ -80,3 +80,15 @@ The snapshot builder rejects any overlap between closed-position intervals with 
 - The current builder still fails closed on filled non-resolved candidates because fresh-candle open-position mark-to-market has not been implemented.
 
 **Disposition remains BLOCKED.** The implementation contract is passing, but a production Shadow NAV/risk basis, recoverable legacy fill provenance or an approved reconciliation policy, open-position mark-to-market, and Stage 6 calibration evidence are still absent. No defaults or account balances are substituted.
+
+### Latest code and live evidence — head `557a8d72` (2026-11-21)
+
+- Portfolio drawdown is now a sticky maximum over the complete NAV event path; a later recovery above the old high-water mark does not reset the recorded maximum.
+- Ledger-to-registry matching now requires a registered `RESOLVED` candidate and exact agreement on symbol, direction, profile, fill price and stop. A present candidate fill timestamp must equal the ledger timestamp.
+- Stage 7 contract run `44893740070`: full build, **15/15 CTest**, schema and fail-closed checks PASS. C++ Foundation run `44893740087` PASS.
+- Stage 6 live read-only run `44893740089`: 16 public OKX instruments; required symbols 6/6; 15m resolution data 16/16; five historical outcomes transiently costed as PROXY (5/5); LFS v2 15/16 and NSS v2 13/16 calculated; five outcomes remain insufficient for calibration; 3 candidates blocked, 0 actionable.
+- The same run found a closed UNI 1h historical candle at `decision_time_ms=1795158000000` with `open=4.845`, exactly matching the legacy candidate's recorded fill reference. The registry was not mutated because the prior policy prohibited timestamp reconstruction from decision-time/later candles. This evidence can support an owner-approved reconciliation policy change.
+- Stage 1 real OKX L1/L2 run `44893740090` passed; its Telegram send was skipped in the PR event. Stage 2/3 dedicated v1 real-data diagnostic steps were skipped in PR events; Stage 6 exercised the LFS/NSS v2 proxy paths against real L1.
+- The production C++ collector is still OKX-only. Bybit, Binance, KuCoin, MEXC and Bitget are listed in provider health but their C++ adapters are not implemented. Python-only fallback work does not satisfy the V18.2 C++ production requirement.
+
+**Disposition:** Stage 7 remains **BLOCKED / FAIL-CLOSED**. The missing frozen risk basis, absent open-position mark-to-market, uncalibrated Stage 6 outcomes, and unreconciled legacy fill prevent PASS. C++ multi-provider fallback is a separate critical whole-project blocker.
