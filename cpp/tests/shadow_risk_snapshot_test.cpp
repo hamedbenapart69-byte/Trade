@@ -92,7 +92,7 @@ int main() {
     auto pending_without_fill_registry=registry();
     pending_without_fill_registry["candidates"][0]["state"]="PENDING";
     pending_without_fill_registry["candidates"][0].erase("entry_fill_reference");
-    blocked=cfss::shadow_risk::build_snapshot(
+    auto blocked=cfss::shadow_risk::build_snapshot(
         b,l,pending_without_fill_registry,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OUTCOME_CANDIDATE_STATE_MISMATCH",
@@ -135,7 +135,7 @@ int main() {
         overlapping["outcomes"][1]["entry_fill_time_ms"].get<std::int64_t>() - 1'000LL;
     overlapping["outcomes"][1]["resolution_bars"][0]["timestamp_ms"] =
         overlapping["outcomes"][1]["entry_fill_time_ms"];
-    auto blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
+    blocked=cfss::shadow_risk::build_snapshot(b,overlapping,r,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
           blocked["reason"]=="OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE",
           "overlapping trades fail closed when entry NAV cannot be reconstructed");
