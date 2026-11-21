@@ -59,25 +59,81 @@ jobs:
             cfss-stage6-pr-cache-
 
       - name: Collect fresh public L1 and compute C++ Stage 4/5 inputs
+        timeout-minutes: 30
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence shared-cache
-          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
-            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
-              signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
-              > stage6-evidence/pending-symbols.v1.json
-          else
-            printf '%s\n' '[]' > stage6-evidence/pending-symbols.v1.json
+          registry_input=signals-state/cpp_runtime/shadow_candidate_registry.v1.json
+          ledger_input=signals-state/cpp_runtime/daily_outcome_ledger.v1.json
+          if [ ! -s "$registry_input" ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
+            registry_input=stage6-evidence/shadow_candidate_registry.input.json
           fi
+          if [ ! -s "$ledger_input" ]; then
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
+            ledger_input=stage6-evidence/daily_outcome_ledger.input.json
+          fi
+          # نامزدهای باز و نتایج بسته با هزینه ناموجود باید هر دو در L1 بعدی پوشش داده شوند.
+          jq -n --slurpfile registry "$registry_input" --slurpfile ledger "$ledger_input" '
+            [
+              ($registry[0].candidates[]? | select(.state == "PENDING") | .symbol),
+              ($ledger[0].outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol)
+            ]
+            | map(select(type == "string" and length > 0))
+            | unique
+          ' > stage6-evidence/pending-symbols.v1.json
+          cost_backfill_symbols="$(jq -r '[.outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol] | unique | join(",")' "$ledger_input")"
+          echo "COST_BACKFILL_REQUIRED_SYMBOLS=${cost_backfill_symbols}"
+          while IFS= read -r symbol; do
+            [ -z "$symbol" ] && continue
+            jq -e --arg symbol "$symbol" 'index($symbol) != null' \
+              stage6-evidence/pending-symbols.v1.json >/dev/null
+          done < <(jq -r '.outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol' "$ledger_input" | sort -u)
+          echo "SHADOW_REQUIRED_SYMBOLS_VALIDATION=PASS"
           if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
             cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
           fi
-          ./build/market_pipeline --collect-okx 100 2 \
+          ./build/market_pipeline --collect-okx 10 1 \
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
             stage6-evidence/pending-symbols.v1.json
+          jq -n --slurpfile required stage6-evidence/pending-symbols.v1.json \
+            --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            ($required[0]) as $r |
+            ([$l1[0].instruments[].unified_symbol] | unique) as $a |
+            {
+              required: $r,
+              present: [$r[] | select(. as $s | $a | index($s) != null)],
+              missing: [$r[] | select(. as $s | $a | index($s) == null)]
+            }
+          ' > stage6-evidence/required-symbol-coverage.v1.json
+          jq -r '"REQUIRED_SYMBOL_COVERAGE present=\(.present|length)/\(.required|length) missing=\(.missing|join(","))"' \
+            stage6-evidence/required-symbol-coverage.v1.json
+          jq -n --slurpfile registry signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
+            --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            [
+              $registry[0].candidates[]?
+              | select(.state == "PENDING" and (.entry_fill_reference | type == "number") and (.entry_fill_time_ms == null))
+              | . as $candidate
+              | ($l1[0].instruments[]? | select(.unified_symbol == $candidate.symbol)) as $instrument
+              | ([$instrument.candles[]? | select(.timestamp_ms == $candidate.decision_time_ms and .closed == true)][0] // null) as $bar
+              | {
+                  signal_id: $candidate.signal_id,
+                  symbol: $candidate.symbol,
+                  decision_time_ms: $candidate.decision_time_ms,
+                  recorded_fill_reference: $candidate.entry_fill_reference,
+                  historical_bar_found: ($bar != null),
+                  historical_bar_timestamp_ms: ($bar.timestamp_ms // null),
+                  historical_bar_open: ($bar.open // null),
+                  exact_open_match: ($bar != null and $bar.open == $candidate.entry_fill_reference),
+                  l1_source_run_id: $l1[0].run_id
+                }
+            ]
+          ' | tee stage6-evidence/legacy-fill-reconciliation-diagnostic.v1.json
+          jq -r '.[] | "LEGACY_FILL_CHECK symbol=\(.symbol) bar_found=\(.historical_bar_found) exact_open_match=\(.exact_open_match) fill=\(.recorded_fill_reference) bar_open=\(.historical_bar_open)"' \
+            stage6-evidence/legacy-fill-reconciliation-diagnostic.v1.json
           ./build/lfs_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/lfs-v2.json
           ./build/nss_basis_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json
           ./build/nss_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json stage6-evidence/nss-v2.json
@@ -90,6 +146,7 @@ jobs:
             stage6-evidence/lrt-candidates.v1.json \
             stage6-evidence/nmt-candidates.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d stage6-evidence/l1-market-data.v1.json --all-errors
+
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/l2-status.v1.schema.json -d stage6-evidence/l2-status.v1.json --all-errors
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/lfs-v2-proxy.v1.schema.json -d stage6-evidence/lfs-v2.json --all-errors
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/nss-v2-proxy.v1.schema.json -d stage6-evidence/nss-v2.json --all-errors
@@ -98,6 +155,7 @@ jobs:
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d stage6-evidence/crypto-universe.v1.json --all-errors
 
       - name: Collect 15m LRT resolution data
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           ./build/intraday_15m_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/l1-market-data-15m.v1.json
@@ -133,7 +191,23 @@ jobs:
             stage6-evidence/shadow_candidate_registry.v1.json \
             stage6-evidence/daily_outcome_ledger.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/shadow-candidate-registry.v1.schema.json -d stage6-evidence/shadow_candidate_registry.v1.json --all-errors
+          jq '{summary}' stage6-evidence/shadow_candidate_registry.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/outcome-ledger.v1.schema.json -d stage6-evidence/daily_outcome_ledger.v1.json --all-errors
+          jq -r --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            .outcomes[] as $o |
+            ($l1[0].instruments[] | select(.unified_symbol == $o.symbol)) as $i |
+            [
+              $o.symbol,
+              ($o.cost_status // "UNAVAILABLE"),
+              ($o.entry_fill_time_ms // 0),
+              ($o.closed_at_ms // 0),
+              ($i.availability.funding // "UNAVAILABLE"),
+              ($i.funding | length),
+              ($i.funding | map(select(.funding_rate != null)) | length),
+              ($i.funding | map(.timestamp_ms) | min // 0),
+              ($i.funding | map(.timestamp_ms) | max // 0)
+            ] | @tsv
+          ' stage6-evidence/daily_outcome_ledger.v1.json
 
       - name: Compute and validate Stage 6 Meta-Cognition
         run: |
@@ -147,6 +221,26 @@ jobs:
             -s contracts/meta-cognition.v1.schema.json \
             -d stage6-evidence/meta_cognition_stage6_v1.json --all-errors
 
+      - name: Build and validate live Shadow risk snapshot
+        run: |
+          set -euo pipefail
+          if [ -s signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json ]; then
+            cp signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json \
+              stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          else
+            printf '%s\n' '{}' > stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          fi
+          ./build/shadow_risk_snapshot_probe \
+            stage6-evidence/shadow-risk-basis.daily_swing.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json \
+            stage6-evidence/shadow_candidate_registry.v1.json \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
+            -s contracts/shadow-risk-snapshot.v1.schema.json \
+            -d stage6-evidence/shadow-risk-snapshot.v1.json --all-errors
+
       - name: Apply Stage 7 fail-closed risk gate
         run: |
           set -euo pipefail
@@ -154,7 +248,8 @@ jobs:
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
             stage6-evidence/meta_cognition_stage6_v1.json \
-            stage6-evidence/stage7-risk-gate.v1.json
+            stage6-evidence/stage7-risk-gate.v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
             -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
@@ -178,6 +273,9 @@ jobs:
             fi
             if [ -s stage6-evidence/meta_cognition_stage6_v1.json ]; then
               jq '{run_id:.source_run_id, outcome_ledger_count, engines:(.instruments|length), sample:(.instruments[:3]|map({symbol,lrt:{candidate_status:.lrt.candidate_status,confidence_status:.lrt.confidence_status,ev_status:.lrt.ev_status,reason:.lrt.reason},nmt:{candidate_status:.nmt.candidate_status,confidence_status:.nmt.confidence_status,ev_status:.nmt.ev_status,reason:.nmt.reason}}))}' stage6-evidence/meta_cognition_stage6_v1.json
+            fi
+            if [ -s stage6-evidence/shadow-risk-snapshot.v1.json ]; then
+              jq '{status,data_class,reason,resolved_outcome_count,daily_loss_pct,weekly_loss_pct,portfolio_drawdown_pct}' stage6-evidence/shadow-risk-snapshot.v1.json
             fi
             if [ -s stage6-evidence/stage7-risk-gate.v1.json ]; then
               jq '{risk_snapshot_status,summary,actionable,trade_execution_allowed}' stage6-evidence/stage7-risk-gate.v1.json

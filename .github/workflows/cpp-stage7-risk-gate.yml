@@ -1,8 +1,8 @@
 name: C++ Stage 7 Risk Gate Contract
 on:
   pull_request:
-    branches: [main]
-    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
+    branches: [main, fix/l1-open-interest-zero-normalization-20261120]
+    paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", "contracts/shadow-risk-basis.v1.schema.json", "contracts/shadow-risk-snapshot.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml", ".github/workflows/cpp-stage6-meta-cognition-v1.yml"]
   push:
     branches: [integration/stage7-risk-gate-v1, integration/stage7-risk-gate-pipeline-v1]
     paths: ["cpp/**", "contracts/risk-gate.v1.schema.json", "contracts/stage7-risk-gate-pipeline.v1.schema.json", ".github/workflows/cpp-stage7-risk-gate.yml"]
@@ -36,6 +36,8 @@ jobs:
           npx ajv compile -s contracts/risk-gate.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/stage7-risk-gate-pipeline.v1.schema.json --spec=draft2020 -c ajv-formats
           npx ajv compile -s contracts/outcome-ledger.v1.schema.json --spec=draft2020 -c ajv-formats
+          npx ajv compile -s contracts/shadow-risk-basis.v1.schema.json --spec=draft2020 -c ajv-formats
+          npx ajv compile -s contracts/shadow-risk-snapshot.v1.schema.json --spec=draft2020 -c ajv-formats
       - name: Fail-closed guards
         run: |
           grep -Fq 'G7_DAILY_KILL_SWITCH_5_PERCENT' cpp/include/cfss/risk_gate.hpp
@@ -58,4 +60,8 @@ jobs:
           grep -Fq 'OKX_PUBLIC_FUNDING_HISTORY' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'cost_backfilled_this_run' cpp/include/cfss/shadow_outcomes.hpp
           grep -Fq 'trade_execution_allowed' cpp/include/cfss/risk_gate_pipeline.hpp
+          grep -Fq 'UNACCOUNTED_FILLED_SHADOW_CANDIDATE' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'OUTCOME_COST_OR_PROVENANCE_UNAVAILABLE' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'RISK_BASIS_INVALID_OR_NOT_FROZEN' cpp/include/cfss/shadow_risk_snapshot.hpp
+          grep -Fq 'shadow_risk_snapshot_tests' cpp/CMakeLists.txt
           echo "STAGE7_FAIL_CLOSED_GUARDS_PASS"

@@ -140,12 +140,19 @@ inline void apply_shadow_costs(
     const auto stop = outcome.value("stop_reference", json{});
     const auto decision = outcome.value("decision_time_ms", std::int64_t{0});
     const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
-    std::int64_t entry_time = decision;
-    if (outcome.contains("resolution_bars") && outcome.at("resolution_bars").is_array() &&
-        !outcome.at("resolution_bars").empty())
-        entry_time = outcome.at("resolution_bars").front().value("timestamp_ms", decision);
-
-    if (!entry.is_number() || !stop.is_number()) return;
+    const auto entry_time = outcome.value("entry_fill_time_ms", std::int64_t{0});
+    if (!entry.is_number() || !stop.is_number() || entry_time <= 0 ||
+        entry_time < decision || entry_time > closed ||
+        !outcome.contains("resolution_bars") || !outcome.at("resolution_bars").is_array() ||
+        outcome.at("resolution_bars").empty() || !outcome.at("resolution_bars").front().is_object())
+        return;
+    const auto& entry_bar = outcome.at("resolution_bars").front();
+    const auto entry_bar_open = entry_bar.value("open", json{});
+    if (entry_bar.value("timestamp_ms", std::int64_t{0}) != entry_time ||
+        !entry_bar_open.is_number() || !std::isfinite(entry_bar_open.get<double>()) ||
+        std::abs(entry_bar_open.get<double>() - entry.get<double>()) >
+            std::max(1e-10, std::abs(entry.get<double>()) * 1e-9))
+        return;
     const auto costs = calculate_shadow_costs(
         instrument, direction, entry.get<double>(), stop.get<double>(), entry_time, closed);
     if (!costs.available) return;
@@ -157,7 +164,7 @@ inline void apply_shadow_costs(
     outcome["cost_model_id"] = "SHADOW_COST_PROXY_V1";
     outcome["fee_rate_per_side"] = kShadowFeeRatePerSide;
     outcome["fee_assumption_class"] = "ASSUMED";
-    outcome["fee_assumption_ref"] = "OWNER_ENGINEERING_DECISION_2026-11-20";
+    outcome["fee_assumption_ref"] = "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE";
     outcome["slippage_rate_per_side"] = kShadowSlippageRatePerSide;
     outcome["slippage_assumption_class"] = "PROXY";
     outcome["slippage_proxy_method"] = "FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK";
@@ -193,13 +200,31 @@ inline bool valid_cost_provenance(const json& outcome) {
         std::all_of(hash.begin(), hash.end(), [](unsigned char ch) {
             return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f');
         });
-    return finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
+    const auto entry_time = outcome.value("entry_fill_time_ms", std::int64_t{0});
+    const auto decision_time = outcome.value("decision_time_ms", std::int64_t{0});
+    const auto closed_time = outcome.value("closed_at_ms", std::int64_t{0});
+    const auto entry_fill = outcome.value("entry_fill_reference", json{});
+    const bool fill_provenance_valid =
+        entry_time > 0 && decision_time > 0 && entry_time >= decision_time &&
+        closed_time >= entry_time && entry_fill.is_number() &&
+        std::isfinite(entry_fill.get<double>()) && entry_fill.get<double>() > 0.0 &&
+        outcome.contains("resolution_bars") && outcome.at("resolution_bars").is_array() &&
+        !outcome.at("resolution_bars").empty() && outcome.at("resolution_bars").front().is_object() &&
+        outcome.at("resolution_bars").front().value("timestamp_ms", std::int64_t{0}) == entry_time &&
+        outcome.at("resolution_bars").front().contains("open") &&
+        outcome.at("resolution_bars").front().at("open").is_number() &&
+        std::isfinite(outcome.at("resolution_bars").front().at("open").get<double>()) &&
+        std::abs(outcome.at("resolution_bars").front().at("open").get<double>() -
+                 entry_fill.get<double>()) <=
+            std::max(1e-10, std::abs(entry_fill.get<double>()) * 1e-9);
+    return fill_provenance_valid && finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
         finite_number("slippage_r") && outcome.at("slippage_r").get<double>() >= 0.0 &&
         finite_number("funding_r") &&
         finite_number("fee_rate_per_side") &&
         std::abs(outcome.at("fee_rate_per_side").get<double>() - kShadowFeeRatePerSide) < 1e-12 &&
         outcome.value("fee_assumption_class", std::string{}) == "ASSUMED" &&
-        outcome.value("fee_assumption_ref", std::string{}) == "OWNER_ENGINEERING_DECISION_2026-11-20" &&
+        outcome.value("fee_assumption_ref", std::string{}) ==
+            "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE" &&
         finite_number("slippage_rate_per_side") &&
         std::abs(outcome.at("slippage_rate_per_side").get<double>() - kShadowSlippageRatePerSide) < 1e-12 &&
         outcome.value("slippage_assumption_class", std::string{}) == "PROXY" &&
@@ -276,6 +301,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         l1.at("crypto_universe").value("provider_id", std::string{}) == "coinpaprika";
     std::size_t registered = 0U;
     std::size_t rejected = 0U;
+    std::size_t unverifiable = 0U;
     for (auto& old_candidate : registry["candidates"]) {
         if (old_candidate.value("state", std::string{}) != "PENDING") continue;
         const auto old_path = old_candidate.value("path", std::string{});
@@ -295,6 +321,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             old_candidate["resolution_timeframe"] =
                 old_path == "PLAN_A_LRT" ? "15m" : "1h";
             old_candidate["entry_fill_reference"] = nullptr;
+            old_candidate["entry_fill_time_ms"] = nullptr;
             old_candidate["entry_model"] = "NEXT_BAR_OPEN_PROXY";
             old_candidate["execution_status"] = "NOT_EXECUTED";
             old_candidate["state"] = "REJECTED";
@@ -316,6 +343,34 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             const auto old_path = old_outcome.value("path", std::string{});
             old_outcome["score_model_version"] =
                 old_path == "PLAN_A_LRT" ? "LFS_V2_PROXY" : "NSS_V2_PROXY";
+        }
+        // زمان ورود فقط از کندل ثبت‌شدهٔ واقعیِ پروکسی بازیابی می‌شود؛ حدس از decision_time ممنوع است.
+        if ((!old_outcome.contains("entry_fill_time_ms") ||
+             old_outcome.at("entry_fill_time_ms").is_null()) &&
+            old_outcome.contains("resolution_bars") &&
+            old_outcome.at("resolution_bars").is_array() &&
+            !old_outcome.at("resolution_bars").empty() &&
+            old_outcome.at("resolution_bars").front().is_object() &&
+            old_outcome.at("resolution_bars").front().contains("timestamp_ms") &&
+            old_outcome.at("resolution_bars").front().at("timestamp_ms").is_number_integer() &&
+            old_outcome.at("resolution_bars").front().contains("open") &&
+            old_outcome.at("resolution_bars").front().at("open").is_number() &&
+            old_outcome.contains("entry_fill_reference") &&
+            old_outcome.at("entry_fill_reference").is_number()) {
+            const auto& first_bar = old_outcome.at("resolution_bars").front();
+            const auto first_timestamp = first_bar.at("timestamp_ms").get<std::int64_t>();
+            const auto decision_timestamp = old_outcome.value("decision_time_ms", std::int64_t{0});
+            const auto close_timestamp = old_outcome.value("closed_at_ms", std::int64_t{0});
+            const double recorded_fill = old_outcome.at("entry_fill_reference").get<double>();
+            const double first_open = first_bar.at("open").get<double>();
+            const bool fill_matches_bar = std::isfinite(recorded_fill) && recorded_fill > 0.0 &&
+                std::isfinite(first_open) &&
+                std::abs(first_open - recorded_fill) <=
+                    std::max(1e-10, std::abs(recorded_fill) * 1e-9);
+            if (first_timestamp >= decision_timestamp && first_timestamp <= close_timestamp &&
+                fill_matches_bar) {
+                old_outcome["entry_fill_time_ms"] = first_timestamp;
+            }
         }
     }
 
@@ -416,7 +471,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
                 {"source_l1_sha256", dual.at("l1_sha256")}, {"source_universe_status", "VERIFIED"},
                 {"profile", "DAILY_SWING"},
                 {"resolution_timeframe", path == "PLAN_A_LRT" ? "15m" : "1h"},
-                {"entry_fill_reference", nullptr},
+                {"entry_fill_reference", nullptr}, {"entry_fill_time_ms", nullptr},
                 {"entry_model", "NEXT_BAR_OPEN_PROXY"},
                 {"execution_status", "NOT_EXECUTED"},
                 {"state", "PENDING"}, {"resolution", nullptr}, {"closed_at_ms", nullptr},
@@ -436,13 +491,32 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const bool is_lrt = path == "PLAN_A_LRT";
         const auto decision = candidate.value("decision_time_ms", std::int64_t{0});
         const auto expiry = candidate.value("expiry_time_ms", std::int64_t{0});
+        const bool has_recorded_fill = candidate.contains("entry_fill_reference") &&
+            candidate.at("entry_fill_reference").is_number() &&
+            std::isfinite(candidate.at("entry_fill_reference").get<double>()) &&
+            candidate.at("entry_fill_reference").get<double>() > 0.0;
+        const bool has_recorded_entry_time = candidate.contains("entry_fill_time_ms") &&
+            candidate.at("entry_fill_time_ms").is_number_integer() &&
+            candidate.at("entry_fill_time_ms").get<std::int64_t>() > 0;
+        if (has_recorded_entry_time && !has_recorded_fill) {
+            candidate["state"] = "UNVERIFIABLE";
+            candidate["skip_reason"] = "ENTRY_TIME_WITHOUT_RECORDED_FILL";
+            ++unverifiable;
+            continue;
+        }
         const auto* instrument = find_instrument(is_lrt ? l1_15m : l1, symbol);
         if (!instrument || !instrument->contains("candles") ||
             !instrument->at("candles").is_array() || instrument->at("candles").empty()) {
             if (current_time >= expiry) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY";
-                ++rejected;
+                if (has_recorded_fill) {
+                    candidate["state"] = "UNVERIFIABLE";
+                    candidate["skip_reason"] = "FILLED_CANDIDATE_RESOLUTION_DATA_UNAVAILABLE";
+                    ++unverifiable;
+                } else {
+                    candidate["state"] = "REJECTED";
+                    candidate["skip_reason"] = "RESOLUTION_DATA_UNAVAILABLE_AT_EXPIRY";
+                    ++rejected;
+                }
             } else {
                 ++still_pending;
             }
@@ -455,16 +529,24 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const std::int64_t bar_ms = is_lrt ? 900'000LL : kOneHourMs;
         if (candidate.value("resolution_timeframe", std::string{}) != (is_lrt ? "15m" : "1h") ||
             expiry <= decision) {
-            candidate["state"] = "REJECTED";
-            candidate["skip_reason"] = "INVALID_RESOLUTION_TIMEFRAME_OR_HORIZON";
-            ++rejected;
+            if (has_recorded_fill) {
+                candidate["state"] = "UNVERIFIABLE";
+                candidate["skip_reason"] = "FILLED_CANDIDATE_INVALID_RESOLUTION_CONTRACT";
+                ++unverifiable;
+            } else {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "INVALID_RESOLUTION_TIMEFRAME_OR_HORIZON";
+                ++rejected;
+            }
             continue;
         }
 
         bool closed = false;
         bool data_gap = false;
         bool entry_checked = false;
-        double entry_fill = 0.0;
+        bool entry_time_available = has_recorded_entry_time;
+        double entry_fill = has_recorded_fill
+            ? candidate.at("entry_fill_reference").get<double>() : 0.0;
         double exit_price = 0.0;
         std::int64_t close_time = 0;
         std::int64_t expected_next_bar_ms = decision;
@@ -495,28 +577,42 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             });
             if (!entry_checked) {
                 entry_checked = true;
-                if ((direction == "LONG" && open <= stop) ||
-                    (direction == "SHORT" && open >= stop)) {
-                    candidate["state"] = "REJECTED";
-                    candidate["skip_reason"] = "INVALIDATED_BEFORE_PROXY_ENTRY";
-                    ++rejected;
-                    break;
+                if (has_recorded_fill) {
+                    // مقدار fill قبلی immutable است؛ timestamp گمشده از decision_time یا کندل جدید حدس زده نمی‌شود.
+                    if (has_recorded_entry_time) {
+                        if (candidate.at("entry_fill_time_ms").get<std::int64_t>() != ts) {
+                            data_gap = true;
+                            break;
+                        }
+                    } else {
+                        entry_time_available = false;
+                    }
+                } else {
+                    if ((direction == "LONG" && open <= stop) ||
+                        (direction == "SHORT" && open >= stop)) {
+                        candidate["state"] = "REJECTED";
+                        candidate["skip_reason"] = "INVALIDATED_BEFORE_PROXY_ENTRY";
+                        ++rejected;
+                        break;
+                    }
+                    if ((direction == "LONG" && open >= target) ||
+                        (direction == "SHORT" && open <= target)) {
+                        candidate["state"] = "MISSED_ENTRY";
+                        candidate["skip_reason"] = "TARGET_GAPPED_BEFORE_PROXY_ENTRY";
+                        ++rejected;
+                        break;
+                    }
+                    entry_fill = open;
+                    candidate["entry_fill_reference"] = entry_fill;
+                    candidate["entry_fill_time_ms"] = ts;
+                    entry_time_available = true;
                 }
-                if ((direction == "LONG" && open >= target) ||
-                    (direction == "SHORT" && open <= target)) {
-                    candidate["state"] = "MISSED_ENTRY";
-                    candidate["skip_reason"] = "TARGET_GAPPED_BEFORE_PROXY_ENTRY";
-                    ++rejected;
-                    break;
-                }
-                entry_fill = open;
-                candidate["entry_fill_reference"] = entry_fill;
             }
             const double risk = std::abs(entry_fill - stop);
             if (risk <= 0.0) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "INVALID_PROXY_FILL_RISK";
-                ++rejected;
+                candidate["state"] = "UNVERIFIABLE";
+                candidate["skip_reason"] = "FILLED_CANDIDATE_INVALID_PROXY_FILL_RISK";
+                ++unverifiable;
                 break;
             }
             const bool stop_hit = direction == "LONG" ? low <= stop : high >= stop;
@@ -538,31 +634,52 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         }
 
         if (candidate.value("state", std::string{}) == "REJECTED" ||
-            candidate.value("state", std::string{}) == "MISSED_ENTRY") continue;
+            candidate.value("state", std::string{}) == "MISSED_ENTRY" ||
+            candidate.value("state", std::string{}) == "UNVERIFIABLE") continue;
         if (data_gap) {
             if (current_time >= expiry) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE";
-                ++rejected;
+                if (has_recorded_fill || entry_fill > 0.0) {
+                    candidate["state"] = "UNVERIFIABLE";
+                    candidate["skip_reason"] = "FILLED_CANDIDATE_DATA_GAP";
+                    ++unverifiable;
+                } else {
+                    candidate["state"] = "REJECTED";
+                    candidate["skip_reason"] = "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE";
+                    ++rejected;
+                }
             } else {
+                if (has_recorded_fill || entry_fill > 0.0)
+                    candidate["skip_reason"] = "FILLED_CANDIDATE_DATA_GAP";
                 ++still_pending;
             }
             continue;
         }
         if (!entry_checked) {
             if (current_time >= expiry) {
-                candidate["state"] = "REJECTED";
-                candidate["skip_reason"] = "NO_FUTURE_ENTRY_BAR_BEFORE_EXPIRY";
-                ++rejected;
+                if (has_recorded_fill) {
+                    candidate["state"] = "UNVERIFIABLE";
+                    candidate["skip_reason"] = "FILLED_CANDIDATE_ENTRY_BAR_UNAVAILABLE";
+                    ++unverifiable;
+                } else {
+                    candidate["state"] = "REJECTED";
+                    candidate["skip_reason"] = "NO_FUTURE_ENTRY_BAR_BEFORE_EXPIRY";
+                    ++rejected;
+                }
             } else {
                 ++still_pending;
             }
             continue;
         }
         if (!closed && current_time >= expiry && expected_next_bar_ms < expiry) {
-            candidate["state"] = "REJECTED";
-            candidate["skip_reason"] = "FUTURE_DATA_COVERAGE_DID_NOT_REACH_EXPIRY";
-            ++rejected;
+            if (has_recorded_fill || entry_fill > 0.0) {
+                candidate["state"] = "UNVERIFIABLE";
+                candidate["skip_reason"] = "FILLED_CANDIDATE_FUTURE_COVERAGE_INCOMPLETE";
+                ++unverifiable;
+            } else {
+                candidate["state"] = "REJECTED";
+                candidate["skip_reason"] = "FUTURE_DATA_COVERAGE_DID_NOT_REACH_EXPIRY";
+                ++rejected;
+            }
             continue;
         }
         if (!closed && current_time >= expiry && expected_next_bar_ms >= expiry &&
@@ -580,6 +697,16 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         const double risk = std::abs(entry_fill - stop);
         const double sign = direction == "LONG" ? 1.0 : -1.0;
         const double gross_r = ((exit_price - entry_fill) * sign) / risk;
+        if (!entry_time_available) {
+            // نتیجهٔ قیمتی قابل مشاهده است، اما بدون زمان fill قابل ورود به دفتر آماری/هزینه نیست.
+            candidate["state"] = "UNVERIFIABLE";
+            candidate["resolution"] = resolution;
+            candidate["closed_at_ms"] = close_time;
+            candidate["gross_r"] = gross_r;
+            candidate["skip_reason"] = "ENTRY_FILL_TIME_UNAVAILABLE";
+            ++unverifiable;
+            continue;
+        }
         const bool win = gross_r > 0.0;
         const auto signal_id = candidate.at("signal_id").get<std::string>();
         json outcome = {
@@ -592,7 +719,9 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             {"fee_r", nullptr}, {"slippage_r", nullptr}, {"funding_r", nullptr},
             {"data_class", candidate.at("data_class")}, {"cost_status", "UNAVAILABLE"},
             {"symbol", symbol}, {"direction", direction}, {"entry_reference", entry_reference},
-            {"entry_fill_reference", entry_fill}, {"entry_model", "NEXT_BAR_OPEN_PROXY"},
+            {"entry_fill_reference", entry_fill},
+            {"entry_fill_time_ms", candidate.value("entry_fill_time_ms", std::int64_t{0})},
+            {"entry_model", "NEXT_BAR_OPEN_PROXY"},
             {"execution_status", "NOT_EXECUTED"},
             {"stop_reference", stop}, {"target_reference", target}, {"exit_reference", exit_price},
             {"decision_time_ms", decision}, {"resolution", resolution},
@@ -639,6 +768,7 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
     registry["summary"] = {
         {"registered_this_run", registered}, {"resolved_this_run", resolved},
         {"pending_count", still_pending}, {"rejected_this_run", rejected},
+        {"unverifiable_this_run", unverifiable},
         {"total_candidates", registry["candidates"].size()},
     };
     return {{"registry", registry}, {"ledger", ledger}};

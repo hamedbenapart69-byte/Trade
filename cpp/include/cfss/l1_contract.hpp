@@ -158,7 +158,9 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
                 row.at("open_interest_value_currency") != "USD")
                 throw std::invalid_argument("open_interest_unit_or_currency_mismatch");
             validate_nullable_number(row.at("open_interest"), "open_interest", true);
-            validate_nullable_number(row.at("open_interest_base"), "open_interest_base", true);
+            // مقدار پایهٔ OI می‌تواند صفر باشد؛ قرارداد JSON نیز minimum=0 تعریف کرده است.
+            if (!row.at("open_interest_base").is_null())
+                (void)require_finite_number(row.at("open_interest_base"), "open_interest_base", false, true);
             validate_nullable_number(row.at("open_interest_value_usd"), "open_interest_value_usd", true);
         }
         const bool latest_fresh = latest_candle_ms > 0 && now_ms >= latest_candle_ms &&
