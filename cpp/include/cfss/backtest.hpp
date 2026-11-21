@@ -83,7 +83,7 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
   const bool target_hit=lng?b.high>=c.target:b.low<=c.target;
   if(stop_hit) { exit=c.stop; outcome=target_hit?"AMBIGUOUS_STOP_FIRST":"STOP"; break; }
   if(target_hit) { exit=c.target; outcome="TARGET"; break; }
-  if(i+1==count) { exit=b.close; outcome="TIME_EXIT"; }
+  if(i+1==c.max_bars) { exit=b.close; outcome="TIME_EXIT"; }
  }
  if(held==0||exit<=0) return std::nullopt;
  const double exit_fill=exit*(lng?1-x.costs.exit_slippage:1+x.costs.exit_slippage);
