@@ -59,6 +59,7 @@ jobs:
             cfss-stage6-pr-cache-
 
       - name: Collect fresh public L1 and compute C++ Stage 4/5 inputs
+        timeout-minutes: 30
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence shared-cache
@@ -98,6 +99,7 @@ jobs:
           ./node_modules/.bin/ajv validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d stage6-evidence/crypto-universe.v1.json --all-errors
 
       - name: Collect 15m LRT resolution data
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           ./build/intraday_15m_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/l1-market-data-15m.v1.json
