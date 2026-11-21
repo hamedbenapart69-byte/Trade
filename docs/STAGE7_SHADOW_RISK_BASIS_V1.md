@@ -4,7 +4,7 @@ Status: **CONTRACT ADDED — RISK SNAPSHOT STILL BLOCKED**
 
 ## Purpose
 
-V18.2 §37.3 requires the system-level 5% daily and 10% weekly kill-switches to use an explicitly defined research/Shadow equity basis. The denominator must be fixed for each experiment. This contract makes that basis an explicit, versioned input instead of silently assuming a user balance or inventing a denominator from R-multiples.
+V18.2 §10.4 requires the system-level 5% daily and 10% weekly kill-switches to use an explicitly defined research/Shadow equity basis. The denominator must be fixed for each experiment. This contract makes that basis an explicit, versioned input instead of silently assuming a user balance or inventing a denominator from R-multiples.
 
 ## Contract rules
 
@@ -24,8 +24,8 @@ The source defines the required measurement basis but does not prescribe a norma
 
 ## Current acceptance
 
-- L1: **BLOCKED** — persistent ledger still contains outcomes with unavailable costs; complete open-position marks/provenance are not yet evidenced.
-- L2: **CONTRACT PASS ON HEAD `f40a356d`; FINAL RERUN PENDING** — C++ snapshot builder, CLI probe, schema and fail-closed tests passed 15/15 CTest plus schema/guard checks on the recorded head; a final timestamp-order guard is being revalidated on `c1e795ba`. Production use is not claimed.
+- L1: **PARTIAL / BLOCKED** — the latest read-only PR live run backfilled all five historical cost rows as PROXY, but the persistent `signals` ledger was not written. A legacy filled UNI candidate still lacks recoverable fill-time provenance; complete open-position marks are not implemented.
+- L2: **LATEST-HEAD PASS ON `89a96ec0`** — C++ Foundation and Stage 7 contract workflows passed full build and 15/15 CTest; all five Stage 7 schemas compiled and fail-closed guards passed. The latest read-only live integration run also completed successfully; production persistence is not claimed.
 - L3: unchanged — Telegram remains the only user-facing channel; no production message is sent by this change.
 - Stage 7 remains **BLOCKED** until persistent cost provenance, non-overlapping entry/close history or explicit entry-NAV accounting, open-position mark-to-market, and the upstream Stage 6 calibration gate are satisfied.
 - Stage 6 remains **NOT_CALIBRATED**; Stage 7 cannot promote candidates while that upstream gate is blocked.
@@ -58,7 +58,7 @@ The Shadow candidate registry now records `entry_fill_time_ms` when a new proxy 
 
 ### Entry-NAV reconstruction guard
 
-Each closed Shadow outcome now carries `entry_fill_time_ms`. Cost backfill requires this explicit timestamp and verifies that it matches the first stored `resolution_bars` candle. Legacy outcomes are upgraded only when that timestamp is present in their stored `resolution_bars`; no decision-time substitution is permitted.
+Each closed Shadow outcome now carries `entry_fill_time_ms`. Cost backfill requires this explicit timestamp, verifies that it matches the first stored `resolution_bars` candle, and verifies that the first candle's `open` matches the immutable `entry_fill_reference`. The timestamp must be between decision and close times. Legacy outcomes are upgraded only when both timestamp and price are proven by their stored `resolution_bars`; no decision-time substitution is permitted.
 
 The snapshot builder rejects any overlap between closed-position intervals with `OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE`. Without a recorded NAV at each entry, applying the current NAV at close would misstate the position's risk amount whenever another position closes while it is open. Non-overlapping intervals permit sequential reconstruction; overlapping intervals remain unavailable until explicit entry-NAV/risk-unit provenance or a correct portfolio mark-to-market ledger is implemented.
 
@@ -68,3 +68,15 @@ The snapshot builder rejects any overlap between closed-position intervals with 
 - A `RESOLVED` candidate without a matching ledger row blocks the snapshot. A ledger row without a registered candidate also blocks it.
 - The persistent legacy `UNI/USDT:USDT` candidate has `entry_fill_reference=4.845` but no `entry_fill_time_ms`. Its original Stage 6 run (`44693771488`) has no retained workflow artifacts, so the original L1 payload cannot be independently recovered. The timestamp is therefore not reconstructed; the candidate remains unmarkable and will be quarantined as `UNVERIFIABLE` if it closes without provenance.
 - The 0.04% fee reference from V18.2 G3 is modeled as an assumed per-side proxy in this build, not as a verified exchange/account fee tier. Cost output remains `PROXY`.
+
+### Latest-head evidence — 2026-11-21
+
+- PR #169 head: `89a96ec0fcd37c643fbf4a822ec0758f6bb60548`.
+- Stage 7 contract run `44892775998`: full build, **15/15 CTest**, schema compilation and fail-closed guards PASS.
+- C++ Foundation run `44892776072`: full build and **15/15 CTest** PASS.
+- Stage 6 PR live run `44892776007`: **SUCCESS**. It collected 16 public OKX instruments; required historical/pending symbols were present 6/6; 15m data was available 16/16; five historical costs were transiently backfilled as PROXY (5/5). LFS v2 was calculated for 15/16 and NSS v2 for 13/16; unavailable inputs remained explicitly UNAVAILABLE.
+- The same read-only run generated Meta-Cognition with 5 outcomes, but all confidence states remained `NOT_CALIBRATED`. Stage 7 risk snapshot remained `UNAVAILABLE` because no frozen risk basis exists. The risk gate blocked all 3 candidates; actionable count was 0. No Telegram message was sent and no persistent `signals` state was written.
+- The persistent `signals` branch still has 5 historical outcomes with unavailable costs until a production scheduled run persists the backfill. The legacy UNI filled candidate still has no recoverable fill timestamp. The original source run `44693771488` has no artifacts; its job log does not contain the original fill candle.
+- The current builder still fails closed on filled non-resolved candidates because fresh-candle open-position mark-to-market has not been implemented.
+
+**Disposition remains BLOCKED.** The implementation contract is passing, but a production Shadow NAV/risk basis, recoverable legacy fill provenance or an approved reconciliation policy, open-position mark-to-market, and Stage 6 calibration evidence are still absent. No defaults or account balances are substituted.
