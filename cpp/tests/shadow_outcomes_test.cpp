@@ -140,8 +140,9 @@ int main() {
             target_row.at("outcome_kind") == "HYPOTHESIS_PROXY" &&
             target_row.at("resolution_timeframe") == "15m" &&
             target_row.at("resolution_data_sha256").get<std::string>().size() == 64U &&
-            target_row.at("resolution_bars").size() == 2U,
-            "LRT outcome retains profile, 15m source fingerprint and exact resolution bars");
+            target_row.at("resolution_bars").size() == 2U &&
+            target_row.at("entry_fill_time_ms") == 3'600'000LL,
+            "LRT outcome retains profile, exact proxy-fill time and resolution bars");
 
     const auto costed_l1 = fixture_l1_with_funding(target_l1);
     const auto costed_target = cfss::shadow::process(
@@ -154,6 +155,8 @@ int main() {
     const auto& costed_row = costed_target.at("ledger").at("outcomes").front();
     require(costed_row.at("cost_status") == "PROXY" &&
             costed_row.at("cost_model_id") == "SHADOW_COST_PROXY_V1" &&
+            costed_row.at("fee_assumption_ref") ==
+                "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE" &&
             std::abs(costed_row.at("fee_r").get<double>() - 0.04) < 1e-9 &&
             std::abs(costed_row.at("slippage_r").get<double>() - 0.10) < 1e-9 &&
             std::abs(costed_row.at("funding_r").get<double>() - 0.005) < 1e-9,
@@ -180,7 +183,7 @@ int main() {
     auto missing_fee_decision = costed_row;
     missing_fee_decision.erase("fee_assumption_ref");
     require(!cfss::shadow::valid_cost_provenance(missing_fee_decision),
-            "assumed fee must retain its owner-decision reference");
+            "assumed fee must retain its V18.2 reference assumption");
     auto stale_cost_snapshot = costed_row;
     stale_cost_snapshot["cost_as_of_time_ms"] =
         stale_cost_snapshot.at("closed_at_ms").get<std::int64_t>() - 1LL;
@@ -284,10 +287,70 @@ int main() {
         fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
         liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
     require(expired_gap.at("ledger").at("outcomes").empty() &&
-            expired_gap.at("registry").at("candidates").front().at("state") == "REJECTED" &&
+            expired_gap.at("registry").at("candidates").front().at("state") == "UNVERIFIABLE" &&
             expired_gap.at("registry").at("candidates").front().at("skip_reason") ==
-                "FUTURE_DATA_GAP_OR_INCOMPLETE_COVERAGE",
-            "expired candidate with missing future candles is rejected, not converted to an outcome");
+                "FILLED_CANDIDATE_DATA_GAP" &&
+            expired_gap.at("registry").at("summary").at("unverifiable_this_run") == 1U,
+            "filled candidate with missing future candles is quarantined, never misclassified as unfilled rejection");
+
+    const auto pending_start = cfss::shadow::process(
+        fixture_l1({}, 4'500'000LL),
+        fixture_l1_15m({candle(3'600'000LL, 101.0, 99.0, 100.5)}, 4'500'000LL),
+        fixture_dual(candidate("PLAN_A_LRT", "LONG", 100.0, 98.0, 104.0)),
+        liquidity, cfss::shadow::empty_registry(), cfss::shadow::empty_ledger());
+    require(pending_start.at("registry").at("candidates").front().at("state") == "PENDING" &&
+            pending_start.at("registry").at("candidates").front().at("entry_fill_reference") == 100.0 &&
+            pending_start.at("registry").at("candidates").front().at("entry_fill_time_ms") == 3'600'000LL,
+            "first observed next-bar proxy fill records price and timestamp once");
+
+    auto legacy_filled_registry = pending_start.at("registry");
+    legacy_filled_registry["candidates"][0]["entry_fill_reference"] = 99.5;
+    legacy_filled_registry["candidates"][0]["entry_fill_time_ms"] = nullptr;
+    const auto legacy_filled = cfss::shadow::process(
+        target_l1, fixture_l1_15m({
+            candle(3'600'000LL, 101.0, 99.0, 100.5),
+            candle(4'500'000LL, 105.0, 99.5, 104.0)
+        }, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        legacy_filled_registry, cfss::shadow::empty_ledger());
+    const auto& legacy_filled_candidate = legacy_filled.at("registry").at("candidates").front();
+    require(legacy_filled.at("ledger").at("outcomes").empty() &&
+            legacy_filled_candidate.at("state") == "UNVERIFIABLE" &&
+            legacy_filled_candidate.at("entry_fill_reference") == 99.5 &&
+            legacy_filled_candidate.at("entry_fill_time_ms").is_null() &&
+            legacy_filled_candidate.at("gross_r") == 3.0 &&
+            legacy_filled_candidate.at("skip_reason") == "ENTRY_FILL_TIME_UNAVAILABLE",
+            "legacy filled candidate without a recorded timestamp is not silently upgraded or counted");
+
+    auto immutable_fill_registry = pending_start.at("registry");
+    immutable_fill_registry["candidates"][0]["entry_fill_reference"] = 99.5;
+    immutable_fill_registry["candidates"][0]["entry_fill_time_ms"] = 3'600'000LL;
+    const auto immutable_fill = cfss::shadow::process(
+        target_l1, fixture_l1_15m({
+            candle(3'600'000LL, 101.0, 99.0, 100.5, 101.0),
+            candle(4'500'000LL, 105.0, 99.5, 104.0)
+        }, 10'800'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        immutable_fill_registry, cfss::shadow::empty_ledger());
+    const auto& immutable_outcome = immutable_fill.at("ledger").at("outcomes").front();
+    require(immutable_outcome.at("entry_fill_reference") == 99.5 &&
+            immutable_outcome.at("entry_fill_time_ms") == 3'600'000LL &&
+            std::abs(immutable_outcome.at("win_r").get<double>() - 3.0) < 1e-9,
+            "reprocessing never overwrites an already recorded proxy fill when source candles change");
+
+    auto filled_gap_registry = pending_start.at("registry");
+    const auto filled_gap = cfss::shadow::process(
+        fixture_l1({}, 18'000'000LL),
+        fixture_l1_15m({
+            candle(3'600'000LL, 101.0, 99.0, 100.5),
+            candle(5'400'000LL, 105.0, 99.5, 104.0)
+        }, 18'000'000LL),
+        fixture_dual({{"status", "NO_QUALIFIED_SETUP"}}), liquidity,
+        filled_gap_registry, cfss::shadow::empty_ledger());
+    require(filled_gap.at("ledger").at("outcomes").empty() &&
+            filled_gap.at("registry").at("candidates").front().at("state") == "UNVERIFIABLE" &&
+            filled_gap.at("registry").at("summary").at("unverifiable_this_run") == 1U,
+            "a filled candidate with an expired resolution data gap is not marked REJECTED");
 
     auto legacy_registry = cfss::shadow::empty_registry();
     legacy_registry["candidates"].push_back({
