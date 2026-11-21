@@ -96,7 +96,8 @@ jobs:
             stage6-evidence/nmt-candidates.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/lfs-v2-proxy.v1.schema.json -d stage6-evidence/lfs-v2.json --all-errors
-          ./node_modules/.bin/ajv validate --spec=draft2020 \
+
+          jq '{summary}' stage6-evidence/shadow_candidate_registry.v1.json          ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/nss-v2-proxy.v1.schema.json -d stage6-evidence/nss-v2.json --all-errors
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/liquidity-phase.v1.schema.json -d stage6-evidence/liquidity-phase.v1.json --all-errors
