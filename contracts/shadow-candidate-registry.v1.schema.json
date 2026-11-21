@@ -20,7 +20,34 @@
       "minimum": 1
     },
     "summary": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "registered_this_run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolved_this_run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pending_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected_this_run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unverifiable_this_run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_candidates": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
     },
     "candidates": {
       "type": "array",
@@ -170,7 +197,8 @@
               "PENDING",
               "RESOLVED",
               "REJECTED",
-              "MISSED_ENTRY"
+              "MISSED_ENTRY",
+              "UNVERIFIABLE"
             ]
           },
           "resolution": {
