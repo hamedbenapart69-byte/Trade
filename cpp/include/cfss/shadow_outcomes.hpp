@@ -594,7 +594,8 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
         }
 
         if (candidate.value("state", std::string{}) == "REJECTED" ||
-            candidate.value("state", std::string{}) == "MISSED_ENTRY") continue;
+            candidate.value("state", std::string{}) == "MISSED_ENTRY" ||
+            candidate.value("state", std::string{}) == "UNVERIFIABLE") continue;
         if (data_gap) {
             if (current_time >= expiry) {
                 if (has_recorded_fill || entry_fill > 0.0) {
