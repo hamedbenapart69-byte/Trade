@@ -228,3 +228,31 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 **L1 persistent risk inputs:** BLOCKED — no frozen risk basis; one legacy filled candidate lacks recoverable fill-time provenance; persistent cost backfill has not yet been committed.  
 **L3 read-only integration:** PASS — live L1/L2, risk-gate generation and Telegram report preparation completed; no message sent by the PR test.  
 **Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
+
+## Latest implementation hardening — 2026-11-21 (head `557a8d72`)
+
+### Risk-accounting integrity
+
+- The Stage 7 snapshot now records the **maximum portfolio drawdown observed at every NAV event**, not merely the final drawdown. A recovery above the previous high-water mark no longer erases the earlier maximum drawdown.
+- Every ledger outcome must map to a registered candidate whose state is exactly `RESOLVED`. Symbol, direction, profile, immutable fill reference and stop reference must match. If a candidate has a recorded fill timestamp, it must match the ledger timestamp.
+- Regression tests cover recovery above the prior high-water mark, a ledger row mapped to a non-resolved candidate, and a mismatched candidate fill reference.
+
+### Latest-head execution evidence
+
+- C++ Foundation run `44893740087`: **SUCCESS**.
+- Stage 7 Risk Gate Contract run `44893740070`: **SUCCESS**, full build, **15/15 CTest**, schema compilation and fail-closed guards.
+- Stage 6 Calibration Contract `44893740077`, Stage 5 Contract `44893740086`, Stage 2 LFS Contract `44893740069`, Stage 3 NSS Contract `44893740107`, Policy Guard `44893740066`, and CI `44893740098`: **SUCCESS**.
+- Stage 1 live vertical slice `44893740090`: real OKX L1/L2 collection and schemas PASS. Telegram outbound and persistent writes were skipped because this was a pull-request validation run.
+- Stage 6/7 read-only live validation `44893740089`: **SUCCESS**. L1 16/16 instruments; required symbols 6/6; 15m data 16/16; LFS v2 15/16 PROXY-calculated; NSS v2 13/16 PROXY-calculated; 5/5 historical outcomes transiently costed as PROXY; Meta-Cognition generated for 5 outcomes; all confidence states remain `NOT_CALIBRATED`; Stage 7 gate blocked 3/3 candidates with 0 actionable.
+
+### Legacy UNI fill: new corroborating evidence, no mutation
+
+- A fresh historical OKX L1 collection found a closed `UNI-USDT-SWAP` 1h candle at timestamp `1795158000000`, exactly equal to the candidate's stored `decision_time_ms`; the candle open is exactly `4.845`, equal to the immutable `entry_fill_reference`.
+- The read-only diagnostic reports `historical_bar_found=true` and `exact_open_match=true`. This is stronger corroboration than the prior run log alone.
+- The persistent registry was **not** changed. The previous policy explicitly prohibited inferring a missing fill timestamp from decision time/later candles. This exact historical-candle match is now available as evidence for an owner-approved reconciliation, but the timestamp remains unset until that policy is explicitly amended.
+
+### Whole-project scope boundary
+
+The current production C++ L1 collector still calls the OKX-only adapter. The C++ provider-health probe lists Bybit, Binance, KuCoin, MEXC and Bitget as `NOT_IMPLEMENTED`; the open Python fallback PRs do not satisfy the V18.2 C++ production requirement. Multi-provider C++ fallback remains a separate critical project blocker and is not included in PR #169.
+
+**Overall Stage 7 remains BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION.** The latest code tests pass, but no frozen risk basis exists, open-position mark-to-market is not implemented, Stage 6 is not calibrated, and the legacy fill reconciliation remains pending explicit approval.
