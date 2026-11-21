@@ -1,49 +1,90 @@
-# Operations runbook
+# CFSS Operations Runbook — V18.2
 
-## First local start
+**Active user channel:** Telegram only  
+**Active production compute:** C++ on GitHub Actions  
+**User-side provider access:** not required  
+**Trading execution:** forbidden; manual trading only.
 
-1. Copy .env.example to .env.
-2. Replace CONTROL_API_TOKEN and WORKER_API_TOKEN with two different random values. Generate each with:
-   python -c "import secrets; print(secrets.token_urlsafe(32))"
-3. Keep ENABLE_WORKER_EXECUTION=false and ENABLE_N8N_EXECUTION=false until a real destination is configured and authorized.
-4. Start: docker compose up -d --build
-5. Open http://127.0.0.1:8000 on the same computer. This localhost binding is intentional; it is not reachable from the public internet or another device by default.
-6. Check: docker compose ps and docker compose logs --tail=100 control-plane.
+This runbook replaces the old Docker/FastAPI/Railway/n8n control-plane instructions for the active Crypto Futures Signal System. Those instructions are historical and must not be used to operate the V18.2 production pipeline.
 
-## Backup
+## 1. Normal operation
 
-The helper creates a consistent SQLite backup using SQLite's backup API and verifies PRAGMA integrity_check.
+1. GitHub Actions workers acquire public market data.
+2. C++ binaries validate and compute L1/L2 artifacts, strategy candidates, Shadow outcomes, meta-cognition and the risk gate.
+3. Versioned outputs and provenance are persisted on the dedicated `signals` branch.
+4. Telegram is the only user-facing delivery channel.
+5. The user reviews the report and independently decides whether to place any trade.
+
+The user's browser, phone, country, exchange account, VPN, balance and private exchange credentials are not part of the data pipeline.
+
+## 2. Active workflows
+
+- [C++ Stage 1 live vertical slice](../.github/workflows/cpp-stage1-live.yml)
+- [C++ Stage 6 scheduled Meta-Cognition pipeline](../.github/workflows/cpp-stage6-meta-cognition-v1.yml)
+- [All GitHub Actions runs](https://github.com/hamedbenapart69-byte/Trade/actions)
+
+Stage-specific contract workflows validate the relevant C++ modules and schemas. Legacy Python/V5, dashboard, email, Railway and orchestration workflows are not the active user-facing architecture.
+
+## 3. Persistent runtime state
+
+The `signals` branch contains versioned runtime artifacts under `cpp_runtime/`, including:
+
+- Shadow candidate registry.
+- Daily outcome ledger.
+- Stage 4 liquidity/phase output.
+- Stage 5 dual-engine output.
+- Stage 6 Meta-Cognition output.
+- Stage 6 Telegram outbox/receipts.
+- Stage 7 risk-gate and, when integrated, Shadow risk snapshot.
+- Provider/universe and provenance artifacts.
+
+Treat these as generated evidence. Do not edit or delete them manually. Inspect the JSON schema and source hashes before interpreting any artifact.
+
+## 4. Telegram delivery and idempotency
+
+- Telegram delivery is performed by the backend workflow; there is no user-side bot setup step in normal operation.
+- A `DELIVERED` receipt with HTTP 200 and a message ID is evidence of a successful Telegram API response.
+- `RESERVED` means a report ID was reserved but no send has yet been confirmed.
+- `SENDING` without a final receipt is an uncertain delivery state. Do not manually resend; first reconcile the outbox to avoid duplicate messages.
+- `DELIVERY_UNKNOWN` and `PERMANENT_FAILURE` are not successful delivery states.
+- A skipped send step is not a Telegram outage; inspect the earlier workflow step that prevented delivery.
+
+Never treat a report file, a reserved outbox record or a green C++ test as proof that a Telegram message reached the user.
+
+## 5. Failure triage
+
+1. Open the failed GitHub Actions run and identify the first failing step.
+2. Separate L1 provider failure, L2 compute/schema failure, persistence failure and Telegram delivery failure.
+3. Inspect the generated run manifest, L1/L2 status, source hashes and relevant runtime artifacts.
+4. If persistence failed, verify whether the `signals` branch received the new artifacts before considering another run.
+5. If the outbox is `RESERVED` or `SENDING`, inspect the report ID and receipt state before any retry.
+6. Preserve `UNAVAILABLE`, `PROXY`, `MARKET_DATA_DEGRADED` and `NOT_CALIBRATED` labels. Never relax a threshold to force a signal.
+7. Record a specific diagnosis (D1 data, D2 assumption, D3 implementation, D4 threshold/calibration, D5 regime, D6 expectations) and rerun the relevant tests after a code correction.
+
+## 6. Current known operating limits
+
+- Stage 6 remains `NOT_CALIBRATED`; current outcome volume does not establish reliable probabilities or EV.
+- Shadow costs must be provenance-backed. Null fee/slippage/funding fields remain `UNAVAILABLE`.
+- Stage 7 remains fail-closed until an owner-approved frozen Shadow risk basis, costed persistent history, valid open-position treatment and upstream calibration evidence exist.
+- No user account balances or exchange positions may be used to fill missing internal Shadow data.
+- No signal may be promoted while a required gate is blocked.
+
+## 7. Build and validation (engineering only)
+
+The current verified GitHub Actions toolchain builds C++20 on `ubuntu-24.04`.
 
 ```bash
-docker compose exec -T control-plane python scripts/backup_db.py /var/lib/control/backup.db
-docker cp "$(docker compose ps -q control-plane)":/var/lib/control/backup.db ./control-backup.db
+cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel 2
+ctest --test-dir build --output-on-failure --no-tests=error
 ```
 
-Store the backup outside the server/container as well. A backup in the same volume is not disaster recovery.
+Schema validation and live L1/L3 evidence are separate acceptance requirements. A local build or CTest pass does not prove production data access, persistence, Telegram delivery or statistical performance.
 
-## Restore
+## 8. Security boundary
 
-Stop the service before replacing the active database. Keep an additional copy of the current database before restoring.
-
-```bash
-docker compose stop control-plane
-docker compose run --rm -v "$PWD:/restore:ro" --entrypoint sh control-plane -c 'python -c "import sqlite3,sys; c=sqlite3.connect(\"/restore/control-backup.db\"); print(c.execute(\"PRAGMA integrity_check\").fetchone()[0]); c.close()" && cp /restore/control-backup.db /var/lib/control/control.db'
-docker compose up -d control-plane
-docker compose logs --tail=100 control-plane
-```
-
-The restore command assumes the backup file is named control-backup.db in the current directory. Verify the console, run history, audit events, and outbox state after restoring. Do not restore a backup over a live database.
-
-## Worker and external delivery
-
-The worker is a one-shot command, not an always-running daemon. It remains disabled unless ENABLE_WORKER_EXECUTION=true and WORKER_ALLOWED_WORKFLOWS explicitly lists a registered workflow. Run it only from a trusted environment with the worker token and after the destination has been tested:
-
-```bash
-python worker.py
-```
-
-N8N execution separately requires ENABLE_N8N_EXECUTION=true, N8N_WEBHOOK_URL and destination authentication. A timeout leaves the item uncertain; do not retry until the destination outcome is checked.
-
-## Current hosted preview
-
-Owner-operated preview URL: https://control-plane-v2-production-8d31.up.railway.app/. Railway deployment is online with TLS and a 500 MB persistent volume mounted at /var/lib/control. `/health` returns HTTP 200. The root HTML and health endpoint are public; operational API routes require the operator key, while worker lease/finish routes use a separate worker key. The one-shot worker is enabled with only `market.snapshot` in its allowlist; n8n remains disabled. This is not yet a hardened production release: add identity/role authorization, rate limiting/origin controls, external backup and restore drill, alerting, and real-device verification before storing sensitive data.
+- Never add exchange private keys, account credentials or order permissions.
+- Keep Telegram secrets in GitHub Actions secrets; never print or commit them.
+- No secret values belong in logs, reports or generated artifacts.
+- No automatic trading, copy trading or order execution.
+- Production merges, deployments and final releases require explicit owner approval.
