@@ -57,7 +57,7 @@ V18.2 §10.4 requires precise definitions for the measurement basis, start/end t
 
 This is a D2 design gap in addition to the D1/D3 evidence gaps above. A Stage 7 v2 snapshot builder must accept a versioned, immutable risk-basis configuration and fail closed when it is absent or mismatched. A fixture-only configuration may test arithmetic but must never be treated as the production risk basis.
 
-## v2 — planned after Stage 6 v2 costed ledger
+## v2 — original planning baseline (superseded by the implementation section below)
 
 Core assumption: risk is measured from the system's own shadow portfolio, not from a user's real exchange account.
 
@@ -68,7 +68,7 @@ Planned implementation:
 4. Keep the gate blocked if cost coverage, risk-unit definition, portfolio history or position state is incomplete.
 5. Preserve all kill-switch thresholds; no relaxation.
 
-**v2 status:** not yet built. The PR-only cost-proxy backfill is transient and the persistent ledger still has 5 `UNAVAILABLE` cost rows. The cohort remains `NOT_CALIBRATED`; no validated shadow NAV exists; and V18.2's loss denominator/risk unit is not configured. V2 may be built only around an explicit versioned risk-basis input, with no default capital or sizing assumption. Until then the production snapshot remains `UNAVAILABLE`.
+**Historical status at this report point:** v2 had not yet been built. The subsequent implementation and evidence are recorded in the later v2 section below. The persistent risk-basis and calibration blockers remain active.
 
 ## v3
 
@@ -154,3 +154,37 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 3. Valid open-position mark-to-market or an explicit accepted closed-only treatment.
 4. Stage 6 calibration gate no longer `NOT_CALIBRATED`.
 5. Expanded live snapshot + risk-gate validation passes with the production-equivalent data contracts.
+
+## Latest v2 hardening — immutable fills and unaccounted-outcome guard (2026-11-21)
+
+### Diagnosis (D1 / D3)
+
+- Persistent candidate `UNI/USDT:USDT` (`signal_id=ff20bd7719014075f4e3a94f73dcdc62874f7b3672b723d98236228bed02e82a`) is `PENDING` with `entry_fill_reference=4.845`, but `entry_fill_time_ms` is absent and the registry contains no stored resolution bars.
+- The candidate's `source_run_id=okx-cpp-1795159176445` maps to Stage 6 run `44693771488`; that run has no retained Actions artifacts. The original L1 payload cannot be independently recovered. Reconstructing the timestamp from the current candle would be an unsupported inference.
+- Before this hardening, the replay loop replaced a previously recorded fill with the current first-bar open and set the timestamp again. A filled candidate with a data gap at expiry could also be labeled `REJECTED`, while the risk builder only blocked filled `PENDING` candidates. That could silently alter a fill or remove an unaccounted fill from risk accounting.
+
+### v2 correction
+
+- A recorded `entry_fill_reference` and `entry_fill_time_ms` are immutable during replay.
+- A legacy filled candidate without a recorded timestamp is never upgraded from `decision_time_ms` or a later candle. If it resolves without timestamp provenance, it becomes `UNVERIFIABLE`; no outcome-ledger row is fabricated.
+- A filled candidate with a resolution data gap becomes `UNVERIFIABLE` after expiry, not `REJECTED`. The registry schema and run summary expose this state.
+- Cost backfill requires an explicit positive `entry_fill_time_ms` that is not earlier than decision time and matches the first stored resolution-bar timestamp. Legacy closed outcomes are backfilled only from their stored `resolution_bars`.
+- The risk snapshot rejects every filled candidate not in `RESOLVED`, every resolved candidate without a matching ledger row, and every ledger row without a registered candidate.
+- The fee reference no longer claims an owner engineering decision. The V18.2 G3 0.04% reference is explicitly modeled as an assumed per-side proxy; it is not an exchange/account-specific fee tier and the resulting costs remain `PROXY`.
+
+### Evidence
+
+- The five persistent closed outcomes each have stored `resolution_bars`; in all five, the first stored bar timestamp equals `decision_time_ms` and its open exactly matches the recorded `entry_fill_reference`. This is sufficient evidence for the legacy timestamp migration from stored bars.
+- The single pending UNI candidate has no such stored bar evidence and remains non-markable. The new code preserves its fill reference and blocks risk until it is resolved with verifiable provenance or otherwise reconciled.
+- C++ Foundation run `44885939384` on head `f40a356d`: build and CTest **15/15 PASS**.
+- Stage 7 Risk Gate Contract run `44885939352` on head `f40a356d`: workflow YAML validation, C++ build/CTest **15/15 PASS**, schema compilation and fail-closed guards PASS.
+- Policy Guard run `44885939345`: PASS.
+- Final timestamp-order guard commit `c1e795ba` is being revalidated; no result is claimed until its checks complete.
+- Stage 6 read-only live validation run `44885939288` on `f40a356d` reached fresh L1 collection after C++ build/tests passed. The final-head live validation rerun is pending. PR live validation uses a bounded 10-symbol target, 1y sample plus required BTC/pending symbols; this is not the production 100-symbol/2y coverage gate.
+
+### Current disposition
+
+**L2 implementation/contract:** PASS on `f40a356d`; final `c1e795ba` rerun pending.  
+**L1 persistent risk inputs:** BLOCKED — no frozen risk basis; one filled pending candidate lacks recoverable timestamp; persistent cost backfill has not yet been committed by a successful production run.  
+**L3 live integration:** pending the final bounded read-only PR run; it sends no Telegram message.  
+**Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
