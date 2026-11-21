@@ -64,11 +64,11 @@ jobs:
           registry_input=signals-state/cpp_runtime/shadow_candidate_registry.v1.json
           ledger_input=signals-state/cpp_runtime/daily_outcome_ledger.v1.json
           if [ ! -s "$registry_input" ]; then
-            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
             registry_input=stage6-evidence/shadow_candidate_registry.input.json
           fi
           if [ ! -s "$ledger_input" ]; then
-            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
+            printf '%s\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
             ledger_input=stage6-evidence/daily_outcome_ledger.input.json
           fi
           # نامزدهای باز و نتایج بسته با هزینه ناموجود باید هر دو در L1 بعدی پوشش داده شوند.
@@ -191,7 +191,7 @@ jobs:
             cp signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json \
               stage6-evidence/shadow-risk-basis.daily_swing.v1.json
           else
-            printf '%s\\n' '{}' > stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+            printf '%s\n' '{}' > stage6-evidence/shadow-risk-basis.daily_swing.v1.json
           fi
           ./build/shadow_risk_snapshot_probe \
             stage6-evidence/shadow-risk-basis.daily_swing.v1.json \
