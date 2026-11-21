@@ -38,6 +38,7 @@ The implementation is in `cpp/include/cfss/shadow_risk_snapshot.hpp`, with the C
 - Applies the frozen `risk_per_trade_pct` to the pre-event NAV. Outcomes with identical close timestamps use the same pre-event NAV and are aggregated before NAV is updated.
 - Daily buckets are UTC calendar days; weekly buckets begin Monday 00:00 UTC.
 - Portfolio drawdown uses the running NAV high-water mark.
+- `daily_loss_pct` and `weekly_loss_pct` retain the maximum loss observed from the relevant period-start NAV; a later recovery does not erase a kill-switch breach before the next UTC reset.
 - The builder rejects duplicate/future/out-of-basis outcomes, non-finite values, missing cost provenance, nonpositive NAV and any filled PENDING candidate.
 - The current version deliberately does not estimate unrealized PnL. A filled open Shadow candidate therefore makes the snapshot `UNAVAILABLE` until a fresh mark-to-market input is implemented.
 - A computed snapshot is labelled `data_class=PROXY`; it is not evidence of executed trades or REAL execution costs.
