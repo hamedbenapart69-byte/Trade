@@ -12,7 +12,9 @@ int main(){
   x.bars["BTC-USDT-SWAP"]=b;
   x.candidates.push_back({"lrt-001","PLAN_A_LRT","BTC-USDT-SWAP","LONG",std::string(64,'a'),"REAL",t0+181LL*86400000LL,t0+100LL*86400000LL,100,95,110,3});
   x.candidates.push_back({"nmt-001","PLAN_A_NMT","BTC-USDT-SWAP","LONG",std::string(64,'b'),"REAL",t0+201LL*86400000LL,t0+120LL*86400000LL,100,95,110,3});
-  const auto r=run(x);require(!r.folds.empty(),"walk-forward folds");require(r.lrt.trades==1,"LRT isolation");require(r.nmt.trades==1,"NMT isolation");
+  x.candidates.push_back({"nmt-overlap-censored","PLAN_A_NMT","BTC-USDT-SWAP","LONG",std::string(64,'c'),"REAL",t0+230LL*86400000LL,t0+100LL*86400000LL,100,95,110,30});
+  b[245].high=111; b[245].close=110;
+  const auto r=run(x);require(!r.folds.empty(),"walk-forward folds");require(r.lrt.trades==1,"LRT isolation");require(r.nmt.trades==1,"NMT isolation");require(r.nmt.censored==1,"unique OOS candidate censored in its first eligible fold is not promoted from a later overlapping fold");
   require(r.lrt.wins==1,"target is win");require(r.nmt.losses==1,"ambiguous bar stop-first");
   const auto j=to_json(r);require(j["baselines"]["status"]=="UNAVAILABLE","no fabricated baselines");
   require(j["gate_status"]=="NOT_EVALUATED_INCOMPLETE_EVIDENCE","fixture cannot pass Gate A");
