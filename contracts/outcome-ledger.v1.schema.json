@@ -322,7 +322,7 @@
             "const": "ASSUMED"
           },
           "fee_assumption_ref": {
-            "const": "OWNER_ENGINEERING_DECISION_2026-11-20"
+            "const": "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE"
           },
           "slippage_assumption_class": {
             "const": "PROXY"
