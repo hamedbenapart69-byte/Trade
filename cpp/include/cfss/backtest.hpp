@@ -44,7 +44,7 @@ inline std::int64_t add_months(std::int64_t ms,int count) {
 }
 inline void validate(const Input& x) {
  if(x.dataset_id.empty()) throw std::invalid_argument("DATASET_ID_REQUIRED");
- if(!std::isfinite(x.risk_fraction)||x.risk_fraction<=0) throw std::invalid_argument("RISK_FRACTION_INVALID");
+ if(!std::isfinite(x.risk_fraction)||x.risk_fraction<=0||x.risk_fraction>1.0) throw std::invalid_argument("RISK_FRACTION_INVALID");
  auto cost=[](double v){return std::isfinite(v)&&v>=0;};
  if(!cost(x.costs.entry_fee)||!cost(x.costs.exit_fee)||!cost(x.costs.entry_slippage)||!cost(x.costs.exit_slippage)||!cost(x.costs.funding_per_8h)) throw std::invalid_argument("COST_INPUT_INVALID");
  if(x.bars.empty()) throw std::invalid_argument("OHLCV_REQUIRED");
