@@ -99,6 +99,18 @@ jobs:
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
             stage6-evidence/pending-symbols.v1.json
+          jq -n --slurpfile required stage6-evidence/pending-symbols.v1.json \
+            --slurpfile l1 stage6-evidence/l1-market-data.v1.json '
+            ($required[0]) as $r |
+            ([$l1[0].instruments[].unified_symbol] | unique) as $a |
+            {
+              required: $r,
+              present: [$r[] | select(. as $s | $a | index($s) != null)],
+              missing: [$r[] | select(. as $s | $a | index($s) == null)]
+            }
+          ' > stage6-evidence/required-symbol-coverage.v1.json
+          jq -r '"REQUIRED_SYMBOL_COVERAGE present=\(.present|length)/\(.required|length) missing=\(.missing|join(","))"' \
+            stage6-evidence/required-symbol-coverage.v1.json
           ./build/lfs_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/lfs-v2.json
           ./build/nss_basis_collector stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json
           ./build/nss_v2_probe stage6-evidence/l1-market-data.v1.json stage6-evidence/nss-basis.v1.json stage6-evidence/nss-v2.json
