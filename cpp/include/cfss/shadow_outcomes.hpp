@@ -193,7 +193,24 @@ inline bool valid_cost_provenance(const json& outcome) {
         std::all_of(hash.begin(), hash.end(), [](unsigned char ch) {
             return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f');
         });
-    return finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
+    const auto entry_time = outcome.value("entry_fill_time_ms", std::int64_t{0});
+    const auto decision_time = outcome.value("decision_time_ms", std::int64_t{0});
+    const auto closed_time = outcome.value("closed_at_ms", std::int64_t{0});
+    const auto entry_fill = outcome.value("entry_fill_reference", json{});
+    const bool fill_provenance_valid =
+        entry_time > 0 && decision_time > 0 && entry_time >= decision_time &&
+        closed_time >= entry_time && entry_fill.is_number() &&
+        std::isfinite(entry_fill.get<double>()) && entry_fill.get<double>() > 0.0 &&
+        outcome.contains("resolution_bars") && outcome.at("resolution_bars").is_array() &&
+        !outcome.at("resolution_bars").empty() && outcome.at("resolution_bars").front().is_object() &&
+        outcome.at("resolution_bars").front().value("timestamp_ms", std::int64_t{0}) == entry_time &&
+        outcome.at("resolution_bars").front().contains("open") &&
+        outcome.at("resolution_bars").front().at("open").is_number() &&
+        std::isfinite(outcome.at("resolution_bars").front().at("open").get<double>()) &&
+        std::abs(outcome.at("resolution_bars").front().at("open").get<double>() -
+                 entry_fill.get<double>()) <=
+            std::max(1e-10, std::abs(entry_fill.get<double>()) * 1e-9);
+    return fill_provenance_valid && finite_number("fee_r") && outcome.at("fee_r").get<double>() >= 0.0 &&
         finite_number("slippage_r") && outcome.at("slippage_r").get<double>() >= 0.0 &&
         finite_number("funding_r") &&
         finite_number("fee_rate_per_side") &&
