@@ -147,6 +147,26 @@ jobs:
             -s contracts/meta-cognition.v1.schema.json \
             -d stage6-evidence/meta_cognition_stage6_v1.json --all-errors
 
+      - name: Build and validate live Shadow risk snapshot
+        run: |
+          set -euo pipefail
+          if [ -s signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json ]; then
+            cp signals-state/cpp_runtime/shadow_risk_basis.daily_swing.v1.json \
+              stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          else
+            printf '%s\n' '{}' > stage6-evidence/shadow-risk-basis.daily_swing.v1.json
+          fi
+          ./build/shadow_risk_snapshot_probe \
+            stage6-evidence/shadow-risk-basis.daily_swing.v1.json \
+            stage6-evidence/daily_outcome_ledger.v1.json \
+            stage6-evidence/shadow_candidate_registry.v1.json \
+            stage6-evidence/l1-market-data.v1.json \
+            stage6-evidence/meta_cognition_stage6_v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
+          ./node_modules/.bin/ajv validate --spec=draft2020 \
+            -s contracts/shadow-risk-snapshot.v1.schema.json \
+            -d stage6-evidence/shadow-risk-snapshot.v1.json --all-errors
+
       - name: Apply Stage 7 fail-closed risk gate
         run: |
           set -euo pipefail
@@ -154,7 +174,8 @@ jobs:
             stage6-evidence/l1-market-data.v1.json \
             stage6-evidence/liquidity-phase.v1.json \
             stage6-evidence/meta_cognition_stage6_v1.json \
-            stage6-evidence/stage7-risk-gate.v1.json
+            stage6-evidence/stage7-risk-gate.v1.json \
+            stage6-evidence/shadow-risk-snapshot.v1.json
           ./node_modules/.bin/ajv validate --spec=draft2020 \
             -s contracts/stage7-risk-gate-pipeline.v1.schema.json \
             -d stage6-evidence/stage7-risk-gate.v1.json --all-errors
@@ -178,6 +199,9 @@ jobs:
             fi
             if [ -s stage6-evidence/meta_cognition_stage6_v1.json ]; then
               jq '{run_id:.source_run_id, outcome_ledger_count, engines:(.instruments|length), sample:(.instruments[:3]|map({symbol,lrt:{candidate_status:.lrt.candidate_status,confidence_status:.lrt.confidence_status,ev_status:.lrt.ev_status,reason:.lrt.reason},nmt:{candidate_status:.nmt.candidate_status,confidence_status:.nmt.confidence_status,ev_status:.nmt.ev_status,reason:.nmt.reason}}))}' stage6-evidence/meta_cognition_stage6_v1.json
+            fi
+            if [ -s stage6-evidence/shadow-risk-snapshot.v1.json ]; then
+              jq '{status,data_class,reason,resolved_outcome_count,daily_loss_pct,weekly_loss_pct,portfolio_drawdown_pct}' stage6-evidence/shadow-risk-snapshot.v1.json
             fi
             if [ -s stage6-evidence/stage7-risk-gate.v1.json ]; then
               jq '{risk_snapshot_status,summary,actionable,trade_execution_allowed}' stage6-evidence/stage7-risk-gate.v1.json
