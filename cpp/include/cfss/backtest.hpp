@@ -91,7 +91,7 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
  const double hours=std::max(0.0,double(exit_ms-it->ts)/3600000.0);
  const double funding=std::ceil(hours/8.0)*x.costs.funding_per_8h;
  const double net=gross-x.costs.entry_fee-x.costs.exit_fee-funding;
- const double unit_r=risk/c.entry;
+ const double unit_r=risk/fill;
  return Trade{c.id,c.path,c.symbol,outcome,it->ts,exit_ms,gross/unit_r,net/unit_r,net};
 }
 inline Metrics summarize(const std::vector<Trade>& trades,double risk_fraction) {
