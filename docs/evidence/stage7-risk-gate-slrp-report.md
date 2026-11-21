@@ -179,12 +179,13 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 - C++ Foundation run `44885939384` on head `f40a356d`: build and CTest **15/15 PASS**.
 - Stage 7 Risk Gate Contract run `44885939352` on head `f40a356d`: workflow YAML validation, C++ build/CTest **15/15 PASS**, schema compilation and fail-closed guards PASS.
 - Policy Guard run `44885939345`: PASS.
-- Final timestamp-order guard commit `c1e795ba` is being revalidated; no result is claimed until its checks complete.
-- Stage 6 read-only live validation run `44885939288` on `f40a356d` reached fresh L1 collection after C++ build/tests passed. The final-head live validation rerun is pending. PR live validation uses a bounded 10-symbol target, 1y sample plus required BTC/pending symbols; this is not the production 100-symbol/2y coverage gate.
+- Final Stage 7 Risk Gate Contract run `44886258049` on head `1edc9d63` includes code commit `c1e795ba`: workflow YAML validation, full C++ build/CTest **15/15 PASS**, schema compilation and fail-closed guards PASS.
+- Policy Guard run `44886258129` on head `1edc9d63`: PASS.
+- Final Stage 6 read-only live validation run `44886258025` on head `1edc9d63`: C++ build/CTest passed; persistent Shadow state checkout and market-cache restore passed; fresh L1 collection is in progress. Later L1/L2/risk/report-preparation steps are not yet verified. PR live validation uses a bounded 10-symbol target, 1y sample plus required BTC/pending symbols; this is not the production 100-symbol/2y coverage gate.
 
 ### Current disposition
 
-**L2 implementation/contract:** PASS on `f40a356d`; final `c1e795ba` rerun pending.  
+**L2 implementation/contract:** PASS on `1edc9d63`; 15/15 CTest, schema and fail-closed guards verified.  
 **L1 persistent risk inputs:** BLOCKED — no frozen risk basis; one filled pending candidate lacks recoverable timestamp; persistent cost backfill has not yet been committed by a successful production run.  
 **L3 live integration:** pending the final bounded read-only PR run; it sends no Telegram message.  
 **Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
