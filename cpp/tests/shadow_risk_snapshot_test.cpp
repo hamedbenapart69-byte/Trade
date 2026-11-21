@@ -48,7 +48,7 @@ json outcome(const std::string& id, std::int64_t closed, double win_r, double lo
             {"open",100.0},{"high",101.0},{"low",99.5},{"close",100.5}}})},
         {"cost_model_id","SHADOW_COST_PROXY_V1"},
         {"fee_rate_per_side",0.0004},{"fee_assumption_class","ASSUMED"},
-        {"fee_assumption_ref","OWNER_ENGINEERING_DECISION_2026-11-20"},
+        {"fee_assumption_ref","V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE"},
         {"slippage_rate_per_side",0.001},{"slippage_assumption_class","PROXY"},
         {"slippage_proxy_method","FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK"},
         {"slippage_source_status","UNAVAILABLE_MARKET_IMPACT_MEASUREMENT"},
@@ -67,7 +67,10 @@ json ledger() {
 json registry() {
     return {{"schema_version","1.0.0"},
         {"artifact_type","cfss_shadow_candidate_registry_v1"},
-        {"candidates",json::array()}};
+        {"candidates",json::array({
+            {{"signal_id","signal-a"},{"state","RESOLVED"},{"entry_fill_reference",100.0}},
+            {{"signal_id","signal-b"},{"state","RESOLVED"},{"entry_fill_reference",100.0}}
+        })}};
 }
 }
 
@@ -115,11 +118,28 @@ int main() {
 
     auto open_registry=r;
     open_registry["candidates"].push_back({
-        {"state","PENDING"},{"entry_fill_reference",100.0}});
+        {"signal_id","signal-open"},{"state","PENDING"},{"entry_fill_reference",100.0}});
     blocked=cfss::shadow_risk::build_snapshot(b,l,open_registry,"run-1","scan-1",day*2+20'000,0);
     check(blocked["status"]=="UNAVAILABLE" &&
-          blocked["reason"]=="OPEN_SHADOW_POSITION_MARK_UNAVAILABLE",
-          "filled open shadow position blocks without mark-to-market data");
+          blocked["reason"]=="UNACCOUNTED_FILLED_SHADOW_CANDIDATE",
+          "any filled candidate without a resolved ledger outcome blocks the snapshot");
+
+    auto rejected_filled_registry=r;
+    rejected_filled_registry["candidates"][0]["state"]="REJECTED";
+    blocked=cfss::shadow_risk::build_snapshot(
+        b,l,rejected_filled_registry,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="UNACCOUNTED_FILLED_SHADOW_CANDIDATE",
+          "a filled candidate cannot disappear from risk accounting by being marked REJECTED");
+
+    auto missing_resolved_outcome_registry=r;
+    missing_resolved_outcome_registry["candidates"].push_back({
+        {"signal_id","signal-without-outcome"},{"state","RESOLVED"},{"entry_fill_reference",100.0}});
+    blocked=cfss::shadow_risk::build_snapshot(
+        b,l,missing_resolved_outcome_registry,"run-1","scan-1",day*2+20'000,0);
+    check(blocked["status"]=="UNAVAILABLE" &&
+          blocked["reason"]=="RESOLVED_CANDIDATE_OUTCOME_MISSING",
+          "resolved candidate without a ledger row fails closed");
 
     // افت روزانه/هفتگی حتی پس از بازیابی در همان دوره باید sticky بماند.
     auto recovery_ledger=ledger();
@@ -127,8 +147,11 @@ int main() {
         outcome("loss-before-recovery",day+10'000,0.0,10.0),
         outcome("win-after-recovery",day+20'000,10.0,0.0)
     });
+    auto recovery_registry=registry();
+    recovery_registry["candidates"][0]["signal_id"]="loss-before-recovery";
+    recovery_registry["candidates"][1]["signal_id"]="win-after-recovery";
     auto recovered=cfss::shadow_risk::build_snapshot(
-        b,recovery_ledger,r,"run-1","scan-1",day+30'000,0);
+        b,recovery_ledger,recovery_registry,"run-1","scan-1",day+30'000,0);
     check(recovered["status"]=="AVAILABLE",
           "non-overlapping loss and recovery outcomes produce a valid snapshot");
     check(recovered["daily_loss_pct"].get<double>()>=5.0,
