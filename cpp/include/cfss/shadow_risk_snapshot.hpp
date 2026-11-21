@@ -168,6 +168,8 @@ inline json build_snapshot(const json& basis, const json& ledger,
     double high_water = nav;
     double day_start_nav = nav;
     double week_start_nav = nav;
+    double max_daily_loss_pct = 0.0;
+    double max_weekly_loss_pct = 0.0;
     std::int64_t active_day = -1;
     std::int64_t active_week = -1;
     std::size_t i = 0U;
@@ -177,10 +179,12 @@ inline json build_snapshot(const json& basis, const json& ledger,
         if (day != active_day) {
             active_day = day;
             day_start_nav = nav;
+            max_daily_loss_pct = 0.0;
         }
         if (week != active_week) {
             active_week = week;
             week_start_nav = nav;
+            max_weekly_loss_pct = 0.0;
         }
 
         // معاملات هم‌زمان با NAV یکسان پیش از رویداد محاسبه می‌شوند.
@@ -196,14 +200,26 @@ inline json build_snapshot(const json& basis, const json& ledger,
         nav += pnl;
         if (!std::isfinite(nav) || nav <= 0.0) return fail("SHADOW_NAV_NONPOSITIVE");
         high_water = std::max(high_water, nav);
+        // عبور از حد زیان درون‌دوره‌ای تا پایان همان روز/هفته باقی می‌ماند؛ بازیابی بعدی آن را پاک نمی‌کند.
+        max_daily_loss_pct = std::max(max_daily_loss_pct,
+            std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0));
+        max_weekly_loss_pct = std::max(max_weekly_loss_pct,
+            std::max(0.0, (week_start_nav - nav) / week_start_nav * 100.0));
         i = j;
     }
 
-    if (active_day != utc_day(decision_time_ms)) day_start_nav = nav;
-    if (active_week != utc_week(decision_time_ms)) week_start_nav = nav;
+    if (active_day != utc_day(decision_time_ms)) {
+        day_start_nav = nav;
+        max_daily_loss_pct = 0.0;
+    }
+    if (active_week != utc_week(decision_time_ms)) {
+        week_start_nav = nav;
+        max_weekly_loss_pct = 0.0;
+    }
 
-    const double daily_loss = std::max(0.0, (day_start_nav - nav) / day_start_nav * 100.0);
-    const double weekly_loss = std::max(0.0, (week_start_nav - nav) / week_start_nav * 100.0);
+    // زیان روزانه/هفتگی، بیشترین افت مشاهده‌شده از NAV ابتدای دوره است، نه فقط مقدار نهایی پس از بازیابی.
+    const double daily_loss = max_daily_loss_pct;
+    const double weekly_loss = max_weekly_loss_pct;
     const double drawdown = std::max(0.0, (high_water - nav) / high_water * 100.0);
     if (!std::isfinite(daily_loss) || !std::isfinite(weekly_loss) ||
         !std::isfinite(drawdown))
