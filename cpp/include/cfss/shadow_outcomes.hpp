@@ -142,7 +142,7 @@ inline void apply_shadow_costs(
     const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
     const auto entry_time = outcome.value("entry_fill_time_ms", std::int64_t{0});
     if (!entry.is_number() || !stop.is_number() || entry_time <= 0 ||
-        !outcome.contains("resolution_bars") || !outcome.at("resolution_bars").is_array() ||
+        entry_time < decision || !outcome.contains("resolution_bars") || !outcome.at("resolution_bars").is_array() ||
         outcome.at("resolution_bars").empty() ||
         outcome.at("resolution_bars").front().value("timestamp_ms", std::int64_t{0}) != entry_time)
         return;
