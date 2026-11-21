@@ -150,6 +150,50 @@
       "telegram_message_id": 67,
       "updated_at_epoch_ms": 1795053866306
     },
+    "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "c2796d79524a3dc0",
+      "scan_id": "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406",
+      "source_run_id": "okx-cpp-1795257048838",
+      "status": "DELIVERED",
+      "telegram_message_id": 76,
+      "updated_at_epoch_ms": 1795257344823
+    },
+    "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406:status:2": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "e8a94d7b212fa687",
+      "scan_id": "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406",
+      "source_run_id": "okx-cpp-1795257048838",
+      "status": "DELIVERED",
+      "telegram_message_id": 77,
+      "updated_at_epoch_ms": 1795257346667
+    },
+    "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406:status:3": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "17bc8142d3a04681",
+      "scan_id": "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406",
+      "source_run_id": "okx-cpp-1795257048838",
+      "status": "DELIVERED",
+      "telegram_message_id": 78,
+      "updated_at_epoch_ms": 1795257348110
+    },
+    "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406:status:4": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "bbbd197929d0a476",
+      "scan_id": "scan-d18c27898d5e249c215c91433122e4a498c64edf5db82873899b2d5789bce406",
+      "source_run_id": "okx-cpp-1795257048838",
+      "status": "DELIVERED",
+      "telegram_message_id": 79,
+      "updated_at_epoch_ms": 1795257349489
+    },
     "scan-d1ca10e307d325316cb832036e9194c0df9e05da36f0a64b272309f058cd4517:status:1": {
       "attempts": 1,
       "http_status": 200,
