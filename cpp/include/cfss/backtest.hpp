@@ -134,22 +134,23 @@ inline Report run(const Input& x) {
  validate(x); Report r{}; r.dataset_id=x.dataset_id;
  std::int64_t first=std::numeric_limits<std::int64_t>::max(),last=0;
  for(const auto& [s,v]:x.bars){(void)s;first=std::min(first,v.front().ts);last=std::max(last,v.back().ts);}
- std::vector<Trade> lrt_all,nmt_all; std::set<std::string> seen;
+ std::vector<Trade> lrt_all,nmt_all; std::set<std::string> unique_assigned; std::size_t unique_lrt_censored=0,unique_nmt_censored=0;
  for(std::int64_t start=add_months(first,6);add_months(start,2)<=last;start=add_months(start,1)) {
   Fold f{}; f.train_start=add_months(start,-6); f.test_start=start; f.test_end=add_months(start,2);
   std::vector<Trade> lrt,nmt; std::size_t lrt_censored=0,nmt_censored=0;
   for(const auto& c:x.candidates) {
    if(c.signal_ms<start||c.signal_ms>=f.test_end||c.registered_ms>start) continue;
    const auto t=simulate(x,c,f.test_end);
-   if(!t){if(c.path=="PLAN_A_LRT")++lrt_censored;else ++nmt_censored;continue;}
+   if(!t){if(c.path=="PLAN_A_LRT")++lrt_censored;else ++nmt_censored;if(unique_assigned.insert(c.id).second){if(c.path=="PLAN_A_LRT")++unique_lrt_censored;else ++unique_nmt_censored;}continue;}
    (c.path=="PLAN_A_LRT"?lrt:nmt).push_back(*t);
-   if(seen.insert(c.id).second)(c.path=="PLAN_A_LRT"?lrt_all:nmt_all).push_back(*t);
+   if(unique_assigned.insert(c.id).second)(c.path=="PLAN_A_LRT"?lrt_all:nmt_all).push_back(*t);
   }
   f.lrt=summarize(lrt,x.risk_fraction); f.nmt=summarize(nmt,x.risk_fraction);
   f.lrt.censored=lrt_censored; f.nmt.censored=nmt_censored;
   r.folds.push_back(f);
  }
  r.lrt=summarize(lrt_all,x.risk_fraction); r.nmt=summarize(nmt_all,x.risk_fraction);
+ r.lrt.censored=unique_lrt_censored; r.nmt.censored=unique_nmt_censored;
  bool any_real=false,any_proxy=false; for(const auto& c:x.candidates){any_real=any_real||c.data_class=="REAL";any_proxy=any_proxy||c.data_class=="PROXY";}
  r.data_class=any_proxy?(any_real?"MIXED_CANDIDATE_CLASSES":"PROXY_CANDIDATES"):(any_real?"REAL_CANDIDATE_CLASSES_BAR_PROVENANCE_UNVERIFIED":"NO_CANDIDATES");
  r.status="ENGINEERING_REPORT_ONLY";
