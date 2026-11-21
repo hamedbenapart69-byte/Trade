@@ -16,6 +16,7 @@ int main(){
   b[245].high=111; b[245].close=110;
   const auto r=run(x);require(!r.folds.empty(),"walk-forward folds");require(r.lrt.trades==1,"LRT isolation");require(r.nmt.trades==1,"NMT isolation");require(r.nmt.censored==1,"unique OOS candidate censored in its first eligible fold is not promoted from a later overlapping fold");
   require(r.lrt.wins==1,"target is win");require(r.nmt.losses==1,"ambiguous bar stop-first");
+  auto invalid_risk=x; invalid_risk.risk_fraction=1.01; bool risk_rejected=false; try{run(invalid_risk);}catch(const std::invalid_argument&){risk_rejected=true;}require(risk_rejected,"risk fraction above 100% is rejected");
   const auto j=to_json(r);require(j["baselines"]["status"]=="UNAVAILABLE","no fabricated baselines");
   require(j["gate_status"]=="NOT_EVALUATED_INCOMPLETE_EVIDENCE","fixture cannot pass Gate A");
   require(!j["actionable"].get<bool>()&&!j["trade_execution_allowed"].get<bool>(),"manual only");
