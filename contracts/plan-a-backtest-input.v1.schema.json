@@ -21,7 +21,8 @@
     },
     "risk_fraction": {
       "type": "number",
-      "exclusiveMinimum": 0
+      "exclusiveMinimum": 0,
+      "maximum": 1
     },
     "costs": {
       "type": "object",
