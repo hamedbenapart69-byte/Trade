@@ -63,13 +63,25 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p stage6-evidence shared-cache
-          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
-            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
-              signals-state/cpp_runtime/shadow_candidate_registry.v1.json \
-              > stage6-evidence/pending-symbols.v1.json
-          else
-            printf '%s\n' '[]' > stage6-evidence/pending-symbols.v1.json
+          registry_input=signals-state/cpp_runtime/shadow_candidate_registry.v1.json
+          ledger_input=signals-state/cpp_runtime/daily_outcome_ledger.v1.json
+          if [ ! -s "$registry_input" ]; then
+            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_shadow_candidate_registry_v1","candidates":[]}' > stage6-evidence/shadow_candidate_registry.input.json
+            registry_input=stage6-evidence/shadow_candidate_registry.input.json
           fi
+          if [ ! -s "$ledger_input" ]; then
+            printf '%s\\n' '{"schema_version":"1.0.0","artifact_type":"cfss_outcome_ledger_v1","profile":"DAILY_SWING","ledger_status":"EMPTY","outcomes":[]}' > stage6-evidence/daily_outcome_ledger.input.json
+            ledger_input=stage6-evidence/daily_outcome_ledger.input.json
+          fi
+          # نامزدهای باز و نتایج بسته با هزینه ناموجود باید هر دو در L1 بعدی پوشش داده شوند.
+          jq -n --slurpfile registry "$registry_input" --slurpfile ledger "$ledger_input" '
+            [
+              ($registry[0].candidates[]? | select(.state == "PENDING") | .symbol),
+              ($ledger[0].outcomes[]? | select((.cost_status // "UNAVAILABLE") == "UNAVAILABLE") | .symbol)
+            ]
+            | map(select(type == "string" and length > 0))
+            | unique
+          ' > stage6-evidence/pending-symbols.v1.json
           if [ -s signals-state/cpp_runtime/crypto_universe.v1.json ] && [ ! -s shared-cache/crypto-universe.v1.json ]; then
             cp signals-state/cpp_runtime/crypto_universe.v1.json shared-cache/crypto-universe.v1.json
           fi
