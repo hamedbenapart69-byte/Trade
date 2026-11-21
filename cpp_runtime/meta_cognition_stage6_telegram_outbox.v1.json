@@ -65,6 +65,14 @@
       "report_id": "c14726b766476d2eafa1d1bf9dabdd4a1f40b20cbe92e43e3605740951cc3712",
       "send_started_at_utc": "2026-11-20T11:27:35Z",
       "status": "DELIVERED"
+    },
+    {
+      "attempts": 0,
+      "created_at_utc": "2026-11-21T01:44:46Z",
+      "http_status": null,
+      "message_id": null,
+      "report_id": "f4135ca509dc45f5531dabdd373ce09c6beafb18413c06769bf959f0d066cc3a",
+      "status": "RESERVED"
     }
   ],
   "schema_version": "1.0.0"
