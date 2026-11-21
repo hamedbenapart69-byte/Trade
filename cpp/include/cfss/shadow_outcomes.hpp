@@ -142,9 +142,16 @@ inline void apply_shadow_costs(
     const auto closed = outcome.value("closed_at_ms", std::int64_t{0});
     const auto entry_time = outcome.value("entry_fill_time_ms", std::int64_t{0});
     if (!entry.is_number() || !stop.is_number() || entry_time <= 0 ||
-        entry_time < decision || !outcome.contains("resolution_bars") || !outcome.at("resolution_bars").is_array() ||
-        outcome.at("resolution_bars").empty() ||
-        outcome.at("resolution_bars").front().value("timestamp_ms", std::int64_t{0}) != entry_time)
+        entry_time < decision || entry_time > closed ||
+        !outcome.contains("resolution_bars") || !outcome.at("resolution_bars").is_array() ||
+        outcome.at("resolution_bars").empty() || !outcome.at("resolution_bars").front().is_object())
+        return;
+    const auto& entry_bar = outcome.at("resolution_bars").front();
+    const auto entry_bar_open = entry_bar.value("open", json{});
+    if (entry_bar.value("timestamp_ms", std::int64_t{0}) != entry_time ||
+        !entry_bar_open.is_number() || !std::isfinite(entry_bar_open.get<double>()) ||
+        std::abs(entry_bar_open.get<double>() - entry.get<double>()) >
+            std::max(1e-10, std::abs(entry.get<double>()) * 1e-9))
         return;
     const auto costs = calculate_shadow_costs(
         instrument, direction, entry.get<double>(), stop.get<double>(), entry_time, closed);
@@ -345,9 +352,25 @@ inline json process(const json& l1, const json& l1_15m, const json& dual, const 
             !old_outcome.at("resolution_bars").empty() &&
             old_outcome.at("resolution_bars").front().is_object() &&
             old_outcome.at("resolution_bars").front().contains("timestamp_ms") &&
-            old_outcome.at("resolution_bars").front().at("timestamp_ms").is_number_integer()) {
-            old_outcome["entry_fill_time_ms"] =
-                old_outcome.at("resolution_bars").front().at("timestamp_ms");
+            old_outcome.at("resolution_bars").front().at("timestamp_ms").is_number_integer() &&
+            old_outcome.at("resolution_bars").front().contains("open") &&
+            old_outcome.at("resolution_bars").front().at("open").is_number() &&
+            old_outcome.contains("entry_fill_reference") &&
+            old_outcome.at("entry_fill_reference").is_number()) {
+            const auto& first_bar = old_outcome.at("resolution_bars").front();
+            const auto first_timestamp = first_bar.at("timestamp_ms").get<std::int64_t>();
+            const auto decision_timestamp = old_outcome.value("decision_time_ms", std::int64_t{0});
+            const auto close_timestamp = old_outcome.value("closed_at_ms", std::int64_t{0});
+            const double recorded_fill = old_outcome.at("entry_fill_reference").get<double>();
+            const double first_open = first_bar.at("open").get<double>();
+            const bool fill_matches_bar = std::isfinite(recorded_fill) && recorded_fill > 0.0 &&
+                std::isfinite(first_open) &&
+                std::abs(first_open - recorded_fill) <=
+                    std::max(1e-10, std::abs(recorded_fill) * 1e-9);
+            if (first_timestamp >= decision_timestamp && first_timestamp <= close_timestamp &&
+                fill_matches_bar) {
+                old_outcome["entry_fill_time_ms"] = first_timestamp;
+            }
         }
     }
 
