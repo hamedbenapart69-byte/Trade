@@ -231,10 +231,12 @@ jobs:
           cd signals-state
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          test ! -e cpp_runtime/liquidity_stage5_v1.json
+          test -s cpp_runtime/liquidity_stage5_v1.json.gz
+          test -s cpp_runtime/liquidity_stage5_v1.json.sha256
           git add -A -- cpp_runtime/crypto_universe.v1.json \
             cpp_runtime/lfs_stage5_v2.json \
             cpp_runtime/nss_stage5_v2.json \
-            cpp_runtime/liquidity_stage5_v1.json \
             cpp_runtime/liquidity_stage5_v1.json.gz \
             cpp_runtime/liquidity_stage5_v1.json.sha256 \
             cpp_runtime/dual_engine_stage5_v1.json \
