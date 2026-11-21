@@ -39,8 +39,9 @@ The implementation is in `cpp/include/cfss/shadow_risk_snapshot.hpp`, with the C
 - Daily buckets are UTC calendar days; weekly buckets begin Monday 00:00 UTC.
 - Portfolio drawdown uses the running NAV high-water mark.
 - `daily_loss_pct` and `weekly_loss_pct` retain the maximum loss observed from the relevant period-start NAV; a later recovery does not erase a kill-switch breach before the next UTC reset.
-- The builder rejects duplicate/future/out-of-basis outcomes, non-finite values, missing cost provenance, nonpositive NAV and any filled PENDING candidate.
-- The current version deliberately does not estimate unrealized PnL. A filled open Shadow candidate therefore makes the snapshot `UNAVAILABLE` until a fresh mark-to-market input is implemented.
+- The builder rejects duplicate/future/out-of-basis outcomes, non-finite values, missing cost provenance, nonpositive NAV and every filled candidate whose state is not `RESOLVED`.
+- Every `RESOLVED` candidate must have exactly one matching outcome-ledger row; every ledger row must map back to a registered candidate.
+- The current version deliberately does not estimate unrealized PnL. Any filled candidate that is not `RESOLVED`, including `UNVERIFIABLE` or a data-gap `REJECTED` record, therefore makes the snapshot `UNAVAILABLE` until the fill has a matching closed outcome or a fresh mark-to-market input is implemented.
 - A computed snapshot is labelled `data_class=PROXY`; it is not evidence of executed trades or REAL execution costs.
 
 The scheduled Stage 6 workflow now invokes the builder before Stage 7 and persists the resulting snapshot on the `signals` branch. If no frozen basis file exists at `signals/cpp_runtime/shadow_risk_basis.daily_swing.v1.json`, the workflow passes an empty basis and the builder emits an explicit `UNAVAILABLE` snapshot. No implicit basis is created.
@@ -52,11 +53,18 @@ The builder and contract are implementation work, not a Stage 7 PASS. Acceptance
 
 ### Entry-time provenance
 
-The Shadow candidate registry now records `entry_fill_time_ms` when a proxy fill is first observed. Legacy filled pending candidates without this timestamp remain non-markable and must keep the snapshot `UNAVAILABLE`; no timestamp is inferred from decision time or later candles.
+The Shadow candidate registry now records `entry_fill_time_ms` when a new proxy fill is first observed. A previously recorded `entry_fill_reference` is immutable and is never overwritten by a later candle open. Legacy filled candidates without a recorded timestamp remain non-markable; no timestamp is inferred from decision time or later candles. If such a candidate resolves, or if a filled candidate reaches expiry with a data gap, it becomes `UNVERIFIABLE` and is not inserted into the performance ledger.
 
 
 ### Entry-NAV reconstruction guard
 
-Each closed Shadow outcome now carries `entry_fill_time_ms`, sourced from the first recorded resolution candle. Legacy outcomes are upgraded only when that timestamp is present in their stored `resolution_bars`; no decision-time substitution is permitted.
+Each closed Shadow outcome now carries `entry_fill_time_ms`. Cost backfill requires this explicit timestamp and verifies that it matches the first stored `resolution_bars` candle. Legacy outcomes are upgraded only when that timestamp is present in their stored `resolution_bars`; no decision-time substitution is permitted.
 
 The snapshot builder rejects any overlap between closed-position intervals with `OVERLAPPING_SHADOW_OUTCOMES_ENTRY_NAV_UNAVAILABLE`. Without a recorded NAV at each entry, applying the current NAV at close would misstate the position's risk amount whenever another position closes while it is open. Non-overlapping intervals permit sequential reconstruction; overlapping intervals remain unavailable until explicit entry-NAV/risk-unit provenance or a correct portfolio mark-to-market ledger is implemented.
+
+## Data-integrity guard added in Stage 7 v2
+
+- A filled candidate cannot be made to disappear from risk accounting by changing its state to `REJECTED`. Any non-`RESOLVED` candidate with a recorded fill blocks the snapshot.
+- A `RESOLVED` candidate without a matching ledger row blocks the snapshot. A ledger row without a registered candidate also blocks it.
+- The persistent legacy `UNI/USDT:USDT` candidate has `entry_fill_reference=4.845` but no `entry_fill_time_ms`. Its original Stage 6 run (`44693771488`) has no retained workflow artifacts, so the original L1 payload cannot be independently recovered. The timestamp is therefore not reconstructed; the candidate remains unmarkable and will be quarantined as `UNVERIFIABLE` if it closes without provenance.
+- The 0.04% fee reference from V18.2 G3 is modeled as an assumed per-side proxy in this build, not as a verified exchange/account fee tier. Cost output remains `PROXY`.
