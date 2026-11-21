@@ -98,3 +98,59 @@ The risk-basis acceptance blocker is grounded in **V18.2 §10.4 — Risk Circuit
 ### Current v2 readiness
 
 The live PR run proves that the current pipeline can generate the Stage 7 artifact and block candidates, but it does not provide persistent costed shadow history or a registered sizing/denominator model. Therefore the planned v2 snapshot builder still lacks valid production inputs. No arbitrary NAV, 1R percentage or reset convention is being inserted. A test fixture may exercise arithmetic only and must remain explicitly non-production. The v2 implementation and any production risk basis remain unapproved/unavailable until their inputs are properly specified and evidenced.
+
+
+## v2 — Shadow risk snapshot implementation (PR #169; overall stage remains BLOCKED)
+
+**Implementation branch:** `feat/stage7-shadow-risk-snapshot-v2-20261120`  
+**Latest inspected head:** `ef9759187b14cec8005150b9337f43a6e77fd687`  
+**PR:** [#169](https://github.com/hamedbenapart69-byte/Trade/pull/169), open and not merged.
+
+### Implemented L1/L2 contract
+
+- Added a versioned frozen Shadow risk-basis schema. `initial_nav_units` and `risk_per_trade_pct` are mandatory; no default is embedded.
+- Added a C++ snapshot builder and CLI probe. It binds the snapshot to the L1, ledger, candidate-registry and Meta-Cognition hashes.
+- Computes normalized Shadow NAV from non-overlapping, costed closed outcomes using `net_R = win_R - loss_R - fee_R - slippage_R - funding_R`.
+- Uses UTC day and Monday-start ISO-week buckets; daily and weekly loss remain at the maximum loss observed from period-start NAV until the relevant reset.
+- Rejects missing/unfrozen basis, unavailable cost provenance, future/duplicate/out-of-basis outcomes, nonpositive NAV, overlapping intervals without entry-NAV provenance and filled open positions without mark-to-market evidence.
+- Keeps every result system-Shadow-only and PROXY; `trade_execution_allowed=false` remains invariant.
+- Extended read-only live PR validation to build the risk snapshot from fresh public L1 plus the persistent `signals` state, validate its schema, pass it into the Stage 7 risk gate, and prepare (but never send) the Telegram report.
+
+### C++ and contract evidence
+
+GitHub Actions run `44884181447` — **C++ Stage 7 Risk Gate Contract**:
+- Full C++ build: PASS.
+- CTest: **15/15 PASS**, including the new loss-then-recovery test for sticky daily/weekly kill-switch measurements.
+- Stage 7 schema/contract and fail-closed guards: PASS.
+
+On the same latest PR head:
+- C++ Foundation: PASS (`44884181474`).
+- Stage 6 Calibration Contract: PASS (`44884181463`).
+- Stage 2 LFS, Stage 3 NSS, Stage 5 dual-engine and Stage 1 contract workflows: PASS.
+- The expanded Stage 6 PR live-validation run `44884181454` is still running as of this report update; its fresh L1 collection has not yet completed. No live snapshot PASS is claimed.
+
+### Current live-data blockers (persistent `signals` branch)
+
+- Five closed outcomes remain in the persistent ledger; all five still have `cost_status=UNAVAILABLE` and null fee/slippage/funding values.
+- One PENDING candidate has a recorded entry reference but lacks `entry_fill_time_ms`; no timestamp is inferred.
+- No frozen `shadow_risk_basis.daily_swing.v1.json` exists on `signals`.
+- Stage 6 remains `NOT_CALIBRATED`; five hypothetical outcomes do not establish a calibrated probability, EV or OOS performance.
+- The v2 builder deliberately does not estimate unrealized PnL for open positions. Without a fresh mark and explicit cost treatment, it returns `UNAVAILABLE`.
+
+### v2 disposition
+
+**L2 engineering / contract:** PASS on the recorded C++ test run.  
+**L1 persistent Shadow data:** BLOCKED.  
+**L3 live Stage 7 integration:** pending the expanded read-only PR live-validation run; no Telegram send is performed by that test.  
+**Overall Stage 7:** **BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION**.
+
+No risk basis or per-trade risk percentage was invented. V18.2 §10.4 requires the measurement basis, timestamps, simulated equity, fees/funding, open/closed treatment and reset rules to be defined; the owner has not approved the missing Shadow NAV and risk-per-trade values. The system must not substitute the separate historical $200/$4 playbook figures or any user-account balance for this internal Shadow configuration.
+
+### Handoff
+
+Do not start Stage 8 or promote candidates until all of the following have evidence:
+1. An owner-approved frozen Shadow risk basis.
+2. Persistent cost-provenance-backed outcomes.
+3. Valid open-position mark-to-market or an explicit accepted closed-only treatment.
+4. Stage 6 calibration gate no longer `NOT_CALIBRATED`.
+5. Expanded live snapshot + risk-gate validation passes with the production-equivalent data contracts.
