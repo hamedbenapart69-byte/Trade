@@ -1,0 +1,41 @@
+name: C++ Stage 8 Plan A Backtest Contract
+on:
+  pull_request:
+    branches: [main]
+    paths: ["cpp/**", "contracts/plan-a-backtest-input.v1.schema.json", ".github/workflows/cpp-stage8-plan-a-backtest.yml"]
+  push:
+    branches: [feat/cpp-stage8-backtest-v1]
+    paths: ["cpp/**", "contracts/plan-a-backtest-input.v1.schema.json", ".github/workflows/cpp-stage8-plan-a-backtest.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: stage8-plan-a-backtest
+  cancel-in-progress: true
+jobs:
+  stage8-plan-a:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev libssl-dev nlohmann-json3-dev
+          npm install --no-save --package-lock=false ajv-cli@5.0.0 ajv-formats@3.0.1
+      - name: Full C++ build and CTest
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Compile input schema
+        run: npx ajv compile -s contracts/plan-a-backtest-input.v1.schema.json --spec=draft2020 -c ajv-formats
+      - name: Stage 8 integrity guards
+        run: |
+          grep -Fq 'PLAN_A_LRT' cpp/include/cfss/backtest.hpp
+          grep -Fq 'PLAN_A_NMT' cpp/include/cfss/backtest.hpp
+          grep -Fq 'AMBIGUOUS_STOP_FIRST' cpp/include/cfss/backtest.hpp
+          grep -Fq 'UNAVAILABLE' cpp/include/cfss/backtest.hpp
+          grep -Fq 'trade_execution_allowed' cpp/include/cfss/backtest.hpp
+          grep -Fq 'STOP_GAP' cpp/include/cfss/backtest.hpp
+          echo "STAGE8_PLAN_A_INTEGRITY_GUARDS_PASS"
