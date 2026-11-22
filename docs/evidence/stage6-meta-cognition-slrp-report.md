@@ -74,7 +74,7 @@ Committed changes:
 4. Estimate the required OOS effective sample size from validation-only cluster uncertainty; require the OOS effective sample to meet it.
 5. Add a paired OOS Brier-improvement confidence interval and require its 95% lower bound to be greater than zero.
 6. Expose the provisional target effect, alpha, power, method, validation uncertainty and required OOS effective sample in the Meta-Cognition output.
-7. Distinguish fee `ASSUMED` from slippage `PROXY`; record the fee decision reference, slippage method/status, funding source, source run/scan/L1 hash and source snapshot as-of timestamp.
+7. Distinguish fee `ASSUMED` from slippage `PROXY`; record the V18.2 G3 0.04% reference, explicitly label the per-side interpretation as an assumption (not an account-specific fee tier), and retain slippage method/status, funding source, source run/scan/L1 hash and source snapshot as-of timestamp.
 8. Enforce cost provenance both in the shadow ledger runtime and again in the Meta-Cognition parser before EV computation.
 9. Add negative tests for missing hashes/methods/assumption references, stale cost snapshot time, mislabelled fee, missing numeric cost components and unsupported `REAL` cost status.
 10. Preserve null cost values when total cost coverage is unavailable.
@@ -149,3 +149,61 @@ Observed job evidence:
 - A separate direct read of `signals/cpp_runtime/daily_outcome_ledger.v1.json` after this run still returns 5 outcomes: all 5 have `cost_status=UNAVAILABLE`, `execution_status=NOT_EXECUTED`, `outcome_kind=HYPOTHESIS_PROXY`; resolutions are 1 TARGET and 4 STOP. Thus the PR-only cost backfill did not change persistent production state.
 
 **Updated decision:** Stage 6 v2 engineering validation = PASS for this PR run; calibration/statistical acceptance = BLOCKED; production release = NOT APPROVED. No OOS calibration PASS is claimed.
+
+
+## 13. Latest scheduled main-branch regression — 2026-11-21
+
+GitHub Actions scheduled run `44850703499` on main commit `5e8257f69d7d5b6fb7eecb8c153dee0d1fa28482` completed the following before failing:
+
+- C++20 configure/build and CTest: **14/14 PASS**.
+- Fresh public OKX L1 collection: **62/62 selected instruments completed**, each reported `errors=0`.
+- C++ Stage 4/5 compute, Stage 6 Meta-Cognition and Stage 7 risk-gate generation completed.
+- Stage 7 output schema validation passed. Runtime summary: `CANDIDATES=2`, `BLOCKED=2`, `ACTIONABLE=0`, `RISK_SNAPSHOT=UNAVAILABLE`, `trade_execution_allowed=false`.
+
+### D3 — scheduled persistence failure
+
+The first failing step was `Reserve Telegram report idempotently and persist evidence before send`. The exact error was:
+
+`fatal: pathspec 'cpp_runtime/liquidity_stage5_v1.json' did not match any files`
+
+The workflow had intentionally deleted the uncompressed liquidity JSON after verifying its compressed artifact and SHA-256 sidecar, but still included the deleted path in the explicit `git add -A` allowlist. Therefore:
+
+- New runtime artifacts and cost backfills from this run were not committed to the persistent `signals` branch.
+- The Telegram send step was skipped; this was not a Telegram HTTP failure.
+- The always-run receipt step persisted report ID `f4135ca509dc45f5531dabdd373ce09c6beafb18413c06769bf959f0d066cc3a` with status `RESERVED`, `attempts=0`, and no message ID.
+- The last confirmed Telegram delivery in the persistent outbox remains message ID `75`, completed at `2026-11-20T11:27:36Z`.
+
+### Correction and disposition
+
+- [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170) removes the deleted path from the staging list and asserts the compressed artifact and checksum exist before staging.
+- PR #170 checks passed: CI, Policy Guard, Stage 6 Calibration Contract and Stage 7 Risk Gate Contract.
+- The same pathspec correction is included in [PR #169](https://github.com/hamedbenapart69-byte/Trade/pull/169) so the Stage 7 integration does not reintroduce the defect.
+- No direct main-branch edit, workflow dispatch or Telegram send was performed. A successful post-merge scheduled run is still required to verify persistent state update and Telegram delivery.
+
+**Current Stage 6 disposition remains BLOCKED / NOT_CALIBRATED.** The latest persistent ledger still contains five hypothetical outcomes with `cost_status=UNAVAILABLE`; no statistical or production-release gate is promoted by this correction.
+
+## 8. Stage 6 outcome-provenance hardening — 2026-11-21
+
+A forensic review of the persistent Shadow registry found a data-integrity case that must not be converted into a synthetic performance observation:
+
+- The registry contains one pending `UNI/USDT:USDT` candidate with `entry_fill_reference=4.845`, but no `entry_fill_time_ms` and no stored resolution bars.
+- Its `source_run_id=okx-cpp-1795159176445` corresponds to Stage 6 run `44693771488`; that run has no retained Actions artifacts. The original L1 payload and exact fill timestamp cannot be independently recovered.
+- The five existing closed outcomes do contain stored `resolution_bars`. In each, the first bar timestamp equals `decision_time_ms` and the first bar open exactly matches the recorded entry reference. Their missing legacy timestamps can therefore be migrated from stored evidence, not guessed from a fresh market pull.
+
+The active Stage 7 v2 branch (PR #169) hardens this path:
+
+1. Existing `entry_fill_reference` and `entry_fill_time_ms` are immutable across replays.
+2. A missing timestamp is never inferred from decision time or a later candle. If a filled candidate resolves without timestamp provenance, it becomes `UNVERIFIABLE` and is not appended to the outcome ledger.
+3. A filled candidate with a data gap at expiry becomes `UNVERIFIABLE`, not `REJECTED`.
+4. Cost backfill requires an explicit positive entry timestamp, not earlier than decision time, matching the first stored resolution bar.
+5. The risk snapshot blocks every filled non-`RESOLVED` candidate and enforces a two-way registry/ledger identity check.
+6. The fee reference no longer claims an owner engineering decision. The V18.2 G3 0.04% value is labeled as an assumed per-side proxy; cost status remains `PROXY`.
+
+### Validation evidence
+
+- Stage 7 Risk Gate Contract run `44886258049` on code head `1edc9d63`: full C++ build and CTest **15/15 PASS**, Stage 6 workflow YAML validation PASS, schema compilation PASS, fail-closed guards PASS.
+- Policy Guard run `44886258129`: PASS.
+- Stage 6 read-only PR validation run `44886258025` on code head `1edc9d63`: C++ build/CTest passed, persistent-state checkout passed, market-cache restore passed; fresh L1 collection was still in progress at the time of this report. No later step is claimed as passed.
+- PR validation uses a bounded 10-symbol target and 1y history plus required BTC/pending symbols. It is an integration sample, not the production 100-symbol/2y coverage test. PR validation does not send Telegram messages or write to the persistent `signals` branch.
+
+**Current Stage 6 status remains BLOCKED / NOT_CALIBRATED / NO_SIGNAL_PROMOTION.** The five hypothetical outcomes are insufficient for chronological calibration, and the one pending UNI fill remains unmarkable until verifiable timestamp provenance exists. The 60/100 eligible-universe shortfall and single-provider live collection remain open coverage issues. The PR-only cost backfill remains ephemeral until a successful, authorized production run persists it.
