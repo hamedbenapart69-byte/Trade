@@ -110,12 +110,15 @@
       "status": "DELIVERED"
     },
     {
-      "attempts": 0,
+      "attempts": 1,
+      "completed_at_utc": "2026-11-22T16:25:20Z",
       "created_at_utc": "2026-11-22T16:25:18Z",
-      "http_status": null,
-      "message_id": null,
+      "detail": null,
+      "http_status": 200,
+      "message_id": 87,
       "report_id": "591b24a59ae60b6d9c895ae9acf9284c965edc04d72defad83ad1410eb5b5e13",
-      "status": "RESERVED"
+      "send_started_at_utc": "2026-11-22T16:25:19Z",
+      "status": "DELIVERED"
     }
   ],
   "schema_version": "1.0.0"
