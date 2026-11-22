@@ -164,7 +164,7 @@ inline Json to_json(const Report& r) {
  Json folds=Json::array();
  for(const auto& f:r.folds) folds.push_back({{"train_start_ms",f.train_start},{"test_start_ms",f.test_start},{"test_end_ms",f.test_end},{"lrt",metric_json(f.lrt)},{"nmt",metric_json(f.nmt)}});
  return Json{{"schema_version","1.0.0"},{"artifact_type","cfss_plan_a_backtest_report_v1"},{"status",r.status},{"dataset_id",r.dataset_id},
- {"data_class",r.data_class},{"walk_forward",{{"train_months",6},{"test_months",2},{"step_months",1},{"chronological",true},{"overlapping_test_windows",true}}},
+ {"data_class",r.data_class},{"walk_forward",{{"context_months",6},{"training_used",false},{"methodology","FIXED_PREREGISTERED_CANDIDATE_ROLLING_OOS"},{"test_months",2},{"step_months",1},{"chronological",true},{"overlapping_test_windows",true}}},
  {"lrt_unique_oos",metric_json(r.lrt)},{"nmt_unique_oos",metric_json(r.nmt)},
  {"baselines",{{"status","UNAVAILABLE"},{"ema_cross","UNAVAILABLE"},{"rsi","UNAVAILABLE"},{"buy_and_hold","UNAVAILABLE"}}},
  {"dsr_status","UNAVAILABLE"},{"pbo_status","UNAVAILABLE"},{"brier_status","UNAVAILABLE"},
