@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: bitget-provider-probe-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-test-live:
