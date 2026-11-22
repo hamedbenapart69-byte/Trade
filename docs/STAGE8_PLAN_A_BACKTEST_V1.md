@@ -110,3 +110,7 @@ Maximum three versions under V18.2; no more than three rewrite cycles. No Gate A
 - Slippage rates of 100% or more are rejected because they can produce non-positive fills.
 - Funding remains a duration-based approximation; exact funding timestamp/event data is not supplied by this contract and must remain explicitly PROXY/unavailable.
 - Regression tests cover gap-stop fill math, invalid hashes, and invalid slippage.
+
+## Runtime contract hardening
+
+The CLI rejects unsupported `schema_version` values before consuming any input fields. The test workflow asserts fail-closed behavior for an unsupported version. The rolling 6-month window is a warm-up/context window only; v1 does not train or fit parameters, and the 6-month data is not used by a model. DSR, PBO, Brier and baselines remain UNAVAILABLE.
