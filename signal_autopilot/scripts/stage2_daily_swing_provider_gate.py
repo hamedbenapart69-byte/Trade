@@ -203,6 +203,8 @@ def run(universe_path: Path, output_path: Path, now_ms: int | None = None) -> di
         "passed_probes": passed,
         "failed_probes": failed,
         "max_staleness_ms": MAX_STALENESS_MS,
+        "contract_metadata_status": metadata_status,
+        "contract_metadata_error": metadata_error,
         "contract_metadata_sha256": contract_hash,
         "contract_metadata": contracts,
         "results": results,
