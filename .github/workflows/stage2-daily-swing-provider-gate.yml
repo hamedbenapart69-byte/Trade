@@ -1,0 +1,156 @@
+name: Stage 2 Daily Swing Provider Gate
+
+on:
+  push:
+    branches: [stage2-daily-swing-provider-gate]
+    paths:
+      - ".github/workflows/stage2-daily-swing-provider-gate.yml"
+      - "docs/decisions/ADR-011-daily-swing-only.md"
+      - "signal_autopilot/scripts/stage2_daily_swing_provider_gate.py"
+      - "signal_autopilot/tests/test_stage2_daily_swing_provider_gate.py"
+      - "cpp/apps/stage2_provider_gate_validate/main.cpp"
+      - "cpp/include/cfss/telegram_l3.hpp"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage2-daily-swing-provider-gate
+  cancel-in-progress: false
+
+jobs:
+  provider-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Stage 2 Daily/Swing branch
+        uses: actions/checkout@v4
+        with:
+          ref: stage2-daily-swing-provider-gate
+          fetch-depth: 0
+
+      - name: Install C++20 build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Stage 2 provider-gate unit tests
+        run: |
+          python -m unittest signal_autopilot.tests.test_stage2_daily_swing_provider_gate -v
+
+      - name: Run live Binance Vision 27-symbol x 1D/4H L1 probe
+        id: l1
+        shell: bash
+        run: |
+          set +e
+          mkdir -p artifacts
+          python signal_autopilot/scripts/stage2_daily_swing_provider_gate.py \
+            signal_autopilot/data/stage1b_universe_27.json \
+            artifacts/stage2-provider-gate.v1.json
+          code=$?
+          echo "l1_exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "STAGE2_L1_EXIT=$code"
+          test -s artifacts/stage2-provider-gate.v1.json
+
+      - name: Compile independent C++20 L2 validator
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -I cpp/include \
+            cpp/apps/stage2_provider_gate_validate/main.cpp -lcrypto \
+            -o build-stage2-provider-gate
+
+      - name: Validate L1 report and produce C++ L2 status
+        id: l2
+        shell: bash
+        run: |
+          set +e
+          ./build-stage2-provider-gate \
+            artifacts/stage2-provider-gate.v1.json \
+            artifacts/stage2-l2-status.v1.json
+          code=$?
+          echo "l2_exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "STAGE2_L2_EXIT=$code"
+          test -s artifacts/stage2-l2-status.v1.json
+
+      - name: Compile C++ Telegram L3 delivery
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -I cpp/include \
+            cpp/apps/telegram_delivery/main.cpp -lcurl -lcrypto \
+            -o telegram-delivery-stage2
+
+      - name: Initialize Telegram outbox and run L3 delivery
+        id: l3
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          set +e
+          test -n "$TELEGRAM_TOKEN"
+          test -n "$TELEGRAM_CHAT_ID"
+          echo '{}' > artifacts/run-manifest.json
+          ./telegram-delivery-stage2 \
+            artifacts/stage2-l2-status.v1.json \
+            artifacts/stage2-provider-gate-outbox.v1.json \
+            artifacts/run-manifest.json
+          code=$?
+          echo "l3_exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "STAGE2_L3_EXIT=$code"
+          test -s artifacts/stage2-provider-gate-outbox.v1.json
+          test -s artifacts/run-manifest.json
+
+      - name: Persist idempotent Telegram outbox to signals branch
+        if: always() && steps.l3.outcome != 'skipped'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/signals:refs/remotes/origin/signals
+          git worktree add /tmp/signals-state refs/remotes/origin/signals
+          mkdir -p /tmp/signals-state/cpp_runtime
+          cp artifacts/stage2-provider-gate-outbox.v1.json \
+            /tmp/signals-state/cpp_runtime/stage2_provider_gate_telegram_outbox.v1.json
+          cd /tmp/signals-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/stage2_provider_gate_telegram_outbox.v1.json
+          if git diff --cached --quiet; then
+            echo "STAGE2_TELEGRAM_OUTBOX_UNCHANGED"
+          else
+            git commit -m "stage2: persist provider-gate Telegram receipt [skip ci]"
+            git rebase refs/remotes/origin/signals
+            git push origin HEAD:refs/heads/signals
+          fi
+
+      - name: Upload Stage 2 provider-gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-daily-swing-provider-gate-${{ github.run_id }}
+          path: |
+            artifacts/stage2-provider-gate.v1.json
+            artifacts/stage2-l2-status.v1.json
+            artifacts/stage2-provider-gate-outbox.v1.json
+            artifacts/run-manifest.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce complete Stage 2 provider gate
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "L1_EXIT=${{ steps.l1.outputs.l1_exit_code }}"
+          echo "L2_EXIT=${{ steps.l2.outputs.l2_exit_code }}"
+          echo "L3_EXIT=${{ steps.l3.outputs.l3_exit_code }}"
+          test "${{ steps.l1.outputs.l1_exit_code }}" = "0"
+          test "${{ steps.l2.outputs.l2_exit_code }}" = "0"
+          test "${{ steps.l3.outputs.l3_exit_code }}" = "0"
+          jq -e '.overall_status == "PASS" and .passed_probes == 54 and .failed_probes == 0' artifacts/stage2-provider-gate.v1.json
+          jq -e '.provider_gate_status == "PASS" and .signal_generation_enabled == false' artifacts/stage2-l2-status.v1.json
+          echo "STAGE2_PROVIDER_GATE_L1_L2_L3=PASS"
+          echo "SIGNAL_GENERATION=DISABLED"
