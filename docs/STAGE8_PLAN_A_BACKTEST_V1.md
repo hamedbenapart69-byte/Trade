@@ -1,7 +1,7 @@
 # STAGE 8 — PLAN A BACKTEST V1 (C++)
 
 **Specification:** V18.2  
-**Branch:** `feat/cpp-stage8-backtest-v1`  
+**Branch:** `feat/stage8-gap-fill-audit-v1`  
 **Status:** ENGINEERING IMPLEMENTATION IN PROGRESS; STRATEGY GATE NOT EVALUATED  
 **Release:** Not approved; no merge to `main` in this change set.
 
@@ -22,10 +22,10 @@ The engine never upgrades PROXY input to REAL. Candidate class is retained in th
 ### Repository evidence audit (2026-11-20)
 
 The `signals` branch contains:
-- `cpp_runtime/daily_outcome_ledger.v1.json`: two closed outcomes, both `PROXY`; fee/funding costs are `UNAVAILABLE`; execution is `NOT_EXECUTED`.
+- `cpp_runtime/daily_outcome_ledger.v1.json`: five closed outcomes, all `PROXY`; fee/funding/slippage costs are `UNAVAILABLE`; execution is `NOT_EXECUTED`.
 - `cpp_runtime/outcome_ledger.v1.json`: `EMPTY`.
-- `cpp_runtime/performance-okx-cpp-1795052817897.json`: `NOT_CALCULATED`, trade_count 0, reason `NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1`.
-- Five recent live-run history CSV snapshots, not a six-month historical OHLCV/candidate archive.
+- `cpp_runtime/performance-okx-cpp-1795257048838.json`: `NOT_CALCULATED`, trade_count 0, reason `NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1`.
+- Ten shadow candidates were present in the inspected registry (5 resolved, 4 rejected, 1 pending); all were `PROXY`. Five recent live-run history CSV snapshots were present, not a six-month historical OHLCV/candidate archive.
 
 Therefore those artifacts are useful operational evidence, but they are not valid REAL OOS evidence for Gate A.
 
@@ -122,4 +122,9 @@ A code audit found that the original v1 implementation compounded completed trad
 
 The implementation now deliberately withholds both metrics (null) for LRT and NMT, and the report states the missing event-driven ledger explicitly. This is a fail-closed correction, not a strategy improvement or a Gate A pass. Win rate, Wilson interval, per-trade net PF and expectancy remain trade-level descriptive statistics and must not be interpreted as portfolio performance.
 
-Funding remains a duration-based proxy (ceil(holding_hours / 8)) rather than exchange funding-event replay. It is not sufficient for Gate A without timestamp-aligned funding history. The engine also has no portfolio capital allocator, concurrency cap, cross-symbol correlation control, or mark-to-market equity accounting. Those are explicit blockers for a future separately approved portfolio-validation implementation.
+Funding remains a duration-based proxy (ceil(holding_hours / 8)) rather than exchange funding-event replay. It is not sufficient for Gate A without timestamp-aligned funding history. The engine also has no portfolio capital allocator, concurrency cap, cross-symbol correlation control, or mark-to-market equity accounting. The `risk_fraction` input is validated but not applied to portfolio sizing or equity; the report limitation makes this explicit. Those are explicit blockers for a future separately approved portfolio-validation implementation.
+
+
+## V1 Audit Fix — Synthetic fixture provenance
+
+A review found that synthetic unit-test bars had been paired with candidate records labeled `REAL`. Although the dataset ID identified the fixture as synthetic and the report warned that bar provenance was unverified, the fixture labels were internally inconsistent. All synthetic test candidates are now labeled `PROXY`, and the test asserts that the resulting report remains `PROXY_CANDIDATES`. This prevents tests from accidentally presenting fabricated market data as real evidence.
