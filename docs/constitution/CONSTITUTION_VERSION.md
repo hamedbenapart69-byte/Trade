@@ -1,45 +1,31 @@
 # Constitution and Master Source Version Register
 
-## Current normative source
+## Current controlling source
 
-**ACCEPTED — V19.0 is the single controlling project specification as of 2026-11-22.**
+**MASTER_SOURCE_V20.0 — OWNER-DIRECTED CANONICAL REPLACEMENT**
 
-- Source file: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
-- Source path: `docs/constitution/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
-- Owner acceptance: explicit decision in the conversation dated 2026-11-22.
-- Activation commit: `aa1c02748b5d7e60966d9d352c6dcb695a1109dc`
-- Source SHA-256 recorded from the owner-provided activated file: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`
-
-## Archived master
-
-- V18.2 remains preserved in the repository as a historical archive.
-- V18.2 is no longer the controlling source.
-- No V18.2 implementation status is carried forward as proof of V19.0 acceptance.
-
-## Owner-approved V19.0 amendments and execution constraints
-
-1. Python is the official L1 acquisition implementation; C++ remains authoritative for L2 compute and L3 Telegram delivery (ADR-001 approved by owner).
-2. Stage 1 is a one-symbol BTCUSDT perpetual vertical slice.
-3. Stage 1 data source: Binance Vision for the initial BTCUSDT L1 JSON export, with provenance, exact contract mapping, timestamps and versioned schema.
-4. Stage 2 target: LRT 15m over 27 eligible contracts; confidence remains UNCALIBRATED until valid calibration evidence exists.
-5. Overlap-safe OOS aggregation is mandatory. Duplicate OOS trades must not inflate pooled sample counts.
-6. Brier Score is not sufficient alone for quality or release acceptance.
-7. A 5–10 daily signal count is a KPI, never a minimum or a reason to weaken gates.
-8. Telegram is the only user-facing delivery channel. No exchange-account connection, private trading keys or order execution.
-9. Stage deadlines: Stage 0 up to 24 hours; Stage 1 up to 48 hours after Stage 0 PASS; Stage 2 up to one week after Stage 1 PASS; Stage 3 up to three days after Stage 2 PASS. If a deadline is exceeded, stop and state the exact blocker; do not relax acceptance criteria.
-
-## Repository baseline at V19.0 activation
-
-- Previous `main` baseline: `143999c8d67dba3851d00568e00287f26e7aad4e`
+- Source file: `MASTER_SOURCE_V20.0.md`
+- Source path: `docs/constitution/MASTER_SOURCE_V20.0.md`
+- Version: `20.0`
+- Owner direction: explicit decision dated 2026-11-23.
 - Repository: `hamedbenapart69-byte/Trade`
-- Default branch: `main`
-- Repository permissions observed: admin=true, push=true.
-- This register records source authority only. It does not declare any implementation stage PASS.
+- Working branch: `stage-vtm-pit-2023`
+- V20 Git blob SHA: `8a9f3150879f540367ef312e452a069cdec2732e`
+- Commit message: `Refactor: Replace V19 with V20 Master Source (VTM Pivot)`
+- The commit SHA is the branch head in Git history; it is intentionally not embedded in the document that the commit itself contains.
 
-## Historical V9 source integrity
+V19.0 and V18.2 are historical sources and no longer control V20 requirements. V20.0 contains explicitly labelled proposed calculation conventions; these are not owner-approved until the corresponding OPEN blockers are resolved.
 
-| Source | SHA-256 | Pages |
-|---|---|---:|
-| V9.0 `rules 1(2).pdf` | `1dbdbcca127bd368b025a554b205970b7221fe22f68139908402c8d04f1db2f3` | 54 |
-| V9.1 `rules 1.1(1).pdf` | `862307dbc8cae72bfac03de24686f52c0a28d170afe26a69d4e27f22a21cf0a8` | 55 |
+## Archived sources
 
+- V19.0 master source: `archive/constitution/V19.0/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
+- V18.2 owner acceptance/errata: `archive/constitution/V18.2/V18.2_OWNER_ACCEPTANCE_AND_ERRATA.md`
+- V18.2 master source SHA-256 recorded in the existing owner acceptance record: `e4e39fc1aec1924f93d9a480fadf6b2ad315388ebb5718ed9765ad89477b6a24`
+
+**V18.2 source-preservation limitation:** the V18.2 master Markdown file is present as an uploaded project file but was not present as a file in the inspected Git repository tree. The original source bytes could not be moved into Git through the available repository-file interface in this operation. The archive records its exact known SHA-256 and this limitation; it does not falsely claim that the full V18.2 master file has been committed under `archive/`. The uploaded original remains the source of record until a repository archive copy is created and hash-verified.
+
+## Validation status
+
+V20.0 is a governing specification, not evidence that VTM passed backtesting or production release.
+
+Before the final VTM backtest, the blockers in Section 10 of V20.0 must be resolved and frozen. No backtest is authorized by this source-creation commit alone.
