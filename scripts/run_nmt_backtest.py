@@ -196,22 +196,26 @@ def main():
         for tn,kn in TENKAN_KIJUN:
             f=features(x,tn,kn); f.attrs["symbol"]=symbol
             feature_cache[(symbol,tn,kn)]=f
-    fold_rows=[]; oos_parts=[]; trade_map={}
+    fold_rows=[]; oos_parts=[]; oos_trades=[]
     for n,(tr_start,te_start,te_end) in enumerate(folds):
         scores=[]
         for cfg in CONFIGS:
             r,t=run_portfolio(data,feature_cache,cfg,tr_start,te_start,te_start)
             scores.append(metrics(r.loc[(r.index>=tr_start)&(r.index<te_start)],t)["sharpe"])
         selected=int(np.nanargmax(np.nan_to_num(scores,nan=-1e9))); cfg=CONFIGS[selected]
-        r,tr=run_portfolio(data,feature_cache,cfg,te_start,te_end,te_end-pd.Timedelta(days=1))
+        # Use one unique scored month per rolling fold; the final fold scores its full remaining test window.
+        score_end=te_end if n==len(folds)-1 else min(te_start+pd.DateOffset(months=STEP_MONTHS),te_end)
+        r,tr=run_portfolio(data,feature_cache,cfg,te_start,score_end,score_end-pd.Timedelta(days=1))
+        scored=r.loc[(r.index>=te_start)&(r.index<score_end)]
         fold_rows.append({"fold":n,"train_start":tr_start.date().isoformat(),"test_start":te_start.date().isoformat(),
-            "test_end":te_end.date().isoformat(),"selected_config":selected,
+            "test_end":te_end.date().isoformat(),"scored_oos_end":score_end.date().isoformat(),
+            "selected_config":selected,
             "selected_parameters":{"tenkan":cfg[0][0],"kijun":cfg[0][1],"volume_multiplier":cfg[1],"sl_atr_multiplier":cfg[2]},
-            "oos_metrics":metrics(r.loc[(r.index>=te_start)&(r.index<te_end)],tr)})
-        oos_parts.append(r.loc[(r.index>=te_start)&(r.index<te_end)])
-        for t in tr: trade_map.setdefault((t["symbol"],t["entry_date"]),t)
-    oos=pd.concat(oos_parts).sort_index(); oos=oos[~oos.index.duplicated(keep="first")]
-    oos_trades=list(trade_map.values())
+            "oos_metrics":metrics(scored,tr)})
+        oos_parts.append(scored); oos_trades.extend(tr)
+    oos=pd.concat(oos_parts).sort_index()
+    if oos.index.has_duplicates:
+        raise AssertionError("OOS date overlap remains after unique-month scoring")
     candidate_returns=[]
     for cfg in CONFIGS:
         r,_=run_portfolio(data,feature_cache,cfg,START,END+pd.Timedelta(days=1),END)
@@ -221,8 +225,11 @@ def main():
     dsr_z=float(norm.ppf(np.clip(dsr_prob,1e-12,1-1e-12)))
     overall=metrics(oos,oos_trades)
     gates={"pbo_lt_0_4":pbo_value<.4,"dsr_z_gt_1":dsr_z>1.0,
-           "oos_win_rate_gt_55":overall["win_rate"] is not None and overall["win_rate"]>.55,
-           "profit_factor_gt_1":overall["profit_factor"] is not None and overall["profit_factor"]>1.0}
+           "owner_win_rate_gt_55":overall["win_rate"] is not None and overall["win_rate"]>.55,
+           "nmt_gate_win_rate_gte_45":overall["win_rate"] is not None and overall["win_rate"]>=.45,
+           "profit_factor_gte_1_4":overall["profit_factor"] is not None and overall["profit_factor"]>=1.4,
+           "max_dd_lte_20pct":overall["max_dd"]>=-.20,
+           "sharpe_gte_1_2":overall["sharpe"]>=1.2}
     gates["status"]="PASS" if all(gates.values()) else "NOT_VALIDATED"
     summary={"strategy":"NMT-1D","status":"RESEARCH_ONLY","data_type":"REAL OHLCV",
         "symbol_count":len(data),"bars_per_symbol":730,"parameter_combinations":len(CONFIGS),
@@ -235,7 +242,7 @@ def main():
                  "costs":"0.04% fee + 0.02% slippage per side."},
         "walk_forward":{"train_months":TRAIN_MONTHS,"test_months":TEST_MONTHS,"step_months":STEP_MONTHS,
                         "fold_count":len(folds),"fold_results":fold_rows,
-                        "overlap_policy":"OOS daily returns deduplicated by date, earliest fold retained; trades deduplicated by symbol and entry date."},
+                        "overlap_policy":"Each fold scores one unique month; the final fold scores its full remaining test window. Entries and exits are restricted to the scored interval; no OOS dates or trades are duplicated."},
         "pbo":pbo_value,"dsr_probability":dsr_prob,"dsr_z":dsr_z,"selected_oos_metrics":overall,"gates":gates,
         "notes":["The supplied grids form 27 combinations, not 30; no unsupplied values were invented.",
                  "No order-book, funding, OI, exchange account, or order execution is used.",
