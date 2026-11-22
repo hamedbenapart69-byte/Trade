@@ -1,5 +1,6 @@
 name: Stage 2 Source Probe (CoinGecko, OKX, Bybit)
 # Probe execution trigger: QC requested three-source verification.
+# Include symbol normalization coverage in the live evidence.
 on:
   push:
     branches: [stage2-daily-swing-provider-gate]
