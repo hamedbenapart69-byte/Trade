@@ -30,6 +30,14 @@ jobs:
           ctest --test-dir build --output-on-failure --no-tests=error
       - name: Compile input schema
         run: npx ajv compile -s contracts/plan-a-backtest-input.v1.schema.json --spec=draft2020 -c ajv-formats
+      - name: CLI rejects unsupported schema version
+        run: |
+          printf '{"schema_version":"9.9.9"}\n' > build/invalid-schema.json
+          if build/plan_a_backtest build/invalid-schema.json build/invalid-schema-output.json 2>build/invalid-schema.err; then
+            echo "CLI unexpectedly accepted unsupported schema"
+            exit 1
+          fi
+          grep -Fq 'SCHEMA_VERSION_UNSUPPORTED' build/invalid-schema.err
       - name: Stage 8 integrity guards
         run: |
           grep -Fq 'PLAN_A_LRT' cpp/include/cfss/backtest.hpp
