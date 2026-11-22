@@ -39,7 +39,7 @@ V1 implementation:
 - LRT and NMT metrics remain separate.
 - Same-bar stop/target collision resolves conservatively as stop-first.
 - Fees, slippage and conservative funding costs are deducted before net R.
-- Win-rate Wilson 95% interval, net PF, net expectancy, drawdown and daily Sharpe are emitted where calculable.
+- Win-rate Wilson 95% interval, net PF and net expectancy are emitted where calculable. Portfolio drawdown and Sharpe remain null/UNAVAILABLE until a portfolio-level event ledger exists.
 - No execution permission or actionable trade output.
 
 ## L3 — Delivery
@@ -114,3 +114,12 @@ Maximum three versions under V18.2; no more than three rewrite cycles. No Gate A
 ## Runtime contract hardening
 
 The CLI rejects unsupported `schema_version` values before consuming any input fields. The test workflow asserts fail-closed behavior for an unsupported version. The rolling 6-month window is a warm-up/context window only; v1 does not train or fit parameters, and the 6-month data is not used by a model. DSR, PBO, Brier and baselines remain UNAVAILABLE.
+
+
+## V1 Audit Fix — Portfolio metric integrity
+
+A code audit found that the original v1 implementation compounded completed trades in exit-time order and grouped their returns by exit date. That is not a valid portfolio equity curve when positions overlap: it omits concurrent exposure, capital allocation, mark-to-market losses during open positions, and portfolio-level constraints. Consequently, the reported drawdown and Sharpe could be materially misleading.
+
+The implementation now deliberately withholds both metrics (null) for LRT and NMT, and the report states the missing event-driven ledger explicitly. This is a fail-closed correction, not a strategy improvement or a Gate A pass. Win rate, Wilson interval, per-trade net PF and expectancy remain trade-level descriptive statistics and must not be interpreted as portfolio performance.
+
+Funding remains a duration-based proxy (ceil(holding_hours / 8)) rather than exchange funding-event replay. It is not sufficient for Gate A without timestamp-aligned funding history. The engine also has no portfolio capital allocator, concurrency cap, cross-symbol correlation control, or mark-to-market equity accounting. Those are explicit blockers for a future separately approved portfolio-validation implementation.
