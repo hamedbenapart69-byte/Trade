@@ -1,0 +1,62 @@
+name: VTM PIT 2023 Data Engineering
+
+on:
+  push:
+    branches: [stage-vtm-pit-2023]
+    paths:
+      - "scripts/build_vtm_pit_2023.py"
+      - "tests/test_vtm_pit_2023.py"
+      - ".github/workflows/vtm-pit-2023.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vtm-pit-2023-data
+  cancel-in-progress: false
+
+jobs:
+  build-pit-universe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile and unit tests
+        run: |
+          python -m py_compile scripts/build_vtm_pit_2023.py tests/test_vtm_pit_2023.py
+          python -m unittest discover -s tests -p "test_vtm_pit_2023.py" -v
+      - name: Build point-in-time universe from Binance Vision
+        run: python scripts/build_vtm_pit_2023.py
+      - name: Validate output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("results/vtm_pit_2023")
+          manifest = json.loads((root / "universe_manifest.json").read_text())
+          daily = json.loads((root / "universe_daily.json").read_text())
+          monthly = json.loads((root / "monthly_universe_counts.json").read_text())
+          assert manifest["status"] == "PASS"
+          assert len(daily) == 365 and len(monthly) == 12
+          assert manifest["records"]["daily_dates"] == 365
+          assert all(x["symbols"] == sorted(set(x["symbols"])) for x in daily)
+          print(json.dumps({
+            "candidate_symbols": manifest["candidate_symbols_discovered"],
+            "symbols_with_rows": manifest["symbols_with_relevant_rows"],
+            "verified_archives": manifest["verified_archive_files"],
+            "membership_rows": manifest["records"]["membership_rows"],
+            "monthly": [{k:x[k] for k in ("month","mean_daily_universe_size","min_daily_universe_size","max_daily_universe_size","month_end_universe_size")} for x in monthly]
+          }, indent=2))
+          PY
+      - name: Upload PIT Universe and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtm-pit-2023-universe
+          path: results/vtm_pit_2023/
+          if-no-files-found: warn
+          retention-days: 30
