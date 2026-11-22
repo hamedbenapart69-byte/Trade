@@ -1,0 +1,358 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/contracts/stage1-btc-l1.v1.schema.json",
+  "title": "CFSS Stage 1 BTC L1 Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "run_id",
+    "scan_id",
+    "acquired_at_utc",
+    "window",
+    "provider",
+    "provenance",
+    "freshness",
+    "instruments",
+    "trading_decision",
+    "signal_generation_enabled"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_stage1_btc_l1_v1"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scan_id": {
+      "type": "string",
+      "pattern": "^scan-[a-f0-9]{64}$"
+    },
+    "acquired_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeframe",
+        "start_ms",
+        "end_ms",
+        "closed_candles"
+      ],
+      "properties": {
+        "timeframe": {
+          "const": "1h"
+        },
+        "start_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "closed_candles": {
+          "const": 24
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_provider_id",
+        "data_class",
+        "realtime",
+        "fallback_used"
+      ],
+      "properties": {
+        "primary_provider_id": {
+          "const": "binance_vision"
+        },
+        "data_class": {
+          "const": "DAILY_ARCHIVE_DELAYED"
+        },
+        "realtime": {
+          "const": false
+        },
+        "fallback_used": {
+          "const": false
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_files",
+        "sha256_verified"
+      ],
+      "properties": {
+        "sha256_verified": {
+          "const": true
+        },
+        "source_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "filename",
+              "archive_url",
+              "checksum_url",
+              "sha256",
+              "checksum_file_sha256",
+              "bytes",
+              "row_count",
+              "first_timestamp_ms",
+              "last_timestamp_ms"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "minLength": 1
+              },
+              "archive_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "checksum_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "checksum_file_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "row_count": {
+                "const": 24
+              },
+              "first_timestamp_ms": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "last_timestamp_ms": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "latest_candle_close_ms",
+        "staleness_ms",
+        "maximum_staleness_ms"
+      ],
+      "properties": {
+        "status": {
+          "const": "DAILY_ARCHIVE_DELAYED"
+        },
+        "latest_candle_close_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "staleness_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 93600000
+        },
+        "maximum_staleness_ms": {
+          "const": 93600000
+        }
+      }
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "instrument_id",
+          "unified_symbol",
+          "base",
+          "quote",
+          "settle",
+          "contract_type",
+          "provider_id",
+          "timeframe",
+          "candles",
+          "funding",
+          "open_interest",
+          "availability"
+        ],
+        "properties": {
+          "instrument_id": {
+            "const": "BTCUSDT"
+          },
+          "unified_symbol": {
+            "const": "BTC/USDT:USDT"
+          },
+          "base": {
+            "const": "BTC"
+          },
+          "quote": {
+            "const": "USDT"
+          },
+          "settle": {
+            "const": "USDT"
+          },
+          "contract_type": {
+            "const": "linear_perpetual"
+          },
+          "provider_id": {
+            "const": "binance_vision"
+          },
+          "timeframe": {
+            "const": "1h"
+          },
+          "candles": {
+            "type": "array",
+            "minItems": 24,
+            "maxItems": 24,
+            "items": {
+              "type": "object",
+              "required": [
+                "timestamp_ms",
+                "close_time_ms",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "volume_quote",
+                "taker_buy_base",
+                "taker_buy_quote",
+                "price_currency",
+                "volume_unit",
+                "volume_base_currency",
+                "volume_quote_currency",
+                "closed",
+                "retrieved_at_utc"
+              ],
+              "properties": {
+                "timestamp_ms": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "close_time_ms": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "open": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "high": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "low": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "close": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "volume": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "volume_quote": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "taker_buy_base": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "taker_buy_quote": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "price_currency": {
+                  "const": "USDT"
+                },
+                "volume_unit": {
+                  "const": "base_asset"
+                },
+                "volume_base_currency": {
+                  "const": "BTC"
+                },
+                "volume_quote_currency": {
+                  "const": "USDT"
+                },
+                "closed": {
+                  "const": true
+                },
+                "retrieved_at_utc": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "funding": {
+            "type": "array",
+            "maxItems": 0
+          },
+          "open_interest": {
+            "type": "array",
+            "maxItems": 0
+          },
+          "availability": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ohlcv",
+              "funding",
+              "open_interest"
+            ],
+            "properties": {
+              "ohlcv": {
+                "const": "AVAILABLE"
+              },
+              "funding": {
+                "const": "UNAVAILABLE"
+              },
+              "open_interest": {
+                "const": "UNAVAILABLE"
+              }
+            }
+          }
+        }
+      }
+    },
+    "trading_decision": {
+      "const": "NOT_IN_SCOPE"
+    },
+    "signal_generation_enabled": {
+      "const": false
+    }
+  }
+}
