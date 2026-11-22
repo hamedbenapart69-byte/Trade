@@ -5,7 +5,7 @@ int main(int argc,char** argv){
  if(argc!=3){std::cerr<<"usage: plan_a_backtest <input.json> <output.json>\n";return 2;}
  try{
   std::ifstream in(argv[1]);if(!in)throw std::runtime_error("INPUT_OPEN_FAILED");
-  const auto j=nlohmann::json::parse(in);cfss::backtest::Input x{};
+  const auto j=nlohmann::json::parse(in);if(!j.is_object()||!j.contains("schema_version")||j.at("schema_version")!="1.0.0")throw std::runtime_error("SCHEMA_VERSION_UNSUPPORTED");cfss::backtest::Input x{};
   x.dataset_id=j.at("dataset_id").get<std::string>();x.risk_fraction=j.at("risk_fraction").get<double>();
   const auto& c=j.at("costs");x.costs={c.at("entry_fee_rate").get<double>(),c.at("exit_fee_rate").get<double>(),c.at("entry_slippage_rate").get<double>(),c.at("exit_slippage_rate").get<double>(),c.at("funding_cost_rate_per_8h").get<double>()};
   for(const auto& b:j.at("bars"))x.bars[b.at("symbol").get<std::string>()].push_back({b.at("timestamp_ms").get<std::int64_t>(),b.at("open").get<double>(),b.at("high").get<double>(),b.at("low").get<double>(),b.at("close").get<double>()});
