@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.request
 import zipfile
+from urllib.parse import urlsplit
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,7 @@ def fetch(url: str, timeout: int = 40) -> bytes:
                 raise GateError(f"HTTP_{response.status}")
             return response.read()
     except urllib.error.HTTPError as exc:
-        raise GateError(f"HTTP_{exc.code}") from exc
+        raise GateError(f"HTTP_{exc.code}:{urlsplit(url).netloc}{urlsplit(url).path}") from exc
     except urllib.error.URLError as exc:
         raise GateError(f"NETWORK_{type(exc.reason).__name__}") from exc
 
@@ -166,7 +167,15 @@ def run(universe_path: Path, output_path: Path, now_ms: int | None = None) -> di
     now_ms = now_ms if now_ms is not None else int(datetime.now(timezone.utc).timestamp() * 1000)
     archive_date = (datetime.fromtimestamp(now_ms / 1000, timezone.utc).date() - timedelta(days=1)).isoformat()
     symbols = load_universe(universe_path)
-    contracts = verify_exchange_contracts(symbols)
+    metadata_error = None
+    try:
+        contracts = verify_exchange_contracts(symbols)
+        metadata_status = "VERIFIED"
+    except Exception as exc:
+        # آرشیو را مستقل از API اطلاعات قرارداد آزمایش می‌کنیم؛ اما بدون متادیتای زنده PASS نمی‌دهیم.
+        contracts = {}
+        metadata_status = "UNAVAILABLE"
+        metadata_error = f"{type(exc).__name__}:{exc}"
     results: list[dict[str, Any]] = []
     for symbol in symbols:
         for interval in ("1d", "4h"):
@@ -198,7 +207,7 @@ def run(universe_path: Path, output_path: Path, now_ms: int | None = None) -> di
         "contract_metadata": contracts,
         "results": results,
         "signal_generation_enabled": False,
-        "overall_status": "PASS" if failed == 0 and passed == 54 else "FAIL",
+        "overall_status": "PASS" if metadata_status == "VERIFIED" and failed == 0 and passed == 54 else "FAIL",
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
