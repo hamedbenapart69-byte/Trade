@@ -37,7 +37,7 @@ jobs:
         with:
           name: binance-vision-1d-25-symbols-45055606760
           run-id: 45055606760
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: data
       - name: Validate real OHLCV inputs
         run: |
@@ -62,7 +62,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nmt1d-backtest-results-\${{ github.run_id }}
+          name: nmt1d-backtest-results-${{ github.run_id }}
           path: results/
           if-no-files-found: error
           retention-days: 30
