@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import io
 import json
 import os
@@ -27,7 +28,7 @@ class GateError(RuntimeError):
     pass
 
 
-def fetch(url: str, timeout: int = 40) -> bytes:
+def fetch(url: str, timeout: int = 12) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as response:
@@ -177,16 +178,24 @@ def run(universe_path: Path, output_path: Path, now_ms: int | None = None) -> di
         metadata_status = "UNAVAILABLE"
         metadata_error = f"{type(exc).__name__}:{exc}"
     results: list[dict[str, Any]] = []
-    for symbol in symbols:
-        for interval in ("1d", "4h"):
+    tasks = [(symbol, interval) for symbol in symbols for interval in ("1d", "4h")]
+    # محدودیت هم‌زمانی، از فشار غیرضروری روی سرویس عمومی جلوگیری می‌کند.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(probe_one, symbol, interval, archive_date, now_ms): (symbol, interval)
+            for symbol, interval in tasks
+        }
+        for future in as_completed(futures):
+            symbol, interval = futures[future]
             try:
-                results.append(probe_one(symbol, interval, archive_date, now_ms))
+                results.append(future.result())
             except Exception as exc:
                 results.append({
                     "symbol": symbol, "timeframe": interval.upper(),
                     "status": "FAIL", "provider": "binance_vision",
                     "reason": f"{type(exc).__name__}:{exc}",
                 })
+    results.sort(key=lambda row: (row["symbol"], row["timeframe"]))
     passed = sum(x["status"] == "PASS" for x in results)
     failed = len(results) - passed
     contract_hash = sha256(json.dumps(contracts, sort_keys=True).encode())
