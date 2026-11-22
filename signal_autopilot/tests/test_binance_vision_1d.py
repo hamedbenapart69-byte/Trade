@@ -4,7 +4,7 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 import pandas as pd
-from scripts.binance_vision_1d import SYMBOLS, archive_url, month_starts, run
+from scripts.binance_vision_1d import ArchiveResult, SYMBOLS, archive_url, month_starts, run
 
 class BinanceVision1DTests(unittest.TestCase):
     def test_universe_is_25_unique_symbols(self):
@@ -22,7 +22,7 @@ class BinanceVision1DTests(unittest.TestCase):
           "https://data.binance.vision/data/futures/um/monthly/klines/BTCUSDT/1d/BTCUSDT-1d-2025-02.zip")
 
     def test_missing_archive_is_partial_not_fabricated(self):
-        fake=type("R",(),{"symbol":"BTCUSDT","month":"2025-01","url":"u","status":"FAIL","http_status":404,"bytes_downloaded":0,"sha256":None,"rows":0,"error":"HTTP_404"})()
+        fake=ArchiveResult("BTCUSDT","2025-01","u","FAIL",404,0,None,0,"HTTP_404")
         with tempfile.TemporaryDirectory() as tmp, patch("scripts.binance_vision_1d.fetch_archive",return_value=(fake,pd.DataFrame())), patch("scripts.binance_vision_1d.SYMBOLS",("BTCUSDT",)):
             report=run(date(2025,1,1),date(2025,1,31),Path(tmp),1)
         self.assertEqual(report["overall_status"],"PARTIAL")
