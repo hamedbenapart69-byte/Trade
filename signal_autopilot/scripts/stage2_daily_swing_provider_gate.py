@@ -36,7 +36,9 @@ def fetch(url: str, timeout: int = 12) -> bytes:
                 raise GateError(f"HTTP_{response.status}")
             return response.read()
     except urllib.error.HTTPError as exc:
-        raise GateError(f"HTTP_{exc.code}:{urlsplit(url).netloc}{urlsplit(url).path}") from exc
+        body = exc.read(512).decode("utf-8", errors="replace").replace("\\n", " ").replace("\\r", " ")
+        body = " ".join(body.split())[:240]
+        raise GateError(f"HTTP_{exc.code}:{urlsplit(url).netloc}{urlsplit(url).path}:body={body}") from exc
     except urllib.error.URLError as exc:
         raise GateError(f"NETWORK_{type(exc.reason).__name__}") from exc
 
