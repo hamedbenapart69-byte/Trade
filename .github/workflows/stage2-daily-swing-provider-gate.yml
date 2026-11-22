@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: stage2-daily-swing-provider-gate
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   provider-gate:
