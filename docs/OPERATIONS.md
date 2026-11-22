@@ -63,12 +63,12 @@ Never treat a report file, a reserved outbox record or a green C++ test as proof
 
 ## 6. Current known operating limits
 
-- Post-PR #169 Stage 6 revalidation run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) was still collecting data on 2026-11-22. Its C++20 build and full CTest passed; do not infer a completed Stage 6 run from those steps.
+- Post-PR #169 scheduled run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) completed successfully on 2026-11-22. It collected 49 instruments, produced 45/49 LFS and 38/49 NSS calculations, persisted five PROXY-costed hypothetical outcomes and delivered Telegram message 83. This proves engineering execution and delivery, not Stage 6 calibration.
 - The Stage 6 run and scheduled pipeline can produce daily status reports, but a daily report is not evidence of calibrated probabilities or profitable trades.
 
 - Stage 6 remains `NOT_CALIBRATED`; current outcome volume does not establish reliable probabilities or EV.
-- Shadow costs must be provenance-backed. Null fee/slippage/funding fields remain `UNAVAILABLE`.
-- Stage 7 remains fail-closed until an owner-approved frozen Shadow risk basis, costed persistent history, valid open-position treatment and upstream calibration evidence exist.
+- Five historical Shadow outcomes now have provenance-backed PROXY cost rows. Fee remains ASSUMED and slippage remains PROXY; these do not qualify as REAL costs. Any new row with incomplete coverage or provenance remains `UNAVAILABLE`.
+- Stage 7 remains fail-closed: the scheduled run emitted `RISK_BASIS_INVALID_OR_NOT_FROZEN`; no owner-approved immutable Shadow NAV/risk basis exists, one pending UNI fill lacks its timestamp, and Stage 6 is NOT_CALIBRATED.
 - No user account balances or exchange positions may be used to fill missing internal Shadow data.
 - No signal may be promoted while a required gate is blocked.
 
