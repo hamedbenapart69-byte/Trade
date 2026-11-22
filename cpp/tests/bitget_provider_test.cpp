@@ -101,9 +101,9 @@ int main() {
     const json empty = json::array();
     require(cfss::bitget::coverage(empty, "timestamp_ms", hour).count == 0U,
             "empty history is unavailable, not a zero-valued observation");
-    require(cfss::bitget::number(json{"0.01"}).value_or(0.0) == 0.01 &&
-            !cfss::bitget::number(json{"NaN"}).has_value() &&
-            !cfss::bitget::number(json{nullptr}).has_value(),
+    require(cfss::bitget::number(json(std::string{"0.01"})).value_or(0.0) == 0.01 &&
+            !cfss::bitget::number(json(std::string{"NaN"})).has_value() &&
+            !cfss::bitget::number(json(nullptr)).has_value(),
             "numeric parsing rejects NaN and null values");
     std::cout << "BITGET_PROVIDER_TESTS_PASS\n";
     return EXIT_SUCCESS;
