@@ -39,18 +39,19 @@ The status below is grounded in the committed stage evidence, not inferred from 
 | 3 | NSS resilience | **PASS via v2** — PROXY / NOT_CALIBRATED; no actionable trades |
 | 4 | Liquidity zones and market phase | **PASS via v1** — rule-based proxy; no trade generation |
 | 5 | Independent LRT/NMT candidate engines | **PASS for candidate generation** — both engines remain non-actionable and NOT_CALIBRATED |
-| 6 | Meta-cognition, calibration and net EV | **BLOCKED / NOT_CALIBRATED** — insufficient independent outcomes and incomplete persisted cost evidence |
-| 7 | Consensus, Shadow risk and manual execution gate | **BLOCKED / FAIL-CLOSED** — risk-basis and persistent Shadow evidence are incomplete |
+| 6 | Meta-cognition, calibration and net EV | **BLOCKED / NOT_CALIBRATED** — only five hypothetical outcomes; costs are persisted as PROXY, but OOS calibration/sample-size acceptance is unmet |
+| 7 | Consensus, Shadow risk and manual execution gate | **BLOCKED / FAIL-CLOSED** — no frozen risk basis; legacy filled UNI candidate lacks fill-time provenance; upstream Stage 6 uncalibrated |
 | 8–15 | Backtests, other paths, Shadow trading, allocator and final decision | **Not eligible to start** until the preceding stage gates pass |
 
-The five persisted Stage 6 outcomes documented in the current evidence are hypothetical Shadow resolutions, not executed trades. They must not be presented as trading performance. The current Stage 7 gate must remain non-actionable while its risk basis, costs, position marks or upstream calibration are unavailable.
+The five persisted Stage 6 outcomes are hypothetical Shadow resolutions, not executed trades. Their fee/slippage/funding rows are now populated using explicitly labelled PROXY/ASSUMED cost models, not REAL execution costs. They must not be presented as trading performance. The Stage 7 gate remains fail-closed because its risk basis is not frozen and Stage 6 remains uncalibrated.
 
 ## Important current engineering work
 
 
 - [PR #169 — Stage 7 Shadow risk snapshot v2](https://github.com/hamedbenapart69-byte/Trade/pull/169) was merged on 2026-11-22 as `ae8e356a408e1c0099aa2134ed16dd7f33ff76e3`. The C++20 build and all CTest cases passed on the merged code. Stage 7 remains blocked because the owner-approved risk basis and upstream calibration evidence are still unavailable.
 - [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170) was closed without merge; its persistence-path fix was superseded by the merged PR #169.
-- Post-merge Stage 6 run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) was in progress on 2026-11-22: C++20 compile/CTest passed; live data collection was still running. This is not a Stage 6 PASS.
+- [PR #174 — C++ Bitget fallback research probe](https://github.com/hamedbenapart69-byte/Trade/pull/174) is Draft and research-only; it does not register a production fallback.
+- Post-merge scheduled Stage 6 run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) completed successfully on 2026-11-22: 49 instruments, 15m resolution 49/49, LFS 45/49, NSS 38/49, five persistent proxy-costed hypothetical outcomes and Telegram message 83 delivered. Statistical acceptance remains BLOCKED.
 
 ## Evidence and operational entry points
 
