@@ -10,12 +10,11 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import NormalDist
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
-from backtest_guard import pbo, deflated_sharpe_ratio
 
 SYMBOLS = [
     "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT",
@@ -31,7 +30,6 @@ TRAIN_MONTHS, TEST_MONTHS, STEP_MONTHS = 6, 2, 1
 # Fixed, pre-registered engineering constants. No parameter sweep or post-result tuning.
 ATR_N = 14
 ADX_N = 14
-MOMENTUM_WINDOWS = (20, 60)
 VOLUME_WINDOW = 20
 BREAKOUT_WINDOW = 20
 FVG_MAX_AGE = 10
@@ -616,6 +614,9 @@ def baseline_returns(panel: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp
 
 
 def main() -> None:
+    # The validator is loaded only for the research run; importing feature tests stays lightweight.
+    from backtest_guard import pbo, deflated_sharpe_ratio
+
     ohlcv, deriv, meta = load_inputs()
     features = {s: build_features(s, ohlcv[s], deriv[s]) for s in SYMBOLS}
     panel = build_panel(features)
@@ -659,7 +660,7 @@ def main() -> None:
     )
     kelly_returns = kelly_returns_raw.reindex(index).fillna(0.0)
     dsr_probability = float(deflated_sharpe_ratio(main_returns.to_numpy(), n_trials=len(VARIANTS)))
-    dsr_z = float(norm.ppf(np.clip(dsr_probability, 1e-12, 1 - 1e-12)))
+    dsr_z = float(NormalDist().inv_cdf(float(np.clip(dsr_probability, 1e-12, 1 - 1e-12))))
     overall = compute_metrics(main_returns, main_trades)
 
     fold_results = []
