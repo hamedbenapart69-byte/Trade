@@ -1,0 +1,49 @@
+name: VTM 1D Final Validation
+on:
+  push:
+    branches: [stage-vtm-pit-2023]
+    paths:
+      - "scripts/run_vtm_backtest_1d.py"
+      - "tests/test_vtm_backtest_1d.py"
+      - ".github/workflows/vtm-1d-final-validation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vtm-1d-final-validation
+  cancel-in-progress: false
+jobs:
+  vtm-1d:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned statistical validator
+        run: python -m pip install "git+https://github.com/AgentJDrew/backtest-guard.git@317cd5a3d56063fd9d4bb8574401af30d9e55f46" numpy pandas scipy
+      - name: Compile and unit tests
+        run: |
+          python -m py_compile scripts/run_vtm_backtest_1d.py tests/test_vtm_backtest_1d.py
+          python -m unittest discover -s tests -p "test_vtm_backtest_1d.py" -v
+      - name: Download verified Binance Vision data and run 1D VTM backtests
+        run: python scripts/run_vtm_backtest_1d.py
+      - name: Validate result artifact
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open("results/vtm_1d/vtm_1d_summary.json"))
+          assert p["manifest"]["timeframe"]=="1D"
+          assert set(p["results"])=={"2023","2024_2026"}
+          assert p["manifest"]["status"]=="COMPLETED_WITH_LIMITATIONS"
+          print("Validated:", {k:v["metrics"] for k,v in p["results"].items()})
+          PY
+      - name: Upload VTM 1D evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtm-1d-final-validation
+          path: results/vtm_1d/
+          if-no-files-found: warn
+          retention-days: 30
