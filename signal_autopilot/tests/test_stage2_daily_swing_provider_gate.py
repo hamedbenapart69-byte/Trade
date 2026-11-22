@@ -93,7 +93,24 @@ class Stage2ProviderGateTests(unittest.TestCase):
                 gate.probe_one("BTCUSDT", "1d", "2026-11-21", now)
 
     def test_signal_generation_is_never_enabled(self):
-        self.assertIn("signal_generation_enabled", gate.run.__code__.co_names)
+        import tempfile
+        symbols = [f"COIN{i}USDT" for i in range(27)]
+        contracts = {s: {"symbol": s} for s in symbols}
+        fake_result = {
+            "status": "PASS", "symbol": "BTCUSDT", "timeframe": "1D",
+            "staleness_ms": 1, "provider": "binance_vision",
+            "data_class": "DELAYED_HISTORICAL_ARCHIVE"
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            universe = Path(tmp) / "universe.json"
+            output = Path(tmp) / "report.json"
+            universe.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
+            with patch.object(gate, "verify_exchange_contracts", return_value=contracts), \\
+                 patch.object(gate, "probe_one", return_value=fake_result):
+                report = gate.run(universe, output, now_ms=1_800_000_000_000)
+            self.assertFalse(report["signal_generation_enabled"])
+            self.assertEqual(report["expected_probes"], 54)
+            self.assertTrue(output.exists())
 
 
 if __name__ == "__main__":
