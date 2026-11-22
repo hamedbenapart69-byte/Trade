@@ -38,13 +38,13 @@ def rank(s,w=90):
 
 def feat(x):
  f=x.copy(); t=(f.high.rolling(9).max()+f.low.rolling(9).min())/2; k=(f.high.rolling(26).max()+f.low.rolling(26).min())/2
- f["tenkan"],f["kijun"]=t,k; f["ca"],f["cb"]=((t+k)/2).shift(26),((f.high.rolling(52).max()+f.low.rolling(52).min())/2).shift(26
+ f["tenkan"],f["kijun"]=t,k; f["ca"],f["cb"]=((t+k)/2).shift(26),((f.high.rolling(52).max()+f.low.rolling(52).min())/2).shift(26)
  f["top"],f["bot"]=f[["ca","cb"]].max(axis=1),f[["ca","cb"]].min(axis=1)
  lo,hi=f.low.shift().rolling(20).min(),f.high.shift().rolling(20).max()
  f["swl"],f["sws"]=(f.low<lo)&(f.close>lo),(f.high>hi)&(f.close<hi)
  tr=pd.concat([f.high-f.low,(f.high-f.close.shift()).abs(),(f.low-f.close.shift()).abs()],axis=1).max(axis=1); f["atr"]=tr.rolling(14).mean()
  # Funding/positioning/OI unavailable in this OHLCV artifact; neutral values explicitly tagged PROXY.
- f["lfs1"]=(rank(f.atr/f.close)+(1-rank(f.volume)))/2; f["lfs2"],f["lfs3"],f["lfs5"]=.5,.5,.5; f["lfs4"]=1-rank(f.close.rolling(20).std()/f.close.rolling(20).mean()
+ f["lfs1"]=(rank(f.atr/f.close)+(1-rank(f.volume)))/2; f["lfs2"],f["lfs3"],f["lfs5"]=.5,.5,.5; f["lfs4"]=1-rank(f.close.rolling(20).std()/f.close.rolling(20).mean())
  f["lfs"]=.25*f.lfs1+.2*f.lfs2+.2*f.lfs3+.2*f.lfs4+.15*f.lfs5
  return f
 
@@ -78,7 +78,7 @@ def sim(f,thr,a,d,start,end):
 def metrics(r,tr):
  r=np.nan_to_num(np.asarray(r,float)); eq=np.cumprod(1+r); dd=eq/np.maximum.accumulate(eq)-1; sd=np.std(r,ddof=1) if len(r)>1 else 0
  w=[t["net_return"] for t in tr if t["net_return"]>0]; l=[t["net_return"] for t in tr if t["net_return"]<=0]; gl=abs(sum(l))
- return {"win_rate":len(w)/len(tr) if tr else None,"profit_factor":sum(w)/gl if gl else (float("inf") if w else 0),"max_dd":float(dd.min()) if len(dd) else 0,"sharpe":float(np.mean(r)/sd*np.sqrt(365)) if sd else 0,"trades_count":len(tr),"net_return":float(eq[-1]-1) if len(eq) else 0}
+ return {"win_rate":len(w)/len(tr) if tr else None,"profit_factor":sum(w)/gl if gl else (None if w else 0),"max_dd":float(dd.min()) if len(dd) else 0,"sharpe":float(np.mean(r)/sd*np.sqrt(365)) if sd else 0,"trades_count":len(tr),"net_return":float(eq[-1]-1) if len(eq) else 0}
 
 def wf(idx):
  out=[]; ts=idx.min()+pd.DateOffset(months=TRAIN); last=idx.max()-pd.DateOffset(months=TEST-1)
@@ -108,7 +108,7 @@ def main():
  for cfg in configs:
   rr=[]
   for sym,f in fs.items(): r,_=sim(f,*cfg,START,END+pd.Timedelta(days=1)); rr.append(r)
- candidates.append(pd.concat(rr,axis=1).mean(axis=1).to_numpy())
+  candidates.append(pd.concat(rr,axis=1).mean(axis=1).to_numpy())
  matrix=np.array(candidates); pbo_val=float(pbo(matrix.T,n_splits=8).pbo)
  selected=pd.concat(oos).reset_index(drop=True) if oos else pd.Series(dtype=float)
  dsr=float(deflated_sharpe_ratio(selected.to_numpy(),n_trials=len(configs))) if len(selected)>1 else 0
