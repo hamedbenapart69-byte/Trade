@@ -1,5 +1,5 @@
 import unittest
-from signal_autopilot.scripts.stage2_source_probe import TARGETS, URLS
+from scripts.stage2_source_probe import TARGETS, URLS
 class SourceProbeTests(unittest.TestCase):
  def test_universe_is_27_unique_symbols(self):
   self.assertEqual(len(TARGETS),27)
