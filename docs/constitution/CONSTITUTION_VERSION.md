@@ -2,20 +2,39 @@
 
 ## Current normative source
 
-**ACCEPTED — V18.2 is the single controlling project specification.**
+**ACCEPTED — V19.0 is the single controlling project specification as of 2026-11-22.**
 
-- Source file: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER-1(1).md`
-- SHA-256: `e4e39fc1aec1924f93d9a480fadf6b2ad315388ebb5718ed9765ad89477b6a24`
-- Owner acceptance: explicitly recorded in the project instruction “V18.2 MASTER SOURCE ACCEPTED — INITIATE C++ STAGE 1”.
-- Binding conflict-resolution record: [V18.2 Owner Acceptance and Errata](V18.2_OWNER_ACCEPTANCE_AND_ERRATA.md).
-- Source register: [SOURCE_REGISTER.md](SOURCE_REGISTER.md).
+- Source file: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
+- Source path: `docs/constitution/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
+- Owner acceptance: explicit decision in the conversation dated 2026-11-22.
+- Activation commit: `aa1c02748b5d7e60966d9d352c6dcb695a1109dc`
+- Source SHA-256 recorded from the owner-provided activated file: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`
 
-## Binding post-acceptance amendments
+## Archived master
 
-1. C++ is the only production implementation language for the remaining L1/L2/L3 path. Python is legacy/auxiliary only; the V18.2 Part XIV hybrid Python-L1 proposal is superseded by the later owner direction.
-2. Telegram is the only user-facing delivery channel. Web dashboard and email are not production delivery dependencies.
-3. Data acquisition is backend-owned and uses permitted public endpoints only. No user exchange account, private trading key, account balance, private endpoint or order execution is permitted.
-4. The verified runner currently uses C++20. This is an implementation choice supported by successful builds, not a literal standard-version requirement in V18.2.
+- V18.2 remains preserved in the repository as a historical archive.
+- V18.2 is no longer the controlling source.
+- No V18.2 implementation status is carried forward as proof of V19.0 acceptance.
+
+## Owner-approved V19.0 amendments and execution constraints
+
+1. Python is the official L1 acquisition implementation; C++ remains authoritative for L2 compute and L3 Telegram delivery (ADR-001 approved by owner).
+2. Stage 1 is a one-symbol BTCUSDT perpetual vertical slice.
+3. Stage 1 data source: Binance Vision for the initial BTCUSDT L1 JSON export, with provenance, exact contract mapping, timestamps and versioned schema.
+4. Stage 2 target: LRT 15m over 27 eligible contracts; confidence remains UNCALIBRATED until valid calibration evidence exists.
+5. Overlap-safe OOS aggregation is mandatory. Duplicate OOS trades must not inflate pooled sample counts.
+6. Brier Score is not sufficient alone for quality or release acceptance.
+7. A 5–10 daily signal count is a KPI, never a minimum or a reason to weaken gates.
+8. Telegram is the only user-facing delivery channel. No exchange-account connection, private trading keys or order execution.
+9. Stage deadlines: Stage 0 up to 24 hours; Stage 1 up to 48 hours after Stage 0 PASS; Stage 2 up to one week after Stage 1 PASS; Stage 3 up to three days after Stage 2 PASS. If a deadline is exceeded, stop and state the exact blocker; do not relax acceptance criteria.
+
+## Repository baseline at V19.0 activation
+
+- Previous `main` baseline: `143999c8d67dba3851d00568e00287f26e7aad4e`
+- Repository: `hamedbenapart69-byte/Trade`
+- Default branch: `main`
+- Repository permissions observed: admin=true, push=true.
+- This register records source authority only. It does not declare any implementation stage PASS.
 
 ## Historical V9 source integrity
 
@@ -24,28 +43,3 @@
 | V9.0 `rules 1(2).pdf` | `1dbdbcca127bd368b025a554b205970b7221fe22f68139908402c8d04f1db2f3` | 54 |
 | V9.1 `rules 1.1(1).pdf` | `862307dbc8cae72bfac03de24686f52c0a28d170afe26a69d4e27f22a21cf0a8` | 55 |
 
-These are archived historical source identities. Their hashes were recalculated from the uploaded PDFs. Hash registration is not a binary backup.
-
-## Open source-integrity items
-
-- Original V10.0 source bytes are absent from the current accessible bundle. Exact V10.0 crosswalk: **OPEN / NOT VERIFIED**.
-- Full V18.1 source bytes are absent from the current accessible bundle. Exact line-level V18.1 diff: **OPEN / NOT VERIFIED**.
-
-No missing source is reconstructed or represented as reviewed.
-
-## Implementation status is separate from source acceptance
-
-- Stage 0 source acceptance: **PASS**.
-- Stages 1–5: PASS at the scope documented in their SLRP reports.
-- Stage 6: engineering pipeline executed successfully; statistical calibration remains BLOCKED / NOT_CALIBRATED.
-- Stage 7: BLOCKED / FAIL-CLOSED.
-- Stages 8–15: GATED; no later-stage PASS is claimed.
-- A document acceptance or a green build does not prove production quality, calibrated edge or profitability.
-
-## Historical V9 source-registration record
-
-- Original main baseline: `3941d8b77b3172f0b3fe3372ba96521d580e3432`
-- Initial source-register commit: `e943fa154f482dbbab547fd0eaaa2b0969a126cc`
-- Initial P0 evidence addendum: `6052acf815e82bf97b9dbf6cf10bd4471005f5c9`
-- V9 source-registration acceptance: `d928f3e8d93d9c69a8937d28a3d2e9c573e1b86f`
-- Original PR #81 merge: `5dcb05e39f8164d805cf32d7b72c421b44cf075a`
