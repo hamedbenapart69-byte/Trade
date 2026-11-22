@@ -1,0 +1,33 @@
+name: Stage 2 Targeted Contract Identity Probe
+on:
+  push:
+    branches: [stage2-daily-swing-provider-gate]
+    paths:
+      - ".github/workflows/stage2-targeted-identity-probe.yml"
+      - "signal_autopilot/scripts/stage2_targeted_identity_probe.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: stage2-targeted-identity-probe
+  cancel-in-progress: true
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run exact OKX contract identity checks
+        run: |
+          mkdir -p artifacts
+          python signal_autopilot/scripts/stage2_targeted_identity_probe.py | tee artifacts/probe-console.json
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage2-targeted-identity-probe-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 30
