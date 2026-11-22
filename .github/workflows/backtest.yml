@@ -21,10 +21,17 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - name: Install backtest engine and statistical validator
+      - name: Install statistical validator and runtime dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install quantbt backtest-guard pandas numpy scipy pyarrow
+          python -m pip install "git+https://github.com/AgentJDrew/backtest-guard.git@317cd5a3d56063fd9d4bb8574401af30d9e55f46" pandas numpy scipy pyarrow
+      - name: Verify backtest-guard API
+        run: |
+          python - <<'PY'
+          from backtest_guard import pbo, deflated_sharpe_ratio, PurgedKFold
+          print("backtest-guard import PASS")
+          print("PBO, DSR and PurgedKFold APIs available")
+          PY
       - name: Download OHLCV dataset from acquisition run
         uses: actions/download-artifact@v4
         with:
