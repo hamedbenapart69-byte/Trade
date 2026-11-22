@@ -25,8 +25,18 @@ def fetch(name,url):
    for row in rows:
     if not isinstance(row,dict): continue
     sym=row.get("symbol") or row.get("ticker") or row.get("market") or row.get("contract")
-    if sym in TARGETS or any(row.get(k) in TARGETS for k in ("symbol","base","target")): matched.append(row)
-   return {"source":name,"url":url,"status_code":res.status,"elapsed_ms":elapsed,"rate_limit_headers":{k:v for k,v in res.headers.items() if "rate" in k.lower() or "limit" in k.lower() or "remaining" in k.lower()},"response_type":type(body).__name__,"row_count":len(rows),"matched_target_rows":len(matched),"sample_first_5":rows[:5],"matched_sample_first_5":matched[:5],"error":None}
+    candidates=set()
+    if sym: candidates.add(str(sym).upper())
+    for k in ("symbol","base","target"):
+     if row.get(k): candidates.add(str(row[k]).upper())
+    # OKX SWAP identifiers are BASE-USDT-SWAP; normalize exact USDT contracts only.
+    inst=row.get("instId")
+    if isinstance(inst,str) and inst.upper().endswith("-USDT-SWAP"):
+     candidates.add(inst.upper().replace("-USDT-SWAP","")+"USDT")
+    for c in list(candidates):
+     if c.endswith("-USDT"): candidates.add(c.replace("-USDT","USDT"))
+    if candidates.intersection(TARGETS): matched.append(row)
+   return {"source":name,"url":url,"status_code":res.status,"elapsed_ms":elapsed,"rate_limit_headers":{k:v for k,v in res.headers.items() if "rate" in k.lower() or "limit" in k.lower() or "remaining" in k.lower()},"response_type":type(body).__name__,"row_count":len(rows),"matched_target_rows":len(matched),"matched_target_symbols":sorted({(r.get("symbol") or r.get("ticker") or r.get("market") or r.get("instId") or "") for r in matched}),"sample_first_5":rows[:5],"matched_sample_first_5":matched[:5],"error":None}
  except urllib.error.HTTPError as e:
   body=e.read(600).decode("utf-8",errors="replace")
   return {"source":name,"url":url,"status_code":e.code,"elapsed_ms":int((time.time()-started)*1000),"rate_limit_headers":{k:v for k,v in e.headers.items() if "rate" in k.lower() or "limit" in k.lower() or "remaining" in k.lower()},"response_type":"HTTP_ERROR","row_count":0,"matched_target_rows":0,"sample_first_5":[],"matched_sample_first_5":[],"error":body[:600]}
