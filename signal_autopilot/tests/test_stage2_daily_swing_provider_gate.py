@@ -105,8 +105,7 @@ class Stage2ProviderGateTests(unittest.TestCase):
             universe = Path(tmp) / "universe.json"
             output = Path(tmp) / "report.json"
             universe.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
-            with patch.object(gate, "verify_exchange_contracts", return_value=contracts), \\
-                 patch.object(gate, "probe_one", return_value=fake_result):
+            with patch.object(gate, "verify_exchange_contracts", return_value=contracts), patch.object(gate, "probe_one", return_value=fake_result):
                 report = gate.run(universe, output, now_ms=1_800_000_000_000)
             self.assertFalse(report["signal_generation_enabled"])
             self.assertEqual(report["expected_probes"], 54)
