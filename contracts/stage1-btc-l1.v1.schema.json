@@ -123,11 +123,11 @@
               },
               "archive_url": {
                 "type": "string",
-                "format": "uri"
+                "pattern": "^https://"
               },
               "checksum_url": {
                 "type": "string",
-                "format": "uri"
+                "pattern": "^https://"
               },
               "sha256": {
                 "type": "string",
