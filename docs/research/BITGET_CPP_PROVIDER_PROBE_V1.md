@@ -47,14 +47,16 @@ A failed or missing field remains unavailable. The code keeps Bitget's OHLCV vol
 
 ## SLRP status
 
-- Objective: determine whether Bitget can independently satisfy the L1 public futures data requirements for the two reference symbols.
-- Acceptance: the six gates above.
-- v1: awaiting C++20 build, fixture tests and live GitHub Actions evidence.
-- D1–D6: diagnosis will be written only from observed test or endpoint results.
-- v2/v3: not built unless v1 records a measured failure; R11 remains in force.
-- Escalation: if any required market history is unavailable, record the exact endpoint/status/coverage. Do not replace it with a spot market or another venue's fields.
-- Budget: maximum three versions; research-only, no production activation.
+- Objective: determine whether Bitget can independently satisfy the C++ L1 public futures data requirements for the two reference symbols.
+- Acceptance: online USDT perpetual crypto instrument; >$10M 24h quote turnover; two years (or full listing history) of gap-free 1H OHLCV; at least 30 days of funding; at least 30 days of 1H OI; and valid unit/freshness provenance.
+- **v1: FAIL — D1 (measured live-data coverage failure), not an implementation/build failure.** Run [45024100468](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45024100468): C++ build and all 16 CTest cases PASS, but the live BTCUSDT/ETHUSDT probe returned zero eligible symbols. For each reference symbol, the API confirmed an online crypto USDT perpetual instrument and turnover above $10M; 90 funding observations covered 29.6667 days with an 8-hour settlement interval; 17,344 1H candles spanned 729.9167 days but had 175 missing hourly intervals; 30 hourly OI observations covered only 1.2083 days. This fails the required 30-day OI and gap-free OHLCV gates. No live fallback is claimed.
+- **v2: built on the measured v1 failure and currently under live validation.** It changes the collection assumption, not acceptance thresholds: 98-hour unique candle windows with a 2-hour page overlap; align the 730-day range to completed-hour boundaries; accept `launchTime=0` only when the full 730-day OHLCV window is verified; report freshness explicitly; and retrieve daily OI as a separate `RESEARCH_ONLY` diagnostic. Daily OI is never substituted for the required 1H OI and cannot turn the full-provider eligibility gate green.
+- The v2 C++20 build and all-target Foundation build have passed; the previous version's 16/16 CTest result is confirmed. The dedicated v2 live-coverage run is still executing; no v2 PASS is claimed until its own full CTest and live result complete.
+- v3: NOT BUILT under R11. It cannot be created before v2 produces a real measured FAIL.
+- Diagnosis D1 is specific: 175 missing 1H candle intervals and only 1.2083 days of 1H OI versus 30 days required. API documentation currently exposes only `symbol` and `period` on the OI-history endpoint, with no documented cursor or date-window parameters; therefore no undocumented pagination parameters are assumed.
+- Escalation: if 1H OI is genuinely limited to the recent ~30 observations, classify Bitget as unavailable for the full L1 fallback contract. Daily OI may be recorded as a distinct lower-frequency research field only after its own coverage and freshness tests pass.
+- Budget: maximum three versions; v1 and v2 only, research-only, no production activation.
 
 ## Live result
 
-Pending GitHub Actions evidence. No successful live Bitget coverage is claimed in this source file.
+v1 failure evidence is linked above. v2 live coverage: PENDING as of 2026-11-22. Production adapter remains `NOT_IMPLEMENTED`; fallback remains `UNAVAILABLE`.
