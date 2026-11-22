@@ -24,7 +24,7 @@ The engine never upgrades PROXY input to REAL. Candidate class is retained in th
 The `signals` branch evidence inspected for this revision contains:
 - `cpp_runtime/daily_outcome_ledger.v1.json`: 5 closed outcomes, all `PROXY`; fee/funding/slippage costs are `UNAVAILABLE`; execution is `NOT_EXECUTED`.
 - `cpp_runtime/outcome_ledger.v1.json`: `EMPTY`.
-- `cpp_runtime/shadow_candidate_registry.v1.json`: 10 candidates, all `PROXY`; 3 resolved, 4 rejected, 1 pending, and 2 additional records without a resolved execution outcome (the registry's exact state values remain authoritative).
+- `cpp_runtime/shadow_candidate_registry.v1.json`: 10 candidates, all `PROXY`; 5 resolved, 4 rejected, and 1 pending.
 - `cpp_runtime/performance-okx-cpp-1795257048838.json`: `NOT_CALCULATED`, trade_count 0, reason `NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1`.
 - Recent history CSV snapshots exist, but they are not a six-month historical OHLCV archive or a point-in-time reconstruction of all LRT/NMT candidate events.
 
