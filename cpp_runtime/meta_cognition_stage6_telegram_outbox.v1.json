@@ -99,12 +99,15 @@
       "status": "RESERVED"
     },
     {
-      "attempts": 0,
+      "attempts": 1,
+      "completed_at_utc": "2026-11-22T12:34:56Z",
       "created_at_utc": "2026-11-22T12:34:54Z",
-      "http_status": null,
-      "message_id": null,
+      "detail": null,
+      "http_status": 200,
+      "message_id": 83,
       "report_id": "cf39cd55f29d295a15eda5b4d9329f5f2945dd3fac88382f5635f99b14df5e93",
-      "status": "RESERVED"
+      "send_started_at_utc": "2026-11-22T12:34:55Z",
+      "status": "DELIVERED"
     }
   ],
   "schema_version": "1.0.0"
