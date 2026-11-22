@@ -1,7 +1,7 @@
 #include "cfss/hash.hpp"
 #include <nlohmann/json.hpp>
 
-#include <chrono>
+#include <algorithm>\n#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -81,8 +81,18 @@ int main(int argc, char** argv) {
         }
 
         const bool all_pass = passed == 54U && report.value("overall_status", std::string{}) == "PASS";
-        const auto scan_material = report.value("run_id", std::string{}) + ":" +
-            report.value("contract_metadata_sha256", std::string{});
+        std::vector<std::string> snapshot_parts;
+        for (const auto& row : report.at("results")) {
+            snapshot_parts.push_back(
+                row.value("symbol", std::string{}) + ":" +
+                row.value("timeframe", std::string{}) + ":" +
+                row.value("status", std::string{}) + ":" +
+                row.value("archive_sha256", row.value("reason", std::string{})));
+        }
+        std::sort(snapshot_parts.begin(), snapshot_parts.end());
+        std::string scan_material = report.at("results").at(0).value("archive_date_utc", std::string{}) +
+            ":" + report.value("contract_metadata_sha256", std::string{});
+        for (const auto& part : snapshot_parts) scan_material += "|" + part;
         const auto scan_id = "scan-" + cfss::sha256_hex(scan_material).substr(0, 48);
         json instruments = json::array();
         for (const auto& symbol : symbols) {
