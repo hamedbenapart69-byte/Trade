@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Plan A Backtest Input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "risk_fraction",
+    "costs",
+    "bars",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk_fraction": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "costs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry_fee_rate",
+        "exit_fee_rate",
+        "entry_slippage_rate",
+        "exit_slippage_rate",
+        "funding_cost_rate_per_8h"
+      ],
+      "properties": {
+        "entry_fee_rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "exit_fee_rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "entry_slippage_rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "exit_slippage_rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "funding_cost_rate_per_8h": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "bars": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "symbol",
+          "timestamp_ms",
+          "open",
+          "high",
+          "low",
+          "close"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "open": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "high": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "low": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "close": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "path",
+          "symbol",
+          "direction",
+          "parameter_hash",
+          "data_class",
+          "signal_time_ms",
+          "registered_at_ms",
+          "entry_reference",
+          "stop",
+          "target",
+          "max_holding_bars"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "enum": [
+              "PLAN_A_LRT",
+              "PLAN_A_NMT"
+            ]
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "direction": {
+            "enum": [
+              "LONG",
+              "SHORT"
+            ]
+          },
+          "parameter_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "data_class": {
+            "enum": [
+              "REAL",
+              "PROXY"
+            ]
+          },
+          "signal_time_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "registered_at_ms": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "entry_reference": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "stop": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "target": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "max_holding_bars": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}
