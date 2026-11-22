@@ -1,84 +1,91 @@
-# AI Orchestration Foundation
+# Crypto Futures Signal System (CFSS)
 
-> Scope note: this repository also contains a separate orchestration/control-plane foundation. Futures Signal Autopilot V5 is a standalone read-only workflow using GitHub Actions and GitHub Pages; it does not depend on Railway. The optional Railway deployment workflow is currently skipped because the `RAILWAY_TOKEN` secret is not configured.
+**Controlling specification:** owner-accepted `UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER`  
+**Production implementation:** C++ (current verified build: C++20)  
+**User delivery:** Telegram only  
+**Trading boundary:** manual trading only; the system never connects to a user's exchange account or places orders.
+
+This repository contains the implementation and evidence for CFSS. Older orchestration, Python/V5 scanner, browser dashboard, email and Railway material may remain in Git history or legacy paths; they are not the controlling production architecture.
+
+## Current architecture
+
+The active system is divided into three layers:
+
+1. **L1 — Data:** GitHub Actions workers acquire public market data and preserve provider, timestamp, coverage and hash provenance. The user's device and exchange account are not part of the data pipeline.
+2. **L2 — Compute:** C++ production binaries validate data, compute versioned research artifacts, maintain Shadow outcomes, apply fail-closed risk controls and produce daily per-symbol states.
+3. **L3 — Delivery:** Telegram is the only user-facing delivery channel. Internal files, GitHub pages and engineering reports are not user dependencies.
+
+The production path is designed for free-tier infrastructure and public APIs. It must not require paid services, exchange-account credentials, private trading keys or order-execution permissions.
+
+## Non-negotiable operating rules
+
+- C++ is the only production implementation language for the remaining system work. Python is legacy/auxiliary only.
+- Public market data only. No private exchange account connection, account balance, trading API key, order placement, modification or cancellation.
+- Telegram is the only user-facing channel. No active web dashboard or email fallback is part of the accepted architecture.
+- Every stage must complete L1 Data, L2 Compute and L3 Delivery; a data-only result is incomplete.
+- Every signal remains research-only until its independent statistical and risk gates pass.
+- Missing or non-real inputs must remain explicitly labelled `PROXY` or `UNAVAILABLE`. Missing values are never silently filled with zero.
+- `NOT_CALIBRATED`, `NO_QUALIFIED_SETUP`, `INSUFFICIENT_DATA` and `MARKET_DATA_DEGRADED` are valid outputs. Thresholds must not be weakened to force signals.
+- The system reports risk states only. It does not control or protect a user's real exchange account.
+
+## Verified stage status
+
+The status below is grounded in the committed stage evidence, not inferred from the presence of source files.
+
+| Stage | Scope | Current evidence status |
+|---|---|---|
+| 1 | C++ end-to-end L1/L2/L3, C10 and Telegram | **PASS** — two consecutive full runs, Telegram outbound and inbound, replay/deduplication evidence |
+| 2 | LFS resilience | **PASS via v2** — PROXY / NOT_CALIBRATED; no actionable trades |
+| 3 | NSS resilience | **PASS via v2** — PROXY / NOT_CALIBRATED; no actionable trades |
+| 4 | Liquidity zones and market phase | **PASS via v1** — rule-based proxy; no trade generation |
+| 5 | Independent LRT/NMT candidate engines | **PASS for candidate generation** — both engines remain non-actionable and NOT_CALIBRATED |
+| 6 | Meta-cognition, calibration and net EV | **BLOCKED / NOT_CALIBRATED** — insufficient independent outcomes and incomplete persisted cost evidence |
+| 7 | Consensus, Shadow risk and manual execution gate | **BLOCKED / FAIL-CLOSED** — risk-basis and persistent Shadow evidence are incomplete |
+| 8–15 | Backtests, other paths, Shadow trading, allocator and final decision | **Not eligible to start** until the preceding stage gates pass |
+
+The five persisted Stage 6 outcomes documented in the current evidence are hypothetical Shadow resolutions, not executed trades. They must not be presented as trading performance. The current Stage 7 gate must remain non-actionable while its risk basis, costs, position marks or upstream calibration are unavailable.
+
+## Important current engineering work
 
 
-Owner-controlled automation platform in repository [Trade](https://github.com/hamedbenapart69-byte/Trade). The current release is a tested foundation, not yet a production-hosted autonomous AI platform.
+- [PR #169 — Stage 7 Shadow risk snapshot v2](https://github.com/hamedbenapart69-byte/Trade/pull/169) was merged on 2026-11-22 as `ae8e356a408e1c0099aa2134ed16dd7f33ff76e3`. The C++20 build and all CTest cases passed on the merged code. Stage 7 remains blocked because the owner-approved risk basis and upstream calibration evidence are still unavailable.
+- [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170) was closed without merge; its persistence-path fix was superseded by the merged PR #169.
+- Post-merge Stage 6 run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) was in progress on 2026-11-22: C++20 compile/CTest passed; live data collection was still running. This is not a Stage 6 PASS.
 
-## Implemented
+## Evidence and operational entry points
 
-- FastAPI control API with health, run creation/list/lookup, audit events, approval/rejection/cancellation.
-- SQLite persistence, idempotency-key protection and audit history.
-- Durable execution outbox with transactional enqueue and bounded leases.
-- Expired leases become `unknown`; retry requires explicit operator reconciliation.
-- Separate operator and worker credentials; missing credentials fail closed.
-- Mobile-first local console served at `/`: operational KPIs, run history, approve/reject, queue, event inspection and unknown-outcome reconciliation.
-- Registered workflow schema boundary. `research.scan` validates symbol, market and timeframe; unregistered workflows cannot be queued.
-- 32 KiB input limit and no persistence of downstream response bodies.
-- Opt-in one-shot worker with explicit allowlist; no background execution loop and no automatic retry after uncertain delivery.
-- Guarded n8n webhook adapter, local HTTP integration tests, backup verification and GitHub Actions CI.
+- [Stage 1 SLRP evidence](docs/evidence/stage1-slrp-report.md)
+- [Stage 2 LFS SLRP evidence](docs/evidence/stage2-lfs-slrp-report.md)
+- [Stage 3 NSS SLRP evidence](docs/evidence/stage3-nss-slrp-report.md)
+- [Stage 4 liquidity/phase SLRP evidence](docs/evidence/stage4-liquidity-phase-slrp-report.md)
+- [Stage 5 dual-engine SLRP evidence](docs/evidence/stage5-dual-engines-slrp-report.md)
+- [Stage 6 calibration and cost evidence](docs/evidence/stage6-meta-cognition-slrp-report.md)
+- [Stage 7 risk-gate evidence](docs/evidence/stage7-risk-gate-slrp-report.md)
+- [Legacy workflow quarantine evidence](docs/evidence/v18.2-legacy-workflow-quarantine.md)
+- [Operations runbook](docs/OPERATIONS.md)
+- [Stage roadmap and gates](docs/ROADMAP.md)
+- [GitHub Actions](https://github.com/hamedbenapart69-byte/Trade/actions)
 
-## Verified evidence
+Active workflow sources:
+- [C++ Stage 1 live pipeline](.github/workflows/cpp-stage1-live.yml)
+- [C++ Stage 6 scheduled pipeline](.github/workflows/cpp-stage6-meta-cognition-v1.yml)
 
-CI: [latest workflow runs](https://github.com/hamedbenapart69-byte/Trade/actions). CI runs unit/API tests, builds the Docker image and smoke-tests the container health endpoint. Tests include an approved research run reaching a local HTTP receiver and persisting completion.
+## Build and test
 
-Deployed preview: https://control-plane-v2-production-8d31.up.railway.app/ (Railway, persistent 500 MB volume, TLS, one replica). Health endpoint and deployment are verified. The live CoinGecko public API endpoint was independently reachable; unit tests use a mocked HTTP client. A full authenticated browser-triggered run through the hosted queue has not yet been verified. No live n8n instance, hosted model, external browser automation, identity provider or real-device mobile access has been verified.
-
-## Local run
-
-Requires Python 3.12 recommended and dependencies from requirements.txt.
+The current verified build uses C++20 on the GitHub Actions `ubuntu-24.04` runner. The exact compiler and dependency versions are recorded in workflow evidence.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-export CONTROL_API_TOKEN='use-a-random-secret-at-least-24-characters'
-export WORKER_API_TOKEN='use-a-different-random-secret-at-least-24-characters'
-export CONTROL_DB_PATH='./data/control.db'
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel 2
+ctest --test-dir build --output-on-failure --no-tests=error
 ```
 
-Open `http://127.0.0.1:8000/` on the same device. Enter the operator token in the console. The page keeps it in memory only; it does not write the token to browser storage.
+Schema and workflow validation are also required; a passing CTest run alone does not establish live provider access, Telegram delivery, statistical calibration or stage acceptance.
 
-Run tests:
+## Release discipline
 
-```bash
-python -m unittest discover -s tests -v
-```
-
-## Outbox lifecycle
-
-1. Create a run with an `Idempotency-Key`.
-2. Approve it through the API or local console.
-3. Queue only an approved run with a registered workflow schema.
-4. The one-shot worker remains disabled unless `ENABLE_WORKER_EXECUTION=true`; it requires the distinct worker token and explicit `WORKER_ALLOWED_WORKFLOWS` allowlist.
-5. An expired lease becomes `unknown`. Inspect the destination before an operator explicitly reconciles it to retry or fail.
-6. A 2xx webhook response means the receiver accepted an HTTP request, not that downstream work necessarily completed.
-
-## n8n adapter
-
-`ENABLE_N8N_EXECUTION=false` by default. The adapter rejects non-loopback plain HTTP, disables redirects, bounds timeouts and does not retry automatically. No live n8n endpoint has been configured or contacted. See `docs/N8N-INTEGRATION.md`.
-
-## Deployment and security
-
-Compose binds the API to `127.0.0.1:8000` and persists SQLite in a named volume. The current public Railway URL is an owner-operated preview, not a hardened production release. Operational API routes require an API key; the root console and health endpoint are public. Before storing sensitive data or treating this as production, add identity/role authorization, rate limiting and origin protections, external backup/restore verification, alerting, and a real-device access test. The one-shot worker is enabled only for the read-only market.snapshot allowlist; n8n execution remains disabled. See `docs/SECURITY-BASELINE.md` and `docs/ROADMAP.md`.
-
-## Research and architecture
-
-See `docs/DECISION-REPORT.md` for a weighted preliminary comparison of n8n, Activepieces, Windmill, a custom control plane and Cloudflare. Scores are engineering judgment rather than benchmark measurements. License, price, quotas and access from the target network must be rechecked before choosing a hosted provider.
-
-## Futures Signal Autopilot V5
-
-The active scheduled scanner uses **CoinGecko public discovery + OKX public USDT linear perpetual market data**. Older Toobit and TraderSpy experiments in the history are not the active scheduled data path.
-
-- Market discovery: CoinGecko top 100 by market cap, intersected with OKX live linear USDT perpetual contracts; candidates are ranked by CoinGecko 24-hour volume. The extended scan selects up to 100 eligible assets (30 primary shortlist plus up to 70 expanded discovery assets).
-- Futures data: OKX public read-only instruments, ticker, completed OHLCV (15m/1h/4h/1d), funding, mark/index, open interest and global account ratio. No exchange account, private API credential, order endpoint or execution route is used.
-- Dashboard: [Futures Signal Autopilot V5](https://hamedbenapart69-byte.github.io/Trade/). The dashboard refreshes every minute and hides immediate-entry rows when the last scan is older than 15 minutes.
-- Schedule: GitHub Actions at minutes 07, 22, 37 and 52 of every UTC hour (every 15 minutes); manual run is available from [V5 Futures Signal Autopilot](https://github.com/hamedbenapart69-byte/Trade/actions/workflows/v5-signal-autopilot.yml).
-- Immediate decisions: BUY_NOW / SELL_NOW only. Conditional decisions are shown separately. WAIT, REJECT and INSUFFICIENT_DATA never appear as executable entries. Zero qualifying signals is a valid output; thresholds are not lowered to fill the table.
-- Risk policy: USD 200 reference capital, maximum planned loss USD 4 before fees/slippage/funding/execution gaps, leverage no greater than 5x or the venue's published maximum (whichever is lower), stop distance 0.5%-3%, and reward/risk at least 2. Position sizing and reward/risk start from unrounded V5 prices; tick/lot rounding is then applied and the actual rounded stop distance, planned loss, leverage and quantity constraints are revalidated.
-- The dashboard is a read-only signal publisher. It does not connect to an exchange account or place, modify, or cancel orders. Paper observations are public-OHLCV tracking, not executed-trade performance.
-- OKX is the source venue for contract sizing. Do not copy its quantity directly to another exchange without rechecking contract multiplier, tick/lot rules, price, fees and margin requirements. Direct OKX account eligibility and API reachability from Iran have not been verified; cloud-runner access does not establish local account eligibility.
-- Active OKX adapter does not supply smart-money or on-chain wallet evidence. Missing evidence is not fabricated and receives no points.
-
-See [V5 source, limits and verification status](docs/FUTURES-SIGNAL-AUTOPILOT-V5.md) and [operational runbook](docs/v5-signal-autopilot.md).
+- Work is developed on dedicated branches and reviewed through pull requests.
+- Production workflow changes and final release require explicit owner approval.
+- Never describe a stage as PASS without numeric acceptance evidence and real execution records.
+- Never describe a proxy Shadow result as an executed trade.
+- Never describe the system as profitable without independent out-of-sample evidence.
