@@ -1,0 +1,2 @@
+run_id,scan_id,symbol,state,latest_candle_timestamp_ms,data_class
+45030171169,scan-8fb4d0fa50e6004ce4a3ab1088bd405ead493cd661eed68f2a2535e6b22c9921,BTCUSDT,NO_QUALIFIED_SETUP,1795305599999,DAILY_ARCHIVE_DELAYED
