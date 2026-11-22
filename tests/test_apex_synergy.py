@@ -14,6 +14,8 @@ import run_apex_synergy as apex
 
 class ApexSynergyTests(unittest.TestCase):
     def test_real_source_artifacts_have_full_expected_coverage(self):
+        if not (Path("data/ohlcv/dataset_manifest.json").exists() and Path("data/derivatives/derivatives_manifest.json").exists()):
+            self.skipTest("Source artifacts are downloaded only by the dedicated Apex-Synergy workflow")
         ohlcv, deriv, meta = apex.load_inputs()
         self.assertEqual(len(ohlcv), 25)
         self.assertEqual(len(deriv), 25)
@@ -25,6 +27,8 @@ class ApexSynergyTests(unittest.TestCase):
         self.assertEqual(meta["derivatives_manifest"]["overall_status"], "PASS")
 
     def test_derivatives_are_lagged_and_missing_values_are_not_zero_filled(self):
+        if not Path("data/derivatives/derivatives_manifest.json").exists():
+            self.skipTest("Source artifacts are downloaded only by the dedicated Apex-Synergy workflow")
         _, deriv, _ = apex.load_inputs()
         m = deriv["BTCUSDT"]["metrics"]
         self.assertTrue(pd.isna(m.iloc[0]["sum_open_interest_value"]))
