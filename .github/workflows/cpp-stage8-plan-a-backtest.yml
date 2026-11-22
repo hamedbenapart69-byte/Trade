@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths: ["cpp/**", "contracts/plan-a-backtest-input.v1.schema.json", ".github/workflows/cpp-stage8-plan-a-backtest.yml"]
   push:
-    branches: [feat/cpp-stage8-backtest-v1]
+    branches: [feat/stage8-gap-fill-audit-v1]
     paths: ["cpp/**", "contracts/plan-a-backtest-input.v1.schema.json", ".github/workflows/cpp-stage8-plan-a-backtest.yml"]
   workflow_dispatch:
 permissions:
