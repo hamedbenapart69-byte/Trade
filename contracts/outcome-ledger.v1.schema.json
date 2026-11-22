@@ -58,6 +58,7 @@
           "direction",
           "entry_reference",
           "entry_fill_reference",
+          "entry_fill_time_ms",
           "entry_model",
           "execution_status",
           "stop_reference",
@@ -172,6 +173,11 @@
           "entry_fill_reference": {
             "type": "number",
             "exclusiveMinimum": 0
+          },
+          "entry_fill_time_ms": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Timestamp of the first closed resolution candle used as the proxy entry fill."
           },
           "entry_model": {
             "const": "NEXT_BAR_OPEN_PROXY"
@@ -316,7 +322,7 @@
             "const": "ASSUMED"
           },
           "fee_assumption_ref": {
-            "const": "OWNER_ENGINEERING_DECISION_2026-11-20"
+            "const": "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE"
           },
           "slippage_assumption_class": {
             "const": "PROXY"

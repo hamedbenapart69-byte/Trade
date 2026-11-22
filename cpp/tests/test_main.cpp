@@ -113,6 +113,28 @@ int main() {
 
     const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
+    auto zero_oi_contract = sample_contract(now_ms);
+    zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest"] = 0.0;
+    zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest_base"] = 0.0;
+    const auto normalized_oi_count =
+        cfss::okx::normalize_open_interest_rows(zero_oi_contract["instruments"][0]["open_interest"]);
+    zero_oi_contract["instruments"][0]["funding"][0]["funding_rate"] = 0.0001;
+    zero_oi_contract["instruments"][0]["funding"][0]["mark_price"] = 100.0;
+    zero_oi_contract["instruments"][0]["availability"]["funding"] = "AVAILABLE";
+    zero_oi_contract["instruments"][0]["availability"]["open_interest"] = "PARTIAL";
+    if (normalized_oi_count != 1U ||
+        !zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest"].is_null() ||
+        zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest_base"] != 0.0) {
+        std::cerr << "Zero/invalid open-interest normalization failed\\n";
+        return EXIT_FAILURE;
+    }
+    const auto zero_oi_artifact = cfss::build_l2_artifact(zero_oi_contract, now_ms);
+    if (zero_oi_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        zero_oi_artifact["instruments"][0]["reason_code"] != "OPEN_INTEREST_DATA_DEGRADED") {
+        std::cerr << "Invalid open-interest did not fail closed as partial data\\n";
+        return EXIT_FAILURE;
+    }
+
     const auto contract = sample_contract(now_ms);
     const auto artifact = cfss::build_l2_artifact(contract, now_ms);
     const auto atomic_test_dir = std::filesystem::temp_directory_path() /

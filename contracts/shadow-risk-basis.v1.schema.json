@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CFSS Immutable Shadow Risk Basis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "basis_id",
+    "basis_version",
+    "profile",
+    "basis_status",
+    "initial_nav_units",
+    "risk_per_trade_pct",
+    "effective_from_ms",
+    "timezone",
+    "daily_reset_rule",
+    "weekly_reset_rule",
+    "equity_method",
+    "open_position_policy",
+    "cost_policy",
+    "user_account_data_used"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_type": {
+      "const": "cfss_shadow_risk_basis_v1"
+    },
+    "basis_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "basis_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "profile": {
+      "enum": [
+        "DAILY_SWING",
+        "INTRADAY_SCALP"
+      ]
+    },
+    "basis_status": {
+      "const": "FROZEN"
+    },
+    "initial_nav_units": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "risk_per_trade_pct": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 100
+    },
+    "effective_from_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timezone": {
+      "const": "UTC"
+    },
+    "daily_reset_rule": {
+      "const": "UTC_CALENDAR_DAY_00_00"
+    },
+    "weekly_reset_rule": {
+      "const": "ISO_WEEK_MONDAY_00_00_UTC"
+    },
+    "equity_method": {
+      "const": "INITIAL_NAV_PLUS_REALIZED_AND_MARKED_UNREALIZED_NET_PNL"
+    },
+    "open_position_policy": {
+      "const": "MARK_TO_MARKET_WITH_FRESH_CLOSED_CANDLE_AND_COSTS"
+    },
+    "cost_policy": {
+      "const": "REQUIRE_EXPLICIT_COST_STATUS_AND_PROVENANCE"
+    },
+    "user_account_data_used": {
+      "const": false
+    },
+    "supersedes_basis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  }
+}

@@ -610,6 +610,24 @@ inline std::string open_interest_availability(const json& rows, double minimum_d
     return "AVAILABLE";
 }
 
+inline std::size_t normalize_open_interest_rows(json& rows) {
+    if (!rows.is_array()) return 0U;
+    std::size_t invalid_observations = 0U;
+    for (auto& row : rows) {
+        if (!row.is_object()) continue;
+        for (const char* field : {"open_interest", "open_interest_base", "open_interest_value_usd"}) {
+            if (!row.contains(field) || row.at(field).is_null() || !row.at(field).is_number()) continue;
+            const double value = row.at(field).get<double>();
+            const bool must_be_positive = std::string{field} != "open_interest_base";
+            if (!std::isfinite(value) || (must_be_positive ? value <= 0.0 : value < 0.0)) {
+                row[field] = nullptr;
+                ++invalid_observations;
+            }
+        }
+    }
+    return invalid_observations;
+}
+
 inline json probe_provider_health() {
     const auto checked_at = utc_iso(now_ms());
     struct Probe { const char* id; const char* url; int rank; const char* adapter; };
@@ -930,6 +948,12 @@ inline json collect(int symbol_count, int years,
                 cached_instrument->at("open_interest").is_array())
                 oi = cached_instrument->at("open_interest");
         }
+        // صفر برای OI دلاری/قراردادی در قرارداد داده معتبر نیست؛ آن را گمشده ثبت می‌کنیم،
+        // نه اینکه کل اسکن را متوقف کنیم یا مقدار ساختگی جایگزین کنیم.
+        const auto invalid_oi_observations = normalize_open_interest_rows(oi);
+        if (invalid_oi_observations > 0U)
+            errors.push_back("open_interest_nonpositive_observations:" +
+                             std::to_string(invalid_oi_observations));
         const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
         const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
         const auto has_error_prefix = [&](const std::string& prefix) {
