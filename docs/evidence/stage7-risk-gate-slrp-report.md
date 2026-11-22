@@ -256,3 +256,18 @@ Do not start Stage 8 or promote candidates until all of the following have evide
 The current production C++ L1 collector still calls the OKX-only adapter. The C++ provider-health probe lists Bybit, Binance, KuCoin, MEXC and Bitget as `NOT_IMPLEMENTED`; the open Python fallback PRs do not satisfy the V18.2 C++ production requirement. Multi-provider C++ fallback remains a separate critical project blocker and is not included in PR #169.
 
 **Overall Stage 7 remains BLOCKED / FAIL-CLOSED / NO SIGNAL PROMOTION.** The latest code tests pass, but no frozen risk basis exists, open-position mark-to-market is not implemented, Stage 6 is not calibrated, and the legacy fill reconciliation remains pending explicit approval.
+
+
+## Latest main-branch scheduled integration — 2026-11-22
+
+GitHub Actions run [45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) completed **SUCCESS** after PR #169 merged the C++ Shadow risk snapshot builder and persistence repair.
+
+- C++20 build and full CTest: PASS. The scheduled workflow then completed live OKX L1 collection, LFS/NSS v2, Stage 4/5, Shadow tracking, Meta-Cognition, risk-gate generation, signals-branch persistence and Telegram delivery.
+- L1 selected 49 contracts; 15m resolution data was AVAILABLE for 49/49. This remains below the 100-symbol target.
+- LFS v2 calculated 45/49 and NSS v2 38/49; their aggregates remain PARTIAL. No Stage 5 candidate was generated in this run.
+- Five historical NMT hypotheses now have persistent PROXY cost components (1 TARGET / 4 STOP); all remain NOT_EXECUTED. The fee and slippage are assumed/proxy values, not real execution costs.
+- Meta-Cognition has only five outcomes and remains NOT_CALIBRATED. Stage 7 snapshot is UNAVAILABLE because the required immutable risk basis is not frozen. No candidate is actionable.
+- One filled UNI Shadow candidate remains PENDING with entry reference 4.845 but no entry_fill_time_ms. The timestamp is not reconstructed from decision time or current market data. Its expiry is 2026-11-27T07:00:00Z.
+- Telegram report delivery succeeded with HTTP 200 and message ID 83; the receipt was persisted.
+
+**Current disposition:** engineering vertical slice and scheduled delivery succeeded; Stage 6 statistical acceptance and Stage 7 risk acceptance remain BLOCKED. Do not infer profitability or permit signal promotion from this run.
