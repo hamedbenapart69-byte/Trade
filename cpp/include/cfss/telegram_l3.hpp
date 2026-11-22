@@ -159,7 +159,7 @@ inline std::vector<std::string> build_status_messages(const nlohmann::json& arti
     messages.reserve(parts);
     for (std::size_t part = 0; part < parts; ++part) {
         std::ostringstream out;
-        out << "گزارش وضعیت بازار | Stage 1\n"
+        const std::string stage_label = artifact.value("stage", std::string{"Stage 1"});\n        out << "گزارش وضعیت بازار | " << stage_label << "\\n"
             << "شناسه اسکن: " << scan_id.substr(5U, 12U) << "\n"
             << "بخش " << (part + 1U) << " از " << parts << "\n"
             << "این پیام گزارش داده است، نه دستور معامله.\n\n";
