@@ -232,10 +232,13 @@ def main():
         idx=sorted(set(x[0] for x in main_daily))
         matrix=np.column_stack([[dict(candidates[str(m)]).get(d,0.0) for d in idx] for m in MULTIPLIERS])
         pbores=pbo(matrix,n_splits=8)
-        dsrprob=deflated_sharpe_ratio(np.array([x[1] for x in main_daily]),n_trials=3,periods_per_year=365)
-        dsrz=float(NormalDist().inv_cdf(float(np.clip(dsrprob,1e-12,1-1e-12))))
+        try:
+            dsrprob=deflated_sharpe_ratio(np.array([x[1] for x in main_daily]),n_trials=3,periods_per_year=365)
+            dsrz=float(NormalDist().inv_cdf(float(np.clip(dsrprob,1e-12,1-1e-12))))
+        except (ValueError, FloatingPointError):
+            dsrprob=None; dsrz=None
         met=stats(main_daily,main_trades)
-        met.update({"pbo":float(pbores.pbo),"pbo_splits":pbores.n_splits_evaluated,"dsr_probability":float(dsrprob),"dsr_z":dsrz,
+        met.update({"pbo":float(pbores.pbo),"pbo_splits":pbores.n_splits_evaluated,"dsr_probability":float(dsrprob) if dsrprob is not None else "UNAVAILABLE_ZERO_VARIANCE","dsr_z":dsrz if dsrz is not None else "UNAVAILABLE_ZERO_VARIANCE",
                     "candidate_multipliers":list(MULTIPLIERS),"oos_start":idx[0].isoformat() if idx else None,"oos_end":idx[-1].isoformat() if idx else None})
         all_results[pname]={"metrics":met,"candidate_metrics":{m:stats(candidates[m],trade_sets[m]) for m in candidates}}
     monthly={}
