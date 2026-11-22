@@ -300,14 +300,18 @@ inline json fetch_ohlcv_two_years(const std::string& symbol, const std::string& 
                                   std::int64_t start_ms, std::int64_t end_ms) {
     if (!valid_symbol(symbol) || start_ms <= 0 || end_ms <= start_ms)
         throw std::invalid_argument("bitget_ohlcv_request_invalid");
-    constexpr std::int64_t kChunkHours = 100LL;
+    // Two-hour overlap plus a 98-hour unique range avoids the observed
+    // one-candle loss at every 100-row API page boundary.
+    constexpr std::int64_t kChunkHours = 98LL;
+    constexpr std::int64_t kOverlapHours = 2LL;
     const std::int64_t chunk_ms = kChunkHours * kHourMs;
     std::map<std::int64_t, json> rows;
     std::int64_t cursor = end_ms;
     std::size_t pages = 0U;
     while (cursor > start_ms) {
         const auto chunk_start = std::max(start_ms, cursor - chunk_ms);
-        const auto request_start = chunk_start > 0 ? chunk_start - 1LL : chunk_start;
+        const auto request_start = chunk_start > kOverlapHours * kHourMs
+            ? chunk_start - kOverlapHours * kHourMs : chunk_start;
         const std::string path = "/api/v3/market/history-candles?category=USDT-FUTURES&symbol=" +
             symbol + "&interval=1H&startTime=" + std::to_string(request_start) +
             "&endTime=" + std::to_string(cursor) + "&limit=100";
@@ -366,11 +370,12 @@ inline json fetch_funding_last_30d(const std::string& symbol,
     return output;
 }
 
-inline json fetch_open_interest_last_30d(const std::string& symbol,
-                                         std::int64_t cutoff_ms, std::int64_t now_ms) {
-    if (!valid_symbol(symbol)) throw std::invalid_argument("bitget_oi_symbol_invalid");
+inline json fetch_open_interest_history(const std::string& symbol, const std::string& period,
+                                          std::int64_t cutoff_ms, std::int64_t now_ms) {
+    if (!valid_symbol(symbol) || (period != "1h" && period != "1d"))
+        throw std::invalid_argument("bitget_oi_request_invalid");
     const std::string path = "/api/v3/market/open-interest-history?symbol=" +
-        symbol + "&period=1h";
+        symbol + "&period=" + period;
     const auto payload = request_json(path);
     if (!payload.at("data").is_object() || !payload.at("data").contains("list") ||
         !payload.at("data").at("list").is_array())
@@ -398,9 +403,10 @@ inline json probe_symbol(const std::string& symbol, std::int64_t as_of_ms) {
         const auto base = text(instrument, "baseCoin");
         const auto launch_ms = timestamp(instrument.value("launchTime", json{}));
         const bool listing_time_verified = launch_ms > 0 && launch_ms <= as_of_ms;
+        const auto closed_hour_end_ms = (as_of_ms / kHourMs) * kHourMs;
         const auto start_ms = listing_time_verified
-            ? std::max(as_of_ms - kTwoYearsMs, launch_ms)
-            : as_of_ms - kTwoYearsMs;
+            ? std::max(closed_hour_end_ms - kTwoYearsMs, launch_ms)
+            : closed_hour_end_ms - kTwoYearsMs;
         const auto ticker = fetch_ticker(symbol);
         result["ticker"] = {
             {"last_price", number(ticker.value("lastPrice", json{})).value_or(0.0)},
@@ -410,24 +416,44 @@ inline json probe_symbol(const std::string& symbol, std::int64_t as_of_ms) {
             {"timestamp_ms", timestamp(ticker.value("ts", json{}))}
         };
 
-        const auto candles = fetch_ohlcv_two_years(symbol, base, start_ms, as_of_ms);
+        const auto candles = fetch_ohlcv_two_years(symbol, base, start_ms, closed_hour_end_ms);
         const auto funding = fetch_funding_last_30d(symbol, as_of_ms - kThirtyDaysMs, as_of_ms);
-        const auto oi = fetch_open_interest_last_30d(symbol, as_of_ms - kThirtyDaysMs, as_of_ms);
+        const auto oi_1h = fetch_open_interest_history(symbol, "1h", as_of_ms - kThirtyDaysMs, as_of_ms);
+        const auto oi_1d = fetch_open_interest_history(symbol, "1d", as_of_ms - kThirtyDaysMs, as_of_ms);
         const auto candle_coverage = coverage(candles, "timestamp_ms", kHourMs);
         const auto funding_coverage = coverage(funding, "timestamp_ms", 1LL);
-        const auto oi_coverage = coverage(oi, "timestamp_ms", kHourMs);
+        const auto oi_1h_coverage = coverage(oi_1h, "timestamp_ms", kHourMs);
+        const auto oi_1d_coverage = coverage(oi_1d, "timestamp_ms", kDayMs);
         const auto listing_days = static_cast<double>(as_of_ms - start_ms) /
             static_cast<double>(kDayMs);
         const auto fund_interval = number(instrument.value("fundInterval", json{})).value_or(0.0);
         const double funding_interval_days = fund_interval > 0.0 ? fund_interval / 24.0 : 0.0;
+        const auto latest_candle_ms = candle_coverage.last_ms;
+        const auto latest_funding_ms = funding_coverage.last_ms;
+        const auto latest_oi_1h_ms = oi_1h_coverage.last_ms;
+        const auto latest_oi_1d_ms = oi_1d_coverage.last_ms;
+        const auto latest_ticker_ms = result["ticker"].value("timestamp_ms", std::int64_t{0});
+        const bool candle_fresh = latest_candle_ms > 0 && as_of_ms >= latest_candle_ms &&
+            as_of_ms - latest_candle_ms <= 2LL * kHourMs;
+        const bool funding_fresh = latest_funding_ms > 0 && as_of_ms >= latest_funding_ms &&
+            as_of_ms - latest_funding_ms <= static_cast<std::int64_t>(
+                std::max(1.0, fund_interval) * static_cast<double>(kHourMs) + kHourMs);
+        const bool oi_1h_fresh = latest_oi_1h_ms > 0 && as_of_ms >= latest_oi_1h_ms &&
+            as_of_ms - latest_oi_1h_ms <= 2LL * kHourMs;
+        const bool oi_1d_fresh = latest_oi_1d_ms > 0 && as_of_ms >= latest_oi_1d_ms &&
+            as_of_ms - latest_oi_1d_ms <= 2LL * kDayMs;
+        const bool ticker_fresh = latest_ticker_ms > 0 && as_of_ms >= latest_ticker_ms &&
+            as_of_ms - latest_ticker_ms <= 5LL * 60LL * 1000LL;
         const bool candle_ok = candle_coverage.days + (1.0 / 24.0) >= listing_days &&
-            candle_coverage.missing_intervals == 0U;
-        const bool funding_ok = funding_coverage.days + funding_interval_days >= 30.0;
-        const bool oi_ok = oi_coverage.days + (1.0 / 24.0) >= 30.0 &&
-            oi_coverage.missing_intervals == 0U;
+            candle_coverage.missing_intervals == 0U && candle_fresh;
+        const bool funding_ok = funding_coverage.days + funding_interval_days >= 30.0 && funding_fresh;
+        const bool oi_1h_ok = oi_1h_coverage.days + (1.0 / 24.0) >= 30.0 &&
+            oi_1h_coverage.missing_intervals == 0U && oi_1h_fresh;
+        const bool oi_1d_research_ok = oi_1d_coverage.days + 1.0 >= 30.0 &&
+            oi_1d_coverage.missing_intervals == 0U && oi_1d_fresh;
         const double turnover = result["ticker"].value("turnover_24h_usdt", 0.0);
-        const bool liquidity_ok = std::isfinite(turnover) && turnover > 10'000'000.0;
-        const bool eligible = candle_ok && funding_ok && oi_ok && liquidity_ok;
+        const bool liquidity_ok = ticker_fresh && std::isfinite(turnover) && turnover > 10'000'000.0;
+        const bool eligible = candle_ok && funding_ok && oi_1h_ok && liquidity_ok;
 
         result["coverage"] = {
             {"listing_history_days_required", listing_days},
@@ -436,21 +462,35 @@ inline json probe_symbol(const std::string& symbol, std::int64_t as_of_ms) {
             {"ohlcv_1h", {{"records", candle_coverage.count}, {"days", candle_coverage.days},
                           {"missing_intervals", candle_coverage.missing_intervals},
                           {"first_ms", candle_coverage.first_ms}, {"last_ms", candle_coverage.last_ms},
-                          {"required", "TWO_YEARS_OR_FULL_LISTING_HISTORY"}, {"status", candle_ok ? "AVAILABLE" : "PARTIAL"}}},
-            {"funding", {{"records", funding_coverage.count}, {"days", funding_coverage.days},
-                         {"funding_interval_hours", fund_interval}, {"required_days", 30},
+                          {"fresh", candle_fresh}, {"required", "TWO_YEARS_OR_FULL_LISTING_HISTORY"},
+                          {"status", candle_ok ? "AVAILABLE" : "PARTIAL"}}},
+            {"funding", {{"records", funding_coverage.count}, {"days_between_first_last", funding_coverage.days},
+                         {"funding_interval_hours", fund_interval},
+                         {"effective_coverage_days", funding_coverage.days + funding_interval_days},
+                         {"required_days", 30}, {"fresh", funding_fresh},
                          {"first_ms", funding_coverage.first_ms}, {"last_ms", funding_coverage.last_ms},
                          {"status", funding_ok ? "AVAILABLE" : "PARTIAL"}}},
-            {"open_interest_1h", {{"records", oi_coverage.count}, {"days", oi_coverage.days},
-                                  {"missing_intervals", oi_coverage.missing_intervals}, {"required_days", 30},
-                                  {"first_ms", oi_coverage.first_ms}, {"last_ms", oi_coverage.last_ms},
-                                  {"status", oi_ok ? "AVAILABLE" : "PARTIAL"}}}
+            {"open_interest_1h", {{"records", oi_1h_coverage.count}, {"days", oi_1h_coverage.days},
+                                  {"missing_intervals", oi_1h_coverage.missing_intervals}, {"required_days", 30},
+                                  {"fresh", oi_1h_fresh}, {"first_ms", oi_1h_coverage.first_ms},
+                                  {"last_ms", oi_1h_coverage.last_ms},
+                                  {"status", oi_1h_ok ? "AVAILABLE" : "PARTIAL"}}},
+            {"open_interest_1d_research_only", {{"records", oi_1d_coverage.count},
+                                  {"days_between_first_last", oi_1d_coverage.days},
+                                  {"effective_coverage_days", oi_1d_coverage.days + 1.0},
+                                  {"missing_daily_intervals", oi_1d_coverage.missing_intervals},
+                                  {"fresh", oi_1d_fresh}, {"required_days", 30},
+                                  {"first_ms", oi_1d_coverage.first_ms}, {"last_ms", oi_1d_coverage.last_ms},
+                                  {"status", oi_1d_research_ok ? "AVAILABLE_RESEARCH_ONLY" : "PARTIAL"}}}
         };
         result["volume_semantics"] = {
             {"ohlcv_volume_unit", "BASE_COIN"},
-            {"oi_unit", "BASE_COIN"},
+            {"oi_1h_unit", "BASE_COIN"},
+            {"oi_1d_research_unit", "BASE_COIN"},
             {"oi_value_unit", "USDT"},
-            {"cross_venue_unit_conversion", "NOT_APPLIED"}
+            {"quote_notional_unit", "USDT_NOT_IDENTICAL_TO_USD"},
+            {"cross_venue_unit_conversion", "NOT_APPLIED"},
+            {"daily_oi_is_equivalent_to_hourly_oi", false}
         };
         result["liquidity_gate"] = {
             {"threshold_usdt", 10'000'000.0}, {"observed_turnover_24h_usdt", turnover},
