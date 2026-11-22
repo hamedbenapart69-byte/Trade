@@ -1,0 +1,57 @@
+name: Stage 2 Historical OHLCV Acquisition and Research Dataset
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "UTC inclusive start date"
+        required: true
+        default: "2024-11-01"
+        type: string
+      end_date:
+        description: "UTC inclusive end date (last completed UTC day recommended)"
+        required: true
+        default: "2026-10-31"
+        type: string
+  push:
+    branches: [stage2-daily-swing-provider-gate]
+    paths:
+      - "signal_autopilot/scripts/binance_vision_1d.py"
+      - "signal_autopilot/tests/test_binance_vision_1d.py"
+      - ".github/workflows/stage2-historical-data.yml"
+permissions:
+  contents: read
+concurrency:
+  group: stage2-historical-data
+  cancel-in-progress: false
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install data dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pandas>=2.2,<3" "pyarrow>=18,<25"
+      - name: Run acquisition tests
+        working-directory: signal_autopilot
+        run: python -m unittest tests.test_binance_vision_1d -v
+      - name: Download 25-symbol 1D dataset
+        working-directory: signal_autopilot
+        env:
+          START_DATE: ${{ inputs.start_date || '2024-11-01' }}
+          END_DATE: ${{ inputs.end_date || '2026-10-31' }}
+        run: |
+          python scripts/binance_vision_1d.py --start-date "$START_DATE" --end-date "$END_DATE" --output ../artifacts/binance_vision_1d --workers 6
+      - name: Upload immutable research dataset
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: binance-vision-1d-25-symbols-${{ github.run_id }}
+          path: artifacts/binance_vision_1d/
+          if-no-files-found: error
+          retention-days: 30
