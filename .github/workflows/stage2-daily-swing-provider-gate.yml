@@ -83,6 +83,19 @@ jobs:
             cpp/apps/telegram_delivery/main.cpp -lcurl -lcrypto \
             -o telegram-delivery-stage2
 
+      - name: Restore Telegram outbox from signals branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git fetch origin refs/heads/signals:refs/remotes/origin/signals
+          if git show refs/remotes/origin/signals:cpp_runtime/stage2_provider_gate_telegram_outbox.v1.json > artifacts/stage2-provider-gate-outbox.v1.json 2>/dev/null; then
+            echo "STAGE2_TELEGRAM_OUTBOX_RESTORED"
+          else
+            printf '%s\\n' '{"schema_version":1,"messages":{}}' > artifacts/stage2-provider-gate-outbox.v1.json
+            echo "STAGE2_TELEGRAM_OUTBOX_INITIALIZED"
+          fi
+
       - name: Initialize Telegram outbox and run L3 delivery
         id: l3
         env:
