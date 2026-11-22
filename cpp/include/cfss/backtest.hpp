@@ -74,7 +74,7 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
  const bool lng=c.direction=="LONG";
  const double fill=it->open*(lng?1+x.costs.entry_slippage:1-x.costs.entry_slippage);
  // Fail closed: if the opening fill already crossed the candidate stop, do not simulate a trade.
- if((lng&&fill<=c.stop)||(!lng&&fill>=c.stop)) return std::nullopt;
+ if((lng&&(fill<=c.stop||fill>=c.target))||(!lng&&(fill>=c.stop||fill<=c.target))) return std::nullopt;
  const double risk=std::abs(fill-c.stop); if(risk<=0||fill<=0) return std::nullopt;
  double exit=0; std::int64_t exit_ms=0; std::string outcome="TIME_EXIT"; std::size_t held=0;
  const auto available=static_cast<std::size_t>(std::distance(it,bars.end()));
