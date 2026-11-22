@@ -1,0 +1,58 @@
+name: LRT-1D Backtest
+on:
+  push:
+    branches: [stage2-backtest]
+    paths:
+      - "scripts/run_backtest.py"
+      - ".github/workflows/backtest.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lrt1d-backtest
+  cancel-in-progress: false
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install backtest engine and statistical validator
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install quantbt backtest-guard pandas numpy scipy pyarrow
+      - name: Download OHLCV dataset from acquisition run
+        uses: actions/download-artifact@v4
+        with:
+          name: binance-vision-1d-25-symbols-45055606760
+          run-id: 45055606760
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: data
+      - name: Verify input dataset
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          fs=list(Path('data').glob('*_1d.parquet'))
+          assert len(fs)==25, f'expected 25 parquet files, found {len(fs)}'
+          for p in fs:
+              d=pd.read_parquet(p)
+              assert len(d)==730, f'{p}: expected 730 rows, got {len(d)}'
+          print('INPUT PASS: 25 symbols x 730 rows')
+          PY
+      - name: Syntax check
+        run: python -m py_compile scripts/run_backtest.py
+      - name: Run LRT-1D research sweep
+        run: python scripts/run_backtest.py
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lrt1d-backtest-results-${{ github.run_id }}
+          path: results/
+          if-no-files-found: error
+          retention-days: 30
