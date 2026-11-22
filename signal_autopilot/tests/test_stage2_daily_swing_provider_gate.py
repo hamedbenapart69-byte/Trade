@@ -111,6 +111,27 @@ class Stage2ProviderGateTests(unittest.TestCase):
             self.assertEqual(report["expected_probes"], 54)
             self.assertTrue(output.exists())
 
+    def test_archive_probe_runs_but_gate_stays_blocked_without_contract_metadata(self):
+        import tempfile
+        symbols = [f"COIN{i}USDT" for i in range(27)]
+        def fake_probe(symbol, interval, archive_date, now_ms):
+            return {
+                "status": "PASS", "symbol": symbol, "timeframe": interval.upper(),
+                "staleness_ms": 1, "provider": "binance_vision",
+                "data_class": "DELAYED_HISTORICAL_ARCHIVE",
+                "archive_date_utc": archive_date, "archive_sha256": "a" * 64
+            }
+        with tempfile.TemporaryDirectory() as tmp:
+            universe = Path(tmp) / "universe.json"
+            output = Path(tmp) / "report.json"
+            universe.write_text(json.dumps({"symbols": symbols}), encoding="utf-8")
+            with patch.object(gate, "verify_exchange_contracts", side_effect=gate.GateError("HTTP_451:fapi.binance.com")), patch.object(gate, "probe_one", side_effect=fake_probe):
+                report = gate.run(universe, output, now_ms=1_800_000_000_000)
+            self.assertEqual(report["contract_metadata_status"], "UNAVAILABLE")
+            self.assertEqual(report["passed_probes"], 54)
+            self.assertEqual(report["overall_status"], "FAIL")
+            self.assertEqual(report["contract_metadata"], {})
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
