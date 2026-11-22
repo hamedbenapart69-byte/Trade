@@ -1,0 +1,229 @@
+name: Stage 1 V19 BTC End-to-End Vertical Slice
+
+on:
+  push:
+    branches: [stage1-v19-btc-vertical-slice]
+    paths:
+      - ".github/workflows/stage1-v19-btc.yml"
+      - ".github/stage1-run2.trigger"
+      - "signal_autopilot/scripts/stage1_btc_vision.py"
+      - "signal_autopilot/tests/test_stage1_btc_vision.py"
+      - "cpp/include/cfss/stage1_btc_contract.hpp"
+      - "cpp/apps/stage1_btc_validate/main.cpp"
+      - "cpp/tests/stage1_btc_contract_test.cpp"
+      - "cpp/CMakeLists.txt"
+      - "contracts/stage1-btc-l1.v1.schema.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage1-v19-btc-vertical-slice
+  cancel-in-progress: false
+
+jobs:
+  stage1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Stage 1 implementation
+        uses: actions/checkout@v4
+        with:
+          ref: stage1-v19-btc-vertical-slice
+          fetch-depth: 0
+
+      - name: Determine acceptance run sequence
+        shell: bash
+        run: |
+          if [ -f .github/stage1-run2.trigger ]; then
+            echo "RUN_SEQUENCE=2" >> "$GITHUB_ENV"
+          else
+            echo "RUN_SEQUENCE=1" >> "$GITHUB_ENV"
+          fi
+          if [ -f .github/stage1-run2.trigger ]; then echo "STAGE1_RUN_SEQUENCE=2"; else echo "STAGE1_RUN_SEQUENCE=1"; fi
+
+      - name: Install C++20 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ nlohmann-json3-dev libssl-dev
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Python L1 quality tests
+        run: |
+          python -m unittest discover -s signal_autopilot/tests -p "test_stage1_btc_vision.py" -v
+
+      - name: Configure and build independent C++ validator
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target stage1_btc_validate stage1_btc_contract_tests telegram_delivery --parallel 2
+
+      - name: Run independent C++ contract tests
+        run: |
+          ctest --test-dir build -R stage1_btc_contract_tests --output-on-failure
+          ./build/stage1_btc_contract_tests
+
+      - name: Acquire BTCUSDT daily archive and verify upstream SHA-256
+        run: |
+          mkdir -p artifacts
+          python signal_autopilot/scripts/stage1_btc_vision.py artifacts
+
+      - name: Validate versioned L1 JSON Schema
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/stage1-btc-l1.v1.schema.json -d artifacts/l1-btcusdt.v1.json --all-errors
+
+      - name: Independently validate L1 and build no-signal L2 in C++
+        shell: bash
+        run: |
+          ARCHIVE_PATH="$(find artifacts/source -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          test -n "$ARCHIVE_PATH"
+          ./build/stage1_btc_validate artifacts/l1-btcusdt.v1.json "$ARCHIVE_PATH" artifacts/l2-btcusdt.v1.json
+          jq -e '.signal_generation_enabled == false and .instruments[0].state == "NO_QUALIFIED_SETUP" and .instruments[0].actionable == false' artifacts/l2-btcusdt.v1.json
+
+      - name: Upload immutable L1 and L2 data artifact
+        id: data_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-btc-l1-l2-${{ github.run_id }}
+          path: |
+            artifacts/l1-btcusdt.v1.json
+            artifacts/l2-btcusdt.v1.json
+            artifacts/source/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Checkout persistent Telegram outbox
+        uses: actions/checkout@v4
+        with:
+          ref: signals
+          path: signals-state
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Prepare run manifest and compact history artifact
+        env:
+          ARTIFACT_URL: ${{ steps.data_artifact.outputs.artifact-url }}
+          ARTIFACT_NAME: stage1-btc-l1-l2-${{ github.run_id }}
+          RUN_SEQUENCE: ${{ env.RUN_SEQUENCE }}
+        run: |
+          python - <<'PY'
+          import csv, hashlib, json, os
+          from pathlib import Path
+          artifacts = Path("artifacts")
+          l1_path = artifacts / "l1-btcusdt.v1.json"
+          l2_path = artifacts / "l2-btcusdt.v1.json"
+          l1 = json.loads(l1_path.read_text(encoding="utf-8"))
+          l2 = json.loads(l2_path.read_text(encoding="utf-8"))
+          source = l1["provenance"]["source_files"][0]
+          def sha(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+          history = artifacts / "history.csv"
+          with history.open("w", newline="", encoding="utf-8") as stream:
+              writer = csv.writer(stream)
+              writer.writerow(["run_id","scan_id","symbol","state","latest_candle_timestamp_ms","data_class"])
+              writer.writerow([l1["run_id"], l1["scan_id"], "BTCUSDT",
+                               l2["instruments"][0]["state"],
+                               l2["instruments"][0]["latest_candle_timestamp_ms"],
+                               l1["freshness"]["status"]])
+          manifest = {
+              "schema_version": "1.0.0",
+              "stage": "STAGE_1",
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_sequence": int(os.environ["RUN_SEQUENCE"]),
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "commit_sha": os.environ["GITHUB_SHA"],
+              "workflow_run_url": f'https://github.com/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{os.environ["GITHUB_RUN_ID"]}',
+              "scan_id": l1["scan_id"],
+              "provider": "binance_vision",
+              "data_class": l1["freshness"]["status"],
+              "source_archive_sha256": source["sha256"],
+              "l1_sha256": sha(l1_path),
+              "l2_sha256": sha(l2_path),
+              "artifact_name": os.environ["ARTIFACT_NAME"],
+              "artifact_url": os.environ["ARTIFACT_URL"],
+              "artifact_retention_days": 30,
+              "signal_generation_enabled": False,
+              "telegram_status": "PENDING"
+          }
+          (artifacts / "run-manifest.v1.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Send one C++ Telegram no-signal acceptance message
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          test -n "$TELEGRAM_TOKEN"
+          test -n "$TELEGRAM_CHAT_ID"
+          test -s signals-state/cpp_runtime/telegram_outbox.v1.json
+          ./build/telegram_delivery artifacts/l2-btcusdt.v1.json \
+            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v1.json
+          SCAN_ID="$(jq -r .source_scan_id artifacts/l2-btcusdt.v1.json)"
+          KEY="${SCAN_ID}:status:1"
+          jq -e --arg key "$KEY" '.messages[$key].status == "DELIVERED" and (.messages[$key].telegram_message_id | type == "number")' signals-state/cpp_runtime/telegram_outbox.v1.json
+          ATTEMPTS="$(jq -r --arg key "$KEY" '.messages[$key].attempts' signals-state/cpp_runtime/telegram_outbox.v1.json)"
+          MESSAGE_ID="$(jq -r --arg key "$KEY" '.messages[$key].telegram_message_id' signals-state/cpp_runtime/telegram_outbox.v1.json)"
+          test "$ATTEMPTS" -eq 1
+          echo "TELEGRAM_OK=true"
+          echo "TELEGRAM_MESSAGE_ID=$MESSAGE_ID"
+          if [ "$RUN_SEQUENCE" = "2" ]; then
+            echo "TELEGRAM_DUPLICATE_SUPPRESSED=PASS"
+          fi
+
+      - name: Create explicit Telegram receipt artifact
+        run: |
+          SCAN_ID="$(jq -r .scan_id artifacts/run-manifest.v1.json)"
+          KEY="${SCAN_ID}:status:1"
+          jq --arg key "$KEY" '{scan_id: .messages[$key].scan_id, status: .messages[$key].status, attempts: .messages[$key].attempts, telegram_message_id: .messages[$key].telegram_message_id, http_status: .messages[$key].http_status, updated_at_epoch_ms: .messages[$key].updated_at_epoch_ms}' signals-state/cpp_runtime/telegram_outbox.v1.json > artifacts/telegram-receipt.v1.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("artifacts/run-manifest.v1.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          receipt = json.loads(Path("artifacts/telegram-receipt.v1.json").read_text(encoding="utf-8"))
+          data["telegram_status"] = receipt["status"]
+          data["telegram_message_id"] = receipt["telegram_message_id"]
+          data["telegram_attempts"] = receipt["attempts"]
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Persist only Telegram outbox state to signals branch
+        working-directory: signals-state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpp_runtime/telegram_outbox.v1.json
+          if git diff --cached --quiet; then
+            echo "TELEGRAM_OUTBOX_UNCHANGED_DUPLICATE_SUPPRESSED"
+            exit 0
+          fi
+          git commit -m "stage1: persist BTC no-signal Telegram receipt [skip ci]"
+          git fetch origin refs/heads/signals:refs/remotes/origin/signals
+          git rebase refs/remotes/origin/signals
+          git push origin HEAD:refs/heads/signals
+
+      - name: Upload manifest, receipt and history evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-btc-evidence-${{ github.run_id }}
+          path: |
+            artifacts/run-manifest.v1.json
+            artifacts/telegram-receipt.v1.json
+            artifacts/history.csv
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Final Stage 1 assertions
+        run: |
+          jq -e '.telegram_status == "DELIVERED" and .telegram_message_id != null and .signal_generation_enabled == false and .artifact_url != ""' artifacts/run-manifest.v1.json
+          echo "STAGE1_RUN_SEQUENCE=$RUN_SEQUENCE"
+          echo "STAGE1_L1_L2_L3=PASS"
+          echo "L1_L2_STORED_AS_ARTIFACTS_ONLY=true"
+          echo "ONLY_TELEGRAM_OUTBOX_PERSISTED_TO_SIGNALS=true"
