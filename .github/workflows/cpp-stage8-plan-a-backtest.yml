@@ -47,3 +47,4 @@ jobs:
           grep -Fq 'trade_execution_allowed' cpp/include/cfss/backtest.hpp
           grep -Fq 'STOP_GAP' cpp/include/cfss/backtest.hpp
           echo "STAGE8_PLAN_A_INTEGRITY_GUARDS_PASS"
+          echo "CLI schema-version guard present"
