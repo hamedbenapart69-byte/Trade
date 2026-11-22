@@ -174,7 +174,7 @@ inline void validate_btc_l1(const nlohmann::json& contract,
         throw std::invalid_argument("stage1_freshness_metadata_invalid");
     }
     const auto staleness_ms = now_ms - latest_close_ms;
-    if (staleness_ms < 0 || staleness_ms > 26LL * 3'600'000LL ||
+    if (staleness_ms < 0 || staleness_ms >= 26LL * 3'600'000LL ||
         freshness.value("staleness_ms", std::int64_t{-1}) != staleness_ms) {
         throw std::invalid_argument("stage1_candle_stale_or_future");
     }

@@ -110,7 +110,7 @@ def select_latest_24(rows: list[dict[str, Any]], now_ms: int) -> list[dict[str, 
     staleness_ms = now_ms - latest_close
     if staleness_ms < 0:
         raise Stage1DataError("LATEST_CANDLE_CLOSE_IS_IN_FUTURE")
-    if staleness_ms > MAX_STALENESS_MS:
+    if staleness_ms >= MAX_STALENESS_MS:
         raise Stage1DataError(f"ARCHIVE_STALE:{staleness_ms}")
     return selected
 

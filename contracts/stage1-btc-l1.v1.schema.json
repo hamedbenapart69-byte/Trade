@@ -177,7 +177,7 @@
         "staleness_ms": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 93600000
+          "exclusiveMaximum": 93600000
         },
         "maximum_staleness_ms": {
           "const": 93600000

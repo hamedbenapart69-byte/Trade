@@ -67,9 +67,13 @@ class Stage1VisionTests(unittest.TestCase):
 
     def test_07_incomplete_close_is_excluded(self):
         rows = valid_rows()
-        rows[-1][6] = str(NOW + 1000)
+        ts = NOW
+        rows.append([
+            str(ts), "100", "105", "99", "103", "1.25",
+            str(ts + HOUR - 1), "128.75", "100", "0.75", "77.25", "0",
+        ])
         parsed = stage1.parse_daily_zip(archive_with_rows(rows), NOW)
-        self.assertEqual(len(parsed), 23)
+        self.assertEqual(len(parsed), 24)
 
     def test_08_exactly_24_closed_contiguous_candles_are_selected(self):
         rows = stage1.parse_daily_zip(archive_with_rows(valid_rows()), NOW)
