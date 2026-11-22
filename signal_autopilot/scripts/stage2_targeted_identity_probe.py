@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Stage 2 targeted OKX instrument identity probe for HOT and PEPE contracts."""
-import json, time, urllib.request, urllib.error
+import json, time, urllib.request, urllib.error, urllib.parse
 from datetime import datetime, timezone
 
 TARGETS = [
