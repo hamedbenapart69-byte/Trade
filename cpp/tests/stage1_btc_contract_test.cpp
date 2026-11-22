@@ -82,6 +82,8 @@ int main() {
     try {
         auto valid = sample_contract();
         expect_accept("valid_24_closed_btc_candles", valid);
+        cfss::stage1::validate_btc_l1(valid, ARCHIVE, NOW + 30'000LL);
+        std::cout << "PASS python_cpp_clock_drift_under_5m\\n";
 
         auto bad_hash = valid;
         bad_hash["provenance"]["source_files"][0]["sha256"] = std::string(64, 'b');
@@ -115,7 +117,7 @@ int main() {
 
         auto stale = valid;
         const auto latest_close = stale["freshness"]["latest_candle_close_ms"].get<std::int64_t>();
-        const auto stale_now = latest_close + 26LL * HOUR + 1;
+        const auto stale_now = latest_close + 26LL * HOUR;
         stale["freshness"]["staleness_ms"] = stale_now - latest_close;
         expect_reject("staleness_over_26h", stale, stale_now);
 
@@ -138,7 +140,7 @@ int main() {
             throw std::runtime_error("no_signal_l2_artifact_invalid");
         }
         std::cout << "PASS no_signal_l2_hash_and_state\n";
-        std::cout << "STAGE1_CPP_TESTS=13_PASS\n";
+        std::cout << "STAGE1_CPP_TESTS=14_PASS\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "STAGE1_CPP_TESTS=FAIL " << error.what() << '\n';

@@ -147,6 +147,9 @@ jobs:
               "artifact_url": os.environ["ARTIFACT_URL"],
               "artifact_retention_days": 30,
               "signal_generation_enabled": False,
+              "run_status": "L1_L2_PASS",
+              "retry_summary": {},
+              "error_summary": [],
               "telegram_status": "PENDING"
           }
           (artifacts / "run-manifest.v1.json").write_text(

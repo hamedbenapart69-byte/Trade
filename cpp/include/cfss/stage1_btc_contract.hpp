@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 
@@ -166,6 +167,21 @@ inline void validate_btc_l1(const nlohmann::json& contract,
         latest_close_ms = close_ms;
     }
 
+    const auto& window = contract.at("window");
+    const auto& candles = instrument.at("candles");
+    const auto first_ts = candles.front().at("timestamp_ms").get<std::int64_t>();
+    if (window.at("start_ms").get<std::int64_t>() != first_ts ||
+        window.at("end_ms").get<std::int64_t>() != latest_close_ms ||
+        window.at("closed_candles").get<std::int64_t>() != 24) {
+        throw std::invalid_argument("stage1_window_does_not_match_candles");
+    }
+    if (source.at("bytes").get<std::size_t>() != archive_bytes.size() ||
+        source.at("row_count").get<std::size_t>() != 24U ||
+        source.at("first_timestamp_ms").get<std::int64_t>() != first_ts ||
+        source.at("last_timestamp_ms").get<std::int64_t>() != candles.back().at("timestamp_ms").get<std::int64_t>()) {
+        throw std::invalid_argument("stage1_archive_provenance_does_not_match_payload");
+    }
+
     const auto& freshness = contract.at("freshness");
     if (!freshness.is_object() ||
         freshness.value("status", std::string{}) != "DAILY_ARCHIVE_DELAYED" ||
@@ -174,9 +190,13 @@ inline void validate_btc_l1(const nlohmann::json& contract,
         throw std::invalid_argument("stage1_freshness_metadata_invalid");
     }
     const auto staleness_ms = now_ms - latest_close_ms;
+    const auto recorded_staleness_ms = freshness.value("staleness_ms", std::int64_t{-1});
+    const auto staleness_drift_ms = std::llabs(recorded_staleness_ms - staleness_ms);
+    // اختلاف چند ثانیه بین زمان دریافت Python و اعتبارسنجی C++ طبیعی است.
     if (staleness_ms < 0 || staleness_ms >= 26LL * 3'600'000LL ||
-        freshness.value("staleness_ms", std::int64_t{-1}) != staleness_ms) {
-        throw std::invalid_argument("stage1_candle_stale_or_future");
+        recorded_staleness_ms < 0 || recorded_staleness_ms >= 26LL * 3'600'000LL ||
+        staleness_drift_ms > 5LL * 60'000LL) {
+        throw std::invalid_argument("stage1_candle_stale_or_freshness_clock_drift");
     }
 }
 

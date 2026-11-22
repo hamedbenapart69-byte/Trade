@@ -99,7 +99,13 @@ class Stage1VisionTests(unittest.TestCase):
         with self.assertRaises(stage1.Stage1DataError):
             stage1.select_latest_24(rows, late_now)
 
-    def test_12_contract_explicitly_disables_signal_generation(self):
+    def test_12_exact_26_hour_boundary_is_rejected(self):
+        rows = stage1.parse_daily_zip(archive_with_rows(valid_rows()), NOW)
+        latest = rows[-1]["close_time_ms"]
+        with self.assertRaises(stage1.Stage1DataError):
+            stage1.select_latest_24(rows, latest + stage1.MAX_STALENESS_MS)
+
+    def test_13_contract_explicitly_disables_signal_generation(self):
         candles = stage1.select_latest_24(
             stage1.parse_daily_zip(archive_with_rows(valid_rows()), NOW), NOW
         )
