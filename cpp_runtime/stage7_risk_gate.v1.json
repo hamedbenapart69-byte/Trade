@@ -2,7 +2,7 @@
   "actionable": false,
   "artifact_type": "cfss_stage7_risk_gate_v1",
   "correlation_data_status": "AVAILABLE",
-  "decision_time_ms": 1795348800000,
+  "decision_time_ms": 1795363200000,
   "error_code": null,
   "gate_status": "GENERATED",
   "instruments": [
@@ -41,7 +41,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -91,7 +91,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -155,56 +155,6 @@
       },
       "golden_rule_veto": false,
       "symbol": "ZEC/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "SOL/USDT:USDT"
     },
     {
       "engines": {
@@ -291,7 +241,57 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "SOL/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
             "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -341,57 +341,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "DOGE/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -441,7 +391,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -454,7 +404,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "PEPE/USDT:USDT"
+      "symbol": "DOGE/USDT:USDT"
     },
     {
       "engines": {
@@ -554,7 +504,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "UNI/USDT:USDT"
+      "symbol": "MMT/USDT:USDT"
     },
     {
       "engines": {
@@ -591,7 +541,57 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "PEPE/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
             "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -641,7 +641,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -654,7 +654,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "MMT/USDT:USDT"
+      "symbol": "UNI/USDT:USDT"
     },
     {
       "engines": {
@@ -759,7 +759,7 @@
     {
       "engines": {
         "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
+          "candidate_status": "INSUFFICIENT_DATA",
           "decision": "BLOCKED",
           "inputs": {
             "calibration_valid": false,
@@ -769,7 +769,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -781,7 +781,7 @@
           "trade_execution_allowed": false
         },
         "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
+          "candidate_status": "INSUFFICIENT_DATA",
           "decision": "BLOCKED",
           "inputs": {
             "calibration_valid": false,
@@ -791,7 +791,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -804,57 +804,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "WLD/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "SUI/USDT:USDT"
+      "symbol": "DGAI/USDT:USDT"
     },
     {
       "engines": {
@@ -904,57 +854,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "VVV/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "BNB/USDT:USDT"
+      "symbol": "WLD/USDT:USDT"
     },
     {
       "engines": {
@@ -1005,6 +905,56 @@
       },
       "golden_rule_veto": false,
       "symbol": "ENSO/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "VVV/USDT:USDT"
     },
     {
       "engines": {
@@ -1104,6 +1054,106 @@
         }
       },
       "golden_rule_veto": false,
+      "symbol": "BNB/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "SUI/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
       "symbol": "AAVE/USDT:USDT"
     },
     {
@@ -1141,7 +1191,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -1155,6 +1205,156 @@
       },
       "golden_rule_veto": false,
       "symbol": "FIL/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "LIT/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "ADA/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "INJ/USDT:USDT"
     },
     {
       "engines": {
@@ -1241,107 +1441,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "ADA/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "LIT/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -1391,57 +1491,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "INJ/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -1491,7 +1541,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -1509,56 +1559,6 @@
     {
       "engines": {
         "lrt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "SPCX/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
           "candidate_status": "NO_QUALIFIED_SETUP",
           "decision": "BLOCKED",
           "inputs": {
@@ -1591,7 +1591,7 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
+            "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
             "net_ev_r": null,
@@ -1605,106 +1605,6 @@
       },
       "golden_rule_veto": false,
       "symbol": "TAO/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": false,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": false,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "BTW/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "CRCL/USDT:USDT"
     },
     {
       "engines": {
@@ -1804,7 +1704,107 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "DGAI/USDT:USDT"
+      "symbol": "SPCX/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "NIGHT/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "AI/USDT:USDT"
     },
     {
       "engines": {
@@ -1859,56 +1859,6 @@
     {
       "engines": {
         "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "BARD/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
           "candidate_status": "INSUFFICIENT_DATA",
           "decision": "BLOCKED",
           "inputs": {
@@ -1921,7 +1871,7 @@
             "costs_complete": false,
             "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
-            "liquidity_ok": true,
+            "liquidity_ok": false,
             "net_ev_r": null,
             "shadow_risk_snapshot_status": "UNAVAILABLE"
           },
@@ -1943,7 +1893,7 @@
             "costs_complete": false,
             "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
-            "liquidity_ok": true,
+            "liquidity_ok": false,
             "net_ev_r": null,
             "shadow_risk_snapshot_status": "UNAVAILABLE"
           },
@@ -1954,207 +1904,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "KORU/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "AVAX/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "AI/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "STRK/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "OKB/USDT:USDT"
+      "symbol": "BTW/USDT:USDT"
     },
     {
       "engines": {
@@ -2241,56 +1991,6 @@
             "correlated_candidate_exposures": 0,
             "correlation_data_status": "AVAILABLE",
             "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "ONDO/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "UNAVAILABLE",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "INSUFFICIENT_DATA",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
             "data_class": "UNAVAILABLE",
             "golden_rule_veto": false,
             "liquidity_ok": true,
@@ -2304,57 +2004,7 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "SKHY/USDT:USDT"
-    },
-    {
-      "engines": {
-        "lrt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_LRT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        },
-        "nmt": {
-          "candidate_status": "NO_QUALIFIED_SETUP",
-          "decision": "BLOCKED",
-          "inputs": {
-            "calibration_valid": false,
-            "candidate_present": false,
-            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
-            "consensus_status": "CONFIRMED",
-            "correlated_candidate_exposures": 0,
-            "correlation_data_status": "AVAILABLE",
-            "costs_complete": false,
-            "data_class": "PROXY",
-            "golden_rule_veto": false,
-            "liquidity_ok": true,
-            "net_ev_r": null,
-            "shadow_risk_snapshot_status": "UNAVAILABLE"
-          },
-          "manual_review_required": true,
-          "path": "PLAN_A_NMT",
-          "reason": "NO_QUALIFIED_CANDIDATE",
-          "trade_execution_allowed": false
-        }
-      },
-      "golden_rule_veto": false,
-      "symbol": "TRX/USDT:USDT"
+      "symbol": "BARD/USDT:USDT"
     },
     {
       "engines": {
@@ -2404,7 +2054,57 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "NIGHT/USDT:USDT"
+      "symbol": "OKB/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "STRK/USDT:USDT"
     },
     {
       "engines": {
@@ -2454,17 +2154,67 @@
         }
       },
       "golden_rule_veto": false,
-      "symbol": "PONS/USDT:USDT"
+      "symbol": "CASHCAT/USDT:USDT"
+    },
+    {
+      "engines": {
+        "lrt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "PROXY",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_LRT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        },
+        "nmt": {
+          "candidate_status": "NO_QUALIFIED_SETUP",
+          "decision": "BLOCKED",
+          "inputs": {
+            "calibration_valid": false,
+            "candidate_present": false,
+            "consensus_reason": "NOT_APPLICABLE_NO_CANDIDATE",
+            "consensus_status": "CONFIRMED",
+            "correlated_candidate_exposures": 0,
+            "correlation_data_status": "AVAILABLE",
+            "costs_complete": false,
+            "data_class": "UNAVAILABLE",
+            "golden_rule_veto": false,
+            "liquidity_ok": true,
+            "net_ev_r": null,
+            "shadow_risk_snapshot_status": "UNAVAILABLE"
+          },
+          "manual_review_required": true,
+          "path": "PLAN_A_NMT",
+          "reason": "NO_QUALIFIED_CANDIDATE",
+          "trade_execution_allowed": false
+        }
+      },
+      "golden_rule_veto": false,
+      "symbol": "AVAX/USDT:USDT"
     }
   ],
-  "l1_sha256": "d681c917ee41917bb6e80656c01aea8c3d3b899e499a6e92078c80350194c3ce",
-  "liquidity_report_sha256": "f7879a21114e3a5f6a46643fe94ce4fc62d0ae6280516a08cc653639d1dde802",
-  "meta_cognition_sha256": "6cc5e37c94593daee78067f383fe22d96dfca6c8be572cbdc2e8aee79b9a6f3f",
+  "l1_sha256": "57dfaeb6164bb5cf62554b4981a14d48bda7315ed088c751b4a9134f3201753c",
+  "liquidity_report_sha256": "ce58303d0e334a16004e97dfb8eba9dd1bf9f6ddc08c14fea7c82f26602b4551",
+  "meta_cognition_sha256": "ac0190cd1b8dc63cf3504bb7301dad73fd9394af9343c7f804327a2dabc09816",
   "risk_snapshot_status": "UNAVAILABLE",
   "schema_version": "1.0.0",
   "snapshot_scope": "CFSS_SHADOW_PORTFOLIO_ONLY",
-  "source_run_id": "okx-cpp-1795350438497",
-  "source_scan_id": "scan-081b2bf55e3b97d2fd0867795cc6b4270ad812e441f23cd7443e357f7bce710e",
+  "source_run_id": "okx-cpp-1795364369502",
+  "source_scan_id": "scan-650f8f37a0efa661a7e9873e99ae45dbfc2cbf32d479454f86c86728bba34455",
   "summary": {
     "actionable_count": 0,
     "blocked_count": 0,

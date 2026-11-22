@@ -1,6 +1,6 @@
 {
   "artifact_type": "cfss_outcome_ledger_v1",
-  "cost_backfilled_this_run": 5,
+  "cost_backfilled_this_run": 0,
   "cost_model": {
     "data_class": "PROXY",
     "fee_rate_per_side": 0.0004,
