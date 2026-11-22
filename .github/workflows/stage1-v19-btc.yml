@@ -121,14 +121,30 @@ jobs:
           source = l1["provenance"]["source_files"][0]
           def sha(path):
               return hashlib.sha256(path.read_bytes()).hexdigest()
-          history = artifacts / "history.csv"
-          with history.open("w", newline="", encoding="utf-8") as stream:
-              writer = csv.writer(stream)
-              writer.writerow(["run_id","scan_id","symbol","state","latest_candle_timestamp_ms","data_class"])
-              writer.writerow([l1["run_id"], l1["scan_id"], "BTCUSDT",
-                               l2["instruments"][0]["state"],
-                               l2["instruments"][0]["latest_candle_timestamp_ms"],
-                               l1["freshness"]["status"]])
+          history_state = Path("signals-state/cpp_runtime/stage1_btc_history.csv")
+          history_state.parent.mkdir(parents=True, exist_ok=True)
+          fields = ["run_id","scan_id","symbol","state","latest_candle_timestamp_ms","data_class"]
+          history_rows = []
+          if history_state.exists():
+              with history_state.open("r", newline="", encoding="utf-8") as stream:
+                  reader = csv.DictReader(stream)
+                  if reader.fieldnames != fields:
+                      raise SystemExit("STAGE1_HISTORY_SCHEMA_MISMATCH")
+                  history_rows = list(reader)
+          if not any(row["run_id"] == l1["run_id"] for row in history_rows):
+              history_rows.append({
+                  "run_id": l1["run_id"],
+                  "scan_id": l1["scan_id"],
+                  "symbol": "BTCUSDT",
+                  "state": l2["instruments"][0]["state"],
+                  "latest_candle_timestamp_ms": str(l2["instruments"][0]["latest_candle_timestamp_ms"]),
+                  "data_class": l1["freshness"]["status"]
+              })
+          for path in (history_state, artifacts / "history.csv"):
+              with path.open("w", newline="", encoding="utf-8") as stream:
+                  writer = csv.DictWriter(stream, fieldnames=fields)
+                  writer.writeheader()
+                  writer.writerows(history_rows)
           manifest = {
               "schema_version": "1.0.0",
               "stage": "STAGE_1",
@@ -195,14 +211,14 @@ jobs:
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
 
-      - name: Persist only Telegram outbox state to signals branch
+      - name: Persist compact history and Telegram outbox state to signals branch
         working-directory: signals-state
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cpp_runtime/telegram_outbox.v1.json
+          git add cpp_runtime/telegram_outbox.v1.json cpp_runtime/stage1_btc_history.csv
           if git diff --cached --quiet; then
             echo "TELEGRAM_OUTBOX_UNCHANGED_DUPLICATE_SUPPRESSED"
             exit 0
@@ -229,4 +245,4 @@ jobs:
           echo "STAGE1_RUN_SEQUENCE=$RUN_SEQUENCE"
           echo "STAGE1_L1_L2_L3=PASS"
           echo "L1_L2_STORED_AS_ARTIFACTS_ONLY=true"
-          echo "ONLY_TELEGRAM_OUTBOX_PERSISTED_TO_SIGNALS=true"
+          echo "ONLY_COMPACT_HISTORY_AND_TELEGRAM_OUTBOX_PERSISTED_TO_SIGNALS=true"
