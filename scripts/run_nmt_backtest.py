@@ -124,11 +124,11 @@ def simulate_symbol(f:pd.DataFrame,long_sig:pd.Series,short_sig:pd.Series,sl_mul
                 "entry":pos["entry"],"exit":fill,"net_return":net,"exit_reason":"END_OF_WINDOW"})
     return daily,trades
 
-def run_portfolio(data:dict[str,pd.DataFrame],cfg:tuple,entry_start:pd.Timestamp,
+def run_portfolio(data:dict[str,pd.DataFrame],feature_cache:dict,cfg:tuple,entry_start:pd.Timestamp,
                   entry_end:pd.Timestamp,exit_end:pd.Timestamp)->tuple[pd.Series,list[dict]]:
     (tn,kn),vm,sm=cfg; streams=[]; trades=[]
-    for symbol,x in data.items():
-        f=features(x,tn,kn); f.attrs["symbol"]=symbol
+    for symbol in data:
+        f=feature_cache[(symbol,tn,kn)]
         ls,ss=signals(f,vm); r,t=simulate_symbol(f,ls,ss,sm,entry_start,entry_end,exit_end)
         streams.append(r.rename(symbol)); trades.extend(t)
     return pd.concat(streams,axis=1).mean(axis=1),trades
@@ -191,14 +191,19 @@ def lrt_diagnosis(data:dict[str,pd.DataFrame])->dict:
 
 def main():
     data=load_data(); folds=make_folds(next(iter(data.values())).index)
+    feature_cache={}
+    for symbol,x in data.items():
+        for tn,kn in TENKAN_KIJUN:
+            f=features(x,tn,kn); f.attrs["symbol"]=symbol
+            feature_cache[(symbol,tn,kn)]=f
     fold_rows=[]; oos_parts=[]; trade_map={}
     for n,(tr_start,te_start,te_end) in enumerate(folds):
         scores=[]
         for cfg in CONFIGS:
-            r,t=run_portfolio(data,cfg,tr_start,te_start,te_start)
+            r,t=run_portfolio(data,feature_cache,cfg,tr_start,te_start,te_start)
             scores.append(metrics(r.loc[(r.index>=tr_start)&(r.index<te_start)],t)["sharpe"])
         selected=int(np.nanargmax(np.nan_to_num(scores,nan=-1e9))); cfg=CONFIGS[selected]
-        r,tr=run_portfolio(data,cfg,te_start,te_end,te_end-pd.Timedelta(days=1))
+        r,tr=run_portfolio(data,feature_cache,cfg,te_start,te_end,te_end-pd.Timedelta(days=1))
         fold_rows.append({"fold":n,"train_start":tr_start.date().isoformat(),"test_start":te_start.date().isoformat(),
             "test_end":te_end.date().isoformat(),"selected_config":selected,
             "selected_parameters":{"tenkan":cfg[0][0],"kijun":cfg[0][1],"volume_multiplier":cfg[1],"sl_atr_multiplier":cfg[2]},
@@ -209,7 +214,7 @@ def main():
     oos_trades=list(trade_map.values())
     candidate_returns=[]
     for cfg in CONFIGS:
-        r,_=run_portfolio(data,cfg,START,END+pd.Timedelta(days=1),END)
+        r,_=run_portfolio(data,feature_cache,cfg,START,END+pd.Timedelta(days=1),END)
         candidate_returns.append(r.loc[START:END].to_numpy())
     pbo_value=float(pbo(np.asarray(candidate_returns).T,n_splits=8).pbo)
     dsr_prob=float(deflated_sharpe_ratio(oos.to_numpy(),n_trials=len(CONFIGS)))
@@ -239,7 +244,7 @@ def main():
     (out/"nmt1d_summary.json").write_text(json.dumps(summary,indent=2,allow_nan=False))
     (out/"lrt_zero_trade_fold_diagnosis.json").write_text(json.dumps(lrt_diagnosis(data),indent=2,allow_nan=False))
     for i,cfg in enumerate(CONFIGS):
-        r,tr=run_portfolio(data,cfg,START,END+pd.Timedelta(days=1),END)
+        r,tr=run_portfolio(data,feature_cache,cfg,START,END+pd.Timedelta(days=1),END)
         item={"config_id":i,"parameters":{"tenkan":cfg[0][0],"kijun":cfg[0][1],
             "volume_multiplier":cfg[1],"sl_atr_multiplier":cfg[2]},
             "full_period_metrics":metrics(r.loc[START:END],tr)}
