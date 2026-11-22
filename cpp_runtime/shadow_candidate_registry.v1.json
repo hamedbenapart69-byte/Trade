@@ -316,9 +316,9 @@
     "pending_count": 1,
     "registered_this_run": 0,
     "rejected_this_run": 0,
-    "resolved_this_run": 3,
+    "resolved_this_run": 0,
     "total_candidates": 10,
-    "total_outcomes": 5
+    "unverifiable_this_run": 0
   },
-  "updated_at_ms": 1795172400000
+  "updated_at_ms": 1795348800000
 }

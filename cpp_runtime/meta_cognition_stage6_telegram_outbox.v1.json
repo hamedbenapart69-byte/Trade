@@ -97,6 +97,14 @@
       "message_id": null,
       "report_id": "5d98b74107146d69e5e670701b4ffd2293f3c6fab22bb4c20949d6924108fdc7",
       "status": "RESERVED"
+    },
+    {
+      "attempts": 0,
+      "created_at_utc": "2026-11-22T12:34:54Z",
+      "http_status": null,
+      "message_id": null,
+      "report_id": "cf39cd55f29d295a15eda5b4d9329f5f2945dd3fac88382f5635f99b14df5e93",
+      "status": "RESERVED"
     }
   ],
   "schema_version": "1.0.0"
