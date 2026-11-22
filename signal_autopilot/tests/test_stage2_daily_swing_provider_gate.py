@@ -35,8 +35,12 @@ def rows_for(interval, now_ms):
 
 class Stage2ProviderGateTests(unittest.TestCase):
     def test_universe_requires_exactly_27_unique_symbols(self):
-        with self.assertRaises(gate.GateError):
-            gate.load_universe(Path("missing-file.json"))
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "universe.json"
+            path.write_text(json.dumps({"symbols": ["BTCUSDT"]}), encoding="utf-8")
+            with self.assertRaises(gate.GateError):
+                gate.load_universe(path)
 
     def test_daily_archive_parses_one_closed_candle(self):
         now = 1_800_000_000_000
@@ -67,8 +71,8 @@ class Stage2ProviderGateTests(unittest.TestCase):
         now = 1_800_000_000_000
         rows = rows_for("4h", now)
         rows[-1][6] = str(now)
-        parsed = gate.parse_archive(zip_rows(rows), "BTCUSDT", "4h", now)
-        self.assertEqual(len(parsed), 5)
+        with self.assertRaises(gate.GateError):
+            gate.parse_archive(zip_rows(rows), "BTCUSDT", "4h", now)
 
     def test_ohlc_inconsistency_rejected(self):
         now = 1_800_000_000_000
