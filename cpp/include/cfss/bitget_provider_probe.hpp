@@ -152,9 +152,12 @@ inline bool valid_crypto_usdt_perpetual(const json& instrument, const std::strin
     const auto status = text(instrument, "status");
     const auto futures_type = text(instrument, "type");
     const auto launch_time = timestamp(instrument.value("launchTime", json{}));
+    // Bitget may return launchTime=0 for perpetual contracts. This is not proof
+    // of a recent listing; the caller must then require a complete 730-day OHLCV
+    // window rather than infer the listing date.
     return instrument_symbol == symbol && category == "USDT-FUTURES" &&
         quote == "USDT" && !base.empty() && instrument_type == "crypto" &&
-        status == "online" && futures_type == "perpetual" && launch_time > 0 &&
+        status == "online" && futures_type == "perpetual" && launch_time >= 0 &&
         (instrument.value("settleCoin", std::string{"USDT"}) == "USDT");
 }
 
@@ -394,7 +397,10 @@ inline json probe_symbol(const std::string& symbol, std::int64_t as_of_ms) {
             throw std::runtime_error("instrument_not_online_crypto_usdt_perpetual");
         const auto base = text(instrument, "baseCoin");
         const auto launch_ms = timestamp(instrument.value("launchTime", json{}));
-        const auto start_ms = std::max(as_of_ms - kTwoYearsMs, launch_ms);
+        const bool listing_time_verified = launch_ms > 0 && launch_ms <= as_of_ms;
+        const auto start_ms = listing_time_verified
+            ? std::max(as_of_ms - kTwoYearsMs, launch_ms)
+            : as_of_ms - kTwoYearsMs;
         const auto ticker = fetch_ticker(symbol);
         result["ticker"] = {
             {"last_price", number(ticker.value("lastPrice", json{})).value_or(0.0)},
@@ -425,6 +431,8 @@ inline json probe_symbol(const std::string& symbol, std::int64_t as_of_ms) {
 
         result["coverage"] = {
             {"listing_history_days_required", listing_days},
+            {"listing_time_ms", listing_time_verified ? json(launch_ms) : json(nullptr)},
+            {"listing_time_status", listing_time_verified ? "VERIFIED" : "UNAVAILABLE_REQUIRES_FULL_730D"},
             {"ohlcv_1h", {{"records", candle_coverage.count}, {"days", candle_coverage.days},
                           {"missing_intervals", candle_coverage.missing_intervals},
                           {"first_ms", candle_coverage.first_ms}, {"last_ms", candle_coverage.last_ms},
