@@ -3,7 +3,7 @@
 import json, time, urllib.request, urllib.error
 from datetime import datetime, timezone
 
-TARGETS=["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","ADAUSDT","DOGEUSDT","AVAXUSDT","LINKUSDT","LTCUSDT","BCHUSDT","NEARUSDT","INJUSDT","UNIUSDT","FILUSDT","ARBUSDT","ENAUSDT","SUIUSDT","TAOUSDT","WLDUSDT","ZECUSDT","AAVEUSDT","QNTUSDT","RSRUSDT","ONEUSDT","HOTUSDT","1000PEPEUSDT"]
+TARGETS=["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","ADAUSDT","DOGEUSDT","AVAXUSDT","LINKUSDT","LTCUSDT","BCHUSDT","NEARUSDT","INJUSDT","UNIUSDT","FILUSDT","ARBUSDT","ENAUSDT","SUIUSDT","TAOUSDT","WLDUSDT","ZECUSDT","AAVEUSDT","QNTUSDT","RSRUSDT","ONEUSDT"]
 URLS={
  "CoinGecko":"https://api.coingecko.com/api/v3/derivatives?include_tickers=unexpired",
  "OKX":"https://www.okx.com/api/v5/public/instruments?instType=SWAP",
