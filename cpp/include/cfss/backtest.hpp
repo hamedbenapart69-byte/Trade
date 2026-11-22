@@ -98,29 +98,22 @@ inline std::optional<Trade> simulate(const Input& x,const Candidate& c,std::int6
  const double unit_r=risk/fill;
  return Trade{c.id,c.path,c.symbol,outcome,it->ts,exit_ms,gross/unit_r,net/unit_r,net};
 }
-inline Metrics summarize(const std::vector<Trade>& trades,double risk_fraction) {
+inline Metrics summarize(const std::vector<Trade>& trades,double /*risk_fraction*/) {
  Metrics m{}; m.trades=trades.size(); if(trades.empty()) return m;
- auto ordered=trades; std::sort(ordered.begin(),ordered.end(),[](const Trade& a,const Trade& b){return a.exit_ms<b.exit_ms;});
- double gp=0,gl=0,sum=0,equity=1,peak=1,dd=0; std::map<std::int64_t,double> daily;
- for(const auto& t:ordered) {
+ double gp=0,gl=0,sum=0;
+ for(const auto& t:trades) {
   if(t.net_r>0){++m.wins;gp+=t.net_r;} else if(t.net_r<0){++m.losses;gl+=std::abs(t.net_r);}
-  sum+=t.net_r; equity*=std::max(0.0,1+t.net_r*risk_fraction); peak=std::max(peak,equity); if(peak>0) dd=std::max(dd,(peak-equity)/peak);
-  daily[t.exit_ms/86400000LL]+=t.net_r*risk_fraction;
+  sum+=t.net_r;
  }
  const double n=double(m.trades); m.win_rate=double(m.wins)/n;
  const double z=1.959963984540054,den=1+z*z/n,center=(*m.win_rate+z*z/(2*n))/den;
  const double margin=z*std::sqrt((*m.win_rate*(1-*m.win_rate)/n)+z*z/(4*n*n))/den;
  m.ci_low=std::max(0.0,center-margin); m.ci_high=std::min(1.0,center+margin);
  if(gl>0) { m.pf=gp/gl; }
- m.expectancy_r=sum/n; m.max_dd_pct=dd*100;
- if(daily.size()>1) {
-  std::vector<double> v; const auto first_day=daily.begin()->first, last_day=daily.rbegin()->first;
-  for(auto d=first_day;d<=last_day;++d)v.push_back(daily.contains(d)?daily.at(d):0.0);
-  const double mean=std::accumulate(v.begin(),v.end(),0.0)/double(v.size()); double var=0;
-  for(double a:v) { var+=(a-mean)*(a-mean); }
-  var/=double(v.size()-1);
-  if(var>0)m.sharpe=mean/std::sqrt(var)*std::sqrt(365.0);
- }
+ m.expectancy_r=sum/n;
+ // Portfolio drawdown and Sharpe are intentionally unavailable until an
+ // event-driven ledger models concurrent exposure, capital, and mark-to-market.
+ m.max_dd_pct.reset(); m.sharpe.reset();
  return m;
 }
 inline Json metric_json(const Metrics& m) {
@@ -168,7 +161,7 @@ inline Json to_json(const Report& r) {
  {"lrt_unique_oos",metric_json(r.lrt)},{"nmt_unique_oos",metric_json(r.nmt)},
  {"baselines",{{"status","UNAVAILABLE"},{"ema_cross","UNAVAILABLE"},{"rsi","UNAVAILABLE"},{"buy_and_hold","UNAVAILABLE"}}},
  {"dsr_status","UNAVAILABLE"},{"pbo_status","UNAVAILABLE"},{"brier_status","UNAVAILABLE"},
- {"limitations",{"DSR requires registered trial distribution and effective trial count","PBO requires combinatorial cross-validation across frozen trials","Brier requires calibrated probabilities and resolved labels","EMA Cross, RSI and Buy-and-Hold baselines are not implemented in v1","Only pre-registered candidate events are evaluated; historical LFS/NSS signals are not reconstructed","Overlapping test folds are reported separately; unique OOS totals deduplicate candidate IDs"}},
+ {"limitations",{"DSR requires registered trial distribution and effective trial count","PBO requires combinatorial cross-validation across frozen trials","Brier requires calibrated probabilities and resolved labels","EMA Cross, RSI and Buy-and-Hold baselines are not implemented in v1","Only pre-registered candidate events are evaluated; historical LFS/NSS signals are not reconstructed","Overlapping test folds are reported separately; unique OOS totals deduplicate candidate IDs","Portfolio drawdown and Sharpe are UNAVAILABLE: v1 has no event-driven concurrent-position, capital-allocation, or mark-to-market ledger","Funding is a duration-based PROXY, not exchange-event-aligned funding history"}},
  {"gate_status","NOT_EVALUATED_INCOMPLETE_EVIDENCE"},{"actionable",false},{"trade_execution_allowed",false}};
 }
 } // namespace cfss::backtest
