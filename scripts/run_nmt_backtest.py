@@ -83,8 +83,8 @@ def simulate_symbol(f:pd.DataFrame,long_sig:pd.Series,short_sig:pd.Series,sl_mul
                 i+=1; continue
             en=i+1; eb=f.iloc[en]; entry=float(eb.open)*(1+side*SLIPPAGE_PER_SIDE)
             pos={"side":side,"entry":entry,"entry_date":dates[en],"entry_index":en,
-                 "stop":entry-side*sl_mult*float(bar.atr),"high_water":float(eb.high),
-                 "low_water":float(eb.low),"prev_mark":entry}
+                 "stop":entry-side*sl_mult*float(bar.atr),"high_water":entry,
+                 "low_water":entry,"prev_mark":entry}
             i=en
             continue
         side=pos["side"]; prev=f.iloc[i-1]
