@@ -149,3 +149,42 @@ Observed job evidence:
 - A separate direct read of `signals/cpp_runtime/daily_outcome_ledger.v1.json` after this run still returns 5 outcomes: all 5 have `cost_status=UNAVAILABLE`, `execution_status=NOT_EXECUTED`, `outcome_kind=HYPOTHESIS_PROXY`; resolutions are 1 TARGET and 4 STOP. Thus the PR-only cost backfill did not change persistent production state.
 
 **Updated decision:** Stage 6 v2 engineering validation = PASS for this PR run; calibration/statistical acceptance = BLOCKED; production release = NOT APPROVED. No OOS calibration PASS is claimed.
+
+
+## 13. Post-merge scheduled production-path validation — 2026-11-22
+
+**GitHub Actions run:** [45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) — conclusion **SUCCESS**. This is a main-branch scheduled pipeline execution after the Stage 7 v2 implementation merge. C++20 configuration/build/full CTest, persistent-state checkout, cache restore, live L1/Stage 4/5, Stage 6 computation, Stage 7 gate generation, persistent signals-branch writes and Telegram delivery all completed.
+
+### Live L1/L2 evidence
+
+- Source run: `okx-cpp-1795350438497`; **49** selected OKX linear USDT perpetual instruments. The available universe did not reach the 100-instrument target; no liquidity or contract filter was relaxed.
+- The 15-minute resolution collector reported **AVAILABLE, 49/49**.
+- LFS v2: **45/49 CALCULATED**, 4 UNAVAILABLE; aggregate artifact status PARTIAL. Every calculated result remains PROXY because the book-thinness component is an OHLCV proxy, not REAL order-book depth.
+- NSS v2: **38/49 CALCULATED**, 11 UNAVAILABLE; aggregate artifact status PARTIAL_OR_UNAVAILABLE. Scores remain PROXY / NOT_CALIBRATED.
+- Stage 5 dual-engine artifact contains 49 per-instrument rows but **zero generated candidates** in this run; `actionable=false` and no trade was promoted.
+
+### Persistent Shadow outcomes and costs
+
+- Shadow tracker: `REGISTERED=0`, `RESOLVED=0`, `PENDING=1`, `TOTAL_OUTCOMES=5`, `COST_PROXY=5`, `COST_UNAVAILABLE=0`, `COST_BACKFILLED=5`.
+- The persistent daily ledger now contains five hypothetical NMT outcomes, **1 TARGET and 4 STOP**. All remain `HYPOTHESIS_PROXY` and `NOT_EXECUTED`; they are not realized trades.
+- Cost backfill is now persisted for these five rows as `PROXY`: fee 0.04% per side is an explicit assumption, slippage 0.10% per side is a fixed proxy not measured from order-book impact, and funding inputs come from timestamped OKX public funding history. These assumptions do not create REAL execution costs.
+- This closes the previous persistence/NULL-cost implementation defect for the five existing records, but it does not close the statistical sample-size or cost-realism gates.
+
+### Meta-Cognition and Stage 7
+
+- Meta-Cognition generated from 5 outcomes; `actionable=false`. The cohort remains `NOT_CALIBRATED`; a valid calibrated probability, OOS Brier improvement, and net-EV acceptance were not established.
+- Shadow risk snapshot: `UNAVAILABLE`, reason `RISK_BASIS_INVALID_OR_NOT_FROZEN`. The Stage 7 risk gate was generated with **0 actionable** and remains fail-closed.
+- The persistent candidate registry has 10 candidates: 5 RESOLVED, 4 REJECTED and 1 PENDING. The pending UNI candidate retains fill reference 4.845 but has no `entry_fill_time_ms`; no time was inferred. It expires at 2026-11-27T07:00:00Z and remains an unaccounted fill for risk purposes until its state is resolved with provenance or quarantined by the existing expiry policy.
+
+### L3 delivery evidence
+
+- Telegram preflight returned HTTP 200.
+- Stage 6 + Stage 7 report was delivered: HTTP 200, Telegram message ID **83**.
+- The delivery receipt was persisted on the `signals` branch. The workflow completed its receipt persistence step.
+
+### Updated SLRP decision
+
+- **Engineering pipeline:** PASS for this main-branch run, including L1/L2 compute, persistence and L3 Telegram delivery.
+- **Stage 6 statistical acceptance:** BLOCKED / NOT_CALIBRATED. Five hypothetical outcomes do not satisfy independent chronological train/validation/OOS evidence or the validation-derived effective sample-size requirement. EV remains not eligible for promotion.
+- **Stage 7:** BLOCKED / FAIL-CLOSED because there is no frozen shadow NAV/risk basis, the UNI pending fill has no fill-time provenance, and Stage 6 is not calibrated.
+- **Production signal promotion:** NOT APPROVED. No threshold or acceptance criterion was relaxed.
