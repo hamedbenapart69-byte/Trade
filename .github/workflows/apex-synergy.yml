@@ -1,0 +1,124 @@
+name: Apex-Synergy Research Backtest
+
+on:
+  push:
+    branches: [stage-apex-synergy]
+    paths:
+      - "scripts/run_apex_synergy.py"
+      - "tests/test_apex_synergy.py"
+      - ".github/workflows/apex-synergy.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: apex-synergy-research
+  cancel-in-progress: true
+
+jobs:
+  apex-synergy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install pinned statistical validator and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/AgentJDrew/backtest-guard.git@317cd5a3d56063fd9d4bb8574401af30d9e55f46" pandas numpy scipy pyarrow
+
+      - name: Verify statistical validator APIs
+        run: |
+          python - <<'PY'
+          from backtest_guard import pbo, deflated_sharpe_ratio
+          print("backtest-guard PBO and DSR imports: PASS")
+          PY
+
+      - name: Download real 25-symbol OHLCV artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: binance-vision-1d-25-symbols-45055606760
+          run-id: 45055606760
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: data/ohlcv
+
+      - name: Download real derivatives and funding artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: binance-vision-derivatives-1d-25-symbols-45055804237
+          run-id: 45055804237
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: data/derivatives
+
+      - name: Validate source manifests and archive coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          symbols = [
+              "BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT",
+              "ADAUSDT","DOGEUSDT","AVAXUSDT","LINKUSDT","LTCUSDT",
+              "BCHUSDT","NEARUSDT","INJUSDT","UNIUSDT","FILUSDT",
+              "ARBUSDT","ENAUSDT","SUIUSDT","TAOUSDT","WLDUSDT",
+              "ZECUSDT","AAVEUSDT","QNTUSDT","RSRUSDT","ONEUSDT"
+          ]
+          o = json.loads(Path("data/ohlcv/dataset_manifest.json").read_text())
+          d = json.loads(Path("data/derivatives/derivatives_manifest.json").read_text())
+          assert o["overall_status"] == "PASS", o["overall_status"]
+          assert d["overall_status"] == "PASS", d["overall_status"]
+          assert len(o["symbols"]) == 25
+          assert d["metrics_archive_pass"] == d["metrics_archive_expected"] == 18250
+          assert d["funding_archive_pass"] == d["funding_archive_expected"] == 600
+          for s in symbols:
+              assert (Path("data/ohlcv") / f"{s}_1d.csv").exists(), s
+              assert (Path("data/derivatives") / f"{s}_metrics_1d.csv").exists(), s
+              assert (Path("data/derivatives") / f"{s}_funding.csv").exists(), s
+          print("REAL DATA COVERAGE PASS: 25 x 730 OHLCV; 18,250/18,250 metrics archives; 600/600 funding archives.")
+          PY
+
+      - name: Compile Apex-Synergy
+        run: python -m py_compile scripts/run_apex_synergy.py tests/test_apex_synergy.py
+
+      - name: Run data, causality, risk and walk-forward tests
+        run: python -m unittest discover -s tests -p "test_apex_synergy.py" -v
+
+      - name: Execute Apex-Synergy out-of-sample research
+        run: python scripts/run_apex_synergy.py
+
+      - name: Validate result JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("results/apex_synergy_summary.json")
+          x = json.loads(p.read_text())
+          assert x["system"] == "Apex-Synergy"
+          assert x["data"]["symbols"] == 25
+          assert x["data"]["bars_per_symbol"] == 730
+          assert x["metrics"]["candidate_count_for_pbo_dsr"] == 7
+          assert x["walk_forward"]["fold_count"] >= 12
+          print(json.dumps({
+              "validation_status": x["validation_status"],
+              "metrics": x["metrics"],
+              "gates": x["gates"],
+              "kelly": x["risk_engine_diagnostics"]
+          }, indent=2))
+          PY
+
+      - name: Upload Apex-Synergy results and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-synergy-results-\${{ github.run_id }}
+          path: results/
+          if-no-files-found: warn
+          retention-days: 30
