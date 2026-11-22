@@ -30,6 +30,10 @@ int main() {
     };
     require(cfss::bitget::valid_crypto_usdt_perpetual(valid_instrument, "BTCUSDT"),
             "valid online crypto USDT perpetual instrument is admitted");
+    auto no_launch_time = valid_instrument;
+    no_launch_time["launchTime"] = "0";
+    require(cfss::bitget::valid_crypto_usdt_perpetual(no_launch_time, "BTCUSDT"),
+            "zero launchTime is not treated as a delisting; full 730-day history is enforced later");
     auto spot = valid_instrument;
     spot["category"] = "SPOT";
     require(!cfss::bitget::valid_crypto_usdt_perpetual(spot, "BTCUSDT"),
