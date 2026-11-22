@@ -2,7 +2,7 @@
 
 **Specification:** V18.2  
 **Branch:** `feat/stage8-gap-fill-audit-v1`  
-**Status:** ENGINEERING IMPLEMENTATION IN PROGRESS; STRATEGY GATE NOT EVALUATED  
+**Status:** ENGINEERING CONTRACT PASSED ON COMMIT b6f0a15; LATEST PROVENANCE TEST CORRECTION AWAITS CI; STRATEGY GATE NOT EVALUATED  
 **Release:** Not approved; no merge to `main` in this change set.
 
 ## Objective
@@ -21,11 +21,12 @@ The engine never upgrades PROXY input to REAL. Candidate class is retained in th
 
 ### Repository evidence audit (2026-11-20)
 
-The `signals` branch contains:
-- `cpp_runtime/daily_outcome_ledger.v1.json`: five closed outcomes, all `PROXY`; fee/funding/slippage costs are `UNAVAILABLE`; execution is `NOT_EXECUTED`.
+The `signals` branch evidence inspected for this revision contains:
+- `cpp_runtime/daily_outcome_ledger.v1.json`: 5 closed outcomes, all `PROXY`; fee/funding/slippage costs are `UNAVAILABLE`; execution is `NOT_EXECUTED`.
 - `cpp_runtime/outcome_ledger.v1.json`: `EMPTY`.
+- `cpp_runtime/shadow_candidate_registry.v1.json`: 10 candidates, all `PROXY`; 3 resolved, 4 rejected, 1 pending, and 2 additional records without a resolved execution outcome (the registry's exact state values remain authoritative).
 - `cpp_runtime/performance-okx-cpp-1795257048838.json`: `NOT_CALCULATED`, trade_count 0, reason `NO_STRATEGY_ENGINE_OR_EXECUTED_TRADES_IN_STAGE_1`.
-- Ten shadow candidates were present in the inspected registry (5 resolved, 4 rejected, 1 pending); all were `PROXY`. Five recent live-run history CSV snapshots were present, not a six-month historical OHLCV/candidate archive.
+- Recent history CSV snapshots exist, but they are not a six-month historical OHLCV archive or a point-in-time reconstruction of all LRT/NMT candidate events.
 
 Therefore those artifacts are useful operational evidence, but they are not valid REAL OOS evidence for Gate A.
 
@@ -71,11 +72,11 @@ No strategy acceptance can be issued from synthetic fixtures, PROXY outcomes, mi
 
 ### V1
 - Assumption: historical pre-registered candidate events and their matching chronological OHLC bars can be supplied as a reproducible dataset.
-- Current code: replay engine and contract added; actual Actions result pending.
+- Current code: replay engine and contract added; latest Stage 8 contract workflow for commit `b6f0a150fbcd824b5ec7818306417f13743bc0e3` passed all steps. A subsequent test-only provenance correction is committed separately and must receive its own CI confirmation.
 - Strategy evidence: not evaluated.
 
 ### Diagnosis register
-- D1 Data: current repository ledger has only two closed PROXY outcomes; fee/funding fields are unavailable; the REAL outcome ledger is empty; no six-month OHLCV/candidate archive was found on the inspected `signals` branch.
+- D1 Data: the inspected daily ledger has 5 closed PROXY outcomes; fee/funding/slippage fields are unavailable; the REAL outcome ledger is empty; no six-month OHLCV/candidate archive was found on the inspected `signals` branch.
 - D2 Assumption: the current live candidate stream cannot be assumed to represent historical candidate generation.
 - D3 Implementation: pending actual C++ workflow result.
 - D4 Calibration: DSR/PBO/Brier and baselines are not implemented by this v1.
