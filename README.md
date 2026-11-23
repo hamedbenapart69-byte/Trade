@@ -62,9 +62,11 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 - [Stage roadmap and gates](docs/ROADMAP.md)
 - [GitHub Actions](https://github.com/hamedbenapart69-byte/Trade/actions)
 
-Active workflow sources:
-- [C++ Stage 1 live pipeline](.github/workflows/cpp-stage1-live.yml)
-- [C++ Stage 6 scheduled pipeline](.github/workflows/cpp-stage6-meta-cognition-v1.yml)
+V21 workflow under validation:
+- [C++ V21 Stage 1 live pipeline](.github/workflows/cpp-stage1-live.yml)
+
+Legacy workflow requiring owner-authorized quarantine before V21 production scheduling:
+- [V18.2 Stage 6 pipeline](.github/workflows/cpp-stage6-meta-cognition-v1.yml) — still scheduled; invokes rejected LRT/NMT candidate logic.
 
 ## Build and test
 
