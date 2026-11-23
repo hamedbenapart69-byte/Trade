@@ -127,7 +127,7 @@ def sim(feat,regime,universe,grid_params,report_start,report_end):
         prior_hi=df.high.rolling(brk,min_periods=brk).max().shift(1)
         prior_lo=df.low.rolling(brk,min_periods=brk).min().shift(1)
         for d in df.index:
-            if d not in uni or sym not in uni[d] or d not in regime or regime[d] is None or regime[d]<20: continue
+            if d < pd.Timestamp("2023-06-30",tz="UTC") or d not in uni or sym not in uni[d] or d not in regime or regime[d] is None or regime[d]<20: continue
             r=df.loc[d]
             if not (pd.notna(r.atr) and pd.notna(r.mean_vol20) and r.atr>0 and r.mean_vol20>0):continue
             vol_ok=r.volume>vol_mult*r.mean_vol20
@@ -262,7 +262,7 @@ def main():
             {"train":"2023-02-01/2023-07-31","test":"2023-08-01/2023-09-30","score":"2023-08"},
             {"train":"2023-03-01/2023-08-31","test":"2023-09-01/2023-10-31","score":"2023-09"},
             {"train":"2023-04-01/2023-09-30","test":"2023-10-01/2023-11-30","score":"2023-10"},
-            {"train":"2023-05-01/2023-10-31","test":"2023-11-01/2023-12-31","score":"2023-11"}]
+            {"train":"2023-05-01/2023-10-31","test":"2023-11-01/2023-12-31","score":"2023-11"},\n            {"train":"2023-06-01/2023-11-30","test":"2023-12-01/2024-01-31","score":"2023-12"}]
     summary={"strategy":"VTM","status":"RESEARCH_ONLY","period":"2023-07-01 through 2023-12-31 OOS scored months","data":{"source":"Binance Vision USD-M 1d klines","PIT_universe":"verified artifact run 45068636102","PIT_status":manifest["status"],"funding":"UNAVAILABLE; returns omit funding and may be slightly optimistic","archive_count":len(hashes),"archive_sha256_verified":True,"symbols_downloaded":len(data),"PIT_proxy_limitations":manifest.get("limitations",[])},
     "parameters":{"volume_lookback_days":20,"volume_multiplier":2.0,"body_ratio_gt":0.60,"breakout_lookback_days":10,"atr_stop_multiplier":2.0,"atr_period":14,"time_stop_days":10,"tp":"NONE","trailing":"NONE","regime":"BTC ADX14 >=20","fee_per_side":FEE,"slippage_per_side":SLIPPAGE,"risk_per_trade":RISK,"max_gross_exposure":MAX_GROSS,"volatility_target_annual":VOL_TARGET,"kelly":"PROHIBITED"},
     "metrics":{**overall,"pbo":pbo,"dsr_z":dsr,"PBO_matrix":{"volume_multiplier":[1.5,2.0,2.5],"body_ratio":[0.5,0.6,0.7],"breakout_lookback":[5,10,20],"candidate_count":27,"CSCV":pbo_diag}},
