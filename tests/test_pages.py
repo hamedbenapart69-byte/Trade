@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from datetime import datetime, timezone
 from scripts.prepare_pages import build_payload, REQUIRED_AUDIT_CHECKS
-from scripts.v5_live_scan import classify_scan
+from archive.scripts.v5_live_scan import classify_scan
 
 def source():
     return {
