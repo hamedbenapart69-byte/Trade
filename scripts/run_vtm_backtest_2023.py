@@ -150,7 +150,7 @@ def sim(feat,regime,universe,grid_params,report_start,report_end):
                 cost=2*(FEE+SLIPPAGE)
                 net_trade=side*(fill/pos["entry"]-1)-cost
                 daily[d]+=pos["weight"]*(gross-(FEE+SLIPPAGE))
-                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":d.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":net_trade,"exit":"SL"})
+                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":d.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":net_trade,"exit":"SL" if hit else "YEAR_END"})
                 del openpos[sym];exited.add(sym)
             elif pos["days"]>=TIME_STOP-1:
                 fill=row.close
