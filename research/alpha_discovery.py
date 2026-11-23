@@ -224,6 +224,7 @@ def run(data):
         "features":{"requested":FEATURES,"used":usable,"unavailable":missing,
             "coverage":{"funding_available":bool(has_funding),"open_interest_available":bool(has_oi)}},
         "top5_rank_ic":ic[:5],
+        "rank_ic_scope":"Full 2023 sample, descriptive only; not OOS-only and not used to select the fitted model features.",
         "walk_forward":{"train_months":6,"test_months":2,"folds":len(folds),"details":folds},
         "lightgbm_metrics":metrics,
         "costs":{"fee_pct_per_side":0.04,"slippage_pct_per_side":0.02,
