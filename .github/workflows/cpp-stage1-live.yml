@@ -1,4 +1,4 @@
-name: C++ Only Stage 1 Live Vertical Slice
+name: C++ V21 Stage 1 Live Vertical Slice
 
 on:
   push:
@@ -120,7 +120,7 @@ jobs:
 
       - name: Validate run manifest
         run: |
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v2.schema.json -d artifacts/run-manifest.v2.json --all-errors
 
       - name: Validate L2 against the versioned JSON Schema
         run: |
@@ -211,7 +211,7 @@ jobs:
           test "$CSV_ROWS" -eq "$((L1_ROWS + 1))"
           echo "HISTORY_CSV_ROWS=$((CSV_ROWS - 1))"
 
-      - name: Validate V18.2 run manifest
+      - name: Validate V21.0 run manifest
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
 
