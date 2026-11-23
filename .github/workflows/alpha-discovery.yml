@@ -26,26 +26,26 @@ jobs:
         run: python -m pip install --upgrade pandas numpy scipy lightgbm scikit-learn pyarrow
       - name: Download latest VTM result artifact and verified PIT universe artifact
         env:
-          GH_TOKEN: \${{ github.token }}
-          REPOSITORY: \${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           mkdir -p out/vtm_backtest_final data/pit
-          RUNS="$(gh api "repos/\${REPOSITORY}/actions/runs?branch=stage-vtm-backtest-2023&per_page=100")"
+          RUNS="$(gh api "repos/${REPOSITORY}/actions/runs?branch=stage-vtm-backtest-2023&per_page=100")"
           RUN_ID="$(echo "$RUNS" | jq -r '[.workflow_runs[] | select(.name=="VTM Daily PIT Backtest 2023" and .conclusion=="success")] | sort_by(.created_at) | last | .id')"
           test "$RUN_ID" != "null"
-          ARTIFACTS="$(gh api "repos/\${REPOSITORY}/actions/runs/\${RUN_ID}/artifacts")"
+          ARTIFACTS="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts")"
           FINAL_ID="$(echo "$ARTIFACTS" | jq -r '[.artifacts[] | select(.name=="vtm-backtest-2023-final" and .expired==false)] | sort_by(.created_at) | last | .id')"
           test "$FINAL_ID" != "null"
-          gh api "repos/\${REPOSITORY}/actions/artifacts/\${FINAL_ID}/zip" > /tmp/vtm-final.zip
+          gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}/zip" > /tmp/vtm-final.zip
           unzip -q /tmp/vtm-final.zip -d out/vtm_backtest_final
           PIT_UNIVERSE_ARTIFACT_ID="14772840217"
-          gh api "repos/\${REPOSITORY}/actions/artifacts/\${PIT_UNIVERSE_ARTIFACT_ID}/zip" > /tmp/vtm-pit-universe.zip
+          gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}/zip" > /tmp/vtm-pit-universe.zip
           unzip -q /tmp/vtm-pit-universe.zip -d data/pit
           test -s data/pit/universe_manifest.json
-          echo "VTM_RUN_ID=\${RUN_ID}" >> "$GITHUB_ENV"
-          echo "VTM_FINAL_ARTIFACT_ID=\${FINAL_ID}" >> "$GITHUB_ENV"
-          echo "PIT_UNIVERSE_ARTIFACT_ID=\${PIT_UNIVERSE_ARTIFACT_ID}" >> "$GITHUB_ENV"
+          echo "VTM_RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
+          echo "VTM_FINAL_ARTIFACT_ID=${FINAL_ID}" >> "$GITHUB_ENV"
+          echo "PIT_UNIVERSE_ARTIFACT_ID=${PIT_UNIVERSE_ARTIFACT_ID}" >> "$GITHUB_ENV"
       - name: Reconstruct PIT OHLCV from checksum-pinned Binance Vision archives
         run: python research/prepare_vtm_pit.py --manifest data/pit/universe_manifest.json --output data/pit/ohlcv_2023.parquet --workers 12
       - name: Execute LightGBM walk-forward alpha discovery
