@@ -20,8 +20,6 @@
     "dataset_hash",
     "provider_status",
     "profile",
-    "path_statuses",
-    "generator_statuses",
     "rejected_strategy_families",
     "active_strategy_engines",
     "run_status",
@@ -169,150 +167,19 @@
         }
       }
     },
-    "path_statuses": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "A",
-        "B",
-        "C",
-        "H"
-      ],
-      "properties": {
-        "A": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "B": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "C": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        }
-      }
-    },
-    "generator_statuses": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "H1",
-        "H2",
-        "H3",
-        "H4",
-        "H5",
-        "H6",
-        "H7"
-      ],
-      "properties": {
-        "H1": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H2": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H3": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H4": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H5": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H6": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        },
-        "H7": {
-          "enum": [
-            "NOT_STARTED",
-            "ACTIVE",
-            "PASS",
-            "FAIL",
-            "DISABLED",
-            "UNAVAILABLE"
-          ]
-        }
-      }
-    },
     "rejected_strategy_families": {
-      "const": ["LRT", "NMT", "VTM"]
+      "const": [
+        "LRT",
+        "NMT",
+        "VTM"
+      ]
     },
     "active_strategy_engines": {
       "type": "array",
       "maxItems": 0,
-      "items": {"type": "string"}
+      "items": {
+        "type": "string"
+      }
     },
     "run_status": {
       "enum": [
