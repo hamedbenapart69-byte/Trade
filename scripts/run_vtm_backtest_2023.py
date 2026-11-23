@@ -27,7 +27,7 @@ PREFIX = "data/futures/um/monthly/klines/"
 
 def get(url, headers=None):
     req=urllib.request.Request(url,headers=headers or {"User-Agent":"VTM-PIT-Backtest/1.0"})
-    with urllib.request.urlopen(req,timeout=50) as r: return r.read()
+    with urllib.request.urlopen(req,timeout=30) as r: return r.read()
 
 def get_pit():
     # Artifact endpoint redirects to temporary blob storage. Do not forward GitHub auth to that host.
@@ -51,7 +51,7 @@ def get_pit():
 
 def s3list(prefix):
     import xml.etree.ElementTree as ET, urllib.parse
-    token=None; out=[]; ns={"s":"http://s3.amazonaws.com/doc/2006-03-01/"}
+    token=None; out=[]; seen_tokens=set(); ns={"s":"http://s3.amazonaws.com/doc/2006-03-01/"}
     while True:
         q={"list-type":"2","prefix":prefix}
         if token:q["continuation-token"]=token
@@ -60,6 +60,8 @@ def s3list(prefix):
         if root.findtext("s:IsTruncated",namespaces=ns)!="true":break
         token=root.findtext("s:NextContinuationToken",namespaces=ns)
         if not token:raise RuntimeError("S3 pagination missing token")
+        if token in seen_tokens:raise RuntimeError("S3 pagination token repeated; aborting instead of looping")
+        seen_tokens.add(token)
     return out
 
 def verified_zip(key):
@@ -85,19 +87,23 @@ def load_data(universe):
     all_data={}; archive_hashes={}; errors=[]
     months=[f"2022-{m:02d}" for m in (12,)]+[f"2023-{m:02d}" for m in range(1,13)]
     for i,sym in enumerate(symbols,1):
+        print(f"[LOAD] symbol {i}/{len(symbols)} {sym}: listing monthly archives", flush=True)
         p=PREFIX+sym+"/1d/"
         keys=s3list(p)
         pattern=re.compile(re.escape(p+sym+"-1d-") + r"(\d{4}-\d{2})\.zip$")
         monthkeys={pattern.fullmatch(k).group(1):k for k in keys if pattern.fullmatch(k)}
         symdata={}
+        print(f"[LOAD] {sym}: {len(monthkeys)} monthly archives listed; downloading required months", flush=True)
         for month in months:
             key=monthkeys.get(month)
             if not key:continue
+            print(f"[ARCHIVE] {sym} {month}: download + SHA256 verify", flush=True)
             try:
                 blob,sha=verified_zip(key); symdata.update(parse_kline(blob,sym)); archive_hashes[key]=sha
+                print(f"[ARCHIVE] {sym} {month}: OK ({len(symdata)} cumulative daily rows)", flush=True)
             except Exception as e:errors.append({"symbol":sym,"month":month,"error":str(e)})
         all_data[sym]=symdata
-        if i%25==0:print(f"loaded {i}/{len(symbols)} symbols")
+        print(f"[LOAD] completed {i}/{len(symbols)} symbols: {sym}, {len(symdata)} rows", flush=True)
     if errors: raise RuntimeError("Archive failures (strict abort): "+json.dumps(errors[:10]))
     return all_data,archive_hashes
 
@@ -232,18 +238,27 @@ def dsr_z(r,n_trials):
     return float((sr-sr0)*math.sqrt(len(x)-1)/denom)
 
 def main():
+    print("[STAGE 1/5] Fetching and validating PIT artifact", flush=True)
     pit,manifest=get_pit()
+    print(f"[STAGE 1/5] PIT artifact loaded: {len(pit)} dates; status={manifest.get('status')}", flush=True)
     if manifest.get("status")!="PASS" or len(pit)!=365:raise RuntimeError("PIT artifact validation failed")
-    data,hashes=load_data(pit);feat,regime=make_features(data)
+    print("[STAGE 2/5] Downloading and verifying OHLCV archives", flush=True)
+    data,hashes=load_data(pit)
+    print(f"[STAGE 2/5] OHLCV complete: {len(data)} symbols, {len(hashes)} archives", flush=True)
+    print("[STAGE 3/5] Building ATR, volume, body, BTC ADX features", flush=True)
+    feat,regime=make_features(data)
+    print(f"[STAGE 3/5] Feature construction complete: {len(feat)} symbols", flush=True)
     # WF 6m/2m/1m: Jan-Jun is first training window; unique OOS score months Jul-Dec.
     oos_months=list(range(7,13)); folds=[]
     candidate_returns={}; candidate_trade_lists={}
     # Fixed V1 candidate is the center of the 3x3x3 diagnostic matrix.
     main=(2.0,0.60,10)
     monthly_report={}
-    for params in GRID:
+    for i,params in enumerate(GRID,1):
+        print(f"[STAGE 4/5] Candidate {i}/{len(GRID)} params={params}", flush=True)
         r,t=sim(feat,regime,pit,params,pd.Timestamp("2023-07-01",tz="UTC"),END)
         candidate_returns[params]=r;candidate_trade_lists[params]=t
+    print("[STAGE 4/5] Candidate simulations completed; preparing metrics", flush=True)
     r,t=candidate_returns[main],candidate_trade_lists[main]
     # Fold-scored OOS month-by-month, training history prior to each test window.
     for month in oos_months:
@@ -254,6 +269,7 @@ def main():
         monthly_report[start.strftime("%Y-%m")]=metrics(rr,tt)
     # PBO on 27 candidates, OOS daily returns Jul-Dec; candidate matrices are diagnostics only.
     mat=np.vstack([candidate_returns[p].reindex(r.index).fillna(0).values for p in GRID])
+    print("[STAGE 5/5] Calculating PBO/DSR and final report", flush=True)
     pbo,pbo_diag=pbo_cscv(mat)
     dsr=dsr_z(r,27)
     overall=metrics(r,t)
@@ -275,5 +291,6 @@ def main():
     (out/"trades.json").write_text(json.dumps(t,indent=2,ensure_ascii=False,allow_nan=False),encoding="utf-8")
     r.rename("portfolio_daily_return").to_csv(out/"daily_returns.csv")
     (out/"monthly_metrics.json").write_text(json.dumps(monthly_report,indent=2,ensure_ascii=False,allow_nan=False),encoding="utf-8")
+    print("[DONE] Final output files written", flush=True)
     print(json.dumps({"metrics":summary["metrics"],"gates":summary["gates"],"oos":summary["period"],"trades":len(t)},indent=2,ensure_ascii=False,allow_nan=False))
 if __name__=="__main__":main()
