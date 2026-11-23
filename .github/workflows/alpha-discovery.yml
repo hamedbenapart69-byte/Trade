@@ -39,15 +39,31 @@ jobs:
           test "$FINAL_ID" != "null"
           gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}/zip" > /tmp/vtm-final.zip
           unzip -q /tmp/vtm-final.zip -d out/vtm_backtest_final
-          PIT_UNIVERSE_ARTIFACT_ID="14772840217"
+          PIT_RUNS="$(gh api "repos/${REPOSITORY}/actions/runs?branch=stage-vtm-pit-2023&per_page=100")"
+          PIT_RUN_ID="$(echo "$PIT_RUNS" | jq -r '[.workflow_runs[] | select(.name=="VTM PIT 2023 Data Engineering" and .conclusion=="success")] | sort_by(.created_at) | last | .id')"
+          test "$PIT_RUN_ID" != "null"
+          PIT_ARTIFACTS="$(gh api "repos/${REPOSITORY}/actions/runs/${PIT_RUN_ID}/artifacts")"
+          PIT_UNIVERSE_ARTIFACT_ID="$(echo "$PIT_ARTIFACTS" | jq -r '[.artifacts[] | select(.name=="vtm-pit-2023-universe" and .expired==false)] | sort_by(.created_at) | last | .id')"
+          test "$PIT_UNIVERSE_ARTIFACT_ID" != "null"
           gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}/zip" > /tmp/vtm-pit-universe.zip
           unzip -q /tmp/vtm-pit-universe.zip -d data/pit
           test -s data/pit/universe_manifest.json
           echo "VTM_RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
           echo "VTM_FINAL_ARTIFACT_ID=${FINAL_ID}" >> "$GITHUB_ENV"
+          echo "PIT_RUN_ID=${PIT_RUN_ID}" >> "$GITHUB_ENV"
           echo "PIT_UNIVERSE_ARTIFACT_ID=${PIT_UNIVERSE_ARTIFACT_ID}" >> "$GITHUB_ENV"
+      - name: Cache checksum-verified PIT OHLCV
+        uses: actions/cache@v4
+        with:
+          path: data/pit/ohlcv_2023.parquet
+          key: vtm-pit-ohlcv-2023-${{ hashFiles('data/pit/universe_manifest.json') }}
       - name: Reconstruct PIT OHLCV from checksum-pinned Binance Vision archives
-        run: python research/prepare_vtm_pit.py --manifest data/pit/universe_manifest.json --output data/pit/ohlcv_2023.parquet --workers 12
+        run: |
+          if [ -s data/pit/ohlcv_2023.parquet ]; then
+            echo "Using checksum-verified OHLCV cache"
+          else
+            python research/prepare_vtm_pit.py --manifest data/pit/universe_manifest.json --output data/pit/ohlcv_2023.parquet --workers 12
+          fi
       - name: Execute LightGBM walk-forward alpha discovery
         id: research
         continue-on-error: true
@@ -63,9 +79,11 @@ jobs:
           else:
               x={"status":"UNAVAILABLE","reason":"Research process did not create report"}
           x["artifact_provenance"]={
-              "source_branch":"stage-vtm-backtest-2023",
+              "vtm_result_branch":"stage-vtm-backtest-2023",
               "vtm_workflow_run_id":os.getenv("VTM_RUN_ID"),
               "vtm_final_artifact_id":os.getenv("VTM_FINAL_ARTIFACT_ID"),
+              "pit_universe_branch":"stage-vtm-pit-2023",
+              "pit_workflow_run_id":os.getenv("PIT_RUN_ID"),
               "pit_universe_artifact_id":os.getenv("PIT_UNIVERSE_ARTIFACT_ID")
           }
           open(p,"w").write(json.dumps(x,indent=2,allow_nan=False)+"\n")
