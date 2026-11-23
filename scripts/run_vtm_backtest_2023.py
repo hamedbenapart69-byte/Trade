@@ -201,7 +201,7 @@ def metrics(r,trades):
     dd=eq/eq.cummax()-1
     wins=[x["net_return"] for x in trades if x["net_return"]>0]
     losses=[-x["net_return"] for x in trades if x["net_return"]<0]
-    return {"win_rate":len(wins)/len(trades) if trades else None,"profit_factor":sum(wins)/sum(losses) if losses else (None if not wins else float("inf")),"max_drawdown":float(dd.min()) if len(dd) else 0,"total_trades":len(trades),"net_return":float(eq.iloc[-1]-1) if len(eq) else 0,"sharpe":float(r.mean()/r.std(ddof=1)*math.sqrt(365)) if len(r)>1 and r.std(ddof=1)>0 else 0}
+    return {"win_rate":len(wins)/len(trades) if trades else None,"profit_factor":sum(wins)/sum(losses) if losses else None,"profit_factor_status":"CALCULATED" if losses else ("NO_LOSSES" if wins else "NO_TRADES"),"max_drawdown":float(dd.min()) if len(dd) else 0,"total_trades":len(trades),"net_return":float(eq.iloc[-1]-1) if len(eq) else 0,"sharpe":float(r.mean()/r.std(ddof=1)*math.sqrt(365)) if len(r)>1 and r.std(ddof=1)>0 else 0}
 
 def pbo_cscv(matrix):
     # CSCV: 6 contiguous blocks, 3 blocks IS / 3 OOS, all 20 symmetric splits.
@@ -221,7 +221,7 @@ def pbo_cscv(matrix):
 def dsr_z(r,n_trials):
     x=np.asarray(r,dtype=float);x=x[np.isfinite(x)]
     if len(x)<3:return None
-    sr=np.mean(x)/(np.std(x,ddof=1)+1e-12)*math.sqrt(365)
+    sr=np.mean(x)/(np.std(x,ddof=1)+1e-12) # daily Sharpe for DSR statistic; annualizing here would inflate Z
     skew=float(pd.Series(x).skew()); kurt=float(pd.Series(x).kurtosis()+3)
     n=max(1,n_trials)
     gamma=0.5772156649
@@ -264,7 +264,7 @@ def main():
             {"train":"2023-05-01/2023-10-31","test":"2023-11-01/2023-12-31","score":"2023-11"},
             {"train":"2023-06-01/2023-11-30","test":"2023-12-01/2024-01-31","score":"2023-12"}]
     summary={"strategy":"VTM","status":"RESEARCH_ONLY","period":"2023-07-01 through 2023-12-31 OOS scored months","data":{"source":"Binance Vision USD-M 1d klines","PIT_universe":"verified artifact run 45068636102","PIT_status":manifest["status"],"funding":"UNAVAILABLE; returns omit funding and may be slightly optimistic","archive_count":len(hashes),"archive_sha256_verified":True,"symbols_downloaded":len(data),"PIT_proxy_limitations":manifest.get("limitations",[])},
-    "parameters":{"volume_lookback_days":20,"volume_multiplier":2.0,"body_ratio_gt":0.60,"breakout_lookback_days":10,"atr_stop_multiplier":2.0,"atr_period":14,"time_stop_days":10,"tp":"NONE","trailing":"NONE","regime":"BTC ADX14 >=20","fee_per_side":FEE,"slippage_per_side":SLIPPAGE,"risk_per_trade":RISK,"max_gross_exposure":MAX_GROSS,"volatility_target_annual":VOL_TARGET,"kelly":"PROHIBITED"},
+    "parameters":{"volume_lookback_days":20,"volume_multiplier":2.0,"body_ratio_gt":0.60,"breakout_lookback_days":10,"atr_stop_multiplier":2.0,"atr_period":14,"time_stop_days":10,"tp":"NONE","trailing":"NONE","regime":"BTC ADX14 >=20","fee_per_side":FEE,"slippage_per_side":SLIPPAGE,"risk_per_trade":RISK,"max_gross_exposure":MAX_GROSS,"volatility_target_annual":VOL_TARGET,"volatility_targeting_method":"per-position cap based on trailing 20-day realized volatility; NOT a covariance-aware portfolio-level 10% target","kelly":"PROHIBITED"},
     "metrics":{**overall,"pbo":pbo,"dsr_z":dsr,"PBO_matrix":{"volume_multiplier":[1.5,2.0,2.5],"body_ratio":[0.5,0.6,0.7],"breakout_lookback":[5,10,20],"candidate_count":27,"CSCV":pbo_diag}},
     "walk_forward":{"train_months":6,"test_months":2,"step_months":1,"scored_oos_unique_months":6,"folds":folds,"monthly":monthly_report},
     "trades":t,"gates":{"win_rate_gt_50":bool(overall["win_rate"] is not None and overall["win_rate"]>0.50),"profit_factor_gt_1_5":bool(overall["profit_factor"] is not None and overall["profit_factor"]>1.5),"pbo_lt_0_4":bool(pbo is not None and pbo<0.4),"dsr_z_gt_1":bool(dsr is not None and dsr>1),"maxdd_reported":overall["max_drawdown"]},
