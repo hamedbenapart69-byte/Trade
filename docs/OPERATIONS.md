@@ -1,11 +1,11 @@
-# CFSS Operations Runbook — V18.2
+# CFSS Operations Runbook — V21.0
 
 **Active user channel:** Telegram only  
 **Active production compute:** C++ on GitHub Actions  
 **User-side provider access:** not required  
 **Trading execution:** forbidden; manual trading only.
 
-This runbook replaces the old Docker/FastAPI/Railway/n8n control-plane instructions for the active Crypto Futures Signal System. Those instructions are historical and must not be used to operate the V18.2 production pipeline.
+This runbook describes the V21 operational boundary. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
 
 ## 1. Normal operation
 
@@ -19,8 +19,9 @@ The user's browser, phone, country, exchange account, VPN, balance and private e
 
 ## 2. Active workflows
 
-- [C++ Stage 1 live vertical slice](../.github/workflows/cpp-stage1-live.yml)
-- [C++ Stage 6 scheduled Meta-Cognition pipeline](../.github/workflows/cpp-stage6-meta-cognition-v1.yml)
+- [C++ V21 Stage 1 live vertical slice](../.github/workflows/cpp-stage1-live.yml)
+
+**Legacy workflow blocker:** cpp-stage6-meta-cognition-v1.yml remains scheduled and calls LRT/NMT candidate generation. Do not treat it as a V21 workflow. Its disable/quarantine is awaiting owner authorization.
 - [All GitHub Actions runs](https://github.com/hamedbenapart69-byte/Trade/actions)
 
 Stage-specific contract workflows validate the relevant C++ modules and schemas. Legacy Python/V5, dashboard, email, Railway and orchestration workflows are not the active user-facing architecture.
