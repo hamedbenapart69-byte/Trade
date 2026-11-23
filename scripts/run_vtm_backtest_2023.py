@@ -118,84 +118,69 @@ def make_features(data):
     return feat,regime
 
 def sim(feat,regime,universe,grid_params,report_start,report_end):
-    vol_mult,body_min,brk=grid_params
-    uni={pd.Timestamp(x["date"],tz="UTC"):set(x["symbols"]) for x in universe}
-    dates=pd.date_range("2023-01-01", "2023-12-31",freq="D",tz="UTC")
-    # Signals at close, execute at next day's open. The universe membership is PIT and used on signal date.
+    vm,body,brk=grid_params
+    membership={pd.Timestamp(x["date"],tz="UTC"):set(x["symbols"]) for x in universe}
+    dates=pd.date_range("2023-01-01","2023-12-31",freq="D",tz="UTC")
     signals={}
     for sym,df in feat.items():
-        prior_hi=df.high.rolling(brk,min_periods=brk).max().shift(1)
-        prior_lo=df.low.rolling(brk,min_periods=brk).min().shift(1)
+        ph=df.high.rolling(brk,min_periods=brk).max().shift(1)
+        pl=df.low.rolling(brk,min_periods=brk).min().shift(1)
         for d in df.index:
-            if d < pd.Timestamp("2023-06-30",tz="UTC") or d not in uni or sym not in uni[d] or d not in regime or regime[d] is None or regime[d]<20: continue
+            if d<pd.Timestamp("2023-06-30",tz="UTC") or d not in membership or sym not in membership[d]:continue
+            if regime.get(d) is None or regime[d]<20:continue
             r=df.loc[d]
-            if not (pd.notna(r.atr) and pd.notna(r.mean_vol20) and r.atr>0 and r.mean_vol20>0):continue
-            vol_ok=r.volume>vol_mult*r.mean_vol20
-            candle_ok=pd.notna(r.body_ratio) and r.body_ratio>body_min
-            side=1 if (r.close>r.open and r.close>prior_hi.loc[d]) else (-1 if r.close<r.open and r.close<prior_lo.loc[d] else 0)
-            if vol_ok and candle_ok and side:signals.setdefault(d,[]).append((sym,side,float(r.atr)))
-    # Portfolio engine with max 1x aggregate notional, stop-risk and annual-vol caps.
-    openpos={}; trades=[]; daily={d:0.0 for d in dates}; eq=1.0
+            if not (pd.notna(r.atr) and pd.notna(r.mean_vol20) and r.atr>0 and r.mean_vol20>0 and pd.notna(r.body_ratio)):continue
+            direction=1 if r.close>r.open and r.close>ph.loc[d] else (-1 if r.close<r.open and r.close<pl.loc[d] else 0)
+            if r.volume>vm*r.mean_vol20 and r.body_ratio>body and direction:
+                signals.setdefault(d,[]).append((sym,direction,float(r.atr)))
+    positions={}; trades=[]; daily={d:0.0 for d in dates}
     for i,d in enumerate(dates):
-        today_rows={s:feat[s].loc[d] for s in feat if d in feat[s].index}
-        exited=set()
-        for sym,pos in list(openpos.items()):
-            row=today_rows.get(sym)
+        todays={s:feat[s].loc[d] for s in feat if d in feat[s].index}
+        closed=set()
+        for sym,pos in list(positions.items()):
+            row=todays.get(sym)
             if row is None:continue
-            side=pos["side"]; stop=pos["stop"]; prev=pos["prevclose"]
+            side,stop,prev=pos["side"],pos["stop"],pos["prev_close"]
             hit=(row.low<=stop) if side==1 else (row.high>=stop)
-            if hit:
-                fill=min(row.open,stop) if side==1 else max(row.open,stop)
-                gross=side*(fill/prev-1) if d>pos["entry_day"] else side*(fill/pos["entry"]-1)
-                cost=2*(FEE+SLIPPAGE)
-                net_trade=side*(fill/pos["entry"]-1)-cost
-                daily[d]+=pos["weight"]*(gross-(FEE+SLIPPAGE))
-                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":d.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":net_trade,"exit":"SL" if hit else "YEAR_END"})
-                del openpos[sym];exited.add(sym)
-            elif pos["days"]>=TIME_STOP-1:
-                fill=row.close
-                gross=side*(fill/prev-1)
-                daily[d]+=pos["weight"]*(gross-(FEE+SLIPPAGE))
-                net_trade=side*(fill/pos["entry"]-1)-2*(FEE+SLIPPAGE)
-                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":d.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":net_trade,"exit":"TIME"})
-                del openpos[sym];exited.add(sym)
+            time_exit=pos["held"]>=TIME_STOP-1
+            terminal=(d==dates[-1])
+            if hit or time_exit or terminal:
+                fill=(min(float(row.open),stop) if side==1 else max(float(row.open),stop)) if hit else float(row.close)
+                pnl=side*(fill/prev-1)-(FEE+SLIPPAGE)
+                daily[d]+=pos["weight"]*pnl
+                trade_net=side*(fill/pos["entry"]-1)-2*(FEE+SLIPPAGE)
+                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":d.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":trade_net,"exit":"SL" if hit else ("TIME" if time_exit else "YEAR_END")})
+                del positions[sym];closed.add(sym)
             else:
-                daily[d]+=pos["weight"]*side*(row.close/prev-1)
-                pos["prevclose"]=row.close;pos["days"]+=1
-        if i+1<len(dates):
-            nextd=dates[i+1]
-            candidates=sorted(signals.get(d,[]),key=lambda x:x[0])
-            for sym,side,a in candidates:
-                if sym in openpos or sym in exited or nextd not in feat[sym].index:continue
-                row=feat[sym].loc[nextd]
-                entry=float(row.open)*(1+side*SLIPPAGE)
-                stopdist=2*a;stop=entry-side*stopdist
-                stop_pct=stopdist/entry
-                if stop_pct<=0:continue
-                riskweight=RISK/stop_pct
-                dailyvol=float(feat[sym].close.pct_change().rolling(20,min_periods=20).std().loc[d])*math.sqrt(365)
-                volweight=VOL_TARGET/dailyvol if dailyvol>0 and np.isfinite(dailyvol) else MAX_GROSS
-                weight=min(riskweight,volweight,MAX_GROSS-sum(p["weight"] for p in openpos.values()))
-                if weight<=1e-8:continue
-                hit=(row.low<=stop) if side==1 else (row.high>=stop)
-                if hit:
-                    fill=min(row.open,stop) if side==1 else max(row.open,stop)
-                    net=side*(fill/entry-1)-2*(FEE+SLIPPAGE)
-                    daily[nextd]+=weight*(side*(fill/entry-1)-2*(FEE+SLIPPAGE))
-                    trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":nextd.date().isoformat(),"exit_date":nextd.date().isoformat(),"entry":entry,"exit":fill,"net_return":net,"exit":"SAME_DAY_SL"})
-                    exited.add(sym)
-                else:
-                    openpos[sym]={"side":side,"entry":entry,"entry_day":nextd,"stop":stop,"prevclose":entry,"weight":weight,"days":1}
-    # Force-close positions at final bar, record net returns; report daily pnl in final bar.
-    last=dates[-1]
-    for sym,pos in list(openpos.items()):
-        if last not in feat[sym].index:continue
-        row=feat[sym].loc[last]; fill=float(row.close)
-        daily[last]+=pos["weight"]*(pos["side"]*(fill/pos["prevclose"]-1)-(FEE+SLIPPAGE))
-        trades.append({"symbol":sym,"side":"LONG" if pos["side"]==1 else "SHORT","entry_date":pos["entry_day"].date().isoformat(),"exit_date":last.date().isoformat(),"entry":pos["entry"],"exit":fill,"net_return":pos["side"]*(fill/pos["entry"]-1)-2*(FEE+SLIPPAGE),"exit":"YEAR_END"})
-    rs=pd.Series(daily,index=dates,dtype=float).loc[report_start:report_end]
-    t=[x for x in trades if report_start.date().isoformat()<=x["entry_date"]<=report_end.date().isoformat()]
-    return rs,t
+                daily[d]+=pos["weight"]*side*(float(row.close)/prev-1)
+                pos["prev_close"]=float(row.close);pos["held"]+=1
+        if i+1>=len(dates):continue
+        nextd=dates[i+1]
+        for sym,side,signal_atr in sorted(signals.get(d,[]),key=lambda x:x[0]):
+            if sym in positions or sym in closed or nextd not in feat[sym].index:continue
+            row=feat[sym].loc[nextd]
+            entry=float(row.open)*(1+side*SLIPPAGE)
+            distance=2*signal_atr
+            stop=entry-side*distance
+            risk_w=RISK/(distance/entry)
+            daily_vol=float(feat[sym].close.pct_change().rolling(20,min_periods=20).std().loc[d])*math.sqrt(365)
+            vol_w=VOL_TARGET/daily_vol if daily_vol>0 and np.isfinite(daily_vol) else MAX_GROSS
+            weight=min(risk_w,vol_w,MAX_GROSS-sum(p["weight"] for p in positions.values()))
+            if weight<=0:continue
+            hit=(float(row.low)<=stop) if side==1 else (float(row.high)>=stop)
+            if hit:
+                fill=min(float(row.open),stop) if side==1 else max(float(row.open),stop)
+                net=side*(fill/entry-1)-2*(FEE+SLIPPAGE)
+                daily[nextd]+=weight*(side*(fill/entry-1)-2*(FEE+SLIPPAGE))
+                trades.append({"symbol":sym,"side":"LONG" if side==1 else "SHORT","entry_date":nextd.date().isoformat(),"exit_date":nextd.date().isoformat(),"entry":entry,"exit":fill,"net_return":net,"exit":"SAME_DAY_SL"})
+                closed.add(sym)
+            else:
+                # Entry-day PnL includes open-to-close return and entry transaction cost.
+                daily[nextd]+=weight*(side*(float(row.close)/entry-1)-(FEE+SLIPPAGE))
+                positions[sym]={"side":side,"entry":entry,"entry_day":nextd,"stop":stop,"prev_close":float(row.close),"weight":weight,"held":1}
+    r=pd.Series(daily,index=dates,dtype=float).loc[report_start:report_end]
+    trades=[x for x in trades if report_start.date().isoformat()<=x["entry_date"]<=report_end.date().isoformat()]
+    return r,trades
 
 def metrics(r,trades):
     eq=(1+r.fillna(0)).cumprod()
