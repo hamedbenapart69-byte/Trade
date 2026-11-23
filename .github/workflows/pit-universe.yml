@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build-pit-universe:
-    name: Build PIT \${{ matrix.year }}
+    name: Build PIT ${{ matrix.year }}
     runs-on: ubuntu-24.04
     timeout-minutes: 300
     strategy:
@@ -47,15 +47,15 @@ jobs:
       - name: Build verified PIT dataset
         run: |
           python scripts/build_pit_universe.py \
-            --start-date "\${{ matrix.start_date }}" \
-            --end-date "\${{ matrix.end_date }}" \
-            --output-dir "results/pit_universe/\${{ matrix.year }}" \
+            --start-date "${{ matrix.start_date }}" \
+            --end-date "${{ matrix.end_date }}" \
+            --output-dir "results/pit_universe/${{ matrix.year }}" \
             --workers 8
       - name: Validate output completeness and manifest
         env:
-          START_DATE: \${{ matrix.start_date }}
-          END_DATE: \${{ matrix.end_date }}
-          OUTPUT_DIR: results/pit_universe/\${{ matrix.year }}
+          START_DATE: ${{ matrix.start_date }}
+          END_DATE: ${{ matrix.end_date }}
+          OUTPUT_DIR: results/pit_universe/${{ matrix.year }}
         run: |
           python - <<'PY'
           import json, os
@@ -88,7 +88,7 @@ jobs:
       - name: Upload PIT dataset and evidence
         uses: actions/upload-artifact@v4
         with:
-          name: pit-universe-\${{ matrix.year }}
-          path: results/pit_universe/\${{ matrix.year }}/
+          name: pit-universe-${{ matrix.year }}
+          path: results/pit_universe/${{ matrix.year }}/
           if-no-files-found: error
           retention-days: 90
