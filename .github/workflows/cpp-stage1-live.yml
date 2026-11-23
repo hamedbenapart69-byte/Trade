@@ -38,7 +38,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: cpp-only-stage1-live-${{ github.ref }}
+  group: cpp-only-stage1-live-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
