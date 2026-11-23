@@ -68,6 +68,20 @@ class TelegramSenderTests(unittest.TestCase):
         self.assertEqual(second["status"], "DUPLICATE_SKIPPED")
         send.assert_called_once()
 
+
+    def test_idempotency_hash_ignores_json_whitespace_and_key_order(self):
+        signal_path = self.root / "signal.json"
+        payload = self.signal()
+        signal_path.write_text(json.dumps(payload), encoding="utf-8")
+        with patch.dict(os.environ, {"TELEGRAM_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "-100123"}):
+            with patch.object(telegram_sender, "telegram_send_photo", return_value="778") as send:
+                first = telegram_sender.send_signal(signal_path, self.db)
+                signal_path.write_text(json.dumps(payload, indent=4, sort_keys=True), encoding="utf-8")
+                second = telegram_sender.send_signal(signal_path, self.db)
+        self.assertEqual(first["status"], "SENT")
+        self.assertEqual(second["status"], "DUPLICATE_SKIPPED")
+        send.assert_called_once()
+
     def test_payload_collision_is_rejected(self):
         self.assertTrue(telegram_sender.reserve_delivery(self.db, "id-4", "d" * 64))
         with self.assertRaises(ValueError):
