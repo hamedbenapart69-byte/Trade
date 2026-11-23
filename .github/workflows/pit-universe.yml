@@ -71,7 +71,9 @@ jobs:
           assert manifest["universe_period"] == [start.isoformat(), end.isoformat()]
           assert len(daily) == expected_days
           assert manifest["records"]["daily_dates"] == expected_days
-          assert len(monthly) == len({row["month"] for row in daily})
+          assert len(monthly) == len({row["date"][:7] for row in daily})
+          assert daily[0]["date"] == start.isoformat()
+          assert daily[-1]["date"] == end.isoformat()
           assert all(row["symbols"] == sorted(set(row["symbols"])) for row in daily)
           assert all(row["days_observed"] > 0 for row in monthly)
           print(json.dumps({
@@ -86,6 +88,7 @@ jobs:
           }, indent=2))
           PY
       - name: Upload PIT dataset and evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pit-universe-${{ matrix.year }}
