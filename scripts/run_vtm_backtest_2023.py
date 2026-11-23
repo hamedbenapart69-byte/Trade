@@ -65,9 +65,23 @@ def s3list(prefix):
     return out
 
 def verified_zip(key):
+    # Runner cache: reuse previously downloaded archives when GitHub Actions cache restores them.
+    cache_path=Path(".cache/vtm_archives")/key
+    checksum_path=Path(str(cache_path)+".CHECKSUM")
+    if cache_path.is_file() and checksum_path.is_file():
+        payload=cache_path.read_bytes()
+        checksum=checksum_path.read_text(encoding="utf-8").strip()
+        if hashlib.sha256(payload).hexdigest()==checksum:
+            return payload,checksum
+        cache_path.unlink(missing_ok=True); checksum_path.unlink(missing_ok=True)
     payload=get(BINANCE+key)
     checksum=get(BINANCE+key+".CHECKSUM").decode().strip().split()[0].lower()
     if hashlib.sha256(payload).hexdigest()!=checksum: raise ValueError("Checksum mismatch "+key)
+    cache_path.parent.mkdir(parents=True,exist_ok=True)
+    tmp=cache_path.with_suffix(cache_path.suffix+".tmp")
+    tmp.write_bytes(payload); tmp.replace(cache_path)
+    checksum_tmp=checksum_path.with_suffix(checksum_path.suffix+".tmp")
+    checksum_tmp.write_text(checksum,encoding="utf-8"); checksum_tmp.replace(checksum_path)
     return payload,checksum
 
 def parse_kline(payload,symbol):
@@ -84,26 +98,35 @@ def parse_kline(payload,symbol):
 
 def load_data(universe):
     symbols=sorted({s for day in universe for s in day["symbols"]})
-    all_data={}; archive_hashes={}; errors=[]
     months=[f"2022-{m:02d}" for m in (12,)]+[f"2023-{m:02d}" for m in range(1,13)]
-    for i,sym in enumerate(symbols,1):
-        print(f"[LOAD] symbol {i}/{len(symbols)} {sym}: listing monthly archives", flush=True)
+    def load_one(sym):
+        errors=[]; symdata={}; hashes={}
+        print(f"[LOAD] {sym}: listing monthly archives", flush=True)
         p=PREFIX+sym+"/1d/"
         keys=s3list(p)
         pattern=re.compile(re.escape(p+sym+"-1d-") + r"(\d{4}-\d{2})\.zip$")
         monthkeys={pattern.fullmatch(k).group(1):k for k in keys if pattern.fullmatch(k)}
-        symdata={}
-        print(f"[LOAD] {sym}: {len(monthkeys)} monthly archives listed; downloading required months", flush=True)
         for month in months:
             key=monthkeys.get(month)
             if not key:continue
-            print(f"[ARCHIVE] {sym} {month}: download + SHA256 verify", flush=True)
             try:
-                blob,sha=verified_zip(key); symdata.update(parse_kline(blob,sym)); archive_hashes[key]=sha
-                print(f"[ARCHIVE] {sym} {month}: OK ({len(symdata)} cumulative daily rows)", flush=True)
-            except Exception as e:errors.append({"symbol":sym,"month":month,"error":str(e)})
-        all_data[sym]=symdata
-        print(f"[LOAD] completed {i}/{len(symbols)} symbols: {sym}, {len(symdata)} rows", flush=True)
+                blob,sha=verified_zip(key)
+                symdata.update(parse_kline(blob,sym)); hashes[key]=sha
+            except Exception as e:
+                errors.append({"symbol":sym,"month":month,"error":str(e)})
+        print(f"[LOAD] {sym}: {len(symdata)} daily rows; {len(hashes)} archives verified", flush=True)
+        return sym,symdata,hashes,errors
+
+    all_data={}; archive_hashes={}; errors=[]
+    workers=min(16,max(1,len(symbols)))
+    print(f"[LOAD] Loading {len(symbols)} symbols with {workers} concurrent workers", flush=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures={pool.submit(load_one,sym):sym for sym in symbols}
+        for future in concurrent.futures.as_completed(futures):
+            sym,symdata,hashes,failures=future.result()
+            all_data[sym]=symdata
+            archive_hashes.update(hashes)
+            errors.extend(failures)
     if errors: raise RuntimeError("Archive failures (strict abort): "+json.dumps(errors[:10]))
     return all_data,archive_hashes
 
@@ -142,24 +165,27 @@ def sim(feat,regime,universe,grid_params,report_start,report_end):
     membership={pd.Timestamp(x["date"],tz="UTC"):set(x["symbols"]) for x in universe}
     dates=pd.date_range("2023-01-01","2023-12-31",freq="D",tz="UTC")
     signals={}
+    min_signal_date=pd.Timestamp("2023-06-30",tz="UTC")
     for sym,df in feat.items():
         ph=df.high.rolling(brk,min_periods=brk).max().shift(1)
         pl=df.low.rolling(brk,min_periods=brk).min().shift(1)
-        for d in df.index:
-            if d<pd.Timestamp("2023-06-30",tz="UTC") or d not in membership or sym not in membership[d]:continue
-            if regime.get(d) is None or regime[d]<20:continue
-            r=df.loc[d]
-            if not (pd.notna(r.atr) and pd.notna(r.mean_vol20) and r.atr>0 and r.mean_vol20>0 and pd.notna(r.body_ratio)):continue
-            direction=1 if r.close>r.open and r.close>ph.loc[d] else (-1 if r.close<r.open and r.close<pl.loc[d] else 0)
-            if r.volume>vm*r.mean_vol20 and r.body_ratio>body and direction:
-                signals.setdefault(d,[]).append((sym,direction,float(r.atr)))
+        regime_s=pd.Series(regime,dtype="float64").reindex(df.index)
+        member_dates={day for day,members in membership.items() if sym in members}
+        eligible=pd.Series(df.index.isin(member_dates),index=df.index)
+        long_cond=(df.close>df.open)&(df.close>ph)
+        short_cond=(df.close<df.open)&(df.close<pl)
+        valid=(df.index>=min_signal_date)&eligible&(regime_s>=20)&(df.atr>0)&(df.mean_vol20>0)&df.body_ratio.notna()&(df.volume>vm*df.mean_vol20)&(df.body_ratio>body)
+        selected=df.loc[valid]
+        directions=np.where(long_cond.loc[valid].to_numpy(),1,np.where(short_cond.loc[valid].to_numpy(),-1,0))
+        for d,atr_value,direction in zip(selected.index,selected.atr.to_numpy(),directions):
+            if direction:
+                signals.setdefault(d,[]).append((sym,int(direction),float(atr_value)))
     positions={}; trades=[]; daily={d:0.0 for d in dates}
     for i,d in enumerate(dates):
-        todays={s:feat[s].loc[d] for s in feat if d in feat[s].index}
         closed=set()
         for sym,pos in list(positions.items()):
-            row=todays.get(sym)
-            if row is None:continue
+            if d not in feat[sym].index:continue
+            row=feat[sym].loc[d]
             side,stop,prev=pos["side"],pos["stop"],pos["prev_close"]
             hit=(row.low<=stop) if side==1 else (row.high>=stop)
             time_exit=pos["held"]>=TIME_STOP-1
