@@ -1,59 +1,64 @@
-# CFSS Roadmap — V18.2
+# CFSS Roadmap — V21.0
 
-**Controlling source:** owner-accepted `UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER`  
-**Status snapshot:** 2026-11-21  
-**Production language:** C++ (current verified toolchain: C++20)  
+**Controlling source:** owner-accepted MASTER SOURCE V21.0 + V21.0 Execution Protocol Addendum  
+**Status snapshot:** 2026-11-23  
+**Production language:** C++  
 **Delivery:** Telegram only  
-**Execution:** manual trading only; automated orders are forbidden.
+**Execution:** manual only; private exchange accounts, trading keys and automated orders are forbidden.
 
-This roadmap supersedes the legacy orchestration/control-plane and V5 dashboard roadmap for the active Crypto Futures Signal System. Historical material remains available for audit but does not define the production path.
+This roadmap records the V21 reset. V18.2 implementation records remain historical and are not inherited as V21 stage acceptance.
 
-## Stage acceptance
+## V21 stage acceptance
 
 | Stage | Scope | Current disposition | Evidence |
 |---|---|---|---|
-| 0 | Full architecture and design | Owner-accepted V18.2 is controlling | V18.2 master source |
-| 1 | C++ end-to-end L1/L2/L3, C10, Telegram outbound/inbound | **PASS** | [Stage 1 SLRP](evidence/stage1-slrp-report.md) |
-| 2 | LFS resilience | **PASS via v2**; PROXY / NOT_CALIBRATED | [Stage 2 SLRP](evidence/stage2-lfs-slrp-report.md) |
-| 3 | NSS resilience | **PASS via v2**; PROXY / NOT_CALIBRATED | [Stage 3 SLRP](evidence/stage3-nss-slrp-report.md) |
-| 4 | Liquidity zones and market phase | **PASS via v1**; rule-based proxy | [Stage 4 SLRP](evidence/stage4-liquidity-phase-slrp-report.md) |
-| 5 | Independent LRT/NMT candidate engines | **PASS for candidate generation**; NOT_CALIBRATED and non-actionable | [Stage 5 SLRP](evidence/stage5-dual-engines-slrp-report.md) |
-| 6 | Meta-cognition, calibration and net EV | **BLOCKED / NOT_CALIBRATED** | [Stage 6 SLRP](evidence/stage6-meta-cognition-slrp-report.md) |
-| 7 | Consensus, Shadow risk and manual execution gate | **BLOCKED / FAIL-CLOSED** | [Stage 7 SLRP](evidence/stage7-risk-gate-slrp-report.md) |
-| 8 | Plan A backtest and walk-forward | GATED: Stage 7 must PASS first | V18.2 stage rules |
-| 9 | Plan B cross-sectional factor model | GATED: Stage 8 handoff and stage dependencies | V18.2 stage rules |
-| 10 | Plan C robust ensemble | GATED: prior stage approvals | V18.2 stage rules |
-| 11 | Plan H Daily Signal Factory | GATED: prior stage approvals | V18.2 stage rules |
-| 12 | Paper/Shadow observation | GATED: required strategy and risk acceptance | V18.2 stage rules |
-| 13 | Meta-allocator | GATED: minimum 180 days and 100 trades per path | V18.2 stage rules |
-| 14 | Innovation fallback | Triggered only by registered SLRP failure conditions | V18.2 Innovation Protocol |
-| 15 | Final decision | GATED: all required OOS and operational evidence | V18.2 stage rules |
+| 0 | Architecture and source authority | **PASS — OWNER ACCEPTED** | Architecture Design V1; Source Register update on V21 branch |
+| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **IN PROGRESS** | V21 branch; CI/live evidence pending |
+| 2 | Provider independence, data freshness and fallback equivalence | NOT STARTED | Gated by Stage 1 |
+| 3 | Market-regime classification and independent short-squeeze safety | NOT STARTED | Gated by Stage 2 |
+| 4 | Independent research hypotheses and falsification | NOT STARTED | Gated by Stage 3 |
+| 5 | Walk-forward and OOS validation | NOT STARTED | Gated by Stage 4 |
+| 6 | Calibration, costs and net expectancy | NOT STARTED | Gated by Stage 5 |
+| 7 | Risk gate and signal lifecycle | NOT STARTED | Gated by Stage 6 |
+| 8 | Shadow operation and operational reliability | NOT STARTED | Gated by Stage 7 |
+| 9 | Final evidence-based decision | NOT STARTED | Gated by Stage 8 |
 
-## Active blockers
+A stage may PASS only when its numerical criteria and L1/L2/L3 requirements are independently evidenced. A passing compile or fixture test does not prove live data, Telegram delivery, or trading edge.
 
-1. **Stage 6 calibration:** the 2026-11-22 scheduled main run persisted 5/5 historical costs as PROXY, but the cohort still has only five hypothetical outcomes. Probability remains `NOT_CALIBRATED`; net EV is not eligible for promotion.
-2. **Cost provenance:** persistent Shadow outcomes must contain valid fee, slippage and funding values with source provenance. Missing costs remain `UNAVAILABLE`; zero-cost substitution is forbidden.
-3. **Stage 7 risk basis:** the 2026-11-22 run generated `RISK_BASIS_INVALID_OR_NOT_FROZEN`. No owner-approved frozen Shadow NAV and per-trade risk basis exists. The system must not infer portfolio percentages from R-multiples or user account data.
-4. **Open Shadow positions:** a filled pending candidate without a valid mark-to-market and cost record keeps the risk snapshot `UNAVAILABLE`.
-5. **Scheduled persistence/delivery:** the persistence pathspec defect was corrected in [PR #169](https://github.com/hamedbenapart69-byte/Trade/pull/169). Post-merge run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) completed L1/L2, cost backfill persistence and Telegram delivery (HTTP 200, message 83).
-6. **Exchange failover:** the production C++ collector still uses OKX as its only implemented futures adapter. Bybit has returned HTTP 403 and Binance HTTP 451 from the runner; KuCoin, MEXC and Bitget have no equivalence-tested production C++ adapters. Draft research PR [#174](https://github.com/hamedbenapart69-byte/Trade/pull/174) probes Bitget V3 but does not register it. No cross-venue fields are silently blended.
+## V21 hard constraints
 
-## Release rules
+- LRT, NMT and VTM are REJECTED. No cosmetic rename, parameter adjustment, timeframe change, indicator substitution or simple ensemble may recycle them.
+- Production code is C++; Python is limited to permitted research and auxiliary validation.
+- Public market data only; no exchange-account connection, private trading key, or order execution.
+- Telegram is the sole user-facing delivery channel.
+- No paid service or paid trial.
+- Every stage completes L1 Data, L2 Compute and L3 Delivery.
+- REAL / PROXY / UNAVAILABLE / DEGRADED provenance must be explicit.
+- V21 statistical gates are fixed: OOS Win Rate >50%, PF >1.40, PBO <0.40, DSR_Z >1.00, with no look-ahead, leakage, survivorship bias or invalid execution assumptions.
+- Commission 0.04% and slippage 0.02% must be interpreted explicitly as one-way or round-trip before any backtest; until then, dependent validation is BLOCKED.
+- Signal confirmation is executed at the next candle Open in simulation by default, with costs.
+- No strategy is actionable while confidence is NOT_CALIBRATED or net EV is unavailable/non-positive.
+- Scalp remains disabled or shadow-only until measured end-to-end latency, data freshness and operational reliability pass its dedicated gate.
+- No next stage without explicit owner approval.
 
-- A stage advances only after its acceptance criteria pass with real evidence.
-- A test fixture proves code behavior, not live provider or Telegram operation.
-- Every path/profile/generator keeps independent logic, ledgers, calibration and performance reporting.
-- No threshold, risk control, data-quality rule or acceptance criterion is relaxed to create more signals.
-- No v2/v3 rewrite without a measured prior-version failure and a specific diagnosis; maximum three versions.
-- No candidate becomes actionable while calibration, EV, costs or risk evidence is unavailable.
-- The user receives signals through Telegram only. No dashboard or external account connection is required.
-- No merge to production, deployment or final release without explicit owner approval.
+## Current V21 blockers
 
-## Engineering branches in progress
+1. **Legacy scheduled strategy workflow:** .github/workflows/cpp-stage6-meta-cognition-v1.yml remains scheduled every four hours and explicitly invokes LRT/NMT candidate generation. It is incompatible with V21 and must be disabled/quarantined before any V21 production schedule. This branch does not alter it pending separate owner approval.
+2. **Legacy VTM extraction workflow:** .github/workflows/extract-vtm-result.yml remains present on main. VTM is rejected under V21; this workflow must not be considered an active V21 component.
+3. **Provider independence:** the current production collector has an implemented OKX futures adapter; Bybit/Binance were previously observed unavailable from the runner, and other adapters are not equivalence-tested. No fallback is assumed.
+4. **V21 Stage 1:** V18.2 evidence is historical. V21 manifest/contract migration and new live acceptance runs remain pending.
+5. **Cost semantics:** one-way versus round-trip interpretation is open and blocks strategy backtesting.
 
-- [PR #169 — Stage 7 Shadow risk snapshot v2](https://github.com/hamedbenapart69-byte/Trade/pull/169): merged as `ae8e356a408e1c0099aa2134ed16dd7f33ff76e3`; this is an engineering implementation, not a Stage 7 PASS.
-- [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170): closed without merge; its relevant persistence fix was superseded by PR #169.
-- [PR #174](https://github.com/hamedbenapart69-byte/Trade/pull/174): Draft research-only Bitget C++ provider probe; no production fallback is active.
-- [PR #171 — V18.2 documentation alignment](https://github.com/hamedbenapart69-byte/Trade/pull/171): documentation-only branch remains open; main documentation is being aligned directly with the canonical V18.2 roadmap.
+## Historical V18.2 records
 
-A PR being open or its CI passing does not mean the change is active on `main`.
+The following references are preserved for audit only and do not imply V21 acceptance:
+
+- V18.2 Stage 1 evidence: evidence/stage1-slrp-report.md
+- V18.2 Stage 2 LFS evidence: evidence/stage2-lfs-slrp-report.md
+- V18.2 Stage 3 NSS evidence: evidence/stage3-nss-slrp-report.md
+- V18.2 Stage 4 liquidity/phase evidence: evidence/stage4-liquidity-phase-slrp-report.md
+- V18.2 Stage 5 dual-engine evidence: evidence/stage5-dual-engines-slrp-report.md
+- V18.2 Stage 6 calibration evidence: evidence/stage6-meta-cognition-slrp-report.md
+- V18.2 Stage 7 risk-gate evidence: evidence/stage7-risk-gate-slrp-report.md
+
+A legacy PR being open or its CI passing does not make it part of the V21 production architecture. No legacy workflow is presumed safe to run merely because it remains in Git history or on main.
