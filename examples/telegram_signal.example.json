@@ -1,0 +1,22 @@
+{
+  "signal_id": "engine-name:BTCUSDT:2026-11-23T12:00:00Z:BUY",
+  "symbol": "BTCUSDT",
+  "direction": "BUY",
+  "timeframe": "4h",
+  "status": "CONDITIONAL_BUY",
+  "generated_at": "2026-11-23T12:00:00Z",
+  "hypothesis": "نمونه فرضیه مستقل از موتور تولیدکننده",
+  "entry": 90000,
+  "stop_loss": 88000,
+  "targets": [
+    94000,
+    98000
+  ],
+  "risk_reward": "2R / 4R",
+  "confidence": "NOT_CALIBRATED",
+  "calibration_status": "NOT_CALIBRATED",
+  "invalidation": "بسته‌شدن کندل ۴ ساعته زیر سطح ابطال",
+  "chart": "artifacts/BTCUSDT.png",
+  "source": "example",
+  "signal_url": "https://example.invalid/signal/123"
+}
