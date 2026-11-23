@@ -1,0 +1,40 @@
+name: Alpha Discovery Research
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "research/**"
+      - ".github/workflows/alpha-discovery.yml"
+      - "data/pit/**"
+  schedule:
+    - cron: "0 5 * * 1"
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install libraries
+        run: pip install pandas numpy scipy lightgbm scikit-learn pyarrow
+      - name: Execute discovery
+        id: research
+        continue-on-error: true
+        run: python research/alpha_discovery.py --data data/pit --output out/report.json
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-discovery-report
+          path: out/report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail if dataset or model run is unavailable
+        if: steps.research.outcome != 'success'
+        run: exit 1
