@@ -79,6 +79,7 @@ jobs:
             out/report.json
             out/vtm_backtest_final/**
             data/pit/universe_manifest.json
+            data/pit/ohlcv_2023.parquet
             data/pit/ohlcv_2023.parquet.manifest.json
           if-no-files-found: warn
           retention-days: 30
