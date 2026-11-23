@@ -9,6 +9,10 @@ on:
       - .github/workflows/vtm-backtest-2023.yml
   workflow_dispatch:
 
+concurrency:
+  group: vtm-backtest-2023
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
