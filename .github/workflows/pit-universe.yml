@@ -71,7 +71,10 @@ jobs:
           assert manifest["universe_period"] == [start.isoformat(), end.isoformat()]
           assert len(daily) == expected_days
           assert manifest["records"]["daily_dates"] == expected_days
-          assert len(monthly) == len({row["date"][:7] for row in daily})
+          expected_months = sorted({row["date"][:7] for row in daily})
+          assert [row["month"] for row in monthly] == expected_months
+          assert len(monthly) == len(expected_months)
+          assert manifest["records"]["monthly_summaries"] == len(expected_months)
           assert daily[0]["date"] == start.isoformat()
           assert daily[-1]["date"] == end.isoformat()
           assert all(row["symbols"] == sorted(set(row["symbols"])) for row in daily)
