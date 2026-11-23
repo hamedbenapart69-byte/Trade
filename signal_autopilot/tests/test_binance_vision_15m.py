@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import download_lrt15m_history as downloader
+import binance_vision_15m as downloader
 
 
 class BinanceRestKlineParsingTests(unittest.TestCase):

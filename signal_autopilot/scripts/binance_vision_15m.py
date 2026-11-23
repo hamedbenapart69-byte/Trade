@@ -29,7 +29,7 @@ def request_bytes(url: str, method: str = "GET", attempts: int = 3) -> tuple[int
     last_error = "UNKNOWN"
     for attempt in range(attempts):
         request = urllib.request.Request(
-            url, method=method, headers={"User-Agent": "Trade-LRT15m/1.0"}
+            url, method=method, headers={"User-Agent": "Trade-Historical-15m-Data/1.0"}
         )
         try:
             with urllib.request.urlopen(request, timeout=45) as response:
