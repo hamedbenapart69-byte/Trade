@@ -1,0 +1,20 @@
+# Archived legacy strategy code
+
+This directory quarantines the retired VTM, Apex Synergy, and Python LRT-15m
+strategy implementations, their strategy-specific workflows, and their tests.
+Files are preserved for traceability and are not active production entry points.
+
+## Preserved in the active tree
+
+- scripts/build_pit_universe.py: strategy-agnostic PIT universe builder.
+- signal_autopilot/scripts/binance_vision_1d.py
+- signal_autopilot/scripts/binance_vision_derivatives_1d.py
+- signal_autopilot/tests/test_binance_vision_1d.py
+- signal_autopilot/tests/test_binance_vision_derivatives_1d.py
+- config/universe.json and generic universe validation assets.
+
+## PIT limitation
+
+Candidate symbols are discovered from currently discoverable Binance Vision
+archive folders. This does not prove complete historical delisted-symbol
+coverage or reconstruct a full historical exchangeInfo status series.
