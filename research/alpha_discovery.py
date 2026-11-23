@@ -20,7 +20,7 @@ ROUND_TRIP_COST = 0.0012
 
 def read_data(root: Path):
     paths = sorted([*root.rglob("*.parquet"), *root.rglob("*.csv")])
-    paths = [p for p in paths if not p.name.endswith(".manifest.csv")]
+    paths = [p for p in paths if p.name.startswith("ohlcv_") or "ohlcv" in p.stem.lower()]
     if not paths:
         raise FileNotFoundError(f"No CSV/Parquet PIT data found under {root}")
     frames = []
@@ -51,6 +51,11 @@ def _future_by_calendar_days(group: pd.DataFrame, column: str, days: int):
     future["timestamp"] = future.timestamp - pd.Timedelta(days=days)
     return group[["timestamp"]].merge(future, on="timestamp", how="left")[column].to_numpy()
 
+def _past_by_calendar_days(group: pd.DataFrame, column: str, days: int):
+    past = group[["timestamp",column]].copy()
+    past["timestamp"] = past.timestamp + pd.Timedelta(days=days)
+    return group[["timestamp"]].merge(past, on="timestamp", how="left")[column].to_numpy()
+
 def build_features(data: pd.DataFrame):
     parts=[]
     has_funding = "funding" in data.columns and data.funding.notna().any()
@@ -66,8 +71,8 @@ def build_features(data: pd.DataFrame):
                 lambda x: float(pd.Series(x).rank(pct=True).iloc[-1]), raw=False)
         else: g["funding_pct"]=np.nan
         if has_oi and "oi" in g:
-            oi_24=_future_by_calendar_days(g,"oi",1)
-            oi_72=_future_by_calendar_days(g,"oi",3)
+            oi_24=_past_by_calendar_days(g,"oi",1)
+            oi_72=_past_by_calendar_days(g,"oi",3)
             g["oi_chg_24h"]=g.oi.to_numpy()/oi_24-1
             g["oi_chg_72h"]=g.oi.to_numpy()/oi_72-1
         else:
