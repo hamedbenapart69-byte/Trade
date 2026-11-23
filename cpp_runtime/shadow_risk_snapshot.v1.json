@@ -1,14 +1,14 @@
 {
   "artifact_type": "cfss_shadow_risk_snapshot_v1",
   "data_class": "PROXY",
-  "decision_time_ms": 1795381200000,
+  "decision_time_ms": 1795417200000,
   "ledger_sha256": "cad0341adecd81e58dd5a858ac8d27fe324737a64fe23ddbfb6166c3906af615",
   "reason": "RISK_BASIS_INVALID_OR_NOT_FROZEN",
-  "registry_sha256": "adbe2fb832891c0216cbfacec30e4af8e4af7f76e04ce41a02c283da447b8961",
+  "registry_sha256": "f9f099a3c25f0417ac7bf0635f9da1319be14b495e95c7567087294382f9b038",
   "risk_basis_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
   "snapshot_scope": "CFSS_SHADOW_PORTFOLIO_ONLY",
-  "source_run_id": "okx-cpp-1795384592856",
-  "source_scan_id": "scan-c5400c5ac0473c36798069a293ca7405f63c308969c7a7516fb356bef083fd44",
+  "source_run_id": "okx-cpp-1795419755754",
+  "source_scan_id": "scan-07a48439cb5292173a05989837816312836c50cb18678b2e12ddb0959ea241c4",
   "status": "UNAVAILABLE",
   "user_account_data_used": false
 }
