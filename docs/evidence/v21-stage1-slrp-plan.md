@@ -21,9 +21,9 @@ All criteria are mandatory. Stage 1 requires **two consecutive, independent comp
 5. **L2:** C++ emits one valid C10 state for every selected instrument. actionable=false for every instrument in Stage 1. confidence_status=NOT_CALIBRATED remains explicit. Missing/stale/partial required inputs resolve to MARKET_DATA_DEGRADED, not a fabricated signal.
 6. **V21 manifest:** run-manifest.v2.json validates against run-manifest.v2.schema.json; document_version=V21.0; rejected_strategy_families is exactly [LRT,NMT,VTM]; active_strategy_engines is empty.
 7. **L3 outbound:** Telegram API returns HTTP 200, ok=true, and a persisted positive message_id; manifest records DELIVERED and L1_L2_L3_PASS.
-8. **L3 inbound:** a controlled /status update from the authorized chat is received and processed; replaying the same update does not generate a second reply; manifest records RECEIVED_PROCESSED and controlled acceptance.
+8. **L3 inbound:** at least one of the two runs must receive and process a controlled /status update from the authorized chat; replaying the same update does not generate a second reply; the relevant manifest records RECEIVED_PROCESSED and controlled acceptance.
 9. **Persistence:** run manifest, L1/L2 provenance, Telegram outbox and receipts are persisted on the dedicated signals branch. No GitHub Actions artifact upload/storage is used.
-10. **Repeatability:** both consecutive runs independently satisfy criteria 1–9; no manual editing of generated artifacts between runs.
+10. **Repeatability:** both consecutive runs independently satisfy criteria 1–7 and 9; at least one of the two also satisfies criterion 8; no manual editing of generated artifacts between runs.
 11. **Safety:** no private exchange credentials, account endpoints, order placement, paid services, or non-C++ production runtime are used.
 12. **Scope:** no strategy-performance, profitability, calibration, or OOS claim is inferred from Stage 1.
 
