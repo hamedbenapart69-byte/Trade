@@ -1,6 +1,6 @@
 # V21 Stage 1 — SLRP Plan
 
-**Status:** PLAN BASELINED / EXECUTION IN PROGRESS  
+**Status:** MERGED FOUNDATION / LIVE ACCEPTANCE RUNS UNVERIFIED  
 **Controlling source:** MASTER SOURCE V21.0 + V21 Execution Protocol Addendum  
 **Architecture:** CFSS V21 Architecture Design V1  
 **Stage owner approval:** 2026-11-23  
@@ -41,7 +41,7 @@ A pull-request run may prove build, CTest, live L1/L2, and schema validation, bu
 - Reuse Telegram outbox/inbound deduplication with the V21 manifest.
 - Keep all fallback providers explicitly unavailable until separately implemented and equivalence-tested.
 
-**v1 status:** implementation committed to the isolated V21 branch; PR checks and live L1/L2 validation pending. No V21 L3 acceptance run has been claimed.
+**v1 status:** merged to main via PR #175. Pre-merge CI evidence confirmed C++ build, 15/15 tests, live L1/L2 sample and schema validation. This evidence is not a complete Stage 1 acceptance run. Telegram L3 and persistent-state evidence on main remain UNVERIFIED.
 
 ## 4. Diagnosis Protocol (D1–D6)
 
