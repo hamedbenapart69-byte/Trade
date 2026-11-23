@@ -83,14 +83,16 @@ def build_features(data: pd.DataFrame):
         g["pctB_50"]=(g.close-lower)/(upper-lower).replace(0,np.nan)
         parts.append(g)
     df=pd.concat(parts,ignore_index=True).sort_values(["timestamp","symbol"])
-    btc=df[df.symbol=="BTCUSDT"].groupby("timestamp").close.mean().rename("btc_close")
-    if btc.empty:
+    btc_close=df[df.symbol=="BTCUSDT"].groupby("timestamp").close.mean().rename("btc_close")
+    if btc_close.empty:
         # Binance Vision USD-M symbols are commonly BTCUSDT; no substitute is inferred.
         df["btc_corr_break"]=np.nan
     else:
-        df=df.join(btc,on="timestamp")
+        # Compute BTC returns on the unique daily BTC series before broadcasting to symbols.
+        btc_ret=btc_close.pct_change().rename("btc_ret")
+        df=df.join(btc_close,on="timestamp")
+        df=df.join(btc_ret,on="timestamp")
         df["asset_ret"]=df.groupby("symbol").close.pct_change()
-        df["btc_ret"]=df.btc_close.pct_change()
         corr_parts=[]
         for _,g in df.groupby("symbol",sort=False):
             g=g.copy()
