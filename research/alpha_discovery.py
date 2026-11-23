@@ -149,8 +149,8 @@ def trade_metrics(oos):
     pf=float(wins.sum()/losses.sum()) if len(losses) and losses.sum()>0 else None
     return {"win_rate":float(np.mean(returns>0)),"profit_factor":pf,
             "profit_factor_status":"CALCULATED" if len(losses) else "NO_LOSSES_OR_NO_WINNINGS",
-            "trade_count":int(len(returns)),"net_return":float(np.prod(1+returns)-1),
-            "mean_trade_return":float(np.mean(returns))}
+            "trade_count":int(len(returns)),"mean_trade_return":float(np.mean(returns)),
+            "metric_scope":"OOS signal-level returns; overlapping 3-day signals are not a portfolio equity curve"}
 
 def run(data):
     df,has_funding,has_oi=build_features(data)
