@@ -13,7 +13,7 @@ This roadmap records the V21 reset. V18.2 implementation records remain historic
 | Stage | Scope | Current disposition | Evidence |
 |---|---|---|---|
 | 0 | Architecture and source authority | **PASS — OWNER ACCEPTED** | Architecture Design V1; Source Register update on V21 branch |
-| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **IN PROGRESS** | V21 branch; CI/live evidence pending |
+| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **IN PROGRESS** | [V21 Stage 1 SLRP](evidence/v21-stage1-slrp-plan.md); CI/live evidence pending |
 | 2 | Provider independence, data freshness and fallback equivalence | NOT STARTED | Gated by Stage 1 |
 | 3 | Market-regime classification and independent short-squeeze safety | NOT STARTED | Gated by Stage 2 |
 | 4 | Independent research hypotheses and falsification | NOT STARTED | Gated by Stage 3 |
