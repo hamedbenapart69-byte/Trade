@@ -93,6 +93,7 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"provider_status", contract.at("provider_health")},
         {"profile", {{"symbol_target", symbols}, {"selected_symbols", contract.at("instruments").size()},
                      {"years", years}, {"timeframe", "1h"}, {"liquidity_threshold_usd", 10000000.0}}},
+        // V21 Stage 1 deliberately admits no strategy engine; rejected families are recorded for audit only.
         {"rejected_strategy_families", json::array({"LRT", "NMT", "VTM"})},
         {"active_strategy_engines", json::array()},
         {"run_status", all_real ? "L1_L2_PASS" : "DATA_DEGRADED"},
