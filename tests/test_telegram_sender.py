@@ -1,5 +1,8 @@
+import json
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -46,6 +49,24 @@ class TelegramSenderTests(unittest.TestCase):
         self.assertTrue(telegram_sender.reserve_delivery(self.db, "id-3", "c" * 64))
         telegram_sender.update_delivery(self.db, "id-3", "UNKNOWN", error="timeout")
         self.assertFalse(telegram_sender.reserve_delivery(self.db, "id-3", "c" * 64))
+
+
+    def test_accepts_strategy_specific_direction_labels(self):
+        signal = self.signal()
+        signal["direction"] = "CONDITIONAL_BUY"
+        normalized = telegram_sender.normalize_signal(signal)
+        self.assertEqual(normalized["direction"], "CONDITIONAL_BUY")
+
+    def test_sender_uses_existing_telegram_token_secret_and_skips_duplicate(self):
+        signal_path = self.root / "signal.json"
+        signal_path.write_text(json.dumps(self.signal()), encoding="utf-8")
+        with patch.dict(os.environ, {"TELEGRAM_TOKEN": "test-token", "TELEGRAM_CHAT_ID": "-100123"}):
+            with patch.object(telegram_sender, "telegram_send_photo", return_value="777") as send:
+                first = telegram_sender.send_signal(signal_path, self.db)
+                second = telegram_sender.send_signal(signal_path, self.db)
+        self.assertEqual(first["status"], "SENT")
+        self.assertEqual(second["status"], "DUPLICATE_SKIPPED")
+        send.assert_called_once()
 
     def test_payload_collision_is_rejected(self):
         self.assertTrue(telegram_sender.reserve_delivery(self.db, "id-4", "d" * 64))

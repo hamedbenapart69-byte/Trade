@@ -48,8 +48,8 @@ def normalize_signal(signal: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("signal_id is required")
     if not symbol or not direction or not timeframe:
         raise ValueError("symbol, direction and timeframe are required")
-    if direction not in {"BUY", "SELL", "LONG", "SHORT"}:
-        raise ValueError("direction must be BUY, SELL, LONG or SHORT")
+    if len(direction) > 32 or any(ord(char) < 32 for char in direction):
+        raise ValueError("direction must be a short printable label")
     if not isinstance(chart, str) or not chart.strip():
         raise ValueError("chart must be a local image path or HTTPS URL")
     chart = chart.strip()
@@ -69,6 +69,8 @@ def build_caption(signal: dict[str, Any]) -> str:
     targets = signal.get("targets")
     if targets is None:
         targets = [v for v in (signal.get("tp1"), signal.get("tp2"), signal.get("tp3")) if v is not None]
+    if targets is not None and not isinstance(targets, (list, tuple)):
+        targets = [targets]
     target_text = " | ".join(_value(v) for v in targets) if targets else "ثبت نشده"
     lines = [
         f"1) نماد و جهت: {signal['symbol']} | {signal['direction']} | {signal['timeframe']}",
@@ -198,7 +200,7 @@ def send_signal(signal_path: Path, db_path: Path, token: str | None = None,
     raw = signal_path.read_bytes()
     signal = normalize_signal(json.loads(raw.decode("utf-8")))
     caption = build_caption(signal)
-    bot_token = token or os.environ.get("TELEGRAM_BOT_TOKEN")
+    bot_token = token or os.environ.get("TELEGRAM_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
     target_chat = chat_id or os.environ.get("TELEGRAM_CHAT_ID")
     if not bot_token or not target_chat:
         raise RuntimeError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are required")

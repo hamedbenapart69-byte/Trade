@@ -8,7 +8,7 @@ code.
 
 Set environment variables (never commit them):
 
-- TELEGRAM_BOT_TOKEN
+- TELEGRAM_TOKEN (existing project secret; TELEGRAM_BOT_TOKEN is also accepted)
 - TELEGRAM_CHAT_ID
 
 Then run:
