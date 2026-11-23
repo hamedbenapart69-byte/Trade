@@ -28,6 +28,13 @@ jobs:
         run: python -m pip install --upgrade pandas numpy
       - name: Compile source
         run: python -m py_compile scripts/run_vtm_backtest_2023.py
+      - name: Restore verified Binance Vision archive cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/vtm_archives
+          key: vtm-binance-vision-${{ runner.os }}-${{ hashFiles('scripts/run_vtm_backtest_2023.py') }}
+          restore-keys: |
+            vtm-binance-vision-${{ runner.os }}-
       - name: Run VTM frozen-parameter backtest
         timeout-minutes: 50
         env:
