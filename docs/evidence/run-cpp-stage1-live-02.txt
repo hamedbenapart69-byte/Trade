@@ -1,0 +1,1 @@
+Authorized V21 Stage 1 live acceptance run 01 (trigger). Purpose: verify production C++ L1/L2/L3 on main with BTC and altcoin; no trading orders or private account access. This is independent run 01 for the two-consecutive-run gate.
