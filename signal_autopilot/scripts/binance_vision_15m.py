@@ -1,4 +1,4 @@
-"""دریافت تاریخچهٔ ۱۵ دقیقه‌ای Binance Vision برای ۲۷ نماد ثابت."""
+"""دریافت تاریخچهٔ ۱۵ دقیقه‌ای؛ Binance Vision منبع اصلی و منابع عمومی دیگر fallback هستند."""
 from __future__ import annotations
 
 import argparse
