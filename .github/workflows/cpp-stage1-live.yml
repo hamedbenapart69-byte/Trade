@@ -93,7 +93,7 @@ jobs:
 
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '1') }}
+          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '2') }}
           YEARS: ${{ inputs.years || '2' }}
         run: |
           mkdir -p artifacts shared-cache
