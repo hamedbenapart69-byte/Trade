@@ -12,7 +12,7 @@ This repository contains the implementation and evidence for CFSS. Older orchest
 The active system is divided into three layers:
 
 1. **L1 — Data:** GitHub Actions workers acquire public market data and preserve provider, timestamp, coverage and hash provenance. The user's device and exchange account are not part of the data pipeline.
-2. **L2 — Compute:** C++ production binaries validate data, compute versioned research artifacts, maintain Shadow outcomes, apply fail-closed risk controls and produce daily per-symbol states.
+2. **L2 — Compute:** V21 Stage 1 currently validates data and emits fail-closed per-symbol C10 status only. Strategy engines, Shadow outcomes, calibration and risk promotion remain gated until their V21 stages pass.
 3. **L3 — Delivery:** Telegram is the only user-facing delivery channel. Internal files, GitHub pages and engineering reports are not user dependencies.
 
 The production path is designed for free-tier infrastructure and public APIs. It must not require paid services, exchange-account credentials, private trading keys or order-execution permissions.
