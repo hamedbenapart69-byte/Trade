@@ -145,7 +145,7 @@ jobs:
           test -n "$TELEGRAM_CHAT_ID"
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
-            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v1.json
+            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v2.json
 
       - name: Snapshot inbound state before replay
         if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
@@ -161,7 +161,7 @@ jobs:
         run: |
           for attempt in $(seq 1 12); do
             echo "CPP_TELEGRAM_INBOUND_POLL=$attempt/12"
-            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v1.json
+            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v2.json
             sleep 5
           done
           test -s signals-state/cpp_runtime/telegram_inbound.v1.json
@@ -213,14 +213,14 @@ jobs:
 
       - name: Validate V21.0 run manifest
         run: |
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v2.schema.json -d artifacts/run-manifest.v2.json --all-errors
 
       - name: Persist run manifest and Telegram receipts
         if: github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         run: |
-          RUN_ID=$(jq -r .run_id artifacts/run-manifest.v1.json)
+          RUN_ID=$(jq -r .run_id artifacts/run-manifest.v2.json)
           cp artifacts/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
-          cp artifacts/run-manifest.v1.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
+          cp artifacts/run-manifest.v2.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
           cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
           cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"
           cp artifacts/fear-greed.v1.json "signals-state/cpp_runtime/fear-greed-${RUN_ID}.json"
