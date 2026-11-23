@@ -30,8 +30,22 @@ def get(url, headers=None):
     with urllib.request.urlopen(req,timeout=50) as r: return r.read()
 
 def get_pit():
+    # Artifact endpoint redirects to temporary blob storage. Do not forward GitHub auth to that host.
     url=f"https://api.github.com/repos/{REPO}/actions/artifacts/{ARTIFACT_ID}/zip"
-    zbytes=get(url,{"Authorization":f"Bearer {TOKEN}","Accept":"application/vnd.github+json","User-Agent":"VTM-Research"})
+    req=urllib.request.Request(url,headers={"Authorization":f"Bearer {TOKEN}","Accept":"application/vnd.github+json","User-Agent":"VTM-Research"})
+    opener=urllib.request.build_opener(urllib.request.HTTPHandler())
+    # Handle the redirect manually so the bearer token is never sent to blob storage.
+    class StopRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+    opener=urllib.request.build_opener(StopRedirect)
+    try:
+        response=opener.open(req,timeout=60)
+        zbytes=response.read()
+    except urllib.error.HTTPError as e:
+        if e.code not in (302,303,307,308): raise
+        location=e.headers.get("Location")
+        if not location: raise RuntimeError("Artifact redirect missing Location")
+        zbytes=get(location)  # anonymous request to signed temporary URL
     z=zipfile.ZipFile(io.BytesIO(zbytes))
     return json.loads(z.read("universe_daily.json")), json.loads(z.read("universe_manifest.json"))
 
