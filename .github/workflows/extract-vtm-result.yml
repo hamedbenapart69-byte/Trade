@@ -1,0 +1,128 @@
+name: Extract VTM Backtest Result
+
+on:
+  workflow_run:
+    workflows:
+      - "VTM Daily PIT Backtest 2023"
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  extract:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'stage-vtm-backtest-2023' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Download VTM artifact from completed run
+        uses: actions/download-artifact@v4
+        with:
+          name: vtm-backtest-2023-final
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: downloaded-vtm
+
+      - name: Extract metrics and write results/VTM_RESULTS.md
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          matches = list(Path("downloaded-vtm").rglob("summary.json"))
+          if len(matches) != 1:
+              raise SystemExit(f"Expected exactly one summary.json, found {len(matches)}")
+          summary = json.loads(matches[0].read_text(encoding="utf-8"))
+          metrics = summary.get("metrics")
+          if not isinstance(metrics, dict):
+              raise SystemExit("summary.json missing metrics object")
+
+          keys = {
+              "Win Rate": "win_rate",
+              "Profit Factor": "profit_factor",
+              "PBO": "pbo",
+              "DSR_Z": "dsr_z",
+              "MaxDD": "max_drawdown",
+          }
+          def fmt(v):
+              if v is None:
+                  return "UNAVAILABLE"
+              if isinstance(v, (int, float)):
+                  return f"{v:.6f}"
+              return str(v)
+
+          print("=== VTM FINAL METRICS ===")
+          for label, key in keys.items():
+              print(f"{label}: {fmt(metrics.get(key))}")
+
+          run_id = os.environ["RUN_ID"]
+          run_url = os.environ["RUN_URL"]
+          period = summary.get("period", "UNAVAILABLE")
+          data = summary.get("data", {})
+          trade_count = metrics.get("total_trades", "UNAVAILABLE")
+          lines = [
+              "# VTM Backtest Final Results",
+              "",
+              f"- **Workflow Run:** [#{run_id}]({run_url})",
+              f"- **Status:** {summary.get('status', 'UNAVAILABLE')}",
+              f"- **Scored period:** {period}",
+              f"- **Trades:** {trade_count}",
+              "",
+              "## Final Metrics",
+              "",
+              "| Metric | Value |",
+              "|---|---:|",
+          ]
+          for label, key in keys.items():
+              lines.append(f"| {label} | {fmt(metrics.get(key))} |")
+          lines += [
+              "",
+              "## Data Validation",
+              "",
+              f"- Archive SHA-256 verified: {data.get('archive_sha256_verified', 'UNAVAILABLE')}",
+              f"- Archives: {data.get('archive_count', 'UNAVAILABLE')}",
+              f"- Symbols downloaded: {data.get('symbols_downloaded', 'UNAVAILABLE')}",
+              f"- Funding: {data.get('funding', 'UNAVAILABLE')}",
+              "",
+              "## Research Limitations",
+              "",
+          ]
+          for item in summary.get("limitations", []):
+              lines.append(f"- {item}")
+          lines += [
+              "",
+              "> Research results only. Not a live trading signal or execution instruction.",
+              "",
+          ]
+          Path("results").mkdir(parents=True, exist_ok=True)
+          Path("results/VTM_RESULTS.md").write_text("\n".join(lines), encoding="utf-8")
+          PY
+
+      - name: Commit results automatically
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/VTM_RESULTS.md
+          if git diff --cached --quiet; then
+            echo "VTM_RESULTS.md unchanged; no commit required."
+          else
+            git commit -m "Update VTM backtest results automatically"
+            git push origin main
+          fi
