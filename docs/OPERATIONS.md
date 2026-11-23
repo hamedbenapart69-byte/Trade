@@ -28,18 +28,9 @@ Stage-specific contract workflows validate the relevant C++ modules and schemas.
 
 ## 3. Persistent runtime state
 
-The `signals` branch contains versioned runtime artifacts under `cpp_runtime/`, including:
+The `signals` branch contains historical V18.2 runtime artifacts under `cpp_runtime/`, including legacy candidate registries, outcome ledgers, Stage 4/5/6/7 outputs and Telegram receipts. These are historical evidence only; they are not an approved V21 strategy state and must not be consumed by a V21 engine without a separately reviewed migration.
 
-- Shadow candidate registry.
-- Daily outcome ledger.
-- Stage 4 liquidity/phase output.
-- Stage 5 dual-engine output.
-- Stage 6 Meta-Cognition output.
-- Stage 6 Telegram outbox/receipts.
-- Stage 7 risk-gate and, when integrated, Shadow risk snapshot.
-- Provider/universe and provenance artifacts.
-
-Treat these as generated evidence. Do not edit or delete them manually. Inspect the JSON schema and source hashes before interpreting any artifact.
+Treat these as immutable historical evidence. Do not edit or delete them manually. Inspect the JSON schema and source hashes before interpreting any artifact.
 
 ## 4. Telegram delivery and idempotency
 
