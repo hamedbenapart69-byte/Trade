@@ -1,6 +1,6 @@
 # Crypto Futures Signal System (CFSS)
 
-**Controlling specification:** owner-accepted `UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER`  
+**Controlling specification:** owner-accepted MASTER SOURCE V21.0 + V21.0 EXECUTION PROTOCOL ADDENDUM  
 **Production implementation:** C++ (current verified build: C++20)  
 **User delivery:** Telegram only  
 **Trading boundary:** manual trading only; the system never connects to a user's exchange account or places orders.
@@ -28,30 +28,25 @@ The production path is designed for free-tier infrastructure and public APIs. It
 - `NOT_CALIBRATED`, `NO_QUALIFIED_SETUP`, `INSUFFICIENT_DATA` and `MARKET_DATA_DEGRADED` are valid outputs. Thresholds must not be weakened to force signals.
 - The system reports risk states only. It does not control or protect a user's real exchange account.
 
-## Verified stage status
-
-The status below is grounded in the committed stage evidence, not inferred from the presence of source files.
+## V21 stage status
 
 | Stage | Scope | Current evidence status |
 |---|---|---|
-| 1 | C++ end-to-end L1/L2/L3, C10 and Telegram | **PASS** — two consecutive full runs, Telegram outbound and inbound, replay/deduplication evidence |
-| 2 | LFS resilience | **PASS via v2** — PROXY / NOT_CALIBRATED; no actionable trades |
-| 3 | NSS resilience | **PASS via v2** — PROXY / NOT_CALIBRATED; no actionable trades |
-| 4 | Liquidity zones and market phase | **PASS via v1** — rule-based proxy; no trade generation |
-| 5 | Independent LRT/NMT candidate engines | **PASS for candidate generation** — both engines remain non-actionable and NOT_CALIBRATED |
-| 6 | Meta-cognition, calibration and net EV | **BLOCKED / NOT_CALIBRATED** — only five hypothetical outcomes; costs are persisted as PROXY, but OOS calibration/sample-size acceptance is unmet |
-| 7 | Consensus, Shadow risk and manual execution gate | **BLOCKED / FAIL-CLOSED** — no frozen risk basis; legacy filled UNI candidate lacks fill-time provenance; upstream Stage 6 uncalibrated |
-| 8–15 | Backtests, other paths, Shadow trading, allocator and final decision | **Not eligible to start** until the preceding stage gates pass |
+| 0 | V21 architecture and source acceptance | **PASS** — owner accepted V21.0 and Architecture Design V1 on 2026-11-23; source register updated on the V21 branch |
+| 1 | V21 C++ L1/L2/L3 foundation and Telegram | **IN PROGRESS** — branch implementation and contract migration under test; no V21 live-run PASS yet |
+| 2+ | Independent research hypotheses, calibration, risk and OOS validation | **NOT STARTED / GATED** — no strategy engine is approved or calibrated |
 
-The five persisted Stage 6 outcomes are hypothetical Shadow resolutions, not executed trades. Their fee/slippage/funding rows are now populated using explicitly labelled PROXY/ASSUMED cost models, not REAL execution costs. They must not be presented as trading performance. The Stage 7 gate remains fail-closed because its risk basis is not frozen and Stage 6 remains uncalibrated.
+The previous V18.2 stage evidence remains historical evidence only. It does not establish acceptance under V21. LRT, NMT and VTM are rejected by V21 and must not be executed, renamed, or reused as production strategy engines.
 
-## Important current engineering work
+## Legacy V18.2 evidence (historical only)
 
+- V18.2 Stage 1 recorded two consecutive complete L1/L2/L3 runs with Telegram outbound/inbound and replay/deduplication. This is useful infrastructure evidence, but it is not a V21 Stage 1 acceptance.
+- V18.2 Stage 2/3/4/5 records refer to LFS/NSS, liquidity-phase and LRT/NMT candidate research. They are not active V21 strategy approvals.
+- V18.2 Stage 6 had only five hypothetical outcomes and remained NOT_CALIBRATED; Stage 7 remained BLOCKED / FAIL-CLOSED.
+- The historical Stage 6 workflow currently remains in the repository and has a four-hour schedule. Its source invokes LRT/NMT candidate generation and must be disabled or quarantined before V21 production scheduling. This workflow has not been modified in this branch because that operational change requires a separate owner decision.
+- The VTM result extraction workflow also remains present on main; VTM is rejected under V21. It is not part of the V21 execution path and requires separate quarantine approval.
 
-- [PR #169 — Stage 7 Shadow risk snapshot v2](https://github.com/hamedbenapart69-byte/Trade/pull/169) was merged on 2026-11-22 as `ae8e356a408e1c0099aa2134ed16dd7f33ff76e3`. The C++20 build and all CTest cases passed on the merged code. Stage 7 remains blocked because the owner-approved risk basis and upstream calibration evidence are still unavailable.
-- [PR #170](https://github.com/hamedbenapart69-byte/Trade/pull/170) was closed without merge; its persistence-path fix was superseded by the merged PR #169.
-- [PR #174 — C++ Bitget fallback research probe](https://github.com/hamedbenapart69-byte/Trade/pull/174) is Draft and research-only; it does not register a production fallback.
-- Post-merge scheduled Stage 6 run [#45022129611](https://github.com/hamedbenapart69-byte/Trade/actions/runs/45022129611) completed successfully on 2026-11-22: 49 instruments, 15m resolution 49/49, LFS 45/49, NSS 38/49, five persistent proxy-costed hypothetical outcomes and Telegram message 83 delivered. Statistical acceptance remains BLOCKED.
+PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. No strategy profitability or operational readiness is implied by this documentation.
 
 ## Evidence and operational entry points
 
