@@ -71,7 +71,7 @@ class Stage1BWorkflowSecurityTests(unittest.TestCase):
         self.assertNotIn("railway up", workflow)
 
     def test_legacy_v5_autopilot_and_pages_deployment_are_disabled(self):
-        workflow = read("v5-signal-autopilot.yml")
+        workflow = (ROOT / "archive" / ".github" / "workflows" / "v5-signal-autopilot.yml").read_text(encoding="utf-8")
         self.assertIn("scan-and-build:\n    if: ${{ false }}", workflow)
         self.assertNotIn("actions/upload-artifact", workflow)
         self.assertNotIn("actions/deploy-pages", workflow)
