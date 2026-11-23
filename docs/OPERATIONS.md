@@ -5,15 +5,15 @@
 **User-side provider access:** not required  
 **Trading execution:** forbidden; manual trading only.
 
-This runbook describes the V21 operational boundary. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
+This runbook describes the V21 operational boundary. V21 Stage 1 is currently under validation and is not yet declared operational. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
 
 ## 1. Normal operation
 
 1. GitHub Actions workers acquire public market data.
-2. C++ binaries validate and compute L1/L2 artifacts, strategy candidates, Shadow outcomes, meta-cognition and the risk gate.
+2. During V21 Stage 1, C++ validates market data and computes safe per-symbol status only. No strategy engine is admitted; strategy, calibration and risk modules remain gated for later stages.
 3. Versioned outputs and provenance are persisted on the dedicated `signals` branch.
 4. Telegram is the only user-facing delivery channel.
-5. The user reviews the report and independently decides whether to place any trade.
+5. Stage 1 messages are market-status reports, not trade instructions. No actionable BUY/SELL signal is permitted before independent strategy, calibration and risk gates pass.
 
 The user's browser, phone, country, exchange account, VPN, balance and private exchange credentials are not part of the data pipeline.
 
