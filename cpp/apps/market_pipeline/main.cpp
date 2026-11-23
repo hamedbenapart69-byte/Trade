@@ -83,7 +83,7 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"run_timestamp_utc", contract.at("acquired_at_utc")},
         {"repository_commit", commit ? std::string{commit} : std::string{"UNKNOWN"}},
         {"branch", branch ? std::string{branch} : std::string{"UNKNOWN"}},
-        {"document_version", "V18.2"},
+        {"document_version", "V21.0"},
         {"compiler_id", "GCC"}, {"compiler_version", __VERSION__},
         {"build_id", build_id ? std::string{build_id} : std::string{"UNAVAILABLE"}},
         {"configuration_version", "1.0.0"},
@@ -93,9 +93,11 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"provider_status", contract.at("provider_health")},
         {"profile", {{"symbol_target", symbols}, {"selected_symbols", contract.at("instruments").size()},
                      {"years", years}, {"timeframe", "1h"}, {"liquidity_threshold_usd", 10000000.0}}},
-        {"path_statuses", {{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}}},
-        {"generator_statuses", {{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
-                                {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}}},
+        {"path_statuses", {{"A", "DISABLED"}, {"B", "DISABLED"}, {"C", "DISABLED"}, {"H", "DISABLED"}}},
+        {"generator_statuses", {{"H1", "DISABLED"}, {"H2", "DISABLED"}, {"H3", "DISABLED"},
+                                {"H4", "DISABLED"}, {"H5", "DISABLED"}, {"H6", "DISABLED"}, {"H7", "DISABLED"}}},
+        {"rejected_strategy_families", json::array({"LRT", "NMT", "VTM"})},
+        {"active_strategy_engines", json::array()},
         {"run_status", all_real ? "L1_L2_PASS" : "DATA_DEGRADED"},
         {"start_time_utc", contract.at("acquired_at_utc")}, {"end_time_utc", now_text},
         {"error_summary", errors}, {"retry_summary", retry_summary},
@@ -188,7 +190,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const auto performance_path = evidence_dir / "performance.json";
         const auto coverage_path = evidence_dir / "coverage.json";
         const auto system_path = evidence_dir / "system_status.json";
-        const auto manifest_path = evidence_dir / "run-manifest.v1.json";
+        const auto manifest_path = evidence_dir / "run-manifest.v2.json";
 
         const std::string provider_raw = contract.at("provider_health").dump(2) + "\n";
         const std::string fear_raw = contract.at("fear_greed").dump(2) + "\n";
@@ -257,9 +259,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const std::string performance_raw = performance_json.dump(2) + "\n";
         write_json(performance_path, performance_json);
 
-        const json path_statuses = {{"A", "NOT_STARTED"}, {"B", "NOT_STARTED"}, {"C", "NOT_STARTED"}, {"H", "NOT_STARTED"}};
-        const json generator_statuses = {{"H1", "NOT_STARTED"}, {"H2", "NOT_STARTED"}, {"H3", "NOT_STARTED"},
-                                              {"H4", "NOT_STARTED"}, {"H5", "NOT_STARTED"}, {"H6", "NOT_STARTED"}, {"H7", "NOT_STARTED"}};
+        const json path_statuses = {{"A", "DISABLED"}, {"B", "DISABLED"}, {"C", "DISABLED"}, {"H", "DISABLED"}};
+        const json generator_statuses = {{"H1", "DISABLED"}, {"H2", "DISABLED"}, {"H3", "DISABLED"},
+                                              {"H4", "DISABLED"}, {"H5", "DISABLED"}, {"H6", "DISABLED"}, {"H7", "DISABLED"}};
         bool all_real = true;
         for (const auto& item : artifact.at("instruments"))
             if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
@@ -325,7 +327,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                   << " crypto_universe=VERIFIED source=coinpaprika"
                   << " run_id=" << contract.at("run_id") << '\n';
         std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
-        std::cout << "REQUIRED_ARTIFACTS_CREATED signals.json history.csv performance.json coverage.json system_status.json run-manifest.v1.json\n";
+        std::cout << "REQUIRED_ARTIFACTS_CREATED signals.json history.csv performance.json coverage.json system_status.json run-manifest.v2.json\n";
         curl_global_cleanup();
         return EXIT_SUCCESS;
     } catch (...) {
