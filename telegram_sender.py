@@ -205,7 +205,7 @@ def send_signal(signal_path: Path, db_path: Path, token: str | None = None,
     bot_token = token or os.environ.get("TELEGRAM_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
     target_chat = chat_id or os.environ.get("TELEGRAM_CHAT_ID")
     if not bot_token or not target_chat:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are required")
+        raise RuntimeError("Telegram bot token (TELEGRAM_TOKEN or TELEGRAM_BOT_TOKEN) and TELEGRAM_CHAT_ID are required")
     if not reserve_delivery(db_path, signal["signal_id"], payload_hash):
         return {"status": "DUPLICATE_SKIPPED", "signal_id": signal["signal_id"]}
     try:
