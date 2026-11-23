@@ -163,14 +163,22 @@ def run(data):
     model_data=df.replace([np.inf,-np.inf],np.nan).dropna(subset=usable+["forward_3d_return"])
     months=sorted(model_data.timestamp.dt.to_period("M").unique())
     from lightgbm import LGBMClassifier
-    folds=[]; oos_parts=[]
+    folds=[]; oos_parts=[]; fold_diagnostics=[]
     for i in range(6,len(months)-1,2):
         train_months=months[i-6:i]; test_months=months[i:i+2]
-        train=model_data[model_data.timestamp.dt.to_period("M").isin(train_months)]
-        test=model_data[model_data.timestamp.dt.to_period("M").isin(test_months)]
-        if len(train)<500 or len(test)<100: continue
+        train_start=train_months[0].start_time.tz_localize("UTC")
+        test_start=months[i].start_time.tz_localize("UTC")
+        test_end=(months[i+2].start_time.tz_localize("UTC") if i+2<len(months)
+                  else (months[-1]+1).start_time.tz_localize("UTC"))
+        train=model_data[(model_data.timestamp>=train_start)&(model_data.timestamp<test_start)]
+        test=model_data[(model_data.timestamp>=test_start)&(model_data.timestamp<test_end)]
+        if len(train)<500 or len(test)<100:
+            fold_diagnostics.append({"fold":i,"train_rows":int(len(train)),"test_rows":int(len(test)),"skip":"sample_below_minimum"})
+            continue
         y=(train.forward_3d_return>0).astype(int)
-        if y.nunique()<2: continue
+        if y.nunique()<2:
+            fold_diagnostics.append({"fold":i,"train_rows":int(len(train)),"test_rows":int(len(test)),"skip":"single_class_training_target"})
+            continue
         model=LGBMClassifier(n_estimators=180,max_depth=4,num_leaves=15,
             learning_rate=.04,verbosity=-1,random_state=42,n_jobs=-1)
         model.fit(train[usable],y)
@@ -185,7 +193,13 @@ def run(data):
             "test_start":str(test_months[0]),"test_end":str(test_months[-1]),
             "train_rows":int(len(train)),"test_rows":int(len(test)),
             "selected_trades":int(selected.sum()),"features":usable})
-    if not folds: raise ValueError("No valid 6m/2m walk-forward folds in available PIT period")
+    if not folds:
+        raise ValueError("No valid 6m/2m walk-forward folds; diagnostics=" + json.dumps({
+            "available_months":[str(m) for m in months],
+            "model_rows":int(len(model_data)),
+            "feature_non_null":{f:int(model_data[f].notna().sum()) for f in usable},
+            "fold_attempts":fold_diagnostics
+        }))
     oos=pd.concat(oos_parts,ignore_index=True) if oos_parts else pd.DataFrame(
         columns=["timestamp","symbol","probability","net_return"])
     metrics=trade_metrics(oos)
