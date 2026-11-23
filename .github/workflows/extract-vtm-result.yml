@@ -36,9 +36,13 @@ jobs:
 
       - name: Extract metrics and write results/VTM_RESULTS.md
         shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           matches = list(Path("downloaded-vtm").rglob("summary.json"))
@@ -67,8 +71,8 @@ jobs:
           for label, key in keys.items():
               print(f"{label}: {fmt(metrics.get(key))}")
 
-          run_id = ${{ github.event.workflow_run.id }}
-          run_url = ${{ github.event.workflow_run.html_url }}
+          run_id = os.environ["RUN_ID"]
+          run_url = os.environ["RUN_URL"]
           period = summary.get("period", "UNAVAILABLE")
           data = summary.get("data", {})
           trade_count = metrics.get("total_trades", "UNAVAILABLE")
@@ -107,7 +111,7 @@ jobs:
               "",
           ]
           Path("results").mkdir(parents=True, exist_ok=True)
-          Path("results/VTM_RESULTS.md").write_text("\\n".join(lines), encoding="utf-8")
+          Path("results/VTM_RESULTS.md").write_text("\n".join(lines), encoding="utf-8")
           PY
 
       - name: Commit results automatically
