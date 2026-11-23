@@ -1,0 +1,4 @@
+V21 Stage 1 controlled live execution 01.
+Owner authorization: explicit Stage 1 approval recorded 2026-11-23.
+Scope: public OKX L1 collection, C++ L2 safe C10 status, V21 run-manifest v2 validation, Telegram L3 outbound receipt.
+No strategy engine is activated. LRT, NMT and VTM remain rejected. No private exchange account, trading key, or order execution is permitted.
