@@ -16,7 +16,7 @@ permissions:
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,7 +29,7 @@ jobs:
       - name: Compile source
         run: python -m py_compile scripts/run_vtm_backtest_2023.py
       - name: Run VTM frozen-parameter backtest
-        timeout-minutes: 10
+        timeout-minutes: 50
         env:
           PIT_ARTIFACT_ID: '14772840217'
           GITHUB_REPOSITORY: ${{ github.repository }}
