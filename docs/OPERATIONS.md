@@ -1,44 +1,36 @@
-# CFSS Operations Runbook — V18.2
+# CFSS Operations Runbook — V21.0
 
 **Active user channel:** Telegram only  
 **Active production compute:** C++ on GitHub Actions  
 **User-side provider access:** not required  
 **Trading execution:** forbidden; manual trading only.
 
-This runbook replaces the old Docker/FastAPI/Railway/n8n control-plane instructions for the active Crypto Futures Signal System. Those instructions are historical and must not be used to operate the V18.2 production pipeline.
+This runbook describes the V21 operational boundary. V21 Stage 1 is currently under validation and is not yet declared operational. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
 
 ## 1. Normal operation
 
 1. GitHub Actions workers acquire public market data.
-2. C++ binaries validate and compute L1/L2 artifacts, strategy candidates, Shadow outcomes, meta-cognition and the risk gate.
+2. During V21 Stage 1, C++ validates market data and computes safe per-symbol status only. No strategy engine is admitted; strategy, calibration and risk modules remain gated for later stages.
 3. Versioned outputs and provenance are persisted on the dedicated `signals` branch.
 4. Telegram is the only user-facing delivery channel.
-5. The user reviews the report and independently decides whether to place any trade.
+5. Stage 1 messages are market-status reports, not trade instructions. No actionable BUY/SELL signal is permitted before independent strategy, calibration and risk gates pass.
 
 The user's browser, phone, country, exchange account, VPN, balance and private exchange credentials are not part of the data pipeline.
 
 ## 2. Active workflows
 
-- [C++ Stage 1 live vertical slice](../.github/workflows/cpp-stage1-live.yml)
-- [C++ Stage 6 scheduled Meta-Cognition pipeline](../.github/workflows/cpp-stage6-meta-cognition-v1.yml)
+- [C++ V21 Stage 1 live vertical slice](../.github/workflows/cpp-stage1-live.yml)
+
+**Legacy workflow blocker:** cpp-stage6-meta-cognition-v1.yml remains scheduled and calls LRT/NMT candidate generation. Do not treat it as a V21 workflow. Its disable/quarantine is awaiting owner authorization.
 - [All GitHub Actions runs](https://github.com/hamedbenapart69-byte/Trade/actions)
 
 Stage-specific contract workflows validate the relevant C++ modules and schemas. Legacy Python/V5, dashboard, email, Railway and orchestration workflows are not the active user-facing architecture.
 
 ## 3. Persistent runtime state
 
-The `signals` branch contains versioned runtime artifacts under `cpp_runtime/`, including:
+The `signals` branch contains historical V18.2 runtime artifacts under `cpp_runtime/`, including legacy candidate registries, outcome ledgers, Stage 4/5/6/7 outputs and Telegram receipts. These are historical evidence only; they are not an approved V21 strategy state and must not be consumed by a V21 engine without a separately reviewed migration.
 
-- Shadow candidate registry.
-- Daily outcome ledger.
-- Stage 4 liquidity/phase output.
-- Stage 5 dual-engine output.
-- Stage 6 Meta-Cognition output.
-- Stage 6 Telegram outbox/receipts.
-- Stage 7 risk-gate and, when integrated, Shadow risk snapshot.
-- Provider/universe and provenance artifacts.
-
-Treat these as generated evidence. Do not edit or delete them manually. Inspect the JSON schema and source hashes before interpreting any artifact.
+Treat these as immutable historical evidence. Do not edit or delete them manually. Inspect the JSON schema and source hashes before interpreting any artifact.
 
 ## 4. Telegram delivery and idempotency
 

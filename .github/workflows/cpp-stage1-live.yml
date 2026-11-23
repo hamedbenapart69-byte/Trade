@@ -1,8 +1,8 @@
-name: C++ Only Stage 1 Live Vertical Slice
+name: C++ V21 Stage 1 Live Vertical Slice
 
 on:
   push:
-    branches: [feat/cpp-stage1-clean]
+    branches: [feat/cpp-stage1-clean, v21/stage0-accepted-stage1-foundation]
     paths:
       - "docs/evidence/run-cpp-stage1-live*.txt"
       - "docs/evidence/run-telegram-inbound-test*.txt"
@@ -38,8 +38,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: cpp-only-stage1-live-${{ github.event_name }}
-  cancel-in-progress: false
+  group: cpp-only-stage1-live-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   cpp-l1-l2:
@@ -93,7 +93,7 @@ jobs:
 
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '1') }}
+          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '2') }}
           YEARS: ${{ inputs.years || '2' }}
         run: |
           mkdir -p artifacts shared-cache
@@ -120,7 +120,7 @@ jobs:
 
       - name: Validate run manifest
         run: |
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v2.schema.json -d artifacts/run-manifest.v2.json --all-errors
 
       - name: Validate L2 against the versioned JSON Schema
         run: |
@@ -145,7 +145,7 @@ jobs:
           test -n "$TELEGRAM_CHAT_ID"
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
-            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v1.json
+            signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v2.json
 
       - name: Snapshot inbound state before replay
         if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
@@ -161,7 +161,7 @@ jobs:
         run: |
           for attempt in $(seq 1 12); do
             echo "CPP_TELEGRAM_INBOUND_POLL=$attempt/12"
-            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v1.json
+            ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v2.json
             sleep 5
           done
           test -s signals-state/cpp_runtime/telegram_inbound.v1.json
@@ -211,16 +211,16 @@ jobs:
           test "$CSV_ROWS" -eq "$((L1_ROWS + 1))"
           echo "HISTORY_CSV_ROWS=$((CSV_ROWS - 1))"
 
-      - name: Validate V18.2 run manifest
+      - name: Validate V21.0 run manifest
         run: |
-          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v1.schema.json -d artifacts/run-manifest.v1.json --all-errors
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v2.schema.json -d artifacts/run-manifest.v2.json --all-errors
 
       - name: Persist run manifest and Telegram receipts
         if: github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         run: |
-          RUN_ID=$(jq -r .run_id artifacts/run-manifest.v1.json)
+          RUN_ID=$(jq -r .run_id artifacts/run-manifest.v2.json)
           cp artifacts/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
-          cp artifacts/run-manifest.v1.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
+          cp artifacts/run-manifest.v2.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
           cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
           cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"
           cp artifacts/fear-greed.v1.json "signals-state/cpp_runtime/fear-greed-${RUN_ID}.json"
