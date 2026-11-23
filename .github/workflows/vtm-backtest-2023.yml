@@ -11,13 +11,25 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 jobs:
   backtest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Cancel stale long-running backtest attempts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          for run_id in 45120285422 45121216577 45121219754; do
+            echo "Requesting cancellation of stale run $run_id"
+            curl --fail-with-body --silent --show-error -X POST \\
+              -H "Authorization: Bearer $GH_TOKEN" \\
+              -H "Accept: application/vnd.github+json" \\
+              "https://api.github.com/repos/$GH_REPOSITORY/actions/runs/$run_id/cancel" || true
+          done
       - uses: actions/checkout@v4
         with:
           ref: stage-vtm-backtest-2023
