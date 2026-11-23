@@ -1,0 +1,43 @@
+{
+  "artifact_sha256": "0e7996561047babce1b8b9e2e5e4f7e2e632003bb15b14d07a16910294c071d6",
+  "artifact_type": "cfss_l2_status_v1",
+  "created_at_epoch_ms": 1795452133196,
+  "instruments": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795446000000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ETH-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795446000000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "UNI-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795446000000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "UNI/USDT:USDT"
+    }
+  ],
+  "source_run_id": "okx-cpp-1795452117563",
+  "source_scan_id": "scan-bb5232cda73a8b57a897d649657ea53fb0e91adfcc2ad5aebf910e2ebc76247e",
+  "source_schema_version": "1.0.0"
+}
