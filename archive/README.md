@@ -2,7 +2,7 @@
 
 This directory quarantines the retired VTM, Apex Synergy, and Python LRT-15m
 strategy implementations (including the quarantined V5 live scan), their strategy-specific workflows, and their tests.
-Files are preserved for traceability and are not active production entry points. Compatibility symlinks under signal_autopilot/modules and scripts/ resolve to archived legacy modules so existing imports do not break during transition; remove those links when all legacy consumers are retired.
+Files are preserved for traceability and are not active production entry points. Compatibility symlinks under signal_autopilot/modules resolve to archived legacy modules so existing imports do not break during transition; remove those links when all legacy consumers are retired.
 
 ## Preserved in the active tree
 
