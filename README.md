@@ -50,7 +50,8 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 
 ## Evidence and operational entry points
 
-- [Stage 1 SLRP evidence](docs/evidence/stage1-slrp-report.md)
+- [V21 Stage 1 SLRP plan](docs/evidence/v21-stage1-slrp-plan.md)
+- [Historical V18.2 Stage 1 SLRP evidence](docs/evidence/stage1-slrp-report.md)
 - [Stage 2 LFS SLRP evidence](docs/evidence/stage2-lfs-slrp-report.md)
 - [Stage 3 NSS SLRP evidence](docs/evidence/stage3-nss-slrp-report.md)
 - [Stage 4 liquidity/phase SLRP evidence](docs/evidence/stage4-liquidity-phase-slrp-report.md)
