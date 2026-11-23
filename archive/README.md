@@ -7,6 +7,7 @@ Files are preserved for traceability and are not active production entry points.
 ## Preserved in the active tree
 
 - scripts/build_pit_universe.py: strategy-agnostic PIT universe builder.
+- Legacy LRT-1D research sweep and workflow are preserved under archive/.
 - signal_autopilot/scripts/binance_vision_1d.py
 - signal_autopilot/scripts/binance_vision_derivatives_1d.py
 - signal_autopilot/tests/test_binance_vision_1d.py
