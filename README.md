@@ -43,8 +43,8 @@ The previous V18.2 stage evidence remains historical evidence only. It does not 
 - V18.2 Stage 1 recorded two consecutive complete L1/L2/L3 runs with Telegram outbound/inbound and replay/deduplication. This is useful infrastructure evidence, but it is not a V21 Stage 1 acceptance.
 - V18.2 Stage 2/3/4/5 records refer to LFS/NSS, liquidity-phase and LRT/NMT candidate research. They are not active V21 strategy approvals.
 - V18.2 Stage 6 had only five hypothetical outcomes and remained NOT_CALIBRATED; Stage 7 remained BLOCKED / FAIL-CLOSED.
-- The historical Stage 6 workflow currently remains in the repository and has a four-hour schedule. Its source invokes LRT/NMT candidate generation and must be disabled or quarantined before V21 production scheduling. This workflow has not been modified in this branch because that operational change requires a separate owner decision.
-- The VTM result extraction workflow also remains present on main; VTM is rejected under V21. It is not part of the V21 execution path and requires separate quarantine approval.
+- The historical Stage 6 workflow file remains in the repository, but its job is now explicitly quarantined (`if: false`). Its legacy four-hour schedule cannot execute that job.
+- The VTM result-extraction workflow also remains in the repository, with its job explicitly quarantined (`if: false`).
 
 PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. No strategy profitability or operational readiness is implied by this documentation.
 
