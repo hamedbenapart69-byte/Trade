@@ -182,6 +182,12 @@ def trade_metrics(oos):
             "trade_count":int(len(returns)),"mean_trade_return":float(np.mean(returns)),
             "metric_scope":"OOS signal-level returns; overlapping 3-day signals are not a portfolio equity curve"}
 
+def purged_training_window(data: pd.DataFrame, train_start: pd.Timestamp,
+                           test_start: pd.Timestamp, purge_days: int = 3) -> pd.DataFrame:
+    """Exclude training labels whose t+3 outcome could touch the test period."""
+    cutoff = test_start - pd.Timedelta(days=purge_days)
+    return data[(data.timestamp >= train_start) & (data.timestamp < cutoff)].copy()
+
 def run(data):
     df,has_funding,has_oi=build_features(data)
     if "_pit_member" not in df.columns:
@@ -209,7 +215,7 @@ def run(data):
         test_start=months[i].start_time.tz_localize("UTC")
         test_end=(months[i+2].start_time.tz_localize("UTC") if i+2<len(months)
                   else (months[-1]+1).start_time.tz_localize("UTC"))
-        train=model_data[(model_data.timestamp>=train_start)&(model_data.timestamp<test_start)]
+        train=purged_training_window(model_data, train_start, test_start, purge_days=3)
         test=model_data[(model_data.timestamp>=test_start)&(model_data.timestamp<test_end)]
         if len(train)<500 or len(test)<100:
             fold_diagnostics.append({"fold":i,"train_rows":int(len(train)),"test_rows":int(len(test)),"skip":"sample_below_minimum"})
@@ -231,7 +237,7 @@ def run(data):
         folds.append({"train_start":str(train_months[0]),"train_end":str(train_months[-1]),
             "test_start":str(test_months[0]),"test_end":str(test_months[-1]),
             "train_rows":int(len(train)),"test_rows":int(len(test)),
-            "selected_trades":int(selected.sum()),"features":usable})
+            "purge_days":3,"selected_trades":int(selected.sum()),"features":usable})
     if not folds:
         raise ValueError("No valid 6m/2m walk-forward folds; diagnostics=" + json.dumps({
             "available_months":[str(m) for m in months],
@@ -265,11 +271,11 @@ def run(data):
             "coverage":{"funding_available":bool(has_funding),"open_interest_available":bool(has_oi)}},
         "top5_rank_ic":ic[:5],
         "rank_ic_scope":"Full 2023 sample, descriptive only; not OOS-only and not used to select the fitted model features.",
-        "walk_forward":{"train_months":6,"test_months":2,"folds":len(folds),"details":folds},
+        "walk_forward":{"train_months":6,"test_months":2,"purge_days":3,"folds":len(folds),"details":folds},
         "lightgbm_metrics":metrics,
         "costs":{"fee_pct_per_side":0.04,"slippage_pct_per_side":0.02,
             "round_trip_cost_pct":0.12,"cost_model":"deducted once from each 3-day trade return"},
-        "research_limitations":["PIT membership is applied by exact UTC date/symbol key; features use prior available OHLCV history.", "PIT data coverage is limited to dates present in source artifacts.",
+        "research_limitations":["Training rows are purged by the exact 3-calendar-day target horizon before each test fold.", "PIT membership is applied by exact UTC date/symbol key; features use prior available OHLCV history.", "PIT data coverage is limited to dates present in source artifacts.",
             "PBO is explicitly a proxy based on four probability thresholds.",
             "Funding/OI features are not imputed or synthesized."]
     }
