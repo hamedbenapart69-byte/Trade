@@ -138,13 +138,13 @@ int main() {
     nlohmann::json funding_fresh_rows = nlohmann::json::array();
     for (std::int64_t i = 0; i < 4; ++i)
         funding_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
-            15LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
+            39LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
     const auto funding_freshness = cfss::okx::evaluate_series_freshness(
         funding_fresh_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
     nlohmann::json oi_fresh_rows = nlohmann::json::array();
     for (std::int64_t i = 0; i < 4; ++i)
         oi_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
-            3LL * 60LL * 60LL * 1000LL + i * 60LL * 60LL * 1000LL}});
+            6LL * 60LL * 60LL * 1000LL + i * 60LL * 60LL * 1000LL}});
     const auto oi_freshness = cfss::okx::evaluate_series_freshness(
         oi_fresh_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
     if (funding_freshness.status != "FRESH" || funding_freshness.max_age_ms != 16LL * 60LL * 60LL * 1000LL ||
