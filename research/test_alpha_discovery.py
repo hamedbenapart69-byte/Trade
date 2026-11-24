@@ -20,10 +20,13 @@ class PitMembershipTests(unittest.TestCase):
 
     def test_rank_ic_is_mean_daily_cross_sectional_spearman(self):
         rows = []
-        for day, offset in [("2023-01-01", 0), ("2023-01-02", 100), ("2023-01-03", 200)]:
+        first_day = pd.Timestamp("2023-01-01", tz="UTC")
+        for day_index in range(30):
+            day = first_day + pd.Timedelta(days=day_index)
+            offset = 100 * day_index
             for rank in range(10):
                 rows.append({
-                    "timestamp": pd.Timestamp(day, tz="UTC"),
+                    "timestamp": day,
                     "symbol": f"SYM{rank}",
                     "feature": float(offset + rank),
                     "forward_3d_return": float(rank),
@@ -31,7 +34,7 @@ class PitMembershipTests(unittest.TestCase):
         result = ic_table(pd.DataFrame(rows), ["feature"])
         self.assertEqual(len(result), 1)
         self.assertAlmostEqual(result[0]["rank_ic"], 1.0, places=12)
-        self.assertEqual(result[0]["n_dates"], 3)
+        self.assertEqual(result[0]["n_dates"], 30)
 
     def test_training_labels_are_purged_before_test_start(self):
         data = pd.DataFrame({
