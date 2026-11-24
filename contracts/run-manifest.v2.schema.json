@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "run_id",
+    "workflow_run_number",
     "scan_id",
     "run_timestamp_utc",
     "repository_commit",
@@ -39,6 +40,10 @@
     "run_id": {
       "type": "string",
       "minLength": 1
+    },
+    "workflow_run_number": {
+      "type": "integer",
+      "minimum": 0
     },
     "scan_id": {
       "type": "string",
