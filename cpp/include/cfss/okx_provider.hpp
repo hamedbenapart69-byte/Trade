@@ -690,8 +690,9 @@ inline std::int64_t median_series_interval_ms(const json& rows) {
         if (current > previous) gaps.push_back(current - previous);
     }
     if (gaps.empty()) return 0;
+    if (gaps.size() > 20U) gaps.erase(gaps.begin(), gaps.end() - 20);
     std::sort(gaps.begin(), gaps.end());
-    return gaps[gaps.size() / 2U];
+    return gaps[(gaps.size() - 1U) / 2U];
 }
 
 inline SeriesFreshness evaluate_series_freshness(const json& rows,
