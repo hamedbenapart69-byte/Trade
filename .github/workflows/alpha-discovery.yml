@@ -24,6 +24,9 @@ jobs:
           cache: pip
       - name: Install research dependencies
         run: python -m pip install --upgrade pandas numpy scipy lightgbm scikit-learn pyarrow
+      - name: Validate PIT membership filter unit tests
+        run: python -m unittest research.test_alpha_discovery
+
       - name: Download latest VTM result artifact and verified PIT universe artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,6 +103,8 @@ jobs:
             out/report.json
             out/vtm_backtest_final/**
             data/pit/universe_manifest.json
+            data/pit/universe_membership.csv
+            data/pit/universe_daily.csv
             data/pit/ohlcv_2023.parquet
             data/pit/ohlcv_2023.parquet.manifest.json
           if-no-files-found: warn
