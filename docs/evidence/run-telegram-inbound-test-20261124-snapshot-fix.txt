@@ -1,0 +1,1 @@
+Trigger the Stage 1 controlled inbound/replay workflow after correcting the exact processed-update snapshot. The run must only pass if a newly received, authorized Telegram update is processed and replayed without a second reply.
