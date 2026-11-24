@@ -40,7 +40,7 @@ inline void validate_time_series(const nlohmann::json& rows, const char* field, 
     }
 }
 inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int64_t now_ms) {
-    if (!contract.is_object() || !contract.contains("schema_version") || contract.at("schema_version") != "1.0.0")
+    if (!contract.is_object() || !contract.contains("schema_version") || contract.at("schema_version") != "1.1.0")
         throw std::invalid_argument("unsupported_l1_contract_schema_version");
     require_string(contract, "run_id");
     require_string(contract, "scan_id");
