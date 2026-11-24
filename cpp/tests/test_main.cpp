@@ -48,7 +48,18 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
                      {"open_interest_value_currency", "USD"}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"availability", {{"ohlcv", "AVAILABLE"}, {"funding", "PARTIAL"},
-                                  {"open_interest", "PARTIAL"}}}
+                                  {"open_interest", "PARTIAL"}}},
+                {"coverage", {
+                    {"ohlcv_rows", 1}, {"funding_rows", 1}, {"open_interest_rows", 1},
+                    {"ohlcv_coverage_pct", 100.0}, {"funding_coverage_days", 0.0},
+                    {"open_interest_coverage_days", 0.0},
+                    {"funding_latest_age_ms", 3'600'000LL},
+                    {"funding_max_age_ms", 24LL * 60LL * 60LL * 1000LL},
+                    {"funding_freshness_status", "FRESH"},
+                    {"open_interest_latest_age_ms", 3'600'000LL},
+                    {"open_interest_max_age_ms", 3LL * 60LL * 60LL * 1000LL},
+                    {"open_interest_freshness_status", "FRESH"}
+                }}
             }
         })}
     };
@@ -121,6 +132,24 @@ int main() {
         cfss::okx::ohlcv_series_complete(duplicate_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
         cfss::okx::ohlcv_series_complete(off_grid_rows, coverage_start_ms, coverage_end_ms, listing_time_ms)) {
         std::cerr << "Exact listing-aware OHLCV timestamp coverage gate failed\n"; return EXIT_FAILURE;
+    }
+
+    const std::int64_t freshness_reference_ms = 1'800'000'000'000LL;
+    nlohmann::json funding_fresh_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 4; ++i)
+        funding_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
+            15LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
+    const auto funding_freshness = cfss::okx::evaluate_series_freshness(
+        funding_fresh_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+    nlohmann::json oi_fresh_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 4; ++i)
+        oi_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
+            3LL * 60LL * 60LL * 1000LL + i * 60LL * 60LL * 1000LL}});
+    const auto oi_freshness = cfss::okx::evaluate_series_freshness(
+        oi_fresh_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+    if (funding_freshness.status != "FRESH" || funding_freshness.max_age_ms != 16LL * 60LL * 60LL * 1000LL ||
+        oi_freshness.status != "FRESH" || oi_freshness.max_age_ms != 3LL * 60LL * 60LL * 1000LL) {
+        std::cerr << "Funding/OI freshness cadence gate failed\n"; return EXIT_FAILURE;
     }
 
     const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
@@ -269,6 +298,28 @@ int main() {
         complete_item.at("data_quality") != "REAL" ||
         complete_item.at("reason_code") != "NO_STRATEGY_ADMITTED") {
         std::cerr << "C10 full-data no-setup state test failed\n"; return EXIT_FAILURE;
+    }
+    auto stale_funding_contract = complete_contract;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_latest_age_ms"] =
+        17LL * 60LL * 60LL * 1000LL;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_max_age_ms"] =
+        16LL * 60LL * 60LL * 1000LL;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_freshness_status"] = "STALE";
+    const auto stale_funding_artifact = cfss::build_l2_artifact(stale_funding_contract, now_ms);
+    if (stale_funding_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        stale_funding_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Stale funding data did not fail closed\n"; return EXIT_FAILURE;
+    }
+    auto stale_oi_contract = complete_contract;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_latest_age_ms"] =
+        4LL * 60LL * 60LL * 1000LL;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_max_age_ms"] =
+        3LL * 60LL * 60LL * 1000LL;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_freshness_status"] = "STALE";
+    const auto stale_oi_artifact = cfss::build_l2_artifact(stale_oi_contract, now_ms);
+    if (stale_oi_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        stale_oi_artifact["instruments"][0]["reason_code"] != "OPEN_INTEREST_STALE") {
+        std::cerr << "Stale open-interest data did not fail closed\n"; return EXIT_FAILURE;
     }
     auto duplicate = contract;
     duplicate["instruments"][0]["candles"].push_back(duplicate["instruments"][0]["candles"][0]);
