@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from research.alpha_discovery import apply_pit_membership, purged_training_window
+from research.alpha_discovery import apply_pit_membership, purged_training_window, ic_table
 
 class PitMembershipTests(unittest.TestCase):
     def test_only_exact_date_symbol_members_are_marked(self):
@@ -16,6 +16,22 @@ class PitMembershipTests(unittest.TestCase):
         result = apply_pit_membership(data, membership)
         self.assertEqual(result["_pit_member"].tolist(), [True, False, False])
 
+
+
+    def test_rank_ic_is_mean_daily_cross_sectional_spearman(self):
+        rows = []
+        for day, offset in [("2023-01-01", 0), ("2023-01-02", 100), ("2023-01-03", 200)]:
+            for rank in range(10):
+                rows.append({
+                    "timestamp": pd.Timestamp(day, tz="UTC"),
+                    "symbol": f"SYM{rank}",
+                    "feature": float(offset + rank),
+                    "forward_3d_return": float(rank),
+                })
+        result = ic_table(pd.DataFrame(rows), ["feature"])
+        self.assertEqual(len(result), 1)
+        self.assertAlmostEqual(result[0]["rank_ic"], 1.0, places=12)
+        self.assertEqual(result[0]["n_dates"], 3)
 
     def test_training_labels_are_purged_before_test_start(self):
         data = pd.DataFrame({

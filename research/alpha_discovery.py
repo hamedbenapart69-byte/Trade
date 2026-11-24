@@ -133,14 +133,31 @@ def build_features(data: pd.DataFrame):
     return df, has_funding, has_oi
 
 def ic_table(df, available):
+    """Mean daily cross-sectional IC/Rank IC on PIT-member observations."""
     rows=[]
     for feature in available:
-        sample=df[[feature,"forward_3d_return"]].replace([np.inf,-np.inf],np.nan).dropna()
+        sample=df[["timestamp",feature,"forward_3d_return"]].replace(
+            [np.inf,-np.inf],np.nan).dropna()
         if len(sample)<30: continue
-        ic=sample[feature].corr(sample.forward_3d_return)
-        rank_ic=sample[feature].rank().corr(sample.forward_3d_return.rank())
-        rows.append({"feature":feature,"ic":float(ic) if pd.notna(ic) else None,
-                     "rank_ic":float(rank_ic) if pd.notna(rank_ic) else None,"n":int(len(sample))})
+        daily=[]
+        for _, cross_section in sample.groupby("timestamp",sort=True):
+            if len(cross_section)<10: continue
+            ic=cross_section[feature].corr(cross_section.forward_3d_return)
+            rank_ic=cross_section[feature].rank().corr(
+                cross_section.forward_3d_return.rank())
+            if pd.notna(ic) and pd.notna(rank_ic):
+                daily.append((float(ic),float(rank_ic)))
+        if len(daily)<30: continue
+        ic_values=np.asarray([x[0] for x in daily],dtype=float)
+        rank_values=np.asarray([x[1] for x in daily],dtype=float)
+        rows.append({
+            "feature":feature,
+            "ic":float(np.mean(ic_values)),
+            "rank_ic":float(np.mean(rank_values)),
+            "rank_ic_std":float(np.std(rank_values,ddof=1)),
+            "n":int(len(sample)),
+            "n_dates":int(len(daily))
+        })
     return sorted(rows,key=lambda row:abs(row["rank_ic"] or 0),reverse=True)
 
 def pbo_cscv(oos: pd.DataFrame):
@@ -270,7 +287,7 @@ def run(data):
         "features":{"requested":FEATURES,"used":usable,"unavailable":missing,
             "coverage":{"funding_available":bool(has_funding),"open_interest_available":bool(has_oi)}},
         "top5_rank_ic":ic[:5],
-        "rank_ic_scope":"Full 2023 sample, descriptive only; not OOS-only and not used to select the fitted model features.",
+        "rank_ic_scope":"Mean daily cross-sectional Spearman IC on PIT-member rows; dates require at least 10 symbols. Full 2023 descriptive statistic, not OOS-only and not used to select fitted model features.",
         "walk_forward":{"train_months":6,"test_months":2,"purge_days":3,"folds":len(folds),"details":folds},
         "lightgbm_metrics":metrics,
         "costs":{"fee_pct_per_side":0.04,"slippage_pct_per_side":0.02,
