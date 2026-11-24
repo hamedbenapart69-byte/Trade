@@ -187,21 +187,26 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         if (!valid_freshness(funding_freshness) || !valid_freshness(oi_freshness))
             throw std::invalid_argument("instrument_freshness_status_invalid");
         const auto age_is_within_limit = [&](const char* age_key, const char* max_key,
-                                             const std::string& status) {
+                                             const std::string& status, std::int64_t hard_cap_ms) {
             const auto age = coverage.value(age_key, nlohmann::json(nullptr));
             const auto maximum = coverage.value(max_key, nlohmann::json(0));
+            if (!maximum.is_number_integer() || maximum.get<std::int64_t>() < 0 ||
+                maximum.get<std::int64_t>() > hard_cap_ms) return false;
             if (status == "UNAVAILABLE")
-                return age.is_null() || (age.is_number_integer() && age.get<std::int64_t>() >= 0);
-            if (!age.is_number_integer() || !maximum.is_number_integer() ||
-                age.get<std::int64_t>() < 0 || maximum.get<std::int64_t>() <= 0) return false;
+                return maximum.get<std::int64_t>() == 0 &&
+                       (age.is_null() || (age.is_number_integer() && age.get<std::int64_t>() >= 0));
+            if (!age.is_number_integer() || maximum.get<std::int64_t>() <= 0 ||
+                age.get<std::int64_t>() < 0) return false;
             const auto age_ms = age.get<std::int64_t>();
             const auto max_ms = maximum.get<std::int64_t>();
             return status == "FRESH" ? age_ms <= max_ms : age_ms > max_ms;
         };
         const bool funding_fresh = age_is_within_limit(
-            "funding_latest_age_ms", "funding_max_age_ms", funding_freshness);
+            "funding_latest_age_ms", "funding_max_age_ms", funding_freshness,
+            24LL * 60LL * 60LL * 1000LL);
         const bool oi_fresh = age_is_within_limit(
-            "open_interest_latest_age_ms", "open_interest_max_age_ms", oi_freshness);
+            "open_interest_latest_age_ms", "open_interest_max_age_ms", oi_freshness,
+            3LL * 60LL * 60LL * 1000LL);
         const bool full_data = funding_status == "AVAILABLE" && oi_status == "AVAILABLE" &&
                                funding_fresh && oi_fresh;
         const bool admitted = candles_valid && latest_fresh && ohlcv_available && full_data;
