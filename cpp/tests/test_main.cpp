@@ -308,6 +308,31 @@ int main() {
         cfss::telegram::inbound_duplicate_should_resume_reply("DELIVERY_UNKNOWN")) {
         std::cerr << "Telegram inbound duplicate replay gate failed\\n"; return EXIT_FAILURE;
     }
+
+    const auto inbound_replay_test_dir = std::filesystem::temp_directory_path() /
+        ("cfss-inbound-replay-test-" + std::to_string(now_ms));
+    std::filesystem::create_directories(inbound_replay_test_dir);
+    const auto inbound_replay_state_path = inbound_replay_test_dir / "inbound-state.json";
+    auto inbound_replay_state = cfss::telegram::default_inbound_state();
+    inbound_replay_state["last_update_id"] = 610176013;
+    inbound_replay_state["processed_updates"]["610176013"] = {
+        {"status", "PROCESSED"}, {"reply_status", "DELIVERED"},
+        {"reply_message_id", 43}, {"reply_text", "controlled /status reply"}
+    };
+    cfss::telegram::write_json_atomic(inbound_replay_state_path, inbound_replay_state);
+    const int inbound_replay_result =
+        cfss::telegram::replay_processed_update(inbound_replay_state_path, 610176013);
+    const auto inbound_replay_after = cfss::telegram::load_json_or_default(
+        inbound_replay_state_path, cfss::telegram::default_inbound_state());
+    if (inbound_replay_result != EXIT_SUCCESS ||
+        inbound_replay_after["processed_updates"]["610176013"].value("status", std::string{}) != "PROCESSED" ||
+        inbound_replay_after["processed_updates"]["610176013"].value("reply_status", std::string{}) != "DELIVERED" ||
+        inbound_replay_after["processed_updates"]["610176013"].value("reply_message_id", 0LL) != 43LL) {
+        std::cerr << "Telegram exact-update replay generated or allowed a duplicate reply\\n";
+        std::filesystem::remove_all(inbound_replay_test_dir);
+        return EXIT_FAILURE;
+    }
+    std::filesystem::remove_all(inbound_replay_test_dir);
     const auto inbound_default = cfss::telegram::default_inbound_state();
     if (inbound_default.value("last_poll_status", std::string{}) != "NEVER_POLLED" ||
         inbound_default.value("poll_count", -1LL) != 0LL ||
