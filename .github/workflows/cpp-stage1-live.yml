@@ -38,8 +38,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: cpp-only-stage1-live-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # همهٔ اجراها یک signals branch مشترک را می‌نویسند؛ اجرای هم‌زمان ممنوع است.
+  group: cpp-only-stage1-live
+  cancel-in-progress: false
 
 jobs:
   cpp-l1-l2:
@@ -245,76 +246,8 @@ jobs:
             if [ -s "artifacts/$src" ]; then cp "artifacts/$src" "signals-state/cpp_runtime/$dst"; fi
           done
 
-      - name: Enforce V21 Stage 1 acceptance gate
-        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
-        run: |
-          set -euo pipefail
-          RUN_ID=$(jq -r '.run_id // empty' artifacts/run-manifest.v2.json 2>/dev/null || true)
-          CURRENT="signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
-          if [ -z "$RUN_ID" ] || [ ! -s "$CURRENT" ]; then
-            echo "STAGE1_ACCEPTANCE_BLOCKED: current run manifest missing"
-            exit 1
-          fi
-          jq -e '
-            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
-            .telegram_send_status == "DELIVERED" and
-            (.telegram_message_ids | length > 0) and
-            (.active_strategy_engines | length == 0) and
-            (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
-          ' "$CURRENT" >/dev/null
-          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
-            echo "STAGE1_ACCEPTANCE_BLOCKED: only main-branch runs can establish production acceptance"
-            exit 1
-          fi
-          RUN_NUMBER="$GITHUB_RUN_NUMBER"
-          [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]] && [ "$RUN_NUMBER" -gt 1 ]
-          mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
-          test "${#manifests[@]}" -gt 0
-          jq -s --argjson current "$RUN_NUMBER" '
-            [.[] | select((.workflow_run_number | type) == "number")] |
-            sort_by(.workflow_run_number) | .[-2:]
-          ' "${manifests[@]}" > artifacts/stage1-acceptance-last-two.json
-          VALID_COUNT=$(jq 'length' artifacts/stage1-acceptance-last-two.json)
-          if [ "$VALID_COUNT" -lt 2 ]; then
-            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
-            exit 1
-          fi
-          jq -e --arg sha "$GITHUB_SHA" --argjson current "$RUN_NUMBER" '
-            length == 2 and
-            .[0].workflow_run_number == ($current - 1) and
-            .[1].workflow_run_number == $current and
-            all(.[]; 
-              .repository_commit == $sha and
-              .branch == "main" and
-              (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
-              .telegram_send_status == "DELIVERED" and
-              (.telegram_message_ids | length > 0) and
-              (.active_strategy_engines | length == 0) and
-              (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
-              .document_version == "V21.0" and
-              .artifact_manifest.l2_status.retained_in_signals_branch == true and
-              .artifact_manifest.provider_health.retained_in_signals_branch == true and
-              .artifact_manifest.coverage.retained_in_signals_branch == true and
-              .artifact_manifest.system_status.retained_in_signals_branch == true
-            )
-          ' artifacts/stage1-acceptance-last-two.json >/dev/null
-          DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
-          if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
-            echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
-            exit 1
-          fi
-          INBOUND_COUNT=$(jq '[.[] | select(
-            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
-            .telegram_replay_test_status == "PASS" and
-            .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
-          )] | length' artifacts/stage1-acceptance-last-two.json)
-          if [ "$INBOUND_COUNT" -lt 1 ]; then
-            echo "STAGE1_ACCEPTANCE_PENDING: one of the last two runs must prove /status receive and exact-update replay"
-            exit 1
-          fi
-          echo "STAGE1_ACCEPTANCE_GATE_PASS revision=$GITHUB_SHA consecutive_runs=$VALID_COUNT inbound_replay_runs=$INBOUND_COUNT"
-
       - name: Persist Telegram delivery and inbound receipts
+        id: persist_telegram_state
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         working-directory: signals-state
         shell: bash
@@ -338,3 +271,131 @@ jobs:
         run: |
           echo "ACTIONS_ARTIFACT_UPLOAD_DISABLED=true"
           echo "COMPACT_EVIDENCE_PERSISTED_ON_SIGNALS_BRANCH=true"
+
+      - name: Verify signals branch persistence
+        id: verify_signals_persist
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.persist_telegram_state.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=$(jq -r '.run_id // empty' artifacts/run-manifest.v2.json 2>/dev/null || true)
+          test -n "$RUN_ID"
+          git -C signals-state fetch origin refs/heads/signals:refs/remotes/origin/signals
+          MANIFEST_PATH="cpp_runtime/run-manifest-${RUN_ID}.json"
+          git -C signals-state cat-file -e "origin/signals:$MANIFEST_PATH"
+          git -C signals-state show "origin/signals:$MANIFEST_PATH" > artifacts/signals-branch-current-manifest.json
+          cmp artifacts/run-manifest.v2.json artifacts/signals-branch-current-manifest.json
+          git -C signals-state cat-file -e "origin/signals:cpp_runtime/telegram_outbox.v1.json"
+          git -C signals-state show "origin/signals:cpp_runtime/telegram_outbox.v1.json" > artifacts/signals-branch-telegram-outbox.v1.json
+          SCAN_ID=$(jq -r '.scan_id' artifacts/run-manifest.v2.json)
+          jq -e --arg scan "$SCAN_ID" '
+            [.messages | to_entries[] | select(.key | startswith($scan + ":status:"))] as $messages |
+            ($messages | length) > 0 and
+            all($messages[]; .value.status == "DELIVERED" and
+                (.value.telegram_message_id | type) == "number" and
+                .value.telegram_message_id > 0)
+          ' artifacts/signals-branch-telegram-outbox.v1.json >/dev/null
+          for path in             "l2-status-${RUN_ID}.json"             "provider-health-${RUN_ID}.json"             "fear-greed-${RUN_ID}.json"             "crypto_universe.v1.json"             "signals-${RUN_ID}.json"             "history-${RUN_ID}.csv"             "performance-${RUN_ID}.json"             "coverage-${RUN_ID}.json"             "system-status-${RUN_ID}.json"; do
+            git -C signals-state cat-file -e "origin/signals:cpp_runtime/$path"
+          done
+          echo "SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=$RUN_ID"
+
+      - name: Enforce V21 Stage 1 acceptance gate
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=$(jq -r '.run_id // empty' artifacts/run-manifest.v2.json 2>/dev/null || true)
+          CURRENT="signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
+          if [ -z "$RUN_ID" ] || [ ! -s "$CURRENT" ]; then
+            echo "STAGE1_ACCEPTANCE_BLOCKED: current run manifest missing"
+            exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "STAGE1_ACCEPTANCE_BLOCKED: only main-branch runs can establish production acceptance"
+            exit 1
+          fi
+          jq -e '
+            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .telegram_send_status == "DELIVERED" and
+            (.telegram_message_ids | length > 0) and
+            (.active_strategy_engines | length == 0) and
+            (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
+          ' "$CURRENT" >/dev/null
+          RUN_NUMBER="$GITHUB_RUN_NUMBER"
+          [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]] && [ "$RUN_NUMBER" -gt 1 ]
+          mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
+          test "${#manifests[@]}" -gt 0
+          jq -s '
+            [.[] | select((.workflow_run_number | type) == "number")] |
+            sort_by(.workflow_run_number) | .[-2:]
+          ' "${manifests[@]}" > artifacts/stage1-acceptance-last-two.json
+          VALID_COUNT=$(jq 'length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$VALID_COUNT" -lt 2 ]; then
+            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
+            exit 1
+          fi
+          jq -e --arg sha "$GITHUB_SHA" --argjson current "$RUN_NUMBER" '
+            length == 2 and
+            .[0].workflow_run_number == ($current - 1) and
+            .[1].workflow_run_number == $current and
+            all(.[]; 
+              .repository_commit == $sha and
+              .branch == "main" and
+              (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+              .telegram_send_status == "DELIVERED" and
+              (.telegram_message_ids | length > 0) and
+              (.active_strategy_engines | length == 0) and
+              (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
+              .document_version == "V21.0" and
+              (.dataset_hash | type == "string") and
+              (.dataset_hash | length > 0) and
+              (.artifact_manifest.l1_market_data.sha256 | type == "string") and
+              (.artifact_manifest.l1_market_data.sha256 | length > 0) and
+              .artifact_manifest.l2_status.retained_in_signals_branch == true and
+              .artifact_manifest.provider_health.retained_in_signals_branch == true and
+              .artifact_manifest.crypto_universe.retained_in_signals_branch == true and
+              .artifact_manifest.signals.retained_in_signals_branch == true and
+              .artifact_manifest.history.retained_in_signals_branch == true and
+              .artifact_manifest.performance.retained_in_signals_branch == true and
+              .artifact_manifest.coverage.retained_in_signals_branch == true and
+              .artifact_manifest.system_status.retained_in_signals_branch == true
+            )
+          ' artifacts/stage1-acceptance-last-two.json >/dev/null
+          DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
+            echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
+            exit 1
+          fi
+          while IFS= read -r scan_id; do
+            jq -e --arg scan "$scan_id" '
+              [.messages | to_entries[] | select(.key | startswith($scan + ":status:"))] as $messages |
+              ($messages | length) > 0 and
+              all($messages[]; .value.status == "DELIVERED" and
+                  (.value.telegram_message_id | type) == "number" and
+                  .value.telegram_message_id > 0)
+            ' artifacts/signals-branch-telegram-outbox.v1.json >/dev/null
+          done < <(jq -r '.[].scan_id' artifacts/stage1-acceptance-last-two.json)
+          INBOUND_COUNT=$(jq '[.[] | select(
+            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
+            .telegram_replay_test_status == "PASS" and
+            .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
+          )] | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$INBOUND_COUNT" -lt 1 ]; then
+            echo "STAGE1_ACCEPTANCE_PENDING: one of the last two runs must prove /status receive and exact-update replay"
+            exit 1
+          fi
+          git -C signals-state show "origin/signals:cpp_runtime/telegram_inbound.v1.json" > artifacts/signals-branch-telegram-inbound.v1.json
+          while IFS= read -r update_id; do
+            jq -e --arg key "$update_id" '
+              .processed_updates[$key].status == "PROCESSED" and
+              .processed_updates[$key].reply_status == "DELIVERED" and
+              (.processed_updates[$key].reply_message_id | type) == "number" and
+              .processed_updates[$key].reply_message_id > 0
+            ' artifacts/signals-branch-telegram-inbound.v1.json >/dev/null
+          done < <(jq -r '.[] | select(
+            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
+            .telegram_replay_test_status == "PASS" and
+            .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
+          ) | .telegram_replay_test_update_id' artifacts/stage1-acceptance-last-two.json)
+          echo "STAGE1_ACCEPTANCE_GATE_PASS revision=$GITHUB_SHA consecutive_runs=$VALID_COUNT inbound_replay_runs=$INBOUND_COUNT"
