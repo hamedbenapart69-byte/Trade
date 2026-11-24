@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       symbols:
-        description: "Frozen linear USDT perpetual universe size (BTC included)"
+        description: "Number of non-BTC USDT perpetuals; BTC is added separately"
         required: true
         default: "100"
         type: choice
@@ -38,8 +38,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: cpp-only-stage1-live-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # همهٔ اجراها یک signals branch مشترک را می‌نویسند؛ اجرای هم‌زمان ممنوع است.
+  group: cpp-only-stage1-live
+  cancel-in-progress: false
 
 jobs:
   cpp-l1-l2:
@@ -97,12 +98,8 @@ jobs:
           YEARS: ${{ inputs.years || '2' }}
         run: |
           mkdir -p artifacts shared-cache
-          if [ -s signals-state/cpp_runtime/shadow_candidate_registry.v1.json ]; then
-            jq -c '[.candidates[] | select(.state == "PENDING") | .symbol] | unique' \
-              signals-state/cpp_runtime/shadow_candidate_registry.v1.json > artifacts/pending-symbols.v1.json
-          else
-            printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
-          fi
+          # Stage 1 must not inherit symbol candidates from rejected legacy strategy state.
+          printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
           ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
@@ -136,7 +133,7 @@ jobs:
 
 
       - name: Real Telegram outbound through C++ L3
-        if: ${{ github.event_name != 'pull_request' && !(github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
+        if: ${{ github.event_name != 'pull_request' && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]')) }}
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -146,12 +143,6 @@ jobs:
           mkdir -p signals-state/cpp_runtime
           ./build/telegram_delivery artifacts/l2-status.v1.json \
             signals-state/cpp_runtime/telegram_outbox.v1.json artifacts/run-manifest.v2.json
-
-      - name: Snapshot inbound state before replay
-        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
-        run: |
-          jq '{last_update_id, poll_count, delivered_reply_count: ([.processed_updates[] | select(.reply_status == "DELIVERED")] | length), reply_message_id: .processed_updates["610176013"].reply_message_id}' signals-state/cpp_runtime/telegram_inbound.v1.json > artifacts/inbound-replay-before.json
-          jq '.messages | length' signals-state/cpp_runtime/telegram_outbox.v1.json > artifacts/inbound-replay-outbox-before.txt
 
       - name: Controlled Telegram inbound receive through C++ L3
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
@@ -168,26 +159,40 @@ jobs:
           grep -Eq '"status": "PROCESSED"' signals-state/cpp_runtime/telegram_inbound.v1.json
           echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
-      - name: Verify inbound replay did not resend a reply
-        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
+      - name: Snapshot exact processed update before replay
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
-          BEFORE_ID=$(jq -r .last_update_id artifacts/inbound-replay-before.json)
-          AFTER_ID=$(jq -r .last_update_id signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_POLLS=$(jq -r .poll_count artifacts/inbound-replay-before.json)
-          AFTER_POLLS=$(jq -r .poll_count signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_REPLIES=$(jq -r .delivered_reply_count artifacts/inbound-replay-before.json)
-          AFTER_REPLIES=$(jq '[.processed_updates[] | select(.reply_status == "DELIVERED")] | length' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          UPDATE_ID=$(jq -r '.last_update_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          test "$UPDATE_ID" -gt 0
+          jq --arg key "$UPDATE_ID" '.processed_updates[$key] | {status, reply_status, reply_message_id}' \
+            signals-state/cpp_runtime/telegram_inbound.v1.json > artifacts/inbound-replay-before.json
+          test "$(jq -r .status artifacts/inbound-replay-before.json)" = "PROCESSED"
+          test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
+          test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
+          printf '%s\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
+
+      - name: Replay the exact processed Telegram update through C++ L3
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
+        run: |
+          UPDATE_ID=$(cat artifacts/inbound-replay-update-id.txt)
+          ./build/telegram_inbound --replay-update "$UPDATE_ID" \
+            signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v2.json
+
+      - name: Verify exact-update replay did not send a second reply
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
+        run: |
+          UPDATE_ID=$(cat artifacts/inbound-replay-update-id.txt)
+          KEY="$UPDATE_ID"
           BEFORE_REPLY_ID=$(jq -r .reply_message_id artifacts/inbound-replay-before.json)
-          AFTER_REPLY_ID=$(jq -r '.processed_updates["610176013"].reply_message_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_OUTBOX=$(cat artifacts/inbound-replay-outbox-before.txt)
-          AFTER_OUTBOX=$(jq '.messages | length' signals-state/cpp_runtime/telegram_outbox.v1.json)
-          test "$BEFORE_ID" = "$AFTER_ID"
-          test "$AFTER_POLLS" -gt "$BEFORE_POLLS"
-          test "$BEFORE_REPLIES" = "$AFTER_REPLIES"
-          test "$BEFORE_REPLY_ID" = "43"
+          AFTER_REPLY_ID=$(jq -r --arg key "$KEY" '.processed_updates[$key].reply_message_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          AFTER_STATUS=$(jq -r --arg key "$KEY" '.processed_updates[$key].status' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          AFTER_REPLY_STATUS=$(jq -r --arg key "$KEY" '.processed_updates[$key].reply_status' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          test "$AFTER_STATUS" = "PROCESSED"
+          test "$AFTER_REPLY_STATUS" = "DELIVERED"
           test "$AFTER_REPLY_ID" = "$BEFORE_REPLY_ID"
-          test "$BEFORE_OUTBOX" = "$AFTER_OUTBOX"
-          echo "CPP_TELEGRAM_INBOUND_REPLAY_DEDUPE_PASS"
+          test "$(jq -r .telegram_replay_test_status artifacts/run-manifest.v2.json)" = "PASS"
+          test "$(jq -r .telegram_replay_test_update_id artifacts/run-manifest.v2.json)" = "$UPDATE_ID"
+          echo "CPP_TELEGRAM_INBOUND_EXACT_REPLAY_DEDUPE_PASS update_id=$UPDATE_ID reply_message_id=$AFTER_REPLY_ID"
 
       - name: Record inbound test not requested
         if: ${{ !((github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) ) }}
@@ -216,21 +221,33 @@ jobs:
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/run-manifest.v2.schema.json -d artifacts/run-manifest.v2.json --all-errors
 
       - name: Persist run manifest and Telegram receipts
-        if: github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         run: |
+          set -euo pipefail
+          if [ ! -s artifacts/run-manifest.v2.json ]; then
+            echo "STAGE1_MANIFEST_NOT_CREATED"
+            exit 0
+          fi
           RUN_ID=$(jq -r .run_id artifacts/run-manifest.v2.json)
-          cp artifacts/crypto-universe.v1.json signals-state/cpp_runtime/crypto_universe.v1.json
+          mkdir -p signals-state/cpp_runtime
           cp artifacts/run-manifest.v2.json "signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
-          cp artifacts/l2-status.v1.json "signals-state/cpp_runtime/l2-status-${RUN_ID}.json"
-          cp artifacts/provider-health.v1.json "signals-state/cpp_runtime/provider-health-${RUN_ID}.json"
-          cp artifacts/fear-greed.v1.json "signals-state/cpp_runtime/fear-greed-${RUN_ID}.json"
-          cp artifacts/signals.json "signals-state/cpp_runtime/signals-${RUN_ID}.json"
-          cp artifacts/history.csv "signals-state/cpp_runtime/history-${RUN_ID}.csv"
-          cp artifacts/performance.json "signals-state/cpp_runtime/performance-${RUN_ID}.json"
-          cp artifacts/coverage.json "signals-state/cpp_runtime/coverage-${RUN_ID}.json"
-          cp artifacts/system_status.json "signals-state/cpp_runtime/system-status-${RUN_ID}.json"
+          for pair in \
+            "crypto-universe.v1.json:crypto_universe.v1.json" \
+            "l2-status.v1.json:l2-status-${RUN_ID}.json" \
+            "provider-health.v1.json:provider-health-${RUN_ID}.json" \
+            "fear-greed.v1.json:fear-greed-${RUN_ID}.json" \
+            "signals.json:signals-${RUN_ID}.json" \
+            "history.csv:history-${RUN_ID}.csv" \
+            "performance.json:performance-${RUN_ID}.json" \
+            "coverage.json:coverage-${RUN_ID}.json" \
+            "system_status.json:system-status-${RUN_ID}.json"; do
+            src="${pair%%:*}"
+            dst="${pair#*:}"
+            if [ -s "artifacts/$src" ]; then cp "artifacts/$src" "signals-state/cpp_runtime/$dst"; fi
+          done
 
       - name: Persist Telegram delivery and inbound receipts
+        id: persist_telegram_state
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
         working-directory: signals-state
         shell: bash
@@ -254,3 +271,131 @@ jobs:
         run: |
           echo "ACTIONS_ARTIFACT_UPLOAD_DISABLED=true"
           echo "COMPACT_EVIDENCE_PERSISTED_ON_SIGNALS_BRANCH=true"
+
+      - name: Verify signals branch persistence
+        id: verify_signals_persist
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.persist_telegram_state.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=$(jq -r '.run_id // empty' artifacts/run-manifest.v2.json 2>/dev/null || true)
+          test -n "$RUN_ID"
+          git -C signals-state fetch origin refs/heads/signals:refs/remotes/origin/signals
+          MANIFEST_PATH="cpp_runtime/run-manifest-${RUN_ID}.json"
+          git -C signals-state cat-file -e "origin/signals:$MANIFEST_PATH"
+          git -C signals-state show "origin/signals:$MANIFEST_PATH" > artifacts/signals-branch-current-manifest.json
+          cmp artifacts/run-manifest.v2.json artifacts/signals-branch-current-manifest.json
+          git -C signals-state cat-file -e "origin/signals:cpp_runtime/telegram_outbox.v1.json"
+          git -C signals-state show "origin/signals:cpp_runtime/telegram_outbox.v1.json" > artifacts/signals-branch-telegram-outbox.v1.json
+          SCAN_ID=$(jq -r '.scan_id' artifacts/run-manifest.v2.json)
+          jq -e --arg scan "$SCAN_ID" '
+            [.messages | to_entries[] | select(.key | startswith($scan + ":status:"))] as $messages |
+            ($messages | length) > 0 and
+            all($messages[]; .value.status == "DELIVERED" and
+                (.value.telegram_message_id | type) == "number" and
+                .value.telegram_message_id > 0)
+          ' artifacts/signals-branch-telegram-outbox.v1.json >/dev/null
+          for path in             "l2-status-${RUN_ID}.json"             "provider-health-${RUN_ID}.json"             "fear-greed-${RUN_ID}.json"             "crypto_universe.v1.json"             "signals-${RUN_ID}.json"             "history-${RUN_ID}.csv"             "performance-${RUN_ID}.json"             "coverage-${RUN_ID}.json"             "system-status-${RUN_ID}.json"; do
+            git -C signals-state cat-file -e "origin/signals:cpp_runtime/$path"
+          done
+          echo "SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=$RUN_ID"
+
+      - name: Enforce V21 Stage 1 acceptance gate
+        if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=$(jq -r '.run_id // empty' artifacts/run-manifest.v2.json 2>/dev/null || true)
+          CURRENT="signals-state/cpp_runtime/run-manifest-${RUN_ID}.json"
+          if [ -z "$RUN_ID" ] || [ ! -s "$CURRENT" ]; then
+            echo "STAGE1_ACCEPTANCE_BLOCKED: current run manifest missing"
+            exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "STAGE1_ACCEPTANCE_BLOCKED: only main-branch runs can establish production acceptance"
+            exit 1
+          fi
+          jq -e '
+            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .telegram_send_status == "DELIVERED" and
+            (.telegram_message_ids | length > 0) and
+            (.active_strategy_engines | length == 0) and
+            (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
+          ' "$CURRENT" >/dev/null
+          RUN_NUMBER="$GITHUB_RUN_NUMBER"
+          [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]] && [ "$RUN_NUMBER" -gt 1 ]
+          mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
+          test "${#manifests[@]}" -gt 0
+          jq -s '
+            [.[] | select((.workflow_run_number | type) == "number")] |
+            sort_by(.workflow_run_number) | .[-2:]
+          ' "${manifests[@]}" > artifacts/stage1-acceptance-last-two.json
+          VALID_COUNT=$(jq 'length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$VALID_COUNT" -lt 2 ]; then
+            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
+            exit 1
+          fi
+          jq -e --arg sha "$GITHUB_SHA" --argjson current "$RUN_NUMBER" '
+            length == 2 and
+            .[0].workflow_run_number == ($current - 1) and
+            .[1].workflow_run_number == $current and
+            all(.[]; 
+              .repository_commit == $sha and
+              .branch == "main" and
+              (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+              .telegram_send_status == "DELIVERED" and
+              (.telegram_message_ids | length > 0) and
+              (.active_strategy_engines | length == 0) and
+              (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
+              .document_version == "V21.0" and
+              (.dataset_hash | type == "string") and
+              (.dataset_hash | length > 0) and
+              (.artifact_manifest.l1_market_data.sha256 | type == "string") and
+              (.artifact_manifest.l1_market_data.sha256 | length > 0) and
+              .artifact_manifest.l2_status.retained_in_signals_branch == true and
+              .artifact_manifest.provider_health.retained_in_signals_branch == true and
+              .artifact_manifest.crypto_universe.retained_in_signals_branch == true and
+              .artifact_manifest.signals.retained_in_signals_branch == true and
+              .artifact_manifest.history.retained_in_signals_branch == true and
+              .artifact_manifest.performance.retained_in_signals_branch == true and
+              .artifact_manifest.coverage.retained_in_signals_branch == true and
+              .artifact_manifest.system_status.retained_in_signals_branch == true
+            )
+          ' artifacts/stage1-acceptance-last-two.json >/dev/null
+          DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
+            echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
+            exit 1
+          fi
+          while IFS= read -r scan_id; do
+            jq -e --arg scan "$scan_id" '
+              [.messages | to_entries[] | select(.key | startswith($scan + ":status:"))] as $messages |
+              ($messages | length) > 0 and
+              all($messages[]; .value.status == "DELIVERED" and
+                  (.value.telegram_message_id | type) == "number" and
+                  .value.telegram_message_id > 0)
+            ' artifacts/signals-branch-telegram-outbox.v1.json >/dev/null
+          done < <(jq -r '.[].scan_id' artifacts/stage1-acceptance-last-two.json)
+          INBOUND_COUNT=$(jq '[.[] | select(
+            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
+            .telegram_replay_test_status == "PASS" and
+            .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
+          )] | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$INBOUND_COUNT" -lt 1 ]; then
+            echo "STAGE1_ACCEPTANCE_PENDING: one of the last two runs must prove /status receive and exact-update replay"
+            exit 1
+          fi
+          git -C signals-state show "origin/signals:cpp_runtime/telegram_inbound.v1.json" > artifacts/signals-branch-telegram-inbound.v1.json
+          while IFS= read -r update_id; do
+            jq -e --arg key "$update_id" '
+              .processed_updates[$key].status == "PROCESSED" and
+              .processed_updates[$key].reply_status == "DELIVERED" and
+              (.processed_updates[$key].reply_message_id | type) == "number" and
+              .processed_updates[$key].reply_message_id > 0
+            ' artifacts/signals-branch-telegram-inbound.v1.json >/dev/null
+          done < <(jq -r '.[] | select(
+            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
+            .telegram_replay_test_status == "PASS" and
+            .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
+          ) | .telegram_replay_test_update_id' artifacts/stage1-acceptance-last-two.json)
+          echo "STAGE1_ACCEPTANCE_GATE_PASS revision=$GITHUB_SHA consecutive_runs=$VALID_COUNT inbound_replay_runs=$INBOUND_COUNT"

@@ -72,6 +72,9 @@ json build_run_manifest(const json& contract, const json& artifact,
     const char* commit = std::getenv("GITHUB_SHA");
     const char* branch = std::getenv("GITHUB_REF_NAME");
     const char* build_id = std::getenv("CFSS_BUILD_ID");
+    const char* workflow_run_number_env = std::getenv("GITHUB_RUN_NUMBER");
+    const long long workflow_run_number = workflow_run_number_env
+        ? std::strtoll(workflow_run_number_env, nullptr, 10) : 0LL;
     const auto now_text = cfss::okx::utc_iso(now_epoch_ms());
     auto retry_summary = cfss::okx::request_metrics();
     retry_summary["telegram_send_attempts_total_for_scan"] = 0;
@@ -79,7 +82,9 @@ json build_run_manifest(const json& contract, const json& artifact,
     retry_summary["telegram_inbound_polls"] = 0;
 
     return {
-        {"run_id", contract.at("run_id")}, {"scan_id", contract.at("scan_id")},
+        {"run_id", contract.at("run_id")},
+        {"workflow_run_number", workflow_run_number},
+        {"scan_id", contract.at("scan_id")},
         {"run_timestamp_utc", contract.at("acquired_at_utc")},
         {"repository_commit", commit ? std::string{commit} : std::string{"UNKNOWN"}},
         {"branch", branch ? std::string{branch} : std::string{"UNKNOWN"}},
@@ -102,6 +107,8 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"artifact_manifest", artifact_manifest},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
+        {"telegram_replay_test_status", "NOT_REQUESTED"},
+        {"telegram_replay_test_update_id", 0},
         {"telegram_message_ids", json::array()},
         {"telegram_last_update_id", 0}
     };

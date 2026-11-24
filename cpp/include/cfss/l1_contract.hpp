@@ -40,7 +40,7 @@ inline void validate_time_series(const nlohmann::json& rows, const char* field, 
     }
 }
 inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int64_t now_ms) {
-    if (!contract.is_object() || !contract.contains("schema_version") || contract.at("schema_version") != "1.0.0")
+    if (!contract.is_object() || !contract.contains("schema_version") || contract.at("schema_version") != "1.1.0")
         throw std::invalid_argument("unsupported_l1_contract_schema_version");
     require_string(contract, "run_id");
     require_string(contract, "scan_id");
@@ -176,12 +176,46 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         if (!valid_status(ohlcv_status) || !valid_status(funding_status) || !valid_status(oi_status))
             throw std::invalid_argument("instrument_availability_status_invalid");
         const bool ohlcv_available = ohlcv_status == "AVAILABLE";
-        const bool full_data = funding_status == "AVAILABLE" && oi_status == "AVAILABLE";
+        if (!instrument.contains("coverage") || !instrument.at("coverage").is_object())
+            throw std::invalid_argument("instrument_coverage_missing");
+        const auto& coverage = instrument.at("coverage");
+        const auto funding_freshness = coverage.value("funding_freshness_status", std::string{"UNAVAILABLE"});
+        const auto oi_freshness = coverage.value("open_interest_freshness_status", std::string{"UNAVAILABLE"});
+        const auto valid_freshness = [](const std::string& status) {
+            return status == "FRESH" || status == "STALE" || status == "UNAVAILABLE";
+        };
+        if (!valid_freshness(funding_freshness) || !valid_freshness(oi_freshness))
+            throw std::invalid_argument("instrument_freshness_status_invalid");
+        const auto age_is_within_limit = [&](const char* age_key, const char* max_key,
+                                             const std::string& status, std::int64_t hard_cap_ms) {
+            const auto age = coverage.value(age_key, nlohmann::json(nullptr));
+            const auto maximum = coverage.value(max_key, nlohmann::json(0));
+            if (!maximum.is_number_integer() || maximum.get<std::int64_t>() < 0 ||
+                maximum.get<std::int64_t>() > hard_cap_ms) return false;
+            if (status == "UNAVAILABLE")
+                return maximum.get<std::int64_t>() == 0 &&
+                       (age.is_null() || (age.is_number_integer() && age.get<std::int64_t>() >= 0));
+            if (!age.is_number_integer() || maximum.get<std::int64_t>() <= 0 ||
+                age.get<std::int64_t>() < 0) return false;
+            const auto age_ms = age.get<std::int64_t>();
+            const auto max_ms = maximum.get<std::int64_t>();
+            return status == "FRESH" ? age_ms <= max_ms : age_ms > max_ms;
+        };
+        const bool funding_fresh = funding_freshness == "FRESH" && age_is_within_limit(
+            "funding_latest_age_ms", "funding_max_age_ms", funding_freshness,
+            24LL * 60LL * 60LL * 1000LL);
+        const bool oi_fresh = oi_freshness == "FRESH" && age_is_within_limit(
+            "open_interest_latest_age_ms", "open_interest_max_age_ms", oi_freshness,
+            3LL * 60LL * 60LL * 1000LL);
+        const bool full_data = funding_status == "AVAILABLE" && oi_status == "AVAILABLE" &&
+                               funding_fresh && oi_fresh;
         const bool admitted = candles_valid && latest_fresh && ohlcv_available && full_data;
         const std::string reason_code = !candles_valid ? "OHLCV_EMPTY" :
             (!latest_fresh || !ohlcv_available ? "OHLCV_STALE_OR_UNAVAILABLE" :
              (funding_status != "AVAILABLE" ? "FUNDING_DATA_DEGRADED" :
-              (oi_status != "AVAILABLE" ? "OPEN_INTEREST_DATA_DEGRADED" : "NO_STRATEGY_ADMITTED")));
+              (!funding_fresh ? "FUNDING_STALE" :
+               (oi_status != "AVAILABLE" ? "OPEN_INTEREST_DATA_DEGRADED" :
+                (!oi_fresh ? "OPEN_INTEREST_STALE" : "NO_STRATEGY_ADMITTED")))));
         artifact["instruments"].push_back({
             {"instrument_id", instrument.at("instrument_id")}, {"symbol", instrument.at("unified_symbol")},
             {"provider_id", instrument.at("provider_id")},

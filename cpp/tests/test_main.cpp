@@ -19,7 +19,7 @@ namespace {
 nlohmann::json sample_contract(std::int64_t now_ms) {
     const auto candle_ms = now_ms - 3'600'000;
     return {
-        {"schema_version", "1.0.0"}, {"run_id", "test-run-001"},
+        {"schema_version", "1.1.0"}, {"run_id", "test-run-001"},
         {"scan_id", "scan-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
         {"acquired_at_utc", "2026-11-17T12:00:00Z"},
         {"window", {{"timeframe", "1h"}, {"start_ms", now_ms - 7'200'000}, {"end_ms", now_ms}}},
@@ -48,7 +48,18 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
                      {"open_interest_value_currency", "USD"}, {"retrieved_at_utc", "2026-11-17T12:00:00Z"}}
                 })},
                 {"availability", {{"ohlcv", "AVAILABLE"}, {"funding", "PARTIAL"},
-                                  {"open_interest", "PARTIAL"}}}
+                                  {"open_interest", "PARTIAL"}}},
+                {"coverage", {
+                    {"ohlcv_rows", 1}, {"funding_rows", 1}, {"open_interest_rows", 1},
+                    {"ohlcv_coverage_pct", 100.0}, {"funding_coverage_days", 0.0},
+                    {"open_interest_coverage_days", 0.0},
+                    {"funding_latest_age_ms", 3'600'000LL},
+                    {"funding_max_age_ms", 24LL * 60LL * 60LL * 1000LL},
+                    {"funding_freshness_status", "FRESH"},
+                    {"open_interest_latest_age_ms", 3'600'000LL},
+                    {"open_interest_max_age_ms", 3LL * 60LL * 60LL * 1000LL},
+                    {"open_interest_freshness_status", "FRESH"}
+                }}
             }
         })}
     };
@@ -88,9 +99,117 @@ int main() {
         std::cerr << "Open-interest 30-day coverage gate failed\n"; return EXIT_FAILURE;
     }
 
+    // پوشش باید روی شبکهٔ timestamp کندل سنجیده شود؛ ردیف اضافه نباید جای کندل گمشده را بگیرد.
+    const std::int64_t coverage_start_ms = 3'600'000LL;
+    const std::int64_t coverage_end_ms = coverage_start_ms + 17'532LL * 3'600'000LL;
+    const std::int64_t listing_time_ms =
+        coverage_end_ms - 9'181LL * 3'600'000LL - 45LL * 60'000LL;
+    const auto full_window_rows = cfss::okx::expected_ohlcv_rows(
+        coverage_start_ms, coverage_end_ms, 0);
+    const auto listed_window_rows = cfss::okx::expected_ohlcv_rows(
+        coverage_start_ms, coverage_end_ms, listing_time_ms);
+    const auto first_listed_candle = listing_time_ms - (listing_time_ms % 3'600'000LL);
+    nlohmann::json listed_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < listed_window_rows; ++i)
+        listed_rows.push_back({{"timestamp_ms", first_listed_candle + i * 3'600'000LL}});
+    const auto listed_full_coverage = cfss::okx::ohlcv_coverage_pct(
+        listed_rows, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    auto missing_with_extra = listed_rows;
+    missing_with_extra.erase(missing_with_extra.begin() + 1);
+    missing_with_extra.insert(missing_with_extra.begin(),
+        nlohmann::json{{"timestamp_ms", first_listed_candle - 3'600'000LL}});
+    const auto listed_missing_one = cfss::okx::ohlcv_coverage_pct(
+        missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    auto duplicate_rows = listed_rows;
+    duplicate_rows.push_back(listed_rows.back());
+    auto off_grid_rows = listed_rows;
+    off_grid_rows[1]["timestamp_ms"] = off_grid_rows[1]["timestamp_ms"].get<std::int64_t>() + 1;
+    if (full_window_rows != 17532 || listed_window_rows != 9182 ||
+        listed_full_coverage != 100.0 ||
+        !cfss::okx::ohlcv_series_complete(listed_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        listed_missing_one >= 100.0 ||
+        cfss::okx::ohlcv_series_complete(missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        cfss::okx::ohlcv_series_complete(duplicate_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        cfss::okx::ohlcv_series_complete(off_grid_rows, coverage_start_ms, coverage_end_ms, listing_time_ms)) {
+        std::cerr << "Exact listing-aware OHLCV timestamp coverage gate failed\n"; return EXIT_FAILURE;
+    }
+
+    const std::int64_t freshness_reference_ms = 1'800'000'000'000LL;
+    nlohmann::json funding_fresh_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 4; ++i)
+        funding_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
+            40LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
+    const auto funding_freshness = cfss::okx::evaluate_series_freshness(
+        funding_fresh_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+    auto funding_stale_rows = funding_fresh_rows;
+    for (auto& row : funding_stale_rows) row["timestamp_ms"] =
+        row["timestamp_ms"].get<std::int64_t>() - 1LL;
+    const auto funding_stale_freshness = cfss::okx::evaluate_series_freshness(
+        funding_stale_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+    nlohmann::json oi_fresh_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < 4; ++i)
+        oi_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
+            6LL * 60LL * 60LL * 1000LL + i * 60LL * 60LL * 1000LL}});
+    const auto oi_freshness = cfss::okx::evaluate_series_freshness(
+        oi_fresh_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+    auto oi_stale_rows = oi_fresh_rows;
+    for (auto& row : oi_stale_rows) row["timestamp_ms"] =
+        row["timestamp_ms"].get<std::int64_t>() - 1LL;
+    const auto oi_stale_freshness = cfss::okx::evaluate_series_freshness(
+        oi_stale_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+    if (funding_freshness.status != "FRESH" ||
+        funding_freshness.latest_age_ms != 16LL * 60LL * 60LL * 1000LL ||
+        funding_freshness.max_age_ms != 16LL * 60LL * 60LL * 1000LL ||
+        funding_stale_freshness.status != "STALE" ||
+        oi_freshness.status != "FRESH" ||
+        oi_freshness.latest_age_ms != 3LL * 60LL * 60LL * 1000LL ||
+        oi_freshness.max_age_ms != 3LL * 60LL * 60LL * 1000LL ||
+        oi_stale_freshness.status != "STALE") {
+        std::cerr << "Funding/OI freshness cadence gate failed\n"; return EXIT_FAILURE;
+    }
+
     const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
     const nlohmann::json ambiguous_ticker = {{"last", "50000"}, {"vol24h", "250"}};
     const auto turnover = cfss::okx::quote_turnover_usd(valid_ticker);
+    // متادیتای cache باید با پنجرهٔ واقعی دادهٔ ذخیره‌شده منطبق باشد.
+    const std::int64_t cache_previous_start = 100LL * 3'600'000LL;
+    const std::int64_t cache_current_start = 101LL * 3'600'000LL;
+    const std::int64_t cache_previous_end = 103LL * 3'600'000LL;
+    const std::int64_t cache_current_end = 104LL * 3'600'000LL;
+    nlohmann::json old_cached_instrument = {
+        {"instrument_id", "BTC-USDT-SWAP"}, {"listing_time_ms", 0},
+        {"candles", nlohmann::json::array({
+            {{"timestamp_ms", cache_previous_start}},
+            {{"timestamp_ms", cache_previous_start + 3'600'000LL}},
+            {{"timestamp_ms", cache_previous_start + 2LL * 3'600'000LL}}
+        })}
+    };
+    nlohmann::json old_cache_entries = nlohmann::json::object();
+    old_cache_entries["BTC-USDT-SWAP"] = cfss::okx::make_cache_entry(
+        old_cached_instrument, cache_previous_start, cache_previous_end);
+    nlohmann::json old_cache = {
+        {"instruments", nlohmann::json::array({old_cached_instrument})},
+        {"cache_entries", old_cache_entries}
+    };
+    nlohmann::json refreshed_instrument = {
+        {"instrument_id", "BTC-USDT-SWAP"}, {"listing_time_ms", 0},
+        {"candles", nlohmann::json::array({
+            {{"timestamp_ms", cache_current_start}},
+            {{"timestamp_ms", cache_current_start + 3'600'000LL}},
+            {{"timestamp_ms", cache_current_start + 2LL * 3'600'000LL}}
+        })}
+    };
+    const auto refreshed_snapshot = cfss::okx::make_market_cache_snapshot(
+        old_cache, nlohmann::json::array({refreshed_instrument}),
+        cache_current_start, cache_current_end);
+    if (refreshed_snapshot.at("cache_entries").at("BTC-USDT-SWAP")
+            .at("window_start_ms") != cache_current_start ||
+        refreshed_snapshot.at("instruments").at(0).at("candles").at(0)
+            .at("timestamp_ms") != cache_current_start) {
+        std::cerr << "Market cache window metadata does not match retained OHLCV\n";
+        return EXIT_FAILURE;
+    }
+
     if (!turnover || std::abs(*turnover - 12500000.0) > 1e-9 ||
         cfss::okx::quote_turnover_usd(ambiguous_ticker).has_value() ||
         !cfss::okx::passes_liquidity(10000000.01) ||
@@ -196,6 +315,46 @@ int main() {
         complete_item.at("reason_code") != "NO_STRATEGY_ADMITTED") {
         std::cerr << "C10 full-data no-setup state test failed\n"; return EXIT_FAILURE;
     }
+    auto stale_funding_contract = complete_contract;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_latest_age_ms"] =
+        17LL * 60LL * 60LL * 1000LL;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_max_age_ms"] =
+        16LL * 60LL * 60LL * 1000LL;
+    stale_funding_contract["instruments"][0]["coverage"]["funding_freshness_status"] = "STALE";
+    const auto stale_funding_artifact = cfss::build_l2_artifact(stale_funding_contract, now_ms);
+    if (stale_funding_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        stale_funding_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Stale funding data did not fail closed\n"; return EXIT_FAILURE;
+    }
+    auto stale_oi_contract = complete_contract;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_latest_age_ms"] =
+        4LL * 60LL * 60LL * 1000LL;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_max_age_ms"] =
+        3LL * 60LL * 60LL * 1000LL;
+    stale_oi_contract["instruments"][0]["coverage"]["open_interest_freshness_status"] = "STALE";
+    const auto stale_oi_artifact = cfss::build_l2_artifact(stale_oi_contract, now_ms);
+    if (stale_oi_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        stale_oi_artifact["instruments"][0]["reason_code"] != "OPEN_INTEREST_STALE") {
+        std::cerr << "Stale open-interest data did not fail closed\n"; return EXIT_FAILURE;
+    }
+    auto excessive_freshness_cap_contract = complete_contract;
+    excessive_freshness_cap_contract["instruments"][0]["coverage"]["funding_max_age_ms"] =
+        48LL * 60LL * 60LL * 1000LL;
+    const auto excessive_cap_artifact = cfss::build_l2_artifact(excessive_freshness_cap_contract, now_ms);
+    if (excessive_cap_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        excessive_cap_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Excessive funding freshness cap was not rejected\n"; return EXIT_FAILURE;
+    }
+    auto unavailable_funding_freshness_contract = complete_contract;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_latest_age_ms"] = nullptr;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_max_age_ms"] = 0;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_freshness_status"] = "UNAVAILABLE";
+    const auto unavailable_freshness_artifact =
+        cfss::build_l2_artifact(unavailable_funding_freshness_contract, now_ms);
+    if (unavailable_freshness_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        unavailable_freshness_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Unavailable funding freshness was incorrectly admitted\n"; return EXIT_FAILURE;
+    }
     auto duplicate = contract;
     duplicate["instruments"][0]["candles"].push_back(duplicate["instruments"][0]["candles"][0]);
     bool duplicate_rejected = false;
@@ -290,6 +449,31 @@ int main() {
         cfss::telegram::inbound_duplicate_should_resume_reply("DELIVERY_UNKNOWN")) {
         std::cerr << "Telegram inbound duplicate replay gate failed\\n"; return EXIT_FAILURE;
     }
+
+    const auto inbound_replay_test_dir = std::filesystem::temp_directory_path() /
+        ("cfss-inbound-replay-test-" + std::to_string(now_ms));
+    std::filesystem::create_directories(inbound_replay_test_dir);
+    const auto inbound_replay_state_path = inbound_replay_test_dir / "inbound-state.json";
+    auto inbound_replay_state = cfss::telegram::default_inbound_state();
+    inbound_replay_state["last_update_id"] = 610176013;
+    inbound_replay_state["processed_updates"]["610176013"] = {
+        {"status", "PROCESSED"}, {"reply_status", "DELIVERED"},
+        {"reply_message_id", 43}, {"reply_text", "controlled /status reply"}
+    };
+    cfss::telegram::write_json_atomic(inbound_replay_state_path, inbound_replay_state);
+    const int inbound_replay_result =
+        cfss::telegram::replay_processed_update(inbound_replay_state_path, 610176013);
+    const auto inbound_replay_after = cfss::telegram::load_json_or_default(
+        inbound_replay_state_path, cfss::telegram::default_inbound_state());
+    if (inbound_replay_result != EXIT_SUCCESS ||
+        inbound_replay_after["processed_updates"]["610176013"].value("status", std::string{}) != "PROCESSED" ||
+        inbound_replay_after["processed_updates"]["610176013"].value("reply_status", std::string{}) != "DELIVERED" ||
+        inbound_replay_after["processed_updates"]["610176013"].value("reply_message_id", 0LL) != 43LL) {
+        std::cerr << "Telegram exact-update replay generated or allowed a duplicate reply\\n";
+        std::filesystem::remove_all(inbound_replay_test_dir);
+        return EXIT_FAILURE;
+    }
+    std::filesystem::remove_all(inbound_replay_test_dir);
     const auto inbound_default = cfss::telegram::default_inbound_state();
     if (inbound_default.value("last_poll_status", std::string{}) != "NEVER_POLLED" ||
         inbound_default.value("poll_count", -1LL) != 0LL ||

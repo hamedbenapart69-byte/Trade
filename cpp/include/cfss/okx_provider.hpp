@@ -593,6 +593,132 @@ inline double coverage_days(const json& rows) {
     if (first <= 0 || last <= first) return 0.0;
     return static_cast<double>(last - first) / 86'400'000.0;
 }
+
+// شمارش کندل‌ها باید از ابتدای کندل هم‌پوشان با زمان شروع واقعی قرارداد آغاز شود.
+inline std::int64_t expected_ohlcv_first_timestamp(std::int64_t start_ms,
+                                                    std::int64_t end_ms,
+                                                    std::int64_t listing_time_ms,
+                                                    std::int64_t interval_ms = 3'600'000LL) {
+    if (start_ms <= 0 || end_ms <= start_ms || interval_ms <= 0) return 0;
+    const auto effective_start_ms = listing_time_ms > start_ms ? listing_time_ms : start_ms;
+    if (effective_start_ms >= end_ms) return 0;
+    return effective_start_ms - (effective_start_ms % interval_ms);
+}
+
+inline std::int64_t expected_ohlcv_rows(std::int64_t start_ms, std::int64_t end_ms,
+                                        std::int64_t listing_time_ms,
+                                        std::int64_t interval_ms = 3'600'000LL) {
+    const auto first_expected_ms = expected_ohlcv_first_timestamp(
+        start_ms, end_ms, listing_time_ms, interval_ms);
+    if (first_expected_ms <= 0) return 0;
+    return (end_ms - first_expected_ms) / interval_ms;
+}
+
+// فقط timestampهای مورد انتظار در شبکهٔ کندلی شمرده می‌شوند؛ ردیف اضافه یا خارج از شبکه
+// نمی‌تواند جای یک کندل گمشده را بگیرد.
+inline std::size_t ohlcv_present_expected_rows(const json& rows,
+                                                std::int64_t start_ms,
+                                                std::int64_t end_ms,
+                                                std::int64_t listing_time_ms,
+                                                std::int64_t interval_ms = 3'600'000LL) {
+    if (!rows.is_array() || interval_ms <= 0) return 0U;
+    const auto first_expected_ms = expected_ohlcv_first_timestamp(
+        start_ms, end_ms, listing_time_ms, interval_ms);
+    const auto expected_rows = expected_ohlcv_rows(start_ms, end_ms, listing_time_ms, interval_ms);
+    if (first_expected_ms <= 0 || expected_rows <= 0) return 0U;
+    std::set<std::int64_t> present;
+    for (const auto& row : rows) {
+        if (!row.is_object() || !row.contains("timestamp_ms") ||
+            !row.at("timestamp_ms").is_number_integer()) continue;
+        const auto ts = row.at("timestamp_ms").get<std::int64_t>();
+        if (ts < first_expected_ms || ts >= end_ms || ts % interval_ms != 0) continue;
+        present.insert(ts);
+    }
+    return present.size();
+}
+
+inline bool ohlcv_series_complete(const json& rows, std::int64_t start_ms,
+                                  std::int64_t end_ms, std::int64_t listing_time_ms,
+                                  std::int64_t interval_ms = 3'600'000LL) {
+    if (!rows.is_array() || interval_ms <= 0) return false;
+    const auto first_expected_ms = expected_ohlcv_first_timestamp(
+        start_ms, end_ms, listing_time_ms, interval_ms);
+    const auto expected_rows = expected_ohlcv_rows(start_ms, end_ms, listing_time_ms, interval_ms);
+    if (first_expected_ms <= 0 || expected_rows <= 0) return false;
+    std::size_t in_window_rows = 0U;
+    std::set<std::int64_t> present;
+    for (const auto& row : rows) {
+        if (!row.is_object() || !row.contains("timestamp_ms") ||
+            !row.at("timestamp_ms").is_number_integer()) continue;
+        const auto ts = row.at("timestamp_ms").get<std::int64_t>();
+        if (ts < start_ms || ts >= end_ms) continue;
+        if (ts < first_expected_ms || ts % interval_ms != 0) return false;
+        ++in_window_rows;
+        present.insert(ts);
+    }
+    return in_window_rows == static_cast<std::size_t>(expected_rows) &&
+           present.size() == static_cast<std::size_t>(expected_rows);
+}
+
+inline double ohlcv_coverage_pct(const json& rows, std::int64_t start_ms,
+                                 std::int64_t end_ms, std::int64_t listing_time_ms,
+                                 std::int64_t interval_ms = 3'600'000LL) {
+    const auto expected_rows = expected_ohlcv_rows(start_ms, end_ms, listing_time_ms, interval_ms);
+    if (expected_rows <= 0) return 0.0;
+    const auto present = ohlcv_present_expected_rows(rows, start_ms, end_ms,
+                                                    listing_time_ms, interval_ms);
+    return std::min(100.0, 100.0 * static_cast<double>(present) /
+                           static_cast<double>(expected_rows));
+}
+
+struct SeriesFreshness {
+    json latest_age_ms{nullptr};
+    std::int64_t max_age_ms{0};
+    std::string status{"UNAVAILABLE"};
+};
+
+inline std::int64_t median_series_interval_ms(const json& rows) {
+    if (!rows.is_array() || rows.size() < 2U) return 0;
+    std::vector<std::int64_t> gaps;
+    for (std::size_t i = 1; i < rows.size(); ++i) {
+        if (!rows[i - 1U].is_object() || !rows[i].is_object() ||
+            !rows[i - 1U].contains("timestamp_ms") || !rows[i].contains("timestamp_ms") ||
+            !rows[i - 1U].at("timestamp_ms").is_number_integer() ||
+            !rows[i].at("timestamp_ms").is_number_integer()) continue;
+        const auto previous = rows[i - 1U].at("timestamp_ms").get<std::int64_t>();
+        const auto current = rows[i].at("timestamp_ms").get<std::int64_t>();
+        if (current > previous) gaps.push_back(current - previous);
+    }
+    if (gaps.empty()) return 0;
+    if (gaps.size() > 20U) gaps.erase(gaps.begin(), gaps.end() - 20);
+    std::sort(gaps.begin(), gaps.end());
+    return gaps[(gaps.size() - 1U) / 2U];
+}
+
+inline SeriesFreshness evaluate_series_freshness(const json& rows,
+                                                  std::int64_t reference_ms,
+                                                  std::int64_t interval_multiplier,
+                                                  std::int64_t absolute_cap_ms) {
+    SeriesFreshness result;
+    if (!rows.is_array() || rows.empty() || reference_ms <= 0 ||
+        interval_multiplier <= 0 || absolute_cap_ms <= 0) return result;
+    const auto& latest = rows.back();
+    if (!latest.is_object() || !latest.contains("timestamp_ms") ||
+        !latest.at("timestamp_ms").is_number_integer()) return result;
+    const auto latest_ms = latest.at("timestamp_ms").get<std::int64_t>();
+    if (latest_ms <= 0) return result;
+    if (reference_ms >= latest_ms) result.latest_age_ms = reference_ms - latest_ms;
+    const auto median_interval_ms = median_series_interval_ms(rows);
+    if (median_interval_ms <= 0) return result;
+    result.max_age_ms = std::min(absolute_cap_ms, median_interval_ms * interval_multiplier);
+    if (reference_ms < latest_ms) {
+        result.status = "STALE";
+        return result;
+    }
+    result.status = reference_ms - latest_ms <= result.max_age_ms ? "FRESH" : "STALE";
+    return result;
+}
+
 inline std::string availability(const json& rows, const char* field, double minimum_days = 0.0) {
     if (!rows.is_array() || rows.empty()) return "UNAVAILABLE";
     for (const auto& row : rows) if (!row.contains(field) || row[field].is_null()) return "PARTIAL";
@@ -793,31 +919,9 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
             if (!item.is_object()) continue;
             const auto id = item.value("instrument_id", std::string{});
             if (id.empty()) continue;
-            std::int64_t retained_start_ms = window_start_ms;
-            if (cache_entries.contains(id) && cache_entries.at(id).is_object() &&
-                by_instrument.contains(id) &&
-                valid_cache_entry(cache_entries, by_instrument.at(id), id,
-                                  window_start_ms, window_end_ms)) {
-                const auto& old_item = by_instrument.at(id);
-                const bool old_has_candles = old_item.contains("candles") &&
-                    old_item.at("candles").is_array() && !old_item.at("candles").empty();
-                if (old_has_candles) {
-                    const auto first_old = old_item.at("candles").front().value("timestamp_ms", std::int64_t{0});
-                    const auto expected_old = std::max<std::int64_t>(
-                        1, (window_end_ms - window_start_ms) / 3'600'000LL);
-                    const double old_coverage = 100.0 *
-                        static_cast<double>(old_item.at("candles").size()) /
-                        static_cast<double>(expected_old);
-                    const auto previous_start =
-                        cache_entries.at(id).value("window_start_ms", std::int64_t{0});
-                    if (first_old > 0 && first_old <= window_start_ms + 3LL * 3'600'000LL &&
-                        old_coverage >= 98.0 && previous_start > 0 &&
-                        previous_start <= window_start_ms)
-                        retained_start_ms = previous_start;
-                }
-            }
+            // این snapshot فقط دادهٔ پنجرهٔ فعلی را نگه می‌دارد؛ metadata نباید شروع قدیمی‌تری ادعا کند.
             by_instrument[id] = item;
-            cache_entries[id] = make_cache_entry(item, retained_start_ms, window_end_ms);
+            cache_entries[id] = make_cache_entry(item, window_start_ms, window_end_ms);
         }
     }
     json instruments = json::array();
@@ -886,15 +990,14 @@ inline json collect(int symbol_count, int years,
             const auto last_cached_ms = cached_candles.back().value("timestamp_ms", std::int64_t{0});
             const auto effective_start_ms = item.listing_time_ms > start_ms
                 ? item.listing_time_ms : start_ms;
-            const auto expected_rows = std::max<std::int64_t>(
-                1, (end_ms - effective_start_ms) / 3'600'000LL);
-            const double cached_coverage = 100.0 * static_cast<double>(cached_candles.size()) /
-                                           static_cast<double>(expected_rows);
+            const auto cached_end_exclusive = last_cached_ms > 0
+                ? last_cached_ms + 3'600'000LL : 0;
             has_valid_candle_cache = first_cached_ms > 0 &&
                 first_cached_ms <= effective_start_ms + 3LL * 3'600'000LL &&
-                last_cached_ms > 0 && end_ms >= last_cached_ms + 3'600'000LL &&
-                end_ms - (last_cached_ms + 3'600'000LL) <= 10LL * 86'400'000LL &&
-                cached_coverage >= 98.0;
+                last_cached_ms > 0 && end_ms >= cached_end_exclusive &&
+                end_ms - cached_end_exclusive <= 10LL * 86'400'000LL &&
+                ohlcv_series_complete(cached_candles, start_ms, cached_end_exclusive,
+                                      item.listing_time_ms);
         }
         bool oi_cache_complete = false;
         if (cached_instrument && cached_instrument->contains("open_interest") &&
@@ -954,13 +1057,27 @@ inline json collect(int symbol_count, int years,
         if (invalid_oi_observations > 0U)
             errors.push_back("open_interest_nonpositive_observations:" +
                              std::to_string(invalid_oi_observations));
-        const auto expected = std::max<std::int64_t>(1, (end_ms - start_ms) / 3'600'000LL);
-        const double coverage = 100.0 * static_cast<double>(candles.size()) / static_cast<double>(expected);
+        const double coverage = ohlcv_coverage_pct(
+            candles, start_ms, end_ms, item.listing_time_ms);
+        const bool ohlcv_complete = ohlcv_series_complete(
+            candles, start_ms, end_ms, item.listing_time_ms);
         const auto has_error_prefix = [&](const std::string& prefix) {
             return std::any_of(errors.begin(), errors.end(), [&](const json& error) {
                 return error.is_string() && error.get<std::string>().rfind(prefix, 0U) == 0U;
             });
         };
+        const auto funding_freshness = evaluate_series_freshness(
+            funding, end_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+        const auto oi_freshness = evaluate_series_freshness(
+            oi, end_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+        auto funding_status = has_error_prefix("funding:")
+            ? std::string{"PARTIAL"} : availability(funding, "funding_rate", 29.0);
+        auto oi_status = has_error_prefix("open_interest:")
+            ? std::string{"PARTIAL"} : open_interest_availability(oi, 29.0);
+        if (funding_status == "AVAILABLE" && funding_freshness.status != "FRESH")
+            funding_status = "PARTIAL";
+        if (oi_status == "AVAILABLE" && oi_freshness.status != "FRESH")
+            oi_status = "PARTIAL";
         instruments.push_back({
             {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
             {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
@@ -980,15 +1097,21 @@ inline json collect(int symbol_count, int years,
                             {"retrieved_at_utc", utc_iso(now_ms())}}},
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
-                {"ohlcv", coverage >= 100.0 ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
-                {"funding", has_error_prefix("funding:") ? "PARTIAL" : availability(funding, "funding_rate", 29.0)},
-                {"open_interest", has_error_prefix("open_interest:") ? "PARTIAL" : open_interest_availability(oi, 29.0)}
+                {"ohlcv", ohlcv_complete ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
+                {"funding", funding_status},
+                {"open_interest", oi_status}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
                 {"open_interest_rows", oi.size()}, {"ohlcv_coverage_pct", std::min(100.0, coverage)},
                 {"funding_coverage_days", coverage_days(funding)},
-                {"open_interest_coverage_days", coverage_days(oi)}
+                {"open_interest_coverage_days", coverage_days(oi)},
+                {"funding_latest_age_ms", funding_freshness.latest_age_ms},
+                {"funding_max_age_ms", funding_freshness.max_age_ms},
+                {"funding_freshness_status", funding_freshness.status},
+                {"open_interest_latest_age_ms", oi_freshness.latest_age_ms},
+                {"open_interest_max_age_ms", oi_freshness.max_age_ms},
+                {"open_interest_freshness_status", oi_freshness.status}
             }},
             {"errors", errors}
         });
@@ -1016,7 +1139,7 @@ inline json collect(int symbol_count, int years,
     for (const auto& item : selected) { selected_ids.push_back(item.id); scan_material += item.id + ";"; }
     const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
     return {
-        {"schema_version", "1.0.0"},
+        {"schema_version", "1.1.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
         {"scan_id", scan_id},
         {"producer", {{"name", "cfss-cpp-l1-collector"}, {"version", "1.0.0"},
