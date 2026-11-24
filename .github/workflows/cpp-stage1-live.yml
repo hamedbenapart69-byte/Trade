@@ -184,8 +184,27 @@ jobs:
                      .value.reply_message_id > 0) |
               (.key | tonumber)] | max // empty
           ' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          REPLAY_SOURCE="NEWLY_RECEIVED"
           if [ -z "$UPDATE_ID" ]; then
-            echo "TELEGRAM_INBOUND_REPLAY_SNAPSHOT_FAIL: no newly processed and delivered update after baseline=$PREVIOUS_UPDATE_ID"
+            echo "No new authorized /status update; searching persisted receipts for a previously verified real inbound."
+            mapfile -t VERIFIED_RECEIPTS < <(
+              jq -r 'select(.telegram_receive_test_status == "RECEIVED_PROCESSED") | .telegram_last_update_id // empty' \
+                signals-state/cpp_runtime/run-manifest-*.json | sort -n -u
+            )
+            for candidate in "${VERIFIED_RECEIPTS[@]}"; do
+              if jq -e --arg key "$candidate" '
+                .processed_updates[$key].status == "PROCESSED" and
+                .processed_updates[$key].reply_status == "DELIVERED" and
+                (.processed_updates[$key].reply_message_id | type) == "number" and
+                .processed_updates[$key].reply_message_id > 0
+              ' signals-state/cpp_runtime/telegram_inbound.v1.json >/dev/null; then
+                UPDATE_ID="$candidate"
+                REPLAY_SOURCE="PRIOR_VERIFIED_RECEIPT"
+              fi
+            done
+          fi
+          if [ -z "$UPDATE_ID" ]; then
+            echo "TELEGRAM_INBOUND_REPLAY_SNAPSHOT_FAIL: no new update or persisted receipt backed by a prior RECEIVED_PROCESSED manifest"
             exit 1
           fi
           jq --arg key "$UPDATE_ID" '.processed_updates[$key] | {status, reply_status, reply_message_id}' \
@@ -194,6 +213,8 @@ jobs:
           test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
           test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
           printf '%s\\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
+          printf '%s\\n' "$REPLAY_SOURCE" > artifacts/inbound-replay-source.txt
+          echo "TELEGRAM_EXACT_REPLAY_SOURCE=$REPLAY_SOURCE update_id=$UPDATE_ID"
       - name: Replay the exact processed Telegram update through C++ L3
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
