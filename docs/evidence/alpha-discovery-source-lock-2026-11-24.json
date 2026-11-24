@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Deterministic source lock for Alpha Discovery execution",
+  "dataset": {
+    "pit_branch": "stage-vtm-pit-2023",
+    "pit_workflow_run_id": 45068636102,
+    "pit_workflow_run_name": "VTM PIT 2023 Data Engineering",
+    "pit_artifact_id": 14772840217,
+    "pit_artifact_name": "vtm-pit-2023-universe",
+    "pit_run_head_sha": "b0a2021b35e4237a29b6aa87e12c41abaf8fc4f7",
+    "vtm_branch": "stage-vtm-backtest-2023",
+    "vtm_workflow_run_id": 45125243169,
+    "vtm_workflow_run_name": "VTM Daily PIT Backtest 2023",
+    "vtm_artifact_id": 14795915555,
+    "vtm_artifact_name": "vtm-backtest-2023-final",
+    "vtm_run_head_sha": "19a465cb9f2590a27ff6400e5b3c24153a54f7ff"
+  },
+  "note": "Artifacts were independently enumerated from GitHub Actions run records; artifact IDs are immutable source references. PIT manifest reconstruction remains checksum-verified against Binance Vision."
+}
