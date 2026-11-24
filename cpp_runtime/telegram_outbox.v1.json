@@ -95,6 +95,17 @@
       "telegram_message_id": 40,
       "updated_at_epoch_ms": 1794940755086
     },
+    "scan-5d6d51b4fa51c50e38141c7550a77ef41b72b3ad8ecd9759abe5fb36c1ef7562:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "d7082ce0cc2c8e91",
+      "scan_id": "scan-5d6d51b4fa51c50e38141c7550a77ef41b72b3ad8ecd9759abe5fb36c1ef7562",
+      "source_run_id": "okx-cpp-1795544173556",
+      "status": "DELIVERED",
+      "telegram_message_id": 96,
+      "updated_at_epoch_ms": 1795544207831
+    },
     "scan-769a3dd1b1ec25ba3caa86493c536f37e800916971ca744049dddd7171203f1e:status:1": {
       "attempts": 1,
       "http_status": 200,

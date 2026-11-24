@@ -1,0 +1,43 @@
+{
+  "artifact_sha256": "36f139b2fa270c575d8ff0a914eaf24f4c746a7308872e5b21d19edcd0c677b0",
+  "artifact_type": "cfss_l2_status_v1",
+  "created_at_epoch_ms": 1795544190612,
+  "instruments": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795539600000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ETH-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795539600000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ZEC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795539600000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ZEC/USDT:USDT"
+    }
+  ],
+  "source_run_id": "okx-cpp-1795544173556",
+  "source_scan_id": "scan-5d6d51b4fa51c50e38141c7550a77ef41b72b3ad8ecd9759abe5fb36c1ef7562",
+  "source_schema_version": "1.0.0"
+}
