@@ -31,20 +31,23 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out/vtm_backtest_final data/pit
-          RUNS="$(gh api "repos/${REPOSITORY}/actions/runs?branch=stage-vtm-backtest-2023&per_page=100")"
-          RUN_ID="$(echo "$RUNS" | jq -r '[.workflow_runs[] | select(.name=="VTM Daily PIT Backtest 2023" and .conclusion=="success")] | sort_by(.created_at) | last | .id')"
-          test "$RUN_ID" != "null"
-          ARTIFACTS="$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts")"
-          FINAL_ID="$(echo "$ARTIFACTS" | jq -r '[.artifacts[] | select(.name=="vtm-backtest-2023-final" and .expired==false)] | sort_by(.created_at) | last | .id')"
-          test "$FINAL_ID" != "null"
+          LOCK="docs/evidence/alpha-discovery-source-lock-2026-11-24.json"
+          RUN_ID="$(jq -r '.dataset.vtm_workflow_run_id' "$LOCK")"
+          FINAL_ID="$(jq -r '.dataset.vtm_artifact_id' "$LOCK")"
+          PIT_RUN_ID="$(jq -r '.dataset.pit_workflow_run_id' "$LOCK")"
+          PIT_UNIVERSE_ARTIFACT_ID="$(jq -r '.dataset.pit_artifact_id' "$LOCK")"
+          test "$RUN_ID" != "null" && test "$FINAL_ID" != "null"
+          test "$PIT_RUN_ID" != "null" && test "$PIT_UNIVERSE_ARTIFACT_ID" != "null"
+          VTM_META="$(gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}")"
+          PIT_META="$(gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}")"
+          test "$(echo "$VTM_META" | jq -r '.name')" = "vtm-backtest-2023-final"
+          test "$(echo "$VTM_META" | jq -r '.expired')" = "false"
+          test "$(echo "$PIT_META" | jq -r '.name')" = "vtm-pit-2023-universe"
+          test "$(echo "$PIT_META" | jq -r '.expired')" = "false"
+          test "$(echo "$VTM_META" | jq -r '.workflow_run.id')" = "$RUN_ID"
+          test "$(echo "$PIT_META" | jq -r '.workflow_run.id')" = "$PIT_RUN_ID"
           gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}/zip" > /tmp/vtm-final.zip
           unzip -q /tmp/vtm-final.zip -d out/vtm_backtest_final
-          PIT_RUNS="$(gh api "repos/${REPOSITORY}/actions/runs?branch=stage-vtm-pit-2023&per_page=100")"
-          PIT_RUN_ID="$(echo "$PIT_RUNS" | jq -r '[.workflow_runs[] | select(.name=="VTM PIT 2023 Data Engineering" and .conclusion=="success")] | sort_by(.created_at) | last | .id')"
-          test "$PIT_RUN_ID" != "null"
-          PIT_ARTIFACTS="$(gh api "repos/${REPOSITORY}/actions/runs/${PIT_RUN_ID}/artifacts")"
-          PIT_UNIVERSE_ARTIFACT_ID="$(echo "$PIT_ARTIFACTS" | jq -r '[.artifacts[] | select(.name=="vtm-pit-2023-universe" and .expired==false)] | sort_by(.created_at) | last | .id')"
-          test "$PIT_UNIVERSE_ARTIFACT_ID" != "null"
           gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}/zip" > /tmp/vtm-pit-universe.zip
           unzip -q /tmp/vtm-pit-universe.zip -d data/pit
           test -s data/pit/universe_manifest.json
