@@ -464,7 +464,8 @@
               },
               "funding_max_age_ms": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 86400000
               },
               "funding_freshness_status": {
                 "enum": ["FRESH", "STALE", "UNAVAILABLE"]
@@ -475,7 +476,8 @@
               },
               "open_interest_max_age_ms": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 0,
+                "maximum": 10800000
               },
               "open_interest_freshness_status": {
                 "enum": ["FRESH", "STALE", "UNAVAILABLE"]
