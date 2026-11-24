@@ -871,33 +871,9 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
             if (!item.is_object()) continue;
             const auto id = item.value("instrument_id", std::string{});
             if (id.empty()) continue;
-            std::int64_t retained_start_ms = window_start_ms;
-            if (cache_entries.contains(id) && cache_entries.at(id).is_object() &&
-                by_instrument.contains(id) &&
-                valid_cache_entry(cache_entries, by_instrument.at(id), id,
-                                  window_start_ms, window_end_ms)) {
-                const auto& old_item = by_instrument.at(id);
-                const bool old_has_candles = old_item.contains("candles") &&
-                    old_item.at("candles").is_array() && !old_item.at("candles").empty();
-                if (old_has_candles) {
-                    const auto first_old = old_item.at("candles").front().value("timestamp_ms", std::int64_t{0});
-                    const auto last_old = old_item.at("candles").back().value("timestamp_ms", std::int64_t{0});
-                    const auto listing_time_ms = old_item.value("listing_time_ms", std::int64_t{0});
-                    const auto previous_start =
-                        cache_entries.at(id).value("window_start_ms", std::int64_t{0});
-                    const auto previous_end_exclusive = last_old > 0
-                        ? last_old + 3'600'000LL : 0;
-                    if (first_old > 0 && previous_start > 0 &&
-                        previous_start <= window_start_ms && previous_end_exclusive > first_old &&
-                        first_old == expected_ohlcv_first_timestamp(
-                            previous_start, previous_end_exclusive, listing_time_ms) &&
-                        ohlcv_series_complete(old_item.at("candles"), previous_start,
-                                              previous_end_exclusive, listing_time_ms))
-                        retained_start_ms = previous_start;
-                }
-            }
+            // این snapshot فقط دادهٔ پنجرهٔ فعلی را نگه می‌دارد؛ metadata نباید شروع قدیمی‌تری ادعا کند.
             by_instrument[id] = item;
-            cache_entries[id] = make_cache_entry(item, retained_start_ms, window_end_ms);
+            cache_entries[id] = make_cache_entry(item, window_start_ms, window_end_ms);
         }
     }
     json instruments = json::array();
