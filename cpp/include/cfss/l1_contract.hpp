@@ -201,10 +201,10 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
             const auto max_ms = maximum.get<std::int64_t>();
             return status == "FRESH" ? age_ms <= max_ms : age_ms > max_ms;
         };
-        const bool funding_fresh = age_is_within_limit(
+        const bool funding_fresh = funding_freshness == "FRESH" && age_is_within_limit(
             "funding_latest_age_ms", "funding_max_age_ms", funding_freshness,
             24LL * 60LL * 60LL * 1000LL);
-        const bool oi_fresh = age_is_within_limit(
+        const bool oi_fresh = oi_freshness == "FRESH" && age_is_within_limit(
             "open_interest_latest_age_ms", "open_interest_max_age_ms", oi_freshness,
             3LL * 60LL * 60LL * 1000LL);
         const bool full_data = funding_status == "AVAILABLE" && oi_status == "AVAILABLE" &&
