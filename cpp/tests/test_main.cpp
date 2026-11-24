@@ -88,6 +88,24 @@ int main() {
         std::cerr << "Open-interest 30-day coverage gate failed\n"; return EXIT_FAILURE;
     }
 
+    // قرارداد تازه‌فهرست‌شده نباید به‌خاطر نداشتن تاریخچهٔ پیش از عرضه، به‌اشتباه ناقص شناخته شود.
+    const std::int64_t coverage_start_ms = 3'600'000LL;
+    const std::int64_t coverage_end_ms = coverage_start_ms + 17'532LL * 3'600'000LL;
+    const std::int64_t listing_time_ms =
+        coverage_end_ms - 9'181LL * 3'600'000LL - 45LL * 60'000LL;
+    const auto full_window_rows = cfss::okx::expected_ohlcv_rows(
+        coverage_start_ms, coverage_end_ms, 0);
+    const auto listed_window_rows = cfss::okx::expected_ohlcv_rows(
+        coverage_start_ms, coverage_end_ms, listing_time_ms);
+    const auto listed_full_coverage = cfss::okx::ohlcv_coverage_pct(
+        9182U, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    const auto listed_missing_one = cfss::okx::ohlcv_coverage_pct(
+        9180U, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    if (full_window_rows != 17532 || listed_window_rows != 9181 ||
+        listed_full_coverage != 100.0 || listed_missing_one >= 100.0) {
+        std::cerr << "Listing-aware OHLCV coverage gate failed\n"; return EXIT_FAILURE;
+    }
+
     const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
     const nlohmann::json ambiguous_ticker = {{"last", "50000"}, {"vol24h", "250"}};
     const auto turnover = cfss::okx::quote_turnover_usd(valid_ticker);
