@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.invalid/cfss/l1-market-data.v1.schema.json",
-  "title": "CFSS L1 Market Data Contract v1",
+  "title": "CFSS L1 Market Data Contract v1.1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -19,7 +19,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "run_id": {
       "type": "string",
