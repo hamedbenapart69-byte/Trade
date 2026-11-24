@@ -449,6 +449,18 @@ inline void record_inbound_manifest(const std::filesystem::path& manifest_path,
     write_json_atomic(manifest_path, manifest);
 }
 
+inline void record_replay_manifest(const std::filesystem::path& manifest_path,
+                                   long long update_id, int replay_result) {
+    auto manifest = load_json_or_default(manifest_path, nlohmann::json::object());
+    if (!manifest.contains("telegram_replay_test_status") ||
+        !manifest.contains("telegram_replay_test_update_id"))
+        throw std::runtime_error("telegram_replay_manifest_contract_missing");
+    manifest["telegram_replay_test_status"] = replay_result == EXIT_SUCCESS ? "PASS" : "FAIL";
+    manifest["telegram_replay_test_update_id"] = update_id > 0 ? update_id : 0;
+    manifest["end_time_utc"] = utc_now_iso();
+    write_json_atomic(manifest_path, manifest);
+}
+
 inline nlohmann::json default_inbound_state() {
     return {{"schema_version", 1}, {"last_update_id", 0},
             {"poll_count", 0}, {"last_poll_status", "NEVER_POLLED"},
@@ -464,6 +476,71 @@ inline std::string command_reply(const std::string& text) {
     if (text == "/last")
         return "آخرین وضعیت معاملاتی معتبر: هنوز سیگنال کالیبره‌شده و دارای EV مثبت ثبت نشده است.";
     return {};
+}
+
+template <typename Sender>
+inline bool handle_duplicate_inbound_update(const std::filesystem::path& state_path,
+                                            nlohmann::json& state, long long update_id,
+                                            Sender&& sender) {
+    const std::string key = std::to_string(update_id);
+    if (!state.contains("processed_updates") || !state["processed_updates"].contains(key))
+        throw std::invalid_argument("telegram_duplicate_update_not_found");
+    auto& prior = state["processed_updates"][key];
+    const auto status = prior.value("status", std::string{});
+    bool delivery_problem = false;
+    if (reconcile_inbound_status(status) == "DELIVERY_UNKNOWN" && status == "REPLY_SENDING") {
+        prior["status"] = "DELIVERY_UNKNOWN";
+        prior["reply_error"] = "previous_process_ended_while_reply_sending";
+        delivery_problem = true;
+        write_json_atomic(state_path, state);
+    } else if (inbound_duplicate_should_resume_reply(status)) {
+        prior["status"] = "REPLY_SENDING";
+        write_json_atomic(state_path, state);
+        const auto sent = sender(prior.value("reply_text", std::string{}));
+        prior["reply_status"] = sent.status;
+        prior["reply_message_id"] = sent.message_id > 0
+            ? nlohmann::json(sent.message_id) : nlohmann::json(nullptr);
+        prior["status"] = sent.status == "DELIVERED" ? "PROCESSED" : sent.status;
+        prior["reply_error"] = sent.detail;
+        write_json_atomic(state_path, state);
+        if (sent.status != "DELIVERED") delivery_problem = true;
+    } else if (status == "DELIVERY_UNKNOWN" || status == "RETRYABLE_FAILURE" ||
+               status == "PERMANENT_FAILURE") {
+        delivery_problem = true;
+    }
+    state["last_update_id"] = std::max(state.value("last_update_id", 0LL), update_id);
+    write_json_atomic(state_path, state);
+    return delivery_problem;
+}
+
+inline int replay_processed_update(const std::filesystem::path& state_path, long long update_id) {
+    auto state = load_json_or_default(state_path, default_inbound_state());
+    const std::string key = std::to_string(update_id);
+    if (!state.contains("processed_updates") || !state["processed_updates"].contains(key))
+        throw std::runtime_error("telegram_replay_update_not_found");
+    const auto before = state["processed_updates"].at(key);
+    if (before.value("status", std::string{}) != "PROCESSED" ||
+        before.value("reply_status", std::string{}) != "DELIVERED" ||
+        !before.contains("reply_message_id") || !before.at("reply_message_id").is_number_integer() ||
+        before.at("reply_message_id").get<long long>() <= 0)
+        throw std::runtime_error("telegram_replay_requires_previously_delivered_update");
+
+    const auto forbidden_sender = [](const std::string&) -> SendResult {
+        throw std::runtime_error("duplicate_processed_update_attempted_second_reply");
+    };
+    const bool delivery_problem = handle_duplicate_inbound_update(
+        state_path, state, update_id, forbidden_sender);
+    const auto after_state = load_json_or_default(state_path, default_inbound_state());
+    const auto after = after_state["processed_updates"].at(key);
+    if (delivery_problem || after.value("status", std::string{}) != "PROCESSED" ||
+        after.value("reply_status", std::string{}) != "DELIVERED" ||
+        after.at("reply_message_id") != before.at("reply_message_id"))
+        throw std::runtime_error("telegram_duplicate_replay_dedupe_failed");
+
+    std::cout << "CPP_TELEGRAM_INBOUND_DUPLICATE_REPLAY_DEDUPE_PASS update_id="
+              << update_id << " reply_message_id="
+              << before.at("reply_message_id").get<long long>() << '\n';
+    return EXIT_SUCCESS;
 }
 
 inline int run_inbound(const std::filesystem::path& state_path, const std::string& token,
@@ -502,29 +579,10 @@ inline int run_inbound(const std::filesystem::path& state_path, const std::strin
         const auto update_id = update.at("update_id").get<long long>();
         const std::string key = std::to_string(update_id);
         if (state["processed_updates"].contains(key)) {
-            auto& prior = state["processed_updates"][key];
-            const auto status = prior.value("status", std::string{});
-            if (reconcile_inbound_status(status) == "DELIVERY_UNKNOWN" && status == "REPLY_SENDING") {
-                prior["status"] = "DELIVERY_UNKNOWN";
-                prior["reply_error"] = "previous_process_ended_while_reply_sending";
-                delivery_problem = true;
-                write_json_atomic(state_path, state);
-            } else if (inbound_duplicate_should_resume_reply(status)) {
-                prior["status"] = "REPLY_SENDING";
-                write_json_atomic(state_path, state);
-                const auto sent = send_message(token, allowed_chat_id, prior.value("reply_text", std::string{}));
-                prior["reply_status"] = sent.status;
-                prior["reply_message_id"] = sent.message_id > 0 ? nlohmann::json(sent.message_id) : nlohmann::json(nullptr);
-                prior["status"] = sent.status == "DELIVERED" ? "PROCESSED" : sent.status;
-                prior["reply_error"] = sent.detail;
-                write_json_atomic(state_path, state);
-                if (sent.status != "DELIVERED") delivery_problem = true;
-            } else if (status == "DELIVERY_UNKNOWN" || status == "RETRYABLE_FAILURE" ||
-                       status == "PERMANENT_FAILURE") {
-                delivery_problem = true;
-            }
-            state["last_update_id"] = std::max(state.value("last_update_id", 0LL), update_id);
-            write_json_atomic(state_path, state);
+            delivery_problem = handle_duplicate_inbound_update(
+                state_path, state, update_id,
+                [&](const std::string& reply) { return send_message(token, allowed_chat_id, reply); })
+                || delivery_problem;
             continue;
         }
 
