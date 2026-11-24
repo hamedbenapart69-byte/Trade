@@ -671,6 +671,53 @@ inline double ohlcv_coverage_pct(const json& rows, std::int64_t start_ms,
                            static_cast<double>(expected_rows));
 }
 
+struct SeriesFreshness {
+    json latest_age_ms{nullptr};
+    std::int64_t max_age_ms{0};
+    std::string status{"UNAVAILABLE"};
+};
+
+inline std::int64_t median_series_interval_ms(const json& rows) {
+    if (!rows.is_array() || rows.size() < 2U) return 0;
+    std::vector<std::int64_t> gaps;
+    for (std::size_t i = 1; i < rows.size(); ++i) {
+        if (!rows[i - 1U].is_object() || !rows[i].is_object() ||
+            !rows[i - 1U].contains("timestamp_ms") || !rows[i].contains("timestamp_ms") ||
+            !rows[i - 1U].at("timestamp_ms").is_number_integer() ||
+            !rows[i].at("timestamp_ms").is_number_integer()) continue;
+        const auto previous = rows[i - 1U].at("timestamp_ms").get<std::int64_t>();
+        const auto current = rows[i].at("timestamp_ms").get<std::int64_t>();
+        if (current > previous) gaps.push_back(current - previous);
+    }
+    if (gaps.empty()) return 0;
+    std::sort(gaps.begin(), gaps.end());
+    return gaps[gaps.size() / 2U];
+}
+
+inline SeriesFreshness evaluate_series_freshness(const json& rows,
+                                                  std::int64_t reference_ms,
+                                                  std::int64_t interval_multiplier,
+                                                  std::int64_t absolute_cap_ms) {
+    SeriesFreshness result;
+    if (!rows.is_array() || rows.empty() || reference_ms <= 0 ||
+        interval_multiplier <= 0 || absolute_cap_ms <= 0) return result;
+    const auto& latest = rows.back();
+    if (!latest.is_object() || !latest.contains("timestamp_ms") ||
+        !latest.at("timestamp_ms").is_number_integer()) return result;
+    const auto latest_ms = latest.at("timestamp_ms").get<std::int64_t>();
+    if (latest_ms <= 0) return result;
+    if (reference_ms >= latest_ms) result.latest_age_ms = reference_ms - latest_ms;
+    const auto median_interval_ms = median_series_interval_ms(rows);
+    if (median_interval_ms <= 0) return result;
+    result.max_age_ms = std::min(absolute_cap_ms, median_interval_ms * interval_multiplier);
+    if (reference_ms < latest_ms) {
+        result.status = "STALE";
+        return result;
+    }
+    result.status = reference_ms - latest_ms <= result.max_age_ms ? "FRESH" : "STALE";
+    return result;
+}
+
 inline std::string availability(const json& rows, const char* field, double minimum_days = 0.0) {
     if (!rows.is_array() || rows.empty()) return "UNAVAILABLE";
     for (const auto& row : rows) if (!row.contains(field) || row[field].is_null()) return "PARTIAL";
@@ -1018,6 +1065,18 @@ inline json collect(int symbol_count, int years,
                 return error.is_string() && error.get<std::string>().rfind(prefix, 0U) == 0U;
             });
         };
+        const auto funding_freshness = evaluate_series_freshness(
+            funding, end_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+        const auto oi_freshness = evaluate_series_freshness(
+            oi, end_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+        auto funding_status = has_error_prefix("funding:")
+            ? std::string{"PARTIAL"} : availability(funding, "funding_rate", 29.0);
+        auto oi_status = has_error_prefix("open_interest:")
+            ? std::string{"PARTIAL"} : open_interest_availability(oi, 29.0);
+        if (funding_status == "AVAILABLE" && funding_freshness.status != "FRESH")
+            funding_status = "PARTIAL";
+        if (oi_status == "AVAILABLE" && oi_freshness.status != "FRESH")
+            oi_status = "PARTIAL";
         instruments.push_back({
             {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
             {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
@@ -1038,14 +1097,20 @@ inline json collect(int symbol_count, int years,
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", ohlcv_complete ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
-                {"funding", has_error_prefix("funding:") ? "PARTIAL" : availability(funding, "funding_rate", 29.0)},
-                {"open_interest", has_error_prefix("open_interest:") ? "PARTIAL" : open_interest_availability(oi, 29.0)}
+                {"funding", funding_status},
+                {"open_interest", oi_status}
             }},
             {"coverage", {
                 {"ohlcv_rows", candles.size()}, {"funding_rows", funding.size()},
                 {"open_interest_rows", oi.size()}, {"ohlcv_coverage_pct", std::min(100.0, coverage)},
                 {"funding_coverage_days", coverage_days(funding)},
-                {"open_interest_coverage_days", coverage_days(oi)}
+                {"open_interest_coverage_days", coverage_days(oi)},
+                {"funding_latest_age_ms", funding_freshness.latest_age_ms},
+                {"funding_max_age_ms", funding_freshness.max_age_ms},
+                {"funding_freshness_status", funding_freshness.status},
+                {"open_interest_latest_age_ms", oi_freshness.latest_age_ms},
+                {"open_interest_max_age_ms", oi_freshness.max_age_ms},
+                {"open_interest_freshness_status", oi_freshness.status}
             }},
             {"errors", errors}
         });
