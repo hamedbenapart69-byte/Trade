@@ -30,6 +30,8 @@
     "artifact_manifest",
     "telegram_send_status",
     "telegram_receive_test_status",
+    "telegram_replay_test_status",
+    "telegram_replay_test_update_id",
     "telegram_message_ids",
     "telegram_last_update_id"
   ],
@@ -321,6 +323,17 @@
       }
     },
     "telegram_last_update_id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "telegram_replay_test_status": {
+      "enum": [
+        "NOT_REQUESTED",
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "telegram_replay_test_update_id": {
       "type": "integer",
       "minimum": 0
     }
