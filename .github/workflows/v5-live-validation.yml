@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Restore signal and API-usage database
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: data/control.db
           key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
@@ -34,7 +34,7 @@ jobs:
           fi
       - name: Save persistent signal and API-usage database
         if: always() && hashFiles('data/control.db') != ''
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: data/control.db
           key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
