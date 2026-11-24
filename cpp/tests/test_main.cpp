@@ -126,6 +126,45 @@ int main() {
     const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
     const nlohmann::json ambiguous_ticker = {{"last", "50000"}, {"vol24h", "250"}};
     const auto turnover = cfss::okx::quote_turnover_usd(valid_ticker);
+    // متادیتای cache باید با پنجرهٔ واقعی دادهٔ ذخیره‌شده منطبق باشد.
+    const std::int64_t cache_previous_start = 100LL * 3'600'000LL;
+    const std::int64_t cache_current_start = 101LL * 3'600'000LL;
+    const std::int64_t cache_previous_end = 103LL * 3'600'000LL;
+    const std::int64_t cache_current_end = 104LL * 3'600'000LL;
+    nlohmann::json old_cached_instrument = {
+        {"instrument_id", "BTC-USDT-SWAP"}, {"listing_time_ms", 0},
+        {"candles", nlohmann::json::array({
+            {{"timestamp_ms", cache_previous_start}},
+            {{"timestamp_ms", cache_previous_start + 3'600'000LL}},
+            {{"timestamp_ms", cache_previous_start + 2LL * 3'600'000LL}}
+        })}
+    };
+    nlohmann::json old_cache_entries = nlohmann::json::object();
+    old_cache_entries["BTC-USDT-SWAP"] = cfss::okx::make_cache_entry(
+        old_cached_instrument, cache_previous_start, cache_previous_end);
+    nlohmann::json old_cache = {
+        {"instruments", nlohmann::json::array({old_cached_instrument})},
+        {"cache_entries", old_cache_entries}
+    };
+    nlohmann::json refreshed_instrument = {
+        {"instrument_id", "BTC-USDT-SWAP"}, {"listing_time_ms", 0},
+        {"candles", nlohmann::json::array({
+            {{"timestamp_ms", cache_current_start}},
+            {{"timestamp_ms", cache_current_start + 3'600'000LL}},
+            {{"timestamp_ms", cache_current_start + 2LL * 3'600'000LL}}
+        })}
+    };
+    const auto refreshed_snapshot = cfss::okx::make_market_cache_snapshot(
+        old_cache, nlohmann::json::array({refreshed_instrument}),
+        cache_current_start, cache_current_end);
+    if (refreshed_snapshot.at("cache_entries").at("BTC-USDT-SWAP")
+            .at("window_start_ms") != cache_current_start ||
+        refreshed_snapshot.at("instruments").at(0).at("candles").at(0)
+            .at("timestamp_ms") != cache_current_start) {
+        std::cerr << "Market cache window metadata does not match retained OHLCV\n";
+        return EXIT_FAILURE;
+    }
+
     if (!turnover || std::abs(*turnover - 12500000.0) > 1e-9 ||
         cfss::okx::quote_turnover_usd(ambiguous_ticker).has_value() ||
         !cfss::okx::passes_liquidity(10000000.01) ||
