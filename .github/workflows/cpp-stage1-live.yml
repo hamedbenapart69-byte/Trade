@@ -262,29 +262,42 @@ jobs:
             (.active_strategy_engines | length == 0) and
             (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
           ' "$CURRENT" >/dev/null
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "STAGE1_ACCEPTANCE_BLOCKED: only main-branch runs can establish production acceptance"
+            exit 1
+          fi
+          RUN_NUMBER="$GITHUB_RUN_NUMBER"
+          [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]] && [ "$RUN_NUMBER" -gt 1 ]
           mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
           test "${#manifests[@]}" -gt 0
-          jq -s --arg sha "$GITHUB_SHA" '
-            [.[] | select(.repository_commit == $sha)] |
-            sort_by(.end_time_utc) | .[-2:]
+          jq -s --argjson current "$RUN_NUMBER" '
+            [.[] | select((.workflow_run_number | type) == "number")] |
+            sort_by(.workflow_run_number) | .[-2:]
           ' "${manifests[@]}" > artifacts/stage1-acceptance-last-two.json
           VALID_COUNT=$(jq 'length' artifacts/stage1-acceptance-last-two.json)
           if [ "$VALID_COUNT" -lt 2 ]; then
-            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive runs on the same revision"
+            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
             exit 1
           fi
-          jq -e 'all(.[]; 
-            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
-            .telegram_send_status == "DELIVERED" and
-            (.telegram_message_ids | length > 0) and
-            (.active_strategy_engines | length == 0) and
-            (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
-            .document_version == "V21.0" and
-            .artifact_manifest.l2_status.retained_in_signals_branch == true and
-            .artifact_manifest.provider_health.retained_in_signals_branch == true and
-            .artifact_manifest.coverage.retained_in_signals_branch == true and
-            .artifact_manifest.system_status.retained_in_signals_branch == true
-          )' artifacts/stage1-acceptance-last-two.json >/dev/null
+          jq -e --arg sha "$GITHUB_SHA" --argjson current "$RUN_NUMBER" '
+            length == 2 and
+            .[0].workflow_run_number == ($current - 1) and
+            .[1].workflow_run_number == $current and
+            all(.[]; 
+              .repository_commit == $sha and
+              .branch == "main" and
+              (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+              .telegram_send_status == "DELIVERED" and
+              (.telegram_message_ids | length > 0) and
+              (.active_strategy_engines | length == 0) and
+              (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
+              .document_version == "V21.0" and
+              .artifact_manifest.l2_status.retained_in_signals_branch == true and
+              .artifact_manifest.provider_health.retained_in_signals_branch == true and
+              .artifact_manifest.coverage.retained_in_signals_branch == true and
+              .artifact_manifest.system_status.retained_in_signals_branch == true
+            )
+          ' artifacts/stage1-acceptance-last-two.json >/dev/null
           DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
           if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
             echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
