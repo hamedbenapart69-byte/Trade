@@ -1,0 +1,97 @@
+{
+  "checked_at_utc": "2026-11-24T20:28:22Z",
+  "providers": [
+    {
+      "adapter_status": "IMPLEMENTED_PRIMARY",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "HTTP_REACHABLE",
+      "endpoint": "https://www.okx.com/api/v5/public/time",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 1,
+      "fallback_reason": "primary_provider",
+      "fallback_status": "PRIMARY",
+      "http_status": 200,
+      "provider_id": "okx",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "NOT_IMPLEMENTED",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "UNAVAILABLE",
+      "endpoint": "https://api.bybit.com/v5/market/time",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 2,
+      "fallback_reason": "provider_endpoint_unreachable",
+      "fallback_status": "UNAVAILABLE",
+      "http_status": 403,
+      "provider_id": "bybit",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "NOT_IMPLEMENTED",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "UNAVAILABLE",
+      "endpoint": "https://fapi.binance.com/fapi/v1/ping",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 3,
+      "fallback_reason": "provider_endpoint_unreachable",
+      "fallback_status": "UNAVAILABLE",
+      "http_status": 451,
+      "provider_id": "binance",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "NOT_IMPLEMENTED",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "HTTP_REACHABLE",
+      "endpoint": "https://api-futures.kucoin.com/api/v1/timestamp",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 4,
+      "fallback_reason": "no_equivalence_verified_cpp_adapter",
+      "fallback_status": "UNAVAILABLE",
+      "http_status": 200,
+      "provider_id": "kucoin",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "NOT_IMPLEMENTED",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "HTTP_REACHABLE",
+      "endpoint": "https://contract.mexc.com/api/v1/contract/detail",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 5,
+      "fallback_reason": "no_equivalence_verified_cpp_adapter",
+      "fallback_status": "UNAVAILABLE",
+      "http_status": 200,
+      "provider_id": "mexc",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "NOT_IMPLEMENTED",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "HTTP_REACHABLE",
+      "endpoint": "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 6,
+      "fallback_reason": "no_equivalence_verified_cpp_adapter",
+      "fallback_status": "UNAVAILABLE",
+      "http_status": 200,
+      "provider_id": "bitget",
+      "transport_status": "No error"
+    },
+    {
+      "adapter_status": "REFERENCE_ONLY",
+      "checked_at_utc": "2026-11-24T20:28:22Z",
+      "connectivity_status": "HTTP_REACHABLE",
+      "endpoint": "https://api.coingecko.com/api/v3/ping",
+      "fallback_equivalence": "NOT_PROVEN",
+      "fallback_rank": 7,
+      "fallback_reason": "not_a_futures_fallback",
+      "fallback_status": "REFERENCE_ONLY",
+      "http_status": 200,
+      "provider_id": "coingecko",
+      "transport_status": "No error"
+    }
+  ],
+  "schema_version": "1.0.0"
+}
