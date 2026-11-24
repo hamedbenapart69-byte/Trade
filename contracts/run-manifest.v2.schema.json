@@ -6,7 +6,6 @@
   "additionalProperties": false,
   "required": [
     "run_id",
-    "workflow_run_number",
     "scan_id",
     "run_timestamp_utc",
     "repository_commit",
