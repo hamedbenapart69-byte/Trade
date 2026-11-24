@@ -646,27 +646,18 @@ inline bool ohlcv_series_complete(const json& rows, std::int64_t start_ms,
     const auto expected_rows = expected_ohlcv_rows(start_ms, end_ms, listing_time_ms, interval_ms);
     if (first_expected_ms <= 0 || expected_rows <= 0) return false;
     std::size_t in_window_rows = 0U;
+    std::set<std::int64_t> present;
     for (const auto& row : rows) {
         if (!row.is_object() || !row.contains("timestamp_ms") ||
             !row.at("timestamp_ms").is_number_integer()) continue;
         const auto ts = row.at("timestamp_ms").get<std::int64_t>();
-        if (ts < first_expected_ms || ts >= end_ms) continue;
+        if (ts < start_ms || ts >= end_ms) continue;
+        if (ts < first_expected_ms || ts % interval_ms != 0) return false;
         ++in_window_rows;
-        if (ts % interval_ms != 0) return false;
+        present.insert(ts);
     }
-    if (in_window_rows != static_cast<std::size_t>(expected_rows) ||
-        ohlcv_present_expected_rows(rows, start_ms, end_ms, listing_time_ms, interval_ms) !=
-            static_cast<std::size_t>(expected_rows)) return false;
-    for (std::int64_t i = 0; i < expected_rows; ++i) {
-        const auto expected_ts = first_expected_ms + i * interval_ms;
-        const auto found = std::find_if(rows.begin(), rows.end(), [&](const json& row) {
-            return row.is_object() && row.contains("timestamp_ms") &&
-                   row.at("timestamp_ms").is_number_integer() &&
-                   row.at("timestamp_ms").get<std::int64_t>() == expected_ts;
-        });
-        if (found == rows.end()) return false;
-    }
-    return true;
+    return in_window_rows == static_cast<std::size_t>(expected_rows) &&
+           present.size() == static_cast<std::size_t>(expected_rows);
 }
 
 inline double ohlcv_coverage_pct(const json& rows, std::int64_t start_ms,
