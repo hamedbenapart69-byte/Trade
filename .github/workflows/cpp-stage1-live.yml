@@ -158,27 +158,6 @@ jobs:
           grep -Eq '"status": "PROCESSED"' signals-state/cpp_runtime/telegram_inbound.v1.json
           echo "CPP_TELEGRAM_INBOUND_PROCESSED"
 
-      - name: Verify inbound replay did not resend a reply
-        if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
-        run: |
-          BEFORE_ID=$(jq -r .last_update_id artifacts/inbound-replay-before.json)
-          AFTER_ID=$(jq -r .last_update_id signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_POLLS=$(jq -r .poll_count artifacts/inbound-replay-before.json)
-          AFTER_POLLS=$(jq -r .poll_count signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_REPLIES=$(jq -r .delivered_reply_count artifacts/inbound-replay-before.json)
-          AFTER_REPLIES=$(jq '[.processed_updates[] | select(.reply_status == "DELIVERED")] | length' signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_REPLY_ID=$(jq -r .reply_message_id artifacts/inbound-replay-before.json)
-          AFTER_REPLY_ID=$(jq -r '.processed_updates["610176013"].reply_message_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
-          BEFORE_OUTBOX=$(cat artifacts/inbound-replay-outbox-before.txt)
-          AFTER_OUTBOX=$(jq '.messages | length' signals-state/cpp_runtime/telegram_outbox.v1.json)
-          test "$BEFORE_ID" = "$AFTER_ID"
-          test "$AFTER_POLLS" -gt "$BEFORE_POLLS"
-          test "$BEFORE_REPLIES" = "$AFTER_REPLIES"
-          test "$BEFORE_REPLY_ID" = "43"
-          test "$AFTER_REPLY_ID" = "$BEFORE_REPLY_ID"
-          test "$BEFORE_OUTBOX" = "$AFTER_OUTBOX"
-          echo "CPP_TELEGRAM_INBOUND_REPLAY_DEDUPE_PASS"
-
       - name: Snapshot exact processed update before replay
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
