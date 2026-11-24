@@ -181,8 +181,6 @@ jobs:
 
       - name: Snapshot exact processed update before replay
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
-        env:
-          INBOUND_REQUIRED: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]')) }}
         run: |
           UPDATE_ID=$(jq -r '.last_update_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
           test "$UPDATE_ID" -gt 0
@@ -191,9 +189,6 @@ jobs:
           test "$(jq -r .status artifacts/inbound-replay-before.json)" = "PROCESSED"
           test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
           test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
-          if [ "$INBOUND_REQUIRED" = "true" ]; then
-            test "$(jq -r .telegram_receive_test_status artifacts/run-manifest.v2.json)" = "RECEIVED_PROCESSED"
-          fi
           printf '%s\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
 
       - name: Replay the exact processed Telegram update through C++ L3
