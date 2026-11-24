@@ -88,7 +88,7 @@ int main() {
         std::cerr << "Open-interest 30-day coverage gate failed\n"; return EXIT_FAILURE;
     }
 
-    // قرارداد تازه‌فهرست‌شده نباید به‌خاطر نداشتن تاریخچهٔ پیش از عرضه، به‌اشتباه ناقص شناخته شود.
+    // پوشش باید روی شبکهٔ timestamp کندل سنجیده شود؛ ردیف اضافه نباید جای کندل گمشده را بگیرد.
     const std::int64_t coverage_start_ms = 3'600'000LL;
     const std::int64_t coverage_end_ms = coverage_start_ms + 17'532LL * 3'600'000LL;
     const std::int64_t listing_time_ms =
@@ -97,13 +97,24 @@ int main() {
         coverage_start_ms, coverage_end_ms, 0);
     const auto listed_window_rows = cfss::okx::expected_ohlcv_rows(
         coverage_start_ms, coverage_end_ms, listing_time_ms);
+    const auto first_listed_candle = listing_time_ms - (listing_time_ms % 3'600'000LL);
+    nlohmann::json listed_rows = nlohmann::json::array();
+    for (std::int64_t i = 0; i < listed_window_rows; ++i)
+        listed_rows.push_back({{"timestamp_ms", first_listed_candle + i * 3'600'000LL}});
     const auto listed_full_coverage = cfss::okx::ohlcv_coverage_pct(
-        9182U, coverage_start_ms, coverage_end_ms, listing_time_ms);
+        listed_rows, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    auto missing_with_extra = listed_rows;
+    missing_with_extra.erase(missing_with_extra.begin() + 1);
+    missing_with_extra.insert(missing_with_extra.begin(),
+        nlohmann::json{{"timestamp_ms", first_listed_candle - 3'600'000LL}});
     const auto listed_missing_one = cfss::okx::ohlcv_coverage_pct(
-        9180U, coverage_start_ms, coverage_end_ms, listing_time_ms);
-    if (full_window_rows != 17532 || listed_window_rows != 9181 ||
-        listed_full_coverage != 100.0 || listed_missing_one >= 100.0) {
-        std::cerr << "Listing-aware OHLCV coverage gate failed\n"; return EXIT_FAILURE;
+        missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    if (full_window_rows != 17532 || listed_window_rows != 9182 ||
+        listed_full_coverage != 100.0 ||
+        !cfss::okx::ohlcv_series_complete(listed_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        listed_missing_one >= 100.0 ||
+        cfss::okx::ohlcv_series_complete(missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms)) {
+        std::cerr << "Exact listing-aware OHLCV timestamp coverage gate failed\n"; return EXIT_FAILURE;
     }
 
     const nlohmann::json valid_ticker = {{"last", "50000"}, {"volCcy24h", "250"}, {"vol24h", "250"}};
