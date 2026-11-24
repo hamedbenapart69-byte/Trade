@@ -102,6 +102,8 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"artifact_manifest", artifact_manifest},
         {"telegram_send_status", "NOT_ATTEMPTED"},
         {"telegram_receive_test_status", "NOT_REQUESTED"},
+        {"telegram_replay_test_status", "NOT_REQUESTED"},
+        {"telegram_replay_test_update_id", 0},
         {"telegram_message_ids", json::array()},
         {"telegram_last_update_id", 0}
     };
