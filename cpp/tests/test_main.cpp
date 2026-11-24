@@ -138,17 +138,33 @@ int main() {
     nlohmann::json funding_fresh_rows = nlohmann::json::array();
     for (std::int64_t i = 0; i < 4; ++i)
         funding_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
-            39LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
+            40LL * 60LL * 60LL * 1000LL + i * 8LL * 60LL * 60LL * 1000LL}});
     const auto funding_freshness = cfss::okx::evaluate_series_freshness(
         funding_fresh_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
+    auto funding_stale_rows = funding_fresh_rows;
+    for (auto& row : funding_stale_rows) row["timestamp_ms"] =
+        row["timestamp_ms"].get<std::int64_t>() - 1LL;
+    const auto funding_stale_freshness = cfss::okx::evaluate_series_freshness(
+        funding_stale_rows, freshness_reference_ms, 2LL, 24LL * 60LL * 60LL * 1000LL);
     nlohmann::json oi_fresh_rows = nlohmann::json::array();
     for (std::int64_t i = 0; i < 4; ++i)
         oi_fresh_rows.push_back({{"timestamp_ms", freshness_reference_ms -
             6LL * 60LL * 60LL * 1000LL + i * 60LL * 60LL * 1000LL}});
     const auto oi_freshness = cfss::okx::evaluate_series_freshness(
         oi_fresh_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
-    if (funding_freshness.status != "FRESH" || funding_freshness.max_age_ms != 16LL * 60LL * 60LL * 1000LL ||
-        oi_freshness.status != "FRESH" || oi_freshness.max_age_ms != 3LL * 60LL * 60LL * 1000LL) {
+    auto oi_stale_rows = oi_fresh_rows;
+    for (auto& row : oi_stale_rows) row["timestamp_ms"] =
+        row["timestamp_ms"].get<std::int64_t>() - 1LL;
+    const auto oi_stale_freshness = cfss::okx::evaluate_series_freshness(
+        oi_stale_rows, freshness_reference_ms, 3LL, 3LL * 60LL * 60LL * 1000LL);
+    if (funding_freshness.status != "FRESH" ||
+        funding_freshness.latest_age_ms != 16LL * 60LL * 60LL * 1000LL ||
+        funding_freshness.max_age_ms != 16LL * 60LL * 60LL * 1000LL ||
+        funding_stale_freshness.status != "STALE" ||
+        oi_freshness.status != "FRESH" ||
+        oi_freshness.latest_age_ms != 3LL * 60LL * 60LL * 1000LL ||
+        oi_freshness.max_age_ms != 3LL * 60LL * 60LL * 1000LL ||
+        oi_stale_freshness.status != "STALE") {
         std::cerr << "Funding/OI freshness cadence gate failed\n"; return EXIT_FAILURE;
     }
 
