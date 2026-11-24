@@ -1,14 +1,14 @@
 {
   "artifact_type": "cfss_crypto_universe_v1",
   "attribution": "CoinPaprika",
-  "fetched_at_ms": 1795552088037,
+  "fetched_at_ms": 1795552601158,
   "freshness_status": "LIVE",
   "provider_id": "coinpaprika",
-  "retrieved_at_ms": 1795552088037,
+  "retrieved_at_ms": 1795552601158,
   "schema_version": "1.0.0",
   "source_endpoint": "https://api.coinpaprika.com/v1/coins",
   "status": "VERIFIED",
-  "symbol_count": 9322,
+  "symbol_count": 9320,
   "symbols": [
     "00",
     "01",
@@ -243,6 +243,7 @@
     "AIAV",
     "AIB",
     "AIBINANCE",
+    "AIBRK",
     "AIC",
     "AID",
     "AIDD",
@@ -2303,7 +2304,6 @@
     "DNET",
     "DNKY",
     "DNL",
-    "DNNON",
     "DNT",
     "DNUT",
     "DNX",
@@ -7114,7 +7114,6 @@
     "SHADOW",
     "SHAKE",
     "SHAPE",
-    "SHARBI",
     "SHARE",
     "SHARK",
     "SHARKI",
@@ -7298,7 +7297,6 @@
     "SMB",
     "SMCION",
     "SMCW",
-    "SMG",
     "SMH",
     "SMI",
     "SMILEE",
@@ -9333,5 +9331,5 @@
     "ZYN",
     "ZYRA"
   ],
-  "symbols_sha256": "6c65c7b58cc3d25a779832401ab867860bbb93a9c0f98532b2513874f53c3b09"
+  "symbols_sha256": "31c3f1ced9d899934f27ec036a4de53cad9ba0514d297696e2516e864f0cb6f1"
 }
