@@ -337,6 +337,14 @@ int main() {
         stale_oi_artifact["instruments"][0]["reason_code"] != "OPEN_INTEREST_STALE") {
         std::cerr << "Stale open-interest data did not fail closed\n"; return EXIT_FAILURE;
     }
+    auto excessive_freshness_cap_contract = complete_contract;
+    excessive_freshness_cap_contract["instruments"][0]["coverage"]["funding_max_age_ms"] =
+        48LL * 60LL * 60LL * 1000LL;
+    const auto excessive_cap_artifact = cfss::build_l2_artifact(excessive_freshness_cap_contract, now_ms);
+    if (excessive_cap_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        excessive_cap_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Excessive funding freshness cap was not rejected\n"; return EXIT_FAILURE;
+    }
     auto duplicate = contract;
     duplicate["instruments"][0]["candles"].push_back(duplicate["instruments"][0]["candles"][0]);
     bool duplicate_rejected = false;
