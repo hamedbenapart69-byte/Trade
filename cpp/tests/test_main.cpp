@@ -345,6 +345,16 @@ int main() {
         excessive_cap_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
         std::cerr << "Excessive funding freshness cap was not rejected\n"; return EXIT_FAILURE;
     }
+    auto unavailable_funding_freshness_contract = complete_contract;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_latest_age_ms"] = nullptr;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_max_age_ms"] = 0;
+    unavailable_funding_freshness_contract["instruments"][0]["coverage"]["funding_freshness_status"] = "UNAVAILABLE";
+    const auto unavailable_freshness_artifact =
+        cfss::build_l2_artifact(unavailable_funding_freshness_contract, now_ms);
+    if (unavailable_freshness_artifact["instruments"][0]["state"] != "MARKET_DATA_DEGRADED" ||
+        unavailable_freshness_artifact["instruments"][0]["reason_code"] != "FUNDING_STALE") {
+        std::cerr << "Unavailable funding freshness was incorrectly admitted\n"; return EXIT_FAILURE;
+    }
     auto duplicate = contract;
     duplicate["instruments"][0]["candles"].push_back(duplicate["instruments"][0]["candles"][0]);
     bool duplicate_rejected = false;
