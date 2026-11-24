@@ -1,10 +1,10 @@
 # V21 Stage 1 — SLRP Plan
 
-**Status:** v1 FAIL (D3) / v2 FAIL (D3) / v3 IMPLEMENTED ON ISOLATED BRANCH / LIVE ACCEPTANCE PENDING  
+**Status:** v1 FAIL (D3) / v2 FAIL (D3) / v3 CI PASS ON ISOLATED BRANCH / LIVE ACCEPTANCE PENDING  
 **Controlling source:** MASTER SOURCE V21.0 + V21 Execution Protocol Addendum  
 **Architecture:** CFSS V21 Architecture Design V1  
 **Stage owner approval:** 2026-11-23  
-**Active candidate:** v3 (C++ validation for the exact-timestamp implementation is pending; live acceptance has not been run)
+**Active candidate:** v3 (C++ build, complete CTest, L1/L2 collection, schemas, artifacts, policy guards and stage contract CI PASS on commit `0b3ae5209deaa44461ccab309f927c2b6d692e24`; Telegram live acceptance remains pending)
 
 ## 1. Objective
 
@@ -84,7 +84,7 @@ Only apply a diagnosis after a real v1 failure, using run IDs, logs, schema erro
 - Add a regression fixture where one expected timestamp is missing but an extra earlier row preserves the raw row count; the fixture must remain PARTIAL and report coverage below 100%.
 - Preserve the strict 100% requirement and all other Stage 1 acceptance criteria.
 
-**v3 validation status:** implementation and regression test have been committed, but CI for the new head is still pending. No v3 PASS is claimed. PR live acceptance, Telegram delivery/inbound replay, persistent-state verification, and the two-run same-revision gate remain NOT_VERIFIED. No merge or deployment has been performed.
+**v3 validation status:** CI PASS on head `0b3ae5209deaa44461ccab309f927c2b6d692e24`. GitHub Actions completed successfully for C++ foundation, Stage 1 C++ L1/L2 vertical slice, complete CTest, LFS v1 contract, NSS v1 contract, Stage 5 contract, Stage 6 contract, Stage 7 risk-gate contract, and policy guard. The Stage 1 job collected real OKX L1 data, computed C10 states in C++, and passed L1/L2 schemas, universe, manifest, artifact-integrity and required-artifact validation. PR-event semantics skipped Telegram outbound/inbound and signals-branch persistence by design. Therefore this is a v3 engineering/CI PASS, not Stage 1 acceptance. Telegram live outbound, authorized `/status` inbound, exact-update replay against the live bot, remote signals-branch receipt verification, and two consecutive same-revision main-branch runs remain NOT_VERIFIED. No Stage 1 PASS is claimed.
 
 ## 7. Escalation
 
