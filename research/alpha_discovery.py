@@ -18,6 +18,27 @@ ALIASES = {
 }
 ROUND_TRIP_COST = 0.0012
 
+def apply_pit_membership(data: pd.DataFrame, membership: pd.DataFrame) -> pd.DataFrame:
+    """Mark daily rows using only the independently generated PIT membership table."""
+    required = {"date", "symbol"}
+    missing = sorted(required - set(membership.columns))
+    if missing:
+        raise ValueError(f"PIT membership missing columns: {missing}")
+    members = membership[["date", "symbol"]].copy()
+    members["date"] = pd.to_datetime(members["date"], utc=True, errors="coerce").dt.floor("D")
+    members["symbol"] = members["symbol"].astype(str).str.upper().str.strip()
+    if members[["date", "symbol"]].isna().any().any():
+        raise ValueError("PIT membership contains invalid date/symbol keys")
+    if members.duplicated(["date", "symbol"]).any():
+        raise ValueError("PIT membership contains duplicate date/symbol keys")
+    keys = members.assign(_pit_member=True)
+    result = data.copy()
+    result["_pit_date"] = result["timestamp"].dt.floor("D")
+    result = result.merge(keys, left_on=["_pit_date", "symbol"],
+                          right_on=["date", "symbol"], how="left", validate="many_to_one")
+    result["_pit_member"] = result["_pit_member"].fillna(False).astype(bool)
+    return result.drop(columns=["_pit_date", "date"])
+
 def read_data(root: Path):
     paths = sorted([*root.rglob("*.parquet"), *root.rglob("*.csv")])
     paths = [p for p in paths if p.name.startswith("ohlcv_") or "ohlcv" in p.stem.lower()]
@@ -44,6 +65,15 @@ def read_data(root: Path):
     data = pd.concat(frames, ignore_index=True)
     data = data.sort_values(["symbol","timestamp","_source_file"])
     data = data.drop_duplicates(["symbol","timestamp"], keep="last")
+    membership_path = root / "universe_membership.csv"
+    manifest_path = root / "universe_manifest.json"
+    if not membership_path.is_file() or not manifest_path.is_file():
+        raise FileNotFoundError("PIT membership CSV and universe manifest are required; refusing unfiltered universe")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("status") != "PASS" or manifest.get("dataset") != "vtm_pit_usdm_usdt_perpetual_universe_2023":
+        raise ValueError("PIT universe manifest identity/status is not PASS")
+    membership = pd.read_csv(membership_path)
+    data = apply_pit_membership(data, membership)
     return data, paths
 
 def _future_by_calendar_days(group: pd.DataFrame, column: str, days: int):
@@ -154,6 +184,13 @@ def trade_metrics(oos):
 
 def run(data):
     df,has_funding,has_oi=build_features(data)
+    if "_pit_member" not in df.columns:
+        raise ValueError("PIT membership filter missing; refusing non-PIT sample")
+    pit_membership_rows = int(df["_pit_member"].sum())
+    pit_membership_symbols = int(df.loc[df["_pit_member"], "symbol"].nunique())
+    pit_membership_dates = int(df.loc[df["_pit_member"], "timestamp"].dt.floor("D").nunique())
+    # Features are computed on all available historical bars; scored/modelled rows are PIT members only.
+    df = df[df["_pit_member"]].copy()
     usable=[]
     for feature in FEATURES:
         if feature in df and df[feature].notna().sum()>=100:
@@ -216,7 +253,10 @@ def run(data):
         "status":"COMPUTED" if full else "PARTIAL_DATA",
         "reason":None if full else "Funding and/or open-interest observations are absent; reported model uses only verified available features.",
         "dataset":{"rows_after_feature_validation":int(len(model_data)),
-            "raw_rows":int(len(data)),"symbols":int(data.symbol.nunique()),
+            "raw_rows":int(len(data)),"pit_membership_rows":pit_membership_rows,
+            "pit_membership_symbols":pit_membership_symbols,"pit_membership_dates":pit_membership_dates,
+            "pit_membership_filter":"APPLIED: exact date/symbol join to universe_membership.csv",
+            "symbols":int(data.symbol.nunique()),
             "date_min":str(data.timestamp.min()),"date_max":str(data.timestamp.max()),
             "year_coverage":year_coverage,"frequency":"daily UTC; target uses exact calendar t+3 close",
             "source_provenance":data.get("_source_file",pd.Series(dtype=str)).dropna().unique().tolist()},
@@ -229,7 +269,7 @@ def run(data):
         "lightgbm_metrics":metrics,
         "costs":{"fee_pct_per_side":0.04,"slippage_pct_per_side":0.02,
             "round_trip_cost_pct":0.12,"cost_model":"deducted once from each 3-day trade return"},
-        "research_limitations":["PIT data coverage is limited to dates present in source artifacts.",
+        "research_limitations":["PIT membership is applied by exact UTC date/symbol key; features use prior available OHLCV history.", "PIT data coverage is limited to dates present in source artifacts.",
             "PBO is explicitly a proxy based on four probability thresholds.",
             "Funding/OI features are not imputed or synthesized."]
     }
