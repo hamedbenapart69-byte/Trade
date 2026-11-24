@@ -4,7 +4,7 @@
 **Controlling source:** MASTER SOURCE V21.0 + V21 Execution Protocol Addendum  
 **Architecture:** CFSS V21 Architecture Design V1  
 **Stage owner approval:** 2026-11-23  
-**Active candidate:** v2 (not yet CI-accepted or live-accepted)
+**Active candidate:** v2 (C++ build/test and PR L1/L2 validation PASS; live acceptance pending)
 
 ## 1. Objective
 
@@ -70,7 +70,7 @@ Only apply a diagnosis after a real v1 failure, using run IDs, logs, schema erro
 - Allow the controlled inbound push path to perform outbound delivery first, then receive `/status`, then replay the exact update.
 - Enforce two complete runs with distinct run IDs and the same `GITHUB_SHA`; at least one of those two must record `RECEIVED_PROCESSED` and replay PASS.
 
-**v2 status:** code and tests are on the isolated branch. CI/build/test and live acceptance are NOT_YET_VERIFIED. No merge to main has been performed.
+**v2 status:** C++ build and all 15/15 CTest tests PASS on commit `e8e8adef297f7c1bc856e91850b28cbebb30c6d7`; immutable build ID `2cedee92d12d437a0773875678c6cee656fa7b04c5081cc7bca4c8eb434e8972`. The PR Stage 1 workflow also completed real OKX L1 collection, L1/L2 schema validation, universe validation, artifact integrity, and required artifact checks successfully. Telegram outbound/inbound and persistent signals-branch acceptance were correctly skipped for the PR event. Stage 1 live acceptance remains NOT_VERIFIED. No merge to main has been performed.
 
 ## 6. v3 — Conditional Only
 
