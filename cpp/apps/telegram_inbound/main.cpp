@@ -3,8 +3,24 @@
 #include <iostream>
 
 int main(int argc, char** argv) {
+    if (argc == 5 && std::string(argv[1]) == "--replay-update") {
+        try {
+            const auto update_id = std::stoll(argv[2]);
+            const int result = cfss::telegram::replay_processed_update(argv[3], update_id);
+            cfss::telegram::record_replay_manifest(argv[4], update_id, result);
+            return result;
+        } catch (const std::exception& error) {
+            std::cerr << "TELEGRAM_REPLAY_FAILED: " << error.what() << '\n';
+            try {
+                const auto update_id = std::stoll(argv[2]);
+                cfss::telegram::record_replay_manifest(argv[4], update_id, EXIT_FAILURE);
+            } catch (...) {}
+            return EXIT_FAILURE;
+        }
+    }
     if (argc != 3) {
-        std::cerr << "Usage: telegram_inbound <inbound-state.json> <run-manifest.json>\n";
+        std::cerr << "Usage: telegram_inbound <inbound-state.json> <run-manifest.json>\n"
+                  << "   or: telegram_inbound --replay-update <update-id> <inbound-state.json> <run-manifest.json>\n";
         return EXIT_FAILURE;
     }
     const char* token = std::getenv("TELEGRAM_TOKEN");
