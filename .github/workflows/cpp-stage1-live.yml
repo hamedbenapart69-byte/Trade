@@ -300,6 +300,7 @@ jobs:
             (.telegram_message_ids | length > 0) and
             (.active_strategy_engines | length == 0) and
             (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
+            .document_version == "V21.0" and
             .artifact_manifest.l2_status.retained_in_signals_branch == true and
             .artifact_manifest.provider_health.retained_in_signals_branch == true and
             .artifact_manifest.coverage.retained_in_signals_branch == true and
