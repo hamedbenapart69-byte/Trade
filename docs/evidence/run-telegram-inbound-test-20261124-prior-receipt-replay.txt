@@ -1,0 +1,1 @@
+Trigger exact-update deduplication replay using a persisted receipt only if it is backed by a prior run manifest with telegram_receive_test_status=RECEIVED_PROCESSED. Do not claim a new inbound receive when no new Telegram update arrived.
