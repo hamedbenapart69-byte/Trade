@@ -1,10 +1,10 @@
 # V21 Stage 1 — SLRP Plan
 
-**Status:** v1 FAIL (D3) / v2 IMPLEMENTED ON ISOLATED BRANCH / LIVE ACCEPTANCE PENDING  
+**Status:** v1 FAIL (D3) / v2 FAIL (D3) / v3 IMPLEMENTED ON ISOLATED BRANCH / LIVE ACCEPTANCE PENDING  
 **Controlling source:** MASTER SOURCE V21.0 + V21 Execution Protocol Addendum  
 **Architecture:** CFSS V21 Architecture Design V1  
 **Stage owner approval:** 2026-11-23  
-**Active candidate:** v2 (C++ build/test and PR L1/L2 validation PASS; live acceptance pending)
+**Active candidate:** v3 (C++ validation for the exact-timestamp implementation is pending; live acceptance has not been run)
 
 ## 1. Objective
 
@@ -70,15 +70,38 @@ Only apply a diagnosis after a real v1 failure, using run IDs, logs, schema erro
 - Allow the controlled inbound push path to perform outbound delivery first, then receive `/status`, then replay the exact update.
 - Enforce two complete runs with distinct run IDs and the same `GITHUB_SHA`; at least one of those two must record `RECEIVED_PROCESSED` and replay PASS.
 
-**v2 status:** C++ build and all 15/15 CTest tests PASS on commit `e8e8adef297f7c1bc856e91850b28cbebb30c6d7`; immutable build ID `2cedee92d12d437a0773875678c6cee656fa7b04c5081cc7bca4c8eb434e8972`. The PR Stage 1 workflow also completed real OKX L1 collection, L1/L2 schema validation, universe validation, artifact integrity, and required artifact checks successfully. Telegram outbound/inbound and persistent signals-branch acceptance were correctly skipped for the PR event. Stage 1 live acceptance remains NOT_VERIFIED. No merge to main has been performed.
+**v2 status:** The prior v2 commit `48d01026ad88a4bf7736e7b4a088a495934195f2` passed its then-current C++ build/CTest and PR L1/L2 checks, but a source-level correctness audit found a D3 defect that those tests did not cover. In `cpp/include/cfss/okx_provider.hpp`, `expected_ohlcv_rows` divided the duration from the exact listing timestamp by the candle interval, while OKX candle timestamps identify candle opening times. For a listing at 03:15 UTC, the 03:00 candle overlaps the valid trading window and must be counted. The old test in `cpp/tests/test_main.cpp` expected 9,181 rows while supplying 9,182, then accepted the result after the percentage was clamped to 100. More importantly, the count-only coverage function could not detect a missing expected timestamp masked by an extra row. This is a confirmed implementation/validation defect, not a threshold issue. v2 is therefore FAIL (D3); no acceptance criterion was relaxed.
 
-## 6. v3 — Conditional Only
+## 6. v3 — Built After Confirmed v2 FAIL
 
-Do not build unless v2 records a real FAIL.
+**Alternative assumption:** row count is not a sufficient representation of OHLCV completeness. Completeness must be established against the exact aligned candle-open timestamp grid, including the candle interval that overlaps the listing instant. An extra, duplicate, pre-listing, or off-grid row must never substitute for a missing expected candle.
 
-**Alternative assumption:** direct live-provider acquisition from the GitHub runner is too unstable for a repeatable complete run, even after the V21 pipeline boundary is isolated.
+**v3 implementation on the isolated Stage 1 branch:**
+- Align the first expected candle timestamp down to the opening boundary of the interval containing the later of the global lookback start and contract listing time.
+- Compute the expected row count from that aligned first candle through the exclusive end boundary.
+- Count only expected grid timestamps for coverage; reject pre-listing, off-grid, duplicate, missing, or extra in-window rows for completeness.
+- Apply the exact-continuity check to final OHLCV availability and cache acceptance/retention, preventing a cache with a historical gap from being treated as complete.
+- Add a regression fixture where one expected timestamp is missing but an extra earlier row preserves the raw row count; the fixture must remain PARTIAL and report coverage below 100%.
+- Preserve the strict 100% requirement and all other Stage 1 acceptance criteria.
 
-**Conditional redesign:** use a second independently verified public-data source or an independently archived public snapshot for the data layer, while labeling any unavailable live field as UNAVAILABLE; do not synthesize or proxy it as REAL. Telegram remains the only delivery channel.
+**v3 validation status:** implementation and regression test have been committed, but CI for the new head is still pending. No v3 PASS is claimed. PR live acceptance, Telegram delivery/inbound replay, persistent-state verification, and the two-run same-revision gate remain NOT_VERIFIED. No merge or deployment has been performed.
+
+## 7. Escalation
+
+If v3 fails, do not create a fourth version. Stop implementation and invoke the V21 Innovation Protocol in order:
+
+1. Data Expansion
+2. Timeframe Shift
+3. Simplicity Audit
+4. Regime Restriction
+5. Alternative Market
+6. Honest Stop
+
+No acceptance criterion may be relaxed to force PASS.
+
+## 8. Budget
+
+Maximum three versions total: v1, v2, v3. v1 FAILED (D3); v2 FAILED (D3: count-only coverage and incorrect treatment of a non-aligned listing timestamp); v3 is the final permitted candidate and awaits reproducible CI and live acceptance.
 
 ## 7. Escalation
 
