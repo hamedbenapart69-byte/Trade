@@ -1,0 +1,1 @@
+Controlled V21 Stage 1 Telegram inbound acceptance trigger. This file exists only to trigger the workflow; no credentials or user data are stored here.
