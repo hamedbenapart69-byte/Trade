@@ -1,0 +1,46 @@
+{
+  "generated_at_utc": "2026-11-24T20:21:41Z",
+  "note": "Stage 1 has no admitted strategy engine; an empty signals array is intentional and is not a BUY or SELL recommendation.",
+  "report_status": "NO_QUALIFIED_SETUP",
+  "run_id": "okx-cpp-1795551683685",
+  "scan_id": "scan-7af05fa7f8fa83d6c21d581a076912348b4e51a9141d7a8adf37568b47b9e32d",
+  "schema_version": "1.0.0",
+  "signal_count": 0,
+  "signals": [],
+  "status_report": [
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "BTC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795546800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ETH-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795546800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "actionable": false,
+      "confidence_status": "NOT_CALIBRATED",
+      "data_quality": "REAL",
+      "instrument_id": "ZEC-USDT-SWAP",
+      "latest_candle_timestamp_ms": 1795546800000,
+      "provider_id": "okx",
+      "reason_code": "NO_STRATEGY_ADMITTED",
+      "state": "NO_QUALIFIED_SETUP",
+      "symbol": "ZEC/USDT:USDT"
+    }
+  ],
+  "status_report_count": 3
+}
