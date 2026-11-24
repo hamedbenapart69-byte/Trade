@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from research.alpha_discovery import apply_pit_membership
+from research.alpha_discovery import apply_pit_membership, purged_training_window
 
 class PitMembershipTests(unittest.TestCase):
     def test_only_exact_date_symbol_members_are_marked(self):
@@ -15,6 +15,26 @@ class PitMembershipTests(unittest.TestCase):
         })
         result = apply_pit_membership(data, membership)
         self.assertEqual(result["_pit_member"].tolist(), [True, False, False])
+
+
+    def test_training_labels_are_purged_before_test_start(self):
+        data = pd.DataFrame({
+            "timestamp": pd.to_datetime([
+                "2023-07-27T00:00:00Z",
+                "2023-07-28T00:00:00Z",
+                "2023-07-29T00:00:00Z",
+                "2023-07-30T00:00:00Z",
+                "2023-07-31T00:00:00Z",
+            ], utc=True),
+            "symbol": ["BTCUSDT"] * 5,
+        })
+        result = purged_training_window(
+            data,
+            pd.Timestamp("2023-07-01T00:00:00Z"),
+            pd.Timestamp("2023-08-01T00:00:00Z"),
+            purge_days=3,
+        )
+        self.assertEqual(result.timestamp.dt.strftime("%Y-%m-%d").tolist(), ["2023-07-27", "2023-07-28"])
 
     def test_duplicate_membership_keys_fail_closed(self):
         data = pd.DataFrame({
