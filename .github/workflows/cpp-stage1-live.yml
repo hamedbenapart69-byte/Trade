@@ -291,18 +291,28 @@ jobs:
           mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
           test "${#manifests[@]}" -gt 0
           jq -s --arg sha "$GITHUB_SHA" '
-            [.[] | select(
-              .repository_commit == $sha and
-              (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
-              .telegram_send_status == "DELIVERED" and
-              (.telegram_message_ids | length > 0) and
-              (.active_strategy_engines | length == 0) and
-              (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
-            )] | sort_by(.end_time_utc) | .[-2:]
+            [.[] | select(.repository_commit == $sha)] |
+            sort_by(.end_time_utc) | .[-2:]
           ' "${manifests[@]}" > artifacts/stage1-acceptance-last-two.json
           VALID_COUNT=$(jq 'length' artifacts/stage1-acceptance-last-two.json)
           if [ "$VALID_COUNT" -lt 2 ]; then
-            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 complete runs on the same revision"
+            echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive runs on the same revision"
+            exit 1
+          fi
+          jq -e 'all(.[]; 
+            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .telegram_send_status == "DELIVERED" and
+            (.telegram_message_ids | length > 0) and
+            (.active_strategy_engines | length == 0) and
+            (.rejected_strategy_families == ["LRT", "NMT", "VTM"]) and
+            .artifact_manifest.l2_status.retained_in_signals_branch == true and
+            .artifact_manifest.provider_health.retained_in_signals_branch == true and
+            .artifact_manifest.coverage.retained_in_signals_branch == true and
+            .artifact_manifest.system_status.retained_in_signals_branch == true
+          )' artifacts/stage1-acceptance-last-two.json >/dev/null
+          DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
+            echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
             exit 1
           fi
           INBOUND_COUNT=$(jq '[.[] | select(
@@ -314,7 +324,7 @@ jobs:
             echo "STAGE1_ACCEPTANCE_PENDING: one of the last two runs must prove /status receive and exact-update replay"
             exit 1
           fi
-          echo "STAGE1_ACCEPTANCE_GATE_PASS revision=$GITHUB_SHA valid_runs=$VALID_COUNT inbound_replay_runs=$INBOUND_COUNT"
+          echo "STAGE1_ACCEPTANCE_GATE_PASS revision=$GITHUB_SHA consecutive_runs=$VALID_COUNT inbound_replay_runs=$INBOUND_COUNT"
 
       - name: Persist Telegram delivery and inbound receipts
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success'
