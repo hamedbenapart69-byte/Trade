@@ -82,6 +82,18 @@ jobs:
           path: signals-state
           fetch-depth: 0
           persist-credentials: true
+      - name: Snapshot Telegram inbound baseline before controlled polling
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
+        run: |
+          mkdir -p artifacts
+          if [ -s signals-state/cpp_runtime/telegram_inbound.v1.json ]; then
+            PREVIOUS_UPDATE_ID=$(jq -r '.last_update_id // 0' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          else
+            PREVIOUS_UPDATE_ID=0
+          fi
+          printf '%s\\n' "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
+          echo "TELEGRAM_INBOUND_BASELINE_UPDATE_ID=$PREVIOUS_UPDATE_ID"
+
       - name: Restore shared market-data cache
         uses: actions/cache@v4
         with:
@@ -162,15 +174,26 @@ jobs:
       - name: Snapshot exact processed update before replay
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
-          UPDATE_ID=$(jq -r '.last_update_id' signals-state/cpp_runtime/telegram_inbound.v1.json)
-          test "$UPDATE_ID" -gt 0
+          PREVIOUS_UPDATE_ID=$(cat artifacts/telegram-inbound-previous-update-id.txt)
+          UPDATE_ID=$(jq -r --argjson previous "$PREVIOUS_UPDATE_ID" '
+            [.processed_updates | to_entries[] |
+              select((.key | tonumber) > $previous) |
+              select(.value.status == "PROCESSED" and
+                     .value.reply_status == "DELIVERED" and
+                     (.value.reply_message_id | type) == "number" and
+                     .value.reply_message_id > 0) |
+              (.key | tonumber)] | max // empty
+          ' signals-state/cpp_runtime/telegram_inbound.v1.json)
+          if [ -z "$UPDATE_ID" ]; then
+            echo "TELEGRAM_INBOUND_REPLAY_SNAPSHOT_FAIL: no newly processed and delivered update after baseline=$PREVIOUS_UPDATE_ID"
+            exit 1
+          fi
           jq --arg key "$UPDATE_ID" '.processed_updates[$key] | {status, reply_status, reply_message_id}' \
             signals-state/cpp_runtime/telegram_inbound.v1.json > artifacts/inbound-replay-before.json
           test "$(jq -r .status artifacts/inbound-replay-before.json)" = "PROCESSED"
           test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
           test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
-          printf '%s\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
-
+          printf '%s\\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
       - name: Replay the exact processed Telegram update through C++ L3
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
