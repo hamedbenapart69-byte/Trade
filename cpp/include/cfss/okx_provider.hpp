@@ -908,6 +908,8 @@ inline json collect(int symbol_count, int years,
             const auto& cached_candles = cached_instrument->at("candles");
             const auto first_cached_ms = cached_candles.front().value("timestamp_ms", std::int64_t{0});
             const auto last_cached_ms = cached_candles.back().value("timestamp_ms", std::int64_t{0});
+            const auto effective_start_ms = item.listing_time_ms > start_ms
+                ? item.listing_time_ms : start_ms;
             const auto expected_rows = expected_ohlcv_rows(
                 start_ms, end_ms, item.listing_time_ms);
             const double cached_coverage = expected_rows > 0
