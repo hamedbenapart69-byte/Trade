@@ -109,11 +109,17 @@ int main() {
         nlohmann::json{{"timestamp_ms", first_listed_candle - 3'600'000LL}});
     const auto listed_missing_one = cfss::okx::ohlcv_coverage_pct(
         missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms);
+    auto duplicate_rows = listed_rows;
+    duplicate_rows.push_back(listed_rows.back());
+    auto off_grid_rows = listed_rows;
+    off_grid_rows[1]["timestamp_ms"] = off_grid_rows[1]["timestamp_ms"].get<std::int64_t>() + 1;
     if (full_window_rows != 17532 || listed_window_rows != 9182 ||
         listed_full_coverage != 100.0 ||
         !cfss::okx::ohlcv_series_complete(listed_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
         listed_missing_one >= 100.0 ||
-        cfss::okx::ohlcv_series_complete(missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms)) {
+        cfss::okx::ohlcv_series_complete(missing_with_extra, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        cfss::okx::ohlcv_series_complete(duplicate_rows, coverage_start_ms, coverage_end_ms, listing_time_ms) ||
+        cfss::okx::ohlcv_series_complete(off_grid_rows, coverage_start_ms, coverage_end_ms, listing_time_ms)) {
         std::cerr << "Exact listing-aware OHLCV timestamp coverage gate failed\n"; return EXIT_FAILURE;
     }
 
