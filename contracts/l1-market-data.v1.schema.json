@@ -421,7 +421,13 @@
               "ohlcv_rows",
               "funding_rows",
               "open_interest_rows",
-              "ohlcv_coverage_pct"
+              "ohlcv_coverage_pct",
+              "funding_latest_age_ms",
+              "funding_max_age_ms",
+              "funding_freshness_status",
+              "open_interest_latest_age_ms",
+              "open_interest_max_age_ms",
+              "open_interest_freshness_status"
             ],
             "properties": {
               "ohlcv_rows": {
@@ -451,6 +457,28 @@
               "open_interest_coverage_days": {
                 "type": "number",
                 "minimum": 0
+              },
+              "funding_latest_age_ms": {
+                "type": ["integer", "null"],
+                "minimum": 0
+              },
+              "funding_max_age_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "funding_freshness_status": {
+                "enum": ["FRESH", "STALE", "UNAVAILABLE"]
+              },
+              "open_interest_latest_age_ms": {
+                "type": ["integer", "null"],
+                "minimum": 0
+              },
+              "open_interest_max_age_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "open_interest_freshness_status": {
+                "enum": ["FRESH", "STALE", "UNAVAILABLE"]
               }
             }
           },
