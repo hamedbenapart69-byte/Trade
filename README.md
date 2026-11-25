@@ -65,7 +65,7 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 V21 workflow under validation:
 - [C++ V21 Stage 1 live pipeline](.github/workflows/cpp-stage1-live.yml)
 
-Rejected legacy workflows retained for audit but permanently non-runnable under V21: `alpha-discovery.yml`, `cpp-stage5-dual-engines-v1.yml`, `cpp-stage6-meta-cognition-v1.yml`, `cpp-stage6-pr-live-validation.yml`, `extract-vtm-result.yml`, and `stage1b-lrt15m.yml`.
+Rejected strategy workflows and their legacy LFS/NSS/liquidity precursor and Telegram-report paths are retained for audit but permanently non-runnable under V21. The exact denylist is enforced by `.github/scripts/rejected_workflow_guard.py`.
 
 ## Build and test
 
