@@ -1,6 +1,7 @@
 #pragma once
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
+#include "cfss/kucoin_provider.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -291,6 +292,8 @@ struct Instrument {
     double turnover{0.0};
     std::int64_t listing_time_ms{0};
     std::string contract_value_currency;
+    std::string provider_id{"okx"};
+    std::string provider_symbol;
 };
 
 inline std::optional<double> quote_turnover_usd(const json& ticker) {
@@ -349,7 +352,7 @@ inline std::vector<Instrument> select_instruments(
     return selected;
 }
 
-inline std::vector<Instrument> discover(int target_count, const std::set<std::string>& crypto_symbols,
+inline std::vector<Instrument> discover_okx(int target_count, const std::set<std::string>& crypto_symbols,
                                        const std::set<std::string>& required_symbols = {},
                                        std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr,
@@ -412,6 +415,60 @@ inline std::vector<Instrument> discover(int target_count, const std::set<std::st
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
     // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
     return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+}
+
+
+inline std::vector<Instrument> discover_kucoin(
+    int target_count, const std::set<std::string>& crypto_symbols,
+    const std::set<std::string>& required_symbols = {},
+    std::size_t* eligible_count = nullptr,
+    std::size_t* declared_count = nullptr,
+    std::size_t* excluded_non_crypto_count = nullptr) {
+    const auto contracts = cfss::kucoin::fetch_active_contracts();
+    std::vector<Instrument> eligible;
+    std::vector<Instrument> all_valid_crypto;
+    std::size_t excluded_non_crypto = 0U;
+    for (const auto& contract : contracts) {
+        if (!is_verified_crypto_underlying(contract.base, crypto_symbols)) {
+            ++excluded_non_crypto;
+            continue;
+        }
+        Instrument parsed{
+            contract.base + "-USDT-SWAP", contract.base, "USDT", "USDT",
+            contract.multiplier, 1.0, contract.tick_size, contract.lot_size,
+            contract.min_size, contract.turnover_24h_usd, contract.listing_time_ms,
+            contract.base
+        };
+        parsed.provider_id = "kucoin";
+        parsed.provider_symbol = contract.symbol;
+        all_valid_crypto.push_back(parsed);
+        if (passes_liquidity(contract.turnover_24h_usd)) eligible.push_back(parsed);
+    }
+    if (eligible_count) *eligible_count = eligible.size();
+    if (declared_count) *declared_count = contracts.size();
+    if (excluded_non_crypto_count) *excluded_non_crypto_count = excluded_non_crypto;
+    std::cerr << "KUCOIN_UNIVERSE_DIAGNOSTICS declared=" << contracts.size()
+              << " excluded_non_crypto=" << excluded_non_crypto
+              << " eligible=" << eligible.size() << '\\n';
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+}
+
+inline std::vector<Instrument> discover(
+    int target_count, const std::set<std::string>& crypto_symbols,
+    const std::set<std::string>& required_symbols = {},
+    std::size_t* eligible_count = nullptr,
+    std::size_t* declared_count = nullptr,
+    std::size_t* excluded_non_crypto_count = nullptr) {
+    try {
+        auto selected = discover_okx(target_count, crypto_symbols, required_symbols,
+                                     eligible_count, declared_count, excluded_non_crypto_count);
+        if (!selected.empty()) return selected;
+        std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\\n";
+    } catch (const std::exception& e) {
+        std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\\n';
+    }
+    return discover_kucoin(target_count, crypto_symbols, required_symbols,
+                           eligible_count, declared_count, excluded_non_crypto_count);
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
@@ -761,7 +818,7 @@ inline json probe_provider_health() {
         {"okx", "https://www.okx.com/api/v5/public/time", 1, "IMPLEMENTED_PRIMARY"},
         {"bybit", "https://api.bybit.com/v5/market/time", 2, "NOT_IMPLEMENTED"},
         {"binance", "https://fapi.binance.com/fapi/v1/ping", 3, "NOT_IMPLEMENTED"},
-        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "NOT_IMPLEMENTED"},
+        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "IMPLEMENTED_SECONDARY_PARTIAL"},
         {"mexc", "https://contract.mexc.com/api/v1/contract/detail", 5, "NOT_IMPLEMENTED"},
         {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"},
         {"coingecko", "https://api.coingecko.com/api/v3/ping", 7, "REFERENCE_ONLY"}
@@ -770,20 +827,41 @@ inline json probe_provider_health() {
     for (const auto& probe : probes) {
         const auto response = get(probe.url, 12L);
         const bool reachable = response.transport == CURLE_OK && response.status == 200;
-        providers.push_back({
+        const std::string provider_id{probe.id};
+        std::string fallback_status = provider_id == "okx" ? "PRIMARY" :
+            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "REFERENCE_ONLY" : "UNAVAILABLE");
+        std::string fallback_equivalence = "NOT_PROVEN";
+        std::string fallback_reason = provider_id == "okx" ? "primary_provider" :
+            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "not_a_futures_fallback" :
+             (!reachable ? "provider_endpoint_unreachable" : "adapter_live_equivalence_not_proven"));
+        json entry = {
             {"provider_id", probe.id}, {"fallback_rank", probe.rank}, {"endpoint", probe.url},
             {"checked_at_utc", checked_at},
             {"connectivity_status", reachable ? "HTTP_REACHABLE" : "UNAVAILABLE"},
             {"http_status", response.status},
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
-            {"fallback_status", std::string{probe.id} == "okx" ? "PRIMARY" :
-                (std::string{probe.adapter} == "REFERENCE_ONLY" ? "REFERENCE_ONLY" : "UNAVAILABLE")},
-            {"fallback_reason", std::string{probe.id} == "okx" ? "primary_provider" :
-                (std::string{probe.adapter} == "REFERENCE_ONLY" ? "not_a_futures_fallback" :
-                 (!reachable ? "provider_endpoint_unreachable" : "no_equivalence_verified_cpp_adapter"))},
-            {"fallback_equivalence", "NOT_PROVEN"}
-        });
+            {"fallback_status", fallback_status},
+            {"fallback_equivalence", fallback_equivalence},
+            {"fallback_reason", fallback_reason}
+        };
+        if (provider_id == "kucoin" && reachable) {
+            try {
+                const auto live = cfss::kucoin::live_probe("BTC");
+                entry["fallback_probe"] = live;
+                if (live.value("status", std::string{"FAIL"}) == "PASS") {
+                    entry["fallback_status"] = "AVAILABLE_PARTIAL";
+                    entry["fallback_equivalence"] = "PARTIAL";
+                    entry["fallback_reason"] =
+                        "public_live_probe_passed;OHLCV_and_funding_real;hourly_OI_retention_7d_days;30d_OI_remains_PARTIAL";
+                } else {
+                    entry["fallback_reason"] = "kucoin_public_live_probe_failed";
+                }
+            } catch (const std::exception& e) {
+                entry["fallback_reason"] = std::string{"kucoin_public_live_probe_error:"} + e.what();
+            }
+        }
+        providers.push_back(std::move(entry));
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
     return {{"schema_version", "1.0.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
@@ -907,7 +985,7 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
     if (old_cache && old_cache->is_object() && old_cache->contains("instruments") &&
         old_cache->at("instruments").is_array()) {
         for (const auto& item : old_cache->at("instruments")) {
-            if (!item.is_object()) continue;
+            if (!item.is_object() || item.value("provider_id", std::string{"okx"}) != "okx") continue;
             const auto id = item.value("instrument_id", std::string{});
             if (!id.empty()) by_instrument[id] = item;
         }
@@ -916,13 +994,17 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
     }
     if (refreshed_instruments.is_array()) {
         for (const auto& item : refreshed_instruments) {
-            if (!item.is_object()) continue;
+            if (!item.is_object() || item.value("provider_id", std::string{}) != "okx") continue;
             const auto id = item.value("instrument_id", std::string{});
             if (id.empty()) continue;
-            // این snapshot فقط دادهٔ پنجرهٔ فعلی را نگه می‌دارد؛ metadata نباید شروع قدیمی‌تری ادعا کند.
+            // این snapshot فقط دادهٔ OKX را نگه می‌دارد؛ fallback نباید زیر کلید cache اولیه ذخیره شود.
             by_instrument[id] = item;
             cache_entries[id] = make_cache_entry(item, window_start_ms, window_end_ms);
         }
+    }
+    for (auto it = cache_entries.begin(); it != cache_entries.end();) {
+        if (!by_instrument.contains(it.key())) it = cache_entries.erase(it);
+        else ++it;
     }
     json instruments = json::array();
     for (const auto& [id, item] : by_instrument) { (void)id; instruments.push_back(item); }
@@ -957,14 +1039,23 @@ inline json collect(int symbol_count, int years,
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
     const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
+    const bool discovery_fallback_used = !selected.empty() && selected.front().provider_id != "okx";
+    bool fallback_used_any = discovery_fallback_used;
+    std::set<std::string> fallback_provider_ids;
+    if (discovery_fallback_used) fallback_provider_ids.insert(selected.front().provider_id);
     json instruments = json::array();
     std::size_t instrument_index = 0U;
     for (const auto& item : selected) {
         ++instrument_index;
         json candles = json::array(), funding = json::array(), oi = json::array();
         json errors = json::array();
+        Instrument effective_item = item;
+        std::string active_provider = item.provider_id;
+        std::string provider_instrument_id = item.provider_symbol.empty() ? item.id : item.provider_symbol;
+        std::string primary_provider_error;
+        bool item_fallback_used = item.provider_id != "okx";
         const json* cached_instrument = nullptr;
-        if (cached_market_data && cached_market_data->is_object() &&
+        if (item.provider_id == "okx" && cached_market_data && cached_market_data->is_object() &&
             cached_market_data->contains("instruments") &&
             cached_market_data->at("instruments").is_array()) {
             for (const auto& cached_item : cached_market_data->at("instruments")) {
@@ -1014,42 +1105,118 @@ inline json collect(int symbol_count, int years,
                   << " instrument=" << item.id
                   << " ohlcv_cache=" << (has_valid_candle_cache ? "HIT" : "BACKFILL")
                   << " oi_cache=" << (oi_cache_complete ? "HIT" : "BACKFILL") << std::endl;
-        try {
-            if (has_valid_candle_cache) {
-                const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
-                candles = merge_timestamp_rows(cached_instrument->at("candles"), recent,
-                                                start_ms, end_ms, 3'600'000LL);
-            } else {
-                candles = fetch_candles(item, start_ms, end_ms);
+        if (item.provider_id == "okx") {
+            try {
+                if (has_valid_candle_cache) {
+                    const auto recent = fetch_recent_candles(item, "1H", 3'600'000LL, end_ms, 300);
+                    candles = merge_timestamp_rows(cached_instrument->at("candles"), recent,
+                                                    start_ms, end_ms, 3'600'000LL);
+                } else {
+                    candles = fetch_candles(item, start_ms, end_ms);
+                }
+            } catch (const std::exception& e) {
+                errors.push_back(std::string{"ohlcv:"} + e.what());
+                if (has_valid_candle_cache) candles = cached_instrument->at("candles");
             }
-        } catch (const std::exception& e) {
-            errors.push_back(std::string{"ohlcv:"} + e.what());
-            if (has_valid_candle_cache) candles = cached_instrument->at("candles");
+            try {
+                const auto fresh = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
+                const auto old = cached_instrument && cached_instrument->contains("funding")
+                    ? cached_instrument->at("funding") : json::array();
+                funding = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                                end_ms, 1LL);
+            } catch (const std::exception& e) {
+                errors.push_back(std::string{"funding:"} + e.what());
+                if (cached_instrument && cached_instrument->contains("funding") &&
+                    cached_instrument->at("funding").is_array())
+                    funding = cached_instrument->at("funding");
+            }
+            try {
+                const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
+                                                       oi_cache_complete ? 1 : 12);
+                const auto old = cached_instrument && cached_instrument->contains("open_interest")
+                    ? cached_instrument->at("open_interest") : json::array();
+                oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
+                                           end_ms, 1LL);
+            } catch (const std::exception& e) {
+                errors.push_back(std::string{"open_interest:"} + e.what());
+                if (cached_instrument && cached_instrument->contains("open_interest") &&
+                    cached_instrument->at("open_interest").is_array())
+                    oi = cached_instrument->at("open_interest");
+            }
+            const bool primary_needs_fallback = !errors.empty() ||
+                candles.empty() || funding.empty() || oi.empty();
+            if (primary_needs_fallback) {
+                for (const auto& error : errors) {
+                    if (!error.is_string()) continue;
+                    if (!primary_provider_error.empty()) primary_provider_error += " | ";
+                    primary_provider_error += error.get<std::string>();
+                }
+                if (primary_provider_error.empty()) primary_provider_error = "primary_series_empty";
+                try {
+                    const auto contract = cfss::kucoin::find_contract(item.base);
+                    if (!contract) throw std::runtime_error("kucoin_contract_not_found");
+                    const auto bundle = cfss::kucoin::fetch_bundle(
+                        *contract, start_ms, end_ms,
+                        end_ms - 30LL * 86'400'000LL,
+                        end_ms - 7LL * 86'400'000LL);
+                    if (!bundle.candles.empty()) {
+                        candles = bundle.candles;
+                        funding = bundle.funding;
+                        oi = bundle.open_interest;
+                        errors = bundle.errors;
+                        active_provider = "kucoin";
+                        provider_instrument_id = contract->symbol;
+                        item_fallback_used = true;
+                        effective_item.contract_size = contract->multiplier;
+                        effective_item.contract_multiplier = 1.0;
+                        effective_item.contract_value_currency = contract->base;
+                        effective_item.tick_size = contract->tick_size;
+                        effective_item.lot_size = contract->lot_size;
+                        effective_item.min_size = contract->min_size;
+                        effective_item.listing_time_ms = contract->listing_time_ms;
+                        effective_item.turnover = contract->turnover_24h_usd;
+                        effective_item.provider_id = "kucoin";
+                        effective_item.provider_symbol = contract->symbol;
+                    } else {
+                        errors.push_back("fallback:kucoin_no_closed_ohlcv");
+                    }
+                } catch (const std::exception& e) {
+                    errors.push_back(std::string{"fallback:kucoin:"} + e.what());
+                }
+            }
+        } else if (item.provider_id == "kucoin") {
+            try {
+                const auto contract = cfss::kucoin::find_contract(item.base);
+                if (!contract) throw std::runtime_error("kucoin_contract_not_found");
+                const auto bundle = cfss::kucoin::fetch_bundle(
+                    *contract, start_ms, end_ms,
+                    end_ms - 30LL * 86'400'000LL,
+                    end_ms - 7LL * 86'400'000LL);
+                candles = bundle.candles;
+                funding = bundle.funding;
+                oi = bundle.open_interest;
+                errors = bundle.errors;
+                active_provider = "kucoin";
+                provider_instrument_id = contract->symbol;
+                item_fallback_used = true;
+                effective_item.contract_size = contract->multiplier;
+                effective_item.contract_multiplier = 1.0;
+                effective_item.contract_value_currency = contract->base;
+                effective_item.tick_size = contract->tick_size;
+                effective_item.lot_size = contract->lot_size;
+                effective_item.min_size = contract->min_size;
+                effective_item.listing_time_ms = contract->listing_time_ms;
+                effective_item.turnover = contract->turnover_24h_usd;
+                effective_item.provider_symbol = contract->symbol;
+            } catch (const std::exception& e) {
+                errors.push_back(std::string{"fallback:kucoin:"} + e.what());
+            }
+        } else {
+            errors.push_back("provider:unsupported_provider_id:" + item.provider_id);
         }
-        try {
-            const auto fresh = fetch_funding(item, end_ms - 30LL * 86'400'000LL, end_ms);
-            const auto old = cached_instrument && cached_instrument->contains("funding")
-                ? cached_instrument->at("funding") : json::array();
-            funding = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
-                                            end_ms, 1LL);
-        } catch (const std::exception& e) {
-            errors.push_back(std::string{"funding:"} + e.what());
-            if (cached_instrument && cached_instrument->contains("funding") &&
-                cached_instrument->at("funding").is_array())
-                funding = cached_instrument->at("funding");
-        }
-        try {
-            const auto fresh = fetch_open_interest(item, end_ms - 30LL * 86'400'000LL, end_ms,
-                                                   oi_cache_complete ? 1 : 12);
-            const auto old = cached_instrument && cached_instrument->contains("open_interest")
-                ? cached_instrument->at("open_interest") : json::array();
-            oi = merge_timestamp_rows(old, fresh, end_ms - 30LL * 86'400'000LL,
-                                       end_ms, 1LL);
-        } catch (const std::exception& e) {
-            errors.push_back(std::string{"open_interest:"} + e.what());
-            if (cached_instrument && cached_instrument->contains("open_interest") &&
-                cached_instrument->at("open_interest").is_array())
-                oi = cached_instrument->at("open_interest");
+        if (item_fallback_used) {
+            fallback_used_any = true;
+            fallback_provider_ids.insert(active_provider);
         }
         // صفر برای OI دلاری/قراردادی در قرارداد داده معتبر نیست؛ آن را گمشده ثبت می‌کنیم،
         // نه اینکه کل اسکن را متوقف کنیم یا مقدار ساختگی جایگزین کنیم.
@@ -1058,9 +1225,9 @@ inline json collect(int symbol_count, int years,
             errors.push_back("open_interest_nonpositive_observations:" +
                              std::to_string(invalid_oi_observations));
         const double coverage = ohlcv_coverage_pct(
-            candles, start_ms, end_ms, item.listing_time_ms);
+            candles, start_ms, end_ms, effective_item.listing_time_ms);
         const bool ohlcv_complete = ohlcv_series_complete(
-            candles, start_ms, end_ms, item.listing_time_ms);
+            candles, start_ms, end_ms, effective_item.listing_time_ms);
         const auto has_error_prefix = [&](const std::string& prefix) {
             return std::any_of(errors.begin(), errors.end(), [&](const json& error) {
                 return error.is_string() && error.get<std::string>().rfind(prefix, 0U) == 0U;
@@ -1078,23 +1245,50 @@ inline json collect(int symbol_count, int years,
             funding_status = "PARTIAL";
         if (oi_status == "AVAILABLE" && oi_freshness.status != "FRESH")
             oi_status = "PARTIAL";
+        const bool kucoin_active = active_provider == "kucoin";
+        const std::string instrument_endpoint = kucoin_active
+            ? "https://api-futures.kucoin.com/api/v1/contracts/active"
+            : "/api/v5/public/instruments?instType=SWAP";
+        const std::string ticker_endpoint = kucoin_active
+            ? "https://api-futures.kucoin.com/api/v1/contracts/active"
+            : "/api/v5/market/tickers?instType=SWAP";
+        const std::string ohlcv_endpoint = kucoin_active
+            ? "https://api-futures.kucoin.com/api/v1/kline/query"
+            : "/api/v5/market/history-candles";
+        const std::string funding_endpoint = kucoin_active
+            ? "https://api-futures.kucoin.com/api/v1/contract/funding-rates"
+            : "/api/v5/public/funding-rate-history";
+        const std::string open_interest_endpoint = kucoin_active
+            ? "https://api.kucoin.com/api/ua/v2/market/open-interest"
+            : "/api/v5/rubik/stat/contracts/open-interest-history";
+        json provenance = {
+            {"instrument_endpoint", instrument_endpoint},
+            {"ticker_endpoint", ticker_endpoint},
+            {"ohlcv_endpoint", ohlcv_endpoint},
+            {"funding_endpoint", funding_endpoint},
+            {"open_interest_endpoint", open_interest_endpoint},
+            {"retrieved_at_utc", utc_iso(now_ms())},
+            {"provider_instrument_id", provider_instrument_id},
+            {"fallback_used", item_fallback_used}
+        };
+        if (!primary_provider_error.empty())
+            provenance["primary_provider_error"] = primary_provider_error;
         instruments.push_back({
-            {"instrument_id", item.id}, {"unified_symbol", item.base + "/USDT:USDT"},
-            {"base", item.base}, {"quote", item.quote}, {"settle", item.settle},
+            {"instrument_id", effective_item.id},
+            {"unified_symbol", effective_item.base + "/USDT:USDT"},
+            {"base", effective_item.base}, {"quote", effective_item.quote}, {"settle", effective_item.settle},
             {"contract_type", "linear_perpetual"},
-            {"contract_size", item.contract_size}, {"contract_multiplier", item.contract_multiplier},
-            {"contract_value_currency", item.contract_value_currency}, {"tick_size", item.tick_size},
-            {"lot_size", item.lot_size}, {"min_size", item.min_size},
-            {"listing_time_ms", item.listing_time_ms}, {"turnover_24h_usd", item.turnover},
+            {"contract_size", effective_item.contract_size},
+            {"contract_multiplier", effective_item.contract_multiplier},
+            {"contract_value_currency", effective_item.contract_value_currency},
+            {"tick_size", effective_item.tick_size},
+            {"lot_size", effective_item.lot_size}, {"min_size", effective_item.min_size},
+            {"listing_time_ms", effective_item.listing_time_ms},
+            {"turnover_24h_usd", effective_item.turnover},
             {"liquidity_threshold_usd", 10000000.0},
-            {"liquidity_status", passes_liquidity(item.turnover) ? "ELIGIBLE" : "BELOW_THRESHOLD_PINNED"},
-            {"provider_id", "okx"}, {"timeframe", "1h"}, {"candles", candles},
-            {"provenance", {{"instrument_endpoint", "/api/v5/public/instruments?instType=SWAP"},
-                            {"ticker_endpoint", "/api/v5/market/tickers?instType=SWAP"},
-                            {"ohlcv_endpoint", "/api/v5/market/history-candles"},
-                            {"funding_endpoint", "/api/v5/public/funding-rate-history"},
-                            {"open_interest_endpoint", "/api/v5/rubik/stat/contracts/open-interest-history"},
-                            {"retrieved_at_utc", utc_iso(now_ms())}}},
+            {"liquidity_status", passes_liquidity(effective_item.turnover) ? "ELIGIBLE" : "BELOW_THRESHOLD_PINNED"},
+            {"provider_id", active_provider}, {"timeframe", "1h"}, {"candles", candles},
+            {"provenance", provenance},
             {"funding", funding}, {"open_interest", oi},
             {"availability", {
                 {"ohlcv", ohlcv_complete ? "AVAILABLE" : (candles.empty() ? "UNAVAILABLE" : "PARTIAL")},
@@ -1136,7 +1330,10 @@ inline json collect(int symbol_count, int years,
     const auto fear_greed = fetch_fear_greed();
     json selected_ids = json::array();
     std::string scan_material = "1h|" + std::to_string(start_ms) + "|" + std::to_string(end_ms) + "|";
-    for (const auto& item : selected) { selected_ids.push_back(item.id); scan_material += item.id + ";"; }
+    for (const auto& item : selected) {
+        selected_ids.push_back(item.id);
+        scan_material += item.id + ":" + item.provider_id + ":" + item.provider_symbol + ";";
+    }
     const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
     return {
         {"schema_version", "1.1.0"},
@@ -1146,8 +1343,10 @@ inline json collect(int symbol_count, int years,
                       {"source_commit", commit ? json(commit) : json(nullptr)}}},
         {"acquired_at_utc", acquired_text},
         {"window", {{"timeframe", "1h"}, {"start_ms", start_ms}, {"end_ms", end_ms}}},
-        {"provider", {{"primary_provider_id", "okx"}, {"display_name", "OKX public market-data API"},
-                      {"fallback_used", false}}},
+        {"provider", {{"primary_provider_id", "okx"},
+                      {"display_name", "OKX primary with KuCoin public fallback"},
+                      {"fallback_used", fallback_used_any},
+                      {"fallback_provider_ids", json(std::vector<std::string>(fallback_provider_ids.begin(), fallback_provider_ids.end()))}}},
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
         {"crypto_universe", crypto_universe.artifact},
         {"universe", {{"declared_usdt_swap_count", declared_count},
@@ -1159,7 +1358,9 @@ inline json collect(int symbol_count, int years,
                       {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
                       {"liquidity_threshold_usd", 10000000.0},
-                      {"selection_method", "top_turnover_usd_desc_with_btc_first"},
+                      {"selection_method", discovery_fallback_used
+                          ? "kucoin_fallback_top_turnover_usd_desc_with_btc_first"
+                          : "top_turnover_usd_desc_with_btc_first"},
                       {"selection_timestamp_utc", acquired_text},
                       {"selected_instrument_ids", selected_ids}}},
         {"instruments", instruments}
