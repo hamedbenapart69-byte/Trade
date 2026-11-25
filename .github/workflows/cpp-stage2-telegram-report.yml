@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   deliver-stage2-report:
-    if: ${{ contains(github.event.head_commit.message, '[LFS_STAGE2_REPORT]') }}
+    if: false # PERMANENT V21 quarantine: legacy LFS report path
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
