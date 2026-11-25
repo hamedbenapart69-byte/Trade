@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.invalid/cfss/l1-market-data.v1.schema.json",
-  "title": "CFSS L1 Market Data Contract v1.1",
+  "title": "CFSS L1 Market Data Contract v1.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -19,7 +19,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "run_id": {
       "type": "string",
@@ -94,6 +94,14 @@
         },
         "fallback_used": {
           "type": "boolean"
+        },
+        "fallback_provider_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
         }
       }
     },
@@ -197,6 +205,17 @@
               },
               "ticker_endpoint": {
                 "type": "string"
+              },
+              "provider_instrument_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fallback_used": {
+                "type": "boolean"
+              },
+              "primary_provider_error": {
+                "type": "string",
+                "minLength": 1
               }
             }
           },
@@ -459,7 +478,10 @@
                 "minimum": 0
               },
               "funding_latest_age_ms": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "minimum": 0
               },
               "funding_max_age_ms": {
@@ -468,10 +490,17 @@
                 "maximum": 86400000
               },
               "funding_freshness_status": {
-                "enum": ["FRESH", "STALE", "UNAVAILABLE"]
+                "enum": [
+                  "FRESH",
+                  "STALE",
+                  "UNAVAILABLE"
+                ]
               },
               "open_interest_latest_age_ms": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "minimum": 0
               },
               "open_interest_max_age_ms": {
@@ -480,7 +509,11 @@
                 "maximum": 10800000
               },
               "open_interest_freshness_status": {
-                "enum": ["FRESH", "STALE", "UNAVAILABLE"]
+                "enum": [
+                  "FRESH",
+                  "STALE",
+                  "UNAVAILABLE"
+                ]
               }
             }
           },
@@ -523,7 +556,10 @@
             "exclusiveMinimum": 0
           },
           "liquidity_status": {
-            "enum": ["ELIGIBLE", "BELOW_THRESHOLD_PINNED"]
+            "enum": [
+              "ELIGIBLE",
+              "BELOW_THRESHOLD_PINNED"
+            ]
           }
         }
       }
@@ -550,11 +586,24 @@
           "type": "integer",
           "minimum": 0
         },
-        "crypto_universe_status": {"const": "VERIFIED"},
-        "crypto_universe_source": {"const": "coinpaprika"},
-        "crypto_universe_symbol_count": {"type": "integer", "minimum": 500},
-        "crypto_universe_symbols_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "excluded_non_crypto_count": {"type": "integer", "minimum": 0},
+        "crypto_universe_status": {
+          "const": "VERIFIED"
+        },
+        "crypto_universe_source": {
+          "const": "coinpaprika"
+        },
+        "crypto_universe_symbol_count": {
+          "type": "integer",
+          "minimum": 500
+        },
+        "crypto_universe_symbols_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "excluded_non_crypto_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "selected_count": {
           "type": "integer",
           "minimum": 0
@@ -590,20 +639,70 @@
     "crypto_universe": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema_version", "artifact_type", "status", "provider_id", "source_endpoint", "attribution", "freshness_status", "fetched_at_ms", "retrieved_at_ms", "symbol_count", "symbols_sha256", "symbols"],
+      "required": [
+        "schema_version",
+        "artifact_type",
+        "status",
+        "provider_id",
+        "source_endpoint",
+        "attribution",
+        "freshness_status",
+        "fetched_at_ms",
+        "retrieved_at_ms",
+        "symbol_count",
+        "symbols_sha256",
+        "symbols"
+      ],
       "properties": {
-        "schema_version": {"const": "1.0.0"},
-        "artifact_type": {"const": "cfss_crypto_universe_v1"},
-        "status": {"const": "VERIFIED"},
-        "provider_id": {"const": "coinpaprika"},
-        "source_endpoint": {"const": "https://api.coinpaprika.com/v1/coins"},
-        "attribution": {"const": "CoinPaprika"},
-        "freshness_status": {"enum": ["LIVE", "CACHED"]},
-        "fetched_at_ms": {"type": "integer", "minimum": 1},
-        "retrieved_at_ms": {"type": "integer", "minimum": 1},
-        "symbol_count": {"type": "integer", "minimum": 500},
-        "symbols_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "symbols": {"type": "array", "minItems": 500, "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z0-9]{1,20}$"}}
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "artifact_type": {
+          "const": "cfss_crypto_universe_v1"
+        },
+        "status": {
+          "const": "VERIFIED"
+        },
+        "provider_id": {
+          "const": "coinpaprika"
+        },
+        "source_endpoint": {
+          "const": "https://api.coinpaprika.com/v1/coins"
+        },
+        "attribution": {
+          "const": "CoinPaprika"
+        },
+        "freshness_status": {
+          "enum": [
+            "LIVE",
+            "CACHED"
+          ]
+        },
+        "fetched_at_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retrieved_at_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "symbol_count": {
+          "type": "integer",
+          "minimum": 500
+        },
+        "symbols_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "symbols": {
+          "type": "array",
+          "minItems": 500,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]{1,20}$"
+          }
+        }
       }
     },
     "provider_health": {
@@ -616,7 +715,7 @@
       ],
       "properties": {
         "schema_version": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         },
         "checked_at_utc": {
           "type": "string",
@@ -671,7 +770,8 @@
                 "enum": [
                   "IMPLEMENTED_PRIMARY",
                   "NOT_IMPLEMENTED",
-                  "REFERENCE_ONLY"
+                  "REFERENCE_ONLY",
+                  "IMPLEMENTED_SECONDARY_PARTIAL"
                 ]
               },
               "fallback_status": {
@@ -679,15 +779,81 @@
                   "PRIMARY",
                   "UNAVAILABLE",
                   "NOT_IMPLEMENTED",
-                  "REFERENCE_ONLY"
+                  "REFERENCE_ONLY",
+                  "AVAILABLE_PARTIAL"
                 ]
               },
               "fallback_equivalence": {
-                "const": "NOT_PROVEN"
+                "enum": [
+                  "NOT_PROVEN",
+                  "PARTIAL",
+                  "VERIFIED"
+                ]
               },
               "fallback_reason": {
                 "type": "string",
                 "minLength": 1
+              },
+              "fallback_probe": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "symbol",
+                  "ohlcv_rows",
+                  "funding_rows",
+                  "open_interest_rows",
+                  "open_interest_coverage_days",
+                  "open_interest_hourly_retention_days",
+                  "equivalence",
+                  "limitation",
+                  "errors"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL"
+                    ]
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "ohlcv_rows": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "funding_rows": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "open_interest_rows": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "open_interest_coverage_days": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "open_interest_hourly_retention_days": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "equivalence": {
+                    "const": "PARTIAL"
+                  },
+                  "limitation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
