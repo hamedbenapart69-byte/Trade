@@ -62,9 +62,9 @@ class PitMembershipTests(unittest.TestCase):
         target = original[(original.symbol == "ETHUSDT") &
                           (original.timestamp == target_day)].iloc[0]
         for feature in ["ret_1d", "ret_7d", "range_pos_20", "ema_gap_20_50",
-                        "volume_ratio_20", "btc_relative_mom_7d"]:
+                        "volume_ratio_20", "risk_adj_mom_7d"]:
             self.assertTrue(pd.notna(target[feature]), feature)
-        self.assertGreater(target["btc_relative_mom_7d"], 0.0)
+        self.assertGreater(target["risk_adj_mom_7d"], 0.0)
 
         changed = data.copy()
         future_mask = changed.timestamp > target_day
@@ -76,7 +76,7 @@ class PitMembershipTests(unittest.TestCase):
         altered_target = altered[(altered.symbol == "ETHUSDT") &
                                  (altered.timestamp == target_day)].iloc[0]
         for feature in ["ret_1d", "ret_7d", "range_pos_20", "ema_gap_20_50",
-                        "volume_ratio_20", "btc_relative_mom_7d"]:
+                        "volume_ratio_20", "risk_adj_mom_7d"]:
             self.assertAlmostEqual(float(target[feature]), float(altered_target[feature]), places=12)
 
     def test_overlapping_walk_forward_predictions_keep_latest_fold(self):
