@@ -1,0 +1,1330 @@
+{
+  "generated_at_utc": "2026-11-25T11:59:38Z",
+  "instruments": [
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BTC-USDT-SWAP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ETH-USDT-SWAP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 9224,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZEC-USDT-SWAP",
+      "symbol": "ZEC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SOL-USDT-SWAP",
+      "symbol": "SOL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 6388,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MU-USDT-SWAP",
+      "symbol": "MU/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "XRP-USDT-SWAP",
+      "symbol": "XRP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4850,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SPCX-USDT-SWAP",
+      "symbol": "SPCX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PEPE-USDT-SWAP",
+      "symbol": "PEPE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DOGE-USDT-SWAP",
+      "symbol": "DOGE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 15412,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "HYPE-USDT-SWAP",
+      "symbol": "HYPE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 9263,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MMT-USDT-SWAP",
+      "symbol": "MMT/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 8984,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PIEVERSE-USDT-SWAP",
+      "symbol": "PIEVERSE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NEAR-USDT-SWAP",
+      "symbol": "NEAR/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 3307,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SKHY-USDT-SWAP",
+      "symbol": "SKHY/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 184,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 1684,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AKE-USDT-SWAP",
+      "symbol": "AKE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "UNI-USDT-SWAP",
+      "symbol": "UNI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "WLD-USDT-SWAP",
+      "symbol": "WLD/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SUI-USDT-SWAP",
+      "symbol": "SUI/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 16206,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TRUMP-USDT-SWAP",
+      "symbol": "TRUMP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 11970,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PUMP-USDT-SWAP",
+      "symbol": "PUMP/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.916666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 3600000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 181,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BIGTIME-USDT-SWAP",
+      "symbol": "BIGTIME/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 9867,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MON-USDT-SWAP",
+      "symbol": "MON/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 5186,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "OPG-USDT-SWAP",
+      "symbol": "OPG/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BNB-USDT-SWAP",
+      "symbol": "BNB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "FIL-USDT-SWAP",
+      "symbol": "FIL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4254,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "SLX-USDT-SWAP",
+      "symbol": "SLX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 8072,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LIT-USDT-SWAP",
+      "symbol": "LIT/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 6531,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "CRCL-USDT-SWAP",
+      "symbol": "CRCL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 10420,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ENA-USDT-SWAP",
+      "symbol": "ENA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ADA-USDT-SWAP",
+      "symbol": "ADA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LTC-USDT-SWAP",
+      "symbol": "LTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LINK-USDT-SWAP",
+      "symbol": "LINK/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 5061,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "PROS-USDT-SWAP",
+      "symbol": "PROS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4562,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "NBIS-USDT-SWAP",
+      "symbol": "NBIS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4826,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DRAM-USDT-SWAP",
+      "symbol": "DRAM/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.875,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 206,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 819,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BTW-USDT-SWAP",
+      "symbol": "BTW/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AAVE-USDT-SWAP",
+      "symbol": "AAVE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "MOODENG-USDT-SWAP",
+      "symbol": "MOODENG/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BCH-USDT-SWAP",
+      "symbol": "BCH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ARB-USDT-SWAP",
+      "symbol": "ARB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "AVAX-USDT-SWAP",
+      "symbol": "AVAX/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4826,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "LITE-USDT-SWAP",
+      "symbol": "LITE/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 3485,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "VVV-USDT-SWAP",
+      "symbol": "VVV/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 205,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4368,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "IRYS-USDT-SWAP",
+      "symbol": "IRYS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "TAO-USDT-SWAP",
+      "symbol": "TAO/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ONDO-USDT-SWAP",
+      "symbol": "ONDO/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "INJ-USDT-SWAP",
+      "symbol": "INJ/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 959,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DNA-USDT-SWAP",
+      "symbol": "DNA/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 2567,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DOS-USDT-SWAP",
+      "symbol": "DOS/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.833333333333332,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 28800000,
+        "funding_rows": 180,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 10737,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "OKB-USDT-SWAP",
+      "symbol": "OKB/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 4346,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DELL-USDT-SWAP",
+      "symbol": "DELL/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 10800000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "DOT-USDT-SWAP",
+      "symbol": "DOT/USDT:USDT"
+    }
+  ],
+  "run_id": "okx-cpp-1795607812574",
+  "scan_id": "scan-c87a95b8f1213a60bf4925d73201f9edeb51ac75f5a9661c58cd82c2b5eb3833",
+  "schema_version": "1.0.0",
+  "summary": {
+    "fully_available_count": 52,
+    "partial_count": 0,
+    "selected_count": 52,
+    "unavailable_count": 0
+  },
+  "universe": {
+    "crypto_universe_source": "coinpaprika",
+    "crypto_universe_status": "VERIFIED",
+    "crypto_universe_symbol_count": 9153,
+    "crypto_universe_symbols_sha256": "822222aee60970101f41724fec4169a646cd44938d5a21a59ab1e2eb9ed2cf96",
+    "declared_usdt_swap_count": 539,
+    "eligible_count": 52,
+    "excluded_non_crypto_count": 205,
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_count": 52,
+    "selected_instrument_ids": [
+      "BTC-USDT-SWAP",
+      "ETH-USDT-SWAP",
+      "ZEC-USDT-SWAP",
+      "SOL-USDT-SWAP",
+      "MU-USDT-SWAP",
+      "XRP-USDT-SWAP",
+      "SPCX-USDT-SWAP",
+      "PEPE-USDT-SWAP",
+      "DOGE-USDT-SWAP",
+      "HYPE-USDT-SWAP",
+      "MMT-USDT-SWAP",
+      "PIEVERSE-USDT-SWAP",
+      "NEAR-USDT-SWAP",
+      "SKHY-USDT-SWAP",
+      "AKE-USDT-SWAP",
+      "UNI-USDT-SWAP",
+      "WLD-USDT-SWAP",
+      "SUI-USDT-SWAP",
+      "TRUMP-USDT-SWAP",
+      "PUMP-USDT-SWAP",
+      "BIGTIME-USDT-SWAP",
+      "MON-USDT-SWAP",
+      "OPG-USDT-SWAP",
+      "BNB-USDT-SWAP",
+      "FIL-USDT-SWAP",
+      "SLX-USDT-SWAP",
+      "LIT-USDT-SWAP",
+      "CRCL-USDT-SWAP",
+      "ENA-USDT-SWAP",
+      "ADA-USDT-SWAP",
+      "LTC-USDT-SWAP",
+      "LINK-USDT-SWAP",
+      "PROS-USDT-SWAP",
+      "NBIS-USDT-SWAP",
+      "DRAM-USDT-SWAP",
+      "BTW-USDT-SWAP",
+      "AAVE-USDT-SWAP",
+      "MOODENG-USDT-SWAP",
+      "BCH-USDT-SWAP",
+      "ARB-USDT-SWAP",
+      "AVAX-USDT-SWAP",
+      "LITE-USDT-SWAP",
+      "VVV-USDT-SWAP",
+      "IRYS-USDT-SWAP",
+      "TAO-USDT-SWAP",
+      "ONDO-USDT-SWAP",
+      "INJ-USDT-SWAP",
+      "DNA-USDT-SWAP",
+      "DOS-USDT-SWAP",
+      "OKB-USDT-SWAP",
+      "DELL-USDT-SWAP",
+      "DOT-USDT-SWAP"
+    ],
+    "selection_method": "top_turnover_usd_desc_with_btc_first",
+    "selection_timestamp_utc": "2026-11-25T11:56:52Z",
+    "target_count": 100
+  }
+}
