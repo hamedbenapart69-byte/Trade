@@ -136,7 +136,19 @@ def load_panel() -> tuple[pd.DataFrame, pd.DataFrame]:
         raise ValueError(f"Insufficient common daily history: {len(dates)} dates")
     expected = pd.date_range(dates.min(), dates.max(), freq="D", tz="UTC")
     if not dates.equals(expected):
-        raise ValueError("Common data calendar contains missing daily bars")
+        missing_common = expected.difference(dates)
+        per_symbol_gaps = {}
+        for symbol, frame in per_symbol.items():
+            symbol_dates = pd.DatetimeIndex(frame["date"])
+            gaps = expected.difference(symbol_dates)
+            if len(gaps):
+                per_symbol_gaps[symbol] = [str(x.date()) for x in gaps[:20]]
+        raise ValueError(
+            "D1_DATA_GAP: common_calendar_missing="
+            + json.dumps([str(x.date()) for x in missing_common[:30]])
+            + "; per_symbol_missing_dates="
+            + json.dumps(per_symbol_gaps, ensure_ascii=False)
+        )
 
     opens = pd.DataFrame(index=dates)
     features = pd.DataFrame(index=dates)
