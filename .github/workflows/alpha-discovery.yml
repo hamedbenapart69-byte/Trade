@@ -80,6 +80,7 @@ jobs:
           python - <<'PY'
           import json, os
           p="out/report.json"
+          os.makedirs("out", exist_ok=True)
           if os.path.exists(p):
               x=json.load(open(p))
           else:
