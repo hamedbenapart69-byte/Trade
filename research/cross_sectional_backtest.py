@@ -203,7 +203,7 @@ def choose_sides(
     )
     if vol.isna().any() or not np.isfinite(vol.to_numpy()).all():
         return None
-    if experiment == "B_VOLUME_RSI":
+    if experiment == "B_VOLUME_RSI_50_50_CS_ZSCORE":
         if rsi.isna().any() or not np.isfinite(rsi.to_numpy()).all():
             return None
         score = 0.5 * cross_section_z(vol) + 0.5 * cross_section_z(rsi)
@@ -214,6 +214,22 @@ def choose_sides(
     # Stable tie-break: symbol ascending.
     ranked = sorted(SYMBOLS, key=lambda s: (-float(score[s]), s))
     return ranked[:TOP_N], ranked[-TOP_N:]
+
+
+def validate_ranking_logic() -> None:
+    """Deterministic test: the 50/50 composite must actually use RSI."""
+    synthetic: dict[str, float] = {}
+    for i, symbol in enumerate(SYMBOLS):
+        synthetic[f"{symbol}:Volume_Z20"] = float(len(SYMBOLS) - i)
+        synthetic[f"{symbol}:RSI_14"] = float(i)
+    volume_sides = choose_sides(synthetic, "A_VOLUME_ONLY")
+    composite_sides = choose_sides(
+        synthetic, "B_VOLUME_RSI_50_50_CS_ZSCORE"
+    )
+    if volume_sides is None or composite_sides is None:
+        raise AssertionError("Ranking self-test unexpectedly returned no basket")
+    if volume_sides == composite_sides:
+        raise AssertionError("B ranking ignored RSI; composite equals Volume-only")
 
 
 def metric_pack(
@@ -502,6 +518,7 @@ def equal_weight_buy_hold(
 
 
 def main() -> None:
+    validate_ranking_logic()
     opens, features = load_panel()
     results: list[dict[str, object]] = []
     for year in TEST_YEARS:
@@ -514,6 +531,24 @@ def main() -> None:
 
     # Data and methodology invariants.
     by_key = {(int(r["year"]), str(r["experiment"])): r for r in results}
+    for year in TEST_YEARS:
+        changed = 0
+        compared = 0
+        for signal_date in [d for d in opens.index if d.year == year]:
+            a_sides = choose_sides(features.loc[signal_date], "A_VOLUME_ONLY")
+            b_sides = choose_sides(
+                features.loc[signal_date], "B_VOLUME_RSI_50_50_CS_ZSCORE"
+            )
+            if a_sides is not None and b_sides is not None:
+                compared += 1
+                changed += int(a_sides != b_sides)
+        by_key[(year, "B_VOLUME_RSI_50_50_CS_ZSCORE")][
+            "selection_diagnostics"
+        ] = {
+            "dates_compared": compared,
+            "dates_with_different_baskets_vs_A": changed,
+            "ranking_self_test": "PASS",
+        }
     for year in TEST_YEARS:
         a = by_key[(year, "A_VOLUME_ONLY")]["metrics"]["net_return"]
         c = by_key[(year, "C_MARKET_RESIDUAL")]["metrics"]["net_return"]
