@@ -1,6 +1,6 @@
 # CFSS Roadmap — V21.0
 
-**Controlling source:** owner-accepted MASTER SOURCE V21.0 + V21.0 Execution Protocol Addendum  
+**SOLE CONTROLLING AUTHORITY:** owner-accepted MASTER SOURCE V21.0 + V21.0 Execution Protocol Addendum. V19.0 and V18.2 are superseded historical archives.  
 **Status snapshot:** 2026-11-23  
 **Production language:** C++  
 **Delivery:** Telegram only  
@@ -43,9 +43,8 @@ A stage may PASS only when its numerical criteria and L1/L2/L3 requirements are 
 
 ## Current V21 blockers
 
-1. **Legacy scheduled strategy workflow:** .github/workflows/cpp-stage6-meta-cognition-v1.yml remains scheduled every four hours and explicitly invokes LRT/NMT candidate generation. It is incompatible with V21 and must be disabled/quarantined before any V21 production schedule. This branch does not alter it pending separate owner approval.
-2. **Legacy VTM extraction workflow:** .github/workflows/extract-vtm-result.yml remains present on main. VTM is rejected under V21; this workflow must not be considered an active V21 component.
-3. **Provider independence:** the current production collector has an implemented OKX futures adapter; Bybit/Binance were previously observed unavailable from the runner, and other adapters are not equivalence-tested. No fallback is assumed.
+1. **Rejected legacy workflows:** this branch applies job-level `if: false` to all identified LRT/NMT/VTM execution paths and adds a CI regression guard. These controls become effective on the default branch only after this PR is reviewed and merged.
+2. **Provider independence:** the current production collector has an implemented OKX futures adapter; Bybit/Binance were previously observed unavailable from the runner, and other adapters are not equivalence-tested. No fallback is assumed.
 4. **V21 Stage 1:** V18.2 evidence is historical. V21 manifest/contract migration and new live acceptance runs remain pending.
 5. **Cost semantics:** one-way versus round-trip interpretation is open and blocks strategy backtesting.
 
@@ -62,3 +61,11 @@ The following references are preserved for audit only and do not imply V21 accep
 - V18.2 Stage 7 risk-gate evidence: evidence/stage7-risk-gate-slrp-report.md
 
 A legacy PR being open or its CI passing does not make it part of the V21 production architecture. No legacy workflow is presumed safe to run merely because it remains in Git history or on main.
+
+
+## Source archive and workflow governance
+
+- V21.0 is the sole controlling specification. V19.0 is preserved verbatim under `docs/archive/superseded/`; its former constitution path is an archive pointer.
+- V18.2 is recorded as superseded with its owner-provided SHA-256 in `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`. The exact source bytes were not present in the repository at the start of this PR; the archive record does not claim a byte-identical repository copy.
+- Rejected LRT/NMT/VTM workflows and their legacy LFS/NSS/liquidity-phase precursor/report jobs are permanently disabled at job level. CI fails if any denylisted workflow is missing a literal job-level `if: false`.
+- The controls in this branch are proposals until the owner merges this PR; main remains unchanged by this branch.

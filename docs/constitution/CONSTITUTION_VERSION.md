@@ -29,8 +29,8 @@ The exact V21 master and addendum bytes are owner-provided source files. The rep
 
 ## Historical sources — not controlling
 
-- V19.0 was previously accepted but is superseded by V21.0. Its Python-L1, Binance-Vision Stage 1 and V19 stage directives are not current requirements where they conflict with V21.
-- V18.2 remains preserved as historical material only. Its stage PASS records do not establish V21 acceptance.
+- V19.0 was previously accepted but is now explicitly archived and superseded by V21.0. Original SHA-256: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`. The verbatim archive is `docs/archive/superseded/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`; the former constitution path is an archive pointer only. Its Python-L1, Binance-Vision Stage 1 and V19 stage directives are not current requirements where they conflict with V21.
+- V18.2 is explicitly recorded as an archived historical source only (SHA-256: `e4e39fc1aec1924f93d9a480fadf6b2ad315388ebb5718ed9765ad89477b6a24`). See `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`. The repository's prior errata is superseded; historical stage PASS records do not establish V21 acceptance.
 - V9.0 and V9.1 remain historical source records.
 
 ## Historical V9 source integrity

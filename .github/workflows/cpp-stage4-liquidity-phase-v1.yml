@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate-and-deliver:
-    if: ${{ contains(github.event.head_commit.message, '[LIQUIDITY_STAGE4_REPORT]') }}
+    if: false # PERMANENT V21 quarantine: legacy liquidity/phase input to rejected LRT/NMT chain
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:

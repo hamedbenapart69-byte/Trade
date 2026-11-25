@@ -15,7 +15,7 @@ permissions:
 jobs:
   discover:
     # V21.0 quarantine: this legacy workflow consumes VTM artifacts, a rejected strategy family.
-    if: false
+    if: false # PERMANENT V21 quarantine: VTM-derived research is rejected
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:

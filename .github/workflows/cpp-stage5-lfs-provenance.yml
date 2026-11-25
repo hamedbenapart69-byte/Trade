@@ -17,6 +17,7 @@ permissions:
   contents: read
 jobs:
   provenance-contract:
+    if: false # PERMANENT V21 quarantine: legacy LFS provenance for rejected LRT engine
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
