@@ -86,7 +86,7 @@ The following findings concern the current expanded provider-health and manifest
 ### Current verification status
 
 - PR run `45653879982`, head `a829512ad580ed5a90ad8aa7bdf8ae98f72e3f3a): C++20 build, CTest, live L1 collection, L1 schema and universe schema passed; it reproduced D3-B because it predates the schema correction.
-- PR #179 current head: `d9a5866598278fe696fb51b12de7acb0e742564a`.
+- PR #179 latest head after the evidence-ledger update: `d6b3b25ef07476c735d20e6d49332ba3dad2a5a0`; the Stage 1 run `45654141018` was launched against the preceding code/schema head `d9a5866598278fe696fb51b12de7acb0e742564a`.
 - PR Stage 1 run for that head: `45654141018`, pending/in progress at the time of this update. No result is claimed until the run completes.
 - All PR-event runs skip Telegram and persistent-state acceptance by design.
 
