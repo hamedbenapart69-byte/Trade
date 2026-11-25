@@ -864,7 +864,7 @@ inline json probe_provider_health() {
         providers.push_back(std::move(entry));
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
-    return {{"schema_version", "1.0.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
+    return {{"schema_version", "1.1.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
 }
 
 inline json fetch_fear_greed() {
