@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
-from research.alpha_discovery import (apply_pit_membership, purged_training_window, ic_table,\n                                      build_features, deduplicate_oos_predictions)
+from research.alpha_discovery import (apply_pit_membership, purged_training_window, ic_table,
+                                      build_features, deduplicate_oos_predictions)
 
 class PitMembershipTests(unittest.TestCase):
     def test_only_exact_date_symbol_members_are_marked(self):
