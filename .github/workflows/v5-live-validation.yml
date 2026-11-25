@@ -12,7 +12,7 @@ jobs:
       V5_DATA_PROVIDER: okx
       CONTROL_DB_PATH: ./data/control.db
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Restore signal and API-usage database
         uses: actions/cache/restore@v4
         with:

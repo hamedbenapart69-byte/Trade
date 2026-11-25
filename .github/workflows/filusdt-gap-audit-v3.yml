@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Checkout immutable market-data snapshot
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: c34b037e3534192fd95e65a10bc67acba9821f8b
           path: market-data
