@@ -17,9 +17,10 @@ concurrency:
 
 jobs:
   stage6-pr-live-validation:
-    # V21 rejects the legacy LRT/NMT strategy families; do not execute this legacy live-validation job on V21 branches.
-    # V21 branches must never execute the rejected LRT/NMT/VTM legacy live-validation path.
-    if: ${{ !startsWith(github.head_ref, 'v21/') && !startsWith(github.head_ref, 'fix/v21') }}
+    # The previous branch-name condition skipped this job on v21/ and fix/v21 branches, so genuine
+    # failures there were never reported (a bypass, not a quarantine). The job now runs for every
+    # same-repository PR to main and its result is reported independently; only fork PRs are excluded.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:

@@ -14,7 +14,10 @@ permissions:
   actions: read
 jobs:
   discover:
-    # V21.0 quarantine: this legacy workflow consumes VTM artifacts, a rejected strategy family.
+    # V21.0 quarantine retained: research output is exploratory only and is NOT V21 validation evidence.
+    # The rejected VTM result artifact is no longer downloaded or attached; only the point-in-time
+    # universe artifact (a data input, not a strategy result) is consumed. Historical VTM evidence stays
+    # in docs/evidence/alpha-discovery-source-lock-2026-11-24.json and the stage-vtm-* branches.
     if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 180
@@ -29,35 +32,24 @@ jobs:
       - name: Validate PIT membership filter unit tests
         run: python -m unittest research.test_alpha_discovery
 
-      - name: Download latest VTM result artifact and verified PIT universe artifact
+      - name: Download verified PIT universe artifact (no VTM result artifact)
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
-          mkdir -p out/vtm_backtest_final data/pit
+          mkdir -p data/pit
           LOCK="docs/evidence/alpha-discovery-source-lock-2026-11-24.json"
-          RUN_ID="$(jq -r '.dataset.vtm_workflow_run_id' "$LOCK")"
-          FINAL_ID="$(jq -r '.dataset.vtm_artifact_id' "$LOCK")"
           PIT_RUN_ID="$(jq -r '.dataset.pit_workflow_run_id' "$LOCK")"
           PIT_UNIVERSE_ARTIFACT_ID="$(jq -r '.dataset.pit_artifact_id' "$LOCK")"
-          test "$RUN_ID" != "null" && test "$FINAL_ID" != "null"
           test "$PIT_RUN_ID" != "null" && test "$PIT_UNIVERSE_ARTIFACT_ID" != "null"
-          VTM_META="$(gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}")"
           PIT_META="$(gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}")"
-          test "$(echo "$VTM_META" | jq -r '.name')" = "vtm-backtest-2023-final"
-          test "$(echo "$VTM_META" | jq -r '.expired')" = "false"
           test "$(echo "$PIT_META" | jq -r '.name')" = "vtm-pit-2023-universe"
           test "$(echo "$PIT_META" | jq -r '.expired')" = "false"
-          test "$(echo "$VTM_META" | jq -r '.workflow_run.id')" = "$RUN_ID"
           test "$(echo "$PIT_META" | jq -r '.workflow_run.id')" = "$PIT_RUN_ID"
-          gh api "repos/${REPOSITORY}/actions/artifacts/${FINAL_ID}/zip" > /tmp/vtm-final.zip
-          unzip -q /tmp/vtm-final.zip -d out/vtm_backtest_final
           gh api "repos/${REPOSITORY}/actions/artifacts/${PIT_UNIVERSE_ARTIFACT_ID}/zip" > /tmp/vtm-pit-universe.zip
           unzip -q /tmp/vtm-pit-universe.zip -d data/pit
           test -s data/pit/universe_manifest.json
-          echo "VTM_RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
-          echo "VTM_FINAL_ARTIFACT_ID=${FINAL_ID}" >> "$GITHUB_ENV"
           echo "PIT_RUN_ID=${PIT_RUN_ID}" >> "$GITHUB_ENV"
           echo "PIT_UNIVERSE_ARTIFACT_ID=${PIT_UNIVERSE_ARTIFACT_ID}" >> "$GITHUB_ENV"
       - name: Cache checksum-verified PIT OHLCV
@@ -88,9 +80,8 @@ jobs:
           else:
               x={"status":"UNAVAILABLE","reason":"Research process did not create report"}
           x["artifact_provenance"]={
-              "vtm_result_branch":"stage-vtm-backtest-2023",
-              "vtm_workflow_run_id":os.getenv("VTM_RUN_ID"),
-              "vtm_final_artifact_id":os.getenv("VTM_FINAL_ARTIFACT_ID"),
+              "vtm_result_dependency":"REMOVED_V21_REJECTED_STRATEGY_FAMILY",
+              "evidence_class":"EXPLORATORY_NOT_V21_VALIDATION",
               "pit_universe_branch":"stage-vtm-pit-2023",
               "pit_workflow_run_id":os.getenv("PIT_RUN_ID"),
               "pit_universe_artifact_id":os.getenv("PIT_UNIVERSE_ARTIFACT_ID")
@@ -104,7 +95,6 @@ jobs:
           name: alpha-discovery-report
           path: |
             out/report.json
-            out/vtm_backtest_final/**
             data/pit/universe_manifest.json
             data/pit/universe_membership.csv
             data/pit/universe_daily.csv
