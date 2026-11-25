@@ -49,9 +49,9 @@ int main() {
     require(merged.front().at("timestamp_ms") == 3'600'000 &&
             merged.back().at("timestamp_ms") == 10'800'000,
             "incremental cache preserves history and appends fresh closed bars");
-    const cfss::okx::Instrument btc{"BTC-USDT-SWAP", "BTC", "USDT", "USDT", 1, 1, 0.1, 1, 1, 100, 1, "BTC"};
-    const cfss::okx::Instrument eth{"ETH-USDT-SWAP", "ETH", "USDT", "USDT", 1, 1, 0.1, 1, 1, 90, 1, "ETH"};
-    const cfss::okx::Instrument sol{"SOL-USDT-SWAP", "SOL", "USDT", "USDT", 1, 1, 0.1, 1, 1, 1, 1, "SOL"};
+    const cfss::okx::Instrument btc{"BTC-USDT-SWAP", "BTC", "USDT", "USDT", 1, 1, 0.1, 1, 1, 100, 1, "BTC", "okx", "BTC-USDT-SWAP"};
+    const cfss::okx::Instrument eth{"ETH-USDT-SWAP", "ETH", "USDT", "USDT", 1, 1, 0.1, 1, 1, 90, 1, "ETH", "okx", "ETH-USDT-SWAP"};
+    const cfss::okx::Instrument sol{"SOL-USDT-SWAP", "SOL", "USDT", "USDT", 1, 1, 0.1, 1, 1, 1, 1, "SOL", "okx", "SOL-USDT-SWAP"};
     const auto pinned = cfss::okx::select_instruments(
         1, {eth, btc}, {btc, eth, sol}, {"SOL"});
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
