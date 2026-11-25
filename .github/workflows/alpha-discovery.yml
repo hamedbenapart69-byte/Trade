@@ -59,7 +59,7 @@ jobs:
           echo "PIT_RUN_ID=${PIT_RUN_ID}" >> "$GITHUB_ENV"
           echo "PIT_UNIVERSE_ARTIFACT_ID=${PIT_UNIVERSE_ARTIFACT_ID}" >> "$GITHUB_ENV"
       - name: Cache checksum-verified PIT OHLCV
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: data/pit/ohlcv_2023.parquet
           key: vtm-pit-ohlcv-2023-${{ hashFiles('data/pit/universe_manifest.json') }}
