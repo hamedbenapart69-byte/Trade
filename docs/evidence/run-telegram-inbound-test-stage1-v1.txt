@@ -1,0 +1,9 @@
+V21 Stage 1 controlled Telegram inbound/replay acceptance trigger.
+
+Purpose:
+- Trigger one main-branch Stage 1 run with outbound delivery, controlled /status receive, and exact-update replay.
+- Preserve the existing Stage 1 acceptance criteria without modification.
+- This marker is an evidence trigger only; it does not enable any strategy engine.
+
+Owner action:
+- Send /status from the authorized Telegram chat only after the workflow reports that its inbound baseline snapshot has completed.
