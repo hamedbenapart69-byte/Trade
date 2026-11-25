@@ -83,9 +83,30 @@ def download_month(
             raise ValueError(f"{filename}: expected one CSV, got {csv_files}")
         with archive.open(csv_files[0]) as stream:
             frame = pd.read_csv(stream, header=None, names=COLUMNS)
+    timestamp_values = pd.to_numeric(frame["open_time"], errors="coerce")
+    finite_timestamps = timestamp_values[np.isfinite(timestamp_values)]
+    if finite_timestamps.empty:
+        raise ValueError(f"{filename}: no numeric open_time values")
+    # Binance Vision timestamp precision has varied by archive vintage:
+    # detect seconds, milliseconds, or microseconds from the numeric magnitude.
+    median_timestamp = float(finite_timestamps.median())
+    if median_timestamp >= 1e14:
+        timestamp_unit = "us"
+    elif median_timestamp >= 1e11:
+        timestamp_unit = "ms"
+    elif median_timestamp >= 1e8:
+        timestamp_unit = "s"
+    else:
+        raise ValueError(
+            f"{filename}: unrecognized open_time magnitude {median_timestamp}"
+        )
+    frame["open_time"] = timestamp_values
+    frame = frame.loc[np.isfinite(frame["open_time"])].copy()
     for col in ("open", "high", "low", "close", "volume"):
         frame[col] = pd.to_numeric(frame[col], errors="coerce")
-    frame["date"] = pd.to_datetime(frame["open_time"], unit="ms", utc=True).dt.floor("D")
+    frame["date"] = pd.to_datetime(
+        frame["open_time"], unit=timestamp_unit, utc=True
+    ).dt.floor("D")
     frame = frame[["date", "open", "high", "low", "close", "volume"]]
     if frame.empty or frame[["open", "high", "low", "close", "volume"]].isna().any().any():
         raise ValueError(f"{filename}: empty or invalid OHLCV data")
