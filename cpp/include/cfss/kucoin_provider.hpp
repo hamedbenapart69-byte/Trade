@@ -96,19 +96,35 @@ inline std::string utc_iso(std::int64_t timestamp_ms) {
 }
 
 inline json request_data(const std::string& url, long timeout_seconds = 25L) {
-    const auto response = get(url, timeout_seconds);
-    if (response.transport != CURLE_OK || response.status != 200) {
-        throw std::runtime_error("kucoin_http_or_transport_error status=" +
-            std::to_string(response.status) + " transport=" +
-            curl_easy_strerror(response.transport));
+    std::string last_error = "kucoin_request_failed";
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        try {
+            const auto response = get(url, timeout_seconds);
+            if (response.transport != CURLE_OK || response.status != 200) {
+                last_error = "kucoin_http_or_transport_error status=" +
+                    std::to_string(response.status) + " transport=" +
+                    curl_easy_strerror(response.transport);
+                if (attempt < 2)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250 * (attempt + 1)));
+                continue;
+            }
+            const auto payload = json::parse(response.body);
+            if (!payload.is_object() || string_value(payload.value("code", json{})) != "200000" ||
+                !payload.contains("data")) {
+                last_error = "kucoin_api_payload_invalid code=" +
+                    string_value(payload.value("code", json{}));
+                if (attempt < 2)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250 * (attempt + 1)));
+                continue;
+            }
+            return payload.at("data");
+        } catch (const std::exception& e) {
+            last_error = e.what();
+            if (attempt < 2)
+                std::this_thread::sleep_for(std::chrono::milliseconds(250 * (attempt + 1)));
+        }
     }
-    const auto payload = json::parse(response.body);
-    if (!payload.is_object() || string_value(payload.value("code", json{})) != "200000" ||
-        !payload.contains("data")) {
-        throw std::runtime_error("kucoin_api_payload_invalid code=" +
-            string_value(payload.value("code", json{})));
-    }
-    return payload.at("data");
+    throw std::runtime_error(last_error);
 }
 
 struct Contract {
