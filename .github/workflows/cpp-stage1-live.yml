@@ -91,7 +91,7 @@ jobs:
           else
             PREVIOUS_UPDATE_ID=0
           fi
-          printf '%s\\n' "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
+          printf '%s\n' "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
           echo "TELEGRAM_INBOUND_BASELINE_UPDATE_ID=$PREVIOUS_UPDATE_ID"
 
       - name: Restore shared market-data cache
@@ -212,8 +212,8 @@ jobs:
           test "$(jq -r .status artifacts/inbound-replay-before.json)" = "PROCESSED"
           test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
           test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
-          printf '%s\\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
-          printf '%s\\n' "$REPLAY_SOURCE" > artifacts/inbound-replay-source.txt
+          printf '%s\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
+          printf '%s\n' "$REPLAY_SOURCE" > artifacts/inbound-replay-source.txt
           echo "TELEGRAM_EXACT_REPLAY_SOURCE=$REPLAY_SOURCE update_id=$UPDATE_ID"
       - name: Replay the exact processed Telegram update through C++ L3
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
