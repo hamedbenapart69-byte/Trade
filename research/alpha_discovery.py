@@ -245,6 +245,17 @@ def trade_metrics(oos):
             "trade_count":int(len(returns)),"mean_trade_return":float(np.mean(returns)),
             "metric_scope":"OOS signal-level returns; overlapping 3-day signals are not a portfolio equity curve"}
 
+def deduplicate_oos_predictions(oos: pd.DataFrame) -> pd.DataFrame:
+    """For overlapping test windows, keep the latest fold forecast per symbol/date."""
+    if oos.empty:
+        return oos.copy()
+    required={"timestamp","symbol","fold_index"}
+    if not required.issubset(oos.columns):
+        raise ValueError("OOS deduplication requires timestamp, symbol and fold_index")
+    return oos.sort_values(["timestamp","symbol","fold_index"]).drop_duplicates(
+        ["timestamp","symbol"],keep="last").reset_index(drop=True)
+
+
 def purged_training_window(data: pd.DataFrame, train_start: pd.Timestamp,
                            test_start: pd.Timestamp, purge_days: int = 3) -> pd.DataFrame:
     """Exclude training labels whose t+3 outcome could touch the test period."""
@@ -311,11 +322,7 @@ def run(data):
         }))
     oos=pd.concat(oos_parts,ignore_index=True) if oos_parts else pd.DataFrame(
         columns=["timestamp","symbol","probability","net_return","fold_index"])
-    if not oos.empty:
-        # Step=1 month with a 2-month test window overlaps adjacent folds.
-        # Keep the newest available model forecast for each timestamp/symbol pair.
-        oos=oos.sort_values(["timestamp","symbol","fold_index"]).drop_duplicates(
-            ["timestamp","symbol"],keep="last").reset_index(drop=True)
+    oos=deduplicate_oos_predictions(oos)
     metrics=trade_metrics(oos)
     pbo,pbo_details=pbo_cscv(oos) if not oos.empty else (None,{"status":"UNAVAILABLE","reason":"no selected OOS trades"})
     metrics["pbo"]=pbo; metrics["pbo_details"]=pbo_details
