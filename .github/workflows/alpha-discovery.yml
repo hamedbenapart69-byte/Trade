@@ -13,7 +13,9 @@ permissions:
   contents: read
   actions: read
 jobs:
+  # V21 rejects VTM; quarantine legacy VTM-dependent research until a new independent hypothesis is approved.
   discover:
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
