@@ -91,7 +91,11 @@ jobs:
           else
             PREVIOUS_UPDATE_ID=0
           fi
-          printf '%s\\n' "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
+          if ! [[ "$PREVIOUS_UPDATE_ID" =~ ^[0-9]+$ ]]; then
+            echo "TELEGRAM_INBOUND_BASELINE_INVALID=$PREVIOUS_UPDATE_ID"
+            exit 1
+          fi
+          echo "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
           echo "TELEGRAM_INBOUND_BASELINE_UPDATE_ID=$PREVIOUS_UPDATE_ID"
 
       - name: Restore shared market-data cache
@@ -145,7 +149,7 @@ jobs:
 
 
       - name: Real Telegram outbound through C++ L3
-        if: ${{ github.event_name != 'pull_request' && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]')) }}
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -161,20 +165,26 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_INBOUND_REPLAY_ONLY: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]') }}
         run: |
-          for attempt in $(seq 1 12); do
-            echo "CPP_TELEGRAM_INBOUND_POLL=$attempt/12"
+          POLL_ATTEMPTS=12
+          if [ "$TELEGRAM_INBOUND_REPLAY_ONLY" = "true" ]; then POLL_ATTEMPTS=1; fi
+          for attempt in $(seq 1 "$POLL_ATTEMPTS"); do
+            echo "CPP_TELEGRAM_INBOUND_POLL=$attempt/$POLL_ATTEMPTS"
             ./build/telegram_inbound signals-state/cpp_runtime/telegram_inbound.v1.json artifacts/run-manifest.v2.json
-            sleep 5
+            if [ "$POLL_ATTEMPTS" -gt 1 ]; then sleep 5; fi
           done
           test -s signals-state/cpp_runtime/telegram_inbound.v1.json
           grep -Eq '"status": "PROCESSED"' signals-state/cpp_runtime/telegram_inbound.v1.json
-          echo "CPP_TELEGRAM_INBOUND_PROCESSED"
-
+          echo "CPP_TELEGRAM_INBOUND_PROCESSED attempts=$POLL_ATTEMPTS"
       - name: Snapshot exact processed update before replay
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
         run: |
-          PREVIOUS_UPDATE_ID=$(cat artifacts/telegram-inbound-previous-update-id.txt)
+          IFS= read -r PREVIOUS_UPDATE_ID < artifacts/telegram-inbound-previous-update-id.txt
+          if ! [[ "$PREVIOUS_UPDATE_ID" =~ ^[0-9]+$ ]]; then
+            echo "TELEGRAM_INBOUND_BASELINE_FILE_INVALID"
+            exit 1
+          fi
           UPDATE_ID=$(jq -r --argjson previous "$PREVIOUS_UPDATE_ID" '
             [.processed_updates | to_entries[] |
               select((.key | tonumber) > $previous) |
@@ -321,7 +331,7 @@ jobs:
       - name: Record immutable production source tree identity
         run: |
           set -euo pipefail
-          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
+          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
           test "${#SOURCE_TREE_HASH}" -eq 64
           jq --arg source_hash "$SOURCE_TREE_HASH" '.production_source_hash = $source_hash' artifacts/run-manifest.v2.json > artifacts/run-manifest.v2.tmp.json
           mv artifacts/run-manifest.v2.tmp.json artifacts/run-manifest.v2.json
@@ -449,7 +459,7 @@ jobs:
             echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
             exit 1
           fi
-          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
+          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
           if ! jq -e --arg sha "$GITHUB_SHA" --arg source_hash "$SOURCE_TREE_HASH" --argjson current "$RUN_NUMBER" '
             length == 2 and
             .[0].workflow_run_number < .[1].workflow_run_number and
