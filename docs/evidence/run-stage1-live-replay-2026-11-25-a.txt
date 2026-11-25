@@ -1,0 +1,1 @@
+Run the V21 Stage 1 live validation using the persisted, previously verified Telegram inbound receipt. No new user message is requested. Validate C++ L1/L2, live KuCoin partial fallback probe, Telegram outbound delivery, exact-update duplicate suppression, persistent state and the fixed two-run source-hash gate.
