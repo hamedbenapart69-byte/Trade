@@ -66,6 +66,67 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
 }
 }
 int main() {
+    // KuCoin public fallback parsing and unit normalization tests.
+    const nlohmann::json kucoin_contract_row = {
+        {"symbol", "XBTUSDTM"}, {"baseCurrency", "XBT"},
+        {"quoteCurrency", "USDT"}, {"settleCurrency", "USDT"},
+        {"status", "Open"}, {"isInverse", false}, {"expireDate", nullptr},
+        {"multiplier", 0.001}, {"tickSize", 0.1}, {"lotSize", 1},
+        {"turnoverOf24h", 100000000.0}, {"firstOpenDate", 1700000000000LL}
+    };
+    const auto parsed_kucoin_contract = cfss::kucoin::parse_contract(kucoin_contract_row);
+    if (!parsed_kucoin_contract || parsed_kucoin_contract->base != "BTC" ||
+        parsed_kucoin_contract->symbol != "XBTUSDTM" ||
+        std::abs(parsed_kucoin_contract->multiplier - 0.001) > 1e-12 ||
+        !cfss::kucoin::find_contract(std::vector<cfss::kucoin::Contract>{*parsed_kucoin_contract}, "BTC")) {
+        std::cerr << "KuCoin BTC contract normalization failed\n"; return EXIT_FAILURE;
+    }
+    auto inverse_contract_row = kucoin_contract_row;
+    inverse_contract_row["isInverse"] = true;
+    if (cfss::kucoin::parse_contract(inverse_contract_row)) {
+        std::cerr << "Inverse KuCoin contract was not excluded\n"; return EXIT_FAILURE;
+    }
+
+    const std::int64_t kucoin_sample_ts = 1'760'000'000'000LL;
+    const auto kucoin_retrieved_at = std::string{"2026-11-25T00:00:00Z"};
+    const nlohmann::json kucoin_candle_rows = nlohmann::json::array({
+        nlohmann::json::array({kucoin_sample_ts, "100.0", "105.0", "99.0", "103.0", "602", "69424.9528"}),
+        nlohmann::json::array({kucoin_sample_ts + 1'800'000LL, "100.0", "105.0", "99.0", "103.0", "10", "1000"})
+    });
+    const auto kucoin_candles = cfss::kucoin::parse_candle_rows(
+        kucoin_candle_rows, *parsed_kucoin_contract, kucoin_sample_ts,
+        kucoin_sample_ts + cfss::kucoin::kHourMs, kucoin_retrieved_at);
+    if (kucoin_candles.size() != 1U ||
+        std::abs(kucoin_candles[0].value("volume_base", 0.0) - 0.602) > 1e-12 ||
+        std::abs(kucoin_candles[0].value("volume_quote", 0.0) - 69424.9528) > 1e-8 ||
+        kucoin_candles[0].value("volume_unit", std::string{}) != "contracts") {
+        std::cerr << "KuCoin candle contract-to-base normalization failed\n"; return EXIT_FAILURE;
+    }
+
+    const nlohmann::json kucoin_funding_rows = nlohmann::json::array({
+        {{"timepoint", kucoin_sample_ts}, {"fundingRate", "0.0001"}}
+    });
+    const auto kucoin_funding = cfss::kucoin::parse_funding_rows(
+        kucoin_funding_rows, kucoin_sample_ts, kucoin_sample_ts + cfss::kucoin::kHourMs,
+        kucoin_retrieved_at);
+    if (kucoin_funding.size() != 1U ||
+        std::abs(kucoin_funding[0].value("funding_rate", 0.0) - 0.0001) > 1e-12 ||
+        !kucoin_funding[0].at("mark_price").is_null()) {
+        std::cerr << "KuCoin funding normalization failed\n"; return EXIT_FAILURE;
+    }
+
+    const nlohmann::json kucoin_oi_rows = nlohmann::json::array({
+        {{"ts", kucoin_sample_ts}, {"openInterest", "4615535"}}
+    });
+    const auto kucoin_oi = cfss::kucoin::parse_open_interest_rows(
+        kucoin_oi_rows, *parsed_kucoin_contract, kucoin_sample_ts,
+        kucoin_sample_ts + cfss::kucoin::kHourMs, kucoin_retrieved_at);
+    if (kucoin_oi.size() != 1U ||
+        std::abs(kucoin_oi[0].value("open_interest_base", 0.0) - 4615.535) > 1e-9 ||
+        !kucoin_oi[0].at("open_interest_value_usd").is_null()) {
+        std::cerr << "KuCoin open-interest unit normalization failed\n"; return EXIT_FAILURE;
+    }
+
     const std::string input = std::string{"quote: \""} + '\n' + '\t';
     if (cfss::json_escape(input) != "quote: \\\"\\n\\t") {
         std::cerr << "JSON escaping test failed\n"; return EXIT_FAILURE;
