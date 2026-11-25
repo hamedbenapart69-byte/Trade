@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   nss-v1:
+    if: false # PERMANENT V21 quarantine: legacy NSS precursor to rejected NMT engine
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
