@@ -7,7 +7,26 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-FEATURES = ["vol_z20","funding_pct","oi_chg_24h","oi_chg_72h","pctB_50","btc_corr_break"]
+FEATURES = [
+    "vol_z20", "funding_pct", "oi_chg_24h", "oi_chg_72h",
+    "pctB_50", "btc_corr_break", "ret_1d", "ret_7d",
+    "range_pos_20", "ema_gap_20_50", "volume_ratio_20",
+    "btc_relative_mom_7d"
+]
+FEATURE_HYPOTHESES = {
+    "vol_z20": {"hypothesis":"Unusual volume may proxy participation shocks.","falsification":"Mean daily cross-sectional Rank IC is non-positive or unstable OOS."},
+    "funding_pct": {"hypothesis":"Extreme funding percentile may proxy crowded derivatives positioning.","falsification":"No stable OOS contribution when real funding observations are present."},
+    "oi_chg_24h": {"hypothesis":"Daily open-interest expansion may identify new positioning.","falsification":"OOS contribution is non-positive after costs when real OI is present."},
+    "oi_chg_72h": {"hypothesis":"Three-day open-interest expansion may separate persistent positioning from noise.","falsification":"OOS contribution is non-positive after costs when real OI is present."},
+    "pctB_50": {"hypothesis":"Position within a 50-day Bollinger envelope may distinguish continuation from reversion.","falsification":"Rank IC sign is unstable across chronological folds."},
+    "btc_corr_break": {"hypothesis":"A change in rolling BTC correlation may identify idiosyncratic decoupling.","falsification":"No stable cross-sectional association across chronological folds."},
+    "ret_1d": {"hypothesis":"One-day return may capture short-horizon cross-sectional momentum.","falsification":"Mean daily Rank IC is non-positive or reverses across folds."},
+    "ret_7d": {"hypothesis":"Seven-day return may capture intermediate-horizon momentum.","falsification":"Mean daily Rank IC is non-positive or reverses across folds."},
+    "range_pos_20": {"hypothesis":"Close location within the prior 20-day high-low range may capture breakout persistence.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
+    "ema_gap_20_50": {"hypothesis":"The 20/50 EMA spread may proxy medium-term trend state.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
+    "volume_ratio_20": {"hypothesis":"Current volume relative to its 20-day mean may capture participation expansion.","falsification":"Mean daily Rank IC is non-positive after costs or unstable OOS."},
+    "btc_relative_mom_7d": {"hypothesis":"Seven-day asset return relative to BTC may capture cross-sectional relative strength.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."}
+}
 ALIASES = {
     "timestamp":["timestamp","datetime","date","time","ts"],
     "symbol":["symbol","ticker","instrument_id","pair"],
@@ -94,35 +113,62 @@ def build_features(data: pd.DataFrame):
         g=group.sort_values("timestamp").copy()
         future_close=_future_by_calendar_days(g,"close",3)
         g["forward_3d_return"]=future_close/g.close.to_numpy()-1
+        close=g.close.astype(float)
         vol=g.volume.astype(float)
+
+        # Price/volume features use current and historical bars only.
+        g["ret_1d"]=close.pct_change(1)
+        g["ret_7d"]=close.pct_change(7)
         g["vol_z20"]=(vol-vol.rolling(20,min_periods=20).mean())/vol.rolling(20,min_periods=20).std(ddof=0)
+        g["volume_ratio_20"]=vol/vol.rolling(20,min_periods=20).mean().replace(0,np.nan)
+
+        ema20=close.ewm(span=20,adjust=False,min_periods=20).mean()
+        ema50=close.ewm(span=50,adjust=False,min_periods=50).mean()
+        g["ema_gap_20_50"]=ema20/ema50.replace(0,np.nan)-1
+
+        if "high" in g.columns and "low" in g.columns:
+            rolling_high=g.high.astype(float).rolling(20,min_periods=20).max()
+            rolling_low=g.low.astype(float).rolling(20,min_periods=20).min()
+            width=(rolling_high-rolling_low).replace(0,np.nan)
+            g["range_pos_20"]=(close-rolling_low)/width
+        else:
+            g["range_pos_20"]=np.nan
+
         if has_funding and "funding" in g:
             g["funding_pct"]=g.funding.rolling(90,min_periods=20).apply(
                 lambda x: float(pd.Series(x).rank(pct=True).iloc[-1]), raw=False)
-        else: g["funding_pct"]=np.nan
+        else:
+            g["funding_pct"]=np.nan
+
         if has_oi and "oi" in g:
             oi_24=_past_by_calendar_days(g,"oi",1)
             oi_72=_past_by_calendar_days(g,"oi",3)
             g["oi_chg_24h"]=g.oi.to_numpy()/oi_24-1
             g["oi_chg_72h"]=g.oi.to_numpy()/oi_72-1
         else:
-            g["oi_chg_24h"]=np.nan; g["oi_chg_72h"]=np.nan
-        mid=g.close.rolling(50,min_periods=50).mean()
-        sd=g.close.rolling(50,min_periods=50).std(ddof=0)
+            g["oi_chg_24h"]=np.nan
+            g["oi_chg_72h"]=np.nan
+
+        mid=close.rolling(50,min_periods=50).mean()
+        sd=close.rolling(50,min_periods=50).std(ddof=0)
         upper,lower=mid+2*sd,mid-2*sd
-        g["pctB_50"]=(g.close-lower)/(upper-lower).replace(0,np.nan)
+        g["pctB_50"]=(close-lower)/(upper-lower).replace(0,np.nan)
         parts.append(g)
+
     df=pd.concat(parts,ignore_index=True).sort_values(["timestamp","symbol"])
     btc_close=df[df.symbol=="BTCUSDT"].groupby("timestamp").close.mean().rename("btc_close")
     if btc_close.empty:
-        # Binance Vision USD-M symbols are commonly BTCUSDT; no substitute is inferred.
         df["btc_corr_break"]=np.nan
+        df["btc_relative_mom_7d"]=np.nan
     else:
-        # Compute BTC returns on the unique daily BTC series before broadcasting to symbols.
         btc_ret=btc_close.pct_change().rename("btc_ret")
+        btc_ret_7d=btc_close.pct_change(7).rename("btc_ret_7d")
         df=df.join(btc_close,on="timestamp")
         df=df.join(btc_ret,on="timestamp")
+        df=df.join(btc_ret_7d,on="timestamp")
         df["asset_ret"]=df.groupby("symbol").close.pct_change()
+        df["asset_ret_7d"]=df.groupby("symbol").close.pct_change(7)
+        df["btc_relative_mom_7d"]=df.asset_ret_7d-df.btc_ret_7d
         corr_parts=[]
         for _,g in df.groupby("symbol",sort=False):
             g=g.copy()
@@ -226,7 +272,7 @@ def run(data):
     months=sorted(model_data.timestamp.dt.to_period("M").unique())
     from lightgbm import LGBMClassifier
     folds=[]; oos_parts=[]; fold_diagnostics=[]
-    for i in range(6,len(months)-1,2):
+    for i in range(6,len(months)-1,1):
         train_months=months[i-6:i]; test_months=months[i:i+2]
         train_start=train_months[0].start_time.tz_localize("UTC")
         test_start=months[i].start_time.tz_localize("UTC")
@@ -250,6 +296,7 @@ def run(data):
         executed["probability"]=probabilities[selected]
         executed["gross_return"]=executed.forward_3d_return
         executed["net_return"]=executed.gross_return-ROUND_TRIP_COST
+        executed["fold_index"]=i
         oos_parts.append(executed)
         folds.append({"train_start":str(train_months[0]),"train_end":str(train_months[-1]),
             "test_start":str(test_months[0]),"test_end":str(test_months[-1]),
@@ -263,7 +310,12 @@ def run(data):
             "fold_attempts":fold_diagnostics
         }))
     oos=pd.concat(oos_parts,ignore_index=True) if oos_parts else pd.DataFrame(
-        columns=["timestamp","symbol","probability","net_return"])
+        columns=["timestamp","symbol","probability","net_return","fold_index"])
+    if not oos.empty:
+        # Step=1 month with a 2-month test window overlaps adjacent folds.
+        # Keep the newest available model forecast for each timestamp/symbol pair.
+        oos=oos.sort_values(["timestamp","symbol","fold_index"]).drop_duplicates(
+            ["timestamp","symbol"],keep="last").reset_index(drop=True)
     metrics=trade_metrics(oos)
     pbo,pbo_details=pbo_cscv(oos) if not oos.empty else (None,{"status":"UNAVAILABLE","reason":"no selected OOS trades"})
     metrics["pbo"]=pbo; metrics["pbo_details"]=pbo_details
@@ -287,13 +339,22 @@ def run(data):
         "features":{"requested":FEATURES,"used":usable,"unavailable":missing,
             "coverage":{"funding_available":bool(has_funding),"open_interest_available":bool(has_oi)}},
         "top5_rank_ic":ic[:5],
+        "feature_hypotheses":{feature:FEATURE_HYPOTHESES[feature] for feature in usable},
         "rank_ic_scope":"Mean daily cross-sectional Spearman IC on PIT-member rows; dates require at least 10 symbols. Full 2023 descriptive statistic, not OOS-only and not used to select fitted model features.",
-        "walk_forward":{"train_months":6,"test_months":2,"purge_days":3,"folds":len(folds),"details":folds},
+        "execution_assumption":{
+            "status":"PROXY_NOT_EXECUTABLE",
+            "entry":"close(t)",
+            "exit":"close(t+3 calendar days)",
+            "limitation":"This is a close-to-close predictive proxy, not the V21 next-bar-open execution model; no latency or bid/ask replay is claimed."
+        },
+        "walk_forward":{"train_months":6,"test_months":2,"step_months":1,"purge_days":3,"folds":len(folds),"details":folds},
         "lightgbm_metrics":metrics,
         "costs":{"fee_pct_per_side":0.04,"slippage_pct_per_side":0.02,
             "round_trip_cost_pct":0.12,"cost_model":"deducted once from each 3-day trade return"},
         "research_limitations":["Training rows are purged by the exact 3-calendar-day target horizon before each test fold.", "PIT membership is applied by exact UTC date/symbol key; features use prior available OHLCV history.", "PIT data coverage is limited to dates present in source artifacts.",
             "PBO is explicitly a proxy based on four probability thresholds.",
+            "OOS predictions from overlapping 2-month test windows are deduplicated by timestamp/symbol, retaining the latest fold forecast.",
+            "Execution metrics use close-to-close PROXY returns, not next-bar-open executable fills.",
             "Funding/OI features are not imputed or synthesized."]
     }
 
