@@ -1336,7 +1336,7 @@ inline json collect(int symbol_count, int years,
     }
     const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
     return {
-        {"schema_version", "1.1.0"},
+        {"schema_version", "1.2.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
         {"scan_id", scan_id},
         {"producer", {{"name", "cfss-cpp-l1-collector"}, {"version", "1.0.0"},
