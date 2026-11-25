@@ -222,8 +222,8 @@ jobs:
           test "$(jq -r .status artifacts/inbound-replay-before.json)" = "PROCESSED"
           test "$(jq -r .reply_status artifacts/inbound-replay-before.json)" = "DELIVERED"
           test "$(jq -r .reply_message_id artifacts/inbound-replay-before.json)" -gt 0
-          printf '%s\\n' "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
-          printf '%s\\n' "$REPLAY_SOURCE" > artifacts/inbound-replay-source.txt
+          echo "$UPDATE_ID" > artifacts/inbound-replay-update-id.txt
+          echo "$REPLAY_SOURCE" > artifacts/inbound-replay-source.txt
           echo "TELEGRAM_EXACT_REPLAY_SOURCE=$REPLAY_SOURCE update_id=$UPDATE_ID"
       - name: Replay the exact processed Telegram update through C++ L3
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inbound_test) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_TEST]') || contains(github.event.head_commit.message, '[TELEGRAM_INBOUND_REPLAY_TEST]'))) }}
