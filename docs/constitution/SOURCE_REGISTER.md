@@ -40,9 +40,19 @@ V21.0 به‌همراه Addendum مرجع اصلی تصمیم‌های معما�
 - معیارهای آماری V21 نباید برای تولید سیگنال کاهش یابند.
 - Stage بعدی فقط پس از PASS مستند و تأیید مالک آغاز می‌شود.
 
+## منابع تاریخی و آرشیوشده V19.0
+
+**وضعیت: ARCHIVED / SUPERSEDED BY V21.0 — NOT CONTROLLING**
+
+- فایل اصلی: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
+- SHA-256 بایت‌های اصلی: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`
+- نسخهٔ لفظ‌به‌لفظ حفظ‌شده: `docs/archive/superseded/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
+- مسیر قبلی در `docs/constitution/` اکنون فقط یادداشت ارجاع به آرشیو است.
+- V19.0 از تاریخ پذیرش V21 در 2026-11-23 هیچ اختیار حاکمی ندارد.
+
 ## منابع تاریخی V18.2
 
-**وضعیت: HISTORICAL / SUPERSEDED WHERE CONFLICTING — NOT THE CONTROLLING SOURCE**
+**وضعیت: ARCHIVED / HISTORICAL / SUPERSEDED BY V21.0 — NOT CONTROLLING**
 
 - فایل: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V18.2_MASTER-1(1).md`
 - نسخه: `V18.2`
@@ -50,7 +60,7 @@ V21.0 به‌همراه Addendum مرجع اصلی تصمیم‌های معما�
 - پذیرش قبلی: دستور مالک با عنوان «V18.2 MASTER SOURCE ACCEPTED — INITIATE C++ STAGE 1».
 - Errata تاریخی: [V18.2 Owner Acceptance and Errata](V18.2_OWNER_ACCEPTANCE_AND_ERRATA.md)
 
-این پذیرش تاریخی با پذیرش V21 در 2026-11-23 از نظر مرجع حاکم جایگزین شده است. سابقه حفظ می‌شود و چیزی از تاریخچه حذف نمی‌شود.
+این پذیرش تاریخی با پذیرش V21 در 2026-11-23 از نظر مرجع حاکم جایگزین شده است. رکورد آرشیو: `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`. SHA-256 بالا متعلق به بایت‌های فایل اصلی مالک است؛ در ابتدای این تغییر، کپی بایت‌به‌بایت آن در مخزن موجود نبود و این محدودیت صریحاً حفظ می‌شود. سابقه حذف نمی‌شود.
 
 ## منابع تاریخی V9.0 و V9.1
 
