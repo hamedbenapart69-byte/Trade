@@ -877,6 +877,12 @@ inline json probe_provider_health() {
                 entry["fallback_reason"] = std::string{"kucoin_public_live_probe_error:"} + e.what();
             }
         }
+        if (provider_id == "okx")
+            entry["circuit_breaker_state"] = cfss::resilience::okx_circuit_breaker().state();
+        else if (provider_id == "kucoin")
+            entry["circuit_breaker_state"] = cfss::resilience::kucoin_circuit_breaker().state();
+        else
+            entry["circuit_breaker_state"] = "NOT_APPLICABLE";
         providers.push_back(std::move(entry));
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
