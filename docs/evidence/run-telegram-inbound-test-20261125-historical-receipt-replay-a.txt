@@ -1,0 +1,1 @@
+Stage 1 controlled validation: poll the connected Telegram bot, then replay the persisted real /status receipt only if no new update exists. Record historical receipt provenance explicitly; do not claim a new receive in this run. The current C++ replay path must prove no second reply.
