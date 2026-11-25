@@ -19,20 +19,20 @@ jobs:
       contents: read
     steps:
       - name: Checkout Stage 1b data adapters
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: stage1b-lrt15m
           persist-credentials: false
 
       - name: Checkout market-data storage
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: market-data
           path: market-data
           persist-credentials: false
 
       - name: Checkout P0 maintenance tools
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           path: stage1b-tools

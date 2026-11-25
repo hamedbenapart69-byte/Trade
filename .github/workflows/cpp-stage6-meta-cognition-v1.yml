@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install free runner dependencies
         run: |
@@ -40,7 +40,7 @@ jobs:
           ctest --test-dir build --output-on-failure --no-tests=error
 
       - name: Checkout persistent signal and outcome state
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signals
           path: signals-state

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install free runner dependencies
         run: |
           sudo apt-get update
@@ -42,7 +42,7 @@ jobs:
             -d stage2-evidence/lfs-v2.json --all-errors
           jq -r '.instruments[] | [.symbol, .status, .data_class, (.score // "UNAVAILABLE"), (.component_coverage.available_scores|tostring)] | @tsv' stage2-evidence/lfs-v2.json
       - name: Checkout Telegram receipt state
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signals
           path: signals-state

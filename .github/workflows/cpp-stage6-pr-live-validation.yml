@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -43,7 +43,7 @@ jobs:
           ctest --test-dir build --output-on-failure --no-tests=error
 
       - name: Read-only checkout of persistent shadow state
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: signals
           path: signals-state
