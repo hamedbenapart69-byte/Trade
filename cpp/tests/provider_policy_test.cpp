@@ -19,6 +19,10 @@ int main() {
         {"https://api.bitget.com/api/v2/mix/market/ticker", false},
         {"https://contract.mexc.com/api/v1/contract/detail", false},
         {"https://api.coingecko.com.evil.example/api/v3/ping", false},
+        {"https://openapiv1.coinstats.app/v1/coins", true},
+        {"https://api.coingecko.com:443/api/v3/ping", true},
+        {"https://api.coingecko.com:8443/api/v3/ping", false},
+        {"https://api.coingecko.com:443@evil.example/api/v3/ping", false},
         {"http://api.coingecko.com/api/v3/ping", false}
     };
     for (const auto& test : cases) {
