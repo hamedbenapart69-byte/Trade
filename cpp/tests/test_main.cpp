@@ -66,6 +66,26 @@ nlohmann::json sample_contract(std::int64_t now_ms) {
 }
 }
 int main() {
+    // Provider circuit-breaker opens after consecutive failures and recovers after cooldown.
+    cfss::resilience::CircuitBreaker breaker_test(2U, std::chrono::milliseconds(40));
+    if (!breaker_test.allow_request()) {
+        std::cerr << "Circuit breaker should start CLOSED\n"; return EXIT_FAILURE;
+    }
+    breaker_test.record_failure();
+    breaker_test.record_failure();
+    if (breaker_test.state() != "OPEN" || breaker_test.allow_request()) {
+        std::cerr << "Circuit breaker did not OPEN after threshold failures\n"; return EXIT_FAILURE;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(55));
+    if (!breaker_test.allow_request() || breaker_test.state() != "CLOSED") {
+        std::cerr << "Circuit breaker did not recover after cooldown\n"; return EXIT_FAILURE;
+    }
+    breaker_test.record_failure();
+    breaker_test.record_success();
+    if (breaker_test.state() != "CLOSED") {
+        std::cerr << "Circuit breaker success did not reset failure state\n"; return EXIT_FAILURE;
+    }
+
     // KuCoin public fallback parsing and unit normalization tests.
     const nlohmann::json kucoin_contract_row = {
         {"symbol", "XBTUSDTM"}, {"baseCurrency", "XBT"},
