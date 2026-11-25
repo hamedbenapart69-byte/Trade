@@ -92,6 +92,8 @@ jobs:
             PREVIOUS_UPDATE_ID=0
           fi
           printf '%s\n' "$PREVIOUS_UPDATE_ID" > artifacts/telegram-inbound-previous-update-id.txt
+          # Fail immediately if the persisted baseline is not valid JSON integer input for jq --argjson.
+          jq -n --argjson previous "$(cat artifacts/telegram-inbound-previous-update-id.txt)" '$previous' >/dev/null
           echo "TELEGRAM_INBOUND_BASELINE_UPDATE_ID=$PREVIOUS_UPDATE_ID"
 
       - name: Restore shared market-data cache
