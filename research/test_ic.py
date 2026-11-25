@@ -1,7 +1,7 @@
 """Multi-factor Spearman Rank IC research probe using Binance Vision spot klines.
 
 Universe: BTC, ETH, SOL, BNB, XRP, ADA, DOGE, AVAX, DOT, LINK.
-Period: 2023 calendar year; 2022-10..2022-12 are warm-up only.
+Period: 2024 calendar year; 2023-10..2023-12 are warm-up only.
 Features: Volume_Z20, RSI_14, MA_Dist_50, Volatility_ATR.
 Target: 3-day forward close-to-close return.
 
@@ -26,8 +26,8 @@ SYMBOLS = (
     "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
     "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT",
 )
-YEAR = 2023
-WARMUP_MONTHS = ("2022-10", "2022-11", "2022-12")
+YEAR = 2024
+WARMUP_MONTHS = ("2023-10", "2023-11", "2023-12")
 MONTHS = tuple(f"{YEAR}-{month:02d}" for month in range(1, 13))
 HAC_MAX_LAG = 5
 FEATURES = ("Volume_Z20", "RSI_14", "MA_Dist_50", "Volatility_ATR")
@@ -148,7 +148,7 @@ def hac_t_stat(x: np.ndarray, y: np.ndarray, max_lag: int = HAC_MAX_LAG) -> floa
 
 
 def load_symbol(session: requests.Session, symbol: str) -> pd.DataFrame:
-    """Load warm-up plus 2023 data and calculate the factor/target panel."""
+    """Load warm-up plus 2024 data and calculate the factor/target panel."""
     months = (*WARMUP_MONTHS, *MONTHS)
     frames = [download_month(session, symbol, month) for month in months]
     data = (
