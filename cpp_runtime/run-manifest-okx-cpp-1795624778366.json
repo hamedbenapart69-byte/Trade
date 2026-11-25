@@ -1,0 +1,257 @@
+{
+  "active_strategy_engines": [],
+  "artifact_manifest": {
+    "coverage": {
+      "bytes": 3362,
+      "path": "artifacts/coverage.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "01b89e5b920920673a80e74e567cf0a3fd94730ffd0115dd4bfa11d7d820875b"
+    },
+    "crypto_universe": {
+      "bytes": 117650,
+      "path": "artifacts/crypto-universe.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "f15fb3eedd8d9df872221faa4a3a51845fdfe83239d56e7afb28da06195dfc8d"
+    },
+    "fear_greed": {
+      "bytes": 112204,
+      "path": "artifacts/fear-greed.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "31a9e24952c526a0621496bbd2ca8a1cc789d4bff567fdcce76cf42446cce5c1"
+    },
+    "history": {
+      "bytes": 800,
+      "path": "artifacts/history.csv",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "f495cf8411f2b538429d0fec51b7c7f9c3044f8f217e9205b934cdcec298f461"
+    },
+    "l1_market_data": {
+      "bytes": 24044049,
+      "path": "artifacts/l1-market-data.v1.json",
+      "retained_in_signals_branch": false,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "7c5bb25be6dc617e7e0250cc4a56eb359e90c8f83aebac52ac8e574812910500"
+    },
+    "l2_status": {
+      "bytes": 1412,
+      "path": "artifacts/l2-status.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "d8306d9a57cf33c0f51e8cfa3d344a42ce9a0be49cd59ba918f61b4a55fad120"
+    },
+    "performance": {
+      "bytes": 453,
+      "path": "artifacts/performance.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "589095b3ee18d54ad056e02f8f1405961dd18bf5615fc0e3809d43ddb282aa61"
+    },
+    "provider_health": {
+      "bytes": 4399,
+      "path": "artifacts/provider-health.v1.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "6a235f0e293d3312d0b4d08e257131a667e06d25eb6e3ecf61343436e17d4dae"
+    },
+    "signals": {
+      "bytes": 1510,
+      "path": "artifacts/signals.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "300a80f40cf5cef7281ddfad038ac3e8b2eac3fec74e79d5c389196ad0623611"
+    },
+    "system_status": {
+      "bytes": 5664,
+      "path": "artifacts/system_status.json",
+      "retained_in_signals_branch": true,
+      "retained_in_workflow_artifacts": false,
+      "retention_days": 0,
+      "sha256": "874a15da5273b2146ead90adb29fe373546aa493a3c8b6f14fcae5a41bb4eeef"
+    }
+  },
+  "branch": "main",
+  "build_id": "91df4e9eacafe283249d91d694b4823055d5b34f8e44eb4b7ddfe465d44f8ca7",
+  "compiler_id": "GCC",
+  "compiler_version": "13.3.0",
+  "configuration_hash": "38bc774bd670dbf0781e1c86ae6d5bb971c723d121e9038ca53c3a1645fad955",
+  "configuration_version": "1.0.0",
+  "dataset_hash": "7c5bb25be6dc617e7e0250cc4a56eb359e90c8f83aebac52ac8e574812910500",
+  "dataset_version": "1.2.0",
+  "document_version": "V21.0",
+  "end_time_utc": "2026-11-25T16:42:06Z",
+  "error_summary": [
+    "bybit:provider_endpoint_unreachable",
+    "binance:provider_endpoint_unreachable",
+    "mexc:adapter_live_equivalence_not_proven",
+    "bitget:adapter_live_equivalence_not_proven",
+    "telegram_inbound:FAILED"
+  ],
+  "profile": {
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_symbols": 3,
+    "symbol_target": 2,
+    "timeframe": "1h",
+    "years": 2
+  },
+  "provider_status": {
+    "checked_at_utc": "2026-11-25T16:39:50Z",
+    "providers": [
+      {
+        "adapter_status": "IMPLEMENTED_PRIMARY",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "CLOSED",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://www.okx.com/api/v5/public/time",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 1,
+        "fallback_reason": "primary_provider",
+        "fallback_status": "PRIMARY",
+        "http_status": 200,
+        "provider_id": "okx",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "NOT_APPLICABLE",
+        "connectivity_status": "UNAVAILABLE",
+        "endpoint": "https://api.bybit.com/v5/market/time",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 2,
+        "fallback_reason": "provider_endpoint_unreachable",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 403,
+        "provider_id": "bybit",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "NOT_APPLICABLE",
+        "connectivity_status": "UNAVAILABLE",
+        "endpoint": "https://fapi.binance.com/fapi/v1/ping",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 3,
+        "fallback_reason": "provider_endpoint_unreachable",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 451,
+        "provider_id": "binance",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "IMPLEMENTED_SECONDARY_PARTIAL",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "CLOSED",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api-futures.kucoin.com/api/v1/timestamp",
+        "fallback_equivalence": "PARTIAL",
+        "fallback_probe": {
+          "equivalence": "PARTIAL",
+          "errors": [
+            "open_interest:kucoin_api_payload_invalid code=148007"
+          ],
+          "funding_rows": 90,
+          "limitation": "KuCoin hourly open-interest history is limited to 7 days; the 30-day OI requirement remains PARTIAL.",
+          "ohlcv_rows": 168,
+          "open_interest_coverage_days": 0.0,
+          "open_interest_hourly_retention_days": 7,
+          "open_interest_rows": 1,
+          "status": "PASS",
+          "symbol": "XBTUSDTM"
+        },
+        "fallback_rank": 4,
+        "fallback_reason": "public_live_probe_passed;OHLCV_and_funding_real;hourly_OI_retention_7d_days;30d_OI_remains_PARTIAL",
+        "fallback_status": "AVAILABLE_PARTIAL",
+        "http_status": 200,
+        "provider_id": "kucoin",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "NOT_APPLICABLE",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://contract.mexc.com/api/v1/contract/detail",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 5,
+        "fallback_reason": "adapter_live_equivalence_not_proven",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 200,
+        "provider_id": "mexc",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "NOT_IMPLEMENTED",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "NOT_APPLICABLE",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 6,
+        "fallback_reason": "adapter_live_equivalence_not_proven",
+        "fallback_status": "UNAVAILABLE",
+        "http_status": 200,
+        "provider_id": "bitget",
+        "transport_status": "No error"
+      },
+      {
+        "adapter_status": "REFERENCE_ONLY",
+        "checked_at_utc": "2026-11-25T16:39:50Z",
+        "circuit_breaker_state": "NOT_APPLICABLE",
+        "connectivity_status": "HTTP_REACHABLE",
+        "endpoint": "https://api.coingecko.com/api/v3/ping",
+        "fallback_equivalence": "NOT_PROVEN",
+        "fallback_rank": 7,
+        "fallback_reason": "not_a_futures_fallback",
+        "fallback_status": "REFERENCE_ONLY",
+        "http_status": 200,
+        "provider_id": "coingecko",
+        "transport_status": "No error"
+      }
+    ],
+    "schema_version": "1.1.0"
+  },
+  "rejected_strategy_families": [
+    "LRT",
+    "NMT",
+    "VTM"
+  ],
+  "repository_commit": "c7253f135acba80c18698f70a3f3e8331cb7428b",
+  "retry_summary": {
+    "exhausted_requests": 0,
+    "http_failed_attempts": 2,
+    "http_request_attempts": 20,
+    "http_retry_attempts": 0,
+    "telegram_inbound_polls": 156,
+    "telegram_retry_attempts_total_for_scan": 0,
+    "telegram_send_attempts_total_for_scan": 1
+  },
+  "run_id": "okx-cpp-1795624778366",
+  "run_status": "STAGE1_CONTROLLED_ACCEPTANCE_PASS",
+  "run_timestamp_utc": "2026-11-25T16:39:38Z",
+  "scan_id": "scan-edd4cd698f6ead35da0a7d3b69f790dbd3668588f39685d02a3de980e3b488fc",
+  "start_time_utc": "2026-11-25T16:39:38Z",
+  "telegram_last_update_id": 610176016,
+  "telegram_message_ids": [
+    101
+  ],
+  "telegram_receive_test_status": "RECEIVED_PROCESSED",
+  "telegram_replay_test_status": "PASS",
+  "telegram_replay_test_update_id": 610176016,
+  "telegram_send_status": "DELIVERED",
+  "workflow_run_number": 385,
+  "production_source_hash": "3e853c467b0f8ca627d883fbbfbdfccc92ca606c65ee691b2b509d4296a219b4"
+}
