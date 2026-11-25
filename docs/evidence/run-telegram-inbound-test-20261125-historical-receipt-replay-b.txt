@@ -1,0 +1,1 @@
+Second independent Stage 1 validation on the same production source tree. Require a distinct GitHub workflow run ID and scan ID, complete L1/L2/L3 artifacts, Telegram outbound delivery, and current C++ exact-update replay of the persisted real inbound receipt. Historical receipt provenance must remain explicit.
