@@ -244,18 +244,25 @@ def run_experiment(
         longs, shorts = sides
         entry_idx, exit_idx = signal_idx + 1, signal_idx + 4
         entry_date, exit_date = opens.index[entry_idx], opens.index[exit_idx]
-        long_total = (
-            opens.iloc[exit_idx][longs].to_numpy(dtype=float)
-            / opens.iloc[entry_idx][longs].to_numpy(dtype=float) - 1.0
-        )
-        short_total = (
-            opens.iloc[exit_idx][shorts].to_numpy(dtype=float)
-            / opens.iloc[entry_idx][shorts].to_numpy(dtype=float) - 1.0
-        )
-        cohort_gross = (
-            LONG_GROSS_WEIGHT * float(np.mean(long_total))
-            - SHORT_GROSS_WEIGHT * float(np.mean(short_total))
-        )
+        cohort_gross = 0.0
+        for interval_idx in range(entry_idx, exit_idx):
+            d0, d1 = opens.index[interval_idx], opens.index[interval_idx + 1]
+            all_returns = (
+                opens.loc[d1, list(SYMBOLS)].to_numpy(dtype=float)
+                / opens.loc[d0, list(SYMBOLS)].to_numpy(dtype=float) - 1.0
+            )
+            by_symbol = dict(zip(SYMBOLS, all_returns))
+            if experiment == "C_MARKET_RESIDUAL":
+                market_return = float(np.mean(all_returns))
+                long_returns = [by_symbol[s] - market_return for s in longs]
+                short_returns = [by_symbol[s] - market_return for s in shorts]
+            else:
+                long_returns = [by_symbol[s] for s in longs]
+                short_returns = [by_symbol[s] for s in shorts]
+            cohort_gross += (
+                LONG_GROSS_WEIGHT * float(np.mean(long_returns))
+                - SHORT_GROSS_WEIGHT * float(np.mean(short_returns))
+            )
         cohort_cost = 2.0 * COST_PER_SIDE
         cohort_funding = SHORT_GROSS_WEIGHT * SHORT_FUNDING_PER_DAY * 3.0
         cohorts.append({
