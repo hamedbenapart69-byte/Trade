@@ -2,6 +2,12 @@ name: Simple Data Mining - Volume Rank IC
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "research/test_ic.py"
+      - ".github/workflows/test_ic.yml"
 
 permissions:
   contents: read
