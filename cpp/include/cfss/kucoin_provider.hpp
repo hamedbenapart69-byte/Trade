@@ -226,9 +226,13 @@ inline std::optional<Contract> find_contract(const std::vector<Contract>& contra
     return *best;
 }
 
+inline const std::vector<Contract>& active_contracts_cached() {
+    static const std::vector<Contract> contracts = fetch_active_contracts();
+    return contracts;
+}
+
 inline std::optional<Contract> find_contract(const std::string& canonical_symbol) {
-    const auto contracts = fetch_active_contracts();
-    return find_contract(contracts, canonical_symbol);
+    return find_contract(active_contracts_cached(), canonical_symbol);
 }
 
 inline json parse_candle_rows(const json& rows, const Contract& contract,
