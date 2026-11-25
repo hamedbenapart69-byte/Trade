@@ -101,6 +101,17 @@ int main() {
         !cfss::kucoin::find_contract(std::vector<cfss::kucoin::Contract>{*parsed_kucoin_contract}, "BTC")) {
         std::cerr << "KuCoin BTC contract normalization failed\n"; return EXIT_FAILURE;
     }
+    // خطاهای KuCoin باید آرایهٔ تخت و خالی باشند، نه آرایه‌ای شامل یک آرایهٔ خالی.
+    cfss::kucoin::Bundle empty_kucoin_bundle{};
+    if (!empty_kucoin_bundle.errors.is_array() || !empty_kucoin_bundle.errors.empty()) {
+        std::cerr << "KuCoin fallback error-list default shape failed\n"; return EXIT_FAILURE;
+    }
+    empty_kucoin_bundle.errors.push_back("open_interest:test_unavailable");
+    if (empty_kucoin_bundle.errors.size() != 1U ||
+        !empty_kucoin_bundle.errors[0].is_string()) {
+        std::cerr << "KuCoin fallback error-list item type failed\n"; return EXIT_FAILURE;
+    }
+
     auto inverse_contract_row = kucoin_contract_row;
     inverse_contract_row["isInverse"] = true;
     if (cfss::kucoin::parse_contract(inverse_contract_row)) {
@@ -325,7 +336,7 @@ int main() {
     if (normalized_oi_count != 1U ||
         !zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest"].is_null() ||
         zero_oi_contract["instruments"][0]["open_interest"][0]["open_interest_base"] != 0.0) {
-        std::cerr << "Zero/invalid open-interest normalization failed\\n";
+        std::cerr << "Zero/invalid open-interest normalization failed\n";
         return EXIT_FAILURE;
     }
     const auto zero_oi_artifact = cfss::build_l2_artifact(zero_oi_contract, now_ms);
@@ -528,7 +539,7 @@ int main() {
         cfss::telegram::inbound_duplicate_should_resume_reply("PROCESSED") ||
         cfss::telegram::inbound_duplicate_should_resume_reply("IGNORED_UNKNOWN_COMMAND") ||
         cfss::telegram::inbound_duplicate_should_resume_reply("DELIVERY_UNKNOWN")) {
-        std::cerr << "Telegram inbound duplicate replay gate failed\\n"; return EXIT_FAILURE;
+        std::cerr << "Telegram inbound duplicate replay gate failed\n"; return EXIT_FAILURE;
     }
 
     const auto inbound_replay_test_dir = std::filesystem::temp_directory_path() /
