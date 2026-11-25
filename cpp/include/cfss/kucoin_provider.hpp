@@ -17,6 +17,8 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#include "cfss/provider_resilience.hpp"
+
 namespace cfss::kucoin {
 
 using json = nlohmann::json;
@@ -96,6 +98,8 @@ inline std::string utc_iso(std::int64_t timestamp_ms) {
 }
 
 inline json request_data(const std::string& url, long timeout_seconds = 25L) {
+    auto& breaker = cfss::resilience::kucoin_circuit_breaker();
+    if (!breaker.allow_request()) throw std::runtime_error("kucoin_circuit_open");
     std::string last_error = "kucoin_request_failed";
     for (int attempt = 0; attempt < 3; ++attempt) {
         try {
@@ -117,6 +121,7 @@ inline json request_data(const std::string& url, long timeout_seconds = 25L) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(250 * (attempt + 1)));
                 continue;
             }
+            breaker.record_success();
             return payload.at("data");
         } catch (const std::exception& e) {
             last_error = e.what();
@@ -124,6 +129,7 @@ inline json request_data(const std::string& url, long timeout_seconds = 25L) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(250 * (attempt + 1)));
         }
     }
+    breaker.record_failure();
     throw std::runtime_error(last_error);
 }
 
