@@ -316,7 +316,8 @@
         "RECEIVED_PROCESSED",
         "NO_UPDATE_RECEIVED",
         "UNAVAILABLE",
-        "FAILED"
+        "FAILED",
+        "HISTORICAL_RECEIPT_REPLAYED"
       ]
     },
     "telegram_message_ids": {
@@ -340,6 +341,34 @@
     "telegram_replay_test_update_id": {
       "type": "integer",
       "minimum": 0
+    },
+    "production_source_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "telegram_receive_test_source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "telegram_receive_test_source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "telegram_receive_test_source_branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "telegram_receive_test_source_document_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "telegram_receive_test_source_update_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "telegram_receive_test_source_reply_message_id": {
+      "type": "integer",
+      "minimum": 1
     }
   },
   "$defs": {
