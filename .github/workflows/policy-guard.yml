@@ -32,6 +32,8 @@ jobs:
 
       - name: Unit test policy guard
         run: python .github/scripts/test_policy_guard.py
+      - name: Enforce permanent rejected-workflow quarantine
+        run: python .github/scripts/test_rejected_workflow_guard.py
 
       - name: Inspect changed paths and branch drift
         env:
