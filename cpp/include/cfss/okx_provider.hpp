@@ -2,6 +2,7 @@
 #include "cfss/hash.hpp"
 #include "cfss/atomic_file.hpp"
 #include "cfss/kucoin_provider.hpp"
+#include "cfss/provider_resilience.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -101,11 +102,23 @@ inline std::chrono::milliseconds retry_delay(const std::string& url, int attempt
 }
 
 inline json request(const std::string& path, int attempts = 3) {
+    auto& breaker = cfss::resilience::okx_circuit_breaker();
+    if (!breaker.allow_request()) throw std::runtime_error("okx_circuit_open");
     const std::string url = "https://www.okx.com" + path;
     std::string last_error = "provider_request_failed";
     for (int attempt = 0; attempt < attempts; ++attempt) {
         if (attempt > 0) http_retry_attempts().fetch_add(1U);
-        const auto response = get(url);
+        HttpResponse response;
+        try {
+            response = get(url);
+        } catch (const std::exception& e) {
+            last_error = std::string{"okx_transport_exception:"} + e.what();
+            if (attempt + 1 < attempts) {
+                std::this_thread::sleep_for(retry_delay(url, attempt));
+                continue;
+            }
+            break;
+        }
         bool retryable = false;
         if (response.transport == CURLE_OK && response.status == 200) {
             json parsed;
@@ -116,8 +129,10 @@ inline json request(const std::string& path, int attempts = 3) {
                 break;
             }
             const auto code = parsed.value("code", std::string{"missing_code"});
-            if (code == "0" && parsed.contains("data") && parsed["data"].is_array())
+            if (code == "0" && parsed.contains("data") && parsed["data"].is_array()) {
+                breaker.record_success();
                 return parsed;
+            }
             last_error = "okx_api_error:" + code + ":" + parsed.value("msg", std::string{});
             retryable = retryable_okx_error_code(code);
         } else {
@@ -128,10 +143,10 @@ inline json request(const std::string& path, int attempts = 3) {
         if (!retryable || attempt + 1 >= attempts) break;
         std::this_thread::sleep_for(retry_delay(url, attempt));
     }
+    breaker.record_failure();
     exhausted_requests().fetch_add(1U);
     throw std::runtime_error(last_error);
 }
-
 inline std::int64_t now_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
