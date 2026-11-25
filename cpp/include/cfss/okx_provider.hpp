@@ -425,7 +425,7 @@ inline std::vector<Instrument> discover_kucoin(
     std::size_t* eligible_count = nullptr,
     std::size_t* declared_count = nullptr,
     std::size_t* excluded_non_crypto_count = nullptr) {
-    const auto contracts = cfss::kucoin::fetch_active_contracts();
+    const auto& contracts = cfss::kucoin::active_contracts_cached();
     std::vector<Instrument> eligible;
     std::vector<Instrument> all_valid_crypto;
     std::size_t excluded_non_crypto = 0U;
