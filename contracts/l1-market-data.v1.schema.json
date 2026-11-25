@@ -854,6 +854,14 @@
                     }
                   }
                 }
+              },
+              "circuit_breaker_state": {
+                "enum": [
+                  "CLOSED",
+                  "OPEN",
+                  "HALF_OPEN",
+                  "NOT_APPLICABLE"
+                ]
               }
             }
           }
