@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <ctime>
+#include <limits>
 #include <cmath>
 #include <cstdint>
 #include <map>
