@@ -115,11 +115,12 @@ def build_features(data: pd.DataFrame):
         g["forward_3d_return"]=future_close/g.close.to_numpy()-1
         close=g.close.astype(float)
         vol=g.volume.astype(float)
+        daily_return=close.pct_change()
 
         # Price/volume features use current and historical bars only.
-        g["ret_1d"]=close.pct_change(1)
+        g["ret_1d"]=daily_return
         g["ret_7d"]=close.pct_change(7)
-        g["realized_vol_20"]=close.pct_change().rolling(20,min_periods=20).std(ddof=0)
+        g["realized_vol_20"]=daily_return.rolling(20,min_periods=20).std(ddof=0)
         g["risk_adj_mom_7d"]=g.ret_7d/(g.realized_vol_20*np.sqrt(7)).replace(0,np.nan)
         g["vol_z20"]=(vol-vol.rolling(20,min_periods=20).mean())/vol.rolling(20,min_periods=20).std(ddof=0)
         g["volume_ratio_20"]=vol/vol.rolling(20,min_periods=20).mean().replace(0,np.nan)
@@ -240,7 +241,7 @@ def trade_metrics(oos):
     return {"win_rate":float(np.mean(returns>0)),"profit_factor":pf,
             "profit_factor_status":"CALCULATED" if len(losses) else "NO_LOSSES_OR_NO_WINNINGS",
             "trade_count":int(len(returns)),"mean_trade_return":float(np.mean(returns)),
-            "metric_scope":"OOS signal-level returns; overlapping 3-day signals are not a portfolio equity curve"}
+            "metric_scope":"OOS selected signal-level close-to-close PROXY returns; not a portfolio equity curve or executable next-bar fills"}
 
 def deduplicate_oos_predictions(oos: pd.DataFrame) -> pd.DataFrame:
     """For overlapping test windows, keep the latest fold forecast per symbol/date."""
@@ -308,12 +309,13 @@ def run(data):
         model.fit(train[usable],y)
         probabilities=model.predict_proba(test[usable])[:,1]
         selected=probabilities>=.50
-        executed=test.loc[selected,["timestamp","symbol","forward_3d_return"]].copy()
-        executed["probability"]=probabilities[selected]
-        executed["gross_return"]=executed.forward_3d_return
-        executed["net_return"]=executed.gross_return-ROUND_TRIP_COST
-        executed["fold_index"]=i
-        oos_parts.append(executed)
+        predicted=test[["timestamp","symbol","forward_3d_return"]].copy()
+        predicted["probability"]=probabilities
+        predicted["outcome"]=(predicted.forward_3d_return>0).astype(int)
+        predicted["gross_return"]=predicted.forward_3d_return
+        predicted["net_return"]=predicted.gross_return-ROUND_TRIP_COST
+        predicted["fold_index"]=i
+        oos_parts.append(predicted)
         folds.append({"train_start":str(train_months[0]),"train_end":str(train_months[-1]),
             "test_start":str(test_months[0]),"test_end":str(test_months[-1]),
             "train_rows":int(len(train)),"test_rows":int(len(test)),
@@ -326,11 +328,22 @@ def run(data):
             "fold_attempts":fold_diagnostics
         }))
     oos=pd.concat(oos_parts,ignore_index=True) if oos_parts else pd.DataFrame(
-        columns=["timestamp","symbol","probability","net_return","fold_index"])
+        columns=["timestamp","symbol","probability","outcome","net_return","fold_index"])
     oos=deduplicate_oos_predictions(oos)
-    metrics=trade_metrics(oos)
-    pbo,pbo_details=pbo_cscv(oos) if not oos.empty else (None,{"status":"UNAVAILABLE","reason":"no selected OOS trades"})
+    trades=oos[oos.probability>=0.50].copy()
+    metrics=trade_metrics(trades)
+    pbo,pbo_details=pbo_cscv(oos) if not oos.empty else (None,{"status":"UNAVAILABLE","reason":"no OOS predictions"})
     metrics["pbo"]=pbo; metrics["pbo_details"]=pbo_details
+    metrics["brier_score"]=float(np.mean((oos.probability-oos.outcome)**2)) if not oos.empty else None
+    metrics["brier_status"]="CALCULATED_UNCALIBRATED" if not oos.empty else "UNAVAILABLE"
+    metrics["probability_calibration_status"]="NOT_CALIBRATED"
+    metrics["ev_status"]="NOT_CALIBRATED"
+    metrics["ev"]="NOT_CALIBRATED"
+    metrics["oos_prediction_count"]=int(len(oos))
+    metrics["oos_selected_trade_count"]=int(len(trades))
+    metrics["sharpe_status"]="UNAVAILABLE_NO_PORTFOLIO_CONSTRUCTION"
+    metrics["max_drawdown_status"]="UNAVAILABLE_NO_PORTFOLIO_CONSTRUCTION"
+    metrics["dsr_status"]="UNAVAILABLE_NO_PORTFOLIO_SHARPE"
     metrics["walk_forward_folds"]=len(folds)
     metrics["round_trip_cost_pct"]=0.12
     year_coverage={str(int(year)):int((model_data.timestamp.dt.year==year).sum())
