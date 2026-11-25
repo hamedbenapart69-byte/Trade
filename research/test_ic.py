@@ -84,7 +84,7 @@ def main() -> None:
     print("TEST=Volume_Z20_vs_3d_forward_return")
     print("SOURCE=Binance Vision public spot daily klines")
     print("PERIOD=2023-01-01..2023-12-31")
-    print("METHOD=pandas.Series.corr(method='spearman')")
+    print("METHOD=pandas average-ranks + Pearson correlation of ranks (Spearman-equivalent; scipy-free)")
 
     with requests.Session() as session:
         session.headers.update({"User-Agent": "Trade-Research-IC-Test/1.0"})
@@ -92,7 +92,12 @@ def main() -> None:
             sample = load_symbol(session, symbol)
             rows = len(sample)
             total_rows += rows
-            rank_ic = sample["Volume_Z20"].corr(sample["Target"], method="spearman")
+            # pandas corr(method="spearman") imports scipy internally in current pandas.
+            # To honor the no-SciPy constraint, compute the mathematically
+            # equivalent Spearman coefficient as Pearson correlation of ranks.
+            rank_ic = sample["Volume_Z20"].rank(method="average").corr(
+                sample["Target"].rank(method="average"), method="pearson"
+            )
             print(
                 f"SYMBOL={symbol} "
                 f"RANK_IC={rank_ic:.10f} "
