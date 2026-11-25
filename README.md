@@ -1,6 +1,6 @@
 # Crypto Futures Signal System (CFSS)
 
-**Controlling specification:** owner-accepted MASTER SOURCE V21.0 + V21.0 EXECUTION PROTOCOL ADDENDUM  
+**SOLE CONTROLLING AUTHORITY:** owner-accepted MASTER SOURCE V21.0 + V21.0 EXECUTION PROTOCOL ADDENDUM. V19.0, V18.2 and all earlier sources are superseded historical archives.  
 **Production implementation:** C++ (current verified build: C++20)  
 **User delivery:** Telegram only  
 **Trading boundary:** manual trading only; the system never connects to a user's exchange account or places orders.
@@ -43,8 +43,7 @@ The previous V18.2 stage evidence remains historical evidence only. It does not 
 - V18.2 Stage 1 recorded two consecutive complete L1/L2/L3 runs with Telegram outbound/inbound and replay/deduplication. This is useful infrastructure evidence, but it is not a V21 Stage 1 acceptance.
 - V18.2 Stage 2/3/4/5 records refer to LFS/NSS, liquidity-phase and LRT/NMT candidate research. They are not active V21 strategy approvals.
 - V18.2 Stage 6 had only five hypothetical outcomes and remained NOT_CALIBRATED; Stage 7 remained BLOCKED / FAIL-CLOSED.
-- The historical Stage 6 workflow file remains in the repository, but its job is now explicitly quarantined (`if: false`). Its legacy four-hour schedule cannot execute that job.
-- The VTM result-extraction workflow also remains in the repository, with its job explicitly quarantined (`if: false`).
+- All identified LRT/NMT/VTM execution workflows are hard-quarantined at job level with literal `if: false`; branch-name and commit-message conditions are not accepted as quarantine. CI enforces this invariant. See `docs/archive/superseded/README.md` and `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`.
 
 PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. No strategy profitability or operational readiness is implied by this documentation.
 
@@ -66,8 +65,7 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 V21 workflow under validation:
 - [C++ V21 Stage 1 live pipeline](.github/workflows/cpp-stage1-live.yml)
 
-Legacy workflow requiring owner-authorized quarantine before V21 production scheduling:
-- [V18.2 Stage 6 pipeline](.github/workflows/cpp-stage6-meta-cognition-v1.yml) — still scheduled; invokes rejected LRT/NMT candidate logic.
+Rejected legacy workflows retained for audit but permanently non-runnable under V21: `alpha-discovery.yml`, `cpp-stage5-dual-engines-v1.yml`, `cpp-stage6-meta-cognition-v1.yml`, `cpp-stage6-pr-live-validation.yml`, `extract-vtm-result.yml`, and `stage1b-lrt15m.yml`.
 
 ## Build and test
 
