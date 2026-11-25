@@ -49,7 +49,7 @@ json outcome(const std::string& id, std::int64_t closed, double win_r, double lo
         {"cost_model_id","SHADOW_COST_PROXY_V1"},
         {"fee_rate_per_side",0.0004},{"fee_assumption_class","ASSUMED"},
         {"fee_assumption_ref","V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE"},
-        {"slippage_rate_per_side",0.001},{"slippage_assumption_class","PROXY"},
+        {"slippage_rate_per_side",0.0002},{"slippage_assumption_class","PROXY"},
         {"slippage_proxy_method","FIXED_RATE_NOT_MEASURED_FROM_ORDER_BOOK"},
         {"slippage_source_status","UNAVAILABLE_MARKET_IMPACT_MEASUREMENT"},
         {"funding_source","OKX_PUBLIC_FUNDING_HISTORY"},
