@@ -450,6 +450,7 @@ jobs:
               .adapter_status == "IMPLEMENTED_SECONDARY_PARTIAL" and
               .fallback_status == "AVAILABLE_PARTIAL" and
               .fallback_equivalence == "PARTIAL" and
+              .circuit_breaker_state == "CLOSED" and
               .fallback_probe.status == "PASS" and
               .fallback_probe.ohlcv_rows > 0 and
               .fallback_probe.funding_rows > 0 and
