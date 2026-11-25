@@ -67,5 +67,5 @@ A legacy PR being open or its CI passing does not make it part of the V21 produc
 
 - V21.0 is the sole controlling specification. V19.0 is preserved verbatim under `docs/archive/superseded/`; its former constitution path is an archive pointer.
 - V18.2 is recorded as superseded with its owner-provided SHA-256 in `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`. The exact source bytes were not present in the repository at the start of this PR; the archive record does not claim a byte-identical repository copy.
-- Rejected LRT/NMT/VTM workflow jobs are permanently disabled at job level. CI fails if any listed rejected workflow is missing a literal job-level `if: false`.
+- Rejected LRT/NMT/VTM workflows and their legacy LFS/NSS/liquidity-phase precursor/report jobs are permanently disabled at job level. CI fails if any denylisted workflow is missing a literal job-level `if: false`.
 - The controls in this branch are proposals until the owner merges this PR; main remains unchanged by this branch.
