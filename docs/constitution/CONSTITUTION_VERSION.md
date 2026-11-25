@@ -2,39 +2,36 @@
 
 ## Current normative source
 
-**ACCEPTED — V19.0 is the single controlling project specification as of 2026-11-22.**
+**V21.0 is the sole controlling project specification. Owner acceptance: 2026-11-23.**
 
-- Source file: `UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
-- Source path: `docs/constitution/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`
-- Owner acceptance: explicit decision in the conversation dated 2026-11-22.
-- Activation commit: `aa1c02748b5d7e60966d9d352c6dcb695a1109dc`
-- Source SHA-256 recorded from the owner-provided activated file: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`
+- Master source: owner-provided `T1.md`
+- Master source SHA-256: `6a03106a413a773d5b8905a5f413bfbd5e89f5be45e0ae456c9f7956d4be94a0`
+- Execution addendum: owner-provided `V21_EXECUTION_PROTOCOL_ADDENDUM(1).md`
+- Addendum SHA-256: `ef3a46e7ea137dc9ebaf7f8a891eb002b84788074d95ca51ce613bfecc19d9e4`
+- Accepted architecture: `CFSS_V21_Architecture_Design_V1_FA.md`
+- Architecture SHA-256: `f2949775dea43e410f6c63feb8e67c345a06dac556d48e381ea6d75e74adb762`
+- Owner acceptance: **ACCEPTED**
+- Stage 0: **OWNER ACCEPTED / DESIGN PASS**
+- Stage 1: **IN PROGRESS — NOT YET ACCEPTED**
 
-## Archived master
+The exact V21 master and addendum bytes are owner-provided source files. The repository Source Register records their hashes and explicitly records that independent repository copies are not yet committed. A hash is not a recoverable copy; no claim of repository archival is made.
 
-- V18.2 remains preserved in the repository as a historical archive.
-- V18.2 is no longer the controlling source.
-- No V18.2 implementation status is carried forward as proof of V19.0 acceptance.
+## V21 operating constraints
 
-## Owner-approved V19.0 amendments and execution constraints
+- Production language: **C++ only**. Python is limited to research, analysis, auxiliary tooling and validation.
+- User-facing delivery: **Telegram only**.
+- Public market data only; no exchange-account connection, private trading keys or order execution.
+- Zero-cost infrastructure; no paid services or paid trials.
+- Every stage must verify L1 Data, L2 Compute and L3 Delivery.
+- REAL / PROXY / UNAVAILABLE / DEGRADED provenance must be explicit.
+- No strategy promotion without the fixed V21 statistical and risk gates.
+- No next stage without explicit owner approval.
 
-1. Python is the official L1 acquisition implementation; C++ remains authoritative for L2 compute and L3 Telegram delivery (ADR-001 approved by owner).
-2. Stage 1 is a one-symbol BTCUSDT perpetual vertical slice.
-3. Stage 1 data source: Binance Vision for the initial BTCUSDT L1 JSON export, with provenance, exact contract mapping, timestamps and versioned schema.
-4. Stage 2 target: LRT 15m over 27 eligible contracts; confidence remains UNCALIBRATED until valid calibration evidence exists.
-5. Overlap-safe OOS aggregation is mandatory. Duplicate OOS trades must not inflate pooled sample counts.
-6. Brier Score is not sufficient alone for quality or release acceptance.
-7. A 5–10 daily signal count is a KPI, never a minimum or a reason to weaken gates.
-8. Telegram is the only user-facing delivery channel. No exchange-account connection, private trading keys or order execution.
-9. Stage deadlines: Stage 0 up to 24 hours; Stage 1 up to 48 hours after Stage 0 PASS; Stage 2 up to one week after Stage 1 PASS; Stage 3 up to three days after Stage 2 PASS. If a deadline is exceeded, stop and state the exact blocker; do not relax acceptance criteria.
+## Historical sources — not controlling
 
-## Repository baseline at V19.0 activation
-
-- Previous `main` baseline: `143999c8d67dba3851d00568e00287f26e7aad4e`
-- Repository: `hamedbenapart69-byte/Trade`
-- Default branch: `main`
-- Repository permissions observed: admin=true, push=true.
-- This register records source authority only. It does not declare any implementation stage PASS.
+- V19.0 was previously accepted but is superseded by V21.0. Its Python-L1, Binance-Vision Stage 1 and V19 stage directives are not current requirements where they conflict with V21.
+- V18.2 remains preserved as historical material only. Its stage PASS records do not establish V21 acceptance.
+- V9.0 and V9.1 remain historical source records.
 
 ## Historical V9 source integrity
 
@@ -43,3 +40,4 @@
 | V9.0 `rules 1(2).pdf` | `1dbdbcca127bd368b025a554b205970b7221fe22f68139908402c8d04f1db2f3` | 54 |
 | V9.1 `rules 1.1(1).pdf` | `862307dbc8cae72bfac03de24686f52c0a28d170afe26a69d4e27f22a21cf0a8` | 55 |
 
+This register records source authority only. It does not declare Stage 1, production readiness, or any trading edge as PASS.
