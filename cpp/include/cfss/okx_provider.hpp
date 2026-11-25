@@ -400,7 +400,8 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
         const auto listing = timestamp(item.value("listTime", json{}));
         const auto value_ccy = text(item, "ctValCcy");
         const Instrument parsed{id, base, quote, "USDT", *ct, *mult,
-                                *tick, *lot, *minimum, quote_turnover, listing, value_ccy};
+                                *tick, *lot, *minimum, quote_turnover, listing, value_ccy,
+                                "okx", id};
         all_valid_crypto.push_back(parsed);
         if (passes_liquidity(quote_turnover)) eligible.push_back(parsed);
         (void)second_dash;
@@ -437,7 +438,7 @@ inline std::vector<Instrument> discover_kucoin(
             contract.base + "-USDT-SWAP", contract.base, "USDT", "USDT",
             contract.multiplier, 1.0, contract.tick_size, contract.lot_size,
             contract.min_size, contract.turnover_24h_usd, contract.listing_time_ms,
-            contract.base
+            contract.base, "kucoin", contract.symbol
         };
         parsed.provider_id = "kucoin";
         parsed.provider_symbol = contract.symbol;
@@ -463,7 +464,7 @@ inline std::vector<Instrument> discover(
         auto selected = discover_okx(target_count, crypto_symbols, required_symbols,
                                      eligible_count, declared_count, excluded_non_crypto_count);
         if (!selected.empty()) return selected;
-        std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\\n";
+        std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\n";
     } catch (const std::exception& e) {
         std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\n';
     }
