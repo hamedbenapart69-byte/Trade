@@ -482,8 +482,9 @@ jobs:
             exit 1
           fi
           DISTINCT_RUN_IDS=$(jq '[.[].run_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
-          if [ "$DISTINCT_RUN_IDS" -ne 2 ]; then
-            echo "STAGE1_ACCEPTANCE_FAIL: run IDs are not distinct"
+          DISTINCT_SCAN_IDS=$(jq '[.[].scan_id] | unique | length' artifacts/stage1-acceptance-last-two.json)
+          if [ "$DISTINCT_RUN_IDS" -ne 2 ] || [ "$DISTINCT_SCAN_IDS" -ne 2 ]; then
+            echo "STAGE1_ACCEPTANCE_FAIL: run IDs and scan IDs must both be distinct"
             exit 1
           fi
           while IFS= read -r scan_id; do
@@ -524,7 +525,8 @@ jobs:
               .processed_updates[$key].reply_message_id > 0
             ' artifacts/signals-branch-telegram-inbound.v1.json >/dev/null
           done < <(jq -r '.[] | select(
-            .telegram_receive_test_status == "RECEIVED_PROCESSED" and
+            (.telegram_receive_test_status == "RECEIVED_PROCESSED" or
+             .telegram_receive_test_status == "HISTORICAL_RECEIPT_REPLAYED") and
             .telegram_replay_test_status == "PASS" and
             .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS"
           ) | .telegram_replay_test_update_id' artifacts/stage1-acceptance-last-two.json)
