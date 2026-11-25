@@ -43,7 +43,7 @@ jobs:
 
       - name: Upload generated format-test chart
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: arb-telegram-format-test-chart
           path: signal_autopilot/artifacts/format_test/ARBUSDT_format_test.png
