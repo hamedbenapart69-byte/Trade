@@ -11,7 +11,7 @@ FEATURES = [
     "vol_z20", "funding_pct", "oi_chg_24h", "oi_chg_72h",
     "pctB_50", "btc_corr_break", "ret_1d", "ret_7d",
     "range_pos_20", "ema_gap_20_50", "volume_ratio_20",
-    "btc_relative_mom_7d"
+    "risk_adj_mom_7d"
 ]
 FEATURE_HYPOTHESES = {
     "vol_z20": {"hypothesis":"Unusual volume may proxy participation shocks.","falsification":"Mean daily cross-sectional Rank IC is non-positive or unstable OOS."},
@@ -25,7 +25,7 @@ FEATURE_HYPOTHESES = {
     "range_pos_20": {"hypothesis":"Close location within the prior 20-day high-low range may capture breakout persistence.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
     "ema_gap_20_50": {"hypothesis":"The 20/50 EMA spread may proxy medium-term trend state.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
     "volume_ratio_20": {"hypothesis":"Current volume relative to its 20-day mean may capture participation expansion.","falsification":"Mean daily Rank IC is non-positive after costs or unstable OOS."},
-    "btc_relative_mom_7d": {"hypothesis":"Seven-day asset return relative to BTC may capture cross-sectional relative strength.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."}
+    "risk_adj_mom_7d": {"hypothesis":"Seven-day momentum normalized by trailing 20-day realized volatility may capture risk-adjusted trend persistence.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."}
 }
 ALIASES = {
     "timestamp":["timestamp","datetime","date","time","ts"],
@@ -119,6 +119,8 @@ def build_features(data: pd.DataFrame):
         # Price/volume features use current and historical bars only.
         g["ret_1d"]=close.pct_change(1)
         g["ret_7d"]=close.pct_change(7)
+        g["realized_vol_20"]=close.pct_change().rolling(20,min_periods=20).std(ddof=0)
+        g["risk_adj_mom_7d"]=g.ret_7d/(g.realized_vol_20*np.sqrt(7)).replace(0,np.nan)
         g["vol_z20"]=(vol-vol.rolling(20,min_periods=20).mean())/vol.rolling(20,min_periods=20).std(ddof=0)
         g["volume_ratio_20"]=vol/vol.rolling(20,min_periods=20).mean().replace(0,np.nan)
 
@@ -159,16 +161,11 @@ def build_features(data: pd.DataFrame):
     btc_close=df[df.symbol=="BTCUSDT"].groupby("timestamp").close.mean().rename("btc_close")
     if btc_close.empty:
         df["btc_corr_break"]=np.nan
-        df["btc_relative_mom_7d"]=np.nan
     else:
         btc_ret=btc_close.pct_change().rename("btc_ret")
-        btc_ret_7d=btc_close.pct_change(7).rename("btc_ret_7d")
         df=df.join(btc_close,on="timestamp")
         df=df.join(btc_ret,on="timestamp")
-        df=df.join(btc_ret_7d,on="timestamp")
         df["asset_ret"]=df.groupby("symbol").close.pct_change()
-        df["asset_ret_7d"]=df.groupby("symbol").close.pct_change(7)
-        df["btc_relative_mom_7d"]=df.asset_ret_7d-df.btc_ret_7d
         corr_parts=[]
         for _,g in df.groupby("symbol",sort=False):
             g=g.copy()
@@ -280,6 +277,14 @@ def run(data):
         raise ValueError(f"Insufficient real feature coverage: usable={usable}; unavailable={missing}")
     ic=ic_table(df,usable)
     model_data=df.replace([np.inf,-np.inf],np.nan).dropna(subset=usable+["forward_3d_return"])
+    feature_corr=model_data[usable].corr(method="spearman")
+    high_corr_pairs=[]
+    for i,feature_a in enumerate(usable):
+        for feature_b in usable[i+1:]:
+            rho=feature_corr.loc[feature_a,feature_b]
+            if pd.notna(rho) and abs(float(rho))>=0.90:
+                high_corr_pairs.append({"feature_a":feature_a,"feature_b":feature_b,
+                                        "spearman_rho":float(rho)})
     months=sorted(model_data.timestamp.dt.to_period("M").unique())
     from lightgbm import LGBMClassifier
     folds=[]; oos_parts=[]; fold_diagnostics=[]
@@ -347,6 +352,12 @@ def run(data):
             "coverage":{"funding_available":bool(has_funding),"open_interest_available":bool(has_oi)}},
         "top5_rank_ic":ic[:5],
         "feature_hypotheses":{feature:FEATURE_HYPOTHESES[feature] for feature in usable},
+        "feature_correlation":{
+            "method":"Spearman","high_correlation_threshold":0.90,
+            "high_correlation_pairs":high_corr_pairs,
+            "sample_rows":int(len(model_data)),
+            "scope":"Full PIT 2023 descriptive diagnostic; not used to drop or select features."
+        },
         "rank_ic_scope":"Mean daily cross-sectional Spearman IC on PIT-member rows; dates require at least 10 symbols. Full 2023 descriptive statistic, not OOS-only and not used to select fitted model features.",
         "execution_assumption":{
             "status":"PROXY_NOT_EXECUTABLE",
