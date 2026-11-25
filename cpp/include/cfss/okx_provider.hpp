@@ -449,7 +449,7 @@ inline std::vector<Instrument> discover_kucoin(
     if (excluded_non_crypto_count) *excluded_non_crypto_count = excluded_non_crypto;
     std::cerr << "KUCOIN_UNIVERSE_DIAGNOSTICS declared=" << contracts.size()
               << " excluded_non_crypto=" << excluded_non_crypto
-              << " eligible=" << eligible.size() << '\\n';
+              << " eligible=" << eligible.size() << '\n';
     return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
 }
 
@@ -465,7 +465,7 @@ inline std::vector<Instrument> discover(
         if (!selected.empty()) return selected;
         std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\\n";
     } catch (const std::exception& e) {
-        std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\\n';
+        std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\n';
     }
     return discover_kucoin(target_count, crypto_symbols, required_symbols,
                            eligible_count, declared_count, excluded_non_crypto_count);
@@ -994,7 +994,7 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
     }
     if (refreshed_instruments.is_array()) {
         for (const auto& item : refreshed_instruments) {
-            if (!item.is_object() || item.value("provider_id", std::string{}) != "okx") continue;
+            if (!item.is_object() || item.value("provider_id", std::string{"okx"}) != "okx") continue;
             const auto id = item.value("instrument_id", std::string{});
             if (id.empty()) continue;
             // این snapshot فقط دادهٔ OKX را نگه می‌دارد؛ fallback نباید زیر کلید cache اولیه ذخیره شود.
