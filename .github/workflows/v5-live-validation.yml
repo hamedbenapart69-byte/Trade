@@ -38,7 +38,7 @@ jobs:
         with:
           path: data/control.db
           key: ${{ runner.os }}-v5-state-${{ github.run_id }}-${{ github.run_attempt }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: v5-live-scan

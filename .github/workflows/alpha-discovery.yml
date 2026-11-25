@@ -99,7 +99,7 @@ jobs:
           PY
       - name: Upload raw report and source evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: alpha-discovery-report
           path: |

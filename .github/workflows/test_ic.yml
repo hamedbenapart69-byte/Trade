@@ -36,7 +36,7 @@ jobs:
           python research/test_ic.py | tee rank_ic_results.json
 
       - name: Upload raw JSON result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: multi-factor-rank-ic-2024
           path: rank_ic_results.json

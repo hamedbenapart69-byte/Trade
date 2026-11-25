@@ -28,7 +28,7 @@ jobs:
         run: python scripts/run_stage1_data.py --provider okx --symbols 100 --years 2
       - name: Upload Parquet and quality evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stage1-historical-parquet
           path: signal_autopilot/data/stage1/

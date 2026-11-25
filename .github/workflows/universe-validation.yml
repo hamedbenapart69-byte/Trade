@@ -43,7 +43,7 @@ jobs:
         run: python scripts/audit_crypto_universe.py
       - name: Upload universe audit evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: crypto-usdt-perpetual-universe-audit
           path: signal_autopilot/data/universe_audit*.json
