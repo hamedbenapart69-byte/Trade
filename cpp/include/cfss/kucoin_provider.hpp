@@ -152,7 +152,7 @@ struct Bundle {
     json candles{json::array()};
     json funding{json::array()};
     json open_interest{json::array()};
-    json errors{json::array()};
+    json errors = json::array();
 };
 
 inline std::string canonical_base(const std::string& base_currency) {
