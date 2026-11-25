@@ -14,6 +14,8 @@ permissions:
   actions: read
 jobs:
   discover:
+    # V21.0 quarantine: this legacy workflow consumes VTM artifacts, a rejected strategy family.
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
