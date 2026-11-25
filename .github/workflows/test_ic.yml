@@ -38,6 +38,6 @@ jobs:
       - name: Upload raw JSON result
         uses: actions/upload-artifact@v4
         with:
-          name: multi-factor-rank-ic-2023
+          name: multi-factor-rank-ic-2024
           path: rank_ic_results.json
           if-no-files-found: error
