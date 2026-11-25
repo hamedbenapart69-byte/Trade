@@ -8,6 +8,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REJECTED_WORKFLOWS = (
     ".github/workflows/alpha-discovery.yml",
+    ".github/workflows/cpp-stage2-lfs-v1.yml",
+    ".github/workflows/cpp-stage2-telegram-report.yml",
+    ".github/workflows/cpp-stage3-nss-v1.yml",
+    ".github/workflows/cpp-stage3-nss-v2.yml",
+    ".github/workflows/cpp-stage3-telegram-report.yml",
+    ".github/workflows/cpp-stage4-liquidity-phase-v1.yml",
+    ".github/workflows/cpp-stage5-lfs-provenance.yml",
     ".github/workflows/cpp-stage5-dual-engines-v1.yml",
     ".github/workflows/cpp-stage6-meta-cognition-v1.yml",
     ".github/workflows/cpp-stage6-pr-live-validation.yml",
