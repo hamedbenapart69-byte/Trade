@@ -127,7 +127,8 @@
                   "PRIMARY",
                   "UNAVAILABLE",
                   "NOT_IMPLEMENTED",
-                  "REFERENCE_ONLY"
+                  "REFERENCE_ONLY",
+                  "AVAILABLE_PARTIAL"
                 ]
               },
               "fallback_reason": {
