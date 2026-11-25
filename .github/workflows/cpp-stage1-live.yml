@@ -443,6 +443,23 @@ jobs:
             (.active_strategy_engines | length == 0) and
             (.rejected_strategy_families == ["LRT", "NMT", "VTM"])
           ' "$CURRENT" >/dev/null
+          jq -e '
+            any(.provider_health.providers[];
+              .provider_id == "kucoin" and
+              .connectivity_status == "HTTP_REACHABLE" and
+              .adapter_status == "IMPLEMENTED_SECONDARY_PARTIAL" and
+              .fallback_status == "AVAILABLE_PARTIAL" and
+              .fallback_equivalence == "PARTIAL" and
+              .fallback_probe.status == "PASS" and
+              .fallback_probe.ohlcv_rows > 0 and
+              .fallback_probe.funding_rows > 0 and
+              .fallback_probe.open_interest_rows > 0 and
+              .fallback_probe.open_interest_coverage_days >= 6
+            )
+          ' artifacts/l1-market-data.v1.json >/dev/null || {
+            echo "STAGE1_FALLBACK_GATE_FAIL: KuCoin public fallback live probe did not pass with real OHLCV, funding and hourly OI sample."
+            exit 1
+          }
           RUN_NUMBER="$GITHUB_RUN_NUMBER"
           [[ "$RUN_NUMBER" =~ ^[0-9]+$ ]] && [ "$RUN_NUMBER" -gt 1 ]
           mapfile -t manifests < <(find signals-state/cpp_runtime -maxdepth 1 -type f -name 'run-manifest-*.json' | sort)
