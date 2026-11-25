@@ -101,6 +101,17 @@ int main() {
         !cfss::kucoin::find_contract(std::vector<cfss::kucoin::Contract>{*parsed_kucoin_contract}, "BTC")) {
         std::cerr << "KuCoin BTC contract normalization failed\n"; return EXIT_FAILURE;
     }
+    // خطاهای KuCoin باید آرایهٔ تخت و خالی باشند، نه آرایه‌ای شامل یک آرایهٔ خالی.
+    cfss::kucoin::Bundle empty_kucoin_bundle{};
+    if (!empty_kucoin_bundle.errors.is_array() || !empty_kucoin_bundle.errors.empty()) {
+        std::cerr << "KuCoin fallback error-list default shape failed\\n"; return EXIT_FAILURE;
+    }
+    empty_kucoin_bundle.errors.push_back("open_interest:test_unavailable");
+    if (empty_kucoin_bundle.errors.size() != 1U ||
+        !empty_kucoin_bundle.errors[0].is_string()) {
+        std::cerr << "KuCoin fallback error-list item type failed\\n"; return EXIT_FAILURE;
+    }
+
     auto inverse_contract_row = kucoin_contract_row;
     inverse_contract_row["isInverse"] = true;
     if (cfss::kucoin::parse_contract(inverse_contract_row)) {
