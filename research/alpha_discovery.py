@@ -11,7 +11,7 @@ FEATURES = [
     "vol_z20", "funding_pct", "oi_chg_24h", "oi_chg_72h",
     "pctB_50", "btc_corr_break", "ret_1d", "ret_7d",
     "range_pos_20", "ema_gap_20_50", "volume_ratio_20",
-    "risk_adj_mom_7d"
+    "volatility_ratio_5_20"
 ]
 FEATURE_HYPOTHESES = {
     "vol_z20": {"hypothesis":"Unusual volume may proxy participation shocks.","falsification":"Mean daily cross-sectional Rank IC is non-positive or unstable OOS."},
@@ -25,7 +25,7 @@ FEATURE_HYPOTHESES = {
     "range_pos_20": {"hypothesis":"Close location within the prior 20-day high-low range may capture breakout persistence.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
     "ema_gap_20_50": {"hypothesis":"The 20/50 EMA spread may proxy medium-term trend state.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."},
     "volume_ratio_20": {"hypothesis":"Current volume relative to its 20-day mean may capture participation expansion.","falsification":"Mean daily Rank IC is non-positive after costs or unstable OOS."},
-    "risk_adj_mom_7d": {"hypothesis":"Seven-day momentum normalized by trailing 20-day realized volatility may capture risk-adjusted trend persistence.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."}
+    "volatility_ratio_5_20": {"hypothesis":"Five-day realized volatility relative to its 20-day baseline may identify volatility-regime expansion.","falsification":"Mean daily Rank IC is non-positive or unstable OOS."}
 }
 ALIASES = {
     "timestamp":["timestamp","datetime","date","time","ts"],
@@ -120,8 +120,9 @@ def build_features(data: pd.DataFrame):
         # Price/volume features use current and historical bars only.
         g["ret_1d"]=daily_return
         g["ret_7d"]=close.pct_change(7)
-        g["realized_vol_20"]=daily_return.rolling(20,min_periods=20).std(ddof=0)
-        g["risk_adj_mom_7d"]=g.ret_7d/(g.realized_vol_20*np.sqrt(7)).replace(0,np.nan)
+        realized_vol_5=daily_return.rolling(5,min_periods=5).std(ddof=0)
+        realized_vol_20=daily_return.rolling(20,min_periods=20).std(ddof=0)
+        g["volatility_ratio_5_20"]=realized_vol_5/realized_vol_20.replace(0,np.nan)
         g["vol_z20"]=(vol-vol.rolling(20,min_periods=20).mean())/vol.rolling(20,min_periods=20).std(ddof=0)
         g["volume_ratio_20"]=vol/vol.rolling(20,min_periods=20).mean().replace(0,np.nan)
 
@@ -336,13 +337,26 @@ def run(data):
     metrics["pbo"]=pbo; metrics["pbo_details"]=pbo_details
     metrics["brier_score"]=float(np.mean((oos.probability-oos.outcome)**2)) if not oos.empty else None
     metrics["brier_status"]="CALCULATED_UNCALIBRATED" if not oos.empty else "UNAVAILABLE"
+    if not oos.empty:
+        oos_base_rate=float(oos.outcome.mean())
+        brier_baseline=float(np.mean((oos_base_rate-oos.outcome)**2))
+        metrics["oos_base_rate"]=oos_base_rate
+        metrics["brier_constant_base_rate_baseline"]=brier_baseline
+        metrics["brier_skill_score"]=float(1.0-metrics["brier_score"]/brier_baseline) if brier_baseline>0 else None
+    else:
+        metrics["oos_base_rate"]=None
+        metrics["brier_constant_base_rate_baseline"]=None
+        metrics["brier_skill_score"]=None
     metrics["probability_calibration_status"]="NOT_CALIBRATED"
     metrics["ev_status"]="NOT_CALIBRATED"
     metrics["ev"]="NOT_CALIBRATED"
     metrics["oos_prediction_count"]=int(len(oos))
     metrics["oos_selected_trade_count"]=int(len(trades))
+    metrics["sharpe"]="UNAVAILABLE"
     metrics["sharpe_status"]="UNAVAILABLE_NO_PORTFOLIO_CONSTRUCTION"
+    metrics["max_drawdown"]="UNAVAILABLE"
     metrics["max_drawdown_status"]="UNAVAILABLE_NO_PORTFOLIO_CONSTRUCTION"
+    metrics["dsr"]="UNAVAILABLE"
     metrics["dsr_status"]="UNAVAILABLE_NO_PORTFOLIO_SHARPE"
     metrics["walk_forward_folds"]=len(folds)
     metrics["round_trip_cost_pct"]=0.12
