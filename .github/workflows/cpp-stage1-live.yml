@@ -331,7 +331,7 @@ jobs:
       - name: Record immutable production source tree identity
         run: |
           set -euo pipefail
-          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
+          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config cmake scripts CMakeLists.txt CMakePresets.json .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
           test "${#SOURCE_TREE_HASH}" -eq 64
           jq --arg source_hash "$SOURCE_TREE_HASH" '.production_source_hash = $source_hash' artifacts/run-manifest.v2.json > artifacts/run-manifest.v2.tmp.json
           mv artifacts/run-manifest.v2.tmp.json artifacts/run-manifest.v2.json
@@ -476,7 +476,7 @@ jobs:
             echo "STAGE1_ACCEPTANCE_PENDING: ${VALID_COUNT}/2 consecutive Stage 1 workflow runs have manifests"
             exit 1
           fi
-          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
+          SOURCE_TREE_HASH=$(git ls-tree -r HEAD -- cpp contracts config cmake scripts CMakeLists.txt CMakePresets.json .github/workflows/cpp-stage1-live.yml | sha256sum | awk '{print $1}')
           if ! jq -e --arg sha "$GITHUB_SHA" --arg source_hash "$SOURCE_TREE_HASH" --argjson current "$RUN_NUMBER" '
             length == 2 and
             .[0].workflow_run_number < .[1].workflow_run_number and
