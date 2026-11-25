@@ -1,3 +1,7 @@
+> **HISTORICAL / SUPERSEDED — NOT A CONTROLLING DESIGN.**
+>
+> This V1 polyglot plan predates owner-accepted MASTER SOURCE V21.0. Preserve it for audit history only; do not implement its Go, Rust, Python-orchestration, or TypeScript-production architecture. V21.0 controls: C++ is the only production language; Python is permitted only for research, analysis, auxiliary tooling and validation; Telegram is the only user-facing delivery channel. V21.0 and its execution addendum take precedence over every conflicting statement below.
+
 # POLYGLOT PLAN — Trade System V1
 **Status:** DESIGN ONLY — awaiting owner approval  
 **Date:** 2026-11-11  
