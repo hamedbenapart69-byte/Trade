@@ -1,0 +1,43 @@
+name: Multi-Factor Data Mining - Rank IC
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "research/test_ic.py"
+      - ".github/workflows/test_ic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  multi-factor-ic:
+    name: Calculate Multi-Factor Rank IC and HAC T-Stats
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install permitted dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy requests
+
+      - name: Download public market data and calculate IC statistics
+        shell: bash
+        run: |
+          set -o pipefail
+          python research/test_ic.py | tee rank_ic_results.json
+
+      - name: Upload raw JSON result
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi-factor-rank-ic-2024
+          path: rank_ic_results.json
+          if-no-files-found: error

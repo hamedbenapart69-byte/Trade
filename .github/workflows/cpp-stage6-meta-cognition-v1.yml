@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validate-and-deliver:
-    if: false # V21 safety quarantine: legacy LRT/NMT workflow disabled pending replacement
+    if: false # PERMANENT V21 quarantine: legacy LRT/NMT candidate pipeline is rejected
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:

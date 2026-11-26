@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate-and-deliver:
-    if: ${{ contains(github.event.head_commit.message, '[NSS_STAGE3_V2_REPORT]') }}
+    if: false # PERMANENT V21 quarantine: legacy NSS report path
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:

@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   extract:
-    if: false # V21 safety quarantine: VTM is explicitly rejected
+    if: false # PERMANENT V21 quarantine: VTM is rejected
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

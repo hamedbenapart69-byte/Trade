@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   validate-and-deliver:
-    if: ${{ contains(github.event.head_commit.message, '[DUAL_ENGINE_STAGE5_REPORT]') }}
+    if: false # PERMANENT V21 quarantine: LRT/NMT engines are rejected
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:

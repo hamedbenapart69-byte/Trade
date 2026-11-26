@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   paused:
+    if: false # PERMANENT V21 quarantine: LRT-specific historical workflow is not runnable
     runs-on: ubuntu-latest
     steps:
       - name: Explain why historical backfill is paused
