@@ -21,6 +21,11 @@ target_include_directories(market_pipeline PRIVATE include)
 target_link_libraries(market_pipeline PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
 target_compile_features(market_pipeline PRIVATE cxx_std_20)
 
+add_executable(kucoin_diagnostic apps/kucoin_diagnostic/main.cpp)
+target_include_directories(kucoin_diagnostic PRIVATE include)
+target_link_libraries(kucoin_diagnostic PRIVATE CURL::libcurl nlohmann_json::nlohmann_json OpenSSL::Crypto)
+target_compile_features(kucoin_diagnostic PRIVATE cxx_std_20)
+
 add_executable(telegram_delivery apps/telegram_delivery/main.cpp)
 target_include_directories(telegram_delivery PRIVATE include)
 target_link_libraries(telegram_delivery PRIVATE CURL::libcurl OpenSSL::Crypto)

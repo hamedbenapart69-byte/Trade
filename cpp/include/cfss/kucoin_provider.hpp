@@ -149,9 +149,11 @@ struct Contract {
 
 struct Bundle {
     Contract contract;
-    json candles{json::array()};
-    json funding{json::array()};
-    json open_interest{json::array()};
+    // Copy-initialisation is mandatory: brace-initialising with json::array() builds the
+    // one-element array [[]], which made a failed OI request look like one real row.
+    json candles = json::array();
+    json funding = json::array();
+    json open_interest = json::array();
     json errors = json::array(); // Keep schema error entries flat strings.
 };
 
@@ -362,12 +364,19 @@ inline json parse_open_interest_rows(const json& rows, const Contract& contract,
     return result;
 }
 
+// Documented endpoint: GET /api/ua/v1/market/open-interest (KuCoin UTA docs, 5min..4hour keep 7 days).
+// The previously used /api/ua/v2/ path returned code 148007 in the live Stage 1 probe (run manifest
+// okx-cpp-1795624778366).
+inline std::string open_interest_url(const std::string& symbol, std::int64_t start_ms,
+                                     std::int64_t end_ms) {
+    return "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=" + symbol +
+        "&interval=1hour&startAt=" + std::to_string(start_ms) +
+        "&endAt=" + std::to_string(end_ms) + "&pageSize=500";
+}
+
 inline json fetch_open_interest(const Contract& contract, std::int64_t start_ms,
                                 std::int64_t end_ms) {
-    const auto url = "https://api.kucoin.com/api/ua/v2/market/open-interest?symbol=" +
-        contract.symbol + "&interval=1hour&startAt=" + std::to_string(start_ms) +
-        "&endAt=" + std::to_string(end_ms) + "&pageSize=500";
-    const auto rows = request_data(url);
+    const auto rows = request_data(open_interest_url(contract.symbol, start_ms, end_ms));
     return parse_open_interest_rows(rows, contract, start_ms, end_ms, utc_iso(now_ms()));
 }
 
@@ -415,7 +424,7 @@ inline json live_probe(const std::string& canonical_symbol = "BTC") {
               static_cast<double>(kDayMs)
         : 0.0;
     const bool pass = !bundle.candles.empty() && !bundle.funding.empty() &&
-                      !bundle.open_interest.empty();
+                      !bundle.open_interest.empty() && bundle.errors.empty();
     return {
         {"status", pass ? "PASS" : "FAIL"},
         {"symbol", bundle.contract.symbol},

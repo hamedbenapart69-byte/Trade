@@ -112,6 +112,33 @@ int main() {
         std::cerr << "KuCoin fallback error-list item type failed\n"; return EXIT_FAILURE;
     }
 
+    // Regression (Stage 1 run manifest okx-cpp-1795624778366): failed OI/funding/OHLCV requests must
+    // leave EMPTY row arrays, never [[]] which previously counted as one real open-interest row.
+    if (!empty_kucoin_bundle.open_interest.empty() || !empty_kucoin_bundle.candles.empty() ||
+        !empty_kucoin_bundle.funding.empty() || !empty_kucoin_bundle.open_interest.is_array()) {
+        std::cerr << "KuCoin default row arrays must be empty (no [[]] masquerading as a row)\n";
+        return EXIT_FAILURE;
+    }
+    if (cfss::kucoin::open_interest_url("XBTUSDTM", 1000, 2000).rfind(
+            "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1hour", 0) != 0) {
+        std::cerr << "KuCoin OI endpoint must use the documented /api/ua/v1/ path\n";
+        return EXIT_FAILURE;
+    }
+    {
+        const nlohmann::json oi_rows = nlohmann::json::array({
+            {{"openInterest", "4615535"}, {"ts", 1'760'000'000'000LL}},
+            {{"openInterest", "4615999"}, {"ts", 1'760'003'600'000LL}},
+            {{"openInterest", "0"}, {"ts", 1'760'007'200'000LL}},
+            {{"openInterest", "not-a-number"}, {"ts", 1'760'010'800'000LL}}});
+        const auto parsed_oi = cfss::kucoin::parse_open_interest_rows(
+            oi_rows, *parsed_kucoin_contract, 1'760'000'000'000LL, 1'761'000'000'000LL,
+            "2026-11-26T00:00:00Z");
+        if (parsed_oi.size() != 2U || parsed_oi[0].at("open_interest").get<double>() != 4615535.0) {
+            std::cerr << "KuCoin OI parser must keep only finite positive in-window rows\n";
+            return EXIT_FAILURE;
+        }
+    }
+
     auto inverse_contract_row = kucoin_contract_row;
     inverse_contract_row["isInverse"] = true;
     if (cfss::kucoin::parse_contract(inverse_contract_row)) {

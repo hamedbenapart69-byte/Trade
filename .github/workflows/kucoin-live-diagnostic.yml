@@ -1,0 +1,43 @@
+name: KuCoin Live Diagnostic (non-production)
+
+# Public GET requests only. No secrets, no Telegram, no signals-branch writes, no artifacts.
+on:
+  push:
+    branches: ["v21/fix-stage1-gate"]
+    paths:
+      - ".github/workflows/kucoin-live-diagnostic.yml"
+      - "cpp/include/cfss/kucoin_provider.hpp"
+      - "cpp/apps/kucoin_diagnostic/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Raw endpoint evidence (OI v1 vs v2, funding, klines)
+        run: |
+          set +e
+          NOW=$(( $(date +%s) / 3600 * 3600 * 1000 ))
+          START=$(( NOW - 7*24*3600*1000 ))
+          show() { echo "--- $1"; curl -sS -m 25 -w '\nHTTP=%{http_code}\n' "$2" | head -c 700; echo; }
+          show "OI v1 (documented)" "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1hour&startAt=$START&endAt=$NOW&pageSize=500"
+          show "OI v1 no time window" "https://api.kucoin.com/api/ua/v1/market/open-interest?symbol=XBTUSDTM&interval=1hour&pageSize=5"
+          show "OI v2 (previous code path)" "https://api.kucoin.com/api/ua/v2/market/open-interest?symbol=XBTUSDTM&interval=1hour&startAt=$START&endAt=$NOW&pageSize=500"
+          show "funding" "https://api-futures.kucoin.com/api/v1/contract/funding-rates?symbol=XBTUSDTM&from=$(( NOW - 3*24*3600*1000 ))&to=$NOW"
+      - name: Install C++ dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+      - name: Build diagnostic
+        run: |
+          cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target kucoin_diagnostic -j2
+      - name: Live probe via production C++ adapter
+        run: ./build/kucoin_diagnostic BTC ETH SOL
