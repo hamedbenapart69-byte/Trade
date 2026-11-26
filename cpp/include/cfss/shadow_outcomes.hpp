@@ -43,7 +43,7 @@ inline double required_number(const json& value, const char* key) {
 }
 
 constexpr double kShadowFeeRatePerSide = 0.0004;
-constexpr double kShadowSlippageRatePerSide = 0.0002;  // D-1=A owner-approved baseline assumption (not a verified exchange fee)
+constexpr double kShadowSlippageRatePerSide = 0.0010;
 constexpr std::int64_t kFundingCoverageToleranceMs = 8LL * kOneHourMs;
 
 struct ShadowCostResult {

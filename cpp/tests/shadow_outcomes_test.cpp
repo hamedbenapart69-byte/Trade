@@ -158,7 +158,7 @@ int main() {
             costed_row.at("fee_assumption_ref") ==
                 "V18.2_G3_REFERENCE_FEE_0.04_PERCENT_ASSUMED_PER_SIDE" &&
             std::abs(costed_row.at("fee_r").get<double>() - 0.04) < 1e-9 &&
-            std::abs(costed_row.at("slippage_r").get<double>() - 0.02) < 1e-9 &&
+            std::abs(costed_row.at("slippage_r").get<double>() - 0.10) < 1e-9 &&
             std::abs(costed_row.at("funding_r").get<double>() - 0.005) < 1e-9,
             "proxy costs use explicit fee, conservative slippage and signed real funding in R");
 

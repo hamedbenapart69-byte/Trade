@@ -1,0 +1,16 @@
+{
+  "id": "V21_BASELINE_COST_D1_A",
+  "status": "OWNER_APPROVED_BASELINE_ASSUMPTION",
+  "verified_exchange_fee": false,
+  "decision": "D-1=A",
+  "decided_at": "2026-11-26",
+  "commission_rate_per_side": 0.0004,
+  "slippage_rate_per_side": 0.0002,
+  "round_trip_cost_rate": 0.0012,
+  "applied_to": "entry and exit symmetrically",
+  "consumers": {
+    "research/alpha_discovery.py": "ROUND_TRIP_COST=0.0012 (workflow permanently quarantined; exploratory only)",
+    "cpp shadow outcomes (SHADOW_COST_PROXY_V1)": "NOT changed: legacy LRT/NMT shadow ledger pins 0.001/side in validator and schema"
+  },
+  "note": "Not a verified universal exchange fee. No performance evaluation is made under this model by this file."
+}
