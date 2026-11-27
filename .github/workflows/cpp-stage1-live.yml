@@ -2,12 +2,12 @@ name: C++ V21 Stage 1 Live Vertical Slice
 
 on:
   push:
-    branches: [main, feat/cpp-stage1-clean, v21/stage0-accepted-stage1-foundation]
+    branches: [main, feat/cpp-stage1-clean, v21/stage0-accepted-stage1-foundation, v21.1/provider-federation-v1]
     paths:
       - "docs/evidence/run-cpp-stage1-live*.txt"
       - "docs/evidence/run-telegram-inbound-test*.txt"
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 */4 * * *"
   pull_request:
     branches: [main]
     paths:
@@ -19,9 +19,9 @@ on:
       symbols:
         description: "Number of non-BTC USDT perpetuals; BTC is added separately"
         required: true
-        default: "100"
+        default: "8"
         type: choice
-        options: ["1", "5", "10", "25", "50", "100"]
+        options: ["8"]
       years:
         description: "Completed 1h OHLCV history"
         required: true
@@ -110,12 +110,22 @@ jobs:
 
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '2') }}
+          SYMBOLS: ${{ inputs.symbols || '8' }}
           YEARS: ${{ inputs.years || '2' }}
+          CFSS_EXACT_UNIVERSE: "1"
+          COINRANKING_API_KEY: ${{ secrets.COINRANKING_API_KEY }}
         run: |
           mkdir -p artifacts shared-cache
-          # Stage 1 must not inherit symbol candidates from rejected legacy strategy state.
-          printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$GITHUB_REF_NAME" = "v21.1/provider-federation-v1" ]; then
+            jq '[.candidate_assets[] | select(.required == false) | .symbol]' config/universe.v21.1.candidate.json > artifacts/pending-symbols.v1.json
+          else
+            jq '[.symbols[] | sub("USDT$"; "") | select(. != "BTC")]' config/universe.json > artifacts/pending-symbols.v1.json
+          fi
+          PENDING_COUNT=$(jq 'length' artifacts/pending-symbols.v1.json)
+          if [ "$PENDING_COUNT" -ne 8 ] || [ "$SYMBOLS" -ne 8 ]; then
+            echo "EXACT_NINE_ASSET_UNIVERSE_REQUIRED: pending=$PENDING_COUNT non_btc=$SYMBOLS"
+            exit 1
+          fi
           ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
@@ -127,6 +137,17 @@ jobs:
       - name: Validate L1 against the versioned JSON Schema
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
+      - name: Enforce V21.1 market-wide two-provider and exact-nine acceptance
+        run: |
+          jq -e '
+            .market_wide_provider_federation.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .market_wide_provider_federation.production_eligible_fresh_provider_count >= 2 and
+            .market_wide_provider_federation.matched_asset_count == 9 and
+            .market_wide_provider_federation.required_asset_count == 9 and
+            (.instruments | length) == 9 and
+            ([.instruments[].base] | sort) == ["ADA","AVAX","BNB","BTC","DOGE","ETH","LINK","SOL","XRP"]
+          ' artifacts/l1-market-data.v1.json >/dev/null
+
       - name: Validate verified crypto universe
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d artifacts/crypto-universe.v1.json --all-errors
