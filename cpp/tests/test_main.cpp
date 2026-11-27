@@ -168,6 +168,16 @@ int main() {
         std::cerr << "KuCoin OI request must use verified millisecond bounds and bounded pagination\\n";
         return EXIT_FAILURE;
     }
+    if (!cfss::kucoin::should_fetch_next_open_interest_page(
+            100U, kucoin_sample_ts, kucoin_sample_ts - cfss::kucoin::kHourMs) ||
+        cfss::kucoin::should_fetch_next_open_interest_page(
+            99U, kucoin_sample_ts, kucoin_sample_ts - cfss::kucoin::kHourMs) ||
+        cfss::kucoin::should_fetch_next_open_interest_page(
+            100U, kucoin_sample_ts, kucoin_sample_ts)) {
+        std::cerr << "KuCoin OI pagination must use raw response size after boundary filtering\\n";
+        return EXIT_FAILURE;
+    }
+
     bool kucoin_oi_page_limit_rejected = false;
     try {
         (void)cfss::kucoin::open_interest_request_url(
