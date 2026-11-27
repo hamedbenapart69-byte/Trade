@@ -1107,6 +1107,17 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
     return result;
 }
 
+inline json cache_key_material(const std::string& instrument_id, std::int64_t window_start_ms) {
+    if (instrument_id.empty() || window_start_ms <= 0)
+        throw std::invalid_argument("market_cache_key_material_invalid");
+    return {
+        {"schema_version", "1.0.0"},
+        {"instrument_id", instrument_id},
+        {"window_start_ms", window_start_ms},
+        {"cache_policy", "INSTRUMENT_ID_AND_WINDOW_START_V1"}
+    };
+}
+
 inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
                              std::int64_t window_end_ms) {
     const auto id = instrument.value("instrument_id", std::string{});
