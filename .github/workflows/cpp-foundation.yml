@@ -61,13 +61,13 @@ jobs:
             exit "$probe_status"
           fi
           jq -e '
-            .document_version == "V21.1" and
-            .run_status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .schema_version == "1.0.0" and
+            .status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
             .production_eligible_fresh_provider_count >= 2 and
             .matched_asset_count == 9 and .required_asset_count == 9 and
             ([.candidate_seed[] | select(.classification == "TWO_SOURCE_IDENTITY_MATCHED" and .matched_provider_pair == "coinranking+coinpaprika")] | length) == 9
           ' artifacts/provider-federation-discovery.v1.json >/dev/null
-          echo "V21_1_TWO_AGGREGATOR_BTC_OVERLAP_PASS"
+          echo "V21_1_TWO_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_PASS"
 
       - name: Verify market pipeline requires an explicit L1 contract or live collection command
         run: |
