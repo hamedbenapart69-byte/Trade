@@ -138,6 +138,7 @@ struct ProviderSnapshot {
     std::string retrieved_at_utc;
     long http_status{0};
     std::string error;
+    std::string endpoint_used;
     std::string freshness_status{"NOT_TESTED"};
     std::string license_status{"NOT_VERIFIED"};
     int request_attempts{0};
@@ -340,27 +341,42 @@ inline ProviderSnapshot fetch_coinmarketcap() {
         snapshot.error = "coinmarketcap_circuit_open";
         return snapshot;
     }
-    const auto response = http_get(
+
+    auto response = http_get(
         "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest?start=1&limit=100&convert=USD");
-    snapshot.http_status = response.status;
+    snapshot.endpoint_used = "listings_latest";
     snapshot.request_attempts = response.attempts;
     if (response.transport != CURLE_OK || response.status != 200L) {
-        snapshot.status = response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE";
-        breaker.record_failure();
-        snapshot.status = response.status == 403L ? "PROVIDER_BLOCKED" :
-            (response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
-        snapshot.error = std::string{"coinmarketcap_transport_or_http_error:"} +
-            std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
-        return snapshot;
+        const auto fallback = http_get(
+            "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/quotes/latest?symbol=BTC,ETH,SOL,BNB,XRP,DOGE,ADA,LINK,AVAX&convert=USD");
+        snapshot.request_attempts += fallback.attempts;
+        if (fallback.transport == CURLE_OK && fallback.status == 200L) {
+            response = fallback;
+            snapshot.endpoint_used = "quotes_latest_fallback";
+            snapshot.error = "listings_latest_failed_quotes_latest_fallback_used";
+        } else {
+            snapshot.http_status = fallback.status;
+            breaker.record_failure();
+            snapshot.status = fallback.status == 403L ? "PROVIDER_BLOCKED" :
+                (fallback.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
+            snapshot.error = std::string{"coinmarketcap_endpoints_failed:listings="} +
+                std::to_string(response.status) + ",quotes=" + std::to_string(fallback.status);
+            return snapshot;
+        }
     }
+
+    snapshot.http_status = response.status;
     try {
         const auto payload = json::parse(response.body);
         snapshot.tickers = parse_coinmarketcap(payload);
         snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
         snapshot.freshness_status = "NOT_TESTED";
-        if (snapshot.tickers.empty()) snapshot.error = "coinmarketcap_no_valid_tickers";
-        if (snapshot.tickers.empty()) breaker.record_failure();
-        else breaker.record_success();
+        if (snapshot.tickers.empty()) {
+            snapshot.error = "coinmarketcap_no_valid_tickers";
+            breaker.record_failure();
+        } else {
+            breaker.record_success();
+        }
     } catch (const std::exception& error) {
         snapshot.status = "FAILED";
         snapshot.error = std::string{"coinmarketcap_parse_failed:"} + error.what();
@@ -602,7 +618,8 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     return {
         {"provider_id", snapshot.provider_id}, {"status", snapshot.status}, {"license_status", snapshot.license_status},
         {"retrieved_at_utc", snapshot.retrieved_at_utc}, {"http_status", snapshot.http_status},
-        {"error", snapshot.error}, {"freshness_status", snapshot.freshness_status},
+        {"error", snapshot.error}, {"endpoint_used", snapshot.endpoint_used},
+        {"freshness_status", snapshot.freshness_status},
         {"request_attempts", snapshot.request_attempts}, {"ticker_count", tickers.size()}, {"tickers", tickers}
     };
 }
