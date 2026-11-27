@@ -473,7 +473,7 @@ jobs:
           echo "SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=$RUN_ID"
 
       - name: Dispatch one same-source Stage1 acceptance replay
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.verification_replay != true && steps.persist_telegram_state.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
+        if: github.ref == 'refs/heads/main' && inputs.verification_replay != true && steps.persist_telegram_state.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -486,6 +486,24 @@ jobs:
             (.telegram_message_ids | length) > 0
           ' artifacts/run-manifest.v2.json >/dev/null; then
             echo "SECOND_SAME_SOURCE_RUN_NOT_DISPATCHED: first run has not passed full Stage1 prerequisites."
+            exit 0
+          fi
+          SOURCE_HASH=$(jq -r '.production_source_hash' artifacts/run-manifest.v2.json)
+          CURRENT_SHA=$(jq -r '.repository_commit' artifacts/run-manifest.v2.json)
+          EXISTING_PASS_COUNT=0
+          if [ -f artifacts/cpp_runtime_manifests.json ]; then
+            EXISTING_PASS_COUNT=$(jq --arg source_hash "$SOURCE_HASH" --arg sha "$CURRENT_SHA" '
+              [.[] | select(
+                .repository_commit == $sha and
+                .production_source_hash == $source_hash and
+                .branch == "main" and
+                (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+                .telegram_send_status == "DELIVERED"
+              )] | length
+            ' artifacts/cpp_runtime_manifests.json)
+          fi
+          if [ "$EXISTING_PASS_COUNT" -ge 2 ]; then
+            echo "STAGE1_TWO_SAME_SOURCE_PASSES_ALREADY_RETAINED; replay not needed."
             exit 0
           fi
           gh workflow run cpp-stage1-live.yml --ref main \
