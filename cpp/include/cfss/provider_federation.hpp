@@ -387,7 +387,7 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
         output.push_back({
             "coinmarketcap", id, symbol, string_value(row.value("name", json{})),
             string_value(usd.value("last_updated", json{})), *price, *market_cap, *volume,
-            row.value("cmc_rank", std::int64_t{0})
+            row.value("cmc_rank", std::int64_t{0}), ""
         });
     };
     const auto& data = payload.at("data");
@@ -456,7 +456,7 @@ inline std::vector<MarketTicker> parse_coinpaprika(const json& payload) {
         output.push_back({
             "coinpaprika", id, symbol, string_value(row.value("name", json{})),
             string_value(row.value("last_updated", json{})), *price, *market_cap, *volume,
-            row.value("rank", std::int64_t{0})
+            row.value("rank", std::int64_t{0}), ""
         });
     }
     return output;
@@ -522,7 +522,7 @@ inline std::vector<MarketTicker> parse_coingecko(const json& payload) {
         output.push_back({
             "coingecko", id, symbol, string_value(row.value("name", json{})),
             string_value(row.value("last_updated", json{})), *price, *market_cap, *volume,
-            row.value("market_cap_rank", std::int64_t{0})
+            row.value("market_cap_rank", std::int64_t{0}), ""
         });
     }
     return output;
