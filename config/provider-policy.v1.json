@@ -28,7 +28,7 @@
       "required_secret": "COINRANKING_API_KEY",
       "operational_status": "NOT_CONFIGURED",
       "production_eligibility": "PENDING_PROVIDER_KEY_ISSUANCE_AND_ACCOUNT_ELIGIBILITY",
-      "jurisdiction_status": "No explicit Iran exclusion found in the published API terms reviewed; account eligibility is not independently confirmed until Coinranking accepts registration and issues the key. Applicable-law compliance remains the account holder's responsibility.",
+      "jurisdiction_status": "No explicit country exclusion was found in the published API terms reviewed; account eligibility remains unverified until provider registration is accepted and an API key is issued. Applicable-law compliance remains the account holder's responsibility.",
       "free_plan_positioning": "Official Free plan: 5,000 calls/month, 5 requests/second, one API key, up to 100 results/request, one year of price history, no credit card. Free key is required for reliable use; account eligibility remains unverified until key issuance.",
       "official_pricing_source": "https://coinranking.com/api/pricing",
       "official_terms_source": "https://support.coinranking.com/article/131-api-terms-conditions",

@@ -55,8 +55,11 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"symbol_target", symbols}, {"years", years}, {"timeframe", "1h"},
         {"liquidity_threshold_usd", 10000000.0}, {"ohlcv_closed_bars_only", true}
     };
-    bool all_real = contract.at("market_wide_provider_federation").value(
-        "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
+    bool all_real =
+        contract.at("market_wide_provider_federation").value(
+            "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" &&
+        contract.at("market_wide_provider_federation").value(
+            "production_universe_status", std::string{}) == "PRODUCTION_UNIVERSE_FROZEN";
     json errors = json::array();
     if (!all_real) errors.push_back("market_wide_provider_federation:PROVIDER_DISCOVERY_PARTIAL");
     for (const auto& item : artifact.at("instruments")) {
@@ -223,7 +226,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         }
         const bool market_wide_provider_pass =
             contract.at("market_wide_provider_federation").value(
-                "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
+                "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" &&
+            contract.at("market_wide_provider_federation").value(
+                "production_universe_status", std::string{}) == "PRODUCTION_UNIVERSE_FROZEN";
         if (!market_wide_provider_pass) {
             for (auto& item : artifact["instruments"]) {
                 if (item.value("state", std::string{}) != "MARKET_DATA_DEGRADED") {

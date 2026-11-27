@@ -27,5 +27,12 @@
     "ONEUSDT",
     "HOTUSDT",
     "1000PEPEUSDT"
-  ]
+  ],
+  "schema_version": "1.0.0",
+  "document_version": "LEGACY_27_RESEARCH_ONLY",
+  "artifact_type": "legacy_universe_configuration",
+  "status": "LEGACY_NOT_PRODUCTION",
+  "selection_status": "NOT_FROZEN",
+  "required_production_count": 9,
+  "migration_note": "This 27-symbol list is retained for historical research only. It is not a V21.1 production universe. Production execution requires a nine-asset frozen manifest with screen_evidence_sha256 and explicit owner_approval_ref."
 }

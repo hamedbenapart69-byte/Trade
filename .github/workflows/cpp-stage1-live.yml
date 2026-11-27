@@ -110,6 +110,30 @@ jobs:
           restore-keys: |
             cfss-market-cache-
 
+      - name: Require an explicitly frozen V21.1 production universe
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! jq -e '
+            .schema_version == "1.0.0" and
+            .document_version == "V21.1" and
+            .artifact_type == "cfss_nine_asset_frozen_production_universe" and
+            .status == "FROZEN_PRODUCTION_UNIVERSE" and
+            .selection_status == "FROZEN_PRODUCTION_UNIVERSE" and
+            .required_production_count == 9 and
+            (.symbols | type == "array" and length == 9 and unique | length == 9) and
+            ([.symbols[] | sub("USDT$"; "")] | index("BTC")) != null and
+            (.screen_evidence_sha256 | test("^[a-f0-9]{64}$")) and
+            (.selection_method | type == "string" and length > 0) and
+            (.selection_timestamp_utc | type == "string" and length > 0) and
+            (.owner_approval_ref | type == "string" and length > 0) and
+            (.owner_approval_timestamp_utc | type == "string" and length > 0)
+          ' config/universe.json >/dev/null; then
+            echo "PRODUCTION_UNIVERSE_NOT_FROZEN: explicit screen evidence and owner approval are required."
+            exit 1
+          fi
+
+
       - name: Collect provider-federated L1 data and compute C10 states in C++
         env:
           SYMBOLS: ${{ inputs.symbols || '8' }}
@@ -119,13 +143,8 @@ jobs:
           CMC_PRO_API_KEY: ${{ secrets.CMC_PRO_API_KEY }}
         run: |
           mkdir -p artifacts shared-cache
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            export CFSS_UNIVERSE_SOURCE="config/universe.v21.1.candidate.json"
-            jq '[.candidate_assets[] | select(.required == false) | .symbol]' config/universe.v21.1.candidate.json > artifacts/pending-symbols.v1.json
-          else
-            export CFSS_UNIVERSE_SOURCE="config/universe.json"
-            jq '[.symbols[] | sub("USDT$"; "") | select(. != "BTC")]' config/universe.json > artifacts/pending-symbols.v1.json
-          fi
+          export CFSS_UNIVERSE_SOURCE="config/universe.json"
+          jq '[.symbols[] | sub("USDT$"; "") | select(. != "BTC")]' config/universe.json > artifacts/pending-symbols.v1.json
           PENDING_COUNT=$(jq 'length' artifacts/pending-symbols.v1.json)
           if [ "$PENDING_COUNT" -ne 8 ] || [ "$SYMBOLS" -ne 8 ]; then
             echo "EXACT_NINE_ASSET_UNIVERSE_REQUIRED: pending=$PENDING_COUNT non_btc=$SYMBOLS"
@@ -147,6 +166,7 @@ jobs:
         run: |
           if jq -e '
             .market_wide_provider_federation.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .market_wide_provider_federation.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
             .market_wide_provider_federation.production_eligible_fresh_provider_count >= 2 and
             .market_wide_provider_federation.matched_asset_count == 9 and
             .market_wide_provider_federation.required_asset_count == 9 and
