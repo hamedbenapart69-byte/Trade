@@ -396,6 +396,46 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
     return output;
 }
 
+inline std::string epoch_seconds_to_utc_iso(std::int64_t seconds) {
+    if (seconds <= 0) return {};
+    const std::time_t raw = static_cast<std::time_t>(seconds);
+    std::tm tm_value{};
+#if defined(_WIN32)
+    if (gmtime_s(&tm_value, &raw) != 0) return {};
+#else
+    if (!gmtime_r(&raw, &tm_value)) return {};
+#endif
+    char buffer[32]{};
+    if (std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &tm_value) == 0U) return {};
+    return std::string{buffer};
+}
+
+inline std::optional<MarketTicker> parse_coinranking_coin_detail(const json& payload) {
+    if (!payload.is_object() || !payload.contains("data") ||
+        !payload.at("data").is_object() || !payload.at("data").contains("coin") ||
+        !payload.at("data").at("coin").is_object()) return std::nullopt;
+    const auto& coin = payload.at("data").at("coin");
+    const auto uuid = string_value(coin.value("uuid", json{}));
+    const auto external_id = string_value(coin.value("coinMarketCapId", json{}));
+    const auto symbol = string_value(coin.value("symbol", json{}));
+    const auto name = string_value(coin.value("name", json{}));
+    const auto price = numeric_value(coin.value("price", json{}));
+    const auto market_cap = numeric_value(coin.value("marketCap", json{}));
+    const auto volume = numeric_value(coin.value("24hVolume", json{}));
+    const auto price_at = numeric_value(coin.value("priceAt", json{}));
+    if (uuid.empty() || external_id.empty() || symbol.empty() || name.empty() ||
+        !price || !market_cap || !volume || !price_at ||
+        *price <= 0.0 || *market_cap < 0.0 || *volume < 0.0 || *price_at <= 0.0) {
+        return std::nullopt;
+    }
+    const auto timestamp = epoch_seconds_to_utc_iso(static_cast<std::int64_t>(*price_at));
+    if (timestamp.empty()) return std::nullopt;
+    return MarketTicker{
+        "coinranking", uuid, symbol, name, timestamp, *price, *market_cap, *volume,
+        coin.value("rank", std::int64_t{0}), external_id
+    };
+}
+
 inline std::vector<MarketTicker> parse_coinpaprika(const json& payload) {
     if (!payload.is_array()) throw std::invalid_argument("coinpaprika_response_shape_invalid");
     std::vector<MarketTicker> output;
@@ -585,6 +625,90 @@ inline ProviderSnapshot fetch_coinpaprika() {
         breaker.record_failure();
     }
     return snapshot;
+}
+
+inline ProviderSnapshot fetch_coinranking(
+    const std::vector<AssetIdentity>& identities = candidate_identity_seed()) {
+    ProviderSnapshot snapshot;
+    snapshot.provider_id = "coinranking";
+    snapshot.license_status = "PERSONAL_INTERNAL_USE_FREE_PLAN";
+    snapshot.endpoint_used = "coins+coin_details";
+    snapshot.retrieved_at_utc = utc_now_iso();
+
+    const char* key_value = std::getenv("COINRANKING_API_KEY");
+    if (!key_value || std::string_view{key_value}.empty()) {
+        snapshot.status = "NOT_CONFIGURED";
+        snapshot.error = "coinranking_api_key_missing";
+        return snapshot;
+    }
+    const std::string api_key{key_value};
+    const std::vector<std::string> headers{"x-access-token: " + api_key};
+    const auto listing = http_get(
+        "https://api.coinranking.com/v2/coins?limit=100&orderBy=marketCap&orderDirection=desc",
+        20L, 3, headers);
+    snapshot.request_attempts = listing.attempts;
+    snapshot.http_status = listing.status;
+    if (listing.transport != CURLE_OK || listing.status != 200L) {
+        snapshot.status = listing.status == 401L ? "PROVIDER_AUTH_FAILED" :
+            (listing.status == 403L ? "PROVIDER_PLAN_RESTRICTED" :
+            (listing.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE"));
+        snapshot.error = "coinranking_coin_list_request_failed";
+        return snapshot;
+    }
+
+    try {
+        const auto payload = json::parse(listing.body);
+        if (!payload.contains("data") || !payload.at("data").is_object() ||
+            !payload.at("data").contains("coins") || !payload.at("data").at("coins").is_array()) {
+            snapshot.status = "FAILED";
+            snapshot.error = "coinranking_coin_list_shape_invalid";
+            return snapshot;
+        }
+        const auto& coins = payload.at("data").at("coins");
+        std::size_t missing = 0U;
+        for (const auto& identity : identities) {
+            const auto found = std::find_if(coins.begin(), coins.end(), [&](const json& coin) {
+                return coin.is_object() &&
+                    string_value(coin.value("coinMarketCapId", json{})) == identity.coinmarketcap_id &&
+                    string_value(coin.value("symbol", json{})) == identity.canonical_symbol;
+            });
+            if (found == coins.end()) {
+                ++missing;
+                continue;
+            }
+            const auto uuid = string_value(found->value("uuid", json{}));
+            if (uuid.empty()) {
+                ++missing;
+                continue;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            const auto detail = http_get(
+                std::string{"https://api.coinranking.com/v2/coin/"} + uuid, 20L, 3, headers);
+            snapshot.request_attempts += detail.attempts;
+            snapshot.http_status = detail.status;
+            if (detail.transport != CURLE_OK || detail.status != 200L) {
+                ++missing;
+                continue;
+            }
+            const auto parsed = parse_coinranking_coin_detail(json::parse(detail.body));
+            if (!parsed || parsed->symbol != identity.canonical_symbol ||
+                parsed->external_asset_id != identity.coinmarketcap_id) {
+                ++missing;
+                continue;
+            }
+            snapshot.tickers.push_back(*parsed);
+        }
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
+        if (missing > 0U) {
+            snapshot.error = "coinranking_candidate_coverage_partial:" +
+                std::to_string(snapshot.tickers.size()) + "/" + std::to_string(identities.size());
+        }
+        return snapshot;
+    } catch (const std::exception& error) {
+        snapshot.status = "FAILED";
+        snapshot.error = std::string{"coinranking_parse_failed:"} + error.what();
+        return snapshot;
+    }
 }
 
 inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
