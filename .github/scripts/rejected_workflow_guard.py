@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REJECTED_WORKFLOWS = (
+    ".github/workflows/universe-validation.yml",
     ".github/workflows/v5-okx-live-scan.yml",
     ".github/workflows/v5-live-validation.yml",
     ".github/workflows/alpha-discovery.yml",
