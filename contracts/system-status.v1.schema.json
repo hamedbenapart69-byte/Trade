@@ -16,7 +16,8 @@
     "telegram_receive_test_status",
     "telegram_message_ids",
     "telegram_last_update_id",
-    "error_summary"
+    "error_summary",
+    "market_wide_provider_status"
   ],
   "properties": {
     "schema_version": {
@@ -89,6 +90,157 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "market_wide_provider_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "status",
+        "generated_at_utc",
+        "production_universe_status",
+        "live_provider_count",
+        "production_eligible_fresh_provider_count",
+        "matched_asset_count",
+        "required_asset_count",
+        "providers",
+        "candidate_seed",
+        "limitations"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0"
+        },
+        "status": {
+          "enum": [
+            "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH",
+            "PROVIDER_DISCOVERY_PARTIAL"
+          ]
+        },
+        "generated_at_utc": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "production_universe_status": {
+          "const": "DISCOVERY_ONLY_NOT_FROZEN"
+        },
+        "live_provider_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "production_eligible_fresh_provider_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matched_asset_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "required_asset_count": {
+          "const": 9
+        },
+        "providers": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "provider_id",
+              "status",
+              "license_status",
+              "retrieved_at_utc",
+              "http_status",
+              "error",
+              "endpoint_used",
+              "freshness_status",
+              "request_attempts",
+              "ticker_count"
+            ],
+            "properties": {
+              "provider_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "license_status": {
+                "type": "string"
+              },
+              "retrieved_at_utc": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+              },
+              "http_status": {
+                "type": "integer"
+              },
+              "error": {
+                "type": "string"
+              },
+              "endpoint_used": {
+                "type": "string"
+              },
+              "freshness_status": {
+                "type": "string"
+              },
+              "request_attempts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ticker_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "candidate_seed": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "canonical_asset_id",
+              "canonical_symbol",
+              "classification",
+              "matched_provider_pair"
+            ],
+            "properties": {
+              "canonical_asset_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "canonical_symbol": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{1,20}$"
+              },
+              "classification": {
+                "enum": [
+                  "TWO_SOURCE_IDENTITY_MATCHED",
+                  "ONE_SOURCE_IDENTITY_MATCHED",
+                  "UNAVAILABLE"
+                ]
+              },
+              "matched_provider_pair": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   }
