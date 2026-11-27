@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cfss/provider_resilience.hpp"
+
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -14,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 namespace cfss::federation {
@@ -38,6 +41,7 @@ struct HttpResult {
     long status{0};
     CURLcode transport{CURLE_FAILED_INIT};
     std::string body;
+    int attempts{0};
 };
 
 inline std::size_t write_body(char* data, std::size_t size, std::size_t count, void* context) {
@@ -47,25 +51,46 @@ inline std::size_t write_body(char* data, std::size_t size, std::size_t count, v
     return bytes;
 }
 
-inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L) {
-    HttpResult result;
-    CURL* handle = curl_easy_init();
-    if (!handle) throw std::runtime_error("federation_curl_init_failed");
+inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int max_attempts = 3) {
+    HttpResult last;
     const std::string url_text{url};
-    curl_easy_setopt(handle, CURLOPT_URL, url_text.c_str());
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_body);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &result.body);
-    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 8L);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout_seconds);
-    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 0L);
-    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 2L);
-    curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
-    curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-provider-federation/21.1");
-    result.transport = curl_easy_perform(handle);
-    if (result.transport == CURLE_OK) curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &result.status);
-    curl_easy_cleanup(handle);
-    return result;
+    for (int attempt = 0; attempt < std::max(1, max_attempts); ++attempt) {
+        HttpResult result;
+        result.attempts = attempt + 1;
+        CURL* handle = curl_easy_init();
+        if (!handle) throw std::runtime_error("federation_curl_init_failed");
+        curl_easy_setopt(handle, CURLOPT_URL, url_text.c_str());
+        curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_body);
+        curl_easy_setopt(handle, CURLOPT_WRITEDATA, &result.body);
+        curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 8L);
+        curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout_seconds);
+        curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 0L);
+        curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 2L);
+        curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
+        curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-provider-federation/21.1");
+        result.transport = curl_easy_perform(handle);
+        if (result.transport == CURLE_OK) curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &result.status);
+        curl_easy_cleanup(handle);
+        last = result;
+        const bool success = result.transport == CURLE_OK && result.status == 200L;
+        const bool retryable = result.transport != CURLE_OK || result.status == 408L ||
+            result.status == 429L || (result.status >= 500L && result.status <= 599L);
+        if (success || !retryable || attempt + 1 >= std::max(1, max_attempts)) return result;
+        const auto delay = std::chrono::milliseconds(250 * (1 << std::min(attempt, 3)));
+        std::this_thread::sleep_for(delay);
+    }
+    return last;
+}
+
+inline cfss::resilience::CircuitBreaker& coinmarketcap_breaker() {
+    static cfss::resilience::CircuitBreaker breaker(3U, std::chrono::seconds(60));
+    return breaker;
+}
+
+inline cfss::resilience::CircuitBreaker& coinpaprika_breaker() {
+    static cfss::resilience::CircuitBreaker breaker(3U, std::chrono::seconds(60));
+    return breaker;
 }
 
 inline std::optional<double> numeric_value(const json& value) {
@@ -108,6 +133,8 @@ struct ProviderSnapshot {
     std::string retrieved_at_utc;
     long http_status{0};
     std::string error;
+    std::string freshness_status{"NOT_TESTED"};
+    int request_attempts{0};
     std::vector<MarketTicker> tickers;
 };
 
@@ -278,11 +305,21 @@ inline ProviderSnapshot fetch_coinmarketcap() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinmarketcap";
     snapshot.retrieved_at_utc = utc_now_iso();
+    auto& breaker = coinmarketcap_breaker();
+    if (!breaker.allow_request()) {
+        snapshot.status = "PROVIDER_CIRCUIT_OPEN";
+        snapshot.error = "coinmarketcap_circuit_open";
+        return snapshot;
+    }
     const auto response = http_get(
         "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest?start=1&limit=100&convert=USD");
     snapshot.http_status = response.status;
+    snapshot.request_attempts = response.attempts;
     if (response.transport != CURLE_OK || response.status != 200L) {
         snapshot.status = response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE";
+        breaker.record_failure();
+        snapshot.status = response.status == 403L ? "PROVIDER_BLOCKED" :
+            (response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
         snapshot.error = std::string{"coinmarketcap_transport_or_http_error:"} +
             std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
         return snapshot;
@@ -290,11 +327,15 @@ inline ProviderSnapshot fetch_coinmarketcap() {
     try {
         const auto payload = json::parse(response.body);
         snapshot.tickers = parse_coinmarketcap(payload);
-        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
+        snapshot.freshness_status = "NOT_TESTED";
         if (snapshot.tickers.empty()) snapshot.error = "coinmarketcap_no_valid_tickers";
+        if (snapshot.tickers.empty()) breaker.record_failure();
+        else breaker.record_success();
     } catch (const std::exception& error) {
         snapshot.status = "FAILED";
         snapshot.error = std::string{"coinmarketcap_parse_failed:"} + error.what();
+        breaker.record_failure();
     }
     return snapshot;
 }
@@ -303,10 +344,20 @@ inline ProviderSnapshot fetch_coinpaprika() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinpaprika";
     snapshot.retrieved_at_utc = utc_now_iso();
+    auto& breaker = coinpaprika_breaker();
+    if (!breaker.allow_request()) {
+        snapshot.status = "PROVIDER_CIRCUIT_OPEN";
+        snapshot.error = "coinpaprika_circuit_open";
+        return snapshot;
+    }
     const auto response = http_get("https://api.coinpaprika.com/v1/tickers?quotes=USD");
     snapshot.http_status = response.status;
+    snapshot.request_attempts = response.attempts;
     if (response.transport != CURLE_OK || response.status != 200L) {
         snapshot.status = response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE";
+        breaker.record_failure();
+        snapshot.status = response.status == 403L ? "PROVIDER_BLOCKED" :
+            (response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
         snapshot.error = std::string{"coinpaprika_transport_or_http_error:"} +
             std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
         return snapshot;
@@ -314,11 +365,15 @@ inline ProviderSnapshot fetch_coinpaprika() {
     try {
         const auto payload = json::parse(response.body);
         snapshot.tickers = parse_coinpaprika(payload);
-        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
+        snapshot.freshness_status = "NOT_TESTED";
         if (snapshot.tickers.empty()) snapshot.error = "coinpaprika_no_valid_tickers";
+        if (snapshot.tickers.empty()) breaker.record_failure();
+        else breaker.record_success();
     } catch (const std::exception& error) {
         snapshot.status = "FAILED";
         snapshot.error = std::string{"coinpaprika_parse_failed:"} + error.what();
+        breaker.record_failure();
     }
     return snapshot;
 }
@@ -396,7 +451,8 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     return {
         {"provider_id", snapshot.provider_id}, {"status", snapshot.status},
         {"retrieved_at_utc", snapshot.retrieved_at_utc}, {"http_status", snapshot.http_status},
-        {"error", snapshot.error}, {"ticker_count", tickers.size()}, {"tickers", tickers}
+        {"error", snapshot.error}, {"freshness_status", snapshot.freshness_status},
+        {"request_attempts", snapshot.request_attempts}, {"ticker_count", tickers.size()}, {"tickers", tickers}
     };
 }
 
