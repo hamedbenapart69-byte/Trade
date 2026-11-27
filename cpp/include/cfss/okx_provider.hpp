@@ -255,6 +255,43 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
     }
 }
 
+inline CryptoUniverse load_candidate_universe(const std::set<std::string>& required_symbols) {
+    if (required_symbols.size() != 8U || required_symbols.contains("BTC"))
+        throw std::runtime_error("owner_candidate_universe_requires_exactly_eight_non_btc_symbols");
+    const auto retrieved_at = now_ms();
+    std::set<std::string> symbols{"BTC"};
+    for (const auto& raw : required_symbols) {
+        const auto symbol = uppercase_symbol(raw);
+        if (!valid_crypto_symbol(symbol) || symbol == "BTC")
+            throw std::runtime_error("owner_candidate_universe_symbol_invalid:" + raw);
+        symbols.insert(symbol);
+    }
+    if (symbols.size() != 9U)
+        throw std::runtime_error("owner_candidate_universe_duplicate_or_invalid_symbol");
+    json symbol_array = json::array();
+    std::string hash_material;
+    for (const auto& symbol : symbols) {
+        symbol_array.push_back(symbol);
+        hash_material += symbol + "\n";
+    }
+    json artifact{
+        {"schema_version", "1.0.0"},
+        {"artifact_type", "cfss_crypto_universe_v1"},
+        {"status", "OWNER_CONFIGURED_CANDIDATE_SET"},
+        {"provider_id", "owner_config"},
+        {"source_endpoint", "config/universe.v21.1.candidate.json"},
+        {"attribution", "Owner-configured provisional candidate universe; not market data."},
+        {"freshness_status", "STATIC_CONFIG"},
+        {"fetched_at_ms", retrieved_at},
+        {"retrieved_at_ms", retrieved_at},
+        {"symbol_count", symbols.size()},
+        {"symbols_sha256", cfss::sha256_hex(hash_material)},
+        {"selection_status", "PROVISIONAL_NOT_FROZEN"},
+        {"symbols", symbol_array}
+    };
+    return {std::move(symbols), std::move(artifact)};
+}
+
 inline bool is_verified_crypto_underlying(const std::string& raw_symbol,
                                           const std::set<std::string>& crypto_symbols) {
     const auto symbol = uppercase_symbol(raw_symbol);
@@ -1167,7 +1204,9 @@ inline json collect(int symbol_count, int years,
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
+    const auto crypto_universe = exact_universe_mode_enabled()
+        ? load_candidate_universe(required_symbols)
+        : load_crypto_universe(cached_crypto_universe);
     const auto market_wide_provider_federation =
         cfss::federation::collect_market_wide_provider_federation();
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
