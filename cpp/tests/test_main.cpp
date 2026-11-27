@@ -381,6 +381,14 @@ int main() {
 
     const auto contract = sample_contract(now_ms);
     const auto artifact = cfss::build_l2_artifact(contract, now_ms);
+    auto empty_discovery_contract = contract;
+    empty_discovery_contract["instruments"] = nlohmann::json::array();
+    const auto empty_discovery_artifact =
+        cfss::build_l2_artifact(empty_discovery_contract, now_ms);
+    if (!empty_discovery_artifact["instruments"].empty()) {
+        std::cerr << "Empty L1 discovery did not remain an explicit empty L2 input for C10 degraded rows\n";
+        return EXIT_FAILURE;
+    }
     const auto atomic_test_dir = std::filesystem::temp_directory_path() /
         ("cfss-atomic-test-" + std::to_string(now_ms));
     const auto atomic_test_file = atomic_test_dir / "state.json";
