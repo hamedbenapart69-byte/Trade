@@ -1114,24 +1114,31 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
     return result;
 }
 
-inline json cache_key_material(const std::string& instrument_id, std::int64_t window_start_ms) {
-    if (instrument_id.empty() || window_start_ms <= 0)
+inline json cache_key_material(const std::string& instrument_id, std::int64_t window_start_ms,
+                                 const std::string& venue = "okx") {
+    if (instrument_id.empty() || window_start_ms <= 0 || venue.empty())
         throw std::invalid_argument("market_cache_key_material_invalid");
     return {
         {"schema_version", "1.0.0"},
         {"instrument_id", instrument_id},
+        {"venue", venue},
+        {"market_type", "LINEAR_PERPETUAL"},
+        {"timeframe", "1H"},
+        {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
+        {"normalization_schema_version", "1.0.0"},
         {"window_start_ms", window_start_ms},
-        {"cache_policy", "INSTRUMENT_ID_AND_WINDOW_START_V1"}
+        {"cache_policy", "PROVIDER_VENUE_MARKET_TIMEFRAME_WINDOW_V1"}
     };
 }
 
 inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
                              std::int64_t window_end_ms) {
     const auto id = instrument.value("instrument_id", std::string{});
-    auto metadata = cache_key_material(id, window_start_ms);
+    const auto venue = instrument.value("provider_id", std::string{"okx"});
+    auto metadata = cache_key_material(id, window_start_ms, venue);
     metadata["window_end_ms"] = window_end_ms;
     metadata["data_revision"] = sha256_hex(instrument.dump());
-    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms).dump());
+    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms, venue).dump());
     return metadata;
 }
 
@@ -1142,8 +1149,9 @@ inline bool valid_cache_entry(const json& cache_entries, const json& instrument,
         !instrument.is_object()) return false;
     const auto& metadata = cache_entries.at(instrument_id);
     if (!metadata.is_object()) return false;
+    const auto venue = instrument.value("provider_id", std::string{"okx"});
     const auto expected = cache_key_material(instrument_id,
-        metadata.value("window_start_ms", std::int64_t{0}));
+        metadata.value("window_start_ms", std::int64_t{0}), venue);
     for (const auto& [key, value] : expected.items()) {
         if (!metadata.contains(key) || metadata.at(key) != value) return false;
     }
