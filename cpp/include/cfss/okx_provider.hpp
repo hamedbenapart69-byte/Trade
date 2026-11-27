@@ -308,6 +308,12 @@ inline std::set<std::string> provider_identity_seed_symbols() {
     return expected;
 }
 
+inline std::set<std::string> provider_identity_non_btc_symbols() {
+    auto expected = provider_identity_seed_symbols();
+    expected.erase("BTC");
+    return expected;
+}
+
 inline CryptoUniverse load_candidate_universe(const std::set<std::string>& required_symbols) {
     if (required_symbols.size() != 8U || required_symbols.contains("BTC"))
         throw std::runtime_error("owner_candidate_universe_requires_exactly_eight_non_btc_symbols");
@@ -354,7 +360,7 @@ inline CryptoUniverse load_candidate_universe(const std::set<std::string>& requi
         }
         if (required_btc_count != 1U || configured_symbols.size() != 9U ||
             configured_non_btc != required_symbols ||
-            configured_non_btc != provider_identity_seed_symbols().erase("BTC")) {
+            configured_non_btc != provider_identity_non_btc_symbols()) {
             throw std::runtime_error("owner_candidate_manifest_identity_seed_mismatch");
         }
     } else {
@@ -383,7 +389,7 @@ inline CryptoUniverse load_candidate_universe(const std::set<std::string>& requi
         }
         if (configured_symbols.size() != 9U || !configured_symbols.contains("BTC") ||
             configured_non_btc != required_symbols ||
-            configured_non_btc != provider_identity_seed_symbols().erase("BTC")) {
+            configured_non_btc != provider_identity_non_btc_symbols()) {
             throw std::runtime_error("frozen_production_universe_identity_seed_mismatch");
         }
     }
@@ -1661,6 +1667,29 @@ inline json collect(int symbol_count, int years,
         scan_material += item.id + ":" + item.provider_id + ":" + item.provider_symbol + ";";
     }
     const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
+    json universe_summary = {
+        {"declared_usdt_swap_count", declared_count},
+        {"crypto_universe_status", crypto_universe.artifact.at("status")},
+        {"crypto_universe_source", crypto_universe.artifact.at("provider_id")},
+        {"crypto_universe_symbol_count", crypto_universe.artifact.at("symbol_count")},
+        {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
+        {"selection_status", crypto_universe.artifact.value("selection_status", std::string{"LIVE_MARKET_UNIVERSE"})},
+        {"excluded_non_crypto_count", excluded_non_crypto_count},
+        {"eligible_count", eligible_count},
+        {"selected_count", selected.size()}, {"target_count", symbol_count},
+        {"liquidity_threshold_usd", 10000000.0},
+        {"selection_method", crypto_universe.artifact.value("selection_method",
+            exact_universe_mode_enabled()
+                ? std::string{"exact_candidate_manifest_plus_btc_across_eligible_venues"}
+                : std::string{"per_asset_max_24h_quote_turnover_across_okx_kucoin"})},
+        {"selection_timestamp_utc", crypto_universe.artifact.value("selection_timestamp_utc", acquired_text)},
+        {"selected_instrument_ids", selected_ids}
+    };
+    for (const auto& key : {"screen_evidence_sha256", "owner_approval_ref", "owner_approval_timestamp_utc"}) {
+        if (crypto_universe.artifact.contains(key))
+            universe_summary[key] = crypto_universe.artifact.at(key);
+    }
+    const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
     return {
         {"schema_version", "1.2.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
@@ -1677,21 +1706,7 @@ inline json collect(int symbol_count, int years,
         {"market_wide_provider_federation", market_wide_provider_federation},
         {"fear_greed", fear_greed},
         {"crypto_universe", crypto_universe.artifact},
-        {"universe", {{"declared_usdt_swap_count", declared_count},
-                      {"crypto_universe_status", crypto_universe.artifact.at("status")},
-                      {"crypto_universe_source", crypto_universe.artifact.at("provider_id")},
-                      {"crypto_universe_symbol_count", crypto_universe.artifact.at("symbol_count")},
-                      {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
-                      {"selection_status", crypto_universe.artifact.value("selection_status", std::string{"LIVE_MARKET_UNIVERSE"})},
-                      {"excluded_non_crypto_count", excluded_non_crypto_count},
-                      {"eligible_count", eligible_count},
-                      {"selected_count", selected.size()}, {"target_count", symbol_count},
-                      {"liquidity_threshold_usd", 10000000.0},
-                      {"selection_method", exact_universe_mode_enabled()
-                          ? "exact_candidate_manifest_plus_btc_across_eligible_venues"
-                          : "per_asset_max_24h_quote_turnover_across_okx_kucoin"},
-                      {"selection_timestamp_utc", acquired_text},
-                      {"selected_instrument_ids", selected_ids}}},
+        {"universe", universe_summary},
         {"instruments", instruments}
     };
 }
