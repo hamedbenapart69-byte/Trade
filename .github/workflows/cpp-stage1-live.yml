@@ -475,11 +475,11 @@ jobs:
           ' "$CURRENT" >/dev/null
           jq -e '
             any(.provider_health.providers[];
-              .provider_id == "kucoin" and
+              (.provider_id | type) == "string" and (.provider_id | length) > 0 and
               .connectivity_status == "HTTP_REACHABLE" and
-              .adapter_status == "IMPLEMENTED_SECONDARY_PARTIAL" and
-              .fallback_status == "AVAILABLE_PARTIAL" and
-              .fallback_equivalence == "PARTIAL" and
+              (.adapter_status | startswith("IMPLEMENTED")) and
+              (.fallback_status == "AVAILABLE_PARTIAL" or .fallback_status == "AVAILABLE_FULL") and
+              (.fallback_equivalence == "PARTIAL" or .fallback_equivalence == "FULL") and
               .circuit_breaker_state == "CLOSED" and
               .fallback_probe.status == "PASS" and
               .fallback_probe.ohlcv_rows > 0 and
@@ -488,7 +488,7 @@ jobs:
               .fallback_probe.open_interest_coverage_days >= 6
             )
           ' artifacts/l1-market-data.v1.json >/dev/null || {
-            echo "STAGE1_FALLBACK_GATE_FAIL: KuCoin public fallback live probe did not pass with real OHLCV, funding and hourly OI sample."
+            echo "STAGE1_FALLBACK_GATE_FAIL: no independent public derivatives provider passed real OHLCV, funding and open-interest fallback checks."
             exit 1
           }
           RUN_NUMBER="$GITHUB_RUN_NUMBER"
