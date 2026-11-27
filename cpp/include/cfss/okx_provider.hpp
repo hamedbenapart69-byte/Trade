@@ -1007,6 +1007,10 @@ inline json probe_provider_health() {
             {"http_status", response.status},
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
+            {"circuit_breaker_state", provider_id == "okx"
+                ? cfss::resilience::okx_circuit_breaker().state()
+                : (provider_id == "kucoin"
+                    ? cfss::resilience::kucoin_circuit_breaker().state() : "NOT_APPLICABLE")},
             {"fallback_status", fallback_status},
             {"fallback_equivalence", fallback_equivalence},
             {"fallback_reason", fallback_reason}
