@@ -37,13 +37,21 @@
     },
     "coinmarketcap": {
       "enabled": true,
-      "role": "diagnostic_only_until_free_key_and_license_review",
-      "access": "keyless_public_api",
+      "role": "market_wide_reference",
+      "access": "free_basic_api_key_or_keyless_diagnostic",
       "plan_cost_usd": 0,
-      "license_status": "KEYLESS_EVALUATION_ONLY",
-      "data_redistribution": "NOT_PERMITTED",
-      "operational_status": "HTTP_429_ON_PREVIOUS_KEYLESS_RUN",
-      "production_eligibility": "NOT_COUNTED"
+      "monthly_free_api_credits": 15000,
+      "free_basic_data_endpoints": 65,
+      "expected_calls_per_4h_run": 1,
+      "expected_monthly_calls_at_four_hour_cron": 180,
+      "required_secret": "CMC_PRO_API_KEY",
+      "authenticated_license_status": "PERSONAL_FREE_BASIC_API_KEY",
+      "keyless_license_status": "KEYLESS_EVALUATION_ONLY",
+      "data_redistribution": "NO_RAW_DATA_REDISTRIBUTION",
+      "operational_status": "KEYLESS_HTTP_429_ON_PREVIOUS_RUN; AUTHENTICATED_KEY_NOT_CONFIGURED",
+      "production_eligibility": "PENDING_FREE_BASIC_KEY_AND_ACCOUNT_ELIGIBILITY",
+      "official_faq_source": "https://coinmarketcap.com/faq/",
+      "official_pricing_source": "https://coinmarketcap.com/api/pricing/"
     },
     "coingecko": {
       "enabled": false,
@@ -69,5 +77,5 @@
       "production_eligibility": "NOT_QUALIFIED"
     }
   },
-  "operational_rule": "Only providers with a current eligible license, configured access, fresh data, and exact asset identity may count toward the two-provider production gate. A successful HTTP response alone is insufficient."
+  "operational_rule": "Production acceptance requires at least two independent, fresh, license-eligible providers with exact identity matches for all nine candidate assets. Any pair among CoinMarketCap Free Basic, Coinranking Free, and CoinPaprika Personal may qualify. Keyless CMC and CoinGecko do not count."
 }
