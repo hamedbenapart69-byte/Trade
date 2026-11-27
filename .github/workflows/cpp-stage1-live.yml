@@ -8,15 +8,8 @@ on:
       - "docs/evidence/run-telegram-inbound-test*.txt"
   schedule:
     - cron: "0 */4 * * *"
-  pull_request:
-    branches: [main]
-    paths:
-      - "cpp/**"
-      - "contracts/**"
-      - "config/universe.json"
-      - "config/universe.v21.1.candidate.json"
-      - "config/provider-policy.v1.json"
-      - ".github/workflows/cpp-stage1-live.yml"
+  # Privileged live workflow is intentionally not PR-triggered: it uses secrets and write permissions.
+  # Read-only C++ build/CTest validation is provided by cpp-foundation.yml.
   workflow_dispatch:
     inputs:
       symbols:

@@ -5,7 +5,7 @@
 **User delivery:** Telegram only  
 **Trading boundary:** manual trading only; the system never connects to a user's exchange account or places orders.
 
-This repository contains the implementation and evidence for CFSS. Older orchestration, Python/V5 scanner, browser dashboard, email and Railway material may remain in Git history or legacy paths; they are not the controlling production architecture.
+This repository contains the implementation and evidence for CFSS. Older orchestration, Python/V5 scanner, browser dashboard, email and Railway material may remain in Git history or legacy paths; they are not the controlling production architecture. The remaining V5 live-scan workflows are hard-quarantined by V21 CI.
 
 ## Current architecture
 

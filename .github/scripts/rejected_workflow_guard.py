@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail CI if any repository workflow capable of executing rejected V21 engines is enabled."""
+"""Fail CI if any repository workflow capable of executing rejected V21 engines or legacy Python production scanners is enabled."""
 from __future__ import annotations
 
 import re
@@ -7,6 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REJECTED_WORKFLOWS = (
+    ".github/workflows/v5-okx-live-scan.yml",
+    ".github/workflows/v5-live-validation.yml",
     ".github/workflows/alpha-discovery.yml",
     ".github/workflows/cpp-stage2-lfs-v1.yml",
     ".github/workflows/cpp-stage2-telegram-report.yml",
