@@ -43,32 +43,60 @@ int main(int argc, char** argv) {
     try {
         const auto cmc = cfss::federation::fetch_coinmarketcap();
         const auto gecko = cfss::federation::fetch_coingecko();
-        const auto references = cfss::federation::compare_cmc_coingecko_references(cmc, gecko);
+        const auto paprika = cfss::federation::fetch_coinpaprika();
+
+        const auto cmc_gecko = cfss::federation::compare_cmc_coingecko_references(cmc, gecko);
+        const auto cmc_paprika = cfss::federation::compare_candidate_references(cmc, paprika);
+        const auto gecko_paprika = cfss::federation::compare_coingecko_coinpaprika_references(gecko, paprika);
 
         json candidate_rows = json::array();
-        for (const auto& item : references) {
+        bool btc_two_source_match = false;
+        const auto& identities = cfss::federation::candidate_identity_seed();
+        for (std::size_t i = 0; i < identities.size(); ++i) {
+            const cfss::federation::CrossProviderReference* selected = &cmc_gecko[i];
+            std::string pair = "coinmarketcap+coingecko";
+            if (cmc_paprika[i].classification == "TWO_SOURCE_IDENTITY_MATCHED") {
+                selected = &cmc_paprika[i];
+                pair = "coinmarketcap+coinpaprika";
+            }
+            if (gecko_paprika[i].classification == "TWO_SOURCE_IDENTITY_MATCHED") {
+                selected = &gecko_paprika[i];
+                pair = "coingecko+coinpaprika";
+            }
+            const bool matched = selected->classification == "TWO_SOURCE_IDENTITY_MATCHED";
+            if (identities[i].canonical_symbol == "BTC" && matched) btc_two_source_match = true;
             candidate_rows.push_back({
-                {"canonical_asset_id", item.canonical_asset_id},
-                {"canonical_symbol", item.canonical_symbol},
-                {"classification", item.classification},
+                {"canonical_asset_id", identities[i].canonical_asset_id},
+                {"canonical_symbol", identities[i].canonical_symbol},
+                {"classification", selected->classification},
+                {"matched_provider_pair", matched ? pair : "NONE"}
             });
         }
 
-        const bool both_live = cmc.status == "LIVE_RESPONSE_PARSED" && gecko.status == "LIVE_RESPONSE_PARSED";
+        const int live_provider_count =
+            (cmc.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
+            (gecko.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
+            (paprika.status == "LIVE_RESPONSE_PARSED" ? 1 : 0);
+        const bool federation_discovery_pass = live_provider_count >= 2 && btc_two_source_match;
         const json output = {
             {"document_version", "V21.1"},
             {"artifact_type", "cfss_provider_federation_discovery_v1"},
             {"generated_at_utc", cfss::federation::utc_now_iso()},
-            {"run_status", both_live ? "TWO_PROVIDER_LIVE_RESPONSE_PARSED_FRESHNESS_UNVERIFIED" : "PROVIDER_DISCOVERY_PARTIAL"},
+            {"run_status", federation_discovery_pass
+                ? "TWO_INDEPENDENT_PROVIDER_BTC_MATCH_FRESHNESS_AND_LICENSE_UNVERIFIED"
+                : "PROVIDER_DISCOVERY_PARTIAL"},
             {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
+            {"live_provider_count", live_provider_count},
             {"providers", json::array({
                 cfss::federation::snapshot_health_to_json(cmc),
-                cfss::federation::snapshot_health_to_json(gecko)
+                cfss::federation::snapshot_health_to_json(gecko),
+                cfss::federation::snapshot_health_to_json(paprika)
             })},
             {"candidate_seed", candidate_rows},
             {"limitations", json::array({
-                "CoinGecko Public API rate limit is variable; this probe performs only one bounded request per scan.",
-                "Provider license and public-artifact redistribution compatibility remain NOT_VERIFIED until reviewed.",
+                "CoinGecko and CoinPaprika are independent market-wide reference sources; each quota and access path must be monitored.",
+                "CoinPaprika free access is personal-use restricted; production use remains blocked until exact license compatibility is reviewed.",
+                "Provider license and public-artifact redistribution compatibility remain NOT_VERIFIED.",
                 "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow logs.",
                 "Market-wide spot references are not perpetual contract prices.",
                 "This probe does not provide futures OHLCV, funding, open interest or order-book depth.",
@@ -79,7 +107,7 @@ int main(int argc, char** argv) {
 
         write_output(argc == 2 ? argv[1] : "-", output);
         curl_global_cleanup();
-        return both_live ? EXIT_SUCCESS : 2;
+        return federation_discovery_pass ? EXIT_SUCCESS : 2;
     } catch (const std::exception& error) {
         curl_global_cleanup();
         std::cerr << "provider_federation_probe_failed:" << error.what() << '\n';
