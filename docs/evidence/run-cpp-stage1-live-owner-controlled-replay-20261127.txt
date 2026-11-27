@@ -1,0 +1,5 @@
+V21 Stage 1 controlled live verification trigger.
+
+Purpose: run the existing production workflow on the unchanged main source tree and verify L1/L2/L3 delivery plus exact replay of a previously persisted, verified Telegram /status update.
+
+No acceptance threshold, source code, runtime configuration, strategy, or production universe is changed by this marker.
