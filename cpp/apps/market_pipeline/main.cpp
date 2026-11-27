@@ -225,8 +225,10 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
         if (!market_wide_provider_pass) {
             for (auto& item : artifact["instruments"]) {
-                item["state"] = "MARKET_DATA_DEGRADED";
-                item["reason_code"] = "MARKET_WIDE_PROVIDER_FEDERATION_DEGRADED";
+                if (item.value("state", std::string{}) != "MARKET_DATA_DEGRADED") {
+                    item["state"] = "MARKET_DATA_DEGRADED";
+                    item["reason_code"] = "MARKET_WIDE_PROVIDER_FEDERATION_DEGRADED";
+                }
                 if (item.value("data_quality", std::string{}) == "REAL") item["data_quality"] = "PARTIAL";
                 item["confidence_status"] = "NOT_CALIBRATED";
                 item["actionable"] = false;
