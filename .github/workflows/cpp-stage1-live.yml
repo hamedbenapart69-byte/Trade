@@ -554,6 +554,7 @@ jobs:
               .branch == "main" and
               (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
               .market_wide_provider_status.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+              .market_wide_provider_status.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
               .market_wide_provider_status.production_eligible_fresh_provider_count >= 2 and
               .market_wide_provider_status.matched_asset_count == 9 and
               .market_wide_provider_status.required_asset_count == 9 and
