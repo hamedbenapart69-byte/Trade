@@ -397,7 +397,8 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
                                        const std::set<std::string>& required_symbols = {},
                                        std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr,
-                                       std::size_t* excluded_non_crypto_count = nullptr) {
+                                       std::size_t* excluded_non_crypto_count = nullptr,
+                                       bool apply_exact_universe = true) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
@@ -456,7 +457,8 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
     // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols, exact_universe_mode_enabled());
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols,
+                              apply_exact_universe && exact_universe_mode_enabled());
 }
 
 
@@ -465,7 +467,8 @@ inline std::vector<Instrument> discover_kucoin(
     const std::set<std::string>& required_symbols = {},
     std::size_t* eligible_count = nullptr,
     std::size_t* declared_count = nullptr,
-    std::size_t* excluded_non_crypto_count = nullptr) {
+    std::size_t* excluded_non_crypto_count = nullptr,
+    bool apply_exact_universe = true) {
     const auto& contracts = cfss::kucoin::active_contracts_cached();
     std::vector<Instrument> eligible;
     std::vector<Instrument> all_valid_crypto;
@@ -495,22 +498,99 @@ inline std::vector<Instrument> discover_kucoin(
     return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols, exact_universe_mode_enabled());
 }
 
+inline double minimum_turnover(const std::vector<Instrument>& instruments) {
+    if (instruments.empty()) return 0.0;
+    double value = std::numeric_limits<double>::max();
+    for (const auto& instrument : instruments) value = std::min(value, instrument.turnover);
+    return value == std::numeric_limits<double>::max() ? 0.0 : value;
+}
+
+inline double total_turnover(const std::vector<Instrument>& instruments) {
+    double value = 0.0;
+    for (const auto& instrument : instruments) value += instrument.turnover;
+    return value;
+}
+
+// Query both public derivatives venues, merge by canonical underlying, and
+// choose the venue with the stronger verified 24h quote turnover per asset.
+// This is quality-ranked routing, not a fixed primary/fallback chain.
 inline std::vector<Instrument> discover(
     int target_count, const std::set<std::string>& crypto_symbols,
     const std::set<std::string>& required_symbols = {},
     std::size_t* eligible_count = nullptr,
     std::size_t* declared_count = nullptr,
     std::size_t* excluded_non_crypto_count = nullptr) {
+    struct VenueDiscovery {
+        std::string provider_id;
+        std::vector<Instrument> instruments;
+        std::size_t eligible{0U};
+        std::size_t declared{0U};
+        std::size_t excluded{0U};
+    };
+    std::vector<VenueDiscovery> venues;
+    std::string okx_error;
+    std::string kucoin_error;
+
     try {
-        auto selected = discover_okx(target_count, crypto_symbols, required_symbols,
-                                     eligible_count, declared_count, excluded_non_crypto_count);
-        if (!selected.empty()) return selected;
-        std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\n";
-    } catch (const std::exception& e) {
-        std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\n';
+        VenueDiscovery candidate;
+        candidate.provider_id = "okx";
+        candidate.instruments = discover_okx(100, crypto_symbols, {},
+            &candidate.eligible, &candidate.declared, &candidate.excluded, false);
+        if (!candidate.instruments.empty()) venues.push_back(std::move(candidate));
+    } catch (const std::exception& error) {
+        okx_error = error.what();
+        std::cerr << "OKX_DISCOVERY_UNAVAILABLE: " << okx_error << '\n';
     }
-    return discover_kucoin(target_count, crypto_symbols, required_symbols,
-                           eligible_count, declared_count, excluded_non_crypto_count);
+
+    try {
+        VenueDiscovery candidate;
+        candidate.provider_id = "kucoin";
+        candidate.instruments = discover_kucoin(100, crypto_symbols, {},
+            &candidate.eligible, &candidate.declared, &candidate.excluded, false);
+        if (!candidate.instruments.empty()) venues.push_back(std::move(candidate));
+    } catch (const std::exception& error) {
+        kucoin_error = error.what();
+        std::cerr << "KUCOIN_DISCOVERY_UNAVAILABLE: " << kucoin_error << '\n';
+    }
+
+    if (venues.empty()) {
+        throw std::runtime_error("all_derivatives_providers_unavailable:okx=" +
+            okx_error + ";kucoin=" + kucoin_error);
+    }
+
+    std::map<std::string, Instrument> best_by_base;
+    for (const auto& venue : venues) {
+        for (const auto& instrument : venue.instruments) {
+            const auto found = best_by_base.find(instrument.base);
+            if (found == best_by_base.end() ||
+                instrument.turnover > found->second.turnover ||
+                (instrument.turnover == found->second.turnover &&
+                 instrument.provider_id < found->second.provider_id)) {
+                best_by_base[instrument.base] = instrument;
+            }
+        }
+    }
+
+    std::vector<Instrument> merged;
+    merged.reserve(best_by_base.size());
+    for (const auto& [base, instrument] : best_by_base) {
+        (void)base;
+        merged.push_back(instrument);
+    }
+    if (eligible_count) *eligible_count = merged.size();
+    if (declared_count) {
+        *declared_count = 0U;
+        for (const auto& venue : venues) *declared_count = std::max(*declared_count, venue.declared);
+    }
+    if (excluded_non_crypto_count) {
+        *excluded_non_crypto_count = 0U;
+        for (const auto& venue : venues) {
+            *excluded_non_crypto_count = std::max(*excluded_non_crypto_count, venue.excluded);
+        }
+    }
+
+    return select_instruments(target_count, merged, merged, required_symbols,
+                              exact_universe_mode_enabled());
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
