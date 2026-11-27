@@ -42,8 +42,8 @@ int main(int argc, char** argv) {
 
     try {
         const auto cmc = cfss::federation::fetch_coinmarketcap();
-        const auto paprika = cfss::federation::fetch_coinpaprika();
-        const auto references = cfss::federation::compare_candidate_references(cmc, paprika);
+        const auto gecko = cfss::federation::fetch_coingecko();
+        const auto references = cfss::federation::compare_cmc_coingecko_references(cmc, gecko);
 
         json candidate_rows = json::array();
         for (const auto& item : references) {
@@ -52,16 +52,16 @@ int main(int argc, char** argv) {
                 {"canonical_symbol", item.canonical_symbol},
                 {"classification", item.classification},
                 {"coinmarketcap_price_usd", item.coinmarketcap_price_usd},
-                {"coinpaprika_price_usd", item.coinpaprika_price_usd},
+                {"coingecko_price_usd", item.coingecko_price_usd},
                 {"price_difference_bps", item.price_difference_bps},
                 {"coinmarketcap_market_cap_usd", item.coinmarketcap_market_cap_usd},
-                {"coinpaprika_market_cap_usd", item.coinpaprika_market_cap_usd},
+                {"coingecko_market_cap_usd", item.coingecko_market_cap_usd},
                 {"coinmarketcap_volume_24h_usd", item.coinmarketcap_volume_24h_usd},
-                {"coinpaprika_volume_24h_usd", item.coinpaprika_volume_24h_usd}
+                {"coingecko_volume_24h_usd", item.coingecko_volume_24h_usd}
             });
         }
 
-        const bool both_live = cmc.status == "LIVE_RESPONSE_PARSED" && paprika.status == "LIVE_RESPONSE_PARSED";
+        const bool both_live = cmc.status == "LIVE_RESPONSE_PARSED" && gecko.status == "LIVE_RESPONSE_PARSED";
         const json output = {
             {"document_version", "V21.1"},
             {"artifact_type", "cfss_provider_federation_discovery_v1"},
@@ -70,10 +70,12 @@ int main(int argc, char** argv) {
             {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
             {"providers", json::array({
                 cfss::federation::snapshot_to_json(cmc),
-                cfss::federation::snapshot_to_json(paprika)
+                cfss::federation::snapshot_to_json(gecko)
             })},
             {"candidate_seed", candidate_rows},
             {"limitations", json::array({
+                "CoinGecko Public API rate limit is variable; this probe performs only one bounded request per scan.",
+                "Provider license and public-artifact redistribution compatibility remain NOT_VERIFIED until reviewed.",
                 "Market-wide spot references are not perpetual contract prices.",
                 "This probe does not provide futures OHLCV, funding, open interest or order-book depth.",
                 "The nine-asset candidate seed is provisional and is not a frozen production universe.",
