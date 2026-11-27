@@ -70,7 +70,23 @@ int main() {
         }}
     };
 
+    const json cmc_simple_price_fixture = {
+        {"data", json::array({{
+            {"id", 1}, {"name", "Bitcoin"}, {"symbol", "BTC"},
+            {"quotes", json::array({{
+                {"symbol", "USD"}, {"price", 100000.0}, {"market_cap", 2000000000000.0},
+                {"volume_24h", 30000000000.0}, {"last_updated", "2026-11-27T00:00:00.000Z"}
+            }})}
+        }})}
+    };
+
     const auto cmc = cfss::federation::parse_coinmarketcap(cmc_fixture);
+    const auto cmc_simple_price = cfss::federation::parse_coinmarketcap(cmc_simple_price_fixture);
+    if (cmc_simple_price.size() != 1U || cmc_simple_price[0].provider_asset_id != "1" ||
+        cmc_simple_price[0].symbol != "BTC" || cmc_simple_price[0].price_usd != 100000.0) {
+        std::cerr << "CoinMarketCap keyless simple-price quotes parsing failed\n";
+        return EXIT_FAILURE;
+    }
     const auto cmc_quotes = cfss::federation::parse_coinmarketcap(cmc_quotes_fixture);
     if (cmc_quotes.size() != 1U || cmc_quotes[0].provider_asset_id != "1" ||
         cmc_quotes[0].symbol != "BTC") {
