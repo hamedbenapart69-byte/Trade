@@ -1,0 +1,105 @@
+{
+  "generated_at_utc": "2026-11-27T17:52:57Z",
+  "instruments": [
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 3600000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "BTC-USDT-SWAP",
+      "symbol": "BTC/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 3600000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 17532,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ETH-USDT-SWAP",
+      "symbol": "ETH/USDT:USDT"
+    },
+    {
+      "availability": {
+        "funding": "AVAILABLE",
+        "ohlcv": "AVAILABLE",
+        "open_interest": "AVAILABLE"
+      },
+      "coverage": {
+        "funding_coverage_days": 29.666666666666668,
+        "funding_freshness_status": "FRESH",
+        "funding_latest_age_ms": 3600000,
+        "funding_max_age_ms": 57600000,
+        "funding_rows": 90,
+        "ohlcv_coverage_pct": 100.0,
+        "ohlcv_rows": 9278,
+        "open_interest_coverage_days": 29.958333333333332,
+        "open_interest_freshness_status": "FRESH",
+        "open_interest_latest_age_ms": 3600000,
+        "open_interest_max_age_ms": 10800000,
+        "open_interest_rows": 720
+      },
+      "errors": [],
+      "instrument_id": "ZEC-USDT-SWAP",
+      "symbol": "ZEC/USDT:USDT"
+    }
+  ],
+  "run_id": "okx-cpp-1795801953622",
+  "scan_id": "scan-ed9910dedf304c0b2950182ac638562e6dc01acc2ac5d38b0479b4c3cbd2ba66",
+  "schema_version": "1.0.0",
+  "summary": {
+    "fully_available_count": 3,
+    "partial_count": 0,
+    "selected_count": 3,
+    "unavailable_count": 0
+  },
+  "universe": {
+    "crypto_universe_source": "coinpaprika",
+    "crypto_universe_status": "VERIFIED",
+    "crypto_universe_symbol_count": 8868,
+    "crypto_universe_symbols_sha256": "98ff48b4450c7d7f545159fe12e63466cbc49b2b134be27371b3bb12c2d95f82",
+    "declared_usdt_swap_count": 539,
+    "eligible_count": 54,
+    "excluded_non_crypto_count": 201,
+    "liquidity_threshold_usd": 10000000.0,
+    "selected_count": 3,
+    "selected_instrument_ids": [
+      "BTC-USDT-SWAP",
+      "ETH-USDT-SWAP",
+      "ZEC-USDT-SWAP"
+    ],
+    "selection_method": "top_turnover_usd_desc_with_btc_first",
+    "selection_timestamp_utc": "2026-11-27T17:52:33Z",
+    "target_count": 2
+  }
+}
