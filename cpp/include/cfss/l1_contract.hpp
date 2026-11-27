@@ -75,7 +75,7 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
             throw std::invalid_argument("crypto_universe_btc_missing");
     }
     require_string(contract.at("provider"), "primary_provider_id");
-    if (!contract.contains("instruments") || !contract.at("instruments").is_array() || contract.at("instruments").empty())
+    if (!contract.contains("instruments") || !contract.at("instruments").is_array())
         throw std::invalid_argument("contract_instruments_missing");
     nlohmann::json artifact = {
         {"artifact_type", "cfss_l2_status_v1"}, {"source_schema_version", "1.0.0"},
