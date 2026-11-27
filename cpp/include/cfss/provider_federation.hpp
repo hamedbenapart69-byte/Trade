@@ -135,6 +135,7 @@ struct ProviderSnapshot {
     long http_status{0};
     std::string error;
     std::string freshness_status{"NOT_TESTED"};
+    std::string license_status{"NOT_VERIFIED"};
     int request_attempts{0};
     std::vector<MarketTicker> tickers;
 };
@@ -549,6 +550,20 @@ inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
     return output;
 }
 
+inline json snapshot_health_to_json(const ProviderSnapshot& snapshot) {
+    return {
+        {"provider_id", snapshot.provider_id},
+        {"status", snapshot.status},
+        {"license_status", snapshot.license_status},
+        {"retrieved_at_utc", snapshot.retrieved_at_utc},
+        {"http_status", snapshot.http_status},
+        {"error", snapshot.error},
+        {"freshness_status", snapshot.freshness_status},
+        {"request_attempts", snapshot.request_attempts},
+        {"ticker_count", snapshot.tickers.size()}
+    };
+}
+
 inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     json tickers = json::array();
     for (const auto& ticker : snapshot.tickers) {
@@ -561,7 +576,7 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
         });
     }
     return {
-        {"provider_id", snapshot.provider_id}, {"status", snapshot.status}, {"license_status", "NOT_VERIFIED"},
+        {"provider_id", snapshot.provider_id}, {"status", snapshot.status}, {"license_status", snapshot.license_status},
         {"retrieved_at_utc", snapshot.retrieved_at_utc}, {"http_status", snapshot.http_status},
         {"error", snapshot.error}, {"freshness_status", snapshot.freshness_status},
         {"request_attempts", snapshot.request_attempts}, {"ticker_count", tickers.size()}, {"tickers", tickers}
