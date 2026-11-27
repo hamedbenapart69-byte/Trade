@@ -11,17 +11,17 @@ int main() {
         {"data", json::array({
             {
                 {"id", 1}, {"name", "Bitcoin"}, {"symbol", "BTC"}, {"cmc_rank", 1},
-                {"quote", {{"USD", {
-                    {"price", 100000.0}, {"market_cap", 2000000000000.0},
+                {"quote", json::array({{
+                    {"symbol", "USD"}, {"price", 100000.0}, {"market_cap", 2000000000000.0},
                     {"volume_24h", 30000000000.0}, {"last_updated", "2026-11-27T00:00:00.000Z"}
-                }}}}
+                }})}
             },
             {
                 {"id", 1027}, {"name", "Ethereum"}, {"symbol", "ETH"}, {"cmc_rank", 2},
-                {"quote", {{"USD", {
-                    {"price", "3000.0"}, {"market_cap", "360000000000.0"},
+                {"quote", json::array({{
+                    {"symbol", "USD"}, {"price", "3000.0"}, {"market_cap", "360000000000.0"},
                     {"volume_24h", "12000000000.0"}, {"last_updated", "2026-11-27T00:00:00.000Z"}
-                }}}}
+                }})}
             }
         })}
     };
