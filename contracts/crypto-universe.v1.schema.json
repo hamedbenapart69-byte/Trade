@@ -27,7 +27,8 @@
     "status": {
       "enum": [
         "VERIFIED",
-        "OWNER_CONFIGURED_CANDIDATE_SET"
+        "OWNER_CONFIGURED_CANDIDATE_SET",
+        "OWNER_CONFIGURED_PRODUCTION_SET"
       ]
     },
     "provider_id": {
@@ -79,7 +80,10 @@
       "minContains": 1
     },
     "selection_status": {
-      "const": "PROVISIONAL_NOT_FROZEN"
+      "enum": [
+        "PROVISIONAL_NOT_FROZEN",
+        "FROZEN_PRODUCTION_UNIVERSE"
+      ]
     }
   },
   "allOf": [
@@ -178,6 +182,57 @@
           },
           "selection_status": {
             "const": "PROVISIONAL_NOT_FROZEN"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "OWNER_CONFIGURED_PRODUCTION_SET"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "selection_status"
+        ],
+        "properties": {
+          "provider_id": {
+            "const": "owner_config"
+          },
+          "source_endpoint": {
+            "const": "config/universe.json"
+          },
+          "attribution": {
+            "const": "Owner-frozen production universe configuration; not market data."
+          },
+          "freshness_status": {
+            "const": "STATIC_CONFIG"
+          },
+          "symbol_count": {
+            "const": 9
+          },
+          "symbols": {
+            "type": "array",
+            "minItems": 9,
+            "maxItems": 9,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{1,20}$"
+            },
+            "contains": {
+              "const": "BTC"
+            },
+            "minContains": 1
+          },
+          "selection_status": {
+            "const": "FROZEN_PRODUCTION_UNIVERSE"
           }
         }
       }
