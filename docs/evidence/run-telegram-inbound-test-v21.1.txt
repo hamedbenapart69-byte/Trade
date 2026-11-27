@@ -1,0 +1,9 @@
+V21.1 Stage 1 controlled Telegram inbound replay marker.
+
+After this PR is approved and merged to main, the first production Stage 1 run should:
+1. Snapshot the existing Telegram update offset.
+2. Process one real /status update if newly received, or reuse a prior verified receipt.
+3. Replay the exact same update ID.
+4. Verify that the bot does not send a duplicate reply.
+
+This file is inert on the feature branch. The live workflow is restricted to main.
