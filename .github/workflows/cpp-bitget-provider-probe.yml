@@ -1,0 +1,64 @@
+name: C++ Bitget Provider Fallback Probe (Research Only)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/CMakeLists.txt"
+      - "cpp/include/cfss/bitget_provider_probe.hpp"
+      - "cpp/apps/bitget_provider_probe/**"
+      - "cpp/tests/bitget_provider_test.cpp"
+      - ".github/workflows/cpp-bitget-provider-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bitget-provider-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-test-live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+
+      - name: Install free build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+
+      - name: Configure C++20
+        run: cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build all C++ targets
+        run: cmake --build build --parallel 2
+
+      - name: Run full CTest and provider normalization tests
+        run: |
+          ctest --test-dir build --output-on-failure --no-tests=error
+          ./build/bitget_provider_tests
+
+      - name: Live public Bitget coverage probe (BTC + ETH)
+        shell: bash
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          ./build/bitget_provider_probe BTCUSDT ETHUSDT | tee "$RUNNER_TEMP/bitget-provider-probe.json"
+          jq -e '.status == "PASS" and .eligible_symbols == 2 and .requested_symbols == 2' \
+            "$RUNNER_TEMP/bitget-provider-probe.json"
+
+      - name: Record evidence summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -s "$RUNNER_TEMP/bitget-provider-probe.json" ]; then
+            jq '{provider_id, api_version, status, eligible_symbols, requested_symbols,
+                 symbols: [.symbols[] | {symbol, status, eligible, coverage, liquidity_gate,
+                 volume_semantics, error}]}' "$RUNNER_TEMP/bitget-provider-probe.json" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No live probe report was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
