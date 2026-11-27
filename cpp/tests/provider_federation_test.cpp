@@ -180,6 +180,8 @@ int main() {
         std::cerr << "valid same-field fallback was rejected\n";
         return EXIT_FAILURE;
     }
+    auto same_provider = compatible;
+    same_provider.provider_id = required.provider_id;
     auto incompatible_scope = compatible;
     incompatible_scope.market_scope = "SPOT";
     auto incompatible_unit = compatible;
@@ -188,7 +190,8 @@ int main() {
     proxy_fallback.data_class = "PROXY";
     auto stale_fallback = compatible;
     stale_fallback.provider_timestamp_ms = 1795730000000LL;
-    if (cfss::federation::fallback_compatible(required, incompatible_scope, 1795737610000LL, 900000LL) ||
+    if (cfss::federation::fallback_compatible(required, same_provider, 1795737610000LL, 900000LL) ||
+        cfss::federation::fallback_compatible(required, incompatible_scope, 1795737610000LL, 900000LL) ||
         cfss::federation::fallback_compatible(required, incompatible_unit, 1795737610000LL, 900000LL) ||
         cfss::federation::fallback_compatible(required, proxy_fallback, 1795737610000LL, 900000LL) ||
         cfss::federation::fallback_compatible(required, stale_fallback, 1795737610000LL, 900000LL)) {
