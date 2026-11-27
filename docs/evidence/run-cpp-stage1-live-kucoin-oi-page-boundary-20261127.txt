@@ -1,0 +1,5 @@
+V21 Stage 1 controlled verification of KuCoin OI pagination v3.
+
+The previous live run returned 99 parsed hourly OI rows from a 100-row raw API page because an inclusive endAt boundary row was filtered. Pagination continuation now uses the raw response row count, with a unit test for the 100-raw/99-parsed boundary case.
+
+No acceptance threshold, strategy identity, production universe, manual-trading boundary, or paid dependency is changed.
