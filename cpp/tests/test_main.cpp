@@ -161,11 +161,11 @@ int main() {
     const auto kucoin_oi_url = cfss::kucoin::open_interest_request_url(
         *parsed_kucoin_contract, kucoin_sample_ts,
         kucoin_sample_ts + cfss::kucoin::kHourMs);
-    if (kucoin_oi_url.find("startAt=1760000000") == std::string::npos ||
-        kucoin_oi_url.find("endAt=1760003600") == std::string::npos ||
+    if (kucoin_oi_url.find("startAt=1760000000000") == std::string::npos ||
+        kucoin_oi_url.find("endAt=1760003600000") == std::string::npos ||
         kucoin_oi_url.find("pageSize=100") == std::string::npos ||
         kucoin_oi_url.find("interval=1hour") == std::string::npos) {
-        std::cerr << "KuCoin OI request must use Unix seconds and bounded pagination\\n";
+        std::cerr << "KuCoin OI request must use verified millisecond bounds and bounded pagination\\n";
         return EXIT_FAILURE;
     }
     bool kucoin_oi_page_limit_rejected = false;
