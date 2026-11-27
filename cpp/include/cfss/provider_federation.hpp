@@ -1037,6 +1037,7 @@ inline json collect_market_wide_provider_federation() {
         ranking.license_status == "PERSONAL_INTERNAL_USE_FREE_PLAN";
     const bool paprika_eligible = paprika.freshness_status == "FRESH" &&
         paprika.license_status == "PERSONAL_USE_ONLY";
+    const auto cmc_ranking = compare_cmc_coinranking_references(cmc, ranking);
     const auto cmc_paprika = compare_cmc_coinpaprika_references(cmc, paprika);
     const auto ranking_paprika = compare_coinranking_coinpaprika_references(ranking, paprika);
 
@@ -1044,22 +1045,31 @@ inline json collect_market_wide_provider_federation() {
     bool btc_two_source_match = false;
     std::size_t matched_asset_count = 0U;
     for (std::size_t i = 0; i < identities.size(); ++i) {
-        const auto& cmc_row = cmc_paprika[i];
-        const auto& ranking_row = ranking_paprika[i];
-        const bool cmc_match = cmc_eligible && paprika_eligible &&
-            cmc_row.classification == "TWO_SOURCE_IDENTITY_MATCHED";
-        const bool ranking_match = ranking_eligible && paprika_eligible &&
-            ranking_row.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        const auto& cr = cmc_ranking[i];
+        const auto& cp = cmc_paprika[i];
+        const auto& rp = ranking_paprika[i];
+        const bool cr_match = cmc_eligible && ranking_eligible &&
+            cr.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        const bool cp_match = cmc_eligible && paprika_eligible &&
+            cp.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        const bool rp_match = ranking_eligible && paprika_eligible &&
+            rp.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+
         std::string classification = "UNAVAILABLE";
         std::string pair = "NONE";
-        if (cmc_match || ranking_match) {
+        if (cr_match || cp_match || rp_match) {
             classification = "TWO_SOURCE_IDENTITY_MATCHED";
-            if (cmc_match && ranking_match) {
-                pair = cmc_row.price_difference_bps <= ranking_row.price_difference_bps
-                    ? "coinmarketcap+coinpaprika" : "coinranking+coinpaprika";
-            } else {
-                pair = cmc_match ? "coinmarketcap+coinpaprika" : "coinranking+coinpaprika";
-            }
+            double best_difference = std::numeric_limits<double>::max();
+            const auto consider = [&](bool matched, const CrossProviderReference& row,
+                                      const std::string& pair_name) {
+                if (matched && row.price_difference_bps < best_difference) {
+                    best_difference = row.price_difference_bps;
+                    pair = pair_name;
+                }
+            };
+            consider(cr_match, cr, "coinmarketcap+coinranking");
+            consider(cp_match, cp, "coinmarketcap+coinpaprika");
+            consider(rp_match, rp, "coinranking+coinpaprika");
             ++matched_asset_count;
         } else {
             const auto* cmc_ticker = find_by_provider_id(cmc, identities[i].coinmarketcap_id);
@@ -1079,7 +1089,6 @@ inline json collect_market_wide_provider_federation() {
             {"matched_provider_pair", pair}
         });
     }
-
     const int live_provider_count =
         (cmc.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
         (ranking.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
