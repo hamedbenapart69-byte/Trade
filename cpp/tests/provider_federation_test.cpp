@@ -115,6 +115,49 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    cfss::federation::ProviderCapabilityRegistry registry;
+    registry.add({"coinmarketcap", "price", "SPOT_REFERENCE", "USD/asset", "USD",
+                   {"BTC", "ETH"}, 900000, 365, "COMPATIBLE", "REACHABLE"});
+    registry.add({"coinpaprika", "price", "SPOT_REFERENCE", "USD/asset", "USD",
+                   {"BTC", "ETH"}, 900000, 365, "COMPATIBLE", "REACHABLE"});
+    registry.add({"venue-x", "open_interest", "PERPETUAL", "contracts", "USDT",
+                   {"BTC"}, 10800000, 30, "COMPATIBLE", "REACHABLE"});
+    const auto spot_sources = registry.eligible("price", "SPOT_REFERENCE", "BTC");
+    const auto oi_sources = registry.eligible("open_interest", "PERPETUAL", "BTC");
+    const auto unsupported_sources = registry.eligible("open_interest", "SPOT_REFERENCE", "BTC");
+    if (spot_sources.size() != 2U || oi_sources.size() != 1U || !unsupported_sources.empty()) {
+        std::cerr << "field-level provider capability routing failed\n";
+        return EXIT_FAILURE;
+    }
+
+    const cfss::federation::CanonicalRecord required{
+        "bitcoin", "BTC", "venue-a", "BTC-USDT-SWAP", "PERPETUAL", "open_interest",
+        1000.0, "contracts", "USDT", "1h", 1795737600000LL, 1795737600000LL,
+        1795737605000LL, "VALID", "REAL", "COMPATIBLE"
+    };
+    auto compatible = required;
+    compatible.provider_id = "venue-b";
+    compatible.provider_instrument_id = "XBTUSDTM";
+    if (!cfss::federation::fallback_compatible(required, compatible, 1795737610000LL)) {
+        std::cerr << "valid same-field fallback was rejected\n";
+        return EXIT_FAILURE;
+    }
+    auto incompatible_scope = compatible;
+    incompatible_scope.market_scope = "SPOT";
+    auto incompatible_unit = compatible;
+    incompatible_unit.unit = "USD";
+    auto proxy_fallback = compatible;
+    proxy_fallback.data_class = "PROXY";
+    auto stale_fallback = compatible;
+    stale_fallback.provider_timestamp_ms = 1795730000000LL;
+    if (cfss::federation::fallback_compatible(required, incompatible_scope, 1795737610000LL) ||
+        cfss::federation::fallback_compatible(required, incompatible_unit, 1795737610000LL) ||
+        cfss::federation::fallback_compatible(required, proxy_fallback, 1795737610000LL) ||
+        cfss::federation::fallback_compatible(required, stale_fallback, 1795737610000LL)) {
+        std::cerr << "incompatible or proxy fallback was accepted\n";
+        return EXIT_FAILURE;
+    }
+
     std::cout << "PROVIDER_FEDERATION_CONTRACT_TESTS_PASS\n";
     return EXIT_SUCCESS;
 }
