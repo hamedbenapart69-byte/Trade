@@ -1,0 +1,5 @@
+V21 Stage 1 controlled verification after the live KuCoin OI timestamp behavior correction.
+
+Evidence from the public endpoint on 2026-11-27: second-based startAt/endAt bounds returned an empty data array, while millisecond bounds returned historical hourly OI rows. The adapter therefore uses millisecond bounds, pageSize=100, and endAt cursor pagination. The workflow validates the behavior again from GitHub Actions.
+
+No acceptance threshold, strategy identity, production universe, manual-trading boundary, or paid dependency is changed.
