@@ -1097,6 +1097,9 @@ inline json collect_market_wide_provider_federation() {
         (cmc_eligible ? 1 : 0) + (ranking_eligible ? 1 : 0) + (paprika_eligible ? 1 : 0);
     const bool pass = eligible_fresh_provider_count >= 2 &&
         btc_two_source_match && matched_asset_count == identities.size();
+    const char* universe_source_value = std::getenv("CFSS_UNIVERSE_SOURCE");
+    const bool frozen_production_universe = universe_source_value &&
+        std::string_view{universe_source_value} == "config/universe.json";
 
     return {
         {"schema_version", "1.0.0"},
@@ -1104,7 +1107,8 @@ inline json collect_market_wide_provider_federation() {
             ? "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH"
             : "PROVIDER_DISCOVERY_PARTIAL"},
         {"generated_at_utc", utc_now_iso()},
-        {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
+        {"production_universe_status", frozen_production_universe
+            ? "PRODUCTION_UNIVERSE_FROZEN" : "DISCOVERY_ONLY_NOT_FROZEN"},
         {"live_provider_count", live_provider_count},
         {"production_eligible_fresh_provider_count", eligible_fresh_provider_count},
         {"matched_asset_count", matched_asset_count},
