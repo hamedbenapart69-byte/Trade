@@ -3,6 +3,7 @@
 #include "cfss/atomic_file.hpp"
 #include "cfss/kucoin_provider.hpp"
 #include "cfss/provider_resilience.hpp"
+#include "cfss/provider_federation.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -331,10 +332,16 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
+inline bool exact_universe_mode_enabled() {
+    const char* value = std::getenv("CFSS_EXACT_UNIVERSE");
+    return value && (std::string_view{value} == "1" || std::string_view{value} == "true");
+}
+
 inline std::vector<Instrument> select_instruments(
     int target_count, std::vector<Instrument> eligible,
     const std::vector<Instrument>& all_valid_crypto,
-    const std::set<std::string>& required_symbols = {}) {
+    const std::set<std::string>& required_symbols = {},
+    bool exact_universe = false) {
     if (target_count < 1 || target_count > 100)
         throw std::invalid_argument("target_count_invalid");
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
@@ -347,6 +354,25 @@ inline std::vector<Instrument> select_instruments(
         [](const Instrument& item) { return item.base == "BTC"; });
     if (btc == eligible.end())
         throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
+    if (exact_universe) {
+        if (required_symbols.size() != static_cast<std::size_t>(target_count) ||
+            required_symbols.contains("BTC")) {
+            throw std::runtime_error("exact_universe_requires_exact_non_btc_symbol_count");
+        }
+        std::vector<Instrument> exact_selected{*btc};
+        for (const auto& required_base : required_symbols) {
+            const auto found = std::find_if(eligible.begin(), eligible.end(),
+                [&](const Instrument& item) { return item.base == required_base; });
+            if (found == eligible.end()) {
+                throw std::runtime_error("exact_universe_asset_not_eligible:" + required_base);
+            }
+            exact_selected.push_back(*found);
+        }
+        if (exact_selected.size() != static_cast<std::size_t>(target_count) + 1U) {
+            throw std::runtime_error("exact_universe_selection_count_mismatch");
+        }
+        return exact_selected;
+    }
     const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
     const auto selection_limit = std::min(requested_total, eligible.size());
     std::vector<Instrument> selected{*btc};
@@ -430,7 +456,7 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
     // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols, exact_universe_mode_enabled());
 }
 
 
@@ -466,7 +492,7 @@ inline std::vector<Instrument> discover_kucoin(
     std::cerr << "KUCOIN_UNIVERSE_DIAGNOSTICS declared=" << contracts.size()
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << '\n';
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols, exact_universe_mode_enabled());
 }
 
 inline std::vector<Instrument> discover(
