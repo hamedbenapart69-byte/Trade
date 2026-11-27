@@ -2,7 +2,7 @@ name: C++ V21 Stage 1 Live Vertical Slice
 
 on:
   push:
-    branches: [main, feat/cpp-stage1-clean, v21/stage0-accepted-stage1-foundation, v21.1/provider-federation-v1]
+    branches: [main]
     paths:
       - "docs/evidence/run-cpp-stage1-live*.txt"
       - "docs/evidence/run-telegram-inbound-test*.txt"
