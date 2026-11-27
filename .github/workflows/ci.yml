@@ -15,6 +15,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: pip install -r signal_autopilot/requirements.txt
+      - run: pip install -r research/requirements.txt
       - name: Audit production code for legacy markers and embedded Telegram identifiers
         shell: bash
         run: |
