@@ -417,7 +417,14 @@ inline std::vector<Instrument> select_instruments(
         for (const auto& required_base : required_symbols) {
             const auto found = std::find_if(eligible.begin(), eligible.end(),
                 [&](const Instrument& item) { return item.base == required_base; });
-            if (found != eligible.end()) exact_selected.push_back(*found);
+            if (found == eligible.end()) {
+                throw std::runtime_error(
+                    "exact_universe_candidate_not_liquid_or_available:" + required_base);
+            }
+            exact_selected.push_back(*found);
+        }
+        if (exact_selected.size() != requested_total) {
+            throw std::runtime_error("exact_universe_selection_incomplete");
         }
         return exact_selected;
     }
