@@ -1,364 +1,499 @@
-"""Experiment B: weekly cross-sectional long/short with BTC MA50 regime filter.
+"""Full-history, point-in-time, long-only cross-sectional research.
 
-Research-only SPOT proxy. No perpetual execution/funding data is available.
-Signal: Monday, using features and BTC regime known at prior UTC daily close.
-Execution: Monday Open to same-week Friday Close; one non-overlapping cohort/week.
-Note: Monday Open -> Friday Close is a weekly 5-session window, NOT 7 calendar days.
+Universe selection is data-driven from Binance Vision SPOT archives.
+BTC is a regime benchmark only and is never tradable.
+The portfolio is equal-weight long top-2 or bottom-2; otherwise cash.
+Execution: Monday open to same-week Friday close (5 sessions, not 7 days).
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
-import json
 from zipfile import ZipFile
+import json
+import math
+import time
 
 import numpy as np
 import pandas as pd
 import requests
 
-BASE_URL = "https://data.binance.vision/data/spot/monthly/klines"
-SYMBOLS = (
-    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
-    "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT",
+BASE = "https://data.binance.vision/data/spot"
+CANDIDATES = (
+    "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT",
+    "DOGEUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT", "LTCUSDT",
+    "BCHUSDT", "NEARUSDT", "UNIUSDT", "FILUSDT", "AAVEUSDT",
 )
-YEARS = (2023, 2024)
-FIRST_MONTH = "2022-10"
-LAST_MONTH = "2025-01"
-FEE_PER_SIDE = 0.0004
-SLIPPAGE_PER_SIDE = 0.0002
-COST_PER_SIDE = FEE_PER_SIDE + SLIPPAGE_PER_SIDE
+BENCHMARK = "BTCUSDT"
+SCAN_START = "2017-01"
+FEE_SIDE = 0.0004
+SLIPPAGE_SIDE = 0.0002
+COST_SIDE = FEE_SIDE + SLIPPAGE_SIDE
 TOP_N = 2
-LONG_WEIGHT = 0.5
-SHORT_WEIGHT = 0.5
-WEEKLY_SESSIONS = 5
+MIN_ELIGIBLE = 4
+MIN_DOLLAR_VOLUME_90D = 10_000_000.0
+MIN_HISTORY_DAYS = 730
+MIN_CORR_OBS = 180
+SELECTION_LOOKBACK_DAYS = 365
+WARMUP_DAYS = 50
 WEEKS_PER_YEAR = 52
-COLUMNS = [
+CSV_COLUMNS = [
     "open_time", "open", "high", "low", "close", "volume",
     "close_time", "quote_asset_volume", "number_of_trades",
     "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore",
 ]
 
 
-def months_between(first: str, last: str) -> list[str]:
-    return [str(p) for p in pd.period_range(first, last, freq="M")]
+def month_range(first: str, last: str) -> list[str]:
+    return [str(x) for x in pd.period_range(first, last, freq="M")]
 
 
-def download_month(session: requests.Session, symbol: str, month: str) -> pd.DataFrame:
-    filename = f"{symbol}-1d-{month}.zip"
-    url = f"{BASE_URL}/{symbol}/1d/{filename}"
-    response = session.get(url, timeout=90)
-    response.raise_for_status()
-    with ZipFile(BytesIO(response.content)) as archive:
-        csvs = [name for name in archive.namelist() if name.endswith(".csv")]
+def month_of(d: date) -> str:
+    return f"{d.year:04d}-{d.month:02d}"
+
+
+def make_session() -> requests.Session:
+    s = requests.Session()
+    s.headers.update({"User-Agent": "Trade-Full-History-Research/1.0"})
+    return s
+
+
+def monthly_url(symbol: str, month: str) -> str:
+    name = f"{symbol}-1d-{month}.zip"
+    return f"{BASE}/monthly/klines/{symbol}/1d/{name}"
+
+
+def daily_url(symbol: str, day: date) -> str:
+    name = f"{symbol}-1d-{day.isoformat()}.zip"
+    return f"{BASE}/daily/klines/{symbol}/1d/{name}"
+
+
+def parse_zip(payload: bytes, label: str) -> pd.DataFrame:
+    with ZipFile(BytesIO(payload)) as zf:
+        csvs = [n for n in zf.namelist() if n.endswith(".csv")]
         if len(csvs) != 1:
-            raise ValueError(f"{filename}: expected exactly one CSV; found {csvs}")
-        with archive.open(csvs[0]) as stream:
-            frame = pd.read_csv(stream, header=None, names=COLUMNS)
-    ts = pd.to_numeric(frame["open_time"], errors="coerce")
-    ts = ts[np.isfinite(ts)]
-    if ts.empty:
-        raise ValueError(f"{filename}: no valid timestamps")
-    median = float(ts.median())
+            raise ValueError(f"{label}: expected one CSV, got {csvs}")
+        with zf.open(csvs[0]) as stream:
+            df = pd.read_csv(stream, header=None, names=CSV_COLUMNS)
+    if df.empty:
+        raise ValueError(f"{label}: empty CSV")
+    ts = pd.to_numeric(df["open_time"], errors="coerce")
+    valid = ts[np.isfinite(ts)]
+    if valid.empty:
+        raise ValueError(f"{label}: no timestamps")
+    median = float(valid.median())
     unit = "us" if median >= 1e14 else "ms" if median >= 1e11 else "s" if median >= 1e8 else None
     if unit is None:
-        raise ValueError(f"{filename}: unsupported timestamp magnitude {median}")
-    frame["open_time"] = pd.to_numeric(frame["open_time"], errors="coerce")
-    frame = frame.loc[np.isfinite(frame["open_time"])].copy()
-    frame["date"] = pd.to_datetime(frame["open_time"], unit=unit, utc=True).dt.floor("D")
-    for col in ("open", "high", "low", "close", "volume"):
-        frame[col] = pd.to_numeric(frame[col], errors="coerce")
-    frame = frame[["date", "open", "high", "low", "close", "volume"]]
-    if frame.empty or frame[["open", "high", "low", "close", "volume"]].isna().any().any():
-        raise ValueError(f"{filename}: empty or invalid OHLCV")
-    if (frame[["open", "high", "low", "close"]] <= 0).any().any():
-        raise ValueError(f"{filename}: non-positive price")
-    return frame
+        raise ValueError(f"{label}: unsupported timestamp magnitude {median}")
+    df["date"] = pd.to_datetime(ts, unit=unit, utc=True).dt.floor("D")
+    for c in ("open", "high", "low", "close", "volume", "quote_asset_volume"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    df = df[["date", "open", "high", "low", "close", "volume", "quote_asset_volume"]]
+    df = df.dropna().drop_duplicates("date").sort_values("date")
+    if (df[["open", "high", "low", "close"]] <= 0).any().any():
+        raise ValueError(f"{label}: non-positive OHLC")
+    if (df[["volume", "quote_asset_volume"]] < 0).any().any():
+        raise ValueError(f"{label}: negative volume")
+    return df
 
 
-def wilder(series: pd.Series, period: int) -> pd.Series:
-    return series.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+def get_bytes(session: requests.Session, url: str, attempts: int = 4) -> bytes | None:
+    for attempt in range(attempts):
+        try:
+            r = session.get(url, timeout=45)
+            if r.status_code == 404:
+                return None
+            r.raise_for_status()
+            return r.content
+        except requests.RequestException:
+            if attempt + 1 == attempts:
+                raise
+            time.sleep(1.5 * (attempt + 1))
+    return None
 
 
-def add_features(frame: pd.DataFrame) -> pd.DataFrame:
-    out = frame.sort_values("date").copy()
-    mean = out["volume"].rolling(20, min_periods=20).mean()
-    std = out["volume"].rolling(20, min_periods=20).std(ddof=0)
-    out["Volume_Z20"] = (out["volume"] - mean) / std.replace(0.0, np.nan)
-    delta = out["close"].diff()
-    avg_gain = wilder(delta.clip(lower=0.0), 14)
-    avg_loss = wilder(-delta.clip(upper=0.0), 14)
-    rs = avg_gain / avg_loss.replace(0.0, np.nan)
-    out["RSI_14"] = 100.0 - 100.0 / (1.0 + rs)
-    out.loc[(avg_loss == 0.0) & (avg_gain > 0.0), "RSI_14"] = 100.0
-    out.loc[(avg_gain == 0.0) & (avg_loss > 0.0), "RSI_14"] = 0.0
+def first_archive_months(symbols: list[str], months: list[str]) -> dict[str, str]:
+    """Find first actually present monthly archive; no guessed listing dates."""
+    found: dict[str, str] = {}
+    tasks = {}
+    with ThreadPoolExecutor(max_workers=24) as pool:
+        for symbol in symbols:
+            for month in months:
+                fut = pool.submit(requests.head, monthly_url(symbol, month), timeout=20)
+                tasks[fut] = (symbol, month)
+        for fut in as_completed(tasks):
+            symbol, month = tasks[fut]
+            try:
+                response = fut.result()
+                if response.status_code == 200:
+                    if symbol not in found or month < found[symbol]:
+                        found[symbol] = month
+            except requests.RequestException:
+                continue
+    missing = sorted(set(symbols) - set(found))
+    if missing:
+        raise RuntimeError("No monthly Binance Vision archive found for: " + ",".join(missing))
+    return found
+
+
+def download_symbol(symbol: str, first_month: str, complete_months: list[str],
+                    cutoff: date) -> pd.DataFrame:
+    parts: list[pd.DataFrame] = []
+    session = make_session()
+    for month in complete_months:
+        if month < first_month:
+            continue
+        blob = get_bytes(session, monthly_url(symbol, month))
+        if blob is None:
+            # Missing monthly archive after first listing is not silently forward-filled.
+            raise RuntimeError(f"D1_DATA_GAP: missing monthly archive {symbol} {month}")
+        parts.append(parse_zip(blob, f"{symbol} {month}"))
+    # Current partial month: use daily archives only through the last completed UTC day.
+    if month_of(cutoff) > complete_months[-1]:
+        start = date(cutoff.year, cutoff.month, 1)
+        for day_no in range(1, cutoff.day + 1):
+            day = date(start.year, start.month, day_no)
+            blob = get_bytes(session, daily_url(symbol, day), attempts=3)
+            if blob is None:
+                # The last daily archive can lag publication; only trailing missing day is tolerated.
+                if day < cutoff - timedelta(days=1):
+                    raise RuntimeError(f"D1_DATA_GAP: missing daily archive {symbol} {day}")
+                continue
+            parts.append(parse_zip(blob, f"{symbol} {day}"))
+    if not parts:
+        raise RuntimeError(f"No data downloaded for {symbol}")
+    out = pd.concat(parts, ignore_index=True).drop_duplicates("date").sort_values("date")
+    out = out[out["date"].dt.date <= cutoff].reset_index(drop=True)
+    if out.empty:
+        raise RuntimeError(f"No observations through cutoff for {symbol}")
     return out
 
 
-def load_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    month_list = months_between(FIRST_MONTH, LAST_MONTH)
-    frames: dict[str, pd.DataFrame] = {}
-    with requests.Session() as session:
-        session.headers.update({"User-Agent": "Trade-Weekly-Regime-Research/1.0"})
-        for symbol in SYMBOLS:
-            pieces = [download_month(session, symbol, month) for month in month_list]
-            raw = (
-                pd.concat(pieces, ignore_index=True)
-                .drop_duplicates("date")
-                .sort_values("date")
-                .reset_index(drop=True)
-            )
-            frames[symbol] = add_features(raw)
+def add_features(df: pd.DataFrame) -> pd.DataFrame:
+    x = df.copy().sort_values("date").reset_index(drop=True)
+    vmean = x["volume"].rolling(20, min_periods=20).mean()
+    vstd = x["volume"].rolling(20, min_periods=20).std(ddof=0)
+    x["volume_z20"] = (x["volume"] - vmean) / vstd.replace(0.0, np.nan)
+    delta = x["close"].diff()
+    gain = delta.clip(lower=0.0)
+    loss = -delta.clip(upper=0.0)
+    # Wilder smoothing; min_periods enforces the indicator warm-up.
+    avg_gain = gain.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    avg_loss = loss.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    rs = avg_gain / avg_loss.replace(0.0, np.nan)
+    x["rsi14"] = 100.0 - 100.0 / (1.0 + rs)
+    x.loc[(avg_loss == 0.0) & (avg_gain > 0.0), "rsi14"] = 100.0
+    x.loc[(avg_gain == 0.0) & (avg_loss > 0.0), "rsi14"] = 0.0
+    x["obs_from_inception"] = np.arange(1, len(x) + 1)
+    return x
 
-    common = set(frames[SYMBOLS[0]]["date"])
-    for symbol in SYMBOLS[1:]:
-        common.intersection_update(set(frames[symbol]["date"]))
-    dates = pd.DatetimeIndex(sorted(common), name="date")
-    if len(dates) < 800:
-        raise ValueError(f"Insufficient common history: {len(dates)} days")
-    expected = pd.date_range(dates.min(), dates.max(), freq="D", tz="UTC")
-    if not dates.equals(expected):
-        gaps = expected.difference(dates)
-        raise ValueError("D1_DATA_GAP common dates: " + json.dumps([str(x.date()) for x in gaps[:30]]))
 
-    opens = pd.DataFrame(index=dates)
-    closes = pd.DataFrame(index=dates)
-    feature_map = pd.DataFrame(index=dates)
+def select_universe(frames: dict[str, pd.DataFrame], cutoff: date) -> tuple[list[str], dict]:
+    end = pd.Timestamp(cutoff, tz="UTC")
+    start90 = end - pd.Timedelta(days=89)
+    start365 = end - pd.Timedelta(days=SELECTION_LOOKBACK_DAYS - 1)
+    stats: dict[str, dict] = {}
     for symbol, frame in frames.items():
-        indexed = frame.set_index("date").reindex(dates)
-        opens[symbol] = indexed["open"].astype(float)
-        closes[symbol] = indexed["close"].astype(float)
-        # Point-in-time feature values available before the Monday open.
-        feature_map[f"{symbol}:Volume_Z20"] = indexed["Volume_Z20"].shift(1)
-        feature_map[f"{symbol}:RSI_14"] = indexed["RSI_14"].shift(1)
+        recent90 = frame.loc[frame["date"] >= start90, "quote_asset_volume"].dropna()
+        recent365 = frame.loc[frame["date"] >= start365].copy()
+        history_days = int((frame["date"].max() - frame["date"].min()).days + 1)
+        coverage = len(frame) / max(history_days, 1)
+        med90 = float(recent90.median()) if len(recent90) >= 60 else 0.0
+        med365 = float(recent365["quote_asset_volume"].median()) if len(recent365) >= 180 else 0.0
+        stats[symbol] = {
+            "first_observation": str(frame["date"].min().date()),
+            "last_observation": str(frame["date"].max().date()),
+            "observations": int(len(frame)),
+            "history_calendar_days": history_days,
+            "daily_coverage_ratio": round(float(coverage), 6),
+            "median_quote_volume_90d_usdt": round(med90, 2),
+            "median_quote_volume_365d_usdt": round(med365, 2),
+            "eligible": bool(history_days >= MIN_HISTORY_DAYS and med90 >= MIN_DOLLAR_VOLUME_90D and coverage >= 0.995),
+        }
+    qualified = [s for s in frames if stats[s]["eligible"]]
+    if len(qualified) < 8:
+        raise RuntimeError(
+            "UNIVERSE_GATE_FAIL: fewer than 8 candidates meet history/liquidity/coverage gates; "
+            + json.dumps({"qualified": qualified, "candidate_stats": stats})
+        )
 
-    btc_ma50 = closes["BTCUSDT"].rolling(50, min_periods=50).mean()
-    # Monday's row is populated only with Sunday's BTC close and MA50.
-    btc_close_prior = closes["BTCUSDT"].shift(1)
-    btc_ma50_prior = btc_ma50.shift(1)
-    if opens.isna().any().any() or closes.isna().any().any():
-        raise ValueError("Missing OHLC prices in common calendar")
-    return opens, closes, feature_map, btc_close_prior / btc_ma50_prior
+    # Pairwise correlations use only the common trailing 365-day return window.
+    returns = {}
+    for symbol in qualified:
+        f = frames[symbol].set_index("date")
+        r = f["close"].pct_change()
+        returns[symbol] = r.loc[r.index >= start365]
+    corr = pd.DataFrame(returns).corr(min_periods=MIN_CORR_OBS).abs()
+    liquidity_order = sorted(qualified, key=lambda s: stats[s]["median_quote_volume_90d_usdt"], reverse=True)
+    selected = [liquidity_order[0]]
+    while len(selected) < 8:
+        remaining = [s for s in qualified if s not in selected]
+        def candidate_score(s: str) -> tuple[float, str]:
+            vals = corr.loc[s, selected].dropna()
+            mean_corr = float(vals.mean()) if len(vals) else 1.0
+            liq_rank = liquidity_order.index(s)
+            liq_pct = 1.0 - liq_rank / max(len(liquidity_order) - 1, 1)
+            hist_pct = min(stats[s]["history_calendar_days"] / max(
+                stats[z]["history_calendar_days"] for z in qualified), 1.0)
+            score = 0.45 * (1.0 - mean_corr) + 0.40 * liq_pct + 0.15 * hist_pct
+            return score, s
+        chosen = max(remaining, key=candidate_score)
+        selected.append(chosen)
+    corr_out = {}
+    for a in selected:
+        corr_out[a] = {}
+        for b in selected:
+            value = corr.loc[a, b]
+            corr_out[a][b] = round(float(value), 6) if pd.notna(value) else None
+    audit = {
+        "selection_method": "greedy_liquidity_history_and_low_abs_correlation",
+        "selection_window": {"start": str(start365.date()), "end": str(cutoff)},
+        "minimum_median_quote_volume_90d_usdt": MIN_DOLLAR_VOLUME_90D,
+        "minimum_history_calendar_days": MIN_HISTORY_DAYS,
+        "minimum_daily_coverage_ratio": 0.995,
+        "minimum_pairwise_correlation_observations": MIN_CORR_OBS,
+        "candidate_stats": stats,
+        "selected_pairwise_abs_return_correlations": corr_out,
+        "survivorship_warning": "EXPLORATORY_SURVIVORSHIP_BIAS: selected from currently listed candidates using trailing-period liquidity and correlation; not a point-in-time historical constituent universe.",
+    }
+    return selected, audit
 
 
-def cross_section_z(series: pd.Series) -> pd.Series:
-    sd = float(series.std(ddof=0))
-    if not np.isfinite(sd) or sd <= 0:
-        return pd.Series(np.nan, index=series.index)
-    return (series - float(series.mean())) / sd
+def zscore(s: pd.Series) -> pd.Series:
+    sd = float(s.std(ddof=0))
+    if not np.isfinite(sd) or sd <= 1e-12:
+        return pd.Series(np.nan, index=s.index)
+    return (s - float(s.mean())) / sd
 
 
-def select_basket(row: pd.Series) -> tuple[list[str], list[str]]:
-    vol = pd.Series({s: row[f"{s}:Volume_Z20"] for s in SYMBOLS}, dtype=float)
-    rsi = pd.Series({s: row[f"{s}:RSI_14"] for s in SYMBOLS}, dtype=float)
-    if vol.isna().any() or rsi.isna().any():
-        raise ValueError("Missing cross-sectional features at a scheduled Monday")
-    score = 0.5 * cross_section_z(vol) + 0.5 * cross_section_z(rsi)
-    if score.isna().any() or not np.isfinite(score.to_numpy()).all():
-        raise ValueError("Invalid composite ranking score")
-    ranked = sorted(SYMBOLS, key=lambda symbol: (-float(score[symbol]), symbol))
-    return ranked[:TOP_N], ranked[-TOP_N:]
-
-
-def metrics(returns: list[float]) -> dict[str, float | int | None]:
-    arr = np.asarray(returns, dtype=float)
+def portfolio_metrics(weekly_returns: list[float]) -> dict:
+    arr = np.asarray(weekly_returns, dtype=float)
+    if len(arr) == 0:
+        return {
+            "net_return": None, "max_drawdown": None, "sharpe_ratio": None,
+            "profit_factor": None, "weeks": 0, "positive_weeks": 0,
+            "negative_weeks": 0, "cash_weeks": 0,
+        }
     nav = np.cumprod(1.0 + arr)
-    peaks = np.maximum.accumulate(np.r_[1.0, nav])
-    nav_with_initial = np.r_[1.0, nav]
-    dd = nav_with_initial / peaks - 1.0
+    peak = np.maximum.accumulate(np.r_[1.0, nav])
+    dd = np.r_[1.0, nav] / peak - 1.0
     sd = float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0
-    sharpe = float(np.mean(arr) / sd * np.sqrt(WEEKS_PER_YEAR)) if sd > 0 else None
+    sharpe = float(np.mean(arr) / sd * math.sqrt(WEEKS_PER_YEAR)) if sd > 1e-15 else None
     gains = float(arr[arr > 0].sum())
     losses = float(-arr[arr < 0].sum())
     return {
-        "net_return": round(float(nav[-1] - 1.0), 10) if len(nav) else 0.0,
-        "max_drawdown": round(float(np.min(dd)), 10),
-        "sharpe_ratio_weekly_annualized": round(sharpe, 8) if sharpe is not None else None,
-        "profit_factor_weekly_net": round(gains / losses, 8) if losses > 0 else None,
+        "net_return": round(float(nav[-1] - 1.0), 10),
+        "max_drawdown": round(float(dd.min()), 10),
+        "sharpe_ratio": round(sharpe, 8) if sharpe is not None else None,
+        "profit_factor": round(gains / losses, 8) if losses > 0 else None,
+        "weeks": int(len(arr)),
         "positive_weeks": int((arr > 0).sum()),
         "negative_weeks": int((arr < 0).sum()),
-        "zero_return_weeks": int((arr == 0).sum()),
-        "weeks": int(len(arr)),
+        "cash_weeks": int((arr == 0).sum()),
     }
 
 
-def run_year(
-    year: int,
-    opens: pd.DataFrame,
-    closes: pd.DataFrame,
-    features: pd.DataFrame,
-    btc_ratio_prior: pd.Series,
-) -> dict[str, object]:
-    mondays = [
-        d for d in opens.index
-        if d.year == year and d.weekday() == 0
-        and (d + pd.Timedelta(days=4)) in opens.index
-        and (d + pd.Timedelta(days=4)).year == year
-    ]
-    if not mondays:
-        raise ValueError(f"No complete Monday-Friday weeks in {year}")
-
-    weekly_gross: list[float] = []
-    weekly_net: list[float] = []
-    market_weeks = 0
-    cash_weeks = 0
-    long_gross_sum = 0.0
-    short_gross_sum = 0.0
-    long_net_sum = 0.0
-    short_net_sum = 0.0
-    trade_rows: list[dict[str, object]] = []
-
+def build_weekly_panel(frames: dict[str, pd.DataFrame], symbols: list[str],
+                       btc: pd.DataFrame, cutoff: date) -> list[dict]:
+    indexed = {s: frames[s].set_index("date") for s in symbols}
+    btc_i = btc.set_index("date").copy()
+    btc_i["sma50"] = btc_i["close"].rolling(50, min_periods=50).mean()
+    first = min(frames[s]["date"].min() for s in symbols)
+    first_monday = first + pd.Timedelta(days=(7 - first.weekday()) % 7)
+    last = pd.Timestamp(cutoff, tz="UTC")
+    mondays = pd.date_range(first_monday, last - pd.Timedelta(days=4), freq="W-MON", tz="UTC")
+    panel = []
     for monday in mondays:
+        prior = monday - pd.Timedelta(days=1)
         friday = monday + pd.Timedelta(days=4)
-        ratio = float(btc_ratio_prior.loc[monday]) if pd.notna(btc_ratio_prior.loc[monday]) else np.nan
-        if not np.isfinite(ratio):
-            # Warm-up is not silently counted as market exposure; strict run records it as cash.
-            cash_weeks += 1
-            weekly_gross.append(0.0)
-            weekly_net.append(0.0)
-            trade_rows.append({
-                "monday": str(monday.date()), "friday": str(friday.date()),
-                "regime": "CASH_MA50_UNAVAILABLE", "gross_return": 0.0, "net_return": 0.0
-            })
-            continue
-
-        # Exact requested rule: prior UTC daily BTC close strictly above prior MA50.
-        if ratio <= 1.0:
-            cash_weeks += 1
-            weekly_gross.append(0.0)
-            weekly_net.append(0.0)
-            trade_rows.append({
-                "monday": str(monday.date()), "friday": str(friday.date()),
-                "regime": "CASH_BTC_CLOSE_LE_MA50",
-                "btc_close_to_ma50_ratio_prior": round(ratio, 8),
-                "gross_return": 0.0, "net_return": 0.0
-            })
-            continue
-
-        longs, shorts = select_basket(features.loc[monday])
-        long_returns = np.array([
-            float(closes.loc[friday, s] / opens.loc[monday, s] - 1.0) for s in longs
-        ])
-        short_returns = np.array([
-            float(closes.loc[friday, s] / opens.loc[monday, s] - 1.0) for s in shorts
-        ])
-        gross = LONG_WEIGHT * float(long_returns.mean()) - SHORT_WEIGHT * float(short_returns.mean())
-        # 0.06% one-way cost on 100% gross notional, charged at entry and exit.
-        round_trip_cost = 2.0 * COST_PER_SIDE * (LONG_WEIGHT + SHORT_WEIGHT)
-        net = gross - round_trip_cost
-        market_weeks += 1
-        weekly_gross.append(gross)
-        weekly_net.append(net)
-        lg = LONG_WEIGHT * float(long_returns.mean())
-        sg = -SHORT_WEIGHT * float(short_returns.mean())
-        long_gross_sum += lg
-        short_gross_sum += sg
-        long_net_sum += lg - LONG_WEIGHT * 2.0 * COST_PER_SIDE
-        short_net_sum += sg - SHORT_WEIGHT * 2.0 * COST_PER_SIDE
-        trade_rows.append({
-            "monday": str(monday.date()), "friday": str(friday.date()),
-            "regime": "MARKET",
-            "btc_close_to_ma50_ratio_prior": round(ratio, 8),
-            "long_symbols": longs, "short_symbols": shorts,
-            "gross_return": round(gross, 10),
-            "net_return": round(net, 10),
-            "round_trip_cost": round(round_trip_cost, 10)
+        available = []
+        feature_values = {}
+        prices = {}
+        for s in symbols:
+            f = indexed[s]
+            if prior not in f.index or monday not in f.index or friday not in f.index:
+                continue
+            row = f.loc[prior]
+            if isinstance(row, pd.DataFrame):
+                row = row.iloc[-1]
+            monday_row = f.loc[monday]
+            friday_row = f.loc[friday]
+            if isinstance(monday_row, pd.DataFrame):
+                monday_row = monday_row.iloc[-1]
+            if isinstance(friday_row, pd.DataFrame):
+                friday_row = friday_row.iloc[-1]
+            if int(row["obs_from_inception"]) < WARMUP_DAYS:
+                continue
+            if not np.isfinite(row["volume_z20"]) or not np.isfinite(row["rsi14"]):
+                continue
+            if not np.isfinite(monday_row["open"]) or not np.isfinite(friday_row["close"]):
+                continue
+            available.append(s)
+            feature_values[s] = (float(row["volume_z20"]), float(row["rsi14"]))
+            prices[s] = float(friday_row["close"] / monday_row["open"] - 1.0)
+        btc_regime = None
+        if prior in btc_i.index:
+            b = btc_i.loc[prior]
+            if isinstance(b, pd.DataFrame):
+                b = b.iloc[-1]
+            if pd.notna(b["sma50"]) and float(b["close"]) > 0:
+                btc_regime = bool(float(b["close"]) > float(b["sma50"]))
+        scores = {}
+        if len(available) >= MIN_ELIGIBLE:
+            vol = pd.Series({s: feature_values[s][0] for s in available})
+            rsi = pd.Series({s: feature_values[s][1] for s in available})
+            zv, zr = zscore(vol), zscore(rsi)
+            if zv.notna().all() and zr.notna().all():
+                composite = 0.5 * zv + 0.5 * zr
+                scores = {s: float(composite[s]) for s in available}
+        ranked = sorted(scores, key=lambda s: (-scores[s], s))
+        top = ranked[:TOP_N] if len(ranked) >= MIN_ELIGIBLE else []
+        bottom = ranked[-TOP_N:] if len(ranked) >= MIN_ELIGIBLE else []
+        panel.append({
+            "monday": monday, "friday": friday, "year": int(monday.year),
+            "available_symbols": available, "scores": scores,
+            "top2": top, "bottom2": bottom, "asset_returns": prices,
+            "btc_bull_regime": btc_regime,
         })
+    return panel
 
-    gross_stats = metrics(weekly_gross)
-    net_stats = metrics(weekly_net)
-    total_sessions = len(mondays) * WEEKLY_SESSIONS
-    market_sessions = market_weeks * WEEKLY_SESSIONS
-    cash_sessions = cash_weeks * WEEKLY_SESSIONS
-    # Weekend calendar days are also uninvested under Monday-open/Friday-close execution.
-    weekend_days = len(mondays) * 2
-    total_calendar_days = len(mondays) * 7
-    calendar_market_days = market_sessions
-    calendar_cash_days = cash_sessions + weekend_days
 
-    return {
-        "year": year,
-        "status": "COMPLETED",
-        "experiment": "B_VOLUME_RSI_50_50_CS_ZSCORE_WITH_BTC_MA50_FILTER",
-        "metrics": {
-            "gross_return": gross_stats["net_return"],
-            "net_return": net_stats["net_return"],
-            "max_drawdown": net_stats["max_drawdown"],
-            "sharpe_ratio": net_stats["sharpe_ratio_weekly_annualized"],
-            "profit_factor": net_stats["profit_factor_weekly_net"],
-            "gross_metrics": gross_stats,
-            "net_metrics": net_stats
+def run_strategy(panel: list[dict], strategy: str) -> tuple[dict, dict]:
+    all_returns: list[float] = []
+    by_year: dict[int, list[float]] = {}
+    year_trade_counts: dict[int, int] = {}
+    year_selected: dict[int, dict[str, int]] = {}
+    weekly_log = []
+    for row in panel:
+        year = row["year"]
+        by_year.setdefault(year, [])
+        year_trade_counts.setdefault(year, 0)
+        year_selected.setdefault(year, {})
+        chosen: list[str] = []
+        reason = "CASH_INSUFFICIENT_ELIGIBLE_ASSETS"
+        if len(row["available_symbols"]) >= MIN_ELIGIBLE and row["top2"]:
+            if strategy == "PURE_MOMENTUM_LONG_TOP2":
+                chosen, reason = row["top2"], "LONG_TOP2"
+            elif strategy == "PURE_MEAN_REVERSION_LONG_BOTTOM2":
+                chosen, reason = row["bottom2"], "LONG_BOTTOM2"
+            elif strategy == "HYBRID_BTC_MA50_SWITCH":
+                if row["btc_bull_regime"] is True:
+                    chosen, reason = row["top2"], "BTC_ABOVE_MA50_LONG_TOP2"
+                elif row["btc_bull_regime"] is False:
+                    chosen, reason = row["bottom2"], "BTC_AT_OR_BELOW_MA50_LONG_BOTTOM2"
+                else:
+                    reason = "CASH_BTC_MA50_UNAVAILABLE"
+        gross = float(np.mean([row["asset_returns"][s] for s in chosen])) if chosen else 0.0
+        # 100% long exposure: entry and exit costs on total portfolio notional.
+        cost = 2.0 * COST_SIDE if chosen else 0.0
+        net = gross - cost
+        all_returns.append(net)
+        by_year[year].append(net)
+        if chosen:
+            year_trade_counts[year] += 1
+            for s in chosen:
+                year_selected[year][s] = year_selected[year].get(s, 0) + 1
+        weekly_log.append({
+            "monday": str(row["monday"].date()),
+            "friday": str(row["friday"].date()),
+            "strategy_state": reason,
+            "eligible_assets": row["available_symbols"],
+            "selected_longs": chosen,
+            "btc_bull_regime": row["btc_bull_regime"],
+            "gross_return": round(gross, 10),
+            "round_trip_cost": round(cost, 10),
+            "net_return": round(net, 10),
+        })
+    years = {}
+    for year, returns in sorted(by_year.items()):
+        years[str(year)] = {
+            "status": "COMPLETED" if returns else "NO_WEEKS",
+            "metrics": portfolio_metrics(returns),
+            "invested_weeks": year_trade_counts[year],
+            "selection_counts": year_selected[year],
+        }
+    result = {
+        "strategy": strategy,
+        "year_by_year": years,
+        "entire_period": {
+            "start_monday": weekly_log[0]["monday"] if weekly_log else None,
+            "end_friday": weekly_log[-1]["friday"] if weekly_log else None,
+            "metrics": portfolio_metrics(all_returns),
         },
-        "exposure": {
-            "total_complete_weeks": len(mondays),
-            "market_weeks": market_weeks,
-            "cash_weeks": cash_weeks,
-            "total_trading_sessions": total_sessions,
-            "market_trading_sessions": market_sessions,
-            "cash_trading_sessions": cash_sessions,
-            "market_exposure_pct_of_trading_sessions": round(100.0 * market_sessions / total_sessions, 6),
-            "cash_pct_of_trading_sessions": round(100.0 * cash_sessions / total_sessions, 6),
-            "calendar_days_including_weekends": total_calendar_days,
-            "calendar_market_days_approx": calendar_market_days,
-            "calendar_cash_days_approx_including_weekends": calendar_cash_days,
-            "calendar_market_exposure_pct_approx": round(100.0 * calendar_market_days / total_calendar_days, 6)
-        },
-        "long_leg": {
-            "gross_contribution_sum_weekly": round(long_gross_sum, 10),
-            "net_contribution_sum_weekly": round(long_net_sum, 10)
-        },
-        "short_leg": {
-            "gross_contribution_sum_weekly": round(short_gross_sum, 10),
-            "net_contribution_sum_weekly": round(short_net_sum, 10)
-        },
-        "cost_model": {
-            "fee_per_side": FEE_PER_SIDE,
-            "slippage_per_side": SLIPPAGE_PER_SIDE,
-            "combined_execution_cost_per_side": COST_PER_SIDE,
-            "round_trip_cost_on_100pct_gross_notional": round(2.0 * COST_PER_SIDE, 10),
-            "funding": "UNAVAILABLE_NOT_INCLUDED_SPOT_PROXY"
-        },
-        "holding_period": {
-            "requested_label": "7-day non-overlapping",
-            "implemented_execution": "Monday Open to same-week Friday Close",
-            "actual_window": "weekly 5-session window; not 7 calendar days",
-            "non_overlapping": True
-        },
-        "weekly_trades": trade_rows
     }
+    return result, {"weekly_log": weekly_log}
 
 
 def main() -> None:
-    opens, closes, features, btc_ratio_prior = load_data()
-    results = [run_year(y, opens, closes, features, btc_ratio_prior) for y in YEARS]
+    now_utc = datetime.now(timezone.utc).date()
+    cutoff = now_utc - timedelta(days=2)  # completed daily bars only
+    current_month = month_of(cutoff)
+    previous_month_end = date(cutoff.year, cutoff.month, 1) - timedelta(days=1)
+    last_complete_month = month_of(previous_month_end)
+    scan_months = month_range(SCAN_START, last_complete_month)
+    symbols_to_fetch = [BENCHMARK, *CANDIDATES]
+    first_months = first_archive_months(symbols_to_fetch, scan_months)
+
+    frames_raw = {}
+    for symbol in symbols_to_fetch:
+        frames_raw[symbol] = download_symbol(
+            symbol, first_months[symbol], scan_months, cutoff
+        )
+    frames = {s: add_features(frames_raw[s]) for s in CANDIDATES}
+    selected, selection_audit = select_universe(frames, cutoff)
+    btc = add_features(frames_raw[BENCHMARK])
+    panel = build_weekly_panel(frames, selected, btc, cutoff)
+
+    strategy_names = (
+        "PURE_MOMENTUM_LONG_TOP2",
+        "PURE_MEAN_REVERSION_LONG_BOTTOM2",
+        "HYBRID_BTC_MA50_SWITCH",
+    )
+    results = {}
+    for name in strategy_names:
+        results[name], _ = run_strategy(panel, name)
+
     output = {
-        "schema_version": "2.0",
+        "schema_version": "3.0",
         "research_status": "EXPLORATORY_NOT_APPROVED_FOR_TRADING",
         "data": {
             "provider": "Binance Vision",
             "market": "SPOT",
             "interval": "1d",
-            "universe": list(SYMBOLS),
-            "test_years": list(YEARS),
-            "warmup_start_month": FIRST_MONTH,
-            "download_end_month": LAST_MONTH,
-            "btc_regime_reference": "BTCUSDT close(T-1) > SMA50(BTCUSDT close)(T-1)",
-            "short_perpetual_data": "UNAVAILABLE",
-            "prices_and_volume": "REAL_BINANCE_VISION_SPOT"
+            "data_cutoff_utc": str(cutoff),
+            "latest_complete_month": last_complete_month,
+            "current_partial_month_daily_archives_included": current_month if current_month > last_complete_month else None,
+            "benchmark_only": BENCHMARK,
+            "candidate_universe": list(CANDIDATES),
+            "selected_tradable_assets": selected,
+            "first_available_archive_month_by_symbol": first_months,
+            "asset_first_observation_dates": {
+                s: str(frames_raw[s]["date"].min().date()) for s in symbols_to_fetch
+            },
+            "funding": "NOT_APPLICABLE_TO_SPOT_PROXY; NO PERPETUAL FUNDING DATA USED",
+            "data_integrity": "No forward-fill; missing monthly archive or material historical gaps fail the run.",
         },
+        "universe_selection": selection_audit,
         "methodology": {
-            "experiment": "B",
             "ranking": "0.5 * cross_section_z(Volume_Z20) + 0.5 * cross_section_z(RSI_14)",
-            "long_selection": "top 2",
-            "short_selection": "bottom 2",
-            "regime_filter": "Only enter if BTC close(T-1) > BTC MA50(T-1); otherwise 100% cash for the entire weekly cohort.",
-            "signal_day": "Monday",
-            "feature_and_regime_asof": "prior UTC daily close (Sunday)",
-            "entry": "Monday Open",
-            "exit": "same-week Friday Close",
-            "holding": "5 weekday sessions, non-overlapping; explicit Monday-Friday dates take precedence over inconsistent 7-calendar-day label",
-            "portfolio": "50% gross long + 50% gross short",
-            "costs": "0.04% fee + 0.02% slippage per side; entry and exit"
+            "volume_z20": "20-day rolling z-score of base-asset volume",
+            "rsi14": "Wilder RSI(14)",
+            "cross_section": "At each Monday, rank only assets already listed and with valid prior-Sunday features plus Monday Open and Friday Close; require at least 4 eligible assets.",
+            "warmup": "At least 50 observations since first available daily archive for each tradable asset; BTC SMA50 uses prior close only.",
+            "execution": "Monday Open to same-week Friday Close; 5 weekday sessions, non-overlapping; not 7 calendar days.",
+            "portfolio": "Long-only, equal-weight top 2 or bottom 2; 100% cash when fewer than 4 assets or required benchmark data is unavailable.",
+            "costs": {
+                "fee_per_side": FEE_SIDE,
+                "slippage_per_side": SLIPPAGE_SIDE,
+                "combined_cost_per_side": COST_SIDE,
+                "round_trip_cost_on_fully_invested_portfolio": 2 * COST_SIDE,
+            },
+            "btc_regime": "BTC Close(T-1) > SMA50(T-1) => bullish; <= => bearish; missing SMA => cash for Hybrid only.",
+            "selection_bias": "The eight assets are selected using trailing-period liquidity and correlation as of the run cutoff. Historical results are exploratory and contain universe-selection/survivorship bias; they are not unbiased OOS evidence.",
+            "spot_proxy_limitation": "Spot returns are not perpetual-futures returns; funding, basis, liquidation, and contract-specific microstructure are not modeled.",
         },
-        "results": results
+        "strategies": results,
     }
     print(json.dumps(output, ensure_ascii=False, indent=2, allow_nan=False))
 
