@@ -353,8 +353,16 @@ inline std::vector<Instrument> select_instruments(
     });
     const auto btc = std::find_if(eligible.begin(), eligible.end(),
         [](const Instrument& item) { return item.base == "BTC"; });
-    if (btc == eligible.end())
+    if (btc == eligible.end()) {
+        if (exact_universe) {
+            if (required_symbols.size() != static_cast<std::size_t>(target_count) ||
+                required_symbols.contains("BTC")) {
+                throw std::runtime_error("exact_universe_requires_exact_non_btc_symbol_count");
+            }
+            return {};
+        }
         throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
+    }
     if (exact_universe) {
         if (required_symbols.size() != static_cast<std::size_t>(target_count) ||
             required_symbols.contains("BTC")) {
@@ -364,13 +372,7 @@ inline std::vector<Instrument> select_instruments(
         for (const auto& required_base : required_symbols) {
             const auto found = std::find_if(eligible.begin(), eligible.end(),
                 [&](const Instrument& item) { return item.base == required_base; });
-            if (found == eligible.end()) {
-                throw std::runtime_error("exact_universe_asset_not_eligible:" + required_base);
-            }
-            exact_selected.push_back(*found);
-        }
-        if (exact_selected.size() != static_cast<std::size_t>(target_count) + 1U) {
-            throw std::runtime_error("exact_universe_selection_count_mismatch");
+            if (found != eligible.end()) exact_selected.push_back(*found);
         }
         return exact_selected;
     }
