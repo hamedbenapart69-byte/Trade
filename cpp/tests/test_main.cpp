@@ -381,6 +381,15 @@ int main() {
 
     const auto contract = sample_contract(now_ms);
     const auto artifact = cfss::build_l2_artifact(contract, now_ms);
+    auto owner_candidate_contract = contract;
+    owner_candidate_contract["crypto_universe"] = cfss::okx::load_candidate_universe(
+        {"ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"}).artifact;
+    const auto owner_candidate_artifact =
+        cfss::build_l2_artifact(owner_candidate_contract, now_ms);
+    if (owner_candidate_artifact["instruments"].size() != 1U) {
+        std::cerr << "Owner-configured candidate universe did not pass L2 contract validation\\n";
+        return EXIT_FAILURE;
+    }
     auto empty_discovery_contract = contract;
     empty_discovery_contract["instruments"] = nlohmann::json::array();
     const auto empty_discovery_artifact =
