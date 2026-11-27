@@ -264,11 +264,13 @@ inline const std::vector<AssetIdentity>& candidate_identity_seed() {
 }
 
 inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
-    if (!payload.is_object() || !payload.contains("data") || !payload.at("data").is_array())
+    if (!payload.is_object() || !payload.contains("data") ||
+        (!payload.at("data").is_array() && !payload.at("data").is_object())) {
         throw std::invalid_argument("coinmarketcap_response_shape_invalid");
+    }
     std::vector<MarketTicker> output;
-    for (const auto& row : payload.at("data")) {
-        if (!row.is_object() || !row.contains("quote")) continue;
+    const auto parse_row = [&](const json& row) {
+        if (!row.is_object() || !row.contains("quote")) return;
         const json* usd_pointer = nullptr;
         const auto& quote = row.at("quote");
         if (quote.is_array()) {
@@ -281,7 +283,7 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
         } else if (quote.is_object() && quote.contains("USD")) {
             usd_pointer = &quote.at("USD");
         }
-        if (!usd_pointer) continue;
+        if (!usd_pointer) return;
         const auto& usd = *usd_pointer;
         const auto price = numeric_value(usd.value("price", json{}));
         const auto market_cap = numeric_value(usd.value("market_cap", json{}));
@@ -289,12 +291,18 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
         const auto id = string_value(row.value("id", json{}));
         const auto symbol = string_value(row.value("symbol", json{}));
         if (!price || !market_cap || !volume || id.empty() || symbol.empty() ||
-            *price <= 0.0 || *market_cap < 0.0 || *volume < 0.0) continue;
+            *price <= 0.0 || *market_cap < 0.0 || *volume < 0.0) return;
         output.push_back({
             "coinmarketcap", id, symbol, string_value(row.value("name", json{})),
             string_value(usd.value("last_updated", json{})), *price, *market_cap, *volume,
             row.value("cmc_rank", std::int64_t{0})
         });
+    };
+    const auto& data = payload.at("data");
+    if (data.is_array()) {
+        for (const auto& row : data) parse_row(row);
+    } else {
+        for (const auto& item : data.items()) parse_row(item.value());
     }
     return output;
 }
