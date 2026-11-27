@@ -120,32 +120,50 @@ class IsolatedSignalsBranchTests(unittest.TestCase):
 
 
 
-    def test_email_fallback_sends_only_with_configured_sender_and_recipient(self):
-        import os
+    def test_email_delivery_is_disabled_by_telegram_only_policy(self):
         from modules.notifier import notify_email
-        payload = {
-            "generated_at_utc": "2026-11-08T12:00:00+00:00",
-            "signals": [{
-                "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "side": "BUY",
-                "entry": 100, "stop_loss": 95, "take_profit": [110, 120],
-            }],
-        }
-        class FakeSMTP:
-            sent_message = None
-            def __init__(self, *args, **kwargs): pass
-            def __enter__(self): return self
-            def __exit__(self, *args): return False
-            def login(self, username, password): self.credentials = (username, password)
-            def send_message(self, message): FakeSMTP.sent_message = message
-        with patch.dict(os.environ, {
-            "SMTP_HOST": "smtp.gmail.com", "SMTP_PORT": "465",
-            "SMTP_USER": "from@example.test", "SMTP_PASSWORD": "test-app-password",
-            "ALERT_EMAIL_TO": "to@example.test",
-        }, clear=True), patch("modules.notifier.smtplib.SMTP_SSL", FakeSMTP):
-            result = notify_email(payload)
-        self.assertEqual(result, {"status": "SENT", "sent": 1})
-        self.assertEqual(FakeSMTP.sent_message["To"], "to@example.test")
-        self.assertIn(chr(10) + "جهت:", FakeSMTP.sent_message.get_content())
+        payload = {"signals": [{"symbol": "BTC", "status": "BUY_NOW"}]}
+        self.assertEqual(notify_email(payload), {"status": "SKIPPED_POLICY_DISABLED", "sent": 0})
+
+    def test_telegram_is_the_only_user_facing_delivery_and_has_no_dashboard_dependency(self):
+        from modules.notifier import _format_signal
+        message = _format_signal({
+            "symbol": "BTC/USDT:USDT", "status": "BUY_NOW", "entry": 100,
+            "stop_loss": 95, "take_profit": [110, 120],
+        }, {})
+        self.assertIn("🔔 سیگنال فیوچرز", message)
+        self.assertNotIn("trade-3vn.pages.dev", message)
+        self.assertNotIn("DASHBOARD_URL", message)
+
+    def test_user_access_policy_requires_only_telegram_and_no_user_side_exchange_connection(self):
+        policy = json.loads((ROOT / "user_access_policy.json").read_text(encoding="utf-8"))
+        self.assertEqual(policy["user_delivery_channels"], ["telegram"])
+        self.assertFalse(policy["user_connectivity_required"])
+        self.assertFalse(policy["exchange_account_connection"])
+        self.assertFalse(policy["trading_api_keys"])
+        self.assertFalse(policy["order_execution"])
+        self.assertTrue(policy["backend_fetches_public_market_data"])
+
+    def test_user_geography_never_filters_backend_provider_candidates(self):
+        policy = json.loads((ROOT / "user_access_policy.json").read_text(encoding="utf-8"))
+        self.assertFalse(policy["user_geography_policy"]["user_location_is_provider_selection_criterion"])
+        self.assertFalse(policy["user_geography_policy"]["iran_user_side_filtering_or_vpn_requirement"])
+        self.assertFalse(policy["user_geography_policy"]["mobile_browser_provider_access_test_required"])
+        self.assertTrue(policy["user_geography_policy"]["backend_egress_reachability_test_required"])
+
+    def test_telegram_is_the_only_user_delivery_channel(self):
+        policy = json.loads((ROOT / "user_access_policy.json").read_text(encoding="utf-8"))
+        self.assertEqual(policy["delivery_behavior"]["actionable_signals"], "telegram_channel")
+        self.assertFalse(policy["delivery_behavior"]["email_delivery_enabled"])
+        self.assertFalse(policy["delivery_behavior"]["dashboard_required_for_user"])
+
+    def test_provider_catalog_marks_documentation_discovery_separately_from_runtime_proof(self):
+        catalog = json.loads((ROOT / "config" / "provider_catalog.json").read_text(encoding="utf-8"))
+        self.assertTrue(catalog["entries"])
+        for entry in catalog["entries"]:
+            self.assertIn("status", entry)
+            self.assertIn("category", entry)
+        self.assertEqual(catalog["runtime_verification"], "NOT_YET_RUN_FOR_ENTRIES_UNLESS_EXPLICITLY_STATED")
 
     def test_signal_message_uses_real_newline_characters(self):
         from modules.notifier import _format_signal
