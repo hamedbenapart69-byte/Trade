@@ -251,6 +251,9 @@ struct AssetIdentity {
     std::string coinpaprika_id;
 };
 
+inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
+                                                std::string_view provider_asset_id);
+
 inline std::optional<std::int64_t> parse_utc_iso_ms(const std::string& value) {
     if (value.size() < 19U) return std::nullopt;
     std::tm parsed{};
