@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <utility>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -79,8 +80,10 @@ inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int
         curl_easy_cleanup(handle);
         last = result;
         const bool success = result.transport == CURLE_OK && result.status == 200L;
+        // HTTP 429 is not retried blindly: without honoring Retry-After, retries
+        // amplify provider throttling and consume quota. The caller records RATE_LIMITED.
         const bool retryable = result.transport != CURLE_OK || result.status == 408L ||
-            result.status == 429L || (result.status >= 500L && result.status <= 599L);
+            (result.status >= 500L && result.status <= 599L);
         if (success || !retryable || attempt + 1 >= std::max(1, max_attempts)) return result;
         const auto delay = std::chrono::milliseconds(250 * (1 << std::min(attempt, 3)));
         std::this_thread::sleep_for(delay);
@@ -248,6 +251,63 @@ struct AssetIdentity {
     std::string coinpaprika_id;
 };
 
+inline std::optional<std::int64_t> parse_utc_iso_ms(const std::string& value) {
+    if (value.size() < 19U) return std::nullopt;
+    std::tm parsed{};
+    std::istringstream input{value.substr(0U, 19U)};
+    input >> std::get_time(&parsed, "%Y-%m-%dT%H:%M:%S");
+    if (input.fail()) return std::nullopt;
+#if defined(_WIN32)
+    const auto seconds = _mkgmtime(&parsed);
+#else
+    const auto seconds = timegm(&parsed);
+#endif
+    if (seconds < 0) return std::nullopt;
+    return static_cast<std::int64_t>(seconds) * 1000LL;
+}
+
+inline void evaluate_snapshot_freshness(ProviderSnapshot& snapshot,
+                                        const std::vector<AssetIdentity>& identities,
+                                        std::int64_t now_ms,
+                                        std::int64_t max_age_ms) {
+    if (snapshot.status != "LIVE_RESPONSE_PARSED") {
+        snapshot.freshness_status = "UNAVAILABLE";
+        return;
+    }
+    if (identities.empty() || now_ms <= 0 || max_age_ms <= 0) {
+        snapshot.freshness_status = "NOT_TESTED";
+        return;
+    }
+    std::size_t checked = 0U;
+    for (const auto& identity : identities) {
+        const std::string* provider_id = nullptr;
+        if (snapshot.provider_id == "coinmarketcap") provider_id = &identity.coinmarketcap_id;
+        else if (snapshot.provider_id == "coingecko") provider_id = &identity.coingecko_id;
+        else if (snapshot.provider_id == "coinpaprika") provider_id = &identity.coinpaprika_id;
+        if (!provider_id) {
+            snapshot.freshness_status = "UNSUPPORTED_PROVIDER";
+            return;
+        }
+        const auto* ticker = find_by_provider_id(snapshot, *provider_id);
+        if (!ticker || ticker->symbol != identity.canonical_symbol) {
+            snapshot.freshness_status = "PARTIAL_COVERAGE";
+            return;
+        }
+        const auto timestamp = parse_utc_iso_ms(ticker->provider_timestamp_utc);
+        if (!timestamp) {
+            snapshot.freshness_status = "TIMESTAMP_UNAVAILABLE";
+            return;
+        }
+        const auto age = now_ms - *timestamp;
+        if (age < -300'000LL || age > max_age_ms) {
+            snapshot.freshness_status = "STALE";
+            return;
+        }
+        ++checked;
+    }
+    snapshot.freshness_status = checked == identities.size() ? "FRESH" : "PARTIAL_COVERAGE";
+}
+
 // This is a discovery seed only. Membership is not a production-universe decision.
 inline const std::vector<AssetIdentity>& candidate_identity_seed() {
     static const std::vector<AssetIdentity> seed{
@@ -347,6 +407,13 @@ inline ProviderSnapshot fetch_coinmarketcap() {
     snapshot.endpoint_used = "listings_latest";
     snapshot.request_attempts = response.attempts;
     if (response.transport != CURLE_OK || response.status != 200L) {
+        if (response.status == 429L) {
+            snapshot.http_status = response.status;
+            snapshot.status = "PROVIDER_RATE_LIMITED";
+            snapshot.error = "coinmarketcap_listings_rate_limited_no_same-provider_retry";
+            breaker.record_failure();
+            return snapshot;
+        }
         const auto fallback = http_get(
             "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/quotes/latest?symbol=BTC,ETH,SOL,BNB,XRP,DOGE,ADA,LINK,AVAX&convert=USD");
         snapshot.request_attempts += fallback.attempts;
@@ -455,6 +522,7 @@ inline ProviderSnapshot fetch_coingecko() {
 inline ProviderSnapshot fetch_coinpaprika() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinpaprika";
+    snapshot.license_status = "PERSONAL_USE_ONLY";
     snapshot.endpoint_used = "tickers";
     snapshot.retrieved_at_utc = utc_now_iso();
     auto& breaker = coinpaprika_breaker();
