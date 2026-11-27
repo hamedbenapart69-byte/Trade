@@ -58,7 +58,25 @@ int main() {
         }
     });
 
+    const json cmc_quotes_fixture = {
+        {"data", {
+            {"1", {
+                {"id", 1}, {"name", "Bitcoin"}, {"symbol", "BTC"}, {"cmc_rank", 1},
+                {"quote", json::array({{
+                    {"symbol", "USD"}, {"price", 100000.0}, {"market_cap", 2000000000000.0},
+                    {"volume_24h", 30000000000.0}, {"last_updated", "2026-11-27T00:00:00.000Z"}
+                }})}
+            }}
+        }}
+    };
+
     const auto cmc = cfss::federation::parse_coinmarketcap(cmc_fixture);
+    const auto cmc_quotes = cfss::federation::parse_coinmarketcap(cmc_quotes_fixture);
+    if (cmc_quotes.size() != 1U || cmc_quotes[0].provider_asset_id != "1" ||
+        cmc_quotes[0].symbol != "BTC") {
+        std::cerr << "CoinMarketCap quotes/latest object envelope parsing failed\n";
+        return EXIT_FAILURE;
+    }
     const auto paprika = cfss::federation::parse_coinpaprika(paprika_fixture);
     const auto gecko = cfss::federation::parse_coingecko(gecko_fixture);
     if (cmc.size() != 2U || paprika.size() != 2U || gecko.size() != 2U) {
