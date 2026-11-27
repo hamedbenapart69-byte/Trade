@@ -377,6 +377,13 @@ inline std::string open_interest_request_url(const Contract& contract,
         "&pageSize=" + std::to_string(page_size);
 }
 
+inline bool should_fetch_next_open_interest_page(std::size_t response_rows,
+                                                    std::int64_t oldest_timestamp_ms,
+                                                    std::int64_t start_ms,
+                                                    std::size_t page_size = 100U) noexcept {
+    return response_rows >= page_size && oldest_timestamp_ms > start_ms;
+}
+
 inline json fetch_open_interest(const Contract& contract, std::int64_t start_ms,
                                 std::int64_t end_ms) {
     constexpr std::size_t page_size = 100U;
@@ -399,7 +406,9 @@ inline json fetch_open_interest(const Contract& contract, std::int64_t start_ms,
             oldest_timestamp_ms = std::min(oldest_timestamp_ms, timestamp_ms);
         }
 
-        if (parsed.size() < page_size || oldest_timestamp_ms <= start_ms) break;
+        // Use raw API row count: parsing may drop an inclusive endAt boundary row.
+        if (!should_fetch_next_open_interest_page(rows.size(), oldest_timestamp_ms,
+                                                  start_ms, page_size)) break;
         // KuCoin returns historical OI newest-first; endAt is also its pagination cursor.
         const auto next_cursor_ms = oldest_timestamp_ms - 1000LL;
         if (next_cursor_ms >= cursor_end_ms || next_cursor_ms <= start_ms) break;
