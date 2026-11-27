@@ -14,7 +14,8 @@
       "data_redistribution": "PROHIBITED",
       "expected_calls_per_4h_run": 1,
       "operational_status": "LIVE_TESTED_HTTP_200",
-      "production_eligibility": "CONDITIONAL_PERSONAL_INTERNAL_USE"
+      "production_eligibility": "CONDITIONAL_PERSONAL_INTERNAL_USE",
+      "jurisdiction_status": "No explicit country exclusion was found in the API documentation reviewed; personal-use restriction applies and applicable-law compliance remains required."
     },
     "coinranking": {
       "enabled": true,
@@ -27,7 +28,12 @@
       "expected_calls_per_4h_run": 10,
       "required_secret": "COINRANKING_API_KEY",
       "operational_status": "NOT_CONFIGURED",
-      "production_eligibility": "PENDING_KEY_AND_JURISDICTION_CHECK"
+      "production_eligibility": "PENDING_PROVIDER_KEY_ISSUANCE_AND_ACCOUNT_ELIGIBILITY",
+      "jurisdiction_status": "No explicit Iran exclusion found in the published API terms reviewed; account eligibility is not independently confirmed until Coinranking accepts registration and issues the key. Applicable-law compliance remains the account holder's responsibility.",
+      "free_plan_positioning": "Pricing page labels Free as ideal for testing; API terms permit internal analysis and internal application development. No SLA; 5,000 calls/month; 5 requests/second; 100 results/request; 1-year price history.",
+      "official_pricing_source": "https://coinranking.com/api/pricing",
+      "official_terms_source": "https://support.coinranking.com/article/131-api-terms-conditions",
+      "expected_monthly_calls_at_four_hour_cron": 1800
     },
     "coinmarketcap": {
       "enabled": true,
