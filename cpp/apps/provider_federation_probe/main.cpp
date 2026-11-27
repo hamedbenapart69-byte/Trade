@@ -61,12 +61,12 @@ int main(int argc, char** argv) {
             });
         }
 
-        const bool both_live = cmc.status == "LIVE" && paprika.status == "LIVE";
+        const bool both_live = cmc.status == "LIVE_RESPONSE_PARSED" && paprika.status == "LIVE_RESPONSE_PARSED";
         const json output = {
             {"document_version", "V21.1"},
             {"artifact_type", "cfss_provider_federation_discovery_v1"},
             {"generated_at_utc", cfss::federation::utc_now_iso()},
-            {"run_status", both_live ? "TWO_PROVIDER_LIVE_TESTED" : "PROVIDER_DISCOVERY_PARTIAL"},
+            {"run_status", both_live ? "TWO_PROVIDER_LIVE_RESPONSE_PARSED_FRESHNESS_UNVERIFIED" : "PROVIDER_DISCOVERY_PARTIAL"},
             {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
             {"providers", json::array({
                 cfss::federation::snapshot_to_json(cmc),
