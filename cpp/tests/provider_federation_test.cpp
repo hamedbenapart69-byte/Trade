@@ -77,7 +77,7 @@ int main() {
     }
 
     cfss::federation::ProviderSnapshot cmc_snapshot{
-        "coinmarketcap", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, cmc
+        "coinmarketcap", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", "NOT_VERIFIED", 1, cmc
     };
     if (gecko[0].provider_id != "coingecko" || gecko[0].provider_asset_id != "bitcoin" ||
         gecko[0].symbol != "BTC" || std::abs(gecko[1].price_usd - 3002.0) > 1e-9) {
@@ -85,10 +85,10 @@ int main() {
         return EXIT_FAILURE;
     }
     cfss::federation::ProviderSnapshot gecko_snapshot{
-        "coingecko", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, gecko
+        "coingecko", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", "NOT_VERIFIED", 1, gecko
     };
     cfss::federation::ProviderSnapshot paprika_snapshot{
-        "coinpaprika", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, paprika
+        "coinpaprika", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", "NOT_VERIFIED", 1, paprika
     };
     const auto references = cfss::federation::compare_candidate_references(
         cmc_snapshot, paprika_snapshot,
