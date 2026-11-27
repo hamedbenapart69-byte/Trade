@@ -10,6 +10,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <ctime>
 #include <cstdio>
 #include <utility>
@@ -133,6 +134,7 @@ struct MarketTicker {
     double market_cap_usd{0.0};
     double volume_24h_usd{0.0};
     std::int64_t rank{0};
+    std::string external_asset_id;
 };
 
 struct ProviderSnapshot {
@@ -576,13 +578,16 @@ struct CrossProviderReference {
     double coinmarketcap_price_usd{0.0};
     double coingecko_price_usd{0.0};
     double coinpaprika_price_usd{0.0};
+    double coinranking_price_usd{0.0};
     double price_difference_bps{0.0};
     double coinmarketcap_market_cap_usd{0.0};
     double coingecko_market_cap_usd{0.0};
     double coinpaprika_market_cap_usd{0.0};
+    double coinranking_market_cap_usd{0.0};
     double coinmarketcap_volume_24h_usd{0.0};
     double coingecko_volume_24h_usd{0.0};
     double coinpaprika_volume_24h_usd{0.0};
+    double coinranking_volume_24h_usd{0.0};
 };
 
 inline std::vector<CrossProviderReference> compare_candidate_references(
