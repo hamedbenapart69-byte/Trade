@@ -60,8 +60,8 @@ jobs:
           fi
           jq -e '
             .document_version == "V21.1" and
-            .run_status == "TWO_PROVIDER_LIVE_TESTED" and
-            ([.providers[] | select(.status == "LIVE")] | length) == 2 and
+            .run_status == "TWO_PROVIDER_LIVE_RESPONSE_PARSED_FRESHNESS_UNVERIFIED" and
+            ([.providers[] | select(.status == "LIVE_RESPONSE_PARSED")] | length) == 2 and
             any(.candidate_seed[]; .canonical_symbol == "BTC" and .classification == "REAL_MULTI_SOURCE")
           ' artifacts/provider-federation-discovery.v1.json >/dev/null
           echo "V21_1_TWO_AGGREGATOR_BTC_OVERLAP_PASS"
