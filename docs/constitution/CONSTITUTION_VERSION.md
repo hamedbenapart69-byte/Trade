@@ -2,7 +2,7 @@
 
 ## Current normative source
 
-**V21.0 is the sole controlling project specification. Owner acceptance: 2026-11-23.**
+**Controlling source set: V21.0 Master Source + V21.1 Binding Master Source Addendum, interpreted with the M1 Decision Intelligence Protocol and Master Owner Mission. Owner acceptance of V21.0: 2026-11-23.**
 
 - Master source: owner-provided `T1.md`
 - Master source SHA-256: `6a03106a413a773d5b8905a5f413bfbd5e89f5be45e0ae456c9f7956d4be94a0`
@@ -10,11 +10,13 @@
 - Addendum SHA-256: `ef3a46e7ea137dc9ebaf7f8a891eb002b84788074d95ca51ce613bfecc19d9e4`
 - Accepted architecture: `CFSS_V21_Architecture_Design_V1_FA.md`
 - Architecture SHA-256: `f2949775dea43e410f6c63feb8e67c345a06dac556d48e381ea6d75e74adb762`
-- Owner acceptance: **ACCEPTED**
+- V21.1 addendum: owner-provided v.21pro(1).md; SHA-256 b05fd41b48f162caf0a40e401a97d6a7be0fe7f345026f29c9dbd33c9e828fc0
+- Supporting owner directives: m1.md SHA-256 31e7645060309801ca94d2f80df2b7812928a6cb9d1e5f03d49de053184be8e2; untitled.md SHA-256 3359994927025d3446e709c3f0816ff30d186742622a7cd0c631bf9d3943b5ac
+- Owner acceptance: V21.0 ACCEPTED; V21.1 BINDING ADDENDUM; M1 AND OWNER MISSION RECORDED AS GOVERNING OWNER DIRECTIVES
 - Stage 0: **OWNER ACCEPTED / DESIGN PASS**
 - Stage 1: **IN PROGRESS — NOT YET ACCEPTED**
 
-The exact V21 master and addendum bytes are owner-provided source files. The repository Source Register records their hashes and explicitly records that independent repository copies are not yet committed. A hash is not a recoverable copy; no claim of repository archival is made.
+The five source documents were read and their SHA-256 hashes verified in the project runtime. Their independent repository copies are not yet committed. A hash is not a recoverable copy; no claim of repository archival is made. V21.1 binds the data-federation and nine-asset-universe scope; M1 and Master Owner Mission guide strategic intent without relaxing V21 hard gates.
 
 ## V21 operating constraints
 
@@ -29,7 +31,7 @@ The exact V21 master and addendum bytes are owner-provided source files. The rep
 
 ## Historical sources — not controlling
 
-- V19.0 was previously accepted but is now explicitly archived and superseded by V21.0. Original SHA-256: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`. The verbatim archive is `docs/archive/superseded/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`; the former constitution path is an archive pointer only. Its Python-L1, Binance-Vision Stage 1 and V19 stage directives are not current requirements where they conflict with V21.
+- V19.0 was previously accepted but is now explicitly archived and superseded by V21.0/V21.1. Original SHA-256: `96dbd3bc5fe672a09f3f7bd680e40549c24a3df1b9da4ed0abc044498a3191bf`. The verbatim archive is `docs/archive/superseded/UNIFIED_CRYPTO_FUTURES_SYSTEM_V19.0_MASTER.md`; the former constitution path is an archive pointer only. Its Python-L1, Binance-Vision Stage 1 and V19 stage directives are not current requirements where they conflict with V21.
 - V18.2 is explicitly recorded as an archived historical source only (SHA-256: `e4e39fc1aec1924f93d9a480fadf6b2ad315388ebb5718ed9765ad89477b6a24`). See `docs/archive/superseded/V18.2_ARCHIVE_RECORD.md`. The repository's prior errata is superseded; historical stage PASS records do not establish V21 acceptance.
 - V9.0 and V9.1 remain historical source records.
 
