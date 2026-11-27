@@ -235,21 +235,22 @@ struct AssetIdentity {
     std::string canonical_asset_id;
     std::string canonical_symbol;
     std::string coinmarketcap_id;
+    std::string coingecko_id;
     std::string coinpaprika_id;
 };
 
 // This is a discovery seed only. Membership is not a production-universe decision.
 inline const std::vector<AssetIdentity>& candidate_identity_seed() {
     static const std::vector<AssetIdentity> seed{
-        {"bitcoin", "BTC", "1", "btc-bitcoin"},
-        {"ethereum", "ETH", "1027", "eth-ethereum"},
-        {"solana", "SOL", "5426", "sol-solana"},
-        {"binance-coin", "BNB", "1839", "bnb-binance-coin"},
-        {"ripple", "XRP", "52", "xrp-xrp"},
-        {"dogecoin", "DOGE", "74", "doge-dogecoin"},
-        {"cardano", "ADA", "2010", "ada-cardano"},
-        {"chainlink", "LINK", "1975", "link-chainlink"},
-        {"avalanche", "AVAX", "5805", "avax-avalanche"}
+        {"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+        {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"},
+        {"solana", "SOL", "5426", "solana", "sol-solana"},
+        {"binance-coin", "BNB", "1839", "binancecoin", "bnb-binance-coin"},
+        {"ripple", "XRP", "52", "ripple", "xrp-xrp"},
+        {"dogecoin", "DOGE", "74", "dogecoin", "doge-dogecoin"},
+        {"cardano", "ADA", "2010", "cardano", "ada-cardano"},
+        {"chainlink", "LINK", "1975", "chainlink", "link-chainlink"},
+        {"avalanche", "AVAX", "5805", "avalanche-2", "avax-avalanche"}
     };
     return seed;
 }
@@ -340,6 +341,72 @@ inline ProviderSnapshot fetch_coinmarketcap() {
     return snapshot;
 }
 
+inline std::vector<MarketTicker> parse_coingecko(const json& payload) {
+    if (!payload.is_array()) throw std::invalid_argument("coingecko_response_shape_invalid");
+    std::vector<MarketTicker> output;
+    for (const auto& row : payload) {
+        if (!row.is_object()) continue;
+        const auto price = numeric_value(row.value("current_price", json{}));
+        const auto market_cap = numeric_value(row.value("market_cap", json{}));
+        const auto volume = numeric_value(row.value("total_volume", json{}));
+        const auto id = string_value(row.value("id", json{}));
+        auto symbol = string_value(row.value("symbol", json{}));
+        std::transform(symbol.begin(), symbol.end(), symbol.begin(),
+            [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+        if (!price || !market_cap || !volume || id.empty() || symbol.empty() ||
+            *price <= 0.0 || *market_cap < 0.0 || *volume < 0.0) continue;
+        output.push_back({
+            "coingecko", id, symbol, string_value(row.value("name", json{})),
+            string_value(row.value("last_updated", json{})), *price, *market_cap, *volume,
+            row.value("market_cap_rank", std::int64_t{0})
+        });
+    }
+    return output;
+}
+
+inline cfss::resilience::CircuitBreaker& coingecko_breaker() {
+    static cfss::resilience::CircuitBreaker breaker(3U, std::chrono::seconds(60));
+    return breaker;
+}
+
+inline ProviderSnapshot fetch_coingecko() {
+    ProviderSnapshot snapshot;
+    snapshot.provider_id = "coingecko";
+    snapshot.retrieved_at_utc = utc_now_iso();
+    auto& breaker = coingecko_breaker();
+    if (!breaker.allow_request()) {
+        snapshot.status = "PROVIDER_CIRCUIT_OPEN";
+        snapshot.error = "coingecko_circuit_open";
+        return snapshot;
+    }
+    const auto response = http_get(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+    snapshot.http_status = response.status;
+    snapshot.request_attempts = response.attempts;
+    if (response.transport != CURLE_OK || response.status != 200L) {
+        breaker.record_failure();
+        snapshot.status = response.status == 403L ? "PROVIDER_BLOCKED" :
+            (response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
+        snapshot.error = std::string{"coingecko_transport_or_http_error:"} +
+            std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
+        return snapshot;
+    }
+    try {
+        const auto payload = json::parse(response.body);
+        snapshot.tickers = parse_coingecko(payload);
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
+        snapshot.freshness_status = "NOT_TESTED";
+        if (snapshot.tickers.empty()) snapshot.error = "coingecko_no_valid_tickers";
+        if (snapshot.tickers.empty()) breaker.record_failure();
+        else breaker.record_success();
+    } catch (const std::exception& error) {
+        snapshot.status = "FAILED";
+        snapshot.error = std::string{"coingecko_parse_failed:"} + error.what();
+        breaker.record_failure();
+    }
+    return snapshot;
+}
+
 inline ProviderSnapshot fetch_coinpaprika() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinpaprika";
@@ -384,6 +451,10 @@ inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
         [&](const MarketTicker& ticker) { return ticker.provider_asset_id == provider_asset_id; });
     return found == snapshot.tickers.end() ? nullptr : &*found;
 }
+
+inline std::vector<struct CrossProviderReference> compare_cmc_coingecko_references(
+    const ProviderSnapshot& cmc, const ProviderSnapshot& gecko,
+    const std::vector<AssetIdentity>& identities = candidate_identity_seed());
 
 struct CrossProviderReference {
     std::string canonical_asset_id;
@@ -437,6 +508,45 @@ inline std::vector<CrossProviderReference> compare_candidate_references(
     return output;
 }
 
+inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
+    const ProviderSnapshot& cmc, const ProviderSnapshot& gecko,
+    const std::vector<AssetIdentity>& identities) {
+    std::vector<CrossProviderReference> output;
+    for (const auto& identity : identities) {
+        CrossProviderReference row;
+        row.canonical_asset_id = identity.canonical_asset_id;
+        row.canonical_symbol = identity.canonical_symbol;
+        const auto* a = find_by_provider_id(cmc, identity.coinmarketcap_id);
+        const auto* b = find_by_provider_id(gecko, identity.coingecko_id);
+        if (a && b && a->symbol == identity.canonical_symbol && b->symbol == identity.canonical_symbol) {
+            row.classification = "REAL_MULTI_SOURCE";
+            row.coinmarketcap_price_usd = a->price_usd;
+            row.coinpaprika_price_usd = b->price_usd;
+            const double midpoint = (a->price_usd + b->price_usd) / 2.0;
+            row.price_difference_bps = midpoint > 0.0
+                ? std::abs(a->price_usd - b->price_usd) / midpoint * 10000.0 : 0.0;
+            row.coinmarketcap_market_cap_usd = a->market_cap_usd;
+            row.coinpaprika_market_cap_usd = b->market_cap_usd;
+            row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
+            row.coinpaprika_volume_24h_usd = b->volume_24h_usd;
+        } else if (a || b) {
+            row.classification = "REAL_SINGLE_SOURCE";
+            if (a) {
+                row.coinmarketcap_price_usd = a->price_usd;
+                row.coinmarketcap_market_cap_usd = a->market_cap_usd;
+                row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
+            }
+            if (b) {
+                row.coinpaprika_price_usd = b->price_usd;
+                row.coinpaprika_market_cap_usd = b->market_cap_usd;
+                row.coinpaprika_volume_24h_usd = b->volume_24h_usd;
+            }
+        }
+        output.push_back(std::move(row));
+    }
+    return output;
+}
+
 inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     json tickers = json::array();
     for (const auto& ticker : snapshot.tickers) {
@@ -449,7 +559,7 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
         });
     }
     return {
-        {"provider_id", snapshot.provider_id}, {"status", snapshot.status},
+        {"provider_id", snapshot.provider_id}, {"status", snapshot.status}, {"license_status", "NOT_VERIFIED"},
         {"retrieved_at_utc", snapshot.retrieved_at_utc}, {"http_status", snapshot.http_status},
         {"error", snapshot.error}, {"freshness_status", snapshot.freshness_status},
         {"request_attempts", snapshot.request_attempts}, {"ticker_count", tickers.size()}, {"tickers", tickers}
