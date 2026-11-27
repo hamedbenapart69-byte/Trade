@@ -214,7 +214,9 @@ private:
 inline bool fallback_compatible(const CanonicalRecord& required,
                                 const CanonicalRecord& candidate,
                                 std::int64_t now_ms, std::int64_t max_age_ms) {
-    if (max_age_ms <= 0 || required.canonical_asset_id != candidate.canonical_asset_id ||
+    if (max_age_ms <= 0 || required.provider_id.empty() || candidate.provider_id.empty() ||
+        required.provider_id == candidate.provider_id || candidate.provider_instrument_id.empty() ||
+        required.canonical_asset_id != candidate.canonical_asset_id ||
         required.market_scope != candidate.market_scope ||
         required.field != candidate.field || required.unit != candidate.unit ||
         required.quote_currency != candidate.quote_currency ||
