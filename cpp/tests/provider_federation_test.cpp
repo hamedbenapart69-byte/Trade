@@ -45,9 +45,23 @@ int main() {
         }
     });
 
+    const json gecko_fixture = json::array({
+        {
+            {"id", "bitcoin"}, {"symbol", "btc"}, {"name", "Bitcoin"}, {"market_cap_rank", 1},
+            {"current_price", 100010.0}, {"market_cap", 2000500000000.0},
+            {"total_volume", 30050000000.0}, {"last_updated", "2026-11-27T00:00:01Z"}
+        },
+        {
+            {"id", "ethereum"}, {"symbol", "eth"}, {"name", "Ethereum"}, {"market_cap_rank", 2},
+            {"current_price", 3002.0}, {"market_cap", 360200000000.0},
+            {"total_volume", 12150000000.0}, {"last_updated", "2026-11-27T00:00:01Z"}
+        }
+    });
+
     const auto cmc = cfss::federation::parse_coinmarketcap(cmc_fixture);
     const auto paprika = cfss::federation::parse_coinpaprika(paprika_fixture);
-    if (cmc.size() != 2U || paprika.size() != 2U) {
+    const auto gecko = cfss::federation::parse_coingecko(gecko_fixture);
+    if (cmc.size() != 2U || paprika.size() != 2U || gecko.size() != 2U) {
         std::cerr << "provider fixture parsing count failed\n";
         return EXIT_FAILURE;
     }
@@ -65,15 +79,23 @@ int main() {
     cfss::federation::ProviderSnapshot cmc_snapshot{
         "coinmarketcap", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, cmc
     };
+    if (gecko[0].provider_id != "coingecko" || gecko[0].provider_asset_id != "bitcoin" ||
+        gecko[0].symbol != "BTC" || std::abs(gecko[1].price_usd - 3002.0) > 1e-9) {
+        std::cerr << "CoinGecko normalization failed\n";
+        return EXIT_FAILURE;
+    }
+    cfss::federation::ProviderSnapshot gecko_snapshot{
+        "coingecko", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, gecko
+    };
     cfss::federation::ProviderSnapshot paprika_snapshot{
         "coinpaprika", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, paprika
     };
     const auto references = cfss::federation::compare_candidate_references(
         cmc_snapshot, paprika_snapshot,
         {
-            {"bitcoin", "BTC", "1", "btc-bitcoin"},
-            {"ethereum", "ETH", "1027", "eth-ethereum"},
-            {"solana", "SOL", "5426", "sol-solana"}
+            {"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+            {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"},
+            {"solana", "SOL", "5426", "solana", "sol-solana"}
         }
     );
     if (references.size() != 3U ||
@@ -95,6 +117,22 @@ int main() {
         cmc_snapshot, paprika_missing, {{"bitcoin", "BTC", "1", "btc-bitcoin"}});
     if (single.size() != 1U || single[0].classification != "REAL_SINGLE_SOURCE") {
         std::cerr << "single-source honesty classification failed\n";
+        return EXIT_FAILURE;
+    }
+
+    const auto cmc_gecko = cfss::federation::compare_cmc_coingecko_references(
+        cmc_snapshot, gecko_snapshot,
+        {
+            {"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+            {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"},
+            {"solana", "SOL", "5426", "solana", "sol-solana"}
+        }
+    );
+    if (cmc_gecko.size() != 3U ||
+        cmc_gecko[0].classification != "REAL_MULTI_SOURCE" ||
+        cmc_gecko[0].coingecko_price_usd != 100010.0 ||
+        cmc_gecko[2].classification != "UNAVAILABLE") {
+        std::cerr << "CoinMarketCap/CoinGecko independent reference comparison failed\n";
         return EXIT_FAILURE;
     }
 
