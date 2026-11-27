@@ -51,13 +51,6 @@ int main(int argc, char** argv) {
                 {"canonical_asset_id", item.canonical_asset_id},
                 {"canonical_symbol", item.canonical_symbol},
                 {"classification", item.classification},
-                {"coinmarketcap_price_usd", item.coinmarketcap_price_usd},
-                {"coingecko_price_usd", item.coingecko_price_usd},
-                {"price_difference_bps", item.price_difference_bps},
-                {"coinmarketcap_market_cap_usd", item.coinmarketcap_market_cap_usd},
-                {"coingecko_market_cap_usd", item.coingecko_market_cap_usd},
-                {"coinmarketcap_volume_24h_usd", item.coinmarketcap_volume_24h_usd},
-                {"coingecko_volume_24h_usd", item.coingecko_volume_24h_usd}
             });
         }
 
@@ -69,13 +62,14 @@ int main(int argc, char** argv) {
             {"run_status", both_live ? "TWO_PROVIDER_LIVE_RESPONSE_PARSED_FRESHNESS_UNVERIFIED" : "PROVIDER_DISCOVERY_PARTIAL"},
             {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
             {"providers", json::array({
-                cfss::federation::snapshot_to_json(cmc),
-                cfss::federation::snapshot_to_json(gecko)
+                cfss::federation::snapshot_health_to_json(cmc),
+                cfss::federation::snapshot_health_to_json(gecko)
             })},
             {"candidate_seed", candidate_rows},
             {"limitations", json::array({
                 "CoinGecko Public API rate limit is variable; this probe performs only one bounded request per scan.",
                 "Provider license and public-artifact redistribution compatibility remain NOT_VERIFIED until reviewed.",
+                "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow logs.",
                 "Market-wide spot references are not perpetual contract prices.",
                 "This probe does not provide futures OHLCV, funding, open interest or order-book depth.",
                 "The nine-asset candidate seed is provisional and is not a frozen production universe.",
