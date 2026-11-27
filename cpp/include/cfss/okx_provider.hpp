@@ -326,7 +326,7 @@ inline CryptoUniverse load_candidate_universe(const std::set<std::string>& requi
         throw std::runtime_error("owner_universe_source_not_allowlisted");
 
     const auto config = read_universe_config_document(source);
-    std::set<std::string> configured_symbols{"BTC"};
+    std::set<std::string> configured_symbols;
     std::set<std::string> configured_non_btc;
 
     if (!frozen_production) {

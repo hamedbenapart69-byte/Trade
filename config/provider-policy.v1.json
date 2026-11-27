@@ -47,8 +47,8 @@
       "authenticated_license_status": "PERSONAL_FREE_BASIC_API_KEY",
       "keyless_license_status": "KEYLESS_EVALUATION_ONLY",
       "data_redistribution": "NO_RAW_DATA_REDISTRIBUTION",
-      "operational_status": "KEYLESS_HTTP_429_ON_PREVIOUS_RUN; AUTHENTICATED_KEY_NOT_CONFIGURED",
-      "production_eligibility": "PENDING_FREE_BASIC_KEY_AND_ACCOUNT_ELIGIBILITY",
+      "operational_status": "KEYLESS_429_PREVIOUSLY_OBSERVED_NOT_POLLED_IN_PRODUCTION",
+      "production_eligibility": "PENDING_AUTHENTICATED_FREE_BASIC_KEY_AND_ACCOUNT_ELIGIBILITY",
       "official_faq_source": "https://coinmarketcap.com/faq/",
       "official_pricing_source": "https://coinmarketcap.com/api/pricing/",
       "jurisdiction_status": "API personal terms require compliance with applicable law including OFAC; no account/key is configured and account eligibility is not verified. Keep excluded from production until an authenticated free key and eligibility are confirmed."
@@ -93,5 +93,7 @@
     }
   },
   "operational_rule": "Production acceptance requires at least two independent, fresh, license-eligible providers with exact identity matches for all nine candidate assets. Any pair among CoinMarketCap Free Basic, Coinranking Free, and CoinPaprika Personal may qualify. Keyless CMC and CoinGecko do not count.",
-  "jurisdiction_handling": "Do not store the owner's residence in public repository configuration. Evaluate provider-published eligibility and applicable-law restrictions separately from backend network reachability; an HTTP 200 is not contractual authorization."
+  "jurisdiction_handling": "Do not store the owner's residence in public repository configuration. Evaluate provider-published eligibility and applicable-law restrictions separately from backend network reachability; an HTTP 200 is not contractual authorization.",
+  "market_wide_provider_gate_status": "BLOCKED_ONE_QUALIFIED_PROVIDER_ONLY",
+  "market_wide_provider_gate_evidence": "Latest live probe: CoinPaprika is the only fresh license-eligible provider; CoinMarketCap and CoinRanking API keys are not configured; CoinGecko, CoinCap and CoinLore are disabled or unqualified under their published terms."
 }

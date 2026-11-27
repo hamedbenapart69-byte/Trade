@@ -1082,13 +1082,13 @@ inline json collect_market_wide_provider_federation(bool frozen_production_unive
             snapshot_health_to_json(paprika)
         })},
         {"candidate_seed", candidate_rows},
-        {"attribution", "Market-wide reference data sources: CoinMarketCap, Coinranking and CoinPaprika. CoinGecko is disabled for this jurisdiction."},
+        {"attribution", "Market-wide reference data sources: CoinMarketCap, Coinranking and CoinPaprika. CoinGecko is disabled under its published excluded-country terms."},
         {"limitations", json::array({
-            "CoinGecko is disabled: the published excluded-country list includes Iran; HTTP reachability does not override license restrictions.",
+            "CoinGecko is disabled under its published excluded-country terms; HTTP reachability does not override contractual eligibility.",
             "CoinMarketCap keyless access is evaluation-only. Production eligibility requires the free Basic API key and an eligible account.",
             "Coinranking free tier requires COINRANKING_API_KEY and internal-use compliance; account eligibility must be confirmed by key issuance.",
             "CoinPaprika free API is personal-use only; no raw ticker payload is redistributed.",
-            "Provider account eligibility from the user's jurisdiction is not inferred from an HTTP response.",
+            "Provider account eligibility must be confirmed separately from backend HTTP reachability.",
             "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow artifacts.",
             "Market-wide spot references are not perpetual contract prices.",
             "This reference federation does not provide futures OHLCV, funding, open interest or order-book depth.",
