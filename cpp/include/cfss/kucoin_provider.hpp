@@ -362,13 +362,55 @@ inline json parse_open_interest_rows(const json& rows, const Contract& contract,
     return result;
 }
 
+inline std::string open_interest_request_url(const Contract& contract,
+                                                std::int64_t start_ms,
+                                                std::int64_t end_ms,
+                                                std::size_t page_size = 100U) {
+    if (start_ms <= 0 || end_ms <= start_ms || page_size == 0U || page_size > 100U) {
+        throw std::invalid_argument("kucoin_open_interest_query_invalid");
+    }
+    // UTA OI endpoint expects Unix seconds for startAt/endAt (not milliseconds).
+    return "https://api.kucoin.com/api/ua/v2/market/open-interest?symbol=" +
+        contract.symbol + "&interval=1hour&startAt=" + std::to_string(start_ms / 1000LL) +
+        "&endAt=" + std::to_string(end_ms / 1000LL) +
+        "&pageSize=" + std::to_string(page_size);
+}
+
 inline json fetch_open_interest(const Contract& contract, std::int64_t start_ms,
                                 std::int64_t end_ms) {
-    const auto url = "https://api.kucoin.com/api/ua/v2/market/open-interest?symbol=" +
-        contract.symbol + "&interval=1hour&startAt=" + std::to_string(start_ms) +
-        "&endAt=" + std::to_string(end_ms) + "&pageSize=500";
-    const auto rows = request_data(url);
-    return parse_open_interest_rows(rows, contract, start_ms, end_ms, utc_iso(now_ms()));
+    constexpr std::size_t page_size = 100U;
+    constexpr std::size_t max_pages = 4U;
+    const auto retrieved_at = utc_iso(now_ms());
+    std::map<std::int64_t, json> merged;
+    std::int64_t cursor_end_ms = end_ms;
+
+    for (std::size_t page = 0; page < max_pages && cursor_end_ms > start_ms; ++page) {
+        const auto url = open_interest_request_url(contract, start_ms, cursor_end_ms, page_size);
+        const auto rows = request_data(url);
+        const auto parsed = parse_open_interest_rows(rows, contract, start_ms,
+                                                     cursor_end_ms, retrieved_at);
+        if (parsed.empty()) break;
+
+        std::int64_t oldest_timestamp_ms = std::numeric_limits<std::int64_t>::max();
+        for (const auto& row : parsed) {
+            const auto timestamp_ms = row.at("timestamp_ms").get<std::int64_t>();
+            merged[timestamp_ms] = row;
+            oldest_timestamp_ms = std::min(oldest_timestamp_ms, timestamp_ms);
+        }
+
+        if (parsed.size() < page_size || oldest_timestamp_ms <= start_ms) break;
+        // KuCoin returns historical OI newest-first; endAt is also its pagination cursor.
+        const auto next_cursor_ms = oldest_timestamp_ms - 1000LL;
+        if (next_cursor_ms >= cursor_end_ms || next_cursor_ms <= start_ms) break;
+        cursor_end_ms = next_cursor_ms;
+    }
+
+    json result = json::array();
+    for (const auto& [timestamp_ms, row] : merged) {
+        (void)timestamp_ms;
+        result.push_back(row);
+    }
+    return result;
 }
 
 inline Bundle fetch_bundle(const Contract& contract, std::int64_t candle_start_ms,
