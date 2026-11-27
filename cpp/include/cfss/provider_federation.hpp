@@ -465,9 +465,7 @@ inline std::vector<MarketTicker> parse_coinpaprika(const json& payload) {
 inline ProviderSnapshot fetch_coinmarketcap() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinmarketcap";
-    snapshot.license_status = "KEYLESS_EVALUATION_ONLY";
     snapshot.retrieved_at_utc = utc_now_iso();
-    snapshot.endpoint_used = "public_api_v2_simple_price";
     auto& breaker = coinmarketcap_breaker();
     if (!breaker.allow_request()) {
         snapshot.status = "PROVIDER_CIRCUIT_OPEN";
@@ -475,15 +473,33 @@ inline ProviderSnapshot fetch_coinmarketcap() {
         return snapshot;
     }
 
-    const auto response = http_get(
-        "https://pro-api.coinmarketcap.com/public-api/v2/simple/price"
-        "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD&include_all=true&skip_invalid=true");
+    const char* key_value = std::getenv("CMC_PRO_API_KEY");
+    const bool authenticated = key_value && !std::string_view{key_value}.empty();
+    std::vector<std::string> headers;
+    std::string url;
+    if (authenticated) {
+        snapshot.license_status = "PERSONAL_FREE_BASIC_API_KEY";
+        snapshot.endpoint_used = "v1_quotes_latest_authenticated";
+        headers.push_back("X-CMC_PRO_API_KEY: " + std::string{key_value});
+        url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+            "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD";
+    } else {
+        snapshot.license_status = "KEYLESS_EVALUATION_ONLY";
+        snapshot.endpoint_used = "public_api_v2_simple_price";
+        url = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price"
+            "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD&include_all=true&skip_invalid=true";
+    }
+
+    const auto response = http_get(url, 20L, 3, headers);
     snapshot.request_attempts = response.attempts;
     snapshot.http_status = response.status;
     if (response.transport != CURLE_OK || response.status != 200L) {
         snapshot.status = response.status == 429L ? "PROVIDER_RATE_LIMITED" :
-            (response.status == 403L ? "PROVIDER_BLOCKED" : "UNAVAILABLE");
-        snapshot.error = "coinmarketcap_keyless_simple_price_unavailable";
+            (response.status == 401L ? "PROVIDER_AUTH_FAILED" :
+            (response.status == 403L ? "PROVIDER_BLOCKED" : "UNAVAILABLE"));
+        snapshot.error = authenticated
+            ? "coinmarketcap_authenticated_quotes_unavailable"
+            : "coinmarketcap_keyless_simple_price_unavailable";
         breaker.record_failure();
         return snapshot;
     }
