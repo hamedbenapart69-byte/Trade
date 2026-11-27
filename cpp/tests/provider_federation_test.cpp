@@ -170,6 +170,31 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    const auto timestamp_ms = cfss::federation::parse_utc_iso_ms("2026-11-27T00:00:01Z");
+    if (!timestamp_ms || *timestamp_ms != 1795737601000LL) {
+        std::cerr << "ISO-8601 provider timestamp parsing failed\n";
+        return EXIT_FAILURE;
+    }
+    auto gecko_freshness = gecko_snapshot;
+    cfss::federation::evaluate_snapshot_freshness(
+        gecko_freshness,
+        {{"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+         {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"}},
+        1795737603000LL, 900000LL);
+    if (gecko_freshness.freshness_status != "FRESH") {
+        std::cerr << "fresh provider snapshot was not accepted\n";
+        return EXIT_FAILURE;
+    }
+    cfss::federation::evaluate_snapshot_freshness(
+        gecko_freshness,
+        {{"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+         {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"}},
+        1795741203000LL, 900000LL);
+    if (gecko_freshness.freshness_status != "STALE") {
+        std::cerr << "stale provider snapshot was not rejected\n";
+        return EXIT_FAILURE;
+    }
+
     bool invalid_cmc_rejected = false;
     try {
         (void)cfss::federation::parse_coinmarketcap(json::array());
