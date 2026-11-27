@@ -510,7 +510,7 @@ inline std::vector<CrossProviderReference> compare_candidate_references(
 
 inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
     const ProviderSnapshot& cmc, const ProviderSnapshot& gecko,
-    const std::vector<AssetIdentity>& identities) {
+    const std::vector<AssetIdentity>& identities = candidate_identity_seed()) {
     std::vector<CrossProviderReference> output;
     for (const auto& identity : identities) {
         CrossProviderReference row;
