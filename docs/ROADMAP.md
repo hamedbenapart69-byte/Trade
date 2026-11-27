@@ -1,7 +1,7 @@
 # CFSS Roadmap — V21.1
 
 **CONTROLLING SOURCE SET:** MASTER SOURCE V21.0 + V21.0 Execution Protocol Addendum + V21.1 Binding Data Federation & Nine-Asset Universe Addendum. M1 and Master Owner Mission are governing owner directives. V19.0 and V18.2 are superseded historical archives.  
-**Status snapshot:** 2026-11-23  
+**Status snapshot:** 2026-11-28  
 **Production language:** C++  
 **Delivery:** Telegram only  
 **Execution:** manual only; private exchange accounts, trading keys and automated orders are forbidden.
@@ -53,10 +53,10 @@ A stage may PASS only when its numerical criteria and L1/L2/L3 requirements are 
 
 1. **Rejected legacy workflows:** this branch applies job-level `if: false` to all identified LRT/NMT/VTM execution paths and adds a CI regression guard. These controls become effective on the default branch only after this PR is reviewed and merged.
 2. **Provider independence:** the latest live federation probe has one qualified market-wide provider only. CoinRanking and CoinMarketCap authenticated keys are not configured; CoinGecko is disabled under published provider terms. Binance Vision historical archives are reachable for research, but this does not substitute for a second independent market-wide provider.
-4. **V21 Stage 1:** the C++ build/unit tests and candidate L1 smoke have passed on the feature branch, with candidate L2 states fail-closed as MARKET_DATA_DEGRADED and zero actionable signals. This is not a production PASS: the nine-asset set is not frozen, provider quorum is incomplete, and Telegram live inbound has not been revalidated in the current Stage 1 run.
-5. **Universe screen:** spot-volume history and complete delisting history are unavailable in the current L1 artifact; market-wide per-asset liquidity cannot be cross-verified with only one qualified provider. The evidence screen must remain PROVISIONAL_NOT_FROZEN.
-6. **Momentum + Cash research:** spot proxy and USD-M futures research are separate from production paths. A single pre-registered strategy cannot produce a valid PBO estimate; Brier is not applicable without probability forecasts. Any backtest remains exploratory until cost semantics are owner-approved and OOS gates are satisfied.
-7. **Cost semantics:** 0.04% commission and 0.02% slippage one-way versus round-trip interpretation remains open. Conservative per-side sensitivity may be shown as ASSUMED, but cannot be treated as owner-approved gate evidence.
+3. **V21 Stage 1:** the C++ build/unit tests and candidate L1 smoke have passed on the feature branch, with candidate L2 states fail-closed as MARKET_DATA_DEGRADED and zero actionable signals. This is not a production PASS: the nine-asset set is not frozen, provider quorum is incomplete, and Telegram live inbound has not been revalidated in the current Stage 1 run.
+4. **Universe screen:** spot-volume history and complete delisting history are unavailable in the current L1 artifact; market-wide per-asset liquidity cannot be cross-verified with only one qualified provider. The evidence screen must remain PROVISIONAL_NOT_FROZEN.
+5. **Momentum + Cash research:** spot proxy and USD-M futures research are separate from production paths. A single pre-registered strategy cannot produce a valid PBO estimate; Brier is not applicable without probability forecasts. Any backtest remains exploratory until cost semantics are owner-approved and OOS gates are satisfied.
+6. **Cost semantics:** 0.04% commission and 0.02% slippage one-way versus round-trip interpretation remains open. Conservative per-side sensitivity may be shown as ASSUMED, but cannot be treated as owner-approved gate evidence.
 
 ## Historical V18.2 records
 

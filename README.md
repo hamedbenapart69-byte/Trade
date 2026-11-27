@@ -1,6 +1,6 @@
 # Crypto Futures Signal System (CFSS)
 
-**SOLE CONTROLLING AUTHORITY:** owner-accepted MASTER SOURCE V21.0 + V21.0 EXECUTION PROTOCOL ADDENDUM. V19.0, V18.2 and all earlier sources are superseded historical archives.  
+**CONTROLLING SOURCE SET:** owner-accepted MASTER SOURCE V21.0 + V21.0 EXECUTION PROTOCOL ADDENDUM + V21.1 Binding Master Source Addendum. M1 Decision Intelligence Protocol and Master Owner Mission are governing owner directives. V19.0 and V18.2 are superseded historical archives.  
 **Production implementation:** C++ (current verified build: C++20)  
 **User delivery:** Telegram only  
 **Trading boundary:** manual trading only; the system never connects to a user's exchange account or places orders.
@@ -28,12 +28,12 @@ The production path is designed for free-tier infrastructure and public APIs. It
 - `NOT_CALIBRATED`, `NO_QUALIFIED_SETUP`, `INSUFFICIENT_DATA` and `MARKET_DATA_DEGRADED` are valid outputs. Thresholds must not be weakened to force signals.
 - The system reports risk states only. It does not control or protect a user's real exchange account.
 
-## V21 stage status
+## V21.1 stage status
 
 | Stage | Scope | Current evidence status |
 |---|---|---|
-| 0 | V21 architecture and source acceptance | **PASS** — owner accepted V21.0 and Architecture Design V1 on 2026-11-23; source register updated on the V21 branch |
-| 1 | V21 C++ L1/L2/L3 foundation and Telegram | **IN PROGRESS** — branch implementation and contract migration under test; no V21 live-run PASS yet |
+| 0 | V21 architecture and source acceptance | **PASS** — V21.0 accepted 2026-11-23; V21.1 binding addendum and both owner directives hash-registered on the feature branch |
+| 1 | V21 C++ L1/L2/L3 foundation and Telegram | **IN PROGRESS** — C++ build/unit tests and candidate L1 smoke pass on the feature branch; no production V21 PASS while provider quorum, universe freeze and current live Telegram inbound acceptance remain incomplete |
 | 2+ | Independent research hypotheses, calibration, risk and OOS validation | **NOT STARTED / GATED** — no strategy engine is approved or calibrated |
 
 The previous V18.2 stage evidence remains historical evidence only. It does not establish acceptance under V21. LRT, NMT and VTM are rejected by V21 and must not be executed, renamed, or reused as production strategy engines.
@@ -59,6 +59,8 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 - [Stage 7 risk-gate evidence](docs/evidence/stage7-risk-gate-slrp-report.md)
 - [Legacy workflow quarantine evidence](docs/evidence/v18.2-legacy-workflow-quarantine.md)
 - [Operations runbook](docs/OPERATIONS.md)
+- [V21.1 provider eligibility and data federation policy](docs/PROVIDER_ELIGIBILITY.md)
+- [Source register and five owner-source hashes](docs/constitution/SOURCE_REGISTER.md)
 - [Stage roadmap and gates](docs/ROADMAP.md)
 - [GitHub Actions](https://github.com/hamedbenapart69-byte/Trade/actions)
 
