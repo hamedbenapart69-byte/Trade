@@ -7,6 +7,8 @@ on:
       - "cpp/**"
       - "contracts/**"
       - "config/universe.v21.1.candidate.json"
+      - "research/universe_screen.py"
+      - "research/requirements.txt"
       - ".github/workflows/cpp-candidate-smoke.yml"
   push:
     branches:
@@ -56,6 +58,7 @@ jobs:
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
             artifacts/pending-symbols.v1.json
+            artifacts/universe-screen.v1.json
       - name: Validate L1 schema and fail-closed candidate state
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
@@ -72,6 +75,26 @@ jobs:
           assert all(item["actionable"] is False for item in l2["instruments"])
           assert all(item["state"] == "MARKET_DATA_DEGRADED" for item in l2["instruments"])
           print("CANDIDATE_L1_SCHEMA_AND_FAIL_CLOSED=PASS")
+          PY
+      - name: Install research-only screen dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: research/requirements.txt
+      - name: Install research-only Python packages
+        run: python -m pip install --disable-pip-version-check -r research/requirements.txt
+      - name: Run evidence-only 13-criterion universe screen
+        run: |
+          python research/universe_screen.py artifacts/l1-market-data.v1.json artifacts/universe-screen.v1.json
+          python - <<'PY'
+          import json
+          d=json.load(open("artifacts/universe-screen.v1.json", encoding="utf-8"))
+          assert d["criteria_count"] == 13
+          assert d["status"] == "PROVISIONAL_NOT_FROZEN"
+          assert d["production_freeze_allowed"] is False
+          assert d["owner_approval_required"] is True
+          print("V21_CANDIDATE_SCREEN_EVIDENCE=VALID; FREEZE=BLOCKED")
           PY
       - name: Upload read-only candidate evidence
         uses: actions/upload-artifact@v4
