@@ -160,9 +160,20 @@ class OkxPublicMarketData:
                 continue
         return out
 
+    @staticmethod
+    def _candle_instrument_mapping(symbol):
+        """Map canonical symbols to OKX SWAP IDs and normalize quoted price units."""
+        sym = str(symbol).upper()
+        if sym == "1000PEPEUSDT":
+            # OKX lists PEPE-USDT-SWAP, quoted per 1 PEPE; the canonical
+            # Binance-style 1000PEPEUSDT series is quoted per 1,000 PEPE.
+            return "PEPE-USDT-SWAP", 1000.0
+        if not sym.endswith("USDT"):
+            raise DataError("unsupported_okx_candle_symbol")
+        return f"{sym[:-4]}-USDT-SWAP", 1.0
+
     def candles(self, symbol, tf, limit=220):
-        base=str(symbol).upper()[:-4]
-        inst=f"{base}-USDT-SWAP"
+        inst, price_scale = self._candle_instrument_mapping(symbol)
         bar={"15m":"15m","1h":"1H","4h":"4H","1d":"1D"}.get(tf)
         if not bar:
             raise DataError("unsupported_okx_candle_interval")
@@ -174,7 +185,11 @@ class OkxPublicMarketData:
                 if len(row)<9:
                     raise ValueError("short candle row")
                 ot=int(row[0]);vol_quote=float(row[7]);confirm=str(row[8])=="1"
-                out.append(Candle(ot,float(row[1]),float(row[2]),float(row[3]),float(row[4]),
+                open_price=float(row[1])*price_scale
+                high_price=float(row[2])*price_scale
+                low_price=float(row[3])*price_scale
+                close_price=float(row[4])*price_scale
+                out.append(Candle(ot,open_price,high_price,low_price,close_price,
                     vol_quote,ot+interval-1,confirm))
             except (TypeError,ValueError,IndexError) as exc:
                 raise DataError("invalid_okx_ohlcv_payload") from exc
