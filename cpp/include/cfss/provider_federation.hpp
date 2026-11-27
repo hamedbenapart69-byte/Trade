@@ -416,6 +416,7 @@ inline cfss::resilience::CircuitBreaker& coingecko_breaker() {
 inline ProviderSnapshot fetch_coingecko() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coingecko";
+    snapshot.endpoint_used = "coins_markets";
     snapshot.retrieved_at_utc = utc_now_iso();
     auto& breaker = coingecko_breaker();
     if (!breaker.allow_request()) {
@@ -454,6 +455,7 @@ inline ProviderSnapshot fetch_coingecko() {
 inline ProviderSnapshot fetch_coinpaprika() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinpaprika";
+    snapshot.endpoint_used = "tickers";
     snapshot.retrieved_at_utc = utc_now_iso();
     auto& breaker = coinpaprika_breaker();
     if (!breaker.allow_request()) {
@@ -598,6 +600,7 @@ inline json snapshot_health_to_json(const ProviderSnapshot& snapshot) {
         {"retrieved_at_utc", snapshot.retrieved_at_utc},
         {"http_status", snapshot.http_status},
         {"error", snapshot.error},
+        {"endpoint_used", snapshot.endpoint_used},
         {"freshness_status", snapshot.freshness_status},
         {"request_attempts", snapshot.request_attempts},
         {"ticker_count", snapshot.tickers.size()}
