@@ -1171,8 +1171,15 @@ inline json collect(int symbol_count, int years,
     const auto market_wide_provider_federation =
         cfss::federation::collect_market_wide_provider_federation();
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
-    const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
-                                    &eligible_count, &declared_count, &excluded_non_crypto_count);
+    std::vector<Instrument> selected;
+    try {
+        selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
+                            &eligible_count, &declared_count, &excluded_non_crypto_count);
+    } catch (const std::exception& error) {
+        if (!exact_universe_mode_enabled()) throw;
+        std::cerr << "EXACT_UNIVERSE_DISCOVERY_DEGRADED: " << error.what() << '\n';
+        selected.clear();
+    }
     std::set<std::string> selected_provider_ids;
     for (const auto& instrument : selected) selected_provider_ids.insert(instrument.provider_id);
     const std::string selected_provider_id = selected_provider_ids.size() == 1U
