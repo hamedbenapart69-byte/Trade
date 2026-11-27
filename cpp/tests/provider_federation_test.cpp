@@ -63,10 +63,10 @@ int main() {
     }
 
     cfss::federation::ProviderSnapshot cmc_snapshot{
-        "coinmarketcap", "LIVE", "2026-11-27T00:00:03Z", 200, "", cmc
+        "coinmarketcap", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, cmc
     };
     cfss::federation::ProviderSnapshot paprika_snapshot{
-        "coinpaprika", "LIVE", "2026-11-27T00:00:03Z", 200, "", paprika
+        "coinpaprika", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "NOT_TESTED", 1, paprika
     };
     const auto references = cfss::federation::compare_candidate_references(
         cmc_snapshot, paprika_snapshot,
