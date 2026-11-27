@@ -154,6 +154,22 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    const auto gecko_paprika = cfss::federation::compare_coingecko_coinpaprika_references(
+        gecko_snapshot, paprika_snapshot,
+        {
+            {"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+            {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"},
+            {"solana", "SOL", "5426", "solana", "sol-solana"}
+        }
+    );
+    if (gecko_paprika.size() != 3U ||
+        gecko_paprika[0].classification != "TWO_SOURCE_IDENTITY_MATCHED" ||
+        gecko_paprika[0].coingecko_price_usd != 100010.0 ||
+        gecko_paprika[2].classification != "UNAVAILABLE") {
+        std::cerr << "CoinGecko/CoinPaprika independent fallback comparison failed\n";
+        return EXIT_FAILURE;
+    }
+
     bool invalid_cmc_rejected = false;
     try {
         (void)cfss::federation::parse_coinmarketcap(json::array());
