@@ -478,11 +478,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          jq -e '
+          if ! jq -e '
             (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .market_wide_provider_status.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .market_wide_provider_status.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
             .telegram_send_status == "DELIVERED" and
             (.telegram_message_ids | length) > 0
-          ' artifacts/run-manifest.v2.json >/dev/null
+          ' artifacts/run-manifest.v2.json >/dev/null; then
+            echo "SECOND_SAME_SOURCE_RUN_NOT_DISPATCHED: first run has not passed full Stage1 prerequisites."
+            exit 0
+          fi
           gh workflow run cpp-stage1-live.yml --ref main \
             -f symbols=8 -f years=2 -f verification_replay=true
           echo "STAGE1_SECOND_SAME_SOURCE_RUN_DISPATCHED"
