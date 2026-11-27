@@ -67,11 +67,15 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
             crypto_universe.contains("symbols") && crypto_universe.at("symbols").is_array() &&
             crypto_universe.at("symbols").size() >= 500U;
         const bool owner_configured_candidate_set =
-            crypto_universe.value("status", std::string{}) == "OWNER_CONFIGURED_CANDIDATE_SET" &&
             crypto_universe.value("provider_id", std::string{}) == "owner_config" &&
-            crypto_universe.value("selection_status", std::string{}) == "PROVISIONAL_NOT_FROZEN" &&
             crypto_universe.contains("symbols") && crypto_universe.at("symbols").is_array() &&
-            crypto_universe.at("symbols").size() == 9U;
+            crypto_universe.at("symbols").size() == 9U &&
+            ((crypto_universe.value("status", std::string{}) == "OWNER_CONFIGURED_CANDIDATE_SET" &&
+              crypto_universe.value("source_endpoint", std::string{}) == "config/universe.v21.1.candidate.json" &&
+              crypto_universe.value("selection_status", std::string{}) == "PROVISIONAL_NOT_FROZEN") ||
+             (crypto_universe.value("status", std::string{}) == "OWNER_CONFIGURED_PRODUCTION_SET" &&
+              crypto_universe.value("source_endpoint", std::string{}) == "config/universe.json" &&
+              crypto_universe.value("selection_status", std::string{}) == "FROZEN_PRODUCTION_UNIVERSE"));
         if (crypto_universe.value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
             (!verified_market_universe && !owner_configured_candidate_set))
             throw std::invalid_argument("crypto_universe_reference_invalid");
