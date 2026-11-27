@@ -294,6 +294,16 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 {"availability", availability}, {"coverage", item.at("coverage")}, {"errors", item.at("errors")}
             });
         }
+        if (cfss::okx::exact_universe_mode_enabled()) {
+            std::set<std::string> available_bases;
+            for (const auto& item : contract.at("instruments")) {
+                available_bases.insert(item.at("base").get<std::string>());
+            }
+            if (!available_bases.contains("BTC")) ++unavailable_count;
+            for (const auto& base : required_symbols) {
+                if (base != "BTC" && !available_bases.contains(base)) ++unavailable_count;
+            }
+        }
         const json coverage_json = {
             {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
             {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
