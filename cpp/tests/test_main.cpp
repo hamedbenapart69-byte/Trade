@@ -158,6 +158,29 @@ int main() {
         std::cerr << "KuCoin open-interest unit normalization failed\n"; return EXIT_FAILURE;
     }
 
+    const auto kucoin_oi_url = cfss::kucoin::open_interest_request_url(
+        *parsed_kucoin_contract, kucoin_sample_ts,
+        kucoin_sample_ts + cfss::kucoin::kHourMs);
+    if (kucoin_oi_url.find("startAt=1760000000") == std::string::npos ||
+        kucoin_oi_url.find("endAt=1760003600") == std::string::npos ||
+        kucoin_oi_url.find("pageSize=100") == std::string::npos ||
+        kucoin_oi_url.find("interval=1hour") == std::string::npos) {
+        std::cerr << "KuCoin OI request must use Unix seconds and bounded pagination\\n";
+        return EXIT_FAILURE;
+    }
+    bool kucoin_oi_page_limit_rejected = false;
+    try {
+        (void)cfss::kucoin::open_interest_request_url(
+            *parsed_kucoin_contract, kucoin_sample_ts,
+            kucoin_sample_ts + cfss::kucoin::kHourMs, 500U);
+    } catch (const std::invalid_argument&) {
+        kucoin_oi_page_limit_rejected = true;
+    }
+    if (!kucoin_oi_page_limit_rejected) {
+        std::cerr << "KuCoin OI invalid page size was not rejected locally\\n";
+        return EXIT_FAILURE;
+    }
+
     const std::string input = std::string{"quote: \""} + '\n' + '\t';
     if (cfss::json_escape(input) != "quote: \\\"\\n\\t") {
         std::cerr << "JSON escaping test failed\n"; return EXIT_FAILURE;
