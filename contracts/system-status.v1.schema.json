@@ -123,7 +123,10 @@
           "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
         },
         "production_universe_status": {
-          "const": "DISCOVERY_ONLY_NOT_FROZEN"
+          "enum": [
+            "DISCOVERY_ONLY_NOT_FROZEN",
+            "PRODUCTION_UNIVERSE_FROZEN"
+          ]
         },
         "live_provider_count": {
           "type": "integer",
