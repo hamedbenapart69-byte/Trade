@@ -15,6 +15,14 @@ void require(bool value, const char* message) {
 }
 
 int main() {
+    const auto owner_candidate_universe = cfss::okx::load_candidate_universe(
+        {"ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"});
+    require(owner_candidate_universe.symbols.size() == 9U &&
+            owner_candidate_universe.symbols.contains("BTC") &&
+            owner_candidate_universe.artifact.value("status", std::string{}) ==
+                "OWNER_CONFIGURED_CANDIDATE_SET" &&
+            owner_candidate_universe.artifact.value("provider_id", std::string{}) == "owner_config",
+            "exact nine-asset candidate universe is owner-configured and not misrepresented as provider-verified");
     const std::set<std::string> verified{"BTC", "ETH", "SOL", "DOGE"};
     require(cfss::okx::valid_crypto_symbol("BTC") &&
             cfss::okx::valid_crypto_symbol("1INCH") &&
