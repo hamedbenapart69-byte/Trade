@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 
 #include "cfss/provider_resilience.hpp"
+#include "cfss/provider_policy.hpp"
 
 namespace cfss::kucoin {
 
@@ -39,6 +40,11 @@ inline std::size_t write_body(char* data, std::size_t size, std::size_t count, v
 
 inline HttpResponse get(const std::string& url, long timeout_seconds = 25L) {
     HttpResponse response;
+    if (!cfss::provider_policy::is_allowed_independent_provider_url(url)) {
+        response.transport = CURLE_URL_MALFORMAT;
+        response.body = "DIRECT_EXCHANGE_API_FORBIDDEN";
+        return response;
+    }
     CURL* handle = curl_easy_init();
     if (!handle) return response;
     curl_easy_setopt(handle, CURLOPT_URL, url.c_str());

@@ -3,6 +3,7 @@
 #include "cfss/atomic_file.hpp"
 #include "cfss/kucoin_provider.hpp"
 #include "cfss/provider_resilience.hpp"
+#include "cfss/provider_policy.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -52,6 +53,11 @@ struct HttpResponse { long status{0}; CURLcode transport{CURLE_FAILED_INIT}; std
 
 inline HttpResponse get(const std::string& url, long timeout_seconds = 25L) {
     HttpResponse out;
+    if (!cfss::provider_policy::is_allowed_independent_provider_url(url)) {
+        out.transport = CURLE_URL_MALFORMAT;
+        out.body = "DIRECT_EXCHANGE_API_FORBIDDEN";
+        return out;
+    }
     CURL* curl = curl_easy_init();
     if (!curl) throw std::runtime_error("curl_init_failed");
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
