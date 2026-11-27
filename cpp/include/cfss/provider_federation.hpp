@@ -70,7 +70,11 @@ inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int
         curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 2L);
         curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
         curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-provider-federation/21.1");
+        curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, "Accept: application/json");
+        curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
         result.transport = curl_easy_perform(handle);
+        curl_slist_free_all(headers);
         if (result.transport == CURLE_OK) curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &result.status);
         curl_easy_cleanup(handle);
         last = result;
@@ -264,9 +268,21 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
         throw std::invalid_argument("coinmarketcap_response_shape_invalid");
     std::vector<MarketTicker> output;
     for (const auto& row : payload.at("data")) {
-        if (!row.is_object() || !row.contains("quote") || !row.at("quote").is_object() ||
-            !row.at("quote").contains("USD")) continue;
-        const auto& usd = row.at("quote").at("USD");
+        if (!row.is_object() || !row.contains("quote")) continue;
+        const json* usd_pointer = nullptr;
+        const auto& quote = row.at("quote");
+        if (quote.is_array()) {
+            for (const auto& quote_row : quote) {
+                if (quote_row.is_object() && string_value(quote_row.value("symbol", json{})) == "USD") {
+                    usd_pointer = &quote_row;
+                    break;
+                }
+            }
+        } else if (quote.is_object() && quote.contains("USD")) {
+            usd_pointer = &quote.at("USD");
+        }
+        if (!usd_pointer) continue;
+        const auto& usd = *usd_pointer;
         const auto price = numeric_value(usd.value("price", json{}));
         const auto market_cap = numeric_value(usd.value("market_cap", json{}));
         const auto volume = numeric_value(usd.value("volume_24h", json{}));
