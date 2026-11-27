@@ -205,6 +205,39 @@
       "telegram_message_id": 84,
       "updated_at_epoch_ms": 1795355944374
     },
+    "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c:status:1": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "43e5bf2a35a8a44f",
+      "scan_id": "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c",
+      "source_run_id": "okx-cpp-1795779585570",
+      "status": "DELIVERED",
+      "telegram_message_id": 107,
+      "updated_at_epoch_ms": 1795779787219
+    },
+    "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c:status:2": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "8621434c71725d89",
+      "scan_id": "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c",
+      "source_run_id": "okx-cpp-1795779585570",
+      "status": "DELIVERED",
+      "telegram_message_id": 108,
+      "updated_at_epoch_ms": 1795779788581
+    },
+    "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c:status:3": {
+      "attempts": 1,
+      "http_status": 200,
+      "last_error": null,
+      "payload_fingerprint": "26ce0dde00cd425b",
+      "scan_id": "scan-aada94d08eb3c2ad66d4f5b89f29c3cec14d681fac4556d54028b2384ba1c01c",
+      "source_run_id": "okx-cpp-1795779585570",
+      "status": "DELIVERED",
+      "telegram_message_id": 109,
+      "updated_at_epoch_ms": 1795779789941
+    },
     "scan-b81f0d2a47656014d572d4d1ccf1e2f382d297031f7ffddbfb793e3266cf6287:status:1": {
       "attempts": 1,
       "http_status": 200,
