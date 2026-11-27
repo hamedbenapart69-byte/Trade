@@ -45,13 +45,20 @@ int main(int argc, char** argv) {
         const auto gecko = cfss::federation::fetch_coingecko();
         const auto paprika = cfss::federation::fetch_coinpaprika();
 
+        const auto& identities = cfss::federation::candidate_identity_seed();
+        const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+        cfss::federation::evaluate_snapshot_freshness(cmc, identities, now_ms, 15LL * 60LL * 1000LL);
+        cfss::federation::evaluate_snapshot_freshness(gecko, identities, now_ms, 15LL * 60LL * 1000LL);
+        cfss::federation::evaluate_snapshot_freshness(paprika, identities, now_ms, 15LL * 60LL * 1000LL);
+
         const auto cmc_gecko = cfss::federation::compare_cmc_coingecko_references(cmc, gecko);
         const auto cmc_paprika = cfss::federation::compare_candidate_references(cmc, paprika);
         const auto gecko_paprika = cfss::federation::compare_coingecko_coinpaprika_references(gecko, paprika);
 
         json candidate_rows = json::array();
         bool btc_two_source_match = false;
-        const auto& identities = cfss::federation::candidate_identity_seed();
+        std::size_t matched_asset_count = 0U;
         for (std::size_t i = 0; i < identities.size(); ++i) {
             const cfss::federation::CrossProviderReference* selected = &cmc_gecko[i];
             std::string pair = "coinmarketcap+coingecko";
@@ -64,6 +71,7 @@ int main(int argc, char** argv) {
                 pair = "coingecko+coinpaprika";
             }
             const bool matched = selected->classification == "TWO_SOURCE_IDENTITY_MATCHED";
+            if (matched) ++matched_asset_count;
             if (identities[i].canonical_symbol == "BTC" && matched) btc_two_source_match = true;
             candidate_rows.push_back({
                 {"canonical_asset_id", identities[i].canonical_asset_id},
@@ -77,16 +85,24 @@ int main(int argc, char** argv) {
             (cmc.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
             (gecko.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
             (paprika.status == "LIVE_RESPONSE_PARSED" ? 1 : 0);
-        const bool federation_discovery_pass = live_provider_count >= 2 && btc_two_source_match;
+        const int fresh_provider_count =
+            (cmc.freshness_status == "FRESH" ? 1 : 0) +
+            (gecko.freshness_status == "FRESH" ? 1 : 0) +
+            (paprika.freshness_status == "FRESH" ? 1 : 0);
+        const bool federation_discovery_pass =
+            fresh_provider_count >= 2 && btc_two_source_match && matched_asset_count == identities.size();
         const json output = {
             {"document_version", "V21.1"},
             {"artifact_type", "cfss_provider_federation_discovery_v1"},
             {"generated_at_utc", cfss::federation::utc_now_iso()},
             {"run_status", federation_discovery_pass
-                ? "TWO_INDEPENDENT_PROVIDER_BTC_MATCH_FRESHNESS_AND_LICENSE_UNVERIFIED"
+                ? "TWO_FRESH_INDEPENDENT_PROVIDERS_FULL_NINE_ASSET_MATCH_LICENSE_REVIEW_REQUIRED"
                 : "PROVIDER_DISCOVERY_PARTIAL"},
             {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
             {"live_provider_count", live_provider_count},
+            {"fresh_provider_count", fresh_provider_count},
+            {"matched_asset_count", matched_asset_count},
+            {"required_asset_count", identities.size()},
             {"providers", json::array({
                 cfss::federation::snapshot_health_to_json(cmc),
                 cfss::federation::snapshot_health_to_json(gecko),
@@ -95,8 +111,8 @@ int main(int argc, char** argv) {
             {"candidate_seed", candidate_rows},
             {"limitations", json::array({
                 "CoinGecko and CoinPaprika are independent market-wide reference sources; each quota and access path must be monitored.",
-                "CoinPaprika free access is personal-use restricted; production use remains blocked until exact license compatibility is reviewed.",
-                "Provider license and public-artifact redistribution compatibility remain NOT_VERIFIED.",
+                "CoinPaprika free access is personal-use only; the current deployment is private/personal and no raw ticker payload is redistributed. Reassess before any commercial or public-data redistribution use.",
+                "CoinMarketCap and CoinGecko license compatibility remains NOT_VERIFIED; CoinPaprika license is PERSONAL_USE_ONLY.",
                 "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow logs.",
                 "Market-wide spot references are not perpetual contract prices.",
                 "This probe does not provide futures OHLCV, funding, open interest or order-book depth.",
