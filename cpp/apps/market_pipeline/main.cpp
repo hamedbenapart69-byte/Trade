@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <set>
 #include <iterator>
@@ -185,6 +186,40 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         cfss::write_file_atomic(l1_path, l1_raw, true);
 
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        if (cfss::okx::exact_universe_mode_enabled()) {
+            std::map<std::string, json> rows_by_base;
+            for (const auto& row : artifact.at("instruments")) {
+                const auto symbol = row.value("symbol", std::string{});
+                const auto slash = symbol.find('/');
+                const auto base = cfss::okx::uppercase_symbol(
+                    slash == std::string::npos ? symbol : symbol.substr(0U, slash));
+                if (!base.empty()) rows_by_base.emplace(base, row);
+            }
+            std::vector<std::string> expected_bases{"BTC"};
+            for (const auto& base : required_symbols) {
+                if (base != "BTC") expected_bases.push_back(base);
+            }
+            json exact_status_rows = json::array();
+            for (const auto& base : expected_bases) {
+                const auto found = rows_by_base.find(base);
+                if (found != rows_by_base.end()) {
+                    exact_status_rows.push_back(found->second);
+                } else {
+                    exact_status_rows.push_back({
+                        {"instrument_id", "UNAVAILABLE:" + base + "-USDT-SWAP"},
+                        {"symbol", base + "/USDT:USDT"},
+                        {"provider_id", "UNAVAILABLE"},
+                        {"state", "MARKET_DATA_DEGRADED"},
+                        {"reason_code", "DERIVATIVES_CONTRACT_UNAVAILABLE_OR_NOT_ELIGIBLE"},
+                        {"data_quality", "UNAVAILABLE"},
+                        {"confidence_status", "NOT_CALIBRATED"},
+                        {"actionable", false},
+                        {"latest_candle_timestamp_ms", 0}
+                    });
+                }
+            }
+            artifact["instruments"] = std::move(exact_status_rows);
+        }
         const bool market_wide_provider_pass =
             contract.at("market_wide_provider_federation").value(
                 "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
