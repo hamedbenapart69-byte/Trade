@@ -108,7 +108,7 @@ jobs:
           restore-keys: |
             cfss-market-cache-
 
-      - name: Collect real OKX L1 data and compute C10 states in C++
+      - name: Collect provider-federated L1 data and compute C10 states in C++
         env:
           SYMBOLS: ${{ inputs.symbols || '8' }}
           YEARS: ${{ inputs.years || '2' }}
@@ -126,7 +126,7 @@ jobs:
             echo "EXACT_NINE_ASSET_UNIVERSE_REQUIRED: pending=$PENDING_COUNT non_btc=$SYMBOLS"
             exit 1
           fi
-          ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
+          ./build/market_pipeline --collect-market-data "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
