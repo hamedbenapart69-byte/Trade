@@ -538,6 +538,15 @@ jobs:
               .production_source_hash == $source_hash and
               .branch == "main" and
               (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+              .market_wide_provider_status.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+              .market_wide_provider_status.production_eligible_fresh_provider_count >= 2 and
+              .market_wide_provider_status.matched_asset_count == 9 and
+              .market_wide_provider_status.required_asset_count == 9 and
+              ([.market_wide_provider_status.candidate_seed[] |
+                select(.classification == "TWO_SOURCE_IDENTITY_MATCHED" and
+                  (.matched_provider_pair == "coinmarketcap+coinranking" or
+                   .matched_provider_pair == "coinmarketcap+coinpaprika" or
+                   .matched_provider_pair == "coinranking+coinpaprika"))] | length) == 9 and
               .telegram_send_status == "DELIVERED" and
               (.telegram_message_ids | length > 0) and
               (.active_strategy_engines | length == 0) and
