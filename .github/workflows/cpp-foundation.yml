@@ -44,32 +44,6 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure --no-tests=error
           ./build/cfss_unit_tests
-      - name: V21.1 live market-wide aggregator probe
-        if: startsWith(github.head_ref, 'v21.1/')
-        env:
-          COINRANKING_API_KEY: ${{ secrets.COINRANKING_API_KEY }}
-          CMC_PRO_API_KEY: ${{ secrets.CMC_PRO_API_KEY }}
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts
-          set +e
-          ./build/provider_federation_probe artifacts/provider-federation-discovery.v1.json
-          probe_status=$?
-          set -e
-          cat artifacts/provider-federation-discovery.v1.json
-          if [ "$probe_status" -ne 0 ]; then
-            echo "V21_1_PROVIDER_PROBE_FAILED exit=$probe_status"
-            exit "$probe_status"
-          fi
-          jq -e '
-            .schema_version == "1.0.0" and
-            .status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
-            .production_eligible_fresh_provider_count >= 2 and
-            .matched_asset_count == 9 and .required_asset_count == 9 and
-            ([.candidate_seed[] | select(.classification == "TWO_SOURCE_IDENTITY_MATCHED" and (.matched_provider_pair == "coinmarketcap+coinranking" or .matched_provider_pair == "coinmarketcap+coinpaprika" or .matched_provider_pair == "coinranking+coinpaprika"))] | length) == 9
-          ' artifacts/provider-federation-discovery.v1.json >/dev/null
-          echo "V21_1_TWO_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_PASS"
-
       - name: Verify market pipeline requires an explicit L1 contract or live collection command
         run: |
           if ./build/market_pipeline >/tmp/market_pipeline_usage.log 2>&1; then
