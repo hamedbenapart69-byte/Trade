@@ -59,12 +59,20 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
     std::unordered_set<std::string> verified_crypto_symbols;
     if (contract.contains("crypto_universe")) {
         const auto& crypto_universe = contract.at("crypto_universe");
+        const bool verified_market_universe =
+            crypto_universe.value("status", std::string{}) == "VERIFIED" &&
+            crypto_universe.value("provider_id", std::string{}) == "coinpaprika" &&
+            crypto_universe.contains("symbols") && crypto_universe.at("symbols").is_array() &&
+            crypto_universe.at("symbols").size() >= 500U;
+        const bool owner_configured_candidate_set =
+            crypto_universe.value("status", std::string{}) == "OWNER_CONFIGURED_CANDIDATE_SET" &&
+            crypto_universe.value("provider_id", std::string{}) == "owner_config" &&
+            crypto_universe.value("selection_status", std::string{}) == "PROVISIONAL_NOT_FROZEN" &&
+            crypto_universe.contains("symbols") && crypto_universe.at("symbols").is_array() &&
+            crypto_universe.at("symbols").size() == 9U;
         if (!crypto_universe.is_object() ||
             crypto_universe.value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
-            crypto_universe.value("status", std::string{}) != "VERIFIED" ||
-            crypto_universe.value("provider_id", std::string{}) != "coinpaprika" ||
-            !crypto_universe.contains("symbols") || !crypto_universe.at("symbols").is_array() ||
-            crypto_universe.at("symbols").size() < 500U)
+            (!verified_market_universe && !owner_configured_candidate_set))
             throw std::invalid_argument("crypto_universe_reference_invalid");
         for (const auto& symbol : crypto_universe.at("symbols")) {
             if (!symbol.is_string() || symbol.get<std::string>().empty() ||
