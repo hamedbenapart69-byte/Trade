@@ -575,7 +575,12 @@
         "liquidity_threshold_usd",
         "selection_method",
         "selection_timestamp_utc",
-        "selected_instrument_ids"
+        "selected_instrument_ids",
+        "crypto_universe_status",
+        "crypto_universe_source",
+        "crypto_universe_symbol_count",
+        "crypto_universe_symbols_sha256",
+        "selection_status"
       ],
       "properties": {
         "declared_usdt_swap_count": {
@@ -587,14 +592,21 @@
           "minimum": 0
         },
         "crypto_universe_status": {
-          "const": "VERIFIED"
+          "enum": [
+            "VERIFIED",
+            "OWNER_CONFIGURED_CANDIDATE_SET",
+            "OWNER_CONFIGURED_PRODUCTION_SET"
+          ]
         },
         "crypto_universe_source": {
-          "const": "coinpaprika"
+          "enum": [
+            "coinpaprika",
+            "owner_config"
+          ]
         },
         "crypto_universe_symbol_count": {
           "type": "integer",
-          "minimum": 500
+          "minimum": 9
         },
         "crypto_universe_symbols_sha256": {
           "type": "string",
@@ -633,8 +645,115 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "selection_status": {
+          "enum": [
+            "LIVE_MARKET_UNIVERSE",
+            "PROVISIONAL_NOT_FROZEN",
+            "FROZEN_PRODUCTION_UNIVERSE"
+          ]
+        },
+        "screen_evidence_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "owner_approval_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_approval_timestamp_utc": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "crypto_universe_status": {
+                "const": "VERIFIED"
+              }
+            },
+            "required": [
+              "crypto_universe_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "crypto_universe_source": {
+                "const": "coinpaprika"
+              },
+              "crypto_universe_symbol_count": {
+                "minimum": 500
+              },
+              "selection_status": {
+                "const": "LIVE_MARKET_UNIVERSE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "crypto_universe_status": {
+                "const": "OWNER_CONFIGURED_CANDIDATE_SET"
+              }
+            },
+            "required": [
+              "crypto_universe_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "crypto_universe_source": {
+                "const": "owner_config"
+              },
+              "crypto_universe_symbol_count": {
+                "const": 9
+              },
+              "selection_status": {
+                "const": "PROVISIONAL_NOT_FROZEN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "crypto_universe_status": {
+                "const": "OWNER_CONFIGURED_PRODUCTION_SET"
+              }
+            },
+            "required": [
+              "crypto_universe_status"
+            ]
+          },
+          "then": {
+            "required": [
+              "screen_evidence_sha256",
+              "owner_approval_ref",
+              "owner_approval_timestamp_utc"
+            ],
+            "properties": {
+              "crypto_universe_source": {
+                "const": "owner_config"
+              },
+              "crypto_universe_symbol_count": {
+                "const": 9
+              },
+              "selection_status": {
+                "const": "FROZEN_PRODUCTION_UNIVERSE"
+              },
+              "screen_evidence_sha256": {
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "owner_approval_ref": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "crypto_universe": {
       "type": "object",
@@ -717,9 +836,30 @@
         },
         "selection_status": {
           "enum": [
+            "LIVE_MARKET_UNIVERSE",
             "PROVISIONAL_NOT_FROZEN",
             "FROZEN_PRODUCTION_UNIVERSE"
           ]
+        },
+        "selection_method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selection_timestamp_utc": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "screen_evidence_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "owner_approval_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_approval_timestamp_utc": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
         }
       },
       "allOf": [
@@ -767,8 +907,14 @@
                   "const": "BTC"
                 },
                 "minContains": 1
+              },
+              "selection_status": {
+                "const": "LIVE_MARKET_UNIVERSE"
               }
-            }
+            },
+            "required": [
+              "selection_status"
+            ]
           }
         },
         {
@@ -835,7 +981,12 @@
           },
           "then": {
             "required": [
-              "selection_status"
+              "selection_status",
+              "selection_method",
+              "selection_timestamp_utc",
+              "screen_evidence_sha256",
+              "owner_approval_ref",
+              "owner_approval_timestamp_utc"
             ],
             "properties": {
               "provider_id": {
@@ -869,6 +1020,15 @@
               },
               "selection_status": {
                 "const": "FROZEN_PRODUCTION_UNIVERSE"
+              },
+              "screen_evidence_sha256": {
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "owner_approval_ref": {
+                "minLength": 1
+              },
+              "owner_approval_timestamp_utc": {
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
               }
             }
           }

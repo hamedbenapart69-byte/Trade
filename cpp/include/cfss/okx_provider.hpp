@@ -17,6 +17,7 @@
 #include <limits>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <cstdlib>
 #include <map>
@@ -216,6 +217,7 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             {"attribution", "CoinPaprika"}, {"freshness_status", "LIVE"},
             {"fetched_at_ms", retrieved_at}, {"retrieved_at_ms", retrieved_at},
             {"symbol_count", symbols.size()}, {"symbols_sha256", cfss::sha256_hex(hash_material)},
+            {"selection_status", "LIVE_MARKET_UNIVERSE"},
             {"symbols", symbol_array}
         };
         return {std::move(symbols), std::move(artifact)};
@@ -250,36 +252,149 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             throw std::runtime_error("crypto_universe_cache_hash_mismatch");
         auto artifact = *cached;
         artifact["freshness_status"] = "CACHED";
+        artifact["selection_status"] = "LIVE_MARKET_UNIVERSE";
         artifact["retrieved_at_ms"] = retrieved_at;
         return {std::move(symbols), std::move(artifact)};
     }
 }
 
+inline std::filesystem::path resolve_universe_config_path(const std::string& source) {
+    std::filesystem::path requested{source};
+    if (requested.is_absolute() && std::filesystem::exists(requested)) return requested;
+    if (std::filesystem::exists(requested)) return std::filesystem::absolute(requested);
+    auto directory = std::filesystem::current_path();
+    for (int depth = 0; depth < 5 && !directory.empty(); ++depth) {
+        const auto candidate = directory / requested;
+        if (std::filesystem::exists(candidate)) return candidate;
+        const auto parent = directory.parent_path();
+        if (parent == directory) break;
+        directory = parent;
+    }
+    throw std::runtime_error("owner_universe_config_file_missing:" + source);
+}
+
+inline json read_universe_config_document(const std::string& source) {
+    const auto path = resolve_universe_config_path(source);
+    std::ifstream input(path);
+    if (!input) throw std::runtime_error("owner_universe_config_file_unreadable:" + source);
+    json document;
+    try { input >> document; }
+    catch (const std::exception&) {
+        throw std::runtime_error("owner_universe_config_json_invalid:" + source);
+    }
+    if (!document.is_object())
+        throw std::runtime_error("owner_universe_config_root_not_object:" + source);
+    return document;
+}
+
+inline std::string normalize_config_base_symbol(std::string raw) {
+    auto symbol = uppercase_symbol(std::move(raw));
+    if (symbol.size() > 4U && symbol.substr(symbol.size() - 4U) == "USDT")
+        symbol.resize(symbol.size() - 4U);
+    return symbol;
+}
+
+inline bool is_sha256_hex(const std::string& value) {
+    if (value.size() != 64U) return false;
+    return std::all_of(value.begin(), value.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+inline std::set<std::string> provider_identity_seed_symbols() {
+    std::set<std::string> expected;
+    for (const auto& identity : cfss::federation::candidate_identity_seed())
+        expected.insert(identity.canonical_symbol);
+    return expected;
+}
+
 inline CryptoUniverse load_candidate_universe(const std::set<std::string>& required_symbols) {
     if (required_symbols.size() != 8U || required_symbols.contains("BTC"))
         throw std::runtime_error("owner_candidate_universe_requires_exactly_eight_non_btc_symbols");
-    const auto retrieved_at = now_ms();
-    std::set<std::string> symbols{"BTC"};
-    for (const auto& raw : required_symbols) {
-        const auto symbol = uppercase_symbol(raw);
-        if (!valid_crypto_symbol(symbol) || symbol == "BTC")
-            throw std::runtime_error("owner_candidate_universe_symbol_invalid:" + raw);
-        symbols.insert(symbol);
-    }
-    if (symbols.size() != 9U)
-        throw std::runtime_error("owner_candidate_universe_duplicate_or_invalid_symbol");
-    json symbol_array = json::array();
-    std::string hash_material;
-    for (const auto& symbol : symbols) {
-        symbol_array.push_back(symbol);
-        hash_material += symbol + "\n";
-    }
+
     const char* source_value = std::getenv("CFSS_UNIVERSE_SOURCE");
     const std::string source = source_value ? std::string{source_value} :
         "config/universe.v21.1.candidate.json";
     const bool frozen_production = source == "config/universe.json";
     if (!frozen_production && source != "config/universe.v21.1.candidate.json")
         throw std::runtime_error("owner_universe_source_not_allowlisted");
+
+    const auto config = read_universe_config_document(source);
+    std::set<std::string> configured_symbols{"BTC"};
+    std::set<std::string> configured_non_btc;
+
+    if (!frozen_production) {
+        if (config.value("schema_version", std::string{}) != "1.0.0" ||
+            config.value("document_version", std::string{}) != "V21.1" ||
+            config.value("artifact_type", std::string{}) != "cfss_nine_asset_candidate_universe" ||
+            config.value("status", std::string{}) != "PROVISIONAL_NOT_FROZEN" ||
+            config.value("selection_status", std::string{}) !=
+                "AWAITING_LIVE_DERIVATIVES_AND_HISTORICAL_COVERAGE_SCREEN" ||
+            config.value("required_production_count", 0) != 9 ||
+            config.value("mandatory_assets", json::array()) != json::array({"BTC"}) ||
+            !config.contains("candidate_assets") || !config.at("candidate_assets").is_array() ||
+            config.at("candidate_assets").size() != 9U) {
+            throw std::runtime_error("owner_candidate_manifest_contract_invalid");
+        }
+        std::size_t required_btc_count = 0U;
+        for (const auto& item : config.at("candidate_assets")) {
+            if (!item.is_object() || !item.contains("symbol") || !item.at("symbol").is_string())
+                throw std::runtime_error("owner_candidate_manifest_asset_invalid");
+            const auto symbol = uppercase_symbol(item.at("symbol").get<std::string>());
+            if (!valid_crypto_symbol(symbol) || !configured_symbols.insert(symbol).second)
+                throw std::runtime_error("owner_candidate_manifest_symbol_invalid_or_duplicate:" + symbol);
+            const bool required = item.value("required", false);
+            if (symbol == "BTC") {
+                if (!required) throw std::runtime_error("owner_candidate_manifest_btc_must_be_required");
+                ++required_btc_count;
+            } else {
+                if (required) throw std::runtime_error("owner_candidate_manifest_non_btc_must_be_candidate");
+                configured_non_btc.insert(symbol);
+            }
+        }
+        if (required_btc_count != 1U || configured_symbols.size() != 9U ||
+            configured_non_btc != required_symbols ||
+            configured_non_btc != provider_identity_seed_symbols().erase("BTC")) {
+            throw std::runtime_error("owner_candidate_manifest_identity_seed_mismatch");
+        }
+    } else {
+        if (config.value("schema_version", std::string{}) != "1.0.0" ||
+            config.value("document_version", std::string{}) != "V21.1" ||
+            config.value("artifact_type", std::string{}) != "cfss_nine_asset_frozen_production_universe" ||
+            config.value("status", std::string{}) != "FROZEN_PRODUCTION_UNIVERSE" ||
+            config.value("selection_status", std::string{}) != "FROZEN_PRODUCTION_UNIVERSE" ||
+            config.value("required_production_count", 0) != 9 ||
+            !config.contains("symbols") || !config.at("symbols").is_array() ||
+            config.at("symbols").size() != 9U ||
+            !is_sha256_hex(config.value("screen_evidence_sha256", std::string{})) ||
+            config.value("selection_method", std::string{}).empty() ||
+            config.value("selection_timestamp_utc", std::string{}).empty() ||
+            config.value("owner_approval_ref", std::string{}).empty() ||
+            config.value("owner_approval_timestamp_utc", std::string{}).empty()) {
+            throw std::runtime_error("frozen_production_universe_manifest_incomplete");
+        }
+        for (const auto& item : config.at("symbols")) {
+            if (!item.is_string())
+                throw std::runtime_error("frozen_production_universe_symbol_type_invalid");
+            const auto symbol = normalize_config_base_symbol(item.get<std::string>());
+            if (!valid_crypto_symbol(symbol) || !configured_symbols.insert(symbol).second)
+                throw std::runtime_error("frozen_production_universe_symbol_invalid_or_duplicate:" + symbol);
+            if (symbol != "BTC") configured_non_btc.insert(symbol);
+        }
+        if (configured_symbols.size() != 9U || !configured_symbols.contains("BTC") ||
+            configured_non_btc != required_symbols ||
+            configured_non_btc != provider_identity_seed_symbols().erase("BTC")) {
+            throw std::runtime_error("frozen_production_universe_identity_seed_mismatch");
+        }
+    }
+
+    const auto retrieved_at = now_ms();
+    json symbol_array = json::array();
+    std::string hash_material;
+    for (const auto& symbol : configured_symbols) {
+        symbol_array.push_back(symbol);
+        hash_material += symbol + "\n";
+    }
     json artifact{
         {"schema_version", "1.0.0"},
         {"artifact_type", "cfss_crypto_universe_v1"},
@@ -292,12 +407,19 @@ inline CryptoUniverse load_candidate_universe(const std::set<std::string>& requi
         {"freshness_status", "STATIC_CONFIG"},
         {"fetched_at_ms", retrieved_at},
         {"retrieved_at_ms", retrieved_at},
-        {"symbol_count", symbols.size()},
+        {"symbol_count", configured_symbols.size()},
         {"symbols_sha256", cfss::sha256_hex(hash_material)},
         {"selection_status", frozen_production ? "FROZEN_PRODUCTION_UNIVERSE" : "PROVISIONAL_NOT_FROZEN"},
         {"symbols", symbol_array}
     };
-    return {std::move(symbols), std::move(artifact)};
+    if (frozen_production) {
+        artifact["selection_method"] = config.at("selection_method");
+        artifact["selection_timestamp_utc"] = config.at("selection_timestamp_utc");
+        artifact["screen_evidence_sha256"] = config.at("screen_evidence_sha256");
+        artifact["owner_approval_ref"] = config.at("owner_approval_ref");
+        artifact["owner_approval_timestamp_utc"] = config.at("owner_approval_timestamp_utc");
+    }
+    return {std::move(configured_symbols), std::move(artifact)};
 }
 
 inline bool is_verified_crypto_underlying(const std::string& raw_symbol,
@@ -998,10 +1120,10 @@ inline json probe_provider_health() {
         const char* selection_policy;
     };
     const std::vector<Probe> probes{
-        {"okx", "https://www.okx.com/api/v5/public/time", "IMPLEMENTED", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"okx", "https://www.okx.com/api/v5/public/time", "IMPLEMENTED_PRIMARY", "PER_ASSET_LIQUIDITY_RANKED"},
         {"bybit", "https://api.bybit.com/v5/market/time", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
         {"binance", "https://fapi.binance.com/fapi/v1/ping", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
-        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", "IMPLEMENTED_PARTIAL", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", "IMPLEMENTED_SECONDARY_PARTIAL", "PER_ASSET_LIQUIDITY_RANKED"},
         {"mexc", "https://contract.mexc.com/api/v1/contract/detail", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
         {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"}
     };
@@ -1227,8 +1349,10 @@ inline json collect(int symbol_count, int years,
     const auto crypto_universe = exact_universe_mode_enabled()
         ? load_candidate_universe(required_symbols)
         : load_crypto_universe(cached_crypto_universe);
+    const bool frozen_production_universe =
+        crypto_universe.artifact.value("selection_status", std::string{}) == "FROZEN_PRODUCTION_UNIVERSE";
     const auto market_wide_provider_federation =
-        cfss::federation::collect_market_wide_provider_federation();
+        cfss::federation::collect_market_wide_provider_federation(frozen_production_universe);
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
     std::vector<Instrument> selected;
     try {
@@ -1554,10 +1678,11 @@ inline json collect(int symbol_count, int years,
         {"fear_greed", fear_greed},
         {"crypto_universe", crypto_universe.artifact},
         {"universe", {{"declared_usdt_swap_count", declared_count},
-                      {"crypto_universe_status", "VERIFIED"},
-                      {"crypto_universe_source", "coinpaprika"},
-                      {"crypto_universe_symbol_count", crypto_universe.symbols.size()},
+                      {"crypto_universe_status", crypto_universe.artifact.at("status")},
+                      {"crypto_universe_source", crypto_universe.artifact.at("provider_id")},
+                      {"crypto_universe_symbol_count", crypto_universe.artifact.at("symbol_count")},
                       {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
+                      {"selection_status", crypto_universe.artifact.value("selection_status", std::string{"LIVE_MARKET_UNIVERSE"})},
                       {"excluded_non_crypto_count", excluded_non_crypto_count},
                       {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},

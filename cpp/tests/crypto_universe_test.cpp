@@ -21,8 +21,20 @@ int main() {
             owner_candidate_universe.symbols.contains("BTC") &&
             owner_candidate_universe.artifact.value("status", std::string{}) ==
                 "OWNER_CONFIGURED_CANDIDATE_SET" &&
-            owner_candidate_universe.artifact.value("provider_id", std::string{}) == "owner_config",
-            "exact nine-asset candidate universe is owner-configured and not misrepresented as provider-verified");
+            owner_candidate_universe.artifact.value("provider_id", std::string{}) == "owner_config" &&
+            owner_candidate_universe.artifact.value("selection_status", std::string{}) == "PROVISIONAL_NOT_FROZEN",
+            "exact nine-asset candidate universe is owner-configured and remains explicitly provisional");
+    setenv("CFSS_UNIVERSE_SOURCE", "config/universe.json", 1);
+    bool legacy_universe_rejected = false;
+    try {
+        (void)cfss::okx::load_candidate_universe(
+            {"ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"});
+    } catch (const std::runtime_error&) {
+        legacy_universe_rejected = true;
+    }
+    setenv("CFSS_UNIVERSE_SOURCE", "config/universe.v21.1.candidate.json", 1);
+    require(legacy_universe_rejected,
+            "legacy 27-symbol config cannot be treated as a frozen V21.1 production universe");
     const std::set<std::string> verified{"BTC", "ETH", "SOL", "DOGE"};
     require(cfss::okx::valid_crypto_symbol("BTC") &&
             cfss::okx::valid_crypto_symbol("1INCH") &&

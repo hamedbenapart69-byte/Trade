@@ -475,20 +475,21 @@ inline ProviderSnapshot fetch_coinmarketcap() {
 
     const char* key_value = std::getenv("CMC_PRO_API_KEY");
     const bool authenticated = key_value && !std::string_view{key_value}.empty();
-    std::vector<std::string> headers;
-    std::string url;
-    if (authenticated) {
-        snapshot.license_status = "PERSONAL_FREE_BASIC_API_KEY";
-        snapshot.endpoint_used = "v1_quotes_latest_authenticated";
-        headers.push_back("X-CMC_PRO_API_KEY: " + std::string{key_value});
-        url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
-            "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD";
-    } else {
+    if (!authenticated) {
         snapshot.license_status = "KEYLESS_EVALUATION_ONLY";
-        snapshot.endpoint_used = "public_api_v2_simple_price";
-        url = "https://pro-api.coinmarketcap.com/public-api/v2/simple/price"
-            "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD&include_all=true&skip_invalid=true";
+        snapshot.endpoint_used = "public_api_v2_simple_price_not_polled";
+        snapshot.status = "NOT_CONFIGURED";
+        snapshot.error = "coinmarketcap_api_key_missing;keyless_evaluation_not_used_in_production";
+        return snapshot;
     }
+    snapshot.license_status = "PERSONAL_FREE_BASIC_API_KEY";
+    snapshot.endpoint_used = "v1_quotes_latest_authenticated";
+    const std::vector<std::string> headers{
+        "X-CMC_PRO_API_KEY: " + std::string{key_value}
+    };
+    const std::string url =
+        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+        "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD";
 
     const auto response = http_get(url, 20L, 3, headers);
     snapshot.request_attempts = response.attempts;
@@ -982,7 +983,7 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     };
 }
 
-inline json collect_market_wide_provider_federation() {
+inline json collect_market_wide_provider_federation(bool frozen_production_universe = false) {
     auto cmc = fetch_coinmarketcap();
     auto gecko = fetch_coingecko();
     auto ranking = fetch_coinranking();
@@ -1061,9 +1062,6 @@ inline json collect_market_wide_provider_federation() {
         (cmc_eligible ? 1 : 0) + (ranking_eligible ? 1 : 0) + (paprika_eligible ? 1 : 0);
     const bool pass = eligible_fresh_provider_count >= 2 &&
         btc_two_source_match && matched_asset_count == identities.size();
-    const char* universe_source_value = std::getenv("CFSS_UNIVERSE_SOURCE");
-    const bool frozen_production_universe = universe_source_value &&
-        std::string_view{universe_source_value} == "config/universe.json";
 
     return {
         {"schema_version", "1.0.0"},
