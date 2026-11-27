@@ -185,8 +185,8 @@ private:
 
 inline bool fallback_compatible(const CanonicalRecord& required,
                                 const CanonicalRecord& candidate,
-                                std::int64_t now_ms) {
-    if (required.canonical_asset_id != candidate.canonical_asset_id ||
+                                std::int64_t now_ms, std::int64_t max_age_ms) {
+    if (max_age_ms <= 0 || required.canonical_asset_id != candidate.canonical_asset_id ||
         required.market_scope != candidate.market_scope ||
         required.field != candidate.field || required.unit != candidate.unit ||
         required.quote_currency != candidate.quote_currency ||
@@ -199,7 +199,9 @@ inline bool fallback_compatible(const CanonicalRecord& required,
         candidate.license_status != "COMPATIBLE") {
         return false;
     }
-    return std::isfinite(candidate.value);
+    return std::isfinite(candidate.value) &&
+        now_ms - candidate.provider_timestamp_ms <= max_age_ms &&
+        now_ms - candidate.retrieved_at_ms <= max_age_ms;
 }
 
 struct AssetIdentity {
