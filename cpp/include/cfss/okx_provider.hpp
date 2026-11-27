@@ -1164,6 +1164,8 @@ inline json collect(int symbol_count, int years,
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
     const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
+    const auto market_wide_provider_federation =
+        cfss::federation::collect_market_wide_provider_federation();
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
     const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
@@ -1477,7 +1479,9 @@ inline json collect(int symbol_count, int years,
                       {"display_name", "Quality-ranked multi-venue public derivatives federation"},
                       {"fallback_used", fallback_used_any},
                       {"fallback_provider_ids", json(std::vector<std::string>(fallback_provider_ids.begin(), fallback_provider_ids.end()))}}},
-        {"provider_health", provider_health}, {"fear_greed", fear_greed},
+        {"provider_health", provider_health},
+        {"market_wide_provider_federation", market_wide_provider_federation},
+        {"fear_greed", fear_greed},
         {"crypto_universe", crypto_universe.artifact},
         {"universe", {{"declared_usdt_swap_count", declared_count},
                       {"crypto_universe_status", "VERIFIED"},
