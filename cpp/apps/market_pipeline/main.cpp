@@ -54,8 +54,10 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"symbol_target", symbols}, {"years", years}, {"timeframe", "1h"},
         {"liquidity_threshold_usd", 10000000.0}, {"ohlcv_closed_bars_only", true}
     };
-    bool all_real = true;
+    bool all_real = contract.at("market_wide_provider_federation").value(
+        "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
     json errors = json::array();
+    if (!all_real) errors.push_back("market_wide_provider_federation:PROVIDER_DISCOVERY_PARTIAL");
     for (const auto& item : artifact.at("instruments")) {
         if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
     }
@@ -141,8 +143,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                     cached_market_data->value("schema_version", std::string{}) == "1.0.0" &&
                     cached_market_data->value("cache_contract_version", std::string{}) == "1.0.0" &&
                     cached_market_data->value("provider", json::object())
-                        .value("primary_provider_id", std::string{}) == "okx" &&
-                    policy.value("venue", std::string{}) == "OKX" &&
+                        .value("primary_provider_id", std::string{}) == "provider_federation" &&
+                    policy.value("venue", std::string{}) == "PER_INSTRUMENT_PROVIDER" &&
                     policy.value("market_type", std::string{}) == "LINEAR_PERPETUAL" &&
                     policy.value("window_policy", std::string{}) == "ROLLING_2Y_OHLCV_30D_DERIVATIVES" &&
                     policy.value("normalization_schema_version", std::string{}) == "1.0.0" &&
@@ -183,6 +185,18 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         cfss::write_file_atomic(l1_path, l1_raw, true);
 
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        const bool market_wide_provider_pass =
+            contract.at("market_wide_provider_federation").value(
+                "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH";
+        if (!market_wide_provider_pass) {
+            for (auto& item : artifact["instruments"]) {
+                item["state"] = "MARKET_DATA_DEGRADED";
+                item["reason_code"] = "MARKET_WIDE_PROVIDER_FEDERATION_DEGRADED";
+                if (item.value("data_quality", std::string{}) == "REAL") item["data_quality"] = "PARTIAL";
+                item["confidence_status"] = "NOT_CALIBRATED";
+                item["actionable"] = false;
+            }
+        }
         cfss::add_artifact_hash(artifact);
         const std::string l2_raw = artifact.dump(2) + "\n";
         const auto evidence_dir = l1_path.parent_path().empty() ? std::filesystem::path{"."} : l1_path.parent_path();
