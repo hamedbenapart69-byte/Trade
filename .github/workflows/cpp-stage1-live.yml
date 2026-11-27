@@ -178,7 +178,7 @@ jobs:
           echo "PR_ACCEPTANCE_FAIL: two fresh license-eligible providers must match all nine assets."
           exit 1
 
-      - name: Validate verified crypto universe
+      - name: Validate owner-configured candidate or frozen crypto universe
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d artifacts/crypto-universe.v1.json --all-errors
 
