@@ -36,9 +36,15 @@ on:
         required: false
         default: false
         type: boolean
+      verification_replay:
+        description: "Internal one-time second run for same-source Stage1 acceptance"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   # همهٔ اجراها یک signals branch مشترک را می‌نویسند؛ اجرای هم‌زمان ممنوع است.
@@ -450,6 +456,21 @@ jobs:
             git -C signals-state cat-file -e "origin/signals:cpp_runtime/$path"
           done
           echo "SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=$RUN_ID"
+
+      - name: Dispatch one same-source Stage1 acceptance replay
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.verification_replay != true && steps.persist_telegram_state.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          jq -e '
+            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .telegram_send_status == "DELIVERED" and
+            (.telegram_message_ids | length) > 0
+          ' artifacts/run-manifest.v2.json >/dev/null
+          gh workflow run cpp-stage1-live.yml --ref main \
+            -f symbols=8 -f years=2 -f verification_replay=true
+          echo "STAGE1_SECOND_SAME_SOURCE_RUN_DISPATCHED"
 
       - name: Enforce V21 Stage 1 acceptance gate
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
