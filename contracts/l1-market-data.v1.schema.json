@@ -826,11 +826,12 @@
       "required": [
         "schema_version",
         "checked_at_utc",
-        "providers"
+        "providers",
+        "selection_policy"
       ],
       "properties": {
         "schema_version": {
-          "const": "1.1.0"
+          "const": "1.2.0"
         },
         "checked_at_utc": {
           "type": "string",
@@ -843,7 +844,6 @@
             "additionalProperties": false,
             "required": [
               "provider_id",
-              "fallback_rank",
               "endpoint",
               "checked_at_utc",
               "connectivity_status",
@@ -852,15 +852,12 @@
               "adapter_status",
               "fallback_status",
               "fallback_equivalence",
-              "fallback_reason"
+              "fallback_reason",
+              "selection_policy"
             ],
             "properties": {
               "provider_id": {
                 "type": "string"
-              },
-              "fallback_rank": {
-                "type": "integer",
-                "minimum": 1
               },
               "endpoint": {
                 "type": "string"
@@ -977,9 +974,18 @@
                   "HALF_OPEN",
                   "NOT_APPLICABLE"
                 ]
+              },
+              "selection_policy": {
+                "enum": [
+                  "PER_ASSET_LIQUIDITY_RANKED",
+                  "DISCOVERY_ONLY"
+                ]
               }
             }
           }
+        },
+        "selection_policy": {
+          "const": "PER_ASSET_LIQUIDITY_RANKED_NO_FIXED_PROVIDER_PRIORITY"
         }
       }
     },
