@@ -976,30 +976,33 @@ inline std::size_t normalize_open_interest_rows(json& rows) {
 
 inline json probe_provider_health() {
     const auto checked_at = utc_iso(now_ms());
-    struct Probe { const char* id; const char* url; int rank; const char* adapter; };
+    struct Probe {
+        const char* id;
+        const char* url;
+        const char* adapter;
+        const char* selection_policy;
+    };
     const std::vector<Probe> probes{
-        {"okx", "https://www.okx.com/api/v5/public/time", 1, "IMPLEMENTED_PRIMARY"},
-        {"bybit", "https://api.bybit.com/v5/market/time", 2, "NOT_IMPLEMENTED"},
-        {"binance", "https://fapi.binance.com/fapi/v1/ping", 3, "NOT_IMPLEMENTED"},
-        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "IMPLEMENTED_SECONDARY_PARTIAL"},
-        {"mexc", "https://contract.mexc.com/api/v1/contract/detail", 5, "NOT_IMPLEMENTED"},
-        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"},
-        {"coingecko", "https://api.coingecko.com/api/v3/ping", 7, "REFERENCE_ONLY"}
+        {"okx", "https://www.okx.com/api/v5/public/time", "IMPLEMENTED", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"bybit", "https://api.bybit.com/v5/market/time", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"binance", "https://fapi.binance.com/fapi/v1/ping", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", "IMPLEMENTED_PARTIAL", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"mexc", "https://contract.mexc.com/api/v1/contract/detail", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"}
     };
     json providers = json::array();
     for (const auto& probe : probes) {
         const auto response = get(probe.url, 12L);
         const bool reachable = response.transport == CURLE_OK && response.status == 200;
         const std::string provider_id{probe.id};
-        std::string fallback_status = provider_id == "okx" ? "PRIMARY" :
-            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "REFERENCE_ONLY" : "UNAVAILABLE");
+        std::string fallback_status = "UNAVAILABLE";
         std::string fallback_equivalence = "NOT_PROVEN";
-        std::string fallback_reason = provider_id == "okx" ? "primary_provider" :
-            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "not_a_futures_fallback" :
-             (!reachable ? "provider_endpoint_unreachable" : "adapter_live_equivalence_not_proven"));
+        std::string fallback_reason = !reachable ? "provider_endpoint_unreachable" :
+            (std::string{probe.adapter} == "NOT_IMPLEMENTED"
+                ? "adapter_not_implemented" : "live_equivalence_probe_not_run");
         json entry = {
-            {"provider_id", probe.id}, {"fallback_rank", probe.rank}, {"endpoint", probe.url},
-            {"checked_at_utc", checked_at},
+            {"provider_id", probe.id}, {"selection_policy", probe.selection_policy},
+            {"endpoint", probe.url}, {"checked_at_utc", checked_at},
             {"connectivity_status", reachable ? "HTTP_REACHABLE" : "UNAVAILABLE"},
             {"http_status", response.status},
             {"transport_status", curl_easy_strerror(response.transport)},
@@ -1020,129 +1023,17 @@ inline json probe_provider_health() {
                 } else {
                     entry["fallback_reason"] = "kucoin_public_live_probe_failed";
                 }
-            } catch (const std::exception& e) {
-                entry["fallback_reason"] = std::string{"kucoin_public_live_probe_error:"} + e.what();
+            } catch (const std::exception&) {
+                entry["fallback_reason"] = "kucoin_public_live_probe_exception";
             }
         }
-        if (provider_id == "okx")
-            entry["circuit_breaker_state"] = cfss::resilience::okx_circuit_breaker().state();
-        else if (provider_id == "kucoin")
-            entry["circuit_breaker_state"] = cfss::resilience::kucoin_circuit_breaker().state();
-        else
-            entry["circuit_breaker_state"] = "NOT_APPLICABLE";
         providers.push_back(std::move(entry));
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
-    return {{"schema_version", "1.1.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
-}
-
-inline json fetch_fear_greed() {
-    const auto retrieved_at = utc_iso(now_ms());
-    const auto response = get("https://api.alternative.me/fng/?limit=0&format=json", 20L);
-    if (response.transport != CURLE_OK || response.status != 200)
-        return {{"schema_version", "1.0.0"}, {"status", "UNAVAILABLE"},
-                {"retrieved_at_utc", retrieved_at}, {"observations", json::array()},
-                {"error", "fear_greed_http_or_transport_unavailable"}};
-    try {
-        const auto payload = json::parse(response.body);
-        if (!payload.contains("data") || !payload["data"].is_array())
-            throw std::runtime_error("fear_greed_payload_shape_invalid");
-        const auto cutoff = now_ms() - 730LL * 86'400'000LL;
-        std::map<std::int64_t, json> ordered;
-        for (const auto& row : payload["data"]) {
-            const auto raw_ts = text(row, "timestamp");
-            const auto raw_value = text(row, "value");
-            std::int64_t ts = 0;
-            int value = -1;
-            try { ts = std::stoll(raw_ts) * 1000LL; value = std::stoi(raw_value); }
-            catch (...) { continue; }
-            if (ts < cutoff || value < 0 || value > 100) continue;
-            ordered[ts] = {{"timestamp_ms", ts}, {"value", value},
-                           {"classification", text(row, "value_classification")},
-                           {"retrieved_at_utc", retrieved_at}};
-        }
-        json observations = json::array();
-        for (const auto& [ts, item] : ordered) { (void)ts; observations.push_back(item); }
-        return {{"schema_version", "1.0.0"},
-                {"status", observations.empty() ? "UNAVAILABLE" : "AVAILABLE"},
-                {"source_id", "alternative_me_fear_greed"},
-                {"source_endpoint", "https://api.alternative.me/fng/?limit=0&format=json"},
-                {"retrieved_at_utc", retrieved_at}, {"observations", observations}};
-    } catch (const std::exception& e) {
-        return {{"schema_version", "1.0.0"}, {"status", "UNAVAILABLE"},
-                {"retrieved_at_utc", retrieved_at}, {"observations", json::array()},
-                {"error", e.what()}};
-    }
-}
-
-inline json merge_timestamp_rows(const json& historical, const json& recent,
-                                  std::int64_t start_ms, std::int64_t end_ms,
-                                  std::int64_t interval_ms) {
-    std::map<std::int64_t, json> merged;
-    const auto add = [&](const json& rows) {
-        if (!rows.is_array()) return;
-        for (const auto& row : rows) {
-            if (!row.is_object()) continue;
-            const auto ts = row.value("timestamp_ms", std::int64_t{0});
-            if (ts > 0 && ts >= start_ms && ts < end_ms && ts % interval_ms == 0)
-                merged[ts] = row;
-        }
-    };
-    add(historical);
-    add(recent);
-    json result = json::array();
-    for (const auto& [ts, row] : merged) { (void)ts; result.push_back(row); }
-    return result;
-}
-
-inline json cache_key_material(const std::string& instrument_id,
-                                std::int64_t window_start_ms) {
     return {
-        {"provider_id", "okx"},
-        {"venue", "OKX"},
-        {"instrument_id", instrument_id},
-        {"market_type", "LINEAR_PERPETUAL"},
-        {"timeframes", {
-            {"candles", "1H"},
-            {"funding", "8H"},
-            {"open_interest", "1H"}
-        }},
-        {"window_start_ms", window_start_ms},
-        {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
-        {"normalization_schema_version", "1.0.0"}
+        {"schema_version", "1.2.0"}, {"checked_at_utc", checked_at},
+        {"selection_policy", "PER_ASSET_LIQUIDITY_RANKED_NO_FIXED_PROVIDER_PRIORITY"},
+        {"providers", providers}
     };
-}
-
-inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
-                             std::int64_t window_end_ms) {
-    const auto id = instrument.value("instrument_id", std::string{});
-    auto metadata = cache_key_material(id, window_start_ms);
-    metadata["window_end_ms"] = window_end_ms;
-    metadata["data_revision"] = sha256_hex(instrument.dump());
-    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms).dump());
-    return metadata;
-}
-
-inline bool valid_cache_entry(const json& cache_entries, const json& instrument,
-                              const std::string& instrument_id,
-                              std::int64_t current_start_ms, std::int64_t current_end_ms) {
-    if (!cache_entries.is_object() || !cache_entries.contains(instrument_id) ||
-        !instrument.is_object()) return false;
-    const auto& metadata = cache_entries.at(instrument_id);
-    if (!metadata.is_object()) return false;
-    const auto expected = cache_key_material(instrument_id,
-        metadata.value("window_start_ms", std::int64_t{0}));
-    for (const auto& [key, value] : expected.items()) {
-        if (!metadata.contains(key) || metadata.at(key) != value) return false;
-    }
-    const auto window_start = metadata.value("window_start_ms", std::int64_t{0});
-    const auto window_end = metadata.value("window_end_ms", std::int64_t{0});
-    if (window_start <= 0 || window_start > current_start_ms ||
-        window_end <= 0 || window_end > current_end_ms ||
-        current_end_ms - window_end > 10LL * 86'400'000LL) return false;
-    const auto expected_key = sha256_hex(expected.dump());
-    if (metadata.value("cache_key", std::string{}) != expected_key) return false;
-    return metadata.value("data_revision", std::string{}) == sha256_hex(instrument.dump());
 }
 
 inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
