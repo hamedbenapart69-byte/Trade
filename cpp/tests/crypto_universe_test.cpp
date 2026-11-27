@@ -57,6 +57,22 @@ int main() {
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
             pinned.back().base == "SOL",
             "pending candidates remain in L1 even after falling outside top-turnover eligibility");
+    const cfss::okx::Instrument sol_liquid{"SOL-USDT-SWAP", "SOL", "USDT", "USDT", 1, 1, 0.1, 1, 1, 20, 1, "SOL", "okx", "SOL-USDT-SWAP"};
+    const auto exact_nine = cfss::okx::select_instruments(
+        2, {btc, eth, sol_liquid}, {btc, eth, sol_liquid}, {"ETH", "SOL"}, true);
+    require(exact_nine.size() == 3U &&
+            std::set<std::string>{exact_nine[0].base, exact_nine[1].base, exact_nine[2].base} ==
+                std::set<std::string>{"BTC", "ETH", "SOL"},
+            "exact-universe mode returns only BTC plus the complete requested candidate set");
+    bool exact_missing_rejected = false;
+    try {
+        (void)cfss::okx::select_instruments(
+            2, {btc, eth}, {btc, eth, sol_liquid}, {"ETH", "SOL"}, true);
+    } catch (const std::runtime_error&) {
+        exact_missing_rejected = true;
+    }
+    require(exact_missing_rejected,
+            "exact-universe mode rejects a candidate that fails liquidity or provider availability");
     const nlohmann::json old_cache = {
         {"schema_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},
