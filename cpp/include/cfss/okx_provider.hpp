@@ -496,7 +496,8 @@ inline std::vector<Instrument> discover_kucoin(
     std::cerr << "KUCOIN_UNIVERSE_DIAGNOSTICS declared=" << contracts.size()
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << '\n';
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols, exact_universe_mode_enabled());
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols,
+                              apply_exact_universe && exact_universe_mode_enabled());
 }
 
 inline double minimum_turnover(const std::vector<Instrument>& instruments) {
@@ -1493,9 +1494,9 @@ inline json collect(int symbol_count, int years,
                       {"eligible_count", eligible_count},
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
                       {"liquidity_threshold_usd", 10000000.0},
-                      {"selection_method", discovery_fallback_used
-                          ? "kucoin_fallback_top_turnover_usd_desc_with_btc_first"
-                          : "top_turnover_usd_desc_with_btc_first"},
+                      {"selection_method", exact_universe_mode_enabled()
+                          ? "exact_candidate_manifest_plus_btc_across_eligible_venues"
+                          : "per_asset_max_24h_quote_turnover_across_okx_kucoin"},
                       {"selection_timestamp_utc", acquired_text},
                       {"selected_instrument_ids", selected_ids}}},
         {"instruments", instruments}
