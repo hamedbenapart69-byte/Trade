@@ -103,13 +103,80 @@ def csv_from_zip(payload: bytes, label: str) -> pd.DataFrame:
     return frame
 
 
+def raw_csv_from_zip(payload: bytes, label: str) -> bytes:
+    with ZipFile(BytesIO(payload)) as archive:
+        csvs = [name for name in archive.namelist() if name.lower().endswith(".csv")]
+        if len(csvs) != 1:
+            raise RuntimeError(f"D1_ARCHIVE_LAYOUT_INVALID: {label}:{csvs}")
+        return archive.read(csvs[0])
+
+
 def parse_kline_archive(payload: bytes, label: str) -> pd.DataFrame:
-    frame = csv_from_zip(payload, label)
-    rename = {"quote_volume": "quote_asset_volume", "count": "number_of_trades"}
-    frame = frame.rename(columns=rename)
+    raw = raw_csv_from_zip(payload, label)
+    headered = pd.read_csv(BytesIO(raw))
     required = {"open_time", "open", "high", "low", "close", "volume"}
-    if not required.issubset(frame.columns):
-        raise RuntimeError(f"D1_KLINE_SCHEMA_INVALID: {label}:{sorted(frame.columns)}")
+    if required.issubset(headered.columns):
+        frame = headered.rename(columns={"quote_volume": "quote_asset_volume", "count": "number_of_trades"})
+        layout = "HEADERED_STANDARD"
+    else:
+        raw_frame = pd.read_csv(BytesIO(raw), header=None)
+        if raw_frame.shape[1] != 12:
+            raise RuntimeError(f"D1_KLINE_COLUMN_COUNT_INVALID: {label}:{raw_frame.shape[1]}")
+        numeric = raw_frame.apply(pd.to_numeric, errors="coerce")
+        # Some early USD-M monthly archives are headerless and use a legacy
+        # field order: ignore, trades, open_time, close_time, taker-buy quote,
+        # taker-buy base, quote volume, base volume, low, open, close, high.
+        legacy_open_time = numeric.iloc[:, 2]
+        legacy_close_time = numeric.iloc[:, 3]
+        legacy_delta = legacy_close_time - legacy_open_time
+        legacy_timestamp = (
+            legacy_open_time.notna().mean() > 0.999 and
+            legacy_open_time.median() > 1e11 and
+            legacy_close_time.median() > 1e11 and
+            (legacy_delta.between(86_399_000, 86_401_000)).mean() > 0.999
+        )
+        standard_open_time = numeric.iloc[:, 0]
+        standard_close_time = numeric.iloc[:, 6]
+        standard_delta = standard_close_time - standard_open_time
+        standard_timestamp = (
+            standard_open_time.notna().mean() > 0.999 and
+            standard_open_time.median() > 1e11 and
+            standard_close_time.median() > 1e11 and
+            (standard_delta.between(86_399_000, 86_401_000)).mean() > 0.999
+        )
+        if legacy_timestamp:
+            frame = pd.DataFrame({
+                "open_time": numeric.iloc[:, 2],
+                "close_time": numeric.iloc[:, 3],
+                "quote_asset_volume": numeric.iloc[:, 6],
+                "volume": numeric.iloc[:, 7],
+                "number_of_trades": numeric.iloc[:, 1],
+                "taker_buy_quote_asset_volume": numeric.iloc[:, 4],
+                "taker_buy_base_asset_volume": numeric.iloc[:, 5],
+                "low": numeric.iloc[:, 8],
+                "open": numeric.iloc[:, 9],
+                "close": numeric.iloc[:, 10],
+                "high": numeric.iloc[:, 11],
+            })
+            layout = "HEADERLESS_LEGACY_UM_2020"
+        elif standard_timestamp:
+            frame = pd.DataFrame({
+                "open_time": numeric.iloc[:, 0],
+                "open": numeric.iloc[:, 1],
+                "high": numeric.iloc[:, 2],
+                "low": numeric.iloc[:, 3],
+                "close": numeric.iloc[:, 4],
+                "volume": numeric.iloc[:, 5],
+                "close_time": numeric.iloc[:, 6],
+                "quote_asset_volume": numeric.iloc[:, 7],
+                "number_of_trades": numeric.iloc[:, 8],
+                "taker_buy_base_asset_volume": numeric.iloc[:, 9],
+                "taker_buy_quote_asset_volume": numeric.iloc[:, 10],
+            })
+            layout = "HEADERLESS_STANDARD"
+        else:
+            raise RuntimeError(f"D1_KLINE_TIMESTAMP_LAYOUT_INVALID: {label}")
+
     timestamp = pd.to_numeric(frame["open_time"], errors="coerce")
     valid = timestamp[np.isfinite(timestamp)]
     if valid.empty:
@@ -121,14 +188,18 @@ def parse_kline_archive(payload: bytes, label: str) -> pd.DataFrame:
     frame["date"] = pd.to_datetime(timestamp, unit=unit, utc=True).dt.floor("D")
     for column in ("open", "high", "low", "close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    if "quote_asset_volume" in frame:
-        frame["quote_asset_volume"] = pd.to_numeric(frame["quote_asset_volume"], errors="coerce")
     result = frame[["date", "open", "high", "low", "close", "volume"]].dropna()
     result = result.drop_duplicates("date").sort_values("date").reset_index(drop=True)
-    if result.empty or (result[["open", "high", "low", "close"]] <= 0).any().any():
-        raise RuntimeError(f"D1_KLINE_VALUES_INVALID: {label}")
-    if (result["volume"] < 0).any():
-        raise RuntimeError(f"D1_KLINE_NEGATIVE_VOLUME: {label}")
+    valid_ohlc = (
+        (result["low"] > 0) &
+        (result["high"] >= result["low"]) &
+        (result["open"] >= result["low"]) & (result["open"] <= result["high"]) &
+        (result["close"] >= result["low"]) & (result["close"] <= result["high"]) &
+        (result["volume"] >= 0)
+    )
+    if result.empty or not bool(valid_ohlc.all()):
+        raise RuntimeError(f"D1_KLINE_OHLC_OR_VOLUME_INVALID: {label}:{layout}")
+    result.attrs["schema_layout"] = layout
     return result
 
 
@@ -177,14 +248,18 @@ def download_dataset(symbols: list[str], kind: str, months: list[str]) -> tuple[
         payload, checksum = fetch_verified_archive(symbol, kind, month)
         label = f"{symbol}:{month}:{kind}"
         parsed = parse_kline_archive(payload, label) if kind == "klines" else parse_funding_archive(payload, label)
-        return symbol, month, checksum, parsed
+        schema_layout = parsed.attrs.get("schema_layout", "FUNDING_RATE_HEADERED")
+        return symbol, month, checksum, parsed, schema_layout
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = [pool.submit(fetch_one, item) for item in tasks]
         for future in as_completed(futures):
-            symbol, month, checksum, parsed = future.result()
+            symbol, month, checksum, parsed, schema_layout = future.result()
             parts[symbol].append(parsed)
-            archive_manifest[symbol].append({"month": month, "sha256": checksum, "checksum_verified": True})
+            archive_manifest[symbol].append({
+                "month": month, "sha256": checksum, "checksum_verified": True,
+                "schema_layout": schema_layout,
+            })
 
     datasets: dict[str, pd.DataFrame] = {}
     coverage: dict[str, dict] = {}
@@ -312,11 +387,14 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
     return rows
 
 
-def extended_metrics(returns: list[float]) -> dict:
+def extended_metrics(returns: list[float], invested_mask: list[bool] | None = None) -> dict:
     result = metrics(returns)
     values = np.asarray(returns, dtype=float)
-    result["win_rate"] = round(float(np.mean(values > 0.0)), 8) if len(values) else None
+    active = values if invested_mask is None else values[np.asarray(invested_mask, dtype=bool)]
+    result["win_rate"] = round(float(np.mean(active > 0.0)), 8) if len(active) else None
+    result["invested_sample_count"] = int(len(active))
     result["average_weekly_return"] = round(float(np.mean(values)), 10) if len(values) else None
+    result["average_invested_week_return"] = round(float(np.mean(active)), 10) if len(active) else None
     return result
 
 
@@ -369,7 +447,7 @@ def evaluate(panel: list[dict]) -> dict:
         returns = [item["net_return"] for item in rows]
         invested = sum(item["state"] == "INVESTED_LONG_TOP2" for item in rows)
         yearly[str(year)] = {
-            "metrics": extended_metrics(returns),
+            "metrics": extended_metrics(returns, [item["state"] == "INVESTED_LONG_TOP2" for item in rows]),
             "invested_weeks": invested, "cash_weeks": len(rows) - invested,
             "cash_pct": round(100.0 * (len(rows) - invested) / len(rows), 6) if rows else None,
             "funding_cost_sum": round(float(sum(item["funding_cost"] for item in rows)), 10),
@@ -385,7 +463,7 @@ def evaluate(panel: list[dict]) -> dict:
         "entire_period": {
             "start_monday": str(all_rows[0]["monday"].date()) if all_rows else None,
             "end_friday": str(all_rows[-1]["friday"].date()) if all_rows else None,
-            "metrics": extended_metrics(returns),
+            "metrics": extended_metrics(returns, [item["state"] == "INVESTED_LONG_TOP2" for item in all_rows]),
             "invested_weeks": invested, "cash_weeks": total - invested,
             "cash_pct": round(100.0 * (total - invested) / total, 6) if total else None,
             "cash_reason_counts": cash_reasons,
@@ -432,12 +510,13 @@ def walk_forward(results: list[dict]) -> dict:
         fold_rows = [row for row in results if cursor <= pd.Timestamp(row["monday"]) < test_end]
         if fold_rows:
             fold_returns = [row["net_return"] for row in fold_rows]
+            fold_invested = [row["state"] == "INVESTED_LONG_TOP2" for row in fold_rows]
             folds.append({
                 "train_start": (cursor - pd.DateOffset(months=6)).date().isoformat(),
                 "train_end": (cursor - pd.Timedelta(days=1)).date().isoformat(),
                 "test_start": cursor.date().isoformat(),
                 "test_end_exclusive": test_end.date().isoformat(),
-                "metrics": extended_metrics(fold_returns),
+                "metrics": extended_metrics(fold_returns, fold_invested),
             })
             for row in fold_rows:
                 assigned.setdefault(pd.Timestamp(row["monday"]).isoformat(), row)
@@ -445,7 +524,8 @@ def walk_forward(results: list[dict]) -> dict:
         cursor += pd.Timedelta(days=(7 - cursor.weekday()) % 7)
     oos_rows = sorted(assigned.values(), key=lambda row: row["monday"])
     oos_returns = [row["net_return"] for row in oos_rows]
-    oos_metrics = extended_metrics(oos_returns)
+    oos_invested = [row["state"] == "INVESTED_LONG_TOP2" for row in oos_rows]
+    oos_metrics = extended_metrics(oos_returns, oos_invested)
     dsr = dsr_z_single_trial(oos_returns)
     pbo = {"status": "UNAVAILABLE", "value": None,
            "reason": "A single pre-registered strategy is not a CSCV strategy family; PBO is not fabricated."}
