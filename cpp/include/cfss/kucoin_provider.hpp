@@ -369,10 +369,11 @@ inline std::string open_interest_request_url(const Contract& contract,
     if (start_ms <= 0 || end_ms <= start_ms || page_size == 0U || page_size > 100U) {
         throw std::invalid_argument("kucoin_open_interest_query_invalid");
     }
-    // UTA OI endpoint expects Unix seconds for startAt/endAt (not milliseconds).
+    // Live endpoint verification: millisecond bounds return historical rows;
+    // second-based bounds returned an empty data array in the 2026-11-27 run.
     return "https://api.kucoin.com/api/ua/v2/market/open-interest?symbol=" +
-        contract.symbol + "&interval=1hour&startAt=" + std::to_string(start_ms / 1000LL) +
-        "&endAt=" + std::to_string(end_ms / 1000LL) +
+        contract.symbol + "&interval=1hour&startAt=" + std::to_string(start_ms) +
+        "&endAt=" + std::to_string(end_ms) +
         "&pageSize=" + std::to_string(page_size);
 }
 
