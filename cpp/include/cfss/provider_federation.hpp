@@ -992,20 +992,52 @@ inline json collect_market_wide_provider_federation() {
     evaluate_snapshot_freshness(ranking, identities, now_ms, 15LL * 60LL * 1000LL);
     evaluate_snapshot_freshness(paprika, identities, now_ms, 15LL * 60LL * 1000LL);
 
+    const bool cmc_eligible = cmc.freshness_status == "FRESH" &&
+        cmc.license_status == "PERSONAL_FREE_BASIC_API_KEY";
+    const bool ranking_eligible = ranking.freshness_status == "FRESH" &&
+        ranking.license_status == "PERSONAL_INTERNAL_USE_FREE_PLAN";
+    const bool paprika_eligible = paprika.freshness_status == "FRESH" &&
+        paprika.license_status == "PERSONAL_USE_ONLY";
+    const auto cmc_paprika = compare_cmc_coinpaprika_references(cmc, paprika);
     const auto ranking_paprika = compare_coinranking_coinpaprika_references(ranking, paprika);
+
     json candidate_rows = json::array();
     bool btc_two_source_match = false;
     std::size_t matched_asset_count = 0U;
     for (std::size_t i = 0; i < identities.size(); ++i) {
-        const auto& selected = ranking_paprika[i];
-        const bool matched = selected.classification == "TWO_SOURCE_IDENTITY_MATCHED";
-        if (matched) ++matched_asset_count;
-        if (identities[i].canonical_symbol == "BTC" && matched) btc_two_source_match = true;
+        const auto& cmc_row = cmc_paprika[i];
+        const auto& ranking_row = ranking_paprika[i];
+        const bool cmc_match = cmc_eligible && paprika_eligible &&
+            cmc_row.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        const bool ranking_match = ranking_eligible && paprika_eligible &&
+            ranking_row.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        std::string classification = "UNAVAILABLE";
+        std::string pair = "NONE";
+        if (cmc_match || ranking_match) {
+            classification = "TWO_SOURCE_IDENTITY_MATCHED";
+            if (cmc_match && ranking_match) {
+                pair = cmc_row.price_difference_bps <= ranking_row.price_difference_bps
+                    ? "coinmarketcap+coinpaprika" : "coinranking+coinpaprika";
+            } else {
+                pair = cmc_match ? "coinmarketcap+coinpaprika" : "coinranking+coinpaprika";
+            }
+            ++matched_asset_count;
+        } else {
+            const auto* cmc_ticker = find_by_provider_id(cmc, identities[i].coinmarketcap_id);
+            const auto* ranking_ticker = find_by_external_id(ranking, identities[i].coinmarketcap_id);
+            const auto* paprika_ticker = find_by_provider_id(paprika, identities[i].coinpaprika_id);
+            if ((cmc_eligible && cmc_ticker) || (ranking_eligible && ranking_ticker) ||
+                (paprika_eligible && paprika_ticker)) {
+                classification = "ONE_SOURCE_IDENTITY_MATCHED";
+            }
+        }
+        if (identities[i].canonical_symbol == "BTC" &&
+            classification == "TWO_SOURCE_IDENTITY_MATCHED") btc_two_source_match = true;
         candidate_rows.push_back({
             {"canonical_asset_id", identities[i].canonical_asset_id},
             {"canonical_symbol", identities[i].canonical_symbol},
-            {"classification", selected.classification},
-            {"matched_provider_pair", matched ? "coinranking+coinpaprika" : "NONE"}
+            {"classification", classification},
+            {"matched_provider_pair", pair}
         });
     }
 
@@ -1014,10 +1046,7 @@ inline json collect_market_wide_provider_federation() {
         (ranking.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
         (paprika.status == "LIVE_RESPONSE_PARSED" ? 1 : 0);
     const int eligible_fresh_provider_count =
-        (ranking.freshness_status == "FRESH" &&
-         ranking.license_status == "PERSONAL_INTERNAL_USE_FREE_PLAN" ? 1 : 0) +
-        (paprika.freshness_status == "FRESH" &&
-         paprika.license_status == "PERSONAL_USE_ONLY" ? 1 : 0);
+        (cmc_eligible ? 1 : 0) + (ranking_eligible ? 1 : 0) + (paprika_eligible ? 1 : 0);
     const bool pass = eligible_fresh_provider_count >= 2 &&
         btc_two_source_match && matched_asset_count == identities.size();
 
@@ -1027,6 +1056,7 @@ inline json collect_market_wide_provider_federation() {
             ? "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH"
             : "PROVIDER_DISCOVERY_PARTIAL"},
         {"generated_at_utc", utc_now_iso()},
+        {"production_universe_status", "DISCOVERY_ONLY_NOT_FROZEN"},
         {"live_provider_count", live_provider_count},
         {"production_eligible_fresh_provider_count", eligible_fresh_provider_count},
         {"matched_asset_count", matched_asset_count},
@@ -1038,11 +1068,13 @@ inline json collect_market_wide_provider_federation() {
             snapshot_health_to_json(paprika)
         })},
         {"candidate_seed", candidate_rows},
+        {"attribution", "Market-wide reference data sources: CoinMarketCap, Coinranking and CoinPaprika. CoinGecko is disabled for this jurisdiction."},
         {"limitations", json::array({
             "CoinGecko is disabled: the published excluded-country list includes Iran; HTTP reachability does not override license restrictions.",
-            "Coinranking free tier requires COINRANKING_API_KEY and is limited to internal use; no raw data is redistributed.",
+            "CoinMarketCap keyless access is evaluation-only. Production eligibility requires the free Basic API key and an eligible account.",
+            "Coinranking free tier requires COINRANKING_API_KEY and internal-use compliance; account eligibility must be confirmed by key issuance.",
             "CoinPaprika free API is personal-use only; no raw ticker payload is redistributed.",
-            "CoinMarketCap keyless access is evaluation-only and is not counted toward production provider acceptance.",
+            "Provider account eligibility from the user's jurisdiction is not inferred from an HTTP response.",
             "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow artifacts.",
             "Market-wide spot references are not perpetual contract prices.",
             "This reference federation does not provide futures OHLCV, funding, open interest or order-book depth.",
