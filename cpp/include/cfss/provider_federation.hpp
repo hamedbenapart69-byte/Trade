@@ -359,9 +359,12 @@ inline std::vector<MarketTicker> parse_coinmarketcap(const json& payload) {
     }
     std::vector<MarketTicker> output;
     const auto parse_row = [&](const json& row) {
-        if (!row.is_object() || !row.contains("quote")) return;
+        if (!row.is_object()) return;
+        const json* quote_pointer = row.contains("quote") ? &row.at("quote") :
+            (row.contains("quotes") ? &row.at("quotes") : nullptr);
+        if (!quote_pointer) return;
         const json* usd_pointer = nullptr;
-        const auto& quote = row.at("quote");
+        const auto& quote = *quote_pointer;
         if (quote.is_array()) {
             for (const auto& quote_row : quote) {
                 if (quote_row.is_object() && string_value(quote_row.value("symbol", json{})) == "USD") {
@@ -462,7 +465,9 @@ inline std::vector<MarketTicker> parse_coinpaprika(const json& payload) {
 inline ProviderSnapshot fetch_coinmarketcap() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinmarketcap";
+    snapshot.license_status = "KEYLESS_EVALUATION_ONLY";
     snapshot.retrieved_at_utc = utc_now_iso();
+    snapshot.endpoint_used = "public_api_v2_simple_price";
     auto& breaker = coinmarketcap_breaker();
     if (!breaker.allow_request()) {
         snapshot.status = "PROVIDER_CIRCUIT_OPEN";
@@ -470,42 +475,22 @@ inline ProviderSnapshot fetch_coinmarketcap() {
         return snapshot;
     }
 
-    auto response = http_get(
-        "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest?start=1&limit=100&convert=USD");
-    snapshot.endpoint_used = "listings_latest";
+    const auto response = http_get(
+        "https://pro-api.coinmarketcap.com/public-api/v2/simple/price"
+        "?id=1,1027,5426,1839,52,74,2010,1975,5805&convert=USD&include_all=true&skip_invalid=true");
     snapshot.request_attempts = response.attempts;
-    if (response.transport != CURLE_OK || response.status != 200L) {
-        if (response.status == 429L) {
-            snapshot.http_status = response.status;
-            snapshot.status = "PROVIDER_RATE_LIMITED";
-            snapshot.error = "coinmarketcap_listings_rate_limited_no_same-provider_retry";
-            breaker.record_failure();
-            return snapshot;
-        }
-        const auto fallback = http_get(
-            "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/quotes/latest?symbol=BTC,ETH,SOL,BNB,XRP,DOGE,ADA,LINK,AVAX&convert=USD");
-        snapshot.request_attempts += fallback.attempts;
-        if (fallback.transport == CURLE_OK && fallback.status == 200L) {
-            response = fallback;
-            snapshot.endpoint_used = "quotes_latest_fallback";
-            snapshot.error = "listings_latest_failed_quotes_latest_fallback_used";
-        } else {
-            snapshot.http_status = fallback.status;
-            breaker.record_failure();
-            snapshot.status = fallback.status == 403L ? "PROVIDER_BLOCKED" :
-                (fallback.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
-            snapshot.error = std::string{"coinmarketcap_endpoints_failed:listings="} +
-                std::to_string(response.status) + ",quotes=" + std::to_string(fallback.status);
-            return snapshot;
-        }
-    }
-
     snapshot.http_status = response.status;
+    if (response.transport != CURLE_OK || response.status != 200L) {
+        snapshot.status = response.status == 429L ? "PROVIDER_RATE_LIMITED" :
+            (response.status == 403L ? "PROVIDER_BLOCKED" : "UNAVAILABLE");
+        snapshot.error = "coinmarketcap_keyless_simple_price_unavailable";
+        breaker.record_failure();
+        return snapshot;
+    }
     try {
         const auto payload = json::parse(response.body);
         snapshot.tickers = parse_coinmarketcap(payload);
         snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
-        snapshot.freshness_status = "NOT_TESTED";
         if (snapshot.tickers.empty()) {
             snapshot.error = "coinmarketcap_no_valid_tickers";
             breaker.record_failure();
