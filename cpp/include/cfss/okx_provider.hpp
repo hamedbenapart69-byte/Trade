@@ -1689,7 +1689,6 @@ inline json collect(int symbol_count, int years,
         if (crypto_universe.artifact.contains(key))
             universe_summary[key] = crypto_universe.artifact.at(key);
     }
-    const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
     return {
         {"schema_version", "1.2.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
