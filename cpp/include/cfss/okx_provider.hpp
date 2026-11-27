@@ -1139,9 +1139,9 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
     return {
         {"schema_version", "1.0.0"},
         {"cache_contract_version", "1.0.0"},
-        {"provider", {{"primary_provider_id", "okx"}}},
+        {"provider", {{"primary_provider_id", "provider_federation"}}},
         {"cache_policy", {
-            {"venue", "OKX"},
+            {"venue", "PER_INSTRUMENT_PROVIDER"},
             {"market_type", "LINEAR_PERPETUAL"},
             {"timeframes", {{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}}},
             {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
@@ -1167,10 +1167,12 @@ inline json collect(int symbol_count, int years,
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
     const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
-    const bool discovery_fallback_used = !selected.empty() && selected.front().provider_id != "okx";
-    bool fallback_used_any = discovery_fallback_used;
+    std::set<std::string> selected_provider_ids;
+    for (const auto& instrument : selected) selected_provider_ids.insert(instrument.provider_id);
+    const std::string selected_provider_id = selected_provider_ids.size() == 1U
+        ? *selected_provider_ids.begin() : "mixed_provider_federation";
+    bool fallback_used_any = false;
     std::set<std::string> fallback_provider_ids;
-    if (discovery_fallback_used) fallback_provider_ids.insert(selected.front().provider_id);
     json instruments = json::array();
     std::size_t instrument_index = 0U;
     for (const auto& item : selected) {
@@ -1181,9 +1183,9 @@ inline json collect(int symbol_count, int years,
         std::string active_provider = item.provider_id;
         std::string provider_instrument_id = item.provider_symbol.empty() ? item.id : item.provider_symbol;
         std::string primary_provider_error;
-        bool item_fallback_used = item.provider_id != "okx";
+        bool item_fallback_used = false;
         const json* cached_instrument = nullptr;
-        if (item.provider_id == "okx" && cached_market_data && cached_market_data->is_object() &&
+        if (cached_market_data && cached_market_data->is_object() &&
             cached_market_data->contains("instruments") &&
             cached_market_data->at("instruments").is_array()) {
             for (const auto& cached_item : cached_market_data->at("instruments")) {
@@ -1471,8 +1473,8 @@ inline json collect(int symbol_count, int years,
                       {"source_commit", commit ? json(commit) : json(nullptr)}}},
         {"acquired_at_utc", acquired_text},
         {"window", {{"timeframe", "1h"}, {"start_ms", start_ms}, {"end_ms", end_ms}}},
-        {"provider", {{"primary_provider_id", "okx"},
-                      {"display_name", "OKX primary with KuCoin public fallback"},
+        {"provider", {{"primary_provider_id", selected_provider_id},
+                      {"display_name", "Quality-ranked multi-venue public derivatives federation"},
                       {"fallback_used", fallback_used_any},
                       {"fallback_provider_ids", json(std::vector<std::string>(fallback_provider_ids.begin(), fallback_provider_ids.end()))}}},
         {"provider_health", provider_health}, {"fear_greed", fear_greed},
