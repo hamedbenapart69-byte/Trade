@@ -862,6 +862,45 @@ inline std::vector<CrossProviderReference> compare_coingecko_coinpaprika_referen
     return output;
 }
 
+inline std::vector<CrossProviderReference> compare_cmc_coinranking_references(
+    const ProviderSnapshot& cmc, const ProviderSnapshot& ranking,
+    const std::vector<AssetIdentity>& identities = candidate_identity_seed()) {
+    std::vector<CrossProviderReference> output;
+    for (const auto& identity : identities) {
+        CrossProviderReference row;
+        row.canonical_asset_id = identity.canonical_asset_id;
+        row.canonical_symbol = identity.canonical_symbol;
+        const auto* a = find_by_provider_id(cmc, identity.coinmarketcap_id);
+        const auto* b = find_by_external_id(ranking, identity.coinmarketcap_id);
+        if (a && b && a->symbol == identity.canonical_symbol && b->symbol == identity.canonical_symbol) {
+            row.classification = "TWO_SOURCE_IDENTITY_MATCHED";
+            row.coinmarketcap_price_usd = a->price_usd;
+            row.coinranking_price_usd = b->price_usd;
+            const double midpoint = (a->price_usd + b->price_usd) / 2.0;
+            row.price_difference_bps = midpoint > 0.0
+                ? std::abs(a->price_usd - b->price_usd) / midpoint * 10000.0 : 0.0;
+            row.coinmarketcap_market_cap_usd = a->market_cap_usd;
+            row.coinranking_market_cap_usd = b->market_cap_usd;
+            row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
+            row.coinranking_volume_24h_usd = b->volume_24h_usd;
+        } else if (a || b) {
+            row.classification = "ONE_SOURCE_IDENTITY_MATCHED";
+            if (a) {
+                row.coinmarketcap_price_usd = a->price_usd;
+                row.coinmarketcap_market_cap_usd = a->market_cap_usd;
+                row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
+            }
+            if (b) {
+                row.coinranking_price_usd = b->price_usd;
+                row.coinranking_market_cap_usd = b->market_cap_usd;
+                row.coinranking_volume_24h_usd = b->volume_24h_usd;
+            }
+        }
+        output.push_back(std::move(row));
+    }
+    return output;
+}
+
 inline std::vector<CrossProviderReference> compare_cmc_coinpaprika_references(
     const ProviderSnapshot& cmc, const ProviderSnapshot& paprika,
     const std::vector<AssetIdentity>& identities = candidate_identity_seed()) {
