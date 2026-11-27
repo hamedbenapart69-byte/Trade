@@ -661,21 +661,28 @@
           "const": "cfss_crypto_universe_v1"
         },
         "status": {
-          "const": "VERIFIED"
+          "enum": [
+            "VERIFIED",
+            "OWNER_CONFIGURED_CANDIDATE_SET"
+          ]
         },
         "provider_id": {
-          "const": "coinpaprika"
+          "enum": [
+            "coinpaprika",
+            "owner_config"
+          ]
         },
         "source_endpoint": {
-          "const": "https://api.coinpaprika.com/v1/coins"
+          "type": "string"
         },
         "attribution": {
-          "const": "CoinPaprika"
+          "type": "string"
         },
         "freshness_status": {
           "enum": [
             "LIVE",
-            "CACHED"
+            "CACHED",
+            "STATIC_CONFIG"
           ]
         },
         "fetched_at_ms": {
@@ -688,7 +695,7 @@
         },
         "symbol_count": {
           "type": "integer",
-          "minimum": 500
+          "minimum": 9
         },
         "symbols_sha256": {
           "type": "string",
@@ -696,14 +703,122 @@
         },
         "symbols": {
           "type": "array",
-          "minItems": 500,
+          "minItems": 9,
           "uniqueItems": true,
           "items": {
             "type": "string",
             "pattern": "^[A-Z0-9]{1,20}$"
+          },
+          "contains": {
+            "const": "BTC"
+          },
+          "minContains": 1
+        },
+        "selection_status": {
+          "const": "PROVISIONAL_NOT_FROZEN"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "VERIFIED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "provider_id": {
+                "const": "coinpaprika"
+              },
+              "source_endpoint": {
+                "const": "https://api.coinpaprika.com/v1/coins"
+              },
+              "attribution": {
+                "const": "CoinPaprika"
+              },
+              "freshness_status": {
+                "enum": [
+                  "LIVE",
+                  "CACHED"
+                ]
+              },
+              "symbol_count": {
+                "type": "integer",
+                "minimum": 500
+              },
+              "symbols": {
+                "type": "array",
+                "minItems": 500,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{1,20}$"
+                },
+                "contains": {
+                  "const": "BTC"
+                },
+                "minContains": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "OWNER_CONFIGURED_CANDIDATE_SET"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "selection_status"
+            ],
+            "properties": {
+              "provider_id": {
+                "const": "owner_config"
+              },
+              "source_endpoint": {
+                "const": "config/universe.v21.1.candidate.json"
+              },
+              "attribution": {
+                "const": "Owner-configured provisional candidate universe; not market data."
+              },
+              "freshness_status": {
+                "const": "STATIC_CONFIG"
+              },
+              "symbol_count": {
+                "const": 9
+              },
+              "symbols": {
+                "type": "array",
+                "minItems": 9,
+                "maxItems": 9,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{1,20}$"
+                },
+                "contains": {
+                  "const": "BTC"
+                },
+                "minContains": 1
+              },
+              "selection_status": {
+                "const": "PROVISIONAL_NOT_FROZEN"
+              }
+            }
           }
         }
-      }
+      ]
     },
     "provider_health": {
       "type": "object",
