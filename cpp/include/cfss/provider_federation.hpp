@@ -452,20 +452,19 @@ inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
     return found == snapshot.tickers.end() ? nullptr : &*found;
 }
 
-inline std::vector<struct CrossProviderReference> compare_cmc_coingecko_references(
-    const ProviderSnapshot& cmc, const ProviderSnapshot& gecko,
-    const std::vector<AssetIdentity>& identities = candidate_identity_seed());
-
 struct CrossProviderReference {
     std::string canonical_asset_id;
     std::string canonical_symbol;
     std::string classification{"UNAVAILABLE"};
     double coinmarketcap_price_usd{0.0};
+    double coingecko_price_usd{0.0};
     double coinpaprika_price_usd{0.0};
     double price_difference_bps{0.0};
     double coinmarketcap_market_cap_usd{0.0};
+    double coingecko_market_cap_usd{0.0};
     double coinpaprika_market_cap_usd{0.0};
     double coinmarketcap_volume_24h_usd{0.0};
+    double coingecko_volume_24h_usd{0.0};
     double coinpaprika_volume_24h_usd{0.0};
 };
 
@@ -521,14 +520,14 @@ inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
         if (a && b && a->symbol == identity.canonical_symbol && b->symbol == identity.canonical_symbol) {
             row.classification = "REAL_MULTI_SOURCE";
             row.coinmarketcap_price_usd = a->price_usd;
-            row.coinpaprika_price_usd = b->price_usd;
+            row.coingecko_price_usd = b->price_usd;
             const double midpoint = (a->price_usd + b->price_usd) / 2.0;
             row.price_difference_bps = midpoint > 0.0
                 ? std::abs(a->price_usd - b->price_usd) / midpoint * 10000.0 : 0.0;
             row.coinmarketcap_market_cap_usd = a->market_cap_usd;
-            row.coinpaprika_market_cap_usd = b->market_cap_usd;
+            row.coingecko_market_cap_usd = b->market_cap_usd;
             row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
-            row.coinpaprika_volume_24h_usd = b->volume_24h_usd;
+            row.coingecko_volume_24h_usd = b->volume_24h_usd;
         } else if (a || b) {
             row.classification = "REAL_SINGLE_SOURCE";
             if (a) {
@@ -537,9 +536,9 @@ inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
                 row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
             }
             if (b) {
-                row.coinpaprika_price_usd = b->price_usd;
-                row.coinpaprika_market_cap_usd = b->market_cap_usd;
-                row.coinpaprika_volume_24h_usd = b->volume_24h_usd;
+                row.coingecko_price_usd = b->price_usd;
+                row.coingecko_market_cap_usd = b->market_cap_usd;
+                row.coingecko_volume_24h_usd = b->volume_24h_usd;
             }
         }
         output.push_back(std::move(row));
