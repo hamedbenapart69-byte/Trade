@@ -126,9 +126,11 @@ jobs:
           CMC_PRO_API_KEY: ${{ secrets.CMC_PRO_API_KEY }}
         run: |
           mkdir -p artifacts shared-cache
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$GITHUB_REF_NAME" = "v21.1/provider-federation-v1" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            export CFSS_UNIVERSE_SOURCE="config/universe.v21.1.candidate.json"
             jq '[.candidate_assets[] | select(.required == false) | .symbol]' config/universe.v21.1.candidate.json > artifacts/pending-symbols.v1.json
           else
+            export CFSS_UNIVERSE_SOURCE="config/universe.json"
             jq '[.symbols[] | sub("USDT$"; "") | select(. != "BTC")]' config/universe.json > artifacts/pending-symbols.v1.json
           fi
           PENDING_COUNT=$(jq 'length' artifacts/pending-symbols.v1.json)
