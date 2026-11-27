@@ -483,7 +483,7 @@ inline std::vector<CrossProviderReference> compare_candidate_references(
         const auto* a = find_by_provider_id(cmc, identity.coinmarketcap_id);
         const auto* b = find_by_provider_id(paprika, identity.coinpaprika_id);
         if (a && b && a->symbol == identity.canonical_symbol && b->symbol == identity.canonical_symbol) {
-            row.classification = "REAL_MULTI_SOURCE";
+            row.classification = "TWO_SOURCE_IDENTITY_MATCHED";
             row.coinmarketcap_price_usd = a->price_usd;
             row.coinpaprika_price_usd = b->price_usd;
             const double midpoint = (a->price_usd + b->price_usd) / 2.0;
@@ -494,7 +494,7 @@ inline std::vector<CrossProviderReference> compare_candidate_references(
             row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
             row.coinpaprika_volume_24h_usd = b->volume_24h_usd;
         } else if (a || b) {
-            row.classification = "REAL_SINGLE_SOURCE";
+            row.classification = "ONE_SOURCE_IDENTITY_MATCHED";
             if (a) {
                 row.coinmarketcap_price_usd = a->price_usd;
                 row.coinmarketcap_market_cap_usd = a->market_cap_usd;
@@ -522,7 +522,7 @@ inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
         const auto* a = find_by_provider_id(cmc, identity.coinmarketcap_id);
         const auto* b = find_by_provider_id(gecko, identity.coingecko_id);
         if (a && b && a->symbol == identity.canonical_symbol && b->symbol == identity.canonical_symbol) {
-            row.classification = "REAL_MULTI_SOURCE";
+            row.classification = "TWO_SOURCE_IDENTITY_MATCHED";
             row.coinmarketcap_price_usd = a->price_usd;
             row.coingecko_price_usd = b->price_usd;
             const double midpoint = (a->price_usd + b->price_usd) / 2.0;
@@ -533,7 +533,7 @@ inline std::vector<CrossProviderReference> compare_cmc_coingecko_references(
             row.coinmarketcap_volume_24h_usd = a->volume_24h_usd;
             row.coingecko_volume_24h_usd = b->volume_24h_usd;
         } else if (a || b) {
-            row.classification = "REAL_SINGLE_SOURCE";
+            row.classification = "ONE_SOURCE_IDENTITY_MATCHED";
             if (a) {
                 row.coinmarketcap_price_usd = a->price_usd;
                 row.coinmarketcap_market_cap_usd = a->market_cap_usd;
