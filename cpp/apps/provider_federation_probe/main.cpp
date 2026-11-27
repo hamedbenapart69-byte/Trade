@@ -41,9 +41,9 @@ int main(int argc, char** argv) {
     }
 
     try {
-        const auto cmc = cfss::federation::fetch_coinmarketcap();
-        const auto gecko = cfss::federation::fetch_coingecko();
-        const auto paprika = cfss::federation::fetch_coinpaprika();
+        auto cmc = cfss::federation::fetch_coinmarketcap();
+        auto gecko = cfss::federation::fetch_coingecko();
+        auto paprika = cfss::federation::fetch_coinpaprika();
 
         const auto& identities = cfss::federation::candidate_identity_seed();
         const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
