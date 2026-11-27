@@ -46,6 +46,8 @@ jobs:
           ./build/cfss_unit_tests
       - name: V21.1 live market-wide aggregator probe
         if: startsWith(github.head_ref, 'v21.1/')
+        env:
+          COINRANKING_API_KEY: ${{ secrets.COINRANKING_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
