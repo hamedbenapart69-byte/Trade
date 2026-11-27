@@ -274,19 +274,27 @@ inline CryptoUniverse load_candidate_universe(const std::set<std::string>& requi
         symbol_array.push_back(symbol);
         hash_material += symbol + "\n";
     }
+    const char* source_value = std::getenv("CFSS_UNIVERSE_SOURCE");
+    const std::string source = source_value ? std::string{source_value} :
+        "config/universe.v21.1.candidate.json";
+    const bool frozen_production = source == "config/universe.json";
+    if (!frozen_production && source != "config/universe.v21.1.candidate.json")
+        throw std::runtime_error("owner_universe_source_not_allowlisted");
     json artifact{
         {"schema_version", "1.0.0"},
         {"artifact_type", "cfss_crypto_universe_v1"},
-        {"status", "OWNER_CONFIGURED_CANDIDATE_SET"},
+        {"status", frozen_production ? "OWNER_CONFIGURED_PRODUCTION_SET" : "OWNER_CONFIGURED_CANDIDATE_SET"},
         {"provider_id", "owner_config"},
-        {"source_endpoint", "config/universe.v21.1.candidate.json"},
-        {"attribution", "Owner-configured provisional candidate universe; not market data."},
+        {"source_endpoint", source},
+        {"attribution", frozen_production
+            ? "Owner-frozen production universe configuration; not market data."
+            : "Owner-configured provisional candidate universe; not market data."},
         {"freshness_status", "STATIC_CONFIG"},
         {"fetched_at_ms", retrieved_at},
         {"retrieved_at_ms", retrieved_at},
         {"symbol_count", symbols.size()},
         {"symbols_sha256", cfss::sha256_hex(hash_material)},
-        {"selection_status", "PROVISIONAL_NOT_FROZEN"},
+        {"selection_status", frozen_production ? "FROZEN_PRODUCTION_UNIVERSE" : "PROVISIONAL_NOT_FROZEN"},
         {"symbols", symbol_array}
     };
     return {std::move(symbols), std::move(artifact)};
