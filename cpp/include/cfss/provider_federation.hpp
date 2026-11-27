@@ -111,6 +111,97 @@ struct ProviderSnapshot {
     std::vector<MarketTicker> tickers;
 };
 
+struct ProviderCapability {
+    std::string provider_id;
+    std::string field;
+    std::string market_scope;
+    std::string unit;
+    std::string quote_currency;
+    std::vector<std::string> canonical_assets;
+    std::int64_t max_age_ms{0};
+    std::int64_t history_days{0};
+    std::string license_status{"NOT_VERIFIED"};
+    std::string runtime_status{"NOT_TESTED"};
+};
+
+struct CanonicalRecord {
+    std::string canonical_asset_id;
+    std::string canonical_symbol;
+    std::string provider_id;
+    std::string provider_instrument_id;
+    std::string market_scope;
+    std::string field;
+    double value{0.0};
+    std::string unit;
+    std::string quote_currency;
+    std::string interval;
+    std::int64_t event_timestamp_ms{0};
+    std::int64_t provider_timestamp_ms{0};
+    std::int64_t retrieved_at_ms{0};
+    std::string quality_status{"NOT_VERIFIED"};
+    std::string data_class{"UNAVAILABLE"};
+    std::string license_status{"NOT_VERIFIED"};
+};
+
+class ProviderCapabilityRegistry {
+public:
+    void add(ProviderCapability capability) {
+        if (capability.provider_id.empty() || capability.field.empty() ||
+            capability.market_scope.empty() || capability.unit.empty() ||
+            capability.max_age_ms <= 0 || capability.license_status.empty() ||
+            capability.runtime_status.empty()) {
+            throw std::invalid_argument("provider_capability_invalid");
+        }
+        const auto duplicate = std::find_if(entries_.begin(), entries_.end(),
+            [&](const ProviderCapability& existing) {
+                return existing.provider_id == capability.provider_id &&
+                       existing.field == capability.field &&
+                       existing.market_scope == capability.market_scope;
+            });
+        if (duplicate != entries_.end()) throw std::invalid_argument("provider_capability_duplicate");
+        entries_.push_back(std::move(capability));
+    }
+
+    std::vector<ProviderCapability> eligible(std::string_view field,
+                                              std::string_view market_scope,
+                                              std::string_view canonical_symbol) const {
+        std::vector<ProviderCapability> result;
+        for (const auto& item : entries_) {
+            const bool asset_supported = item.canonical_assets.empty() ||
+                std::find(item.canonical_assets.begin(), item.canonical_assets.end(),
+                          canonical_symbol) != item.canonical_assets.end();
+            if (item.field == field && item.market_scope == market_scope &&
+                asset_supported && item.license_status == "COMPATIBLE" &&
+                item.runtime_status == "REACHABLE") {
+                result.push_back(item);
+            }
+        }
+        return result;
+    }
+
+private:
+    std::vector<ProviderCapability> entries_;
+};
+
+inline bool fallback_compatible(const CanonicalRecord& required,
+                                const CanonicalRecord& candidate,
+                                std::int64_t now_ms) {
+    if (required.canonical_asset_id != candidate.canonical_asset_id ||
+        required.market_scope != candidate.market_scope ||
+        required.field != candidate.field || required.unit != candidate.unit ||
+        required.quote_currency != candidate.quote_currency ||
+        required.interval != candidate.interval ||
+        required.event_timestamp_ms != candidate.event_timestamp_ms ||
+        candidate.event_timestamp_ms <= 0 || candidate.provider_timestamp_ms <= 0 ||
+        candidate.retrieved_at_ms <= 0 || candidate.provider_timestamp_ms > now_ms ||
+        candidate.retrieved_at_ms > now_ms ||
+        candidate.quality_status != "VALID" || candidate.data_class != "REAL" ||
+        candidate.license_status != "COMPATIBLE") {
+        return false;
+    }
+    return std::isfinite(candidate.value);
+}
+
 struct AssetIdentity {
     std::string canonical_asset_id;
     std::string canonical_symbol;
