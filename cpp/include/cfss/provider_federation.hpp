@@ -54,7 +54,8 @@ inline std::size_t write_body(char* data, std::size_t size, std::size_t count, v
     return bytes;
 }
 
-inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int max_attempts = 3) {
+inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int max_attempts = 3,
+                           const std::vector<std::string>& extra_headers = {}) {
     HttpResult last;
     const std::string url_text{url};
     for (int attempt = 0; attempt < std::max(1, max_attempts); ++attempt) {
@@ -74,6 +75,7 @@ inline HttpResult http_get(std::string_view url, long timeout_seconds = 20L, int
         curl_easy_setopt(handle, CURLOPT_USERAGENT, "CFSS-provider-federation/21.1");
         curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "Accept: application/json");
+        for (const auto& header : extra_headers) headers = curl_slist_append(headers, header.c_str());
         curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
         result.transport = curl_easy_perform(handle);
         curl_slist_free_all(headers);
@@ -255,6 +257,8 @@ struct AssetIdentity {
 
 inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
                                                 std::string_view provider_asset_id);
+inline const MarketTicker* find_by_external_id(const ProviderSnapshot& snapshot,
+                                                std::string_view external_asset_id);
 
 inline std::optional<std::int64_t> parse_utc_iso_ms(const std::string& value) {
     if (value.size() < 19U) return std::nullopt;
@@ -289,6 +293,25 @@ inline void evaluate_snapshot_freshness(ProviderSnapshot& snapshot,
         if (snapshot.provider_id == "coinmarketcap") provider_id = &identity.coinmarketcap_id;
         else if (snapshot.provider_id == "coingecko") provider_id = &identity.coingecko_id;
         else if (snapshot.provider_id == "coinpaprika") provider_id = &identity.coinpaprika_id;
+        if (snapshot.provider_id == "coinranking") {
+            const auto* ticker = find_by_external_id(snapshot, identity.coinmarketcap_id);
+            if (!ticker || ticker->symbol != identity.canonical_symbol) {
+                snapshot.freshness_status = "PARTIAL_COVERAGE";
+                return;
+            }
+            const auto timestamp = parse_utc_iso_ms(ticker->provider_timestamp_utc);
+            if (!timestamp) {
+                snapshot.freshness_status = "TIMESTAMP_UNAVAILABLE";
+                return;
+            }
+            const auto age = now_ms - *timestamp;
+            if (age < -300'000LL || age > max_age_ms) {
+                snapshot.freshness_status = "STALE";
+                return;
+            }
+            ++checked;
+            continue;
+        }
         if (!provider_id) {
             snapshot.freshness_status = "UNSUPPORTED_PROVIDER";
             return;
@@ -568,6 +591,13 @@ inline const MarketTicker* find_by_provider_id(const ProviderSnapshot& snapshot,
                                                 std::string_view provider_asset_id) {
     const auto found = std::find_if(snapshot.tickers.begin(), snapshot.tickers.end(),
         [&](const MarketTicker& ticker) { return ticker.provider_asset_id == provider_asset_id; });
+    return found == snapshot.tickers.end() ? nullptr : &*found;
+}
+
+inline const MarketTicker* find_by_external_id(const ProviderSnapshot& snapshot,
+                                                std::string_view external_asset_id) {
+    const auto found = std::find_if(snapshot.tickers.begin(), snapshot.tickers.end(),
+        [&](const MarketTicker& ticker) { return ticker.external_asset_id == external_asset_id; });
     return found == snapshot.tickers.end() ? nullptr : &*found;
 }
 
