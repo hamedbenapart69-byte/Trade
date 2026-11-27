@@ -1081,6 +1081,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }
