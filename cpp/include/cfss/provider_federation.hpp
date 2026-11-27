@@ -544,48 +544,16 @@ inline std::vector<MarketTicker> parse_coingecko(const json& payload) {
     return output;
 }
 
-inline cfss::resilience::CircuitBreaker& coingecko_breaker() {
-    static cfss::resilience::CircuitBreaker breaker(3U, std::chrono::seconds(60));
-    return breaker;
-}
-
+// CoinGecko's published API/website terms exclude users domiciled or residing
+// in listed excluded jurisdictions. Do not issue HTTP requests from the
+// production pipeline; HTTP reachability is not contractual eligibility.
 inline ProviderSnapshot fetch_coingecko() {
-    ProviderSnapshot snapshot;
-    snapshot.provider_id = "coingecko";
-    snapshot.endpoint_used = "coins_markets";
-    snapshot.retrieved_at_utc = utc_now_iso();
-    auto& breaker = coingecko_breaker();
-    if (!breaker.allow_request()) {
-        snapshot.status = "PROVIDER_CIRCUIT_OPEN";
-        snapshot.error = "coingecko_circuit_open";
-        return snapshot;
-    }
-    const auto response = http_get(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
-    snapshot.http_status = response.status;
-    snapshot.request_attempts = response.attempts;
-    if (response.transport != CURLE_OK || response.status != 200L) {
-        breaker.record_failure();
-        snapshot.status = response.status == 403L ? "PROVIDER_BLOCKED" :
-            (response.status == 429L ? "PROVIDER_RATE_LIMITED" : "UNAVAILABLE");
-        snapshot.error = std::string{"coingecko_transport_or_http_error:"} +
-            std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
-        return snapshot;
-    }
-    try {
-        const auto payload = json::parse(response.body);
-        snapshot.tickers = parse_coingecko(payload);
-        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE_RESPONSE_PARSED";
-        snapshot.freshness_status = "NOT_TESTED";
-        if (snapshot.tickers.empty()) snapshot.error = "coingecko_no_valid_tickers";
-        if (snapshot.tickers.empty()) breaker.record_failure();
-        else breaker.record_success();
-    } catch (const std::exception& error) {
-        snapshot.status = "FAILED";
-        snapshot.error = std::string{"coingecko_parse_failed:"} + error.what();
-        breaker.record_failure();
-    }
-    return snapshot;
+    return ProviderSnapshot{
+        "coingecko", "DISABLED_BY_PROVIDER_TERMS", utc_now_iso(),
+        0, "provider_terms_exclude_residents_of_listed_jurisdictions",
+        "disabled_without_request", "UNAVAILABLE", "EXCLUDED_COUNTRY_TERMS",
+        0, {}
+    };
 }
 
 inline ProviderSnapshot fetch_coinpaprika() {
@@ -1016,11 +984,7 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
 
 inline json collect_market_wide_provider_federation() {
     auto cmc = fetch_coinmarketcap();
-    ProviderSnapshot gecko{
-        "coingecko", "DISABLED_BY_JURISDICTION_POLICY", utc_now_iso(),
-        0, "excluded_country_policy_applies_to_IR", "disabled_without_request",
-        "UNAVAILABLE", "EXCLUDED_COUNTRY_IR", 0, {}
-    };
+    auto gecko = fetch_coingecko();
     auto ranking = fetch_coinranking();
     auto paprika = fetch_coinpaprika();
 

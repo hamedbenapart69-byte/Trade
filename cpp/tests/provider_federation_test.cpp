@@ -118,6 +118,15 @@ int main() {
         std::cerr << "CoinGecko normalization failed\n";
         return EXIT_FAILURE;
     }
+    const auto disabled_gecko = cfss::federation::fetch_coingecko();
+    if (disabled_gecko.status != "DISABLED_BY_PROVIDER_TERMS" ||
+        disabled_gecko.license_status != "EXCLUDED_COUNTRY_TERMS" ||
+        disabled_gecko.http_status != 0 || disabled_gecko.request_attempts != 0 ||
+        disabled_gecko.endpoint_used != "disabled_without_request" ||
+        !disabled_gecko.tickers.empty()) {
+        std::cerr << "CoinGecko provider-terms fail-closed guard failed\\n";
+        return EXIT_FAILURE;
+    }
     cfss::federation::ProviderSnapshot gecko_snapshot{
         "coingecko", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "", "coins_markets", "NOT_TESTED", "NOT_VERIFIED", 1, gecko
     };
