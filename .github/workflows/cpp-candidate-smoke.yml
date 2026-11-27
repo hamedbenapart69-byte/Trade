@@ -58,7 +58,6 @@ jobs:
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
             artifacts/pending-symbols.v1.json
-            artifacts/universe-screen.v1.json
       - name: Validate L1 schema and fail-closed candidate state
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
@@ -104,5 +103,6 @@ jobs:
             artifacts/l1-market-data.v1.json
             artifacts/l2-status.v1.json
             artifacts/pending-symbols.v1.json
+            artifacts/universe-screen.v1.json
           if-no-files-found: error
           retention-days: 7
