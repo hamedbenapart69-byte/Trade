@@ -44,6 +44,28 @@ jobs:
         run: |
           ctest --test-dir build --output-on-failure --no-tests=error
           ./build/cfss_unit_tests
+      - name: V21.1 live market-wide aggregator probe
+        if: startsWith(github.head_ref, 'v21.1/')
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          set +e
+          ./build/provider_federation_probe artifacts/provider-federation-discovery.v1.json
+          probe_status=$?
+          set -e
+          cat artifacts/provider-federation-discovery.v1.json
+          if [ "$probe_status" -ne 0 ]; then
+            echo "V21_1_PROVIDER_PROBE_FAILED exit=$probe_status"
+            exit "$probe_status"
+          fi
+          jq -e '
+            .document_version == "V21.1" and
+            .run_status == "TWO_PROVIDER_LIVE_TESTED" and
+            ([.providers[] | select(.status == "LIVE")] | length) == 2 and
+            any(.candidate_seed[]; .canonical_symbol == "BTC" and .classification == "REAL_MULTI_SOURCE")
+          ' artifacts/provider-federation-discovery.v1.json >/dev/null
+          echo "V21_1_TWO_AGGREGATOR_BTC_OVERLAP_PASS"
+
       - name: Verify market pipeline requires an explicit L1 contract or live collection command
         run: |
           if ./build/market_pipeline >/tmp/market_pipeline_usage.log 2>&1; then
