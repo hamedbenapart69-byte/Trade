@@ -423,7 +423,7 @@ inline std::vector<Instrument> select_instruments(
             }
             exact_selected.push_back(*found);
         }
-        if (exact_selected.size() != requested_total) {
+        if (exact_selected.size() != static_cast<std::size_t>(target_count) + 1U) {
             throw std::runtime_error("exact_universe_selection_incomplete");
         }
         return exact_selected;
