@@ -156,7 +156,7 @@ int main() {
     cfss::federation::ProviderCapabilityRegistry registry;
     registry.add({"coinmarketcap", "price", "SPOT_REFERENCE", "USD/asset", "USD",
                    {"BTC", "ETH"}, 900000, 365, "COMPATIBLE", "REACHABLE"});
-    registry.add({"coinpaprika", "price", "SPOT_REFERENCE", "USD/asset", "USD",
+    registry.add({"coingecko", "price", "SPOT_REFERENCE", "USD/asset", "USD",
                    {"BTC", "ETH"}, 900000, 365, "COMPATIBLE", "REACHABLE"});
     registry.add({"venue-x", "open_interest", "PERPETUAL", "contracts", "USDT",
                    {"BTC"}, 10800000, 30, "COMPATIBLE", "REACHABLE"});
