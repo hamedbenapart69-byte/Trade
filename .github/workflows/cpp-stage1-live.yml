@@ -114,6 +114,7 @@ jobs:
           YEARS: ${{ inputs.years || '2' }}
           CFSS_EXACT_UNIVERSE: "1"
           COINRANKING_API_KEY: ${{ secrets.COINRANKING_API_KEY }}
+          CMC_PRO_API_KEY: ${{ secrets.CMC_PRO_API_KEY }}
         run: |
           mkdir -p artifacts shared-cache
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$GITHUB_REF_NAME" = "v21.1/provider-federation-v1" ]; then
