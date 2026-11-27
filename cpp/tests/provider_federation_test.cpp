@@ -114,7 +114,7 @@ int main() {
     auto paprika_missing = paprika_snapshot;
     paprika_missing.tickers.erase(paprika_missing.tickers.begin());
     const auto single = cfss::federation::compare_candidate_references(
-        cmc_snapshot, paprika_missing, {{"bitcoin", "BTC", "1", "btc-bitcoin"}});
+        cmc_snapshot, paprika_missing, {{"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"}});
     if (single.size() != 1U || single[0].classification != "REAL_SINGLE_SOURCE") {
         std::cerr << "single-source honesty classification failed\n";
         return EXIT_FAILURE;
