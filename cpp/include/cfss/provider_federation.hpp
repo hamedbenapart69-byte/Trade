@@ -920,4 +920,81 @@ inline json snapshot_to_json(const ProviderSnapshot& snapshot) {
     };
 }
 
+inline json collect_market_wide_provider_federation() {
+    auto cmc = fetch_coinmarketcap();
+    ProviderSnapshot gecko{
+        "coingecko", "DISABLED_BY_JURISDICTION_POLICY", utc_now_iso(),
+        0, "excluded_country_policy_applies_to_IR", "disabled_without_request",
+        "UNAVAILABLE", "EXCLUDED_COUNTRY_IR", 0, {}
+    };
+    auto ranking = fetch_coinranking();
+    auto paprika = fetch_coinpaprika();
+
+    const auto& identities = candidate_identity_seed();
+    const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    evaluate_snapshot_freshness(cmc, identities, now_ms, 15LL * 60LL * 1000LL);
+    evaluate_snapshot_freshness(ranking, identities, now_ms, 15LL * 60LL * 1000LL);
+    evaluate_snapshot_freshness(paprika, identities, now_ms, 15LL * 60LL * 1000LL);
+
+    const auto ranking_paprika = compare_coinranking_coinpaprika_references(ranking, paprika);
+    json candidate_rows = json::array();
+    bool btc_two_source_match = false;
+    std::size_t matched_asset_count = 0U;
+    for (std::size_t i = 0; i < identities.size(); ++i) {
+        const auto& selected = ranking_paprika[i];
+        const bool matched = selected.classification == "TWO_SOURCE_IDENTITY_MATCHED";
+        if (matched) ++matched_asset_count;
+        if (identities[i].canonical_symbol == "BTC" && matched) btc_two_source_match = true;
+        candidate_rows.push_back({
+            {"canonical_asset_id", identities[i].canonical_asset_id},
+            {"canonical_symbol", identities[i].canonical_symbol},
+            {"classification", selected.classification},
+            {"matched_provider_pair", matched ? "coinranking+coinpaprika" : "NONE"}
+        });
+    }
+
+    const int live_provider_count =
+        (cmc.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
+        (ranking.status == "LIVE_RESPONSE_PARSED" ? 1 : 0) +
+        (paprika.status == "LIVE_RESPONSE_PARSED" ? 1 : 0);
+    const int eligible_fresh_provider_count =
+        (ranking.freshness_status == "FRESH" &&
+         ranking.license_status == "PERSONAL_INTERNAL_USE_FREE_PLAN" ? 1 : 0) +
+        (paprika.freshness_status == "FRESH" &&
+         paprika.license_status == "PERSONAL_USE_ONLY" ? 1 : 0);
+    const bool pass = eligible_fresh_provider_count >= 2 &&
+        btc_two_source_match && matched_asset_count == identities.size();
+
+    return {
+        {"schema_version", "1.0.0"},
+        {"status", pass
+            ? "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH"
+            : "PROVIDER_DISCOVERY_PARTIAL"},
+        {"generated_at_utc", utc_now_iso()},
+        {"live_provider_count", live_provider_count},
+        {"production_eligible_fresh_provider_count", eligible_fresh_provider_count},
+        {"matched_asset_count", matched_asset_count},
+        {"required_asset_count", identities.size()},
+        {"providers", json::array({
+            snapshot_health_to_json(cmc),
+            snapshot_health_to_json(gecko),
+            snapshot_health_to_json(ranking),
+            snapshot_health_to_json(paprika)
+        })},
+        {"candidate_seed", candidate_rows},
+        {"limitations", json::array({
+            "CoinGecko is disabled: the published excluded-country list includes Iran; HTTP reachability does not override license restrictions.",
+            "Coinranking free tier requires COINRANKING_API_KEY and is limited to internal use; no raw data is redistributed.",
+            "CoinPaprika free API is personal-use only; no raw ticker payload is redistributed.",
+            "CoinMarketCap keyless access is evaluation-only and is not counted toward production provider acceptance.",
+            "Raw provider ticker payloads and absolute market metrics are not emitted to public workflow artifacts.",
+            "Market-wide spot references are not perpetual contract prices.",
+            "This reference federation does not provide futures OHLCV, funding, open interest or order-book depth.",
+            "The nine-asset candidate seed is provisional and is not a frozen production universe.",
+            "Provider overlap by itself is not evidence of executable liquidity or a trading edge."
+        })}
+    };
+}
+
 } // namespace cfss::federation
