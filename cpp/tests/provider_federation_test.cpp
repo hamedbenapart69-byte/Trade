@@ -99,8 +99,8 @@ int main() {
         }
     );
     if (references.size() != 3U ||
-        references[0].classification != "REAL_MULTI_SOURCE" ||
-        references[1].classification != "REAL_MULTI_SOURCE" ||
+        references[0].classification != "TWO_SOURCE_IDENTITY_MATCHED" ||
+        references[1].classification != "TWO_SOURCE_IDENTITY_MATCHED" ||
         references[2].classification != "UNAVAILABLE") {
         std::cerr << "provider identity matching/classification failed\n";
         return EXIT_FAILURE;
@@ -115,7 +115,7 @@ int main() {
     paprika_missing.tickers.erase(paprika_missing.tickers.begin());
     const auto single = cfss::federation::compare_candidate_references(
         cmc_snapshot, paprika_missing, {{"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"}});
-    if (single.size() != 1U || single[0].classification != "REAL_SINGLE_SOURCE") {
+    if (single.size() != 1U || single[0].classification != "ONE_SOURCE_IDENTITY_MATCHED") {
         std::cerr << "single-source honesty classification failed\n";
         return EXIT_FAILURE;
     }
@@ -129,7 +129,7 @@ int main() {
         }
     );
     if (cmc_gecko.size() != 3U ||
-        cmc_gecko[0].classification != "REAL_MULTI_SOURCE" ||
+        cmc_gecko[0].classification != "TWO_SOURCE_IDENTITY_MATCHED" ||
         cmc_gecko[0].coingecko_price_usd != 100010.0 ||
         cmc_gecko[2].classification != "UNAVAILABLE") {
         std::cerr << "CoinMarketCap/CoinGecko independent reference comparison failed\n";
