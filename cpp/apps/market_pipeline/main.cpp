@@ -328,7 +328,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const auto manifest = build_run_manifest(contract, artifact, artifact_manifest, symbols, years, l1_raw);
         write_json(manifest_path, manifest);
 
-        std::cout << "CPP_L1_COLLECTED provider=okx symbols=" << contract.at("instruments").size()
+        std::cout << "CPP_L1_COLLECTED provider="
+                  << contract.at("provider").at("primary_provider_id").get<std::string>()
+                  << " symbols=" << contract.at("instruments").size()
                   << " crypto_universe=VERIFIED source=coinpaprika"
                   << " run_id=" << contract.at("run_id") << '\n';
         std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
@@ -344,7 +346,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
 int main(int argc, char** argv) {
     try {
-        if ((argc >= 6 && argc <= 9) && std::string{argv[1]} == "--collect-okx") {
+        if ((argc >= 6 && argc <= 9) &&
+            (std::string{argv[1]} == "--collect-market-data" ||
+             std::string{argv[1]} == "--collect-okx")) {
             const std::optional<std::filesystem::path> universe_cache_path =
                 argc >= 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
             const std::optional<std::filesystem::path> market_cache_path =
@@ -356,7 +360,8 @@ int main(int argc, char** argv) {
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n";
+                      << "   or: market_pipeline --collect-market-data <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n"
+                      << "       (legacy alias: --collect-okx)\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};
