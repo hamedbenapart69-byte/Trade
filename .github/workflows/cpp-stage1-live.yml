@@ -13,6 +13,9 @@ on:
     paths:
       - "cpp/**"
       - "contracts/**"
+      - "config/universe.json"
+      - "config/universe.v21.1.candidate.json"
+      - "config/provider-policy.v1.json"
       - ".github/workflows/cpp-stage1-live.yml"
   workflow_dispatch:
     inputs:
