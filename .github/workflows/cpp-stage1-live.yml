@@ -147,9 +147,10 @@ jobs:
       - name: Validate L1 against the versioned JSON Schema
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
-      - name: Enforce V21.1 market-wide two-provider and exact-nine acceptance
+      - name: Evaluate V21.1 market-wide two-provider and exact-nine acceptance
+        id: market_wide_gate
         run: |
-          jq -e '
+          if jq -e '
             .market_wide_provider_federation.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
             .market_wide_provider_federation.production_eligible_fresh_provider_count >= 2 and
             .market_wide_provider_federation.matched_asset_count == 9 and
@@ -161,7 +162,19 @@ jobs:
                 (.matched_provider_pair == "coinmarketcap+coinranking" or
                  .matched_provider_pair == "coinmarketcap+coinpaprika" or
                  .matched_provider_pair == "coinranking+coinpaprika"))] | length) == 9
-          ' artifacts/l1-market-data.v1.json >/dev/null
+          ' artifacts/l1-market-data.v1.json >/dev/null; then
+            echo "pass=true" >> "$GITHUB_OUTPUT"
+            echo "MARKET_WIDE_PROVIDER_GATE=PASS"
+          else
+            echo "pass=false" >> "$GITHUB_OUTPUT"
+            echo "MARKET_WIDE_PROVIDER_GATE=DEGRADED; C10 degraded reporting remains enabled on production runs."
+          fi
+
+      - name: Fail pull-request acceptance when market-wide gate is degraded
+        if: github.event_name == 'pull_request' && steps.market_wide_gate.outputs.pass != 'true'
+        run: |
+          echo "PR_ACCEPTANCE_FAIL: two fresh license-eligible providers must match all nine assets."
+          exit 1
 
       - name: Validate verified crypto universe
         run: |
