@@ -7,6 +7,9 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <ctime>
+#include <cstdio>
+#include <utility>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -16,6 +19,20 @@
 namespace cfss::federation {
 
 using json = nlohmann::json;
+
+inline std::string utc_now_iso() {
+    const auto now = std::chrono::system_clock::now();
+    const std::time_t value = std::chrono::system_clock::to_time_t(now);
+    std::tm utc{};
+#if defined(_WIN32)
+    gmtime_s(&utc, &value);
+#else
+    gmtime_r(&value, &utc);
+#endif
+    char buffer[32]{};
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &utc);
+    return std::string{buffer};
+}
 
 struct HttpResult {
     long status{0};
@@ -167,7 +184,7 @@ inline std::vector<MarketTicker> parse_coinpaprika(const json& payload) {
 inline ProviderSnapshot fetch_coinmarketcap() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinmarketcap";
-    snapshot.retrieved_at_utc = "RUNTIME_TIMESTAMP_REQUIRED";
+    snapshot.retrieved_at_utc = utc_now_iso();
     const auto response = http_get(
         "https://pro-api.coinmarketcap.com/public-api/v3/cryptocurrency/listings/latest?start=1&limit=100&convert=USD");
     snapshot.http_status = response.status;
@@ -177,17 +194,22 @@ inline ProviderSnapshot fetch_coinmarketcap() {
             std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
         return snapshot;
     }
-    const auto payload = json::parse(response.body);
-    snapshot.tickers = parse_coinmarketcap(payload);
-    snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
-    if (snapshot.tickers.empty()) snapshot.error = "coinmarketcap_no_valid_tickers";
+    try {
+        const auto payload = json::parse(response.body);
+        snapshot.tickers = parse_coinmarketcap(payload);
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
+        if (snapshot.tickers.empty()) snapshot.error = "coinmarketcap_no_valid_tickers";
+    } catch (const std::exception& error) {
+        snapshot.status = "FAILED";
+        snapshot.error = std::string{"coinmarketcap_parse_failed:"} + error.what();
+    }
     return snapshot;
 }
 
 inline ProviderSnapshot fetch_coinpaprika() {
     ProviderSnapshot snapshot;
     snapshot.provider_id = "coinpaprika";
-    snapshot.retrieved_at_utc = "RUNTIME_TIMESTAMP_REQUIRED";
+    snapshot.retrieved_at_utc = utc_now_iso();
     const auto response = http_get("https://api.coinpaprika.com/v1/tickers?quotes=USD");
     snapshot.http_status = response.status;
     if (response.transport != CURLE_OK || response.status != 200L) {
@@ -196,10 +218,15 @@ inline ProviderSnapshot fetch_coinpaprika() {
             std::to_string(response.status) + ":" + curl_easy_strerror(response.transport);
         return snapshot;
     }
-    const auto payload = json::parse(response.body);
-    snapshot.tickers = parse_coinpaprika(payload);
-    snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
-    if (snapshot.tickers.empty()) snapshot.error = "coinpaprika_no_valid_tickers";
+    try {
+        const auto payload = json::parse(response.body);
+        snapshot.tickers = parse_coinpaprika(payload);
+        snapshot.status = snapshot.tickers.empty() ? "FAILED" : "LIVE";
+        if (snapshot.tickers.empty()) snapshot.error = "coinpaprika_no_valid_tickers";
+    } catch (const std::exception& error) {
+        snapshot.status = "FAILED";
+        snapshot.error = std::string{"coinpaprika_parse_failed:"} + error.what();
+    }
     return snapshot;
 }
 
