@@ -154,6 +154,52 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    const json coinranking_detail_fixture = {
+        {"data", {{"coin", {
+            {"uuid", "Qwsogvtv82FCd"}, {"coinMarketCapId", "1"},
+            {"symbol", "BTC"}, {"name", "Bitcoin"}, {"rank", 1},
+            {"price", "100020.0"}, {"marketCap", "2000600000000.0"},
+            {"24hVolume", "30060000000.0"}, {"priceAt", 1795737601}
+        }}}}
+    };
+    const auto coinranking_ticker =
+        cfss::federation::parse_coinranking_coin_detail(coinranking_detail_fixture);
+    if (!coinranking_ticker || coinranking_ticker->provider_asset_id != "Qwsogvtv82FCd" ||
+        coinranking_ticker->external_asset_id != "1" ||
+        coinranking_ticker->provider_timestamp_utc != "2026-11-27T00:00:01Z") {
+        std::cerr << "Coinranking detail parsing or CMC-ID crosswalk failed\n";
+        return EXIT_FAILURE;
+    }
+    cfss::federation::ProviderSnapshot ranking_snapshot{
+        "coinranking", "LIVE_RESPONSE_PARSED", "2026-11-27T00:00:03Z", 200, "",
+        "coins+coin_details", "NOT_TESTED", "PERSONAL_INTERNAL_USE_FREE_PLAN", 10,
+        {*coinranking_ticker}
+    };
+    const auto ranking_paprika = cfss::federation::compare_coinranking_coinpaprika_references(
+        ranking_snapshot, paprika_snapshot,
+        {
+            {"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"},
+            {"ethereum", "ETH", "1027", "ethereum", "eth-ethereum"},
+            {"solana", "SOL", "5426", "solana", "sol-solana"}
+        }
+    );
+    if (ranking_paprika.size() != 3U ||
+        ranking_paprika[0].classification != "TWO_SOURCE_IDENTITY_MATCHED" ||
+        ranking_paprika[0].coinranking_price_usd != 100020.0 ||
+        ranking_paprika[1].classification != "ONE_SOURCE_IDENTITY_MATCHED" ||
+        ranking_paprika[2].classification != "UNAVAILABLE") {
+        std::cerr << "Coinranking/CoinPaprika independent comparison failed\n";
+        return EXIT_FAILURE;
+    }
+    auto ranking_freshness = ranking_snapshot;
+    cfss::federation::evaluate_snapshot_freshness(
+        ranking_freshness, {{"bitcoin", "BTC", "1", "bitcoin", "btc-bitcoin"}},
+        1795737603000LL, 900000LL);
+    if (ranking_freshness.freshness_status != "FRESH") {
+        std::cerr << "Coinranking priceAt freshness validation failed\n";
+        return EXIT_FAILURE;
+    }
+
     const auto gecko_paprika = cfss::federation::compare_coingecko_coinpaprika_references(
         gecko_snapshot, paprika_snapshot,
         {
