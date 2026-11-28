@@ -119,6 +119,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 const std::optional<std::filesystem::path>& crypto_universe_cache_path,
                 const std::optional<std::filesystem::path>& market_data_cache_path,
                 const std::optional<std::filesystem::path>& pending_symbols_path) {
+    (void)crypto_universe_cache_path; // Legacy CoinPaprika cache is not a V21.1 production dependency.
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
         throw std::runtime_error("curl_global_init_failed");
     try {
