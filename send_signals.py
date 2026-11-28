@@ -14,8 +14,23 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-UNIVERSE = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
-            "DOGEUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT")
+def _load_universe_manifest() -> tuple[str, tuple[str, ...]]:
+    manifest_path = Path(__file__).resolve().parent / "config" / "universe.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise RuntimeError("UNIVERSE_MANIFEST_UNAVAILABLE") from exc
+    symbols = tuple(manifest.get("symbols", []))
+    if (len(symbols) != 9 or len(set(symbols)) != 9 or
+            symbols[0] != "BTCUSDT" or any(not item.endswith("USDT") for item in symbols)):
+        raise RuntimeError("UNIVERSE_MANIFEST_INVALID: expected nine unique USDT perpetual symbols with BTC first")
+    version = str(manifest.get("version", "UNVERSIONED"))
+    if version == "UNVERSIONED":
+        raise RuntimeError("UNIVERSE_MANIFEST_VERSION_MISSING")
+    return version, symbols
+
+
+UNIVERSE_VERSION, UNIVERSE = _load_universe_manifest()
 ALTCOINS = UNIVERSE[1:]
 PROVIDERS = ("OKX", "BYBIT", "BINANCE_FUTURES")
 TIMEOUT_SECONDS = 15
@@ -194,6 +209,7 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         "btc_close": btc_close,
         "btc_ma50": btc_ma50,
         "volume_measure": QUOTE_VOLUME_LABEL,
+        "universe_version": UNIVERSE_VERSION,
         "universe": list(UNIVERSE),
         "execution": "MANUAL_ONLY_NO_ORDERS",
     }
