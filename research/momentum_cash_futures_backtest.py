@@ -393,6 +393,24 @@ def asset_trend_confirmed(frame: pd.DataFrame, asof: pd.Timestamp,
                 and float(close) > float(ma_now) and float(ma_now) > float(ma_then))
 
 
+
+def market_breadth_assets(frames: dict[str, pd.DataFrame], asof: pd.Timestamp) -> list[str]:
+    """دارایی‌هایی که در تاریخ تصمیم، بالاتر از MA20 بسته شده‌اند."""
+    above: list[str] = []
+    for symbol, frame in frames.items():
+        indexed = frame.set_index("date") if "date" in frame.columns else frame
+        if asof not in indexed.index:
+            continue
+        row = indexed.loc[asof]
+        if isinstance(row, pd.DataFrame):
+            row = row.iloc[-1]
+        ma20 = row.get("sma20")
+        close = row.get("close")
+        if pd.notna(ma20) and pd.notna(close) and float(close) > float(ma20):
+            above.append(symbol)
+    return sorted(above)
+
+
 def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
                  funding: dict[str, pd.DataFrame], cutoff: date,
                  btc_ma_period: int = 50,
@@ -417,15 +435,9 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
         eligible: list[str] = []
         features: dict[str, tuple[float, float]] = {}
         returns: dict[str, float] = {}
-        above_ma20_assets: list[str] = []
+        above_ma20_assets = market_breadth_assets(indexed, prior) if market_breadth_filter else []
         for symbol in ASSETS:
             f = indexed[symbol]
-            if prior in f.index and "sma20" in f.columns:
-                breadth_row = f.loc[prior]
-                if isinstance(breadth_row, pd.DataFrame):
-                    breadth_row = breadth_row.iloc[-1]
-                if pd.notna(breadth_row["sma20"]) and float(breadth_row["close"]) > float(breadth_row["sma20"]):
-                    above_ma20_assets.append(symbol)
             if prior not in f.index or monday not in f.index or friday not in f.index:
                 continue
             if asset_trend_filter and not asset_trend_confirmed(f, prior):
