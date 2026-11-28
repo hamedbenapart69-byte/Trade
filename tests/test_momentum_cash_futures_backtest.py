@@ -34,6 +34,8 @@ class FuturesKlineParserTests(unittest.TestCase):
         self.assertAlmostEqual(float(frame.iloc[0]["low"]), 7170.15)
         self.assertAlmostEqual(float(frame.iloc[0]["close"]), 7197.57)
         self.assertAlmostEqual(float(frame.iloc[0]["volume"]), 56801.329)
+        self.assertAlmostEqual(float(frame.iloc[0]["quote_asset_volume"]), 409678760.56957)
+        self.assertAlmostEqual(float(frame.iloc[0]["quote_asset_volume"]), 409678760.56957)
 
     def test_standard_headerless_usdm_layout_is_normalized(self):
         csv = (
