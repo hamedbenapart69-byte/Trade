@@ -8,6 +8,8 @@ on:
       - "research/momentum_cash_futures_backtest.py"
       - "research/momentum_cash_backtest.py"
       - "research/requirements.txt"
+      - "tests/test_momentum_cash_backtest.py"
+      - "tests/test_momentum_cash_futures_backtest.py"
       - ".github/workflows/research-momentum-cash-futures.yml"
   workflow_dispatch:
 
@@ -43,9 +45,17 @@ jobs:
           assert d["data"]["archive_integrity"] == "SHA256_CHECKSUM_VERIFIED_FOR_EVERY_DOWNLOADED_MONTHLY_ARCHIVE"
           assert len(d["data"]["fixed_tradable_assets"]) == 8
           assert d["strategy"]["acceptance_gate"]["status"] in {"PASS", "FAIL"}
-          assert d["strategy"]["walk_forward"]["pbo"]["status"] == "UNAVAILABLE"
-          assert d["strategy"]["walk_forward"]["brier_score"]["status"] == "NOT_APPLICABLE"
-          print("USD_M_FUTURES_RESEARCH_EVIDENCE=VALID")
+          pbo = d["strategy"]["walk_forward"]["pbo"]
+          assert pbo["status"] == "COMPUTED", pbo
+          assert pbo["split_count"] == 70, pbo
+          assert len(pbo["weekly_return_matrix"]) >= 32
+          assert set(d["strategy"]["variant_comparison"]) == {"BTC_MA40", "BTC_MA50", "BTC_MA60"}
+          assert d["strategy"]["risk_exit"]["trailing_stop_pct"] == 15.0
+          assert d["strategy"]["risk_exit"]["asset_close_ma_exit_period"] == 20
+          assert d["strategy"]["acceptance_gate"]["status"] in {"PASS", "FAIL"}
+          print("USD_M_FUTURES_RISK_PBO_EVIDENCE=VALID")
+          print("OWNER_TARGETS", json.dumps(d["strategy"]["owner_targets"], sort_keys=True))
+          print("CSCV_PBO", pbo["value"], "SPLITS", pbo["split_count"])
           PY
       - name: Upload full year-by-year and OOS evidence
         if: always()
