@@ -9,9 +9,9 @@ from research import momentum_cash_backtest as model
 
 
 def _row(*, regime=True, eligible=None, top2=None, returns=None):
-    eligible = eligible or ["ETHUSDT", "NEARUSDT", "XRPUSDT", "SOLUSDT"]
-    top2 = top2 or ["ETHUSDT", "NEARUSDT"]
-    returns = returns or {"ETHUSDT": 0.10, "NEARUSDT": 0.20}
+    eligible = eligible or ["ETHUSDT", "LINKUSDT", "XRPUSDT", "SOLUSDT"]
+    top2 = top2 or ["ETHUSDT", "LINKUSDT"]
+    returns = returns or {"ETHUSDT": 0.10, "LINKUSDT": 0.20}
     return {
         "monday": pd.Timestamp("2026-01-05", tz="UTC"),
         "friday": pd.Timestamp("2026-01-09", tz="UTC"),
@@ -48,7 +48,7 @@ def test_missing_btc_regime_fails_closed_to_cash():
 
 
 def test_insufficient_cross_section_fails_closed_to_cash():
-    result = model.evaluate([_row(eligible=["ETHUSDT", "NEARUSDT", "XRPUSDT"], top2=[])])
+    result = model.evaluate([_row(eligible=["ETHUSDT", "LINKUSDT", "XRPUSDT"], top2=[])])
     assert result["entire_period"]["metrics"]["net_return"] == 0.0
     assert result["entire_period"]["cash_reason_counts"]["INSUFFICIENT_ELIGIBLE_ASSETS"] == 1
 
