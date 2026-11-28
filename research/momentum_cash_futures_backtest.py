@@ -396,9 +396,11 @@ def asset_trend_confirmed(frame: pd.DataFrame, asof: pd.Timestamp,
 def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
                  funding: dict[str, pd.DataFrame], cutoff: date,
                  btc_ma_period: int = 50,
-                 asset_trend_filter: bool = False) -> list[dict]:
+                 asset_trend_filter: bool = False,
+                 market_breadth_filter: bool = False,
+                 breadth_min_assets: int = 5) -> list[dict]:
     indexed = {symbol: frame.set_index("date") for symbol, frame in frames.items()}
-    if asset_trend_filter:
+    if asset_trend_filter or market_breadth_filter:
         for frame in indexed.values():
             frame["sma20"] = frame["close"].rolling(20, min_periods=20).mean()
             frame["sma20_lag_5"] = frame["sma20"].shift(5)
@@ -415,8 +417,15 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
         eligible: list[str] = []
         features: dict[str, tuple[float, float]] = {}
         returns: dict[str, float] = {}
+        above_ma20_assets: list[str] = []
         for symbol in ASSETS:
             f = indexed[symbol]
+            if prior in f.index and "sma20" in f.columns:
+                breadth_row = f.loc[prior]
+                if isinstance(breadth_row, pd.DataFrame):
+                    breadth_row = breadth_row.iloc[-1]
+                if pd.notna(breadth_row["sma20"]) and float(breadth_row["close"]) > float(breadth_row["sma20"]):
+                    above_ma20_assets.append(symbol)
             if prior not in f.index or monday not in f.index or friday not in f.index:
                 continue
             if asset_trend_filter and not asset_trend_confirmed(f, prior):
@@ -442,8 +451,9 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
             if pd.notna(benchmark["sma_regime"]):
                 regime = bool(float(benchmark["close"]) > float(benchmark["sma_regime"]))
 
+        breadth_pass = (not market_breadth_filter) or (len(above_ma20_assets) >= breadth_min_assets)
         scores: dict[str, float] = {}
-        if regime is True and len(eligible) >= MIN_ELIGIBLE_ASSETS:
+        if regime is True and breadth_pass and len(eligible) >= MIN_ELIGIBLE_ASSETS:
             volume = pd.Series({symbol: features[symbol][0] for symbol in eligible})
             rsi = pd.Series({symbol: features[symbol][1] for symbol in eligible})
             zv, zr = zscore(volume), zscore(rsi)
@@ -472,6 +482,8 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
             "monday": monday, "friday": friday, "year": int(monday.year),
             "eligible_assets": eligible, "scores": scores, "top2": top2,
             "asset_returns": returns, "btc_bull_regime": regime,
+            "above_ma20_assets": above_ma20_assets,
+            "market_breadth_pass": breadth_pass,
             "asset_exit_details": exit_details,
             "funding_sums": funding_sums, "funding_complete": funding_complete,
             "funding_event_counts": funding_counts, "funding_reasons": funding_reasons,
@@ -496,7 +508,7 @@ def evaluate(panel: list[dict]) -> dict:
     cash_reasons = {
         "BTC_AT_OR_BELOW_SMA50": 0, "BTC_SMA50_UNAVAILABLE": 0,
         "INSUFFICIENT_ELIGIBLE_ASSETS": 0, "FEATURE_CROSS_SECTION_INVALID": 0,
-        "FUNDING_DATA_UNAVAILABLE": 0,
+        "FUNDING_DATA_UNAVAILABLE": 0, "INSUFFICIENT_MARKET_BREADTH": 0,
     }
     for row in panel:
         chosen = list(row["top2"])
@@ -504,6 +516,8 @@ def evaluate(panel: list[dict]) -> dict:
             reason = "BTC_AT_OR_BELOW_SMA50"
         elif row["btc_bull_regime"] is None:
             reason = "BTC_SMA50_UNAVAILABLE"
+        elif not row.get("market_breadth_pass", True):
+            reason = "INSUFFICIENT_MARKET_BREADTH"
         elif len(row["eligible_assets"]) < MIN_ELIGIBLE_ASSETS:
             reason = "INSUFFICIENT_ELIGIBLE_ASSETS"
         elif not row["scores"] or len(chosen) != TOP_N:
@@ -530,6 +544,8 @@ def evaluate(panel: list[dict]) -> dict:
             "funding_cost": funding_cost, "net_return": net,
             "funding_event_counts": row["funding_event_counts"],
             "funding_reasons": row["funding_reasons"],
+            "market_breadth_count": len(row.get("above_ma20_assets", [])),
+            "market_breadth_assets": row.get("above_ma20_assets", []),
             "exit_details": row.get("asset_exit_details", {}),
         }
         all_rows.append(item)
@@ -740,13 +756,18 @@ def main() -> None:
     btc = add_features(raw_assets[BTC])
     variants_v1: dict[str, dict] = {}
     variants_v2: dict[str, dict] = {}
+    variants_v3: dict[str, dict] = {}
     for ma_period in (40, 50, 60):
         panel_v1 = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period,
                                 asset_trend_filter=False)
         panel_v2 = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period,
                                 asset_trend_filter=True)
+        panel_v3 = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period,
+                                asset_trend_filter=False, market_breadth_filter=True,
+                                breadth_min_assets=5)
         variants_v1[str(ma_period)] = evaluate(panel_v1)
         variants_v2[str(ma_period)] = evaluate(panel_v2)
+        variants_v3[str(ma_period)] = evaluate(panel_v3)
     pbo_v1 = cscv_pbo({
         f"BTC_MA{period}": value["weekly_results"]
         for period, value in ((40, variants_v1["40"]), (50, variants_v1["50"]), (60, variants_v1["60"]))
@@ -755,13 +776,21 @@ def main() -> None:
         f"BTC_MA{period}": value["weekly_results"]
         for period, value in ((40, variants_v2["40"]), (50, variants_v2["50"]), (60, variants_v2["60"]))
     })
+    pbo_v3 = cscv_pbo({
+        f"BTC_MA{period}": value["weekly_results"]
+        for period, value in ((40, variants_v3["40"]), (50, variants_v3["50"]), (60, variants_v3["60"]))
+    })
     result_v1 = variants_v1["50"]
     wf_v1 = walk_forward(result_v1["weekly_results"])
     wf_v1["pbo"] = pbo_v1
     gate_v1 = gate_result(wf_v1)
-    result = variants_v2["50"]
+    result_v2 = variants_v2["50"]
+    wf_v2 = walk_forward(result_v2["weekly_results"])
+    wf_v2["pbo"] = pbo_v2
+    gate_v2 = gate_result(wf_v2)
+    result = variants_v3["50"]
     wf = walk_forward(result["weekly_results"])
-    wf["pbo"] = pbo_v2
+    wf["pbo"] = pbo_v3
     gate = gate_result(wf)
 
     funding_coverage = {
@@ -799,6 +828,7 @@ def main() -> None:
         "methodology": {
             "regime": "Three pre-registered BTC close regime variants: SMA40, SMA50, SMA60; bullish only when prior-Sunday close is above the selected SMA; otherwise 100% cash.",
             "v2_entry_confirmation": "Before ranking, an alt must have prior-Sunday close above its MA20 and MA20 above its value five daily observations earlier; otherwise it is excluded from that week's cross-section. If fewer than four assets qualify, the portfolio remains cash.",
+            "v3_market_breadth_confirmation": "Do not trade unless at least 5 of the 8 fixed altcoins close above their own MA20 on the prior Sunday. Once breadth passes, rank the full eligible cross-section by the unchanged composite score. This tests broad alt-market participation rather than requiring each selected asset to pass an individual trend filter.",
             "risk_exit": "Each selected long exits at the first of (a) a 15% trailing stop below the highest high observed on prior daily bars since entry, with gap-through fill at the daily open, or (b) a daily close below the asset's MA20, otherwise Friday close. Same-day high/low order is not inferred; today's high cannot raise today's stop.",
             "risk_exit_cost_timing": "Funding is counted through the daily exit bar close; because daily OHLCV cannot identify the intraday stop timestamp, same-day funding treatment is conservative.",
 
@@ -818,10 +848,10 @@ def main() -> None:
             "universe_bias": "The eight assets were fixed from prior research and are not a point-in-time universe. Results remain exploratory.",
         },
         "strategy": {
-            "primary_version": "V2_ASSET_MA20_TREND_CONFIRMATION",
+            "primary_version": "V3_MARKET_BREADTH_CONFIRMATION",
             "primary_variant": "BTC_MA50",
             "risk_exit": {"trailing_stop_pct": 15.0, "asset_close_ma_exit_period": 20},
-            "entry_confirmation": {"asset_close_above_ma20": True, "ma20_rising_observations": 5},
+            "entry_confirmation": {"minimum_alt_assets_above_ma20": 5, "universe_size_ex_btc": 8},
             "entire_period": {k: v for k, v in result["entire_period"].items() if k != "weekly_results"},
             "year_by_year": result["year_by_year"],
             "walk_forward": wf,
@@ -830,12 +860,12 @@ def main() -> None:
                 "full_period": {
                     "max_drawdown_below_30_percent": result["entire_period"]["metrics"]["max_drawdown"] is not None and result["entire_period"]["metrics"]["max_drawdown"] > -0.30,
                     "profit_factor_above_1_50": result["entire_period"]["metrics"]["profit_factor"] is not None and result["entire_period"]["metrics"]["profit_factor"] > 1.50,
-                    "pbo_below_0_40": pbo_v2.get("value") is not None and pbo_v2["value"] < 0.40,
+                    "pbo_below_0_40": pbo_v3.get("value") is not None and pbo_v3["value"] < 0.40,
                 },
                 "oos": {
                     "max_drawdown_below_30_percent": wf["oos_metrics"]["max_drawdown"] is not None and wf["oos_metrics"]["max_drawdown"] > -0.30,
                     "profit_factor_above_1_50": wf["oos_metrics"]["profit_factor"] is not None and wf["oos_metrics"]["profit_factor"] > 1.50,
-                    "pbo_below_0_40": pbo_v2.get("value") is not None and pbo_v2["value"] < 0.40,
+                    "pbo_below_0_40": pbo_v3.get("value") is not None and pbo_v3["value"] < 0.40,
                 },
             },
             "v1_baseline": {
@@ -844,6 +874,13 @@ def main() -> None:
                 "walk_forward": wf_v1,
                 "acceptance_gate": gate_v1,
                 "pbo": pbo_v1,
+            },
+            "v2_baseline": {
+                "version": "V2_ASSET_MA20_TREND_CONFIRMATION",
+                "entire_period": {k: v for k, v in result_v2["entire_period"].items() if k != "weekly_results"},
+                "walk_forward": wf_v2,
+                "acceptance_gate": gate_v2,
+                "pbo": pbo_v2,
             },
             "variant_comparison": {
                 f"BTC_MA{period}": {
@@ -854,6 +891,11 @@ def main() -> None:
             "v1_variant_comparison": {
                 f"BTC_MA{period}": {
                     "entire_period": {k: v for k, v in variants_v1[str(period)]["entire_period"].items() if k != "weekly_results"},
+                } for period in (40, 50, 60)
+            },
+            "v2_variant_comparison": {
+                f"BTC_MA{period}": {
+                    "entire_period": {k: v for k, v in variants_v2[str(period)]["entire_period"].items() if k != "weekly_results"},
                 } for period in (40, 50, 60)
             },
         },
