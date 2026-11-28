@@ -596,7 +596,7 @@ def cscv_pbo(variant_weekly_results: dict[str, list[dict]], n_blocks: int = 8) -
         less = int(np.sum(oos_scores < chosen_oos))
         equal_other = int(np.sum(oos_scores == chosen_oos)) - 1
         rank = 1.0 + less + 0.5 * equal_other
-        omega = rank / len(names)
+        omega = rank / (len(names) + 1.0)
         omega = min(max(omega, 1e-9), 1.0 - 1e-9)
         logit = math.log(omega / (1.0 - omega))
         is_oos_failure = logit <= 0.0
@@ -613,6 +613,10 @@ def cscv_pbo(variant_weekly_results: dict[str, list[dict]], n_blocks: int = 8) -
         "method": "Combinatorially Symmetric Cross-Validation; 8 contiguous blocks, 4 in-sample / 4 complementary out-of-sample; weekly Sharpe ranking; PBO is the fraction of IS winners at or below the OOS median rank.",
         "variant_count": len(names), "variants": names, "block_count": n_blocks,
         "split_count": len(records), "overfit_splits": failures,
+        "weekly_return_matrix": [
+            {"week": key, **{names[i]: float(matrix[i, j]) for i in range(len(names))}}
+            for j, key in enumerate(common)
+        ],
         "limitation": "Only three pre-registered BTC regime MA variants were compared; PBO is a small-family estimate and does not remove fixed-universe survivorship/selection bias.",
         "splits": records,
     }
@@ -783,7 +787,6 @@ def main() -> None:
                 f"BTC_MA{period}": {
                     "entire_period": {k: v for k, v in variants[str(period)]["entire_period"].items() if k != "weekly_results"},
                     "year_by_year": variants[str(period)]["year_by_year"],
-                    "weekly_results": variants[str(period)]["weekly_results"],
                 } for period in (40, 50, 60)
             },
         },
