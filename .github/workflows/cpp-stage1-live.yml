@@ -16,18 +16,6 @@ on:
       - ".github/workflows/cpp-stage1-live.yml"
   workflow_dispatch:
     inputs:
-      symbols:
-        description: "Number of non-BTC USDT perpetuals; BTC is added separately"
-        required: true
-        default: "100"
-        type: choice
-        options: ["1", "5", "10", "25", "50", "100"]
-      years:
-        description: "Completed 1h OHLCV history"
-        required: true
-        default: "2"
-        type: choice
-        options: ["1", "2"]
       run_inbound_test:
         description: "Run the controlled Telegram inbound test after sending /status to the bot"
         required: false
@@ -110,12 +98,20 @@ jobs:
 
       - name: Collect real OKX L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '2') }}
-          YEARS: ${{ inputs.years || '2' }}
+          SYMBOLS: "8"
+          YEARS: "2"
         run: |
           mkdir -p artifacts shared-cache
-          # Stage 1 must not inherit symbol candidates from rejected legacy strategy state.
-          printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
+          # Production universe is sourced only from the V21.1 nine-asset manifest.
+          jq -e '
+            (.version | type == "string") and
+            (.symbols | type == "array" and length == 9) and
+            (.symbols | unique | length == 9) and
+            .symbols[0] == "BTCUSDT" and
+            all(.symbols[]; test("^[A-Z0-9]+USDT$"))
+          ' config/universe.json >/dev/null
+          jq '[.symbols[] | sub("USDT$"; "")]' config/universe.json > artifacts/pending-symbols.v1.json
+          test "$(jq 'length' artifacts/pending-symbols.v1.json)" -eq 9
           ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
@@ -123,6 +119,18 @@ jobs:
             artifacts/pending-symbols.v1.json
           cp artifacts/crypto-universe.v1.json shared-cache/crypto-universe.v1.json
           sha256sum artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json
+
+      - name: Enforce exact V21.1 nine-asset L1 and C10 coverage
+        run: |
+          set -euo pipefail
+          EXPECTED=$(jq -c '.symbols | map(sub("USDT$"; "")) | sort' config/universe.json)
+          ACTUAL=$(jq -c '[.instruments[].base] | sort' artifacts/l1-market-data.v1.json)
+          test "$EXPECTED" = "$ACTUAL"
+          jq -e '
+            (.instruments | length == 9) and
+            ([.instruments[].base] | unique | length == 9)
+          ' artifacts/l2-status.v1.json >/dev/null
+          echo "V21_1_NINE_ASSET_L1_L2_PASS assets=9"
 
       - name: Validate L1 against the versioned JSON Schema
         run: |
