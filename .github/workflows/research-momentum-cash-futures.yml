@@ -52,7 +52,7 @@ jobs:
           assert set(d["strategy"]["variant_comparison"]) == {"BTC_MA40", "BTC_MA50", "BTC_MA60"}
           assert d["strategy"]["risk_exit"]["trailing_stop_pct"] == 15.0
           assert d["strategy"]["risk_exit"]["asset_close_ma_exit_period"] == 20
-          assert d["strategy"]["primary_version"] == "V2_ASSET_MA20_TREND_CONFIRMATION"
+          assert d["strategy"]["primary_version"] == "V3_MARKET_BREADTH_CONFIRMATION"
           assert d["strategy"]["v1_baseline"]["version"] == "V1_15PCT_TRAIL_PLUS_MA20_EXIT"
           assert d["strategy"]["acceptance_gate"]["status"] in {"PASS", "FAIL"}
           print("USD_M_FUTURES_RISK_PBO_EVIDENCE=VALID")
