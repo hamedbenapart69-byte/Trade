@@ -1,6 +1,6 @@
 # V21 Stage 1 — SLRP and Live Acceptance Ledger
 
-**Historical status snapshot (2026-11-25):** v1 FAIL (D3) / v2 FAIL (D3) / v3 engineering CI PASS; PR #179 corrections were subsequently merged. This snapshot is superseded by the 2026-11-28 production acceptance evidence in Section 9. **Current technical disposition: ACCEPTANCE GATE PASS; OWNER SIGN-OFF PENDING.**
+**Historical status snapshot (2026-11-25):** v1 FAIL (D3) / v2 FAIL (D3) / v3 engineering CI PASS; PR #179 corrections were subsequently merged. This snapshot is superseded by the 2026-11-28 production acceptance evidence in Section 9. **Current disposition: IN PROGRESS — V21.1 NONCONFORMANCE FOUND.** The V21.0 vertical-slice evidence below is historical and does not establish full V21.1 acceptance.
 
 - **Controlling source:** T1.md — MASTER SOURCE V21.0 + V21 Execution Protocol Addendum
 - **Architecture:** CFSS V21 Architecture Design V1
@@ -115,9 +115,9 @@ A separate research workflow successfully downloaded checksum-pinned Binance Vis
 - Stage 2 and all strategy promotion remain gated.
 
 
-## 9. Post-merge production acceptance — 2026-11-28
+## 9. Historical V21.0 vertical-slice execution — 2026-11-28 (not V21.1 stage acceptance)
 
-**Disposition: TECHNICAL ACCEPTANCE GATE PASS — OWNER SIGN-OFF PENDING.** This section supersedes the 2026-11-25 pending status above. It does not approve a strategy or authorize Stage 2.
+**Disposition: V21.0 vertical-slice checks passed; V21.1 Stage 1 acceptance NOT MET.** This section records actual historical execution evidence only. It does not approve a strategy or authorize Stage 2.
 
 ### Qualifying main-branch runs
 
@@ -158,4 +158,18 @@ The repository commits differ, but the workflow's production-source hash—which
 
 ### Handoff
 
-Stage 1's **technical acceptance criteria are PASS** based on the workflow's own final gate and the two persisted manifests. **Owner sign-off is still required before Stage 2 begins.** No Stage 2 implementation, strategy activation or signal release is authorized by this evidence.
+The workflow's V21.0 vertical-slice gate passed for the 50-instrument run. This is not a V21.1 Stage 1 PASS because the production universe was not restricted to exactly nine assets and the provider federation requirements were not met. See Section 10. Stage 2 remains blocked.
+
+
+## 10. V21.1 compliance audit — 2026-11-28
+
+The prior live run is not accepted as a complete V21.1 Stage 1 run. The following source-level and persisted-artifact findings are verified:
+
+- `config/universe.json` contains the required nine symbols, but the Stage 1 workflow did not consume it. The workflow exposed symbol-count inputs up to 100 and the scheduled path defaulted to 100; the run manifest recorded 50 L2 instruments.
+- The persisted L2 artifact `cpp_runtime/l2-status-okx-cpp-1795864418221.json` contains 50 rows. All nine configured assets appear, but 41 additional assets are also present. This violates V21.1's exact 9/9 C10 denominator.
+- `cpp_runtime/provider-health-okx-cpp-1795864418221.json` records OKX as the implemented primary; KuCoin as `IMPLEMENTED_SECONDARY_PARTIAL` with 6.75 days of hourly OI coverage; Bybit and Binance as unavailable/unimplemented; MEXC and Bitget reachable but unimplemented; CoinGecko as reference-only. This does not satisfy the V21.1 independent market-wide reference-source and provider-equivalence requirements.
+- The run manifest marks the 331,391,103-byte L1 artifact as not retained on the signals branch and not retained as a workflow artifact. Its SHA-256 is present, but the raw L1 artifact cannot be independently inspected from the retained record.
+- The persisted artifacts include `crypto_universe`, but no dedicated frozen `universe_manifest.json` or `release_manifest.json` is recorded in the run manifest. The config file has no selection timestamp, source snapshot hashes, exclusion record, or freeze approval reference.
+- Telegram outbound is verified for the historical run (HTTP 200; message IDs 111, 112, 113). Owner-side receipt in Iran remains NOT_VERIFIED. The inbound/replay proof came from the prior qualifying manifest, not this specific run.
+
+**Disposition:** V21.0 vertical-slice evidence = VERIFIED; V21.1 exact-nine and federation acceptance = NOT_MET; Stage 1 overall = IN PROGRESS. The correction branch `fix/v21.1-nine-asset-stage1-20261128` and PR #188 implement the first exact-nine reconciliation, but PR validation and live nine-asset L1/L2/L3 acceptance remain pending. No Stage 2 work is authorized.
