@@ -106,8 +106,12 @@ int main() {
     low_liquidity_candidates[8] = make_instrument("AVAX", 9'999'999.0);
     const auto low_liquidity_nine = cfss::okx::select_production_nine_assets(
         low_liquidity_candidates, production_nine);
+    const auto low_liquidity_avax = std::find_if(
+        low_liquidity_nine.begin(), low_liquidity_nine.end(),
+        [](const auto& item) { return item.base == "AVAX"; });
     require(low_liquidity_nine.size() == 9U &&
-            !cfss::okx::passes_liquidity(low_liquidity_nine.back().turnover),
+            low_liquidity_avax != low_liquidity_nine.end() &&
+            !cfss::okx::passes_liquidity(low_liquidity_avax->turnover),
             "low-liquidity asset remains visible in C10 coverage while its downstream eligibility gate stays failed");
 
     const nlohmann::json old_cache = {
