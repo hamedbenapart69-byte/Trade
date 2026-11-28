@@ -82,6 +82,10 @@ int main() {
     };
     const auto exact_nine = cfss::okx::select_production_nine_assets(
         nine_candidates, production_nine);
+    const auto selected_via_discovery = cfss::okx::select_instruments(
+        8, nine_candidates, nine_candidates, production_nine);
+    require(selected_via_discovery.size() == 9U,
+            "production discovery path enforces the manifest rather than target-count top turnover");
     require(exact_nine.size() == 9U && exact_nine.front().base == "BTC",
             "production selection emits exactly nine assets with BTC first");
     require(std::all_of(exact_nine.begin(), exact_nine.end(), [&](const auto& item) {
