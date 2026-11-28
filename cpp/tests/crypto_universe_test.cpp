@@ -57,6 +57,58 @@ int main() {
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
             pinned.back().base == "SOL",
             "pending candidates remain in L1 even after falling outside top-turnover eligibility");
+
+    const auto make_instrument = [](const std::string& base, double turnover) {
+        return cfss::okx::Instrument{
+            base + "-USDT-SWAP", base, "USDT", "USDT",
+            1.0, 1.0, 0.1, 1.0, 1.0, turnover, 1,
+            base, "okx", base + "-USDT-SWAP"
+        };
+    };
+    const std::set<std::string> production_nine{
+        "BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"
+    };
+    const std::vector<cfss::okx::Instrument> nine_candidates{
+        make_instrument("BTC", 100'000'000.0),
+        make_instrument("ETH", 90'000'000.0),
+        make_instrument("SOL", 80'000'000.0),
+        make_instrument("BNB", 70'000'000.0),
+        make_instrument("XRP", 60'000'000.0),
+        make_instrument("DOGE", 50'000'000.0),
+        make_instrument("ADA", 40'000'000.0),
+        make_instrument("LINK", 30'000'000.0),
+        make_instrument("AVAX", 20'000'000.0),
+        make_instrument("EXTRA", 110'000'000.0)
+    };
+    const auto exact_nine = cfss::okx::select_production_nine_assets(
+        nine_candidates, production_nine);
+    require(exact_nine.size() == 9U && exact_nine.front().base == "BTC",
+            "production selection emits exactly nine assets with BTC first");
+    require(std::all_of(exact_nine.begin(), exact_nine.end(), [&](const auto& item) {
+                return production_nine.contains(item.base);
+            }),
+            "wider discovery universe cannot leak into the nine-asset production selection");
+    bool missing_asset_rejected = false;
+    try {
+        (void)cfss::okx::select_production_nine_assets(
+            std::vector<cfss::okx::Instrument>(nine_candidates.begin(), nine_candidates.begin() + 8),
+            production_nine);
+    } catch (const std::runtime_error&) {
+        missing_asset_rejected = true;
+    }
+    require(missing_asset_rejected,
+            "missing canonical asset fails closed instead of silently shrinking production universe");
+    auto low_liquidity_candidates = nine_candidates;
+    low_liquidity_candidates[8] = make_instrument("AVAX", 9'999'999.0);
+    bool low_liquidity_rejected = false;
+    try {
+        (void)cfss::okx::select_production_nine_assets(
+            low_liquidity_candidates, production_nine);
+    } catch (const std::runtime_error&) {
+        low_liquidity_rejected = true;
+    }
+    require(low_liquidity_rejected,
+            "production asset below the $10M liquidity gate fails closed");
     const nlohmann::json old_cache = {
         {"schema_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},
