@@ -1,6 +1,6 @@
 # V21 Stage 1 — SLRP and Live Acceptance Ledger
 
-**Current status (2026-11-25):** v1 FAIL (D3) / v2 FAIL (D3) / v3 engineering CI PASS on its isolated implementation branch; expanded live integration has exposed two D3 contract defects. Corrective changes are under review in PR #179. **Stage 1 remains IN PROGRESS — NOT ACCEPTED.**
+**Historical status snapshot (2026-11-25):** v1 FAIL (D3) / v2 FAIL (D3) / v3 engineering CI PASS; PR #179 corrections were subsequently merged. This snapshot is superseded by the 2026-11-28 production acceptance evidence in Section 9. **Current technical disposition: ACCEPTANCE GATE PASS; OWNER SIGN-OFF PENDING.**
 
 - **Controlling source:** T1.md — MASTER SOURCE V21.0 + V21 Execution Protocol Addendum
 - **Architecture:** CFSS V21 Architecture Design V1
@@ -103,13 +103,59 @@ From the persisted main-branch manifest `okx-cpp-1795613093962` (2026-11-25):
 
 A separate research workflow successfully downloaded checksum-pinned Binance Vision archives from GitHub Actions. This proves archive reachability from that runner at that time; it does not prove Binance Futures REST reachability or full provider equivalence. User geography is not a backend provider-selection rule.
 
-## 8. SLRP Budget, Escalation and Current Gate
+## 8. SLRP Budget, Escalation and 2026-11-25 Historical Gate Snapshot
 
 - Maximum versions remain v1, v2 and v3. No v4 is permitted.
 - v1: FAIL (D3), listing-window coverage and replay-handler defects.
 - v2: FAIL (D3), count-only coverage and incorrect handling of a non-aligned listing timestamp.
-- v3: engineering CI PASS on its isolated branch; complete live acceptance remains NOT_VERIFIED. Expanded live integration exposed D3-A and D3-B, with narrow corrections pending verification in PR #179.
+- v3: at this 2026-11-25 snapshot, engineering CI had passed on its isolated branch; complete live acceptance was NOT_VERIFIED. Expanded live integration had exposed D3-A and D3-B, with narrow corrections pending verification in PR #179.
 - No acceptance threshold has been weakened.
 - If the corrected v3 candidate fails another mandatory acceptance criterion, stop further rewrites and invoke the V21 Innovation Protocol in order: Data Expansion, Timeframe Shift, Simplicity Audit, Regime Restriction, Alternative Market, Honest Stop.
-- Stage 1 remains **IN PROGRESS — NOT ACCEPTED** until two qualifying main-branch L1/L2/L3 runs pass on the same code revision and the controlled inbound/replay condition is satisfied in at least one run.
+- At the time of this 2026-11-25 snapshot, Stage 1 remained **IN PROGRESS — NOT ACCEPTED** pending two qualifying main-branch L1/L2/L3 runs and controlled inbound/replay evidence. This historical disposition is superseded by Section 9.
 - Stage 2 and all strategy promotion remain gated.
+
+
+## 9. Post-merge production acceptance — 2026-11-28
+
+**Disposition: TECHNICAL ACCEPTANCE GATE PASS — OWNER SIGN-OFF PENDING.** This section supersedes the 2026-11-25 pending status above. It does not approve a strategy or authorize Stage 2.
+
+### Qualifying main-branch runs
+
+The main-branch C++ Stage 1 workflow completed run **46138691159** on 2026-11-28 at 11:11:22 UTC. Its job completed successfully, including C++20 configure/build, CTest, live L1 collection, C++ L2 generation, schema checks, Telegram outbound, signals-branch persistence and the final Stage 1 acceptance gate.
+
+Evidence from the workflow log:
+- C++ build identity: `6b7f8eb3acf854d47244a017b74d6be60e50b5b1c44974c3f50231a0a97e6d81`.
+- Live collection: `CPP_L1_COLLECTED provider=okx symbols=50 crypto_universe=VERIFIED`.
+- Telegram API preflight: HTTP 200.
+- Outbound receipts: message IDs 111, 112 and 113; each recorded as `DELIVERED`, HTTP 200.
+- Persistent signals-branch verification: `SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=okx-cpp-1795864418221`.
+- Final workflow assertion: `STAGE1_ACCEPTANCE_GATE_PASS revision=3ea17e71264aad4e8e0ecf7d550914dcd338ae26 consecutive_runs=2 inbound_replay_runs=1`.
+
+The acceptance gate inspected the latest two qualifying main-branch manifests. Run #398's overall Actions conclusion was `failure` only because its final aggregate step correctly reported that a second qualifying manifest did not yet exist; the preceding C++ build, CTest, live L1/L2, outbound delivery, inbound exact-update replay and persistence steps succeeded. Its persisted manifest therefore records the completed first qualifying vertical slice as `STAGE1_CONTROLLED_ACCEPTANCE_PASS`. Run #525 was the next main-branch Stage 1 workflow run and completed the two-run aggregate gate:
+
+| Manifest run number | Run ID | Repository commit | Run status | Telegram message IDs | Inbound/replay |
+|---:|---|---|---|---|---|
+| 398 | `okx-cpp-1795801953622` | `8e9ea66cb090e39c94884013bf02904f0e3bcebb` | `STAGE1_CONTROLLED_ACCEPTANCE_PASS` | 110 | `HISTORICAL_RECEIPT_REPLAYED`, replay PASS, update_id 610176016 |
+| 525 | `okx-cpp-1795864418221` | `3ea17e71264aad4e8e0ecf7d550914dcd338ae26` | `L1_L2_L3_PASS` | 111, 112, 113 | Not requested in this run; prior qualifying run supplies the required inbound/replay proof |
+
+Both manifests record the same production source-tree hash:
+`2efdeebac803ca366aeec438523d7a7d695890f4f5859ea723102a49853225c4`.
+Their scan IDs are distinct:
+- `scan-ed9910dedf304c0b2950182ac638562e6dc01acc2ac5d38b0479b4c3cbd2ba66`
+- `scan-1a0ba50f5eeb6d7930e26a21818ae1ffa773d591ad15990b7fc32d9e0e8c8f5d`
+
+The repository commits differ, but the workflow's production-source hash—which covers the production C++/contracts/configuration/build scripts and Stage 1 workflow scope—is identical. The acceptance gate explicitly compares this source hash across the two qualifying runs.
+
+### Acceptance interpretation
+
+- **Build and tests:** PASS on GitHub Actions ubuntu-24.04 runner. This is runner evidence; no local build is claimed from this environment.
+- **L1/L2:** live OKX collection and C++ C10 safe-state generation completed. The Stage 1 workflow's provider-health and schema gates passed.
+- **L3:** outbound Telegram receipts were returned with HTTP 200 and positive message IDs; receipts and run artifacts were verified on the dedicated signals branch.
+- **Inbound/replay:** one of the two qualifying runs records a previously verified authorized inbound update and exact-update replay with replay status PASS.
+- **Strategy status:** no strategy engine is admitted; actionable remains false and confidence remains NOT_CALIBRATED. Stage 1 is infrastructure acceptance only, not trading-edge evidence.
+- **Provider limitation:** OKX is the production primary. Partial/unavailable fallbacks remain explicitly labelled; Stage 1 PASS does not imply full provider equivalence.
+- **Cost semantics:** this infrastructure-stage PASS does not resolve one-way versus round-trip cost interpretation for later strategy backtests.
+
+### Handoff
+
+Stage 1's **technical acceptance criteria are PASS** based on the workflow's own final gate and the two persisted manifests. **Owner sign-off is still required before Stage 2 begins.** No Stage 2 implementation, strategy activation or signal release is authorized by this evidence.
