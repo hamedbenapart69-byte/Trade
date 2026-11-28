@@ -832,8 +832,7 @@ inline json probe_provider_health() {
         {"binance", "https://fapi.binance.com/fapi/v1/ping", 3, "NOT_IMPLEMENTED"},
         {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "IMPLEMENTED_SECONDARY_PARTIAL"},
         {"mexc", "https://contract.mexc.com/api/v1/contract/detail", 5, "NOT_IMPLEMENTED"},
-        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"},
-        {"coingecko", "https://api.coingecko.com/api/v3/ping", 7, "REFERENCE_ONLY"}
+        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"}
     };
     json providers = json::array();
     for (const auto& probe : probes) {
