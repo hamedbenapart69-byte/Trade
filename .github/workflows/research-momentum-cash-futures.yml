@@ -54,6 +54,8 @@ jobs:
           assert d["strategy"]["risk_exit"]["asset_close_ma_exit_period"] == 20
           assert d["strategy"]["primary_version"] == "V3_MARKET_BREADTH_CONFIRMATION"
           assert d["strategy"]["v1_baseline"]["version"] == "V1_15PCT_TRAIL_PLUS_MA20_EXIT"
+          assert d["strategy"]["v2_baseline"]["version"] == "V2_ASSET_MA20_TREND_CONFIRMATION"
+          assert d["strategy"]["entry_confirmation"]["minimum_alt_assets_above_ma20"] == 5
           assert d["strategy"]["acceptance_gate"]["status"] in {"PASS", "FAIL"}
           print("USD_M_FUTURES_RISK_PBO_EVIDENCE=VALID")
           print("OWNER_TARGETS", json.dumps(d["strategy"]["owner_targets"], sort_keys=True))
