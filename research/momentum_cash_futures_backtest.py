@@ -281,10 +281,14 @@ def download_dataset(symbols: list[str], kind: str, months: list[str]) -> tuple[
     return datasets, {"first_archive_month_by_symbol": first_months, "coverage": coverage}
 
 
-def funding_window(frame: pd.DataFrame, monday: pd.Timestamp, friday: pd.Timestamp) -> tuple[float, bool, int, str]:
+def funding_window(frame: pd.DataFrame, monday: pd.Timestamp, friday: pd.Timestamp,
+                   exit_time: pd.Timestamp | None = None) -> tuple[float, bool, int, str]:
     if frame is None or frame.empty:
         return 0.0, False, 0, "NO_FUNDING_HISTORY"
-    close_time = friday + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1)
+    week_end = friday + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1)
+    # خروج درون کندل روزانه زمان دقیق ندارد؛ برای هزینه funding، تا پایان روز خروج
+    # محاسبه می‌کنیم که فرضی محافظه‌کارانه است.
+    close_time = min(week_end, exit_time) if exit_time is not None else week_end
     times = frame["time"].astype("int64").to_numpy()
     start_ns = monday.value
     end_ns = close_time.value
@@ -317,11 +321,59 @@ def funding_window(frame: pd.DataFrame, monday: pd.Timestamp, friday: pd.Timesta
     return rate_sum, bool(complete), int(len(window)), "OK" if complete else "FUNDING_SCHEDULE_GAP"
 
 
+def risk_adjusted_exit(frame: pd.DataFrame, monday: pd.Timestamp, friday: pd.Timestamp,
+                       trailing_pct: float = 0.15, ma_exit_period: int = 20) -> dict:
+    """خروج لانگ با تریلینگ‌استاپ ۱۵٪ از سقف قبلی یا شکست MA20 در کلوز روزانه."""
+    indexed = frame.set_index("date") if "date" in frame.columns else frame
+    daily = indexed.loc[monday:friday]
+    if daily.empty or monday not in daily.index or friday not in daily.index:
+        raise ValueError("RISK_EXIT_DAILY_WINDOW_INCOMPLETE")
+    entry = float(daily.loc[monday, "open"])
+    if entry <= 0:
+        raise ValueError("RISK_EXIT_INVALID_ENTRY")
+    close_ma = indexed["close"].rolling(ma_exit_period, min_periods=ma_exit_period).mean()
+    peak = entry
+    for day, candle in daily.iterrows():
+        stop_level = peak * (1.0 - trailing_pct)
+        day_open = float(candle["open"])
+        day_low = float(candle["low"])
+        day_high = float(candle["high"])
+        day_close = float(candle["close"])
+        # سطح توقف فقط از سقف‌های روزهای قبل محاسبه می‌شود؛ ترتیب high/low
+        # داخل یک کندل روزانه نامعلوم است و از داده آینده برای ratchet استفاده نمی‌شود.
+        if day_low <= stop_level:
+            fill = min(day_open, stop_level)  # gap-through محافظه‌کارانه
+            return {
+                "return": fill / entry - 1.0, "exit_price": fill,
+                "exit_date": day.date().isoformat(), "exit_time": day + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1),
+                "exit_reason": "TRAILING_STOP_15PCT",
+                "stop_level": stop_level, "peak_before_day": peak,
+            }
+        ma_value = close_ma.loc[day]
+        if pd.notna(ma_value) and day_close < float(ma_value):
+            return {
+                "return": day_close / entry - 1.0, "exit_price": day_close,
+                "exit_date": day.date().isoformat(), "exit_time": day + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1),
+                "exit_reason": f"DAILY_CLOSE_BELOW_MA{ma_exit_period}",
+                "stop_level": stop_level, "peak_before_day": peak,
+            }
+        peak = max(peak, day_high)
+    last = daily.loc[friday]
+    return {
+        "return": float(last["close"]) / entry - 1.0, "exit_price": float(last["close"]),
+        "exit_date": friday.date().isoformat(),
+        "exit_time": friday + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1),
+        "exit_reason": "FRIDAY_CLOSE",
+        "stop_level": peak * (1.0 - trailing_pct), "peak_before_day": peak,
+    }
+
+
 def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
-                 funding: dict[str, pd.DataFrame], cutoff: date) -> list[dict]:
+                 funding: dict[str, pd.DataFrame], cutoff: date,
+                 btc_ma_period: int = 50) -> list[dict]:
     indexed = {symbol: frame.set_index("date") for symbol, frame in frames.items()}
     btc_i = btc.set_index("date").copy()
-    btc_i["sma50"] = btc_i["close"].rolling(50, min_periods=50).mean()
+    btc_i["sma_regime"] = btc_i["close"].rolling(btc_ma_period, min_periods=btc_ma_period).mean()
     earliest = min(frame["date"].min() for frame in frames.values())
     first_monday = earliest + pd.Timedelta(days=(7 - earliest.weekday()) % 7)
     last = pd.Timestamp(cutoff, tz="UTC")
@@ -348,14 +400,15 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
                 continue
             eligible.append(symbol)
             features[symbol] = (volume_z, rsi)
-            returns[symbol] = float(friday_row["close"] / monday_row["open"] - 1.0)
+            # بازده با خروج ریسک‌محور در همان هفته، نه الزاماً close جمعه.
+            returns[symbol] = risk_adjusted_exit(f, monday, friday)["return"]
 
         regime = None
         if prior in btc_i.index:
             benchmark = btc_i.loc[prior]
             if isinstance(benchmark, pd.DataFrame): benchmark = benchmark.iloc[-1]
-            if pd.notna(benchmark["sma50"]):
-                regime = bool(float(benchmark["close"]) > float(benchmark["sma50"]))
+            if pd.notna(benchmark["sma_regime"]):
+                regime = bool(float(benchmark["close"]) > float(benchmark["sma_regime"]))
 
         scores: dict[str, float] = {}
         if regime is True and len(eligible) >= MIN_ELIGIBLE_ASSETS:
@@ -371,8 +424,14 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
         funding_complete: dict[str, bool] = {}
         funding_counts: dict[str, int] = {}
         funding_reasons: dict[str, str] = {}
+        exit_details = {
+            symbol: risk_adjusted_exit(indexed[symbol], monday, friday)
+            for symbol in top2
+        }
         for symbol in top2:
-            total, complete, count, reason = funding_window(funding.get(symbol), monday, friday)
+            total, complete, count, reason = funding_window(
+                funding.get(symbol), monday, friday, exit_details[symbol]["exit_time"]
+            )
             funding_sums[symbol] = total
             funding_complete[symbol] = complete
             funding_counts[symbol] = count
@@ -381,6 +440,7 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
             "monday": monday, "friday": friday, "year": int(monday.year),
             "eligible_assets": eligible, "scores": scores, "top2": top2,
             "asset_returns": returns, "btc_bull_regime": regime,
+            "asset_exit_details": exit_details,
             "funding_sums": funding_sums, "funding_complete": funding_complete,
             "funding_event_counts": funding_counts, "funding_reasons": funding_reasons,
         })
@@ -438,6 +498,7 @@ def evaluate(panel: list[dict]) -> dict:
             "funding_cost": funding_cost, "net_return": net,
             "funding_event_counts": row["funding_event_counts"],
             "funding_reasons": row["funding_reasons"],
+            "exit_details": row.get("asset_exit_details", {}),
         }
         all_rows.append(item)
         by_year.setdefault(row["year"], []).append(item)
@@ -458,7 +519,7 @@ def evaluate(panel: list[dict]) -> dict:
     invested = sum(item["state"] == "INVESTED_LONG_TOP2" for item in all_rows)
     total = len(all_rows)
     return {
-        "strategy": "MOMENTUM_CASH_LONG_TOP2_WITH_REAL_FUNDING",
+        "strategy": "MOMENTUM_CASH_LONG_TOP2_WITH_REAL_FUNDING_AND_RISK_EXITS",
         "year_by_year": yearly,
         "entire_period": {
             "start_monday": str(all_rows[0]["monday"].date()) if all_rows else None,
@@ -494,6 +555,67 @@ def dsr_z_single_trial(returns: list[float]) -> float | None:
     if variance <= 0 or not np.isfinite(variance):
         return None
     return float(sharpe_period / math.sqrt(variance))
+
+
+def _sharpe_score(values: np.ndarray) -> float:
+    values = np.asarray(values, dtype=float)
+    if len(values) < 2:
+        return float("-inf")
+    sd = float(np.std(values, ddof=1))
+    return float(np.mean(values) / sd * math.sqrt(WEEKS_PER_YEAR)) if sd > 1e-15 else float("-inf")
+
+
+def cscv_pbo(variant_weekly_results: dict[str, list[dict]], n_blocks: int = 8) -> dict:
+    """CSCV PBO: select IS-best variant, rank it on complementary OOS blocks."""
+    import itertools
+    names = sorted(variant_weekly_results)
+    if len(names) < 2:
+        return {"status": "UNAVAILABLE", "value": None, "reason": "NEED_AT_LEAST_TWO_VARIANTS"}
+    by_name = {
+        name: {pd.Timestamp(row["monday"]).isoformat(): float(row["net_return"])
+               for row in variant_weekly_results[name]}
+        for name in names
+    }
+    common = sorted(set.intersection(*(set(v) for v in by_name.values())))
+    if len(common) < n_blocks * 4:
+        return {"status": "UNAVAILABLE", "value": None, "reason": "INSUFFICIENT_COMMON_WEEKLY_OBSERVATIONS"}
+    matrix = np.asarray([[by_name[name][key] for key in common] for name in names], dtype=float)
+    blocks = [x for x in np.array_split(np.arange(len(common)), n_blocks) if len(x)]
+    if len(blocks) != n_blocks or n_blocks % 2:
+        return {"status": "UNAVAILABLE", "value": None, "reason": "INVALID_CSCV_BLOCK_LAYOUT"}
+    records = []
+    failures = 0
+    for selected in itertools.combinations(range(n_blocks), n_blocks // 2):
+        is_idx = np.concatenate([blocks[i] for i in selected])
+        oos_idx = np.concatenate([blocks[i] for i in range(n_blocks) if i not in selected])
+        is_scores = np.asarray([_sharpe_score(matrix[i, is_idx]) for i in range(len(names))])
+        oos_scores = np.asarray([_sharpe_score(matrix[i, oos_idx]) for i in range(len(names))])
+        winner = int(np.argmax(is_scores))
+        chosen_oos = oos_scores[winner]
+        # Rank ascending: 1=worst, N=best; average ranks for exact ties.
+        less = int(np.sum(oos_scores < chosen_oos))
+        equal_other = int(np.sum(oos_scores == chosen_oos)) - 1
+        rank = 1.0 + less + 0.5 * equal_other
+        omega = rank / len(names)
+        omega = min(max(omega, 1e-9), 1.0 - 1e-9)
+        logit = math.log(omega / (1.0 - omega))
+        is_oos_failure = logit <= 0.0
+        failures += int(is_oos_failure)
+        records.append({
+            "is_blocks": list(selected), "is_winner": names[winner],
+            "is_sharpe": float(is_scores[winner]),
+            "selected_variant_oos_sharpe": float(chosen_oos),
+            "oos_rank_ascending": rank, "oos_percentile": omega,
+            "lambda": logit, "overfit_event": is_oos_failure,
+        })
+    return {
+        "status": "COMPUTED", "value": round(failures / len(records), 8),
+        "method": "Combinatorially Symmetric Cross-Validation; 8 contiguous blocks, 4 in-sample / 4 complementary out-of-sample; weekly Sharpe ranking; PBO is the fraction of IS winners at or below the OOS median rank.",
+        "variant_count": len(names), "variants": names, "block_count": n_blocks,
+        "split_count": len(records), "overfit_splits": failures,
+        "limitation": "Only three pre-registered BTC regime MA variants were compared; PBO is a small-family estimate and does not remove fixed-universe survivorship/selection bias.",
+        "splits": records,
+    }
 
 
 def walk_forward(results: list[dict]) -> dict:
@@ -580,9 +702,17 @@ def main() -> None:
     raw_assets = {symbol: frame[frame["date"].dt.date <= cutoff].copy() for symbol, frame in klines.items()}
     frames = {symbol: add_features(raw_assets[symbol]) for symbol in ASSETS}
     btc = add_features(raw_assets[BTC])
-    panel = weekly_panel(frames, btc, funding, cutoff)
-    result = evaluate(panel)
+    variants: dict[str, dict] = {}
+    for ma_period in (40, 50, 60):
+        panel = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period)
+        variants[str(ma_period)] = evaluate(panel)
+    pbo = cscv_pbo({
+        f"BTC_MA{period}": value["weekly_results"]
+        for period, value in ((40, variants["40"]), (50, variants["50"]), (60, variants["60"]))
+    })
+    result = variants["50"]
     wf = walk_forward(result["weekly_results"])
+    wf["pbo"] = pbo
     gate = gate_result(wf)
 
     funding_coverage = {
@@ -618,7 +748,10 @@ def main() -> None:
             ],
         },
         "methodology": {
-            "regime": "BTC prior-Sunday close > BTC SMA50: bullish; otherwise 100% cash. Missing BTC SMA: cash.",
+            "regime": "Three pre-registered BTC close regime variants: SMA40, SMA50, SMA60; bullish only when prior-Sunday close is above the selected SMA; otherwise 100% cash.",
+            "risk_exit": "Each selected long exits at the first of (a) a 15% trailing stop below the highest high observed on prior daily bars since entry, with gap-through fill at the daily open, or (b) a daily close below the asset's MA20, otherwise Friday close. Same-day high/low order is not inferred; today's high cannot raise today's stop.",
+            "risk_exit_cost_timing": "Funding is counted through the daily exit bar close; because daily OHLCV cannot identify the intraday stop timestamp, same-day funding treatment is conservative.",
+
             "ranking": "0.5 * cross_section_z(Volume_Z20) + 0.5 * cross_section_z(RSI_14)",
             "features": "Volume_Z20 and Wilder RSI14 use daily futures data through prior Sunday only.",
             "cross_section": "Fixed eight tradable assets; minimum four eligible symbols; deterministic score-descending then symbol-ascending tie-break.",
@@ -635,10 +768,24 @@ def main() -> None:
             "universe_bias": "The eight assets were fixed from prior research and are not a point-in-time universe. Results remain exploratory.",
         },
         "strategy": {
+            "primary_variant": "BTC_MA50",
+            "risk_exit": {"trailing_stop_pct": 15.0, "asset_close_ma_exit_period": 20},
             "entire_period": {k: v for k, v in result["entire_period"].items() if k != "weekly_results"},
             "year_by_year": result["year_by_year"],
             "walk_forward": wf,
             "acceptance_gate": gate,
+            "owner_targets": {
+                "max_drawdown_below_30_percent": result["entire_period"]["metrics"]["max_drawdown"] is not None and result["entire_period"]["metrics"]["max_drawdown"] > -0.30,
+                "profit_factor_above_1_50": result["entire_period"]["metrics"]["profit_factor"] is not None and result["entire_period"]["metrics"]["profit_factor"] > 1.50,
+                "pbo_below_0_40": pbo.get("value") is not None and pbo["value"] < 0.40,
+            },
+            "variant_comparison": {
+                f"BTC_MA{period}": {
+                    "entire_period": {k: v for k, v in variants[str(period)]["entire_period"].items() if k != "weekly_results"},
+                    "year_by_year": variants[str(period)]["year_by_year"],
+                    "weekly_results": variants[str(period)]["weekly_results"],
+                } for period in (40, 50, 60)
+            },
         },
     }
     Path("artifacts").mkdir(exist_ok=True)
