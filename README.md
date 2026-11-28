@@ -33,7 +33,7 @@ The production path is designed for free-tier infrastructure and public APIs. It
 | Stage | Scope | Current evidence status |
 |---|---|---|
 | 0 | V21 architecture and source acceptance | **PASS** — owner accepted V21.0 and Architecture Design V1 on 2026-11-23; source register updated on the V21 branch |
-| 1 | V21 C++ L1/L2/L3 foundation and Telegram | **TECHNICAL ACCEPTANCE PASS — OWNER SIGN-OFF PENDING** — two qualifying main-branch runs passed the V21 Stage 1 gate on 2026-11-28; no strategy is approved or actionable |
+| 1 | V21 C++ L1/L2/L3 foundation and Telegram | **IN PROGRESS — V21.1 NONCONFORMANCE FOUND** — prior 50-symbol V21.0 vertical-slice evidence does not satisfy the exact nine-asset production contract; see the 2026-11-28 audit |
 | 2+ | Independent research hypotheses, calibration, risk and OOS validation | **NOT STARTED / GATED** — no strategy engine is approved or calibrated |
 
 The previous V18.2 stage evidence remains historical evidence only. It does not establish acceptance under V21. LRT, NMT and VTM are rejected by V21 and must not be executed, renamed, or reused as production strategy engines.
@@ -50,7 +50,8 @@ PROXY, UNAVAILABLE, NOT_CALIBRATED and no-signal outputs must remain explicit. N
 ## Evidence and operational entry points
 
 - [V21 Stage 1 SLRP plan](docs/evidence/v21-stage1-slrp-plan.md)
-- [V21 Stage 1 live acceptance evidence — 2026-11-28](docs/evidence/v21-stage1-acceptance-20261128.md)
+- [V21 Stage 1 live acceptance evidence — 2026-11-28 (historical V21.0 slice only)](docs/evidence/v21-stage1-acceptance-20261128.md)
+- [V21.1 nine-asset Stage 1 audit — 2026-11-28](docs/evidence/v21.1-nine-asset-stage1-audit-20261128.md)
 - [Historical V18.2 Stage 1 SLRP evidence](docs/evidence/stage1-slrp-report.md)
 - [Stage 2 LFS SLRP evidence](docs/evidence/stage2-lfs-slrp-report.md)
 - [Stage 3 NSS SLRP evidence](docs/evidence/stage3-nss-slrp-report.md)

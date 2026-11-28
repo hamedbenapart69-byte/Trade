@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <stdexcept>
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -61,18 +62,20 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
         const auto& crypto_universe = contract.at("crypto_universe");
         if (!crypto_universe.is_object() ||
             crypto_universe.value("artifact_type", std::string{}) != "cfss_crypto_universe_v1" ||
-            crypto_universe.value("status", std::string{}) != "VERIFIED" ||
-            crypto_universe.value("provider_id", std::string{}) != "coinpaprika" ||
+            crypto_universe.value("status", std::string{}) != "OWNER_MANIFEST_VERIFIED" ||
+            crypto_universe.value("provider_id", std::string{}) != "owner_manifest" ||
+            crypto_universe.value("source_endpoint", std::string{}) != "config/universe.json" ||
+            crypto_universe.value("freshness_status", std::string{}) != "OWNER_CONFIG" ||
             !crypto_universe.contains("symbols") || !crypto_universe.at("symbols").is_array() ||
-            crypto_universe.at("symbols").size() < 500U)
-            throw std::invalid_argument("crypto_universe_reference_invalid");
+            crypto_universe.at("symbols").size() != 9U)
+            throw std::invalid_argument("owner_production_universe_manifest_invalid");
         for (const auto& symbol : crypto_universe.at("symbols")) {
             if (!symbol.is_string() || symbol.get<std::string>().empty() ||
                 !verified_crypto_symbols.insert(symbol.get<std::string>()).second)
                 throw std::invalid_argument("crypto_universe_symbol_invalid_or_duplicate");
         }
-        if (!verified_crypto_symbols.contains("BTC"))
-            throw std::invalid_argument("crypto_universe_btc_missing");
+        if (verified_crypto_symbols.size() != 9U || !verified_crypto_symbols.contains("BTC"))
+            throw std::invalid_argument("owner_production_universe_not_exact_nine_assets");
     }
     require_string(contract.at("provider"), "primary_provider_id");
     if (!contract.contains("instruments") || !contract.at("instruments").is_array() || contract.at("instruments").empty())

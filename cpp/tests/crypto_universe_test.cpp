@@ -57,6 +57,78 @@ int main() {
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
             pinned.back().base == "SOL",
             "pending candidates remain in L1 even after falling outside top-turnover eligibility");
+
+    const auto make_instrument = [](const std::string& base, double turnover) {
+        return cfss::okx::Instrument{
+            base + "-USDT-SWAP", base, "USDT", "USDT",
+            1.0, 1.0, 0.1, 1.0, 1.0, turnover, 1,
+            base, "okx", base + "-USDT-SWAP"
+        };
+    };
+    const std::set<std::string> production_nine{
+        "BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"
+    };
+    const auto owner_manifest = cfss::okx::load_crypto_universe(production_nine);
+    require(owner_manifest.symbols == production_nine &&
+            owner_manifest.artifact.at("status") == "OWNER_MANIFEST_VERIFIED" &&
+            owner_manifest.artifact.at("provider_id") == "owner_manifest" &&
+            owner_manifest.artifact.at("source_endpoint") == "config/universe.json" &&
+            owner_manifest.artifact.at("symbol_count") == 9,
+            "production universe is loaded and hashed from the owner manifest without a third-party coin list");
+    bool invalid_manifest_rejected = false;
+    try {
+        (void)cfss::okx::load_crypto_universe({"BTC", "ETH"});
+    } catch (const std::invalid_argument&) {
+        invalid_manifest_rejected = true;
+    }
+    require(invalid_manifest_rejected,
+            "incomplete owner universe manifest fails closed");
+    const std::vector<cfss::okx::Instrument> nine_candidates{
+        make_instrument("BTC", 100'000'000.0),
+        make_instrument("ETH", 90'000'000.0),
+        make_instrument("SOL", 80'000'000.0),
+        make_instrument("BNB", 70'000'000.0),
+        make_instrument("XRP", 60'000'000.0),
+        make_instrument("DOGE", 50'000'000.0),
+        make_instrument("ADA", 40'000'000.0),
+        make_instrument("LINK", 30'000'000.0),
+        make_instrument("AVAX", 20'000'000.0),
+        make_instrument("EXTRA", 110'000'000.0)
+    };
+    const auto exact_nine = cfss::okx::select_production_nine_assets(
+        nine_candidates, production_nine);
+    const auto selected_via_discovery = cfss::okx::select_instruments(
+        8, nine_candidates, nine_candidates, production_nine);
+    require(selected_via_discovery.size() == 9U,
+            "production discovery path enforces the manifest rather than target-count top turnover");
+    require(exact_nine.size() == 9U && exact_nine.front().base == "BTC",
+            "production selection emits exactly nine assets with BTC first");
+    require(std::all_of(exact_nine.begin(), exact_nine.end(), [&](const auto& item) {
+                return production_nine.contains(item.base);
+            }),
+            "wider discovery universe cannot leak into the nine-asset production selection");
+    bool missing_asset_rejected = false;
+    try {
+        (void)cfss::okx::select_production_nine_assets(
+            std::vector<cfss::okx::Instrument>(nine_candidates.begin(), nine_candidates.begin() + 8),
+            production_nine);
+    } catch (const std::runtime_error&) {
+        missing_asset_rejected = true;
+    }
+    require(missing_asset_rejected,
+            "missing canonical asset fails closed instead of silently shrinking production universe");
+    auto low_liquidity_candidates = nine_candidates;
+    low_liquidity_candidates[8] = make_instrument("AVAX", 9'999'999.0);
+    const auto low_liquidity_nine = cfss::okx::select_production_nine_assets(
+        low_liquidity_candidates, production_nine);
+    const auto low_liquidity_avax = std::find_if(
+        low_liquidity_nine.begin(), low_liquidity_nine.end(),
+        [](const auto& item) { return item.base == "AVAX"; });
+    require(low_liquidity_nine.size() == 9U &&
+            low_liquidity_avax != low_liquidity_nine.end() &&
+            !cfss::okx::passes_liquidity(low_liquidity_avax->turnover),
+            "low-liquidity asset remains visible in C10 coverage while its downstream eligibility gate stays failed");
+
     const nlohmann::json old_cache = {
         {"schema_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},

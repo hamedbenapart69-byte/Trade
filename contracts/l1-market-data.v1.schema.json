@@ -587,14 +587,13 @@
           "minimum": 0
         },
         "crypto_universe_status": {
-          "const": "VERIFIED"
+          "const": "OWNER_MANIFEST_VERIFIED"
         },
         "crypto_universe_source": {
-          "const": "coinpaprika"
+          "const": "owner_manifest"
         },
         "crypto_universe_symbol_count": {
-          "type": "integer",
-          "minimum": 500
+          "const": 9
         },
         "crypto_universe_symbols_sha256": {
           "type": "string",
@@ -661,22 +660,19 @@
           "const": "cfss_crypto_universe_v1"
         },
         "status": {
-          "const": "VERIFIED"
+          "const": "OWNER_MANIFEST_VERIFIED"
         },
         "provider_id": {
-          "const": "coinpaprika"
+          "const": "owner_manifest"
         },
         "source_endpoint": {
-          "const": "https://api.coinpaprika.com/v1/coins"
+          "const": "config/universe.json"
         },
         "attribution": {
-          "const": "CoinPaprika"
+          "const": "Owner-configured V21.1 production universe"
         },
         "freshness_status": {
-          "enum": [
-            "LIVE",
-            "CACHED"
-          ]
+          "const": "OWNER_CONFIG"
         },
         "fetched_at_ms": {
           "type": "integer",
@@ -687,8 +683,7 @@
           "minimum": 1
         },
         "symbol_count": {
-          "type": "integer",
-          "minimum": 500
+          "const": 9
         },
         "symbols_sha256": {
           "type": "string",
@@ -696,7 +691,8 @@
         },
         "symbols": {
           "type": "array",
-          "minItems": 500,
+          "minItems": 9,
+          "maxItems": 9,
           "uniqueItems": true,
           "items": {
             "type": "string",
