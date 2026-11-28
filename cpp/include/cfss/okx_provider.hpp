@@ -331,12 +331,46 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
+inline std::vector<Instrument> select_production_nine_assets(
+    const std::vector<Instrument>& all_valid_crypto,
+    const std::set<std::string>& required_symbols) {
+    if (required_symbols.size() != 9U || !required_symbols.contains("BTC"))
+        throw std::invalid_argument("production_universe_must_contain_exactly_nine_assets_including_btc");
+
+    std::map<std::string, Instrument> by_base;
+    for (const auto& item : all_valid_crypto) {
+        if (!by_base.emplace(item.base, item).second)
+            throw std::runtime_error("duplicate_provider_instrument_for_canonical_asset:" + item.base);
+    }
+
+    std::vector<Instrument> selected;
+    selected.reserve(9U);
+    const auto append = [&](const std::string& base) {
+        const auto found = by_base.find(base);
+        if (found == by_base.end())
+            throw std::runtime_error("production_asset_instrument_unavailable:" + base);
+        if (!passes_liquidity(found->second.turnover))
+            throw std::runtime_error("production_asset_below_liquidity_gate:" + base);
+        selected.push_back(found->second);
+    };
+
+    append("BTC");
+    for (const auto& base : required_symbols) {
+        if (base != "BTC") append(base);
+    }
+    if (selected.size() != 9U)
+        throw std::runtime_error("production_universe_selection_not_exactly_nine");
+    return selected;
+}
+
 inline std::vector<Instrument> select_instruments(
     int target_count, std::vector<Instrument> eligible,
     const std::vector<Instrument>& all_valid_crypto,
     const std::set<std::string>& required_symbols = {}) {
     if (target_count < 1 || target_count > 100)
         throw std::invalid_argument("target_count_invalid");
+    if (required_symbols.size() == 9U)
+        return select_production_nine_assets(all_valid_crypto, required_symbols);
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
         const bool a_btc = a.base == "BTC";
         const bool b_btc = b.base == "BTC";
