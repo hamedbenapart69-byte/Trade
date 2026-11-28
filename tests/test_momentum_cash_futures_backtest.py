@@ -92,5 +92,57 @@ class FundingAndMetricsTests(unittest.TestCase):
         self.assertEqual(result["invested_sample_count"], 2)
 
 
+
+
+class RiskExitAndPboTests(unittest.TestCase):
+    def _daily_frame(self, start="2024-01-01", count=35):
+        dates = pd.date_range(start, periods=count, freq="D", tz="UTC")
+        return pd.DataFrame({
+            "date": dates,
+            "open": [100.0] * count,
+            "high": [101.0] * count,
+            "low": [99.0] * count,
+            "close": [100.0] * count,
+            "volume": [1000.0] * count,
+        })
+
+    def test_trailing_stop_uses_prior_peak_and_gap_conservative_fill(self):
+        frame = self._daily_frame()
+        monday, friday = frame.loc[21, "date"], frame.loc[25, "date"]
+        frame.loc[21, ["open", "high", "low", "close"]] = [100.0, 105.0, 99.0, 104.0]
+        frame.loc[22, ["open", "high", "low", "close"]] = [104.0, 110.0, 103.0, 108.0]
+        frame.loc[23, ["open", "high", "low", "close"]] = [90.0, 95.0, 89.0, 92.0]
+        result = futures.risk_adjusted_exit(frame, monday, friday)
+        self.assertEqual(result["exit_reason"], "TRAILING_STOP_15PCT")
+        self.assertAlmostEqual(result["stop_level"], 93.5)
+        self.assertAlmostEqual(result["exit_price"], 90.0)  # gap below stop
+        self.assertAlmostEqual(result["return"], -0.10)
+
+    def test_ma20_close_break_exits_at_daily_close(self):
+        frame = self._daily_frame()
+        monday, friday = frame.loc[21, "date"], frame.loc[25, "date"]
+        frame.loc[21, ["open", "high", "low", "close"]] = [100.0, 101.0, 98.0, 99.0]
+        result = futures.risk_adjusted_exit(frame, monday, friday)
+        self.assertEqual(result["exit_reason"], "DAILY_CLOSE_BELOW_MA20")
+        self.assertEqual(result["exit_price"], 99.0)
+        self.assertEqual(result["return"], -0.01)
+
+    def test_cscv_pbo_builds_70_splits_and_a_weekly_return_matrix(self):
+        dates = pd.date_range("2020-01-06", periods=80, freq="W-MON", tz="UTC")
+        variants = {}
+        for name, shift in (("BTC_MA40", 0.001), ("BTC_MA50", 0.0), ("BTC_MA60", -0.001)):
+            rows = []
+            for i, week in enumerate(dates):
+                value = 0.01 * ((-1.0) ** i) + shift
+                rows.append({"monday": week, "net_return": value})
+            variants[name] = rows
+        result = futures.cscv_pbo(variants, n_blocks=8)
+        self.assertEqual(result["status"], "COMPUTED")
+        self.assertEqual(result["split_count"], 70)
+        self.assertEqual(len(result["weekly_return_matrix"]), 80)
+        self.assertGreaterEqual(result["value"], 0.0)
+        self.assertLessEqual(result["value"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main()
