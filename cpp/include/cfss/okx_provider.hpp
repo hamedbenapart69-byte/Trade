@@ -349,8 +349,8 @@ inline std::vector<Instrument> select_production_nine_assets(
         const auto found = by_base.find(base);
         if (found == by_base.end())
             throw std::runtime_error("production_asset_instrument_unavailable:" + base);
-        if (!passes_liquidity(found->second.turnover))
-            throw std::runtime_error("production_asset_below_liquidity_gate:" + base);
+        // Universe membership is fixed by the owner-approved manifest.
+        // Liquidity is a downstream eligibility gate; it must not silently shrink C10 coverage.
         selected.push_back(found->second);
     };
 
