@@ -1,0 +1,7 @@
+{
+  "status": "BLOCKED_PENDING_RESEARCH_VALIDATION",
+  "max_drawdown_below_30_percent": false,
+  "profit_factor_above_1_50": false,
+  "pbo_below_0_40": false,
+  "reason": "No tested strategy version has yet passed all owner release criteria. Signals remain disabled."
+}
