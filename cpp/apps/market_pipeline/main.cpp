@@ -122,12 +122,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
         throw std::runtime_error("curl_global_init_failed");
     try {
-        std::optional<json> cached_crypto_universe;
-        if (crypto_universe_cache_path && std::filesystem::exists(*crypto_universe_cache_path)) {
-            std::ifstream cache_input(*crypto_universe_cache_path, std::ios::binary);
-            if (!cache_input) throw std::runtime_error("crypto_universe_cache_open_failed");
-            cached_crypto_universe = json::parse(cache_input);
-        }
+        // V21.1 production universe is loaded from the owner manifest, never from a third-party symbol cache.
         std::optional<json> cached_market_data;
         if (market_data_cache_path && std::filesystem::exists(*market_data_cache_path)) {
             try {
@@ -175,7 +170,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 if (!base.empty()) required_symbols.insert(base);
             }
         }
-        const auto contract = cfss::okx::collect(symbols, years, cached_crypto_universe,
+        const auto contract = cfss::okx::collect(symbols, years, std::nullopt,
                                                   cached_market_data, required_symbols,
                                                   market_data_cache_path);
         const std::string l1_raw = contract.dump(2) + "\n";
@@ -329,7 +324,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         write_json(manifest_path, manifest);
 
         std::cout << "CPP_L1_COLLECTED provider=okx symbols=" << contract.at("instruments").size()
-                  << " crypto_universe=VERIFIED source=coinpaprika"
+                  << " crypto_universe=OWNER_MANIFEST_VERIFIED source=owner_manifest"
                   << " run_id=" << contract.at("run_id") << '\n';
         std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
         std::cout << "REQUIRED_ARTIFACTS_CREATED signals.json history.csv performance.json coverage.json system_status.json run-manifest.v2.json\n";
