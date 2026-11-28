@@ -11,18 +11,19 @@
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "artifact_type": {"const": "cfss_crypto_universe_v1"},
-    "status": {"const": "VERIFIED"},
-    "provider_id": {"const": "coinpaprika"},
-    "source_endpoint": {"const": "https://api.coinpaprika.com/v1/coins"},
-    "attribution": {"const": "CoinPaprika"},
-    "freshness_status": {"enum": ["LIVE", "CACHED"]},
+    "status": {"const": "OWNER_MANIFEST_VERIFIED"},
+    "provider_id": {"const": "owner_manifest"},
+    "source_endpoint": {"const": "config/universe.json"},
+    "attribution": {"const": "Owner-configured V21.1 production universe"},
+    "freshness_status": {"const": "OWNER_CONFIG"},
     "fetched_at_ms": {"type": "integer", "minimum": 1},
     "retrieved_at_ms": {"type": "integer", "minimum": 1},
-    "symbol_count": {"type": "integer", "minimum": 500},
+    "symbol_count": {"const": 9},
     "symbols_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "symbols": {
       "type": "array",
-      "minItems": 500,
+      "minItems": 9,
+      "maxItems": 9,
       "uniqueItems": true,
       "items": {"type": "string", "pattern": "^[A-Z0-9]{1,20}$"}
     }
