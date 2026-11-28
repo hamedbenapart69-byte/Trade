@@ -1,4 +1,4 @@
-name: V5 OKX Live Market Scan
+name: Legacy V5 OKX Live Market Scan (Quarantined by V21)
 on:
   workflow_dispatch:
 permissions:
@@ -8,6 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   live:
+    if: false # V21: Python V5 live signal path is legacy and cannot run in production
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

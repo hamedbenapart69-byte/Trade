@@ -3,6 +3,7 @@
 #include "cfss/atomic_file.hpp"
 #include "cfss/kucoin_provider.hpp"
 #include "cfss/provider_resilience.hpp"
+#include "cfss/provider_federation.hpp"
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -16,6 +17,7 @@
 #include <limits>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <cstdlib>
 #include <map>
@@ -23,6 +25,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 #include <utility>
@@ -214,6 +217,7 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             {"attribution", "CoinPaprika"}, {"freshness_status", "LIVE"},
             {"fetched_at_ms", retrieved_at}, {"retrieved_at_ms", retrieved_at},
             {"symbol_count", symbols.size()}, {"symbols_sha256", cfss::sha256_hex(hash_material)},
+            {"selection_status", "LIVE_MARKET_UNIVERSE"},
             {"symbols", symbol_array}
         };
         return {std::move(symbols), std::move(artifact)};
@@ -248,9 +252,180 @@ inline CryptoUniverse load_crypto_universe(const std::optional<json>& cached = s
             throw std::runtime_error("crypto_universe_cache_hash_mismatch");
         auto artifact = *cached;
         artifact["freshness_status"] = "CACHED";
+        artifact["selection_status"] = "LIVE_MARKET_UNIVERSE";
         artifact["retrieved_at_ms"] = retrieved_at;
         return {std::move(symbols), std::move(artifact)};
     }
+}
+
+inline std::filesystem::path resolve_universe_config_path(const std::string& source) {
+    std::filesystem::path requested{source};
+    if (requested.is_absolute() && std::filesystem::exists(requested)) return requested;
+    if (std::filesystem::exists(requested)) return std::filesystem::absolute(requested);
+    auto directory = std::filesystem::current_path();
+    for (int depth = 0; depth < 5 && !directory.empty(); ++depth) {
+        const auto candidate = directory / requested;
+        if (std::filesystem::exists(candidate)) return candidate;
+        const auto parent = directory.parent_path();
+        if (parent == directory) break;
+        directory = parent;
+    }
+    throw std::runtime_error("owner_universe_config_file_missing:" + source);
+}
+
+inline json read_universe_config_document(const std::string& source) {
+    const auto path = resolve_universe_config_path(source);
+    std::ifstream input(path);
+    if (!input) throw std::runtime_error("owner_universe_config_file_unreadable:" + source);
+    json document;
+    try { input >> document; }
+    catch (const std::exception&) {
+        throw std::runtime_error("owner_universe_config_json_invalid:" + source);
+    }
+    if (!document.is_object())
+        throw std::runtime_error("owner_universe_config_root_not_object:" + source);
+    return document;
+}
+
+inline std::string normalize_config_base_symbol(std::string raw) {
+    auto symbol = uppercase_symbol(std::move(raw));
+    if (symbol.size() > 4U && symbol.substr(symbol.size() - 4U) == "USDT")
+        symbol.resize(symbol.size() - 4U);
+    return symbol;
+}
+
+inline bool is_sha256_hex(const std::string& value) {
+    if (value.size() != 64U) return false;
+    return std::all_of(value.begin(), value.end(), [](unsigned char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+inline std::set<std::string> provider_identity_seed_symbols() {
+    std::set<std::string> expected;
+    for (const auto& identity : cfss::federation::candidate_identity_seed())
+        expected.insert(identity.canonical_symbol);
+    return expected;
+}
+
+inline std::set<std::string> provider_identity_non_btc_symbols() {
+    auto expected = provider_identity_seed_symbols();
+    expected.erase("BTC");
+    return expected;
+}
+
+inline CryptoUniverse load_candidate_universe(const std::set<std::string>& required_symbols) {
+    if (required_symbols.size() != 8U || required_symbols.contains("BTC"))
+        throw std::runtime_error("owner_candidate_universe_requires_exactly_eight_non_btc_symbols");
+
+    const char* source_value = std::getenv("CFSS_UNIVERSE_SOURCE");
+    const std::string source = source_value ? std::string{source_value} :
+        "config/universe.v21.1.candidate.json";
+    const bool frozen_production = source == "config/universe.json";
+    if (!frozen_production && source != "config/universe.v21.1.candidate.json")
+        throw std::runtime_error("owner_universe_source_not_allowlisted");
+
+    const auto config = read_universe_config_document(source);
+    std::set<std::string> configured_symbols;
+    std::set<std::string> configured_non_btc;
+
+    if (!frozen_production) {
+        if (config.value("schema_version", std::string{}) != "1.0.0" ||
+            config.value("document_version", std::string{}) != "V21.1" ||
+            config.value("artifact_type", std::string{}) != "cfss_nine_asset_candidate_universe" ||
+            config.value("status", std::string{}) != "PROVISIONAL_NOT_FROZEN" ||
+            config.value("selection_status", std::string{}) !=
+                "AWAITING_LIVE_DERIVATIVES_AND_HISTORICAL_COVERAGE_SCREEN" ||
+            config.value("required_production_count", 0) != 9 ||
+            config.value("mandatory_assets", json::array()) != json::array({"BTC"}) ||
+            !config.contains("candidate_assets") || !config.at("candidate_assets").is_array() ||
+            config.at("candidate_assets").size() != 9U) {
+            throw std::runtime_error("owner_candidate_manifest_contract_invalid");
+        }
+        std::size_t required_btc_count = 0U;
+        for (const auto& item : config.at("candidate_assets")) {
+            if (!item.is_object() || !item.contains("symbol") || !item.at("symbol").is_string())
+                throw std::runtime_error("owner_candidate_manifest_asset_invalid");
+            const auto symbol = uppercase_symbol(item.at("symbol").get<std::string>());
+            if (!valid_crypto_symbol(symbol) || !configured_symbols.insert(symbol).second)
+                throw std::runtime_error("owner_candidate_manifest_symbol_invalid_or_duplicate:" + symbol);
+            const bool required = item.value("required", false);
+            if (symbol == "BTC") {
+                if (!required) throw std::runtime_error("owner_candidate_manifest_btc_must_be_required");
+                ++required_btc_count;
+            } else {
+                if (required) throw std::runtime_error("owner_candidate_manifest_non_btc_must_be_candidate");
+                configured_non_btc.insert(symbol);
+            }
+        }
+        if (required_btc_count != 1U || configured_symbols.size() != 9U ||
+            configured_non_btc != required_symbols ||
+            configured_non_btc != provider_identity_non_btc_symbols()) {
+            throw std::runtime_error("owner_candidate_manifest_identity_seed_mismatch");
+        }
+    } else {
+        if (config.value("schema_version", std::string{}) != "1.0.0" ||
+            config.value("document_version", std::string{}) != "V21.1" ||
+            config.value("artifact_type", std::string{}) != "cfss_nine_asset_frozen_production_universe" ||
+            config.value("status", std::string{}) != "FROZEN_PRODUCTION_UNIVERSE" ||
+            config.value("selection_status", std::string{}) != "FROZEN_PRODUCTION_UNIVERSE" ||
+            config.value("required_production_count", 0) != 9 ||
+            !config.contains("symbols") || !config.at("symbols").is_array() ||
+            config.at("symbols").size() != 9U ||
+            !is_sha256_hex(config.value("screen_evidence_sha256", std::string{})) ||
+            config.value("selection_method", std::string{}).empty() ||
+            config.value("selection_timestamp_utc", std::string{}).empty() ||
+            config.value("owner_approval_ref", std::string{}).empty() ||
+            config.value("owner_approval_timestamp_utc", std::string{}).empty()) {
+            throw std::runtime_error("frozen_production_universe_manifest_incomplete");
+        }
+        for (const auto& item : config.at("symbols")) {
+            if (!item.is_string())
+                throw std::runtime_error("frozen_production_universe_symbol_type_invalid");
+            const auto symbol = normalize_config_base_symbol(item.get<std::string>());
+            if (!valid_crypto_symbol(symbol) || !configured_symbols.insert(symbol).second)
+                throw std::runtime_error("frozen_production_universe_symbol_invalid_or_duplicate:" + symbol);
+            if (symbol != "BTC") configured_non_btc.insert(symbol);
+        }
+        if (configured_symbols.size() != 9U || !configured_symbols.contains("BTC") ||
+            configured_non_btc != required_symbols ||
+            configured_non_btc != provider_identity_non_btc_symbols()) {
+            throw std::runtime_error("frozen_production_universe_identity_seed_mismatch");
+        }
+    }
+
+    const auto retrieved_at = now_ms();
+    json symbol_array = json::array();
+    std::string hash_material;
+    for (const auto& symbol : configured_symbols) {
+        symbol_array.push_back(symbol);
+        hash_material += symbol + "\n";
+    }
+    json artifact{
+        {"schema_version", "1.0.0"},
+        {"artifact_type", "cfss_crypto_universe_v1"},
+        {"status", frozen_production ? "OWNER_CONFIGURED_PRODUCTION_SET" : "OWNER_CONFIGURED_CANDIDATE_SET"},
+        {"provider_id", "owner_config"},
+        {"source_endpoint", source},
+        {"attribution", frozen_production
+            ? "Owner-frozen production universe configuration; not market data."
+            : "Owner-configured provisional candidate universe; not market data."},
+        {"freshness_status", "STATIC_CONFIG"},
+        {"fetched_at_ms", retrieved_at},
+        {"retrieved_at_ms", retrieved_at},
+        {"symbol_count", configured_symbols.size()},
+        {"symbols_sha256", cfss::sha256_hex(hash_material)},
+        {"selection_status", frozen_production ? "FROZEN_PRODUCTION_UNIVERSE" : "PROVISIONAL_NOT_FROZEN"},
+        {"symbols", symbol_array}
+    };
+    if (frozen_production) {
+        artifact["selection_method"] = config.at("selection_method");
+        artifact["selection_timestamp_utc"] = config.at("selection_timestamp_utc");
+        artifact["screen_evidence_sha256"] = config.at("screen_evidence_sha256");
+        artifact["owner_approval_ref"] = config.at("owner_approval_ref");
+        artifact["owner_approval_timestamp_utc"] = config.at("owner_approval_timestamp_utc");
+    }
+    return {std::move(configured_symbols), std::move(artifact)};
 }
 
 inline bool is_verified_crypto_underlying(const std::string& raw_symbol,
@@ -331,10 +506,16 @@ inline bool valid_linear_usdt_contract(const json& item, const std::string& base
            positive("ctVal") && positive("ctMult") && positive("tickSz") &&
            positive("lotSz") && positive("minSz") && timestamp(item.value("listTime", json{})) > 0;
 }
+inline bool exact_universe_mode_enabled() {
+    const char* value = std::getenv("CFSS_EXACT_UNIVERSE");
+    return value && (std::string_view{value} == "1" || std::string_view{value} == "true");
+}
+
 inline std::vector<Instrument> select_instruments(
     int target_count, std::vector<Instrument> eligible,
     const std::vector<Instrument>& all_valid_crypto,
-    const std::set<std::string>& required_symbols = {}) {
+    const std::set<std::string>& required_symbols = {},
+    bool exact_universe = false) {
     if (target_count < 1 || target_count > 100)
         throw std::invalid_argument("target_count_invalid");
     std::sort(eligible.begin(), eligible.end(), [](const Instrument& a, const Instrument& b) {
@@ -345,8 +526,36 @@ inline std::vector<Instrument> select_instruments(
     });
     const auto btc = std::find_if(eligible.begin(), eligible.end(),
         [](const Instrument& item) { return item.base == "BTC"; });
-    if (btc == eligible.end())
+    if (btc == eligible.end()) {
+        if (exact_universe) {
+            if (required_symbols.size() != static_cast<std::size_t>(target_count) ||
+                required_symbols.contains("BTC")) {
+                throw std::runtime_error("exact_universe_requires_exact_non_btc_symbol_count");
+            }
+            return {};
+        }
         throw std::runtime_error("btc_contract_does_not_pass_liquidity_or_metadata_gates");
+    }
+    if (exact_universe) {
+        if (required_symbols.size() != static_cast<std::size_t>(target_count) ||
+            required_symbols.contains("BTC")) {
+            throw std::runtime_error("exact_universe_requires_exact_non_btc_symbol_count");
+        }
+        std::vector<Instrument> exact_selected{*btc};
+        for (const auto& required_base : required_symbols) {
+            const auto found = std::find_if(eligible.begin(), eligible.end(),
+                [&](const Instrument& item) { return item.base == required_base; });
+            if (found == eligible.end()) {
+                throw std::runtime_error(
+                    "exact_universe_candidate_not_liquid_or_available:" + required_base);
+            }
+            exact_selected.push_back(*found);
+        }
+        if (exact_selected.size() != static_cast<std::size_t>(target_count) + 1U) {
+            throw std::runtime_error("exact_universe_selection_incomplete");
+        }
+        return exact_selected;
+    }
     const auto requested_total = static_cast<std::size_t>(target_count) + 1U;
     const auto selection_limit = std::min(requested_total, eligible.size());
     std::vector<Instrument> selected{*btc};
@@ -371,7 +580,8 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
                                        const std::set<std::string>& required_symbols = {},
                                        std::size_t* eligible_count = nullptr,
                                        std::size_t* declared_count = nullptr,
-                                       std::size_t* excluded_non_crypto_count = nullptr) {
+                                       std::size_t* excluded_non_crypto_count = nullptr,
+                                       bool apply_exact_universe = true) {
     const auto instruments = request("/api/v5/public/instruments?instType=SWAP");
     const auto tickers = request("/api/v5/market/tickers?instType=SWAP");
     std::map<std::string, double> turnover;
@@ -430,7 +640,8 @@ inline std::vector<Instrument> discover_okx(int target_count, const std::set<std
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << " ticker_turnover=" << turnover.size() << '\n';
     // BTC is a mandatory reference; pinned pending symbols are added after the top-turnover universe.
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols,
+                              apply_exact_universe && exact_universe_mode_enabled());
 }
 
 
@@ -439,7 +650,8 @@ inline std::vector<Instrument> discover_kucoin(
     const std::set<std::string>& required_symbols = {},
     std::size_t* eligible_count = nullptr,
     std::size_t* declared_count = nullptr,
-    std::size_t* excluded_non_crypto_count = nullptr) {
+    std::size_t* excluded_non_crypto_count = nullptr,
+    bool apply_exact_universe = true) {
     const auto& contracts = cfss::kucoin::active_contracts_cached();
     std::vector<Instrument> eligible;
     std::vector<Instrument> all_valid_crypto;
@@ -466,25 +678,103 @@ inline std::vector<Instrument> discover_kucoin(
     std::cerr << "KUCOIN_UNIVERSE_DIAGNOSTICS declared=" << contracts.size()
               << " excluded_non_crypto=" << excluded_non_crypto
               << " eligible=" << eligible.size() << '\n';
-    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols);
+    return select_instruments(target_count, std::move(eligible), all_valid_crypto, required_symbols,
+                              apply_exact_universe && exact_universe_mode_enabled());
 }
 
+inline double minimum_turnover(const std::vector<Instrument>& instruments) {
+    if (instruments.empty()) return 0.0;
+    double value = std::numeric_limits<double>::max();
+    for (const auto& instrument : instruments) value = std::min(value, instrument.turnover);
+    return value == std::numeric_limits<double>::max() ? 0.0 : value;
+}
+
+inline double total_turnover(const std::vector<Instrument>& instruments) {
+    double value = 0.0;
+    for (const auto& instrument : instruments) value += instrument.turnover;
+    return value;
+}
+
+// Query both public derivatives venues, merge by canonical underlying, and
+// choose the venue with the stronger verified 24h quote turnover per asset.
+// This is quality-ranked routing, not a fixed primary/fallback chain.
 inline std::vector<Instrument> discover(
     int target_count, const std::set<std::string>& crypto_symbols,
     const std::set<std::string>& required_symbols = {},
     std::size_t* eligible_count = nullptr,
     std::size_t* declared_count = nullptr,
     std::size_t* excluded_non_crypto_count = nullptr) {
+    struct VenueDiscovery {
+        std::string provider_id;
+        std::vector<Instrument> instruments;
+        std::size_t eligible{0U};
+        std::size_t declared{0U};
+        std::size_t excluded{0U};
+    };
+    std::vector<VenueDiscovery> venues;
+    std::string okx_error;
+    std::string kucoin_error;
+
     try {
-        auto selected = discover_okx(target_count, crypto_symbols, required_symbols,
-                                     eligible_count, declared_count, excluded_non_crypto_count);
-        if (!selected.empty()) return selected;
-        std::cerr << "OKX_DISCOVERY_EMPTY; attempting KuCoin public fallback\n";
-    } catch (const std::exception& e) {
-        std::cerr << "OKX_DISCOVERY_FAILED; attempting KuCoin public fallback: " << e.what() << '\n';
+        VenueDiscovery candidate;
+        candidate.provider_id = "okx";
+        candidate.instruments = discover_okx(100, crypto_symbols, {},
+            &candidate.eligible, &candidate.declared, &candidate.excluded, false);
+        if (!candidate.instruments.empty()) venues.push_back(std::move(candidate));
+    } catch (const std::exception& error) {
+        okx_error = error.what();
+        std::cerr << "OKX_DISCOVERY_UNAVAILABLE: " << okx_error << '\n';
     }
-    return discover_kucoin(target_count, crypto_symbols, required_symbols,
-                           eligible_count, declared_count, excluded_non_crypto_count);
+
+    try {
+        VenueDiscovery candidate;
+        candidate.provider_id = "kucoin";
+        candidate.instruments = discover_kucoin(100, crypto_symbols, {},
+            &candidate.eligible, &candidate.declared, &candidate.excluded, false);
+        if (!candidate.instruments.empty()) venues.push_back(std::move(candidate));
+    } catch (const std::exception& error) {
+        kucoin_error = error.what();
+        std::cerr << "KUCOIN_DISCOVERY_UNAVAILABLE: " << kucoin_error << '\n';
+    }
+
+    if (venues.empty()) {
+        throw std::runtime_error("all_derivatives_providers_unavailable:okx=" +
+            okx_error + ";kucoin=" + kucoin_error);
+    }
+
+    std::map<std::string, Instrument> best_by_base;
+    for (const auto& venue : venues) {
+        for (const auto& instrument : venue.instruments) {
+            const auto found = best_by_base.find(instrument.base);
+            if (found == best_by_base.end() ||
+                instrument.turnover > found->second.turnover ||
+                (instrument.turnover == found->second.turnover &&
+                 instrument.provider_id < found->second.provider_id)) {
+                best_by_base[instrument.base] = instrument;
+            }
+        }
+    }
+
+    std::vector<Instrument> merged;
+    merged.reserve(best_by_base.size());
+    for (const auto& [base, instrument] : best_by_base) {
+        (void)base;
+        merged.push_back(instrument);
+    }
+    if (eligible_count) *eligible_count = merged.size();
+    if (declared_count) {
+        *declared_count = 0U;
+        for (const auto& venue : venues) *declared_count = std::max(*declared_count, venue.declared);
+    }
+    if (excluded_non_crypto_count) {
+        *excluded_non_crypto_count = 0U;
+        for (const auto& venue : venues) {
+            *excluded_non_crypto_count = std::max(*excluded_non_crypto_count, venue.excluded);
+        }
+    }
+
+    return select_instruments(target_count, merged, merged, required_symbols,
+                              exact_universe_mode_enabled());
 }
 
 inline json fetch_candles(const Instrument& instrument, std::int64_t start_ms,
@@ -829,34 +1119,41 @@ inline std::size_t normalize_open_interest_rows(json& rows) {
 
 inline json probe_provider_health() {
     const auto checked_at = utc_iso(now_ms());
-    struct Probe { const char* id; const char* url; int rank; const char* adapter; };
+    struct Probe {
+        const char* id;
+        const char* url;
+        const char* adapter;
+        const char* selection_policy;
+    };
     const std::vector<Probe> probes{
-        {"okx", "https://www.okx.com/api/v5/public/time", 1, "IMPLEMENTED_PRIMARY"},
-        {"bybit", "https://api.bybit.com/v5/market/time", 2, "NOT_IMPLEMENTED"},
-        {"binance", "https://fapi.binance.com/fapi/v1/ping", 3, "NOT_IMPLEMENTED"},
-        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", 4, "IMPLEMENTED_SECONDARY_PARTIAL"},
-        {"mexc", "https://contract.mexc.com/api/v1/contract/detail", 5, "NOT_IMPLEMENTED"},
-        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", 6, "NOT_IMPLEMENTED"},
-        {"coingecko", "https://api.coingecko.com/api/v3/ping", 7, "REFERENCE_ONLY"}
+        {"okx", "https://www.okx.com/api/v5/public/time", "IMPLEMENTED_PRIMARY", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"bybit", "https://api.bybit.com/v5/market/time", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"binance", "https://fapi.binance.com/fapi/v1/ping", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"kucoin", "https://api-futures.kucoin.com/api/v1/timestamp", "IMPLEMENTED_SECONDARY_PARTIAL", "PER_ASSET_LIQUIDITY_RANKED"},
+        {"mexc", "https://contract.mexc.com/api/v1/contract/detail", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"},
+        {"bitget", "https://api.bitget.com/api/v2/mix/market/ticker?productType=USDT-FUTURES&symbol=BTCUSDT", "NOT_IMPLEMENTED", "DISCOVERY_ONLY"}
     };
     json providers = json::array();
     for (const auto& probe : probes) {
         const auto response = get(probe.url, 12L);
         const bool reachable = response.transport == CURLE_OK && response.status == 200;
         const std::string provider_id{probe.id};
-        std::string fallback_status = provider_id == "okx" ? "PRIMARY" :
-            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "REFERENCE_ONLY" : "UNAVAILABLE");
+        std::string fallback_status = "UNAVAILABLE";
         std::string fallback_equivalence = "NOT_PROVEN";
-        std::string fallback_reason = provider_id == "okx" ? "primary_provider" :
-            (std::string{probe.adapter} == "REFERENCE_ONLY" ? "not_a_futures_fallback" :
-             (!reachable ? "provider_endpoint_unreachable" : "adapter_live_equivalence_not_proven"));
+        std::string fallback_reason = !reachable ? "provider_endpoint_unreachable" :
+            (std::string{probe.adapter} == "NOT_IMPLEMENTED"
+                ? "adapter_not_implemented" : "live_equivalence_probe_not_run");
         json entry = {
-            {"provider_id", probe.id}, {"fallback_rank", probe.rank}, {"endpoint", probe.url},
-            {"checked_at_utc", checked_at},
+            {"provider_id", probe.id}, {"selection_policy", probe.selection_policy},
+            {"endpoint", probe.url}, {"checked_at_utc", checked_at},
             {"connectivity_status", reachable ? "HTTP_REACHABLE" : "UNAVAILABLE"},
             {"http_status", response.status},
             {"transport_status", curl_easy_strerror(response.transport)},
             {"adapter_status", probe.adapter},
+            {"circuit_breaker_state", provider_id == "okx"
+                ? cfss::resilience::okx_circuit_breaker().state()
+                : (provider_id == "kucoin"
+                    ? cfss::resilience::kucoin_circuit_breaker().state() : "NOT_APPLICABLE")},
             {"fallback_status", fallback_status},
             {"fallback_equivalence", fallback_equivalence},
             {"fallback_reason", fallback_reason}
@@ -873,20 +1170,17 @@ inline json probe_provider_health() {
                 } else {
                     entry["fallback_reason"] = "kucoin_public_live_probe_failed";
                 }
-            } catch (const std::exception& e) {
-                entry["fallback_reason"] = std::string{"kucoin_public_live_probe_error:"} + e.what();
+            } catch (const std::exception&) {
+                entry["fallback_reason"] = "kucoin_public_live_probe_exception";
             }
         }
-        if (provider_id == "okx")
-            entry["circuit_breaker_state"] = cfss::resilience::okx_circuit_breaker().state();
-        else if (provider_id == "kucoin")
-            entry["circuit_breaker_state"] = cfss::resilience::kucoin_circuit_breaker().state();
-        else
-            entry["circuit_breaker_state"] = "NOT_APPLICABLE";
         providers.push_back(std::move(entry));
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
     }
-    return {{"schema_version", "1.1.0"}, {"checked_at_utc", checked_at}, {"providers", providers}};
+    return {
+        {"schema_version", "1.2.0"}, {"checked_at_utc", checked_at},
+        {"selection_policy", "PER_ASSET_LIQUIDITY_RANKED_NO_FIXED_PROVIDER_PRIORITY"},
+        {"providers", providers}
+    };
 }
 
 inline json fetch_fear_greed() {
@@ -948,31 +1242,31 @@ inline json merge_timestamp_rows(const json& historical, const json& recent,
     return result;
 }
 
-inline json cache_key_material(const std::string& instrument_id,
-                                std::int64_t window_start_ms) {
+inline json cache_key_material(const std::string& instrument_id, std::int64_t window_start_ms,
+                                 const std::string& venue = "okx") {
+    if (instrument_id.empty() || window_start_ms <= 0 || venue.empty())
+        throw std::invalid_argument("market_cache_key_material_invalid");
     return {
-        {"provider_id", "okx"},
-        {"venue", "OKX"},
+        {"schema_version", "1.0.0"},
         {"instrument_id", instrument_id},
+        {"venue", venue},
         {"market_type", "LINEAR_PERPETUAL"},
-        {"timeframes", {
-            {"candles", "1H"},
-            {"funding", "8H"},
-            {"open_interest", "1H"}
-        }},
-        {"window_start_ms", window_start_ms},
+        {"timeframe", "1H"},
         {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
-        {"normalization_schema_version", "1.0.0"}
+        {"normalization_schema_version", "1.0.0"},
+        {"window_start_ms", window_start_ms},
+        {"cache_policy", "PROVIDER_VENUE_MARKET_TIMEFRAME_WINDOW_V1"}
     };
 }
 
 inline json make_cache_entry(const json& instrument, std::int64_t window_start_ms,
                              std::int64_t window_end_ms) {
     const auto id = instrument.value("instrument_id", std::string{});
-    auto metadata = cache_key_material(id, window_start_ms);
+    const auto venue = instrument.value("provider_id", std::string{"okx"});
+    auto metadata = cache_key_material(id, window_start_ms, venue);
     metadata["window_end_ms"] = window_end_ms;
     metadata["data_revision"] = sha256_hex(instrument.dump());
-    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms).dump());
+    metadata["cache_key"] = sha256_hex(cache_key_material(id, window_start_ms, venue).dump());
     return metadata;
 }
 
@@ -983,8 +1277,9 @@ inline bool valid_cache_entry(const json& cache_entries, const json& instrument,
         !instrument.is_object()) return false;
     const auto& metadata = cache_entries.at(instrument_id);
     if (!metadata.is_object()) return false;
+    const auto venue = instrument.value("provider_id", std::string{"okx"});
     const auto expected = cache_key_material(instrument_id,
-        metadata.value("window_start_ms", std::int64_t{0}));
+        metadata.value("window_start_ms", std::int64_t{0}), venue);
     for (const auto& [key, value] : expected.items()) {
         if (!metadata.contains(key) || metadata.at(key) != value) return false;
     }
@@ -1033,9 +1328,9 @@ inline json make_market_cache_snapshot(const std::optional<json>& old_cache,
     return {
         {"schema_version", "1.0.0"},
         {"cache_contract_version", "1.0.0"},
-        {"provider", {{"primary_provider_id", "okx"}}},
+        {"provider", {{"primary_provider_id", "provider_federation"}}},
         {"cache_policy", {
-            {"venue", "OKX"},
+            {"venue", "PER_INSTRUMENT_PROVIDER"},
             {"market_type", "LINEAR_PERPETUAL"},
             {"timeframes", {{"candles", "1H"}, {"funding", "8H"}, {"open_interest", "1H"}}},
             {"window_policy", "ROLLING_2Y_OHLCV_30D_DERIVATIVES"},
@@ -1057,14 +1352,29 @@ inline json collect(int symbol_count, int years,
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    const auto crypto_universe = load_crypto_universe(cached_crypto_universe);
+    const auto crypto_universe = exact_universe_mode_enabled()
+        ? load_candidate_universe(required_symbols)
+        : load_crypto_universe(cached_crypto_universe);
+    const bool frozen_production_universe =
+        crypto_universe.artifact.value("selection_status", std::string{}) == "FROZEN_PRODUCTION_UNIVERSE";
+    const auto market_wide_provider_federation =
+        cfss::federation::collect_market_wide_provider_federation(frozen_production_universe);
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
-    const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
-                                    &eligible_count, &declared_count, &excluded_non_crypto_count);
-    const bool discovery_fallback_used = !selected.empty() && selected.front().provider_id != "okx";
-    bool fallback_used_any = discovery_fallback_used;
+    std::vector<Instrument> selected;
+    try {
+        selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
+                            &eligible_count, &declared_count, &excluded_non_crypto_count);
+    } catch (const std::exception& error) {
+        if (!exact_universe_mode_enabled()) throw;
+        std::cerr << "EXACT_UNIVERSE_DISCOVERY_DEGRADED: " << error.what() << '\n';
+        selected.clear();
+    }
+    std::set<std::string> selected_provider_ids;
+    for (const auto& instrument : selected) selected_provider_ids.insert(instrument.provider_id);
+    const std::string selected_provider_id = selected_provider_ids.size() == 1U
+        ? *selected_provider_ids.begin() : "mixed_provider_federation";
+    bool fallback_used_any = false;
     std::set<std::string> fallback_provider_ids;
-    if (discovery_fallback_used) fallback_provider_ids.insert(selected.front().provider_id);
     json instruments = json::array();
     std::size_t instrument_index = 0U;
     for (const auto& item : selected) {
@@ -1075,9 +1385,9 @@ inline json collect(int symbol_count, int years,
         std::string active_provider = item.provider_id;
         std::string provider_instrument_id = item.provider_symbol.empty() ? item.id : item.provider_symbol;
         std::string primary_provider_error;
-        bool item_fallback_used = item.provider_id != "okx";
+        bool item_fallback_used = false;
         const json* cached_instrument = nullptr;
-        if (item.provider_id == "okx" && cached_market_data && cached_market_data->is_object() &&
+        if (cached_market_data && cached_market_data->is_object() &&
             cached_market_data->contains("instruments") &&
             cached_market_data->at("instruments").is_array()) {
             for (const auto& cached_item : cached_market_data->at("instruments")) {
@@ -1357,6 +1667,28 @@ inline json collect(int symbol_count, int years,
         scan_material += item.id + ":" + item.provider_id + ":" + item.provider_symbol + ";";
     }
     const std::string scan_id = "scan-" + cfss::sha256_hex(scan_material);
+    json universe_summary = {
+        {"declared_usdt_swap_count", declared_count},
+        {"crypto_universe_status", crypto_universe.artifact.at("status")},
+        {"crypto_universe_source", crypto_universe.artifact.at("provider_id")},
+        {"crypto_universe_symbol_count", crypto_universe.artifact.at("symbol_count")},
+        {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
+        {"selection_status", crypto_universe.artifact.value("selection_status", std::string{"LIVE_MARKET_UNIVERSE"})},
+        {"excluded_non_crypto_count", excluded_non_crypto_count},
+        {"eligible_count", eligible_count},
+        {"selected_count", selected.size()}, {"target_count", symbol_count},
+        {"liquidity_threshold_usd", 10000000.0},
+        {"selection_method", crypto_universe.artifact.value("selection_method",
+            exact_universe_mode_enabled()
+                ? std::string{"exact_candidate_manifest_plus_btc_across_eligible_venues"}
+                : std::string{"per_asset_max_24h_quote_turnover_across_okx_kucoin"})},
+        {"selection_timestamp_utc", crypto_universe.artifact.value("selection_timestamp_utc", acquired_text)},
+        {"selected_instrument_ids", selected_ids}
+    };
+    for (const auto& key : {"screen_evidence_sha256", "owner_approval_ref", "owner_approval_timestamp_utc"}) {
+        if (crypto_universe.artifact.contains(key))
+            universe_summary[key] = crypto_universe.artifact.at(key);
+    }
     return {
         {"schema_version", "1.2.0"},
         {"run_id", "okx-cpp-" + std::to_string(acquired_ms)},
@@ -1365,26 +1697,15 @@ inline json collect(int symbol_count, int years,
                       {"source_commit", commit ? json(commit) : json(nullptr)}}},
         {"acquired_at_utc", acquired_text},
         {"window", {{"timeframe", "1h"}, {"start_ms", start_ms}, {"end_ms", end_ms}}},
-        {"provider", {{"primary_provider_id", "okx"},
-                      {"display_name", "OKX primary with KuCoin public fallback"},
+        {"provider", {{"primary_provider_id", selected_provider_id},
+                      {"display_name", "Quality-ranked multi-venue public derivatives federation"},
                       {"fallback_used", fallback_used_any},
                       {"fallback_provider_ids", json(std::vector<std::string>(fallback_provider_ids.begin(), fallback_provider_ids.end()))}}},
-        {"provider_health", provider_health}, {"fear_greed", fear_greed},
+        {"provider_health", provider_health},
+        {"market_wide_provider_federation", market_wide_provider_federation},
+        {"fear_greed", fear_greed},
         {"crypto_universe", crypto_universe.artifact},
-        {"universe", {{"declared_usdt_swap_count", declared_count},
-                      {"crypto_universe_status", "VERIFIED"},
-                      {"crypto_universe_source", "coinpaprika"},
-                      {"crypto_universe_symbol_count", crypto_universe.symbols.size()},
-                      {"crypto_universe_symbols_sha256", crypto_universe.artifact.at("symbols_sha256")},
-                      {"excluded_non_crypto_count", excluded_non_crypto_count},
-                      {"eligible_count", eligible_count},
-                      {"selected_count", selected.size()}, {"target_count", symbol_count},
-                      {"liquidity_threshold_usd", 10000000.0},
-                      {"selection_method", discovery_fallback_used
-                          ? "kucoin_fallback_top_turnover_usd_desc_with_btc_first"
-                          : "top_turnover_usd_desc_with_btc_first"},
-                      {"selection_timestamp_utc", acquired_text},
-                      {"selected_instrument_ids", selected_ids}}},
+        {"universe", universe_summary},
         {"instruments", instruments}
     };
 }

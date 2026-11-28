@@ -1,0 +1,66 @@
+name: Research - Momentum Plus Cash (Fixed 8 Assets)
+
+on:
+  push:
+    branches:
+      - v21.1/provider-federation-v1
+    paths:
+      - "research/momentum_cash_backtest.py"
+      - "research/requirements.txt"
+      - "tests/test_momentum_cash_backtest.py"
+      - ".github/workflows/research_momentum_cash.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  momentum-cash-backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout research source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --disable-pip-version-check -r research/requirements.txt
+      - name: Run deterministic unit tests
+        run: python -m pytest -q tests/test_momentum_cash_backtest.py tests/test_momentum_cash_futures_backtest.py
+      - name: Run fixed-universe Momentum plus Cash backtest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python research/momentum_cash_backtest.py | tee momentum_cash_results.json
+          python -m json.tool momentum_cash_results.json > /dev/null
+          python - <<'PY'
+          import json
+          d = json.load(open("momentum_cash_results.json", encoding="utf-8"))
+          assert d["research_status"] == "EXPLORATORY_NOT_APPROVED_FOR_TRADING"
+          assert d["data"]["provider"] == "Binance Vision"
+          assert d["data"]["market"] == "SPOT"
+          assert d["data"]["fixed_tradable_assets"] == [
+              "ETHUSDT", "NEARUSDT", "XRPUSDT", "SOLUSDT",
+              "BNBUSDT", "UNIUSDT", "DOGEUSDT", "ADAUSDT"
+          ]
+          assert d["data"]["benchmark_only"] == "BTCUSDT"
+          assert d["strategy"]["strategy"] == "MOMENTUM_CASH_LONG_TOP2"
+          assert set(d["strategy"]["entire_period"]["cash_reason_counts"]) == {
+              "BTC_AT_OR_BELOW_SMA50", "BTC_SMA50_UNAVAILABLE",
+              "INSUFFICIENT_ELIGIBLE_ASSETS", "FEATURE_CROSS_SECTION_INVALID"
+          }
+          assert 0 <= d["strategy"]["entire_period"]["cash_pct"] <= 100
+          assert "spot_proxy_limitation" in d["data"]
+          for year, item in d["strategy"]["year_by_year"].items():
+              assert {"net_return", "max_drawdown", "sharpe_ratio", "profit_factor"} <= set(item["metrics"])
+          print("MOMENTUM_CASH_JSON_VALIDATION=PASS")
+          PY
+      - name: Upload research JSON artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: momentum-cash-fixed-8-assets
+          path: momentum_cash_results.json
+          if-no-files-found: error
+          retention-days: 30

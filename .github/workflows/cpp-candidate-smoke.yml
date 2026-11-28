@@ -1,0 +1,108 @@
+name: C++ Candidate Universe L1 Smoke (Read Only)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cpp/**"
+      - "contracts/**"
+      - "config/universe.v21.1.candidate.json"
+      - "research/universe_screen.py"
+      - "research/requirements.txt"
+      - ".github/workflows/cpp-candidate-smoke.yml"
+  push:
+    branches:
+      - v21.1/provider-federation-v1
+    paths:
+      - "cpp/**"
+      - "contracts/**"
+      - "config/universe.v21.1.candidate.json"
+      - ".github/workflows/cpp-candidate-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-l1-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install C++ build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libcurl4-openssl-dev nlohmann-json3-dev libssl-dev
+      - name: Configure and build C++ pipeline
+        run: |
+          cmake -S cpp -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+      - name: Run C++ unit tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Collect candidate-only L1 data (no secrets, no Telegram, no writes)
+        env:
+          CFSS_EXACT_UNIVERSE: "1"
+          CFSS_UNIVERSE_SOURCE: config/universe.v21.1.candidate.json
+          COINRANKING_API_KEY: ""
+          CMC_PRO_API_KEY: ""
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts shared-cache
+          jq '[.candidate_assets[] | select(.required == false) | .symbol]' config/universe.v21.1.candidate.json > artifacts/pending-symbols.v1.json
+          test "$(jq 'length' artifacts/pending-symbols.v1.json)" -eq 8
+          ./build/market_pipeline --collect-market-data 8 2 \
+            artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
+            shared-cache/crypto-universe.v1.json \
+            shared-cache/market_data_cache.v1.json \
+            artifacts/pending-symbols.v1.json
+      - name: Validate L1 schema and fail-closed candidate state
+        run: |
+          npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
+          python - <<'PY'
+          import json
+          l1=json.load(open("artifacts/l1-market-data.v1.json", encoding="utf-8"))
+          l2=json.load(open("artifacts/l2-status.v1.json", encoding="utf-8"))
+          assert l1["crypto_universe"]["status"] == "OWNER_CONFIGURED_CANDIDATE_SET"
+          assert l1["crypto_universe"]["selection_status"] == "PROVISIONAL_NOT_FROZEN"
+          assert l1["universe"]["crypto_universe_status"] == "OWNER_CONFIGURED_CANDIDATE_SET"
+          assert l1["universe"]["crypto_universe_source"] == "owner_config"
+          assert l1["universe"]["crypto_universe_symbol_count"] == 9
+          assert l1["market_wide_provider_federation"]["production_universe_status"] == "DISCOVERY_ONLY_NOT_FROZEN"
+          assert all(item["actionable"] is False for item in l2["instruments"])
+          assert all(item["state"] == "MARKET_DATA_DEGRADED" for item in l2["instruments"])
+          print("CANDIDATE_L1_SCHEMA_AND_FAIL_CLOSED=PASS")
+          PY
+      - name: Install research-only screen dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: research/requirements.txt
+      - name: Install research-only Python packages
+        run: python -m pip install --disable-pip-version-check -r research/requirements.txt
+      - name: Run evidence-only 13-criterion universe screen
+        run: |
+          python research/universe_screen.py artifacts/l1-market-data.v1.json artifacts/universe-screen.v1.json
+          python - <<'PY'
+          import json
+          d=json.load(open("artifacts/universe-screen.v1.json", encoding="utf-8"))
+          assert d["criteria_count"] == 13
+          assert d["status"] == "PROVISIONAL_NOT_FROZEN"
+          assert d["production_freeze_allowed"] is False
+          assert d["owner_approval_required"] is True
+          print("V21_CANDIDATE_SCREEN_EVIDENCE=VALID; FREEZE=BLOCKED")
+          PY
+      - name: Upload read-only candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v21-candidate-l1-smoke
+          path: |
+            artifacts/l1-market-data.v1.json
+            artifacts/l2-status.v1.json
+            artifacts/pending-symbols.v1.json
+            artifacts/universe-screen.v1.json
+          if-no-files-found: error
+          retention-days: 7

@@ -1,4 +1,4 @@
-name: Crypto Universe Validation
+name: Legacy Python Crypto Universe Validation (Quarantined by V21)
 
 on:
   push:
@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate-universe:
+    if: false # V21: legacy Python live-universe audit can call excluded providers and is not a production path
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

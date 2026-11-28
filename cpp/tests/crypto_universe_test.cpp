@@ -15,6 +15,26 @@ void require(bool value, const char* message) {
 }
 
 int main() {
+    const auto owner_candidate_universe = cfss::okx::load_candidate_universe(
+        {"ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"});
+    require(owner_candidate_universe.symbols.size() == 9U &&
+            owner_candidate_universe.symbols.contains("BTC") &&
+            owner_candidate_universe.artifact.value("status", std::string{}) ==
+                "OWNER_CONFIGURED_CANDIDATE_SET" &&
+            owner_candidate_universe.artifact.value("provider_id", std::string{}) == "owner_config" &&
+            owner_candidate_universe.artifact.value("selection_status", std::string{}) == "PROVISIONAL_NOT_FROZEN",
+            "exact nine-asset candidate universe is owner-configured and remains explicitly provisional");
+    setenv("CFSS_UNIVERSE_SOURCE", "config/universe.json", 1);
+    bool legacy_universe_rejected = false;
+    try {
+        (void)cfss::okx::load_candidate_universe(
+            {"ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"});
+    } catch (const std::runtime_error&) {
+        legacy_universe_rejected = true;
+    }
+    setenv("CFSS_UNIVERSE_SOURCE", "config/universe.v21.1.candidate.json", 1);
+    require(legacy_universe_rejected,
+            "legacy 27-symbol config cannot be treated as a frozen V21.1 production universe");
     const std::set<std::string> verified{"BTC", "ETH", "SOL", "DOGE"};
     require(cfss::okx::valid_crypto_symbol("BTC") &&
             cfss::okx::valid_crypto_symbol("1INCH") &&
@@ -57,6 +77,22 @@ int main() {
     require(pinned.size() == 3U && pinned.front().base == "BTC" &&
             pinned.back().base == "SOL",
             "pending candidates remain in L1 even after falling outside top-turnover eligibility");
+    const cfss::okx::Instrument sol_liquid{"SOL-USDT-SWAP", "SOL", "USDT", "USDT", 1, 1, 0.1, 1, 1, 20, 1, "SOL", "okx", "SOL-USDT-SWAP"};
+    const auto exact_nine = cfss::okx::select_instruments(
+        2, {btc, eth, sol_liquid}, {btc, eth, sol_liquid}, {"ETH", "SOL"}, true);
+    require(exact_nine.size() == 3U &&
+            std::set<std::string>{exact_nine[0].base, exact_nine[1].base, exact_nine[2].base} ==
+                std::set<std::string>{"BTC", "ETH", "SOL"},
+            "exact-universe mode returns only BTC plus the complete requested candidate set");
+    bool exact_missing_rejected = false;
+    try {
+        (void)cfss::okx::select_instruments(
+            2, {btc, eth}, {btc, eth, sol_liquid}, {"ETH", "SOL"}, true);
+    } catch (const std::runtime_error&) {
+        exact_missing_rejected = true;
+    }
+    require(exact_missing_rejected,
+            "exact-universe mode rejects a candidate that fails liquidity or provider availability");
     const nlohmann::json old_cache = {
         {"schema_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},

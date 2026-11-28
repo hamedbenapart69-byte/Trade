@@ -2,26 +2,22 @@ name: C++ V21 Stage 1 Live Vertical Slice
 
 on:
   push:
-    branches: [main, feat/cpp-stage1-clean, v21/stage0-accepted-stage1-foundation]
+    branches: [main]
     paths:
       - "docs/evidence/run-cpp-stage1-live*.txt"
       - "docs/evidence/run-telegram-inbound-test*.txt"
   schedule:
-    - cron: "0 3 * * *"
-  pull_request:
-    branches: [main]
-    paths:
-      - "cpp/**"
-      - "contracts/**"
-      - ".github/workflows/cpp-stage1-live.yml"
+    - cron: "0 */4 * * *"
+  # Privileged live workflow is intentionally not PR-triggered: it uses secrets and write permissions.
+  # Read-only C++ build/CTest validation is provided by cpp-foundation.yml.
   workflow_dispatch:
     inputs:
       symbols:
         description: "Number of non-BTC USDT perpetuals; BTC is added separately"
         required: true
-        default: "100"
+        default: "8"
         type: choice
-        options: ["1", "5", "10", "25", "50", "100"]
+        options: ["8"]
       years:
         description: "Completed 1h OHLCV history"
         required: true
@@ -33,9 +29,15 @@ on:
         required: false
         default: false
         type: boolean
+      verification_replay:
+        description: "Internal one-time second run for same-source Stage1 acceptance"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   # همهٔ اجراها یک signals branch مشترک را می‌نویسند؛ اجرای هم‌زمان ممنوع است.
@@ -108,15 +110,47 @@ jobs:
           restore-keys: |
             cfss-market-cache-
 
-      - name: Collect real OKX L1 data and compute C10 states in C++
+      - name: Require an explicitly frozen V21.1 production universe
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! jq -e '
+            .schema_version == "1.0.0" and
+            .document_version == "V21.1" and
+            .artifact_type == "cfss_nine_asset_frozen_production_universe" and
+            .status == "FROZEN_PRODUCTION_UNIVERSE" and
+            .selection_status == "FROZEN_PRODUCTION_UNIVERSE" and
+            .required_production_count == 9 and
+            (.symbols | type == "array" and length == 9 and unique | length == 9) and
+            ([.symbols[] | sub("USDT$"; "")] | index("BTC")) != null and
+            (.screen_evidence_sha256 | test("^[a-f0-9]{64}$")) and
+            (.selection_method | type == "string" and length > 0) and
+            (.selection_timestamp_utc | type == "string" and length > 0) and
+            (.owner_approval_ref | type == "string" and length > 0) and
+            (.owner_approval_timestamp_utc | type == "string" and length > 0)
+          ' config/universe.json >/dev/null; then
+            echo "PRODUCTION_UNIVERSE_NOT_FROZEN: explicit screen evidence and owner approval are required."
+            exit 1
+          fi
+
+
+      - name: Collect provider-federated L1 data and compute C10 states in C++
         env:
-          SYMBOLS: ${{ inputs.symbols || (github.event_name == 'schedule' && '100' || '2') }}
+          SYMBOLS: ${{ inputs.symbols || '8' }}
           YEARS: ${{ inputs.years || '2' }}
+          CFSS_EXACT_UNIVERSE: "1"
+          COINRANKING_API_KEY: ${{ secrets.COINRANKING_API_KEY }}
+          CMC_PRO_API_KEY: ${{ secrets.CMC_PRO_API_KEY }}
         run: |
           mkdir -p artifacts shared-cache
-          # Stage 1 must not inherit symbol candidates from rejected legacy strategy state.
-          printf '%s\n' '[]' > artifacts/pending-symbols.v1.json
-          ./build/market_pipeline --collect-okx "$SYMBOLS" "$YEARS" \
+          export CFSS_UNIVERSE_SOURCE="config/universe.json"
+          jq '[.symbols[] | sub("USDT$"; "") | select(. != "BTC")]' config/universe.json > artifacts/pending-symbols.v1.json
+          PENDING_COUNT=$(jq 'length' artifacts/pending-symbols.v1.json)
+          if [ "$PENDING_COUNT" -ne 8 ] || [ "$SYMBOLS" -ne 8 ]; then
+            echo "EXACT_NINE_ASSET_UNIVERSE_REQUIRED: pending=$PENDING_COUNT non_btc=$SYMBOLS"
+            exit 1
+          fi
+          ./build/market_pipeline --collect-market-data "$SYMBOLS" "$YEARS" \
             artifacts/l1-market-data.v1.json artifacts/l2-status.v1.json \
             shared-cache/crypto-universe.v1.json \
             shared-cache/market_data_cache.v1.json \
@@ -127,7 +161,37 @@ jobs:
       - name: Validate L1 against the versioned JSON Schema
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/l1-market-data.v1.schema.json -d artifacts/l1-market-data.v1.json --all-errors
-      - name: Validate verified crypto universe
+      - name: Evaluate V21.1 market-wide two-provider and exact-nine acceptance
+        id: market_wide_gate
+        run: |
+          if jq -e '
+            .market_wide_provider_federation.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .market_wide_provider_federation.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
+            .market_wide_provider_federation.production_eligible_fresh_provider_count >= 2 and
+            .market_wide_provider_federation.matched_asset_count == 9 and
+            .market_wide_provider_federation.required_asset_count == 9 and
+            (.instruments | length) == 9 and
+            ([.instruments[].base] | sort) == ["ADA","AVAX","BNB","BTC","DOGE","ETH","LINK","SOL","XRP"] and
+            ([.market_wide_provider_federation.candidate_seed[] |
+              select(.classification == "TWO_SOURCE_IDENTITY_MATCHED" and
+                (.matched_provider_pair == "coinmarketcap+coinranking" or
+                 .matched_provider_pair == "coinmarketcap+coinpaprika" or
+                 .matched_provider_pair == "coinranking+coinpaprika"))] | length) == 9
+          ' artifacts/l1-market-data.v1.json >/dev/null; then
+            echo "pass=true" >> "$GITHUB_OUTPUT"
+            echo "MARKET_WIDE_PROVIDER_GATE=PASS"
+          else
+            echo "pass=false" >> "$GITHUB_OUTPUT"
+            echo "MARKET_WIDE_PROVIDER_GATE=DEGRADED; C10 degraded reporting remains enabled on production runs."
+          fi
+
+      - name: Fail pull-request acceptance when market-wide gate is degraded
+        if: github.event_name == 'pull_request' && steps.market_wide_gate.outputs.pass != 'true'
+        run: |
+          echo "PR_ACCEPTANCE_FAIL: two fresh license-eligible providers must match all nine assets."
+          exit 1
+
+      - name: Validate owner-configured candidate or frozen crypto universe
         run: |
           npx --yes ajv-cli@5.0.0 validate --spec=draft2020 -s contracts/crypto-universe.v1.schema.json -d artifacts/crypto-universe.v1.json --all-errors
 
@@ -421,6 +485,44 @@ jobs:
           done
           echo "SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=$RUN_ID"
 
+      - name: Dispatch one same-source Stage1 acceptance replay
+        if: github.ref == 'refs/heads/main' && inputs.verification_replay != true && steps.persist_telegram_state.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! jq -e '
+            (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+            .market_wide_provider_status.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+            .market_wide_provider_status.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
+            .telegram_send_status == "DELIVERED" and
+            (.telegram_message_ids | length) > 0
+          ' artifacts/run-manifest.v2.json >/dev/null; then
+            echo "SECOND_SAME_SOURCE_RUN_NOT_DISPATCHED: first run has not passed full Stage1 prerequisites."
+            exit 0
+          fi
+          SOURCE_HASH=$(jq -r '.production_source_hash' artifacts/run-manifest.v2.json)
+          CURRENT_SHA=$(jq -r '.repository_commit' artifacts/run-manifest.v2.json)
+          EXISTING_PASS_COUNT=0
+          if [ -f artifacts/cpp_runtime_manifests.json ]; then
+            EXISTING_PASS_COUNT=$(jq --arg source_hash "$SOURCE_HASH" --arg sha "$CURRENT_SHA" '
+              [.[] | select(
+                .repository_commit == $sha and
+                .production_source_hash == $source_hash and
+                .branch == "main" and
+                (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+                .telegram_send_status == "DELIVERED"
+              )] | length
+            ' artifacts/cpp_runtime_manifests.json)
+          fi
+          if [ "$EXISTING_PASS_COUNT" -ge 2 ]; then
+            echo "STAGE1_TWO_SAME_SOURCE_PASSES_ALREADY_RETAINED; replay not needed."
+            exit 0
+          fi
+          gh workflow run cpp-stage1-live.yml --ref main \
+            -f symbols=8 -f years=2 -f verification_replay=true
+          echo "STAGE1_SECOND_SAME_SOURCE_RUN_DISPATCHED"
+
       - name: Enforce V21 Stage 1 acceptance gate
         if: always() && github.event_name != 'pull_request' && steps.checkout_signals.outcome == 'success' && steps.verify_signals_persist.outcome == 'success'
         shell: bash
@@ -445,11 +547,11 @@ jobs:
           ' "$CURRENT" >/dev/null
           jq -e '
             any(.provider_health.providers[];
-              .provider_id == "kucoin" and
+              (.provider_id | type) == "string" and (.provider_id | length) > 0 and
               .connectivity_status == "HTTP_REACHABLE" and
-              .adapter_status == "IMPLEMENTED_SECONDARY_PARTIAL" and
-              .fallback_status == "AVAILABLE_PARTIAL" and
-              .fallback_equivalence == "PARTIAL" and
+              (.adapter_status | startswith("IMPLEMENTED")) and
+              (.fallback_status == "AVAILABLE_PARTIAL" or .fallback_status == "AVAILABLE_FULL") and
+              (.fallback_equivalence == "PARTIAL" or .fallback_equivalence == "FULL") and
               .circuit_breaker_state == "CLOSED" and
               .fallback_probe.status == "PASS" and
               .fallback_probe.ohlcv_rows > 0 and
@@ -458,7 +560,7 @@ jobs:
               .fallback_probe.open_interest_coverage_days >= 6
             )
           ' artifacts/l1-market-data.v1.json >/dev/null || {
-            echo "STAGE1_FALLBACK_GATE_FAIL: KuCoin public fallback live probe did not pass with real OHLCV, funding and hourly OI sample."
+            echo "STAGE1_FALLBACK_GATE_FAIL: no independent public derivatives provider passed real OHLCV, funding and open-interest fallback checks."
             exit 1
           }
           RUN_NUMBER="$GITHUB_RUN_NUMBER"
@@ -487,6 +589,16 @@ jobs:
               .production_source_hash == $source_hash and
               .branch == "main" and
               (.run_status == "L1_L2_L3_PASS" or .run_status == "STAGE1_CONTROLLED_ACCEPTANCE_PASS") and
+              .market_wide_provider_status.status == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" and
+              .market_wide_provider_status.production_universe_status == "PRODUCTION_UNIVERSE_FROZEN" and
+              .market_wide_provider_status.production_eligible_fresh_provider_count >= 2 and
+              .market_wide_provider_status.matched_asset_count == 9 and
+              .market_wide_provider_status.required_asset_count == 9 and
+              ([.market_wide_provider_status.candidate_seed[] |
+                select(.classification == "TWO_SOURCE_IDENTITY_MATCHED" and
+                  (.matched_provider_pair == "coinmarketcap+coinranking" or
+                   .matched_provider_pair == "coinmarketcap+coinpaprika" or
+                   .matched_provider_pair == "coinranking+coinpaprika"))] | length) == 9 and
               .telegram_send_status == "DELIVERED" and
               (.telegram_message_ids | length > 0) and
               (.active_strategy_engines | length == 0) and

@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <set>
 #include <iterator>
@@ -54,8 +55,13 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"symbol_target", symbols}, {"years", years}, {"timeframe", "1h"},
         {"liquidity_threshold_usd", 10000000.0}, {"ohlcv_closed_bars_only", true}
     };
-    bool all_real = true;
+    bool all_real =
+        contract.at("market_wide_provider_federation").value(
+            "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" &&
+        contract.at("market_wide_provider_federation").value(
+            "production_universe_status", std::string{}) == "PRODUCTION_UNIVERSE_FROZEN";
     json errors = json::array();
+    if (!all_real) errors.push_back("market_wide_provider_federation:PROVIDER_DISCOVERY_PARTIAL");
     for (const auto& item : artifact.at("instruments")) {
         if (item.value("data_quality", std::string{}) != "REAL") all_real = false;
     }
@@ -96,7 +102,9 @@ json build_run_manifest(const json& contract, const json& artifact,
         {"dataset_version", contract.at("schema_version")},
         {"dataset_hash", cfss::sha256_hex(l1_raw)},
         {"provider_status", contract.at("provider_health")},
-        {"profile", {{"symbol_target", symbols}, {"selected_symbols", contract.at("instruments").size()},
+        {"market_wide_provider_status", contract.at("market_wide_provider_federation")},
+        {"profile", {{"symbol_target", symbols}, {"selected_symbols", artifact.at("instruments").size()},
+                     {"available_instruments", contract.at("instruments").size()},
                      {"years", years}, {"timeframe", "1h"}, {"liquidity_threshold_usd", 10000000.0}}},
         // V21 Stage 1 deliberately admits no strategy engine; rejected families are recorded for audit only.
         {"rejected_strategy_families", json::array({"LRT", "NMT", "VTM"})},
@@ -140,8 +148,8 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                     cached_market_data->value("schema_version", std::string{}) == "1.0.0" &&
                     cached_market_data->value("cache_contract_version", std::string{}) == "1.0.0" &&
                     cached_market_data->value("provider", json::object())
-                        .value("primary_provider_id", std::string{}) == "okx" &&
-                    policy.value("venue", std::string{}) == "OKX" &&
+                        .value("primary_provider_id", std::string{}) == "provider_federation" &&
+                    policy.value("venue", std::string{}) == "PER_INSTRUMENT_PROVIDER" &&
                     policy.value("market_type", std::string{}) == "LINEAR_PERPETUAL" &&
                     policy.value("window_policy", std::string{}) == "ROLLING_2Y_OHLCV_30D_DERIVATIVES" &&
                     policy.value("normalization_schema_version", std::string{}) == "1.0.0" &&
@@ -182,6 +190,56 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         cfss::write_file_atomic(l1_path, l1_raw, true);
 
         auto artifact = cfss::build_l2_artifact(contract, now_epoch_ms());
+        if (cfss::okx::exact_universe_mode_enabled()) {
+            std::map<std::string, json> rows_by_base;
+            for (const auto& row : artifact.at("instruments")) {
+                const auto symbol = row.value("symbol", std::string{});
+                const auto slash = symbol.find('/');
+                const auto base = cfss::okx::uppercase_symbol(
+                    slash == std::string::npos ? symbol : symbol.substr(0U, slash));
+                if (!base.empty()) rows_by_base.emplace(base, row);
+            }
+            std::vector<std::string> expected_bases{"BTC"};
+            for (const auto& base : required_symbols) {
+                if (base != "BTC") expected_bases.push_back(base);
+            }
+            json exact_status_rows = json::array();
+            for (const auto& base : expected_bases) {
+                const auto found = rows_by_base.find(base);
+                if (found != rows_by_base.end()) {
+                    exact_status_rows.push_back(found->second);
+                } else {
+                    exact_status_rows.push_back({
+                        {"instrument_id", "UNAVAILABLE:" + base + "-USDT-SWAP"},
+                        {"symbol", base + "/USDT:USDT"},
+                        {"provider_id", "UNAVAILABLE"},
+                        {"state", "MARKET_DATA_DEGRADED"},
+                        {"reason_code", "DERIVATIVES_CONTRACT_UNAVAILABLE_OR_NOT_ELIGIBLE"},
+                        {"data_quality", "UNAVAILABLE"},
+                        {"confidence_status", "NOT_CALIBRATED"},
+                        {"actionable", false},
+                        {"latest_candle_timestamp_ms", 0}
+                    });
+                }
+            }
+            artifact["instruments"] = std::move(exact_status_rows);
+        }
+        const bool market_wide_provider_pass =
+            contract.at("market_wide_provider_federation").value(
+                "status", std::string{}) == "TWO_FRESH_LICENSE_ELIGIBLE_PROVIDERS_FULL_NINE_ASSET_MATCH" &&
+            contract.at("market_wide_provider_federation").value(
+                "production_universe_status", std::string{}) == "PRODUCTION_UNIVERSE_FROZEN";
+        if (!market_wide_provider_pass) {
+            for (auto& item : artifact["instruments"]) {
+                if (item.value("state", std::string{}) != "MARKET_DATA_DEGRADED") {
+                    item["state"] = "MARKET_DATA_DEGRADED";
+                    item["reason_code"] = "MARKET_WIDE_PROVIDER_FEDERATION_DEGRADED";
+                }
+                if (item.value("data_quality", std::string{}) == "REAL") item["data_quality"] = "PARTIAL";
+                item["confidence_status"] = "NOT_CALIBRATED";
+                item["actionable"] = false;
+            }
+        }
         cfss::add_artifact_hash(artifact);
         const std::string l2_raw = artifact.dump(2) + "\n";
         const auto evidence_dir = l1_path.parent_path().empty() ? std::filesystem::path{"."} : l1_path.parent_path();
@@ -242,6 +300,16 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
                 {"availability", availability}, {"coverage", item.at("coverage")}, {"errors", item.at("errors")}
             });
         }
+        if (cfss::okx::exact_universe_mode_enabled()) {
+            std::set<std::string> available_bases;
+            for (const auto& item : contract.at("instruments")) {
+                available_bases.insert(item.at("base").get<std::string>());
+            }
+            if (!available_bases.contains("BTC")) ++unavailable_count;
+            for (const auto& base : required_symbols) {
+                if (base != "BTC" && !available_bases.contains(base)) ++unavailable_count;
+            }
+        }
         const json coverage_json = {
             {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
             {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
@@ -283,6 +351,7 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
             {"schema_version", "1.0.0"}, {"run_id", contract.at("run_id")},
             {"scan_id", contract.at("scan_id")}, {"generated_at_utc", generated_at},
             {"run_status", run_status}, {"provider_status", contract.at("provider_health")},
+            {"market_wide_provider_status", contract.at("market_wide_provider_federation")},
             {"path_statuses", path_statuses}, {"generator_statuses", generator_statuses},
             {"telegram_send_status", "NOT_ATTEMPTED"},
             {"telegram_receive_test_status", "NOT_REQUESTED"},
@@ -328,7 +397,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
         const auto manifest = build_run_manifest(contract, artifact, artifact_manifest, symbols, years, l1_raw);
         write_json(manifest_path, manifest);
 
-        std::cout << "CPP_L1_COLLECTED provider=okx symbols=" << contract.at("instruments").size()
+        std::cout << "CPP_L1_COLLECTED provider="
+                  << contract.at("provider").at("primary_provider_id").get<std::string>()
+                  << " symbols=" << contract.at("instruments").size()
                   << " crypto_universe=VERIFIED source=coinpaprika"
                   << " run_id=" << contract.at("run_id") << '\n';
         std::cout << "L2_ARTIFACT_CREATED instruments=" << artifact.at("instruments").size() << '\n';
@@ -344,7 +415,9 @@ int run_collect(int symbols, int years, const std::filesystem::path& l1_path,
 
 int main(int argc, char** argv) {
     try {
-        if ((argc >= 6 && argc <= 9) && std::string{argv[1]} == "--collect-okx") {
+        if ((argc >= 6 && argc <= 9) &&
+            (std::string{argv[1]} == "--collect-market-data" ||
+             std::string{argv[1]} == "--collect-okx")) {
             const std::optional<std::filesystem::path> universe_cache_path =
                 argc >= 7 ? std::optional<std::filesystem::path>{argv[6]} : std::nullopt;
             const std::optional<std::filesystem::path> market_cache_path =
@@ -356,7 +429,8 @@ int main(int argc, char** argv) {
         }
         if (argc != 3) {
             std::cerr << "Usage: market_pipeline <l1-contract.json> <l2-artifact.json>\n"
-                      << "   or: market_pipeline --collect-okx <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n";
+                      << "   or: market_pipeline --collect-market-data <non-BTC symbols:1..100 plus BTC> <years:1..2> <l1.json> <l2.json> [crypto-universe-cache.json] [market-data-cache.json] [pending-symbols.json]\n"
+                      << "       (legacy alias: --collect-okx)\n";
             return EXIT_FAILURE;
         }
         const std::filesystem::path input_path{argv[1]};

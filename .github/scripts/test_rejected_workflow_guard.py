@@ -14,6 +14,13 @@ class RejectedWorkflowGuardTests(unittest.TestCase):
     def test_all_rejected_workflows_are_job_level_disabled(self):
         self.assertEqual(MODULE.check(), [])
 
+    def test_legacy_python_universe_validator_is_in_the_permanent_denylist(self):
+        self.assertIn(".github/workflows/universe-validation.yml", MODULE.REJECTED_WORKFLOWS)
+
+    def test_legacy_v5_live_scanners_are_in_the_permanent_denylist(self):
+        self.assertIn(".github/workflows/v5-okx-live-scan.yml", MODULE.REJECTED_WORKFLOWS)
+        self.assertIn(".github/workflows/v5-live-validation.yml", MODULE.REJECTED_WORKFLOWS)
+
     def test_step_level_if_does_not_count_as_job_quarantine(self):
         source = """jobs:
   run:
