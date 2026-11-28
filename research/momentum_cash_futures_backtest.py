@@ -114,7 +114,7 @@ def raw_csv_from_zip(payload: bytes, label: str) -> bytes:
 def parse_kline_archive(payload: bytes, label: str) -> pd.DataFrame:
     raw = raw_csv_from_zip(payload, label)
     headered = pd.read_csv(BytesIO(raw))
-    required = {"open_time", "open", "high", "low", "close", "volume"}
+    required = {"open_time", "open", "high", "low", "close", "volume", "quote_volume"}
     if required.issubset(headered.columns):
         frame = headered.rename(columns={"quote_volume": "quote_asset_volume", "count": "number_of_trades"})
         layout = "HEADERED_STANDARD"
@@ -188,14 +188,15 @@ def parse_kline_archive(payload: bytes, label: str) -> pd.DataFrame:
     frame["date"] = pd.to_datetime(timestamp, unit=unit, utc=True).dt.floor("D")
     for column in ("open", "high", "low", "close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    result = frame[["date", "open", "high", "low", "close", "volume"]].dropna()
+    result = frame[["date", "open", "high", "low", "close", "volume", "quote_asset_volume"]].dropna()
     result = result.drop_duplicates("date").sort_values("date").reset_index(drop=True)
     valid_ohlc = (
         (result["low"] > 0) &
         (result["high"] >= result["low"]) &
         (result["open"] >= result["low"]) & (result["open"] <= result["high"]) &
         (result["close"] >= result["low"]) & (result["close"] <= result["high"]) &
-        (result["volume"] >= 0)
+        (result["volume"] >= 0) &
+        (result["quote_asset_volume"] >= 0)
     )
     if result.empty or not bool(valid_ohlc.all()):
         raise RuntimeError(f"D1_KLINE_OHLC_OR_VOLUME_INVALID: {label}:{layout}")
@@ -764,8 +765,12 @@ def main() -> None:
 
     cutoff = min(frame["date"].max().date() for frame in klines.values())
     raw_assets = {symbol: frame[frame["date"].dt.date <= cutoff].copy() for symbol, frame in klines.items()}
-    frames = {symbol: add_features(raw_assets[symbol]) for symbol in ASSETS}
-    btc = add_features(raw_assets[BTC])
+    # Cross-venue Volume_Z20 uses quote turnover (USDT), not base-coin units.
+    frames = {
+        symbol: add_features(raw_assets[symbol].assign(volume=raw_assets[symbol]["quote_asset_volume"]))
+        for symbol in ASSETS
+    }
+    btc = add_features(raw_assets[BTC].assign(volume=raw_assets[BTC]["quote_asset_volume"]))
     variants_v1: dict[str, dict] = {}
     variants_v2: dict[str, dict] = {}
     variants_v3: dict[str, dict] = {}
@@ -845,7 +850,7 @@ def main() -> None:
             "risk_exit_cost_timing": "Funding is counted through the daily exit bar close; because daily OHLCV cannot identify the intraday stop timestamp, same-day funding treatment is conservative.",
 
             "ranking": "0.5 * cross_section_z(Volume_Z20) + 0.5 * cross_section_z(RSI_14)",
-            "features": "Volume_Z20 and Wilder RSI14 use daily futures data through prior Sunday only.",
+            "features": "Volume_Z20 is calculated from quote-asset turnover (USDT) for cross-venue unit consistency; Wilder RSI14 uses daily futures closes. Both use data through prior Sunday only.",
             "cross_section": "Fixed eight tradable assets; minimum four eligible symbols; deterministic score-descending then symbol-ascending tie-break.",
             "execution": "Decision from prior Sunday; enter Monday open; exit at the first risk condition (15% trailing stop or daily close below MA20) or Friday close, whichever occurs first; non-overlapping weekly windows.",
             "portfolio": "Bull regime: 100% long top two, equal 50/50, 1x notional. Bear regime: 100% cash. No shorts.",
