@@ -603,8 +603,8 @@ def cscv_pbo(variant_weekly_results: dict[str, list[dict]], n_blocks: int = 8) -
         failures += int(is_oos_failure)
         records.append({
             "is_blocks": list(selected), "is_winner": names[winner],
-            "is_sharpe": float(is_scores[winner]),
-            "selected_variant_oos_sharpe": float(chosen_oos),
+            "is_sharpe": float(is_scores[winner]) if np.isfinite(is_scores[winner]) else None,
+            "selected_variant_oos_sharpe": float(chosen_oos) if np.isfinite(chosen_oos) else None,
             "oos_rank_ascending": rank, "oos_percentile": omega,
             "lambda": logit, "overfit_event": is_oos_failure,
         })
