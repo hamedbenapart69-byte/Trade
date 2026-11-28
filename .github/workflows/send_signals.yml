@@ -2,13 +2,7 @@ name: Weekly Futures Signals (Python MVP)
 
 on:
   push:
-    branches:
-      - mvp/python-futures-signal-bot
-    paths:
-      - "send_signals.py"
-      - "tests/test_send_signals.py"
-      - "config/signal_release_gate.json"
-      - ".github/workflows/send_signals.yml"
+    branches: [ main ]
   schedule:
     - cron: "0 0 * * 6"
   workflow_dispatch:
@@ -50,7 +44,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            python send_signals.py --dry-run --market-data-smoke
+            python send_signals.py
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             python send_signals.py --dry-run
           else
