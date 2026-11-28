@@ -368,10 +368,40 @@ def risk_adjusted_exit(frame: pd.DataFrame, monday: pd.Timestamp, friday: pd.Tim
     }
 
 
+def asset_trend_confirmed(frame: pd.DataFrame, asof: pd.Timestamp,
+                          ma_period: int = 20, slope_lookback: int = 5) -> bool:
+    """فیلتر ورود: کلوز بالای MA20 و شیب MA20 مثبت طی پنج روز."""
+    indexed = frame.set_index("date") if "date" in frame.columns else frame
+    if "sma20" not in indexed.columns:
+        indexed = indexed.copy()
+        indexed["sma20"] = indexed["close"].rolling(ma_period, min_periods=ma_period).mean()
+        indexed["sma20_lag"] = indexed["sma20"].shift(slope_lookback)
+    else:
+        lag_col = f"sma20_lag_{slope_lookback}"
+        if lag_col not in indexed.columns:
+            indexed[lag_col] = indexed["sma20"].shift(slope_lookback)
+    if asof not in indexed.index:
+        return False
+    row = indexed.loc[asof]
+    if isinstance(row, pd.DataFrame):
+        row = row.iloc[-1]
+    lag_col = f"sma20_lag_{slope_lookback}" if f"sma20_lag_{slope_lookback}" in indexed.columns else "sma20_lag"
+    ma_now = row.get("sma20")
+    ma_then = row.get(lag_col)
+    close = row.get("close")
+    return bool(pd.notna(ma_now) and pd.notna(ma_then) and pd.notna(close)
+                and float(close) > float(ma_now) and float(ma_now) > float(ma_then))
+
+
 def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
                  funding: dict[str, pd.DataFrame], cutoff: date,
-                 btc_ma_period: int = 50) -> list[dict]:
+                 btc_ma_period: int = 50,
+                 asset_trend_filter: bool = False) -> list[dict]:
     indexed = {symbol: frame.set_index("date") for symbol, frame in frames.items()}
+    if asset_trend_filter:
+        for frame in indexed.values():
+            frame["sma20"] = frame["close"].rolling(20, min_periods=20).mean()
+            frame["sma20_lag_5"] = frame["sma20"].shift(5)
     btc_i = btc.set_index("date").copy()
     btc_i["sma_regime"] = btc_i["close"].rolling(btc_ma_period, min_periods=btc_ma_period).mean()
     earliest = min(frame["date"].min() for frame in frames.values())
@@ -388,6 +418,8 @@ def weekly_panel(frames: dict[str, pd.DataFrame], btc: pd.DataFrame,
         for symbol in ASSETS:
             f = indexed[symbol]
             if prior not in f.index or monday not in f.index or friday not in f.index:
+                continue
+            if asset_trend_filter and not asset_trend_confirmed(f, prior):
                 continue
             prior_row, monday_row, friday_row = f.loc[prior], f.loc[monday], f.loc[friday]
             if isinstance(prior_row, pd.DataFrame): prior_row = prior_row.iloc[-1]
@@ -706,17 +738,30 @@ def main() -> None:
     raw_assets = {symbol: frame[frame["date"].dt.date <= cutoff].copy() for symbol, frame in klines.items()}
     frames = {symbol: add_features(raw_assets[symbol]) for symbol in ASSETS}
     btc = add_features(raw_assets[BTC])
-    variants: dict[str, dict] = {}
+    variants_v1: dict[str, dict] = {}
+    variants_v2: dict[str, dict] = {}
     for ma_period in (40, 50, 60):
-        panel = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period)
-        variants[str(ma_period)] = evaluate(panel)
-    pbo = cscv_pbo({
+        panel_v1 = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period,
+                                asset_trend_filter=False)
+        panel_v2 = weekly_panel(frames, btc, funding, cutoff, btc_ma_period=ma_period,
+                                asset_trend_filter=True)
+        variants_v1[str(ma_period)] = evaluate(panel_v1)
+        variants_v2[str(ma_period)] = evaluate(panel_v2)
+    pbo_v1 = cscv_pbo({
         f"BTC_MA{period}": value["weekly_results"]
-        for period, value in ((40, variants["40"]), (50, variants["50"]), (60, variants["60"]))
+        for period, value in ((40, variants_v1["40"]), (50, variants_v1["50"]), (60, variants_v1["60"]))
     })
-    result = variants["50"]
+    pbo_v2 = cscv_pbo({
+        f"BTC_MA{period}": value["weekly_results"]
+        for period, value in ((40, variants_v2["40"]), (50, variants_v2["50"]), (60, variants_v2["60"]))
+    })
+    result_v1 = variants_v1["50"]
+    wf_v1 = walk_forward(result_v1["weekly_results"])
+    wf_v1["pbo"] = pbo_v1
+    gate_v1 = gate_result(wf_v1)
+    result = variants_v2["50"]
     wf = walk_forward(result["weekly_results"])
-    wf["pbo"] = pbo
+    wf["pbo"] = pbo_v2
     gate = gate_result(wf)
 
     funding_coverage = {
@@ -753,6 +798,7 @@ def main() -> None:
         },
         "methodology": {
             "regime": "Three pre-registered BTC close regime variants: SMA40, SMA50, SMA60; bullish only when prior-Sunday close is above the selected SMA; otherwise 100% cash.",
+            "v2_entry_confirmation": "Before ranking, an alt must have prior-Sunday close above its MA20 and MA20 above its value five daily observations earlier; otherwise it is excluded from that week's cross-section. If fewer than four assets qualify, the portfolio remains cash.",
             "risk_exit": "Each selected long exits at the first of (a) a 15% trailing stop below the highest high observed on prior daily bars since entry, with gap-through fill at the daily open, or (b) a daily close below the asset's MA20, otherwise Friday close. Same-day high/low order is not inferred; today's high cannot raise today's stop.",
             "risk_exit_cost_timing": "Funding is counted through the daily exit bar close; because daily OHLCV cannot identify the intraday stop timestamp, same-day funding treatment is conservative.",
 
@@ -772,21 +818,42 @@ def main() -> None:
             "universe_bias": "The eight assets were fixed from prior research and are not a point-in-time universe. Results remain exploratory.",
         },
         "strategy": {
+            "primary_version": "V2_ASSET_MA20_TREND_CONFIRMATION",
             "primary_variant": "BTC_MA50",
             "risk_exit": {"trailing_stop_pct": 15.0, "asset_close_ma_exit_period": 20},
+            "entry_confirmation": {"asset_close_above_ma20": True, "ma20_rising_observations": 5},
             "entire_period": {k: v for k, v in result["entire_period"].items() if k != "weekly_results"},
             "year_by_year": result["year_by_year"],
             "walk_forward": wf,
             "acceptance_gate": gate,
             "owner_targets": {
-                "max_drawdown_below_30_percent": result["entire_period"]["metrics"]["max_drawdown"] is not None and result["entire_period"]["metrics"]["max_drawdown"] > -0.30,
-                "profit_factor_above_1_50": result["entire_period"]["metrics"]["profit_factor"] is not None and result["entire_period"]["metrics"]["profit_factor"] > 1.50,
-                "pbo_below_0_40": pbo.get("value") is not None and pbo["value"] < 0.40,
+                "full_period": {
+                    "max_drawdown_below_30_percent": result["entire_period"]["metrics"]["max_drawdown"] is not None and result["entire_period"]["metrics"]["max_drawdown"] > -0.30,
+                    "profit_factor_above_1_50": result["entire_period"]["metrics"]["profit_factor"] is not None and result["entire_period"]["metrics"]["profit_factor"] > 1.50,
+                    "pbo_below_0_40": pbo_v2.get("value") is not None and pbo_v2["value"] < 0.40,
+                },
+                "oos": {
+                    "max_drawdown_below_30_percent": wf["oos_metrics"]["max_drawdown"] is not None and wf["oos_metrics"]["max_drawdown"] > -0.30,
+                    "profit_factor_above_1_50": wf["oos_metrics"]["profit_factor"] is not None and wf["oos_metrics"]["profit_factor"] > 1.50,
+                    "pbo_below_0_40": pbo_v2.get("value") is not None and pbo_v2["value"] < 0.40,
+                },
+            },
+            "v1_baseline": {
+                "version": "V1_15PCT_TRAIL_PLUS_MA20_EXIT",
+                "entire_period": {k: v for k, v in result_v1["entire_period"].items() if k != "weekly_results"},
+                "walk_forward": wf_v1,
+                "acceptance_gate": gate_v1,
+                "pbo": pbo_v1,
             },
             "variant_comparison": {
                 f"BTC_MA{period}": {
-                    "entire_period": {k: v for k, v in variants[str(period)]["entire_period"].items() if k != "weekly_results"},
-                    "year_by_year": variants[str(period)]["year_by_year"],
+                    "entire_period": {k: v for k, v in variants_v2[str(period)]["entire_period"].items() if k != "weekly_results"},
+                    "year_by_year": variants_v2[str(period)]["year_by_year"],
+                } for period in (40, 50, 60)
+            },
+            "v1_variant_comparison": {
+                f"BTC_MA{period}": {
+                    "entire_period": {k: v for k, v in variants_v1[str(period)]["entire_period"].items() if k != "weekly_results"},
                 } for period in (40, 50, 60)
             },
         },
