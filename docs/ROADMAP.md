@@ -13,7 +13,7 @@ This roadmap records the V21 reset. V18.2 implementation records remain historic
 | Stage | Scope | Current disposition | Evidence |
 |---|---|---|---|
 | 0 | Architecture and source authority | **PASS — OWNER ACCEPTED** | Architecture Design V1; Source Register update on V21 branch |
-| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **TECHNICAL ACCEPTANCE PASS — OWNER SIGN-OFF PENDING** | [V21 Stage 1 SLRP](evidence/v21-stage1-slrp-plan.md) and [2026-11-28 live acceptance evidence](evidence/v21-stage1-acceptance-20261128.md) |
+| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **IN PROGRESS — V21.1 NONCONFORMANCE FOUND** | [V21 Stage 1 SLRP](evidence/v21-stage1-slrp-plan.md) and [V21.1 audit](evidence/v21.1-nine-asset-stage1-audit-20261128.md); prior V21.0 vertical-slice run is historical evidence only |
 | 2 | Provider independence, data freshness and fallback equivalence | NOT STARTED | Gated by owner acceptance of Stage 1 |
 | 3 | Market-regime classification and independent short-squeeze safety | NOT STARTED | Gated by Stage 2 |
 | 4 | Independent research hypotheses and falsification | NOT STARTED | Gated by Stage 3 |
@@ -45,7 +45,7 @@ A stage may PASS only when its numerical criteria and L1/L2/L3 requirements are 
 
 1. **Rejected legacy workflows:** this branch applies job-level `if: false` to all identified LRT/NMT/VTM execution paths and adds a CI regression guard. These controls become effective on the default branch only after this PR is reviewed and merged.
 2. **Provider independence:** the current production collector has an implemented OKX futures adapter; Bybit/Binance were previously observed unavailable from the runner, and other adapters are not equivalence-tested. No fallback is assumed.
-4. **V21 Stage 1:** the two-run main-branch technical acceptance gate passed on 2026-11-28. Owner stage sign-off is pending; Stage 2 remains gated.
+4. **V21 Stage 1:** previous 50-symbol run evidence passed its V21.0 vertical-slice checks but failed the V21.1 exact-nine production-universe contract. Stage 1 remains IN PROGRESS; Stage 2 remains gated.
 5. **Cost semantics:** one-way versus round-trip interpretation is open and blocks strategy backtesting.
 
 ## Historical V18.2 records
