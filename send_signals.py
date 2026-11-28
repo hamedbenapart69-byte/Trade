@@ -70,8 +70,8 @@ def _utc_day(timestamp_ms: Any) -> date:
     return datetime.fromtimestamp(int(timestamp_ms) / 1000.0, tz=timezone.utc).date()
 
 
-def _valid_candle(day_value: date, o: Any, h: Any, l: Any, c: Any, qv: Any) -> Candle:
-    values = [float(o), float(h), float(l), float(c), float(qv)]
+def _valid_candle(day_value: date, o: Any, h: Any, l: Any, c: Any, volume: Any) -> Candle:
+    values = [float(o), float(h), float(l), float(c), float(volume)]
     op, high, low, close, base_volume = values
     if not all(math.isfinite(x) for x in values):
         raise ProviderError("NON_FINITE_CANDLE")
@@ -94,7 +94,7 @@ def fetch_okx(symbol: str) -> list[Candle]:
     for item in payload["data"]:
         if len(item) < 9 or str(item[8]) != "1":
             continue
-        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[5]))
+        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[6]))
     return sorted(rows, key=lambda x: x.day)
 
 
@@ -109,7 +109,7 @@ def fetch_bybit(symbol: str) -> list[Candle]:
     for item in payload["result"]["list"]:
         if len(item) < 7:
             raise ProviderError("BYBIT_KLINE_SCHEMA_INVALID")
-        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[6]))
+        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[5]))
     return sorted(rows, key=lambda x: x.day)
 
 
