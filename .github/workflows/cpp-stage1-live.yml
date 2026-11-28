@@ -126,9 +126,10 @@ jobs:
           EXPECTED=$(jq -c '.symbols | map(sub("USDT$"; "")) | sort' config/universe.json)
           ACTUAL=$(jq -c '[.instruments[].base] | sort' artifacts/l1-market-data.v1.json)
           test "$EXPECTED" = "$ACTUAL"
-          jq -e '
+          jq -e --argjson expected "$EXPECTED" '
             (.instruments | length == 9) and
-            ([.instruments[].base] | unique | length == 9)
+            ([.instruments[].symbol | split("/")[0]] | sort) == $expected and
+            ([.instruments[].symbol | split("/")[0]] | unique | length == 9)
           ' artifacts/l2-status.v1.json >/dev/null
           echo "V21_1_NINE_ASSET_L1_L2_PASS assets=9"
 
