@@ -1,7 +1,25 @@
 {
-  "status": "BLOCKED_PENDING_RESEARCH_VALIDATION",
+  "status": "BLOCKED_RESEARCH_NOT_VALIDATED",
+  "signals_enabled": false,
+  "research_reference": {
+    "branch": "v21.1/provider-federation-v1",
+    "commit": "340ea9a0d9ca39a8d5d69b297b9c68b3ae70cce0",
+    "workflow_run_id": 46154745469,
+    "artifact": "momentum-cash-usdm-futures-backtest"
+  },
+  "primary_candidate": "V3_MARKET_BREADTH_CONFIRMATION_BTC_MA50",
+  "full_period": {
+    "max_drawdown": -0.5972106657,
+    "profit_factor": 1.13639464,
+    "pbo": 0.45714286
+  },
+  "oos": {
+    "max_drawdown": -0.5972106657,
+    "profit_factor": 1.13639464,
+    "pbo": 0.45714286
+  },
   "max_drawdown_below_30_percent": false,
   "profit_factor_above_1_50": false,
   "pbo_below_0_40": false,
-  "reason": "No tested strategy version has yet passed all owner release criteria. Signals remain disabled."
+  "reason": "V1, V2 and V3 failed owner acceptance targets. Live actionable signals remain disabled."
 }
