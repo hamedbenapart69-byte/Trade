@@ -76,6 +76,34 @@ class SignalBotTests(unittest.TestCase):
         self.assertEqual(failures[0]["provider"], "OKX")
         self.assertTrue(all(p == "BYBIT" for p, _ in calls[3:]))
 
+
+    def test_okx_uses_confirmed_candle_and_quote_volume(self):
+        payload = {"code": "0", "data": [[
+            "1795737600000", "100", "102", "99", "101",
+            "50", "5050", "5100", "1"
+        ]]}
+        with patch.object(bot, "_http_json", return_value=payload):
+            rows = bot.fetch_okx("BTCUSDT")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].quote_volume, 5100.0)
+
+    def test_bybit_uses_linear_turnover_as_quote_volume(self):
+        payload = {"retCode": 0, "result": {"list": [[
+            "1795737600000", "100", "102", "99", "101", "50", "5100"
+        ]]}}
+        with patch.object(bot, "_http_json", return_value=payload):
+            rows = bot.fetch_bybit("BTCUSDT")
+        self.assertEqual(rows[0].quote_volume, 5100.0)
+
+    def test_binance_uses_usdm_quote_asset_volume(self):
+        payload = [[
+            1795737600000, "100", "102", "99", "101", "50",
+            1795823999999, "5100", 100, "20", "2000", "0"
+        ]]
+        with patch.object(bot, "_http_json", return_value=payload):
+            rows = bot.fetch_binance_futures("BTCUSDT")
+        self.assertEqual(rows[0].quote_volume, 5100.0)
+
     def test_release_gate_fails_closed(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "gate.json"
