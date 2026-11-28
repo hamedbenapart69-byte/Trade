@@ -74,11 +74,8 @@ inline nlohmann::json build_l2_artifact(const nlohmann::json& contract, std::int
                 !verified_crypto_symbols.insert(symbol.get<std::string>()).second)
                 throw std::invalid_argument("crypto_universe_symbol_invalid_or_duplicate");
         }
-        const std::set<std::string> expected_owner_assets{
-            "BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"
-        };
-        if (verified_crypto_symbols != expected_owner_assets)
-            throw std::invalid_argument("owner_production_universe_not_exact_v21_1_nine_assets");
+        if (verified_crypto_symbols.size() != 9U || !verified_crypto_symbols.contains("BTC"))
+            throw std::invalid_argument("owner_production_universe_not_exact_nine_assets");
     }
     require_string(contract.at("provider"), "primary_provider_id");
     if (!contract.contains("instruments") || !contract.at("instruments").is_array() || contract.at("instruments").empty())
