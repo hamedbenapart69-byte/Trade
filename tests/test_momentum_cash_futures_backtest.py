@@ -138,6 +138,21 @@ class RiskExitAndPboTests(unittest.TestCase):
         falling["close"] = [120.0 - i for i in range(40)]
         self.assertFalse(futures.asset_trend_confirmed(falling, asof))
 
+
+    def test_market_breadth_requires_five_of_eight_above_ma20(self):
+        dates = pd.date_range("2024-01-01", periods=25, freq="D", tz="UTC")
+        frames = {}
+        for i in range(8):
+            closes = [100.0] * 25
+            ma = [99.0 if i < 5 else 101.0] * 25
+            frames[f"A{i}"] = pd.DataFrame({
+                "date": dates, "close": closes, "sma20": ma,
+            })
+        asof = dates[-1]
+        above = futures.market_breadth_assets(frames, asof)
+        self.assertEqual(len(above), 5)
+        self.assertTrue(all(x in above for x in ["A0", "A1", "A2", "A3", "A4"]))
+
     def test_cscv_pbo_builds_70_splits_and_a_weekly_return_matrix(self):
         dates = pd.date_range("2020-01-06", periods=80, freq="W-MON", tz="UTC")
         variants = {}
