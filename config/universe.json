@@ -1,31 +1,14 @@
 {
+  "version": "V21.1-PRODUCTION-9-V1",
   "symbols": [
     "BTCUSDT",
     "ETHUSDT",
-    "BNBUSDT",
     "SOLUSDT",
+    "BNBUSDT",
     "XRPUSDT",
-    "ADAUSDT",
     "DOGEUSDT",
-    "AVAXUSDT",
+    "ADAUSDT",
     "LINKUSDT",
-    "LTCUSDT",
-    "BCHUSDT",
-    "NEARUSDT",
-    "INJUSDT",
-    "UNIUSDT",
-    "FILUSDT",
-    "ARBUSDT",
-    "ENAUSDT",
-    "SUIUSDT",
-    "TAOUSDT",
-    "WLDUSDT",
-    "ZECUSDT",
-    "AAVEUSDT",
-    "QNTUSDT",
-    "RSRUSDT",
-    "ONEUSDT",
-    "HOTUSDT",
-    "1000PEPEUSDT"
+    "AVAXUSDT"
   ]
 }
