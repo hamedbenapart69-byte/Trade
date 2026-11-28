@@ -236,18 +236,12 @@ def format_persian_message(signal: dict[str, Any]) -> str:
     provider = signal["provider"]
     if signal["state"] == "CASH":
         return (
-            "گزارش هفتگی بازار آتی
-"
-            f"تاریخ مبنا: {day} | منبع داده: {provider}
-"
-            "وضعیت بازار: CASH
-"
-            f"BTC: {signal['btc_close']:.6g}
-"
-            f"MA50 بیت‌کوین: {signal['btc_ma50']:.6g}
-"
-            "شرط روند صعودی برقرار نیست؛ در این دوره هیچ موقعیت لانگی انتخاب نمی‌شود.
-"
+            "گزارش هفتگی بازار آتی\n"
+            f"تاریخ مبنا: {day} | منبع داده: {provider}\n"
+            "وضعیت بازار: CASH\n"
+            f"BTC: {signal['btc_close']:.6g}\n"
+            f"MA50 بیت‌کوین: {signal['btc_ma50']:.6g}\n"
+            "شرط روند صعودی برقرار نیست؛ در این دوره هیچ موقعیت لانگی انتخاب نمی‌شود.\n"
             "این خروجی صرفاً تحلیل است؛ هیچ سفارشی اجرا نمی‌شود."
         )
     lines = [
@@ -327,12 +321,9 @@ def main() -> int:
 
     if gate.get("status") != "PASS":
         message = (
-            "وضعیت سامانه سیگنال‌دهی
-"
-            f"تاریخ: {target_friday.isoformat()}
-"
-            "NO TRADE — اعتبارسنجی استراتژی هنوز معیارهای انتشار را پاس نکرده است.
-"
+            "وضعیت سامانه سیگنال‌دهی\n"
+            f"تاریخ: {target_friday.isoformat()}\n"
+            "NO TRADE — اعتبارسنجی استراتژی هنوز معیارهای انتشار را پاس نکرده است.\n"
             "هیچ سیگنال معاملاتی صادر نشد و هیچ سفارشی اجرا نمی‌شود."
         )
         result = {"state": "NO_QUALIFIED_SETUP", "release_gate": gate.get("status"),
