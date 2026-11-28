@@ -125,7 +125,7 @@ class RiskExitAndPboTests(unittest.TestCase):
         result = futures.risk_adjusted_exit(frame, monday, friday)
         self.assertEqual(result["exit_reason"], "DAILY_CLOSE_BELOW_MA20")
         self.assertEqual(result["exit_price"], 99.0)
-        self.assertEqual(result["return"], -0.01)
+        self.assertAlmostEqual(result["return"], -0.01, places=12)
 
     def test_cscv_pbo_builds_70_splits_and_a_weekly_return_matrix(self):
         dates = pd.date_range("2020-01-06", periods=80, freq="W-MON", tz="UTC")
