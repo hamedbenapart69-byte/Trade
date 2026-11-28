@@ -28,7 +28,7 @@ The runner completed C++20 configure/build, the registered CTest suite, live L1 
 
 ## Two qualifying manifests
 
-The workflow gate selected the latest two qualifying main-branch manifests and verified the same production source-tree hash.
+The workflow gate selected the latest two qualifying main-branch manifests and verified the same production source-tree hash. Run #398's overall Actions conclusion was `failure` only because its final aggregate step correctly reported that a second qualifying manifest did not yet exist; the preceding C++ build, CTest, live L1/L2, outbound delivery, inbound exact-update replay and persistence steps succeeded. Its persisted manifest therefore records the completed first qualifying vertical slice as `STAGE1_CONTROLLED_ACCEPTANCE_PASS`. Run #525 was the next main-branch Stage 1 workflow run and completed the two-run aggregate gate. The intervening workflow run numbers were on other branches; the branch-filtered main run history identifies #398 as the preceding main-branch Stage 1 run.
 
 | Field | First qualifying run | Second qualifying run |
 |---|---|---|
