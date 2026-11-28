@@ -51,9 +51,9 @@ class SignalBotTests(unittest.TestCase):
         self.assertAlmostEqual(value, 2.0)
         plan = bot.atr_risk_plan(100.0, value, equity_quote=1000.0)
         self.assertAlmostEqual(plan["stop_distance"], 4.0)
-        self.assertAlmostEqual(plan["max_risk_fraction"], 0.02)
-        self.assertAlmostEqual(plan["risk_budget_per_1000_equity"], 20.0)
-        self.assertAlmostEqual(plan["notional_per_1000_equity"], 500.0)
+        self.assertAlmostEqual(plan["max_risk_fraction"], 0.01)
+        self.assertAlmostEqual(plan["risk_budget_per_1000_equity"], 10.0)
+        self.assertAlmostEqual(plan["notional_per_1000_equity"], 250.0)
 
     def test_weekly_execution_is_next_monday_open_to_friday_close(self):
         monday, friday = bot.next_week_execution_window(date(2026, 11, 27))
@@ -71,7 +71,9 @@ class SignalBotTests(unittest.TestCase):
         self.assertEqual(result["weekly_execution"]["exit_rule"], "SAME_WEEK_FRIDAY_CLOSE")
         self.assertEqual(result["weekly_execution"]["entry_date"], "2026-11-30")
         self.assertEqual(result["weekly_execution"]["exit_date"], "2026-12-04")
-        self.assertTrue(all(item["max_risk_fraction"] == 0.02 for item in result["selected"]))
+        self.assertTrue(all(item["max_risk_fraction"] == 0.01 for item in result["selected"]))
+        self.assertEqual(result["risk_model"]["max_account_risk_fraction"], 0.02)
+        self.assertEqual(result["risk_model"]["max_concurrent_positions"], 2)
 
     def test_bear_regime_returns_cash(self):
         target = date(2026, 11, 27)
