@@ -131,7 +131,7 @@ Evidence from the workflow log:
 - Persistent signals-branch verification: `SIGNALS_BRANCH_REMOTE_PERSISTENCE_PASS run_id=okx-cpp-1795864418221`.
 - Final workflow assertion: `STAGE1_ACCEPTANCE_GATE_PASS revision=3ea17e71264aad4e8e0ecf7d550914dcd338ae26 consecutive_runs=2 inbound_replay_runs=1`.
 
-The acceptance gate inspected the latest two qualifying main-branch manifests:
+The acceptance gate inspected the latest two qualifying main-branch manifests. Run #398's overall Actions conclusion was `failure` only because its final aggregate step correctly reported that a second qualifying manifest did not yet exist; the preceding C++ build, CTest, live L1/L2, outbound delivery, inbound exact-update replay and persistence steps succeeded. Its persisted manifest therefore records the completed first qualifying vertical slice as `STAGE1_CONTROLLED_ACCEPTANCE_PASS`. Run #525 was the next main-branch Stage 1 workflow run and completed the two-run aggregate gate:
 
 | Manifest run number | Run ID | Repository commit | Run status | Telegram message IDs | Inbound/replay |
 |---:|---|---|---|---|---|
