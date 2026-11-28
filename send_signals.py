@@ -36,6 +36,9 @@ PROVIDERS = ("OKX", "BYBIT", "BINANCE_FUTURES")
 TIMEOUT_SECONDS = 15
 CANDLE_LIMIT = 100
 VOLUME_LABEL = "base-asset futures volume"
+ATR_PERIOD = 14
+ATR_STOP_MULTIPLE = 2.0
+MAX_ACCOUNT_RISK_FRACTION = 0.02
 
 
 @dataclass(frozen=True)
@@ -194,6 +197,59 @@ def _rsi14(closes: list[float]) -> float:
     return 100.0 - 100.0 / (1.0 + rs)
 
 
+def atr14(candles: list[Candle]) -> float:
+    """محاسبه ATR چهارده‌دوره‌ای با هموارسازی وایلدر روی کندل‌های روزانه."""
+    if len(candles) < ATR_PERIOD + 1:
+        raise ProviderError("ATR_HISTORY_INSUFFICIENT")
+    ordered = sorted(candles, key=lambda candle: candle.day)
+    true_ranges: list[float] = []
+    for previous, current in zip(ordered[:-1], ordered[1:]):
+        tr = max(
+            current.high - current.low,
+            abs(current.high - previous.close),
+            abs(current.low - previous.close),
+        )
+        if not math.isfinite(tr) or tr <= 0:
+            raise ProviderError("ATR_TRUE_RANGE_INVALID")
+        true_ranges.append(tr)
+    if len(true_ranges) < ATR_PERIOD:
+        raise ProviderError("ATR_TRUE_RANGE_HISTORY_INSUFFICIENT")
+    value = sum(true_ranges[:ATR_PERIOD]) / ATR_PERIOD
+    for tr in true_ranges[ATR_PERIOD:]:
+        value = ((value * (ATR_PERIOD - 1)) + tr) / ATR_PERIOD
+    if not math.isfinite(value) or value <= 0:
+        raise ProviderError("ATR_VALUE_INVALID")
+    return value
+
+
+def atr_risk_plan(entry_reference_price: float, atr_value: float,
+                  equity_quote: float = 1000.0) -> dict[str, float]:
+    """محاسبه اندازه موقعیت بر مبنای حداکثر ریسک ۲٪؛ بدون ارسال سفارش."""
+    values = (entry_reference_price, atr_value, equity_quote)
+    if not all(math.isfinite(value) and value > 0 for value in values):
+        raise ProviderError("ATR_RISK_INPUT_INVALID")
+    stop_distance = ATR_STOP_MULTIPLE * atr_value
+    stop_fraction = stop_distance / entry_reference_price
+    risk_budget = equity_quote * MAX_ACCOUNT_RISK_FRACTION
+    notional = risk_budget / stop_fraction
+    return {
+        "atr14": atr_value,
+        "stop_distance": stop_distance,
+        "stop_fraction": stop_fraction,
+        "max_risk_fraction": MAX_ACCOUNT_RISK_FRACTION,
+        "risk_budget_per_1000_equity": risk_budget * (1000.0 / equity_quote),
+        "notional_per_1000_equity": notional * (1000.0 / equity_quote),
+    }
+
+
+def next_week_execution_window(completed_friday: date) -> tuple[date, date]:
+    """پنجره اجرای بعدی: بازشدن دوشنبه تا بسته‌شدن جمعه همان هفته."""
+    if completed_friday.weekday() != 4:
+        raise ProviderError("WEEKLY_REFERENCE_DATE_MUST_BE_FRIDAY")
+    return completed_friday + timedelta(days=3), completed_friday + timedelta(days=7)
+
+
+
 def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: date) -> dict[str, Any]:
     btc = market["BTCUSDT"]
     btc_closes = [c.close for c in btc if c.day <= target_friday]
@@ -212,6 +268,23 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         "universe_version": UNIVERSE_VERSION,
         "universe": list(UNIVERSE),
         "execution": "MANUAL_ONLY_NO_ORDERS",
+        "weekly_execution": {
+            "signal_timestamp": "AFTER_COMPLETED_FRIDAY_CLOSE",
+            "entry_rule": "NEXT_MONDAY_OPEN",
+            "exit_rule": "SAME_WEEK_FRIDAY_CLOSE",
+            "entry_date": (target_friday + timedelta(days=3)).isoformat(),
+            "exit_date": (target_friday + timedelta(days=7)).isoformat(),
+            "weekend_holding": False,
+            "sizing_reference": "LAST_COMPLETED_FRIDAY_CLOSE; RECALCULATE_AT_MONDAY_OPEN",
+        },
+        "risk_model": {
+            "max_account_risk_fraction": MAX_ACCOUNT_RISK_FRACTION,
+            "atr_period": ATR_PERIOD,
+            "atr_stop_multiple": ATR_STOP_MULTIPLE,
+            "stop_distance_formula": "2 * ATR14",
+            "position_notional_formula": "(equity * 0.02) / (stop_distance / entry_price)",
+            "sizing_is_reference_only_until_monday_open": True,
+        },
     }
     if btc_close <= btc_ma50:
         return {**base, "state": "CASH", "selected": [], "scores": {}}
@@ -219,6 +292,7 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
     volume_z20: dict[str, float] = {}
     rsi14: dict[str, float] = {}
     closes_by_symbol: dict[str, float] = {}
+    risk_by_symbol: dict[str, dict[str, float]] = {}
     for symbol in ALTCOINS:
         candles = [c for c in market[symbol] if c.day <= target_friday]
         if len(candles) < 20:
@@ -233,6 +307,7 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         closes = [c.close for c in candles]
         rsi14[symbol] = _rsi14(closes)
         closes_by_symbol[symbol] = closes[-1]
+        risk_by_symbol[symbol] = atr_risk_plan(closes[-1], atr14(candles))
 
     zv = _zscore(volume_z20)
     zr = _zscore(rsi14)
@@ -240,7 +315,8 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
     ranked = sorted(ALTCOINS, key=lambda symbol: (-scores[symbol], symbol))
     selected = [
         {"symbol": symbol, "close": closes_by_symbol[symbol],
-         "volume_z20": volume_z20[symbol], "rsi14": rsi14[symbol], "score": scores[symbol]}
+         "volume_z20": volume_z20[symbol], "rsi14": rsi14[symbol], "score": scores[symbol],
+         **risk_by_symbol[symbol]}
         for symbol in ranked[:2]
     ]
     return {**base, "state": "LONG_TOP_2", "selected": selected,
@@ -265,6 +341,9 @@ def format_persian_message(signal: dict[str, Any]) -> str:
         f"تاریخ مبنا: {day} | منبع داده: {provider}",
         "وضعیت بازار: BTC بالاتر از MA50 — انتخاب دو موقعیت لانگ",
         f"BTC: {signal['btc_close']:.6g} | MA50: {signal['btc_ma50']:.6g}",
+        f"چرخه اجرا: ورود در بازشدن دوشنبه {signal['weekly_execution']['entry_date']}؛ خروج در بسته‌شدن جمعه {signal['weekly_execution']['exit_date']}",
+        "حداکثر ریسک هر موقعیت: ۲٪ سرمایه؛ حدضرر مبتنی بر ۲ برابر ATR14",
+        "اندازه موقعیت باید با قیمت واقعی بازشدن دوشنبه دوباره محاسبه شود؛ قیمت جمعه فقط مرجع برآورد است.",
         "",
         "دو دارایی برتر:",
     ]
@@ -272,7 +351,8 @@ def format_persian_message(signal: dict[str, Any]) -> str:
         lines.append(
             f"{index}) {item['symbol']} | قیمت بسته‌شدن: {item['close']:.6g} | "
             f"امتیاز: {item['score']:.4f} | Volume_Z20: {item['volume_z20']:.3f} | "
-            f"RSI14: {item['rsi14']:.2f}"
+            f"RSI14: {item['rsi14']:.2f} | ATR14: {item['atr14']:.6g} | "
+            f"فاصله حدضرر: {item['stop_distance']:.6g}"
         )
     lines.append("")
     lines.append("Volume_Z20 بر اساس حجم دارایی پایه در قرارداد دائمی محاسبه شده است.")
