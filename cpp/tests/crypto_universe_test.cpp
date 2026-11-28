@@ -68,6 +68,21 @@ int main() {
     const std::set<std::string> production_nine{
         "BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "LINK", "AVAX"
     };
+    const auto owner_manifest = cfss::okx::load_crypto_universe(production_nine);
+    require(owner_manifest.symbols == production_nine &&
+            owner_manifest.artifact.at("status") == "OWNER_MANIFEST_VERIFIED" &&
+            owner_manifest.artifact.at("provider_id") == "owner_manifest" &&
+            owner_manifest.artifact.at("source_endpoint") == "config/universe.json" &&
+            owner_manifest.artifact.at("symbol_count") == 9,
+            "production universe is loaded and hashed from the owner manifest without a third-party coin list");
+    bool invalid_manifest_rejected = false;
+    try {
+        (void)cfss::okx::load_crypto_universe({"BTC", "ETH"});
+    } catch (const std::invalid_argument&) {
+        invalid_manifest_rejected = true;
+    }
+    require(invalid_manifest_rejected,
+            "incomplete owner universe manifest fails closed");
     const std::vector<cfss::okx::Instrument> nine_candidates{
         make_instrument("BTC", 100'000'000.0),
         make_instrument("ETH", 90'000'000.0),
