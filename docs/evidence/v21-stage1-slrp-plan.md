@@ -103,15 +103,15 @@ From the persisted main-branch manifest `okx-cpp-1795613093962` (2026-11-25):
 
 A separate research workflow successfully downloaded checksum-pinned Binance Vision archives from GitHub Actions. This proves archive reachability from that runner at that time; it does not prove Binance Futures REST reachability or full provider equivalence. User geography is not a backend provider-selection rule.
 
-## 8. SLRP Budget, Escalation and Current Gate
+## 8. SLRP Budget, Escalation and 2026-11-25 Historical Gate Snapshot
 
 - Maximum versions remain v1, v2 and v3. No v4 is permitted.
 - v1: FAIL (D3), listing-window coverage and replay-handler defects.
 - v2: FAIL (D3), count-only coverage and incorrect handling of a non-aligned listing timestamp.
-- v3: engineering CI PASS on its isolated branch; complete live acceptance remains NOT_VERIFIED. Expanded live integration exposed D3-A and D3-B, with narrow corrections pending verification in PR #179.
+- v3: at this 2026-11-25 snapshot, engineering CI had passed on its isolated branch; complete live acceptance was NOT_VERIFIED. Expanded live integration had exposed D3-A and D3-B, with narrow corrections pending verification in PR #179.
 - No acceptance threshold has been weakened.
 - If the corrected v3 candidate fails another mandatory acceptance criterion, stop further rewrites and invoke the V21 Innovation Protocol in order: Data Expansion, Timeframe Shift, Simplicity Audit, Regime Restriction, Alternative Market, Honest Stop.
-- Stage 1 remains **IN PROGRESS — NOT ACCEPTED** until two qualifying main-branch L1/L2/L3 runs pass on the same code revision and the controlled inbound/replay condition is satisfied in at least one run.
+- At the time of this 2026-11-25 snapshot, Stage 1 remained **IN PROGRESS — NOT ACCEPTED** pending two qualifying main-branch L1/L2/L3 runs and controlled inbound/replay evidence. This historical disposition is superseded by Section 9.
 - Stage 2 and all strategy promotion remain gated.
 
 
