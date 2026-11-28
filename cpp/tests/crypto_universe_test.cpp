@@ -104,15 +104,12 @@ int main() {
             "missing canonical asset fails closed instead of silently shrinking production universe");
     auto low_liquidity_candidates = nine_candidates;
     low_liquidity_candidates[8] = make_instrument("AVAX", 9'999'999.0);
-    bool low_liquidity_rejected = false;
-    try {
-        (void)cfss::okx::select_production_nine_assets(
-            low_liquidity_candidates, production_nine);
-    } catch (const std::runtime_error&) {
-        low_liquidity_rejected = true;
-    }
-    require(low_liquidity_rejected,
-            "production asset below the $10M liquidity gate fails closed");
+    const auto low_liquidity_nine = cfss::okx::select_production_nine_assets(
+        low_liquidity_candidates, production_nine);
+    require(low_liquidity_nine.size() == 9U &&
+            !cfss::okx::passes_liquidity(low_liquidity_nine.back().turnover),
+            "low-liquidity asset remains visible in C10 coverage while its downstream eligibility gate stays failed");
+
     const nlohmann::json old_cache = {
         {"schema_version", "1.0.0"},
         {"provider", {{"primary_provider_id", "okx"}}},
