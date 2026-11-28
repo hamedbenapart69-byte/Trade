@@ -18,8 +18,9 @@ import pandas as pd
 import requests
 
 BASE = "https://data.binance.vision/data/spot"
-ASSETS = ("ETHUSDT", "NEARUSDT", "XRPUSDT", "SOLUSDT",
-          "BNBUSDT", "UNIUSDT", "DOGEUSDT", "ADAUSDT")
+# Universe aligned with the V21.1 nine-asset candidate seed; BTC is benchmark-only.
+ASSETS = ("ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
+          "DOGEUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT")
 BTC = "BTCUSDT"
 SCAN_START = "2017-01"
 FEE_PER_SIDE = 0.0004
