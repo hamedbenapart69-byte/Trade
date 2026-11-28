@@ -41,6 +41,25 @@ class SignalBotTests(unittest.TestCase):
         self.assertEqual(bot._rsi14([float(i) for i in range(20)]), 100.0)
         self.assertEqual(bot._rsi14([100.0] * 20), 50.0)
 
+    def test_atr14_and_two_percent_risk_sizing(self):
+        start = date(2026, 11, 1)
+        candles = [
+            bot.Candle(start + timedelta(days=i), 100.0, 101.0, 99.0, 100.0, 1000.0)
+            for i in range(15)
+        ]
+        value = bot.atr14(candles)
+        self.assertAlmostEqual(value, 2.0)
+        plan = bot.atr_risk_plan(100.0, value, equity_quote=1000.0)
+        self.assertAlmostEqual(plan["stop_distance"], 4.0)
+        self.assertAlmostEqual(plan["max_risk_fraction"], 0.02)
+        self.assertAlmostEqual(plan["risk_budget_per_1000_equity"], 20.0)
+        self.assertAlmostEqual(plan["notional_per_1000_equity"], 500.0)
+
+    def test_weekly_execution_is_next_monday_open_to_friday_close(self):
+        monday, friday = bot.next_week_execution_window(date(2026, 11, 27))
+        self.assertEqual(monday, date(2026, 11, 30))
+        self.assertEqual(friday, date(2026, 12, 4))
+
     def test_bull_regime_ranks_eight_alts_and_selects_two(self):
         target = date(2026, 11, 27)
         result = bot.build_signal("OKX", synthetic_market(target), target)
@@ -48,6 +67,11 @@ class SignalBotTests(unittest.TestCase):
         self.assertEqual(len(result["selected"]), 2)
         self.assertEqual(set(result["scores"]), set(bot.ALTCOINS))
         self.assertGreater(result["btc_close"], result["btc_ma50"])
+        self.assertEqual(result["weekly_execution"]["entry_rule"], "NEXT_MONDAY_OPEN")
+        self.assertEqual(result["weekly_execution"]["exit_rule"], "SAME_WEEK_FRIDAY_CLOSE")
+        self.assertEqual(result["weekly_execution"]["entry_date"], "2026-11-30")
+        self.assertEqual(result["weekly_execution"]["exit_date"], "2026-12-04")
+        self.assertTrue(all(item["max_risk_fraction"] == 0.02 for item in result["selected"]))
 
     def test_bear_regime_returns_cash(self):
         target = date(2026, 11, 27)
