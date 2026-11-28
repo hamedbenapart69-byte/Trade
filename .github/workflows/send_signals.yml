@@ -1,0 +1,59 @@
+name: Weekly Futures Signals (Python MVP)
+
+on:
+  schedule:
+    - cron: "0 0 * * 6"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build the message and artifacts without sending to Telegram"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-futures-signals
+  cancel-in-progress: false
+
+jobs:
+  signals:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Test signal calculations and fail-closed controls
+        run: python -m unittest discover -s tests -p "test_send_signals.py" -v
+
+      - name: Generate and deliver weekly signal
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            python send_signals.py --dry-run
+          else
+            python send_signals.py
+          fi
+
+      - name: Upload exact message and machine-readable result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-futures-signal-output
+          path: |
+            artifacts/signals.json
+            artifacts/telegram_message.txt
+          if-no-files-found: warn
+          retention-days: 30
