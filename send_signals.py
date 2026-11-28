@@ -326,16 +326,20 @@ def load_release_gate(path: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--market-data-smoke", action="store_true",
+                        help="Fetch real public futures data and calculate a signal without Telegram delivery")
     parser.add_argument("--now-utc", help="ISO-8601 timestamp override for deterministic tests")
     args = parser.parse_args()
 
     now = datetime.fromisoformat(args.now_utc.replace("Z", "+00:00")) if args.now_utc else datetime.now(timezone.utc)
     if now.tzinfo is None:
         raise SystemExit("--now-utc must include a timezone")
+    if args.market_data_smoke and not args.dry_run:
+        raise SystemExit("--market-data-smoke requires --dry-run")
     target_friday = latest_completed_friday(now)
     gate = load_release_gate(Path("config/signal_release_gate.json"))
 
-    if gate.get("status") != "PASS":
+    if gate.get("status") != "PASS" and not args.market_data_smoke:
         message = (
             "وضعیت سامانه سیگنال‌دهی\n"
             f"تاریخ: {target_friday.isoformat()}\n"
@@ -348,8 +352,16 @@ def main() -> int:
         provider, market, failures = fetch_consistent_universe(target_friday)
         signal = build_signal(provider, market, target_friday)
         message = format_persian_message(signal)
+        if args.market_data_smoke:
+            message = (
+                "آزمون داده — این پیام به تلگرام ارسال نمی‌شود\n"
+                + message
+                + "\nخروجی صرفاً برای بررسی API عمومی و محاسبات است؛ سیگنال منتشر نشده است."
+            )
         result = {**signal, "provider_failures": failures,
-                  "telegram": {"status": "DRY_RUN" if args.dry_run else "PENDING"}}
+                  "mode": "MARKET_DATA_SMOKE_ONLY" if args.market_data_smoke else "PRODUCTION",
+                  "release_gate": gate.get("status"),
+                  "telegram": {"status": "NOT_ATTEMPTED" if args.market_data_smoke else ("DRY_RUN" if args.dry_run else "PENDING")}}
 
     Path("artifacts").mkdir(exist_ok=True)
     Path("artifacts/telegram_message.txt").write_text(message + "\n", encoding="utf-8")
