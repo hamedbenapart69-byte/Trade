@@ -5,7 +5,7 @@
 **User-side provider access:** not required  
 **Trading execution:** forbidden; manual trading only.
 
-This runbook describes the V21 operational boundary. V21 Stage 1 is currently under validation and is not yet declared operational. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
+This runbook describes the V21 operational boundary. The V21 Stage 1 two-run technical acceptance gate passed on 2026-11-28; owner stage sign-off is pending. No strategy engine is approved, calibrated or actionable. Historical V18.2 workflows and strategy engines are not part of the V21 execution path.
 
 ## 1. Normal operation
 
