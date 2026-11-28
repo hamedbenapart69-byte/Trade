@@ -127,6 +127,17 @@ class RiskExitAndPboTests(unittest.TestCase):
         self.assertEqual(result["exit_price"], 99.0)
         self.assertAlmostEqual(result["return"], -0.01, places=12)
 
+
+    def test_asset_trend_confirmation_requires_close_above_rising_ma20(self):
+        rising = self._daily_frame(count=40)
+        rising["close"] = [80.0 + i for i in range(40)]
+        asof = rising.loc[39, "date"]
+        self.assertTrue(futures.asset_trend_confirmed(rising, asof))
+
+        falling = self._daily_frame(count=40)
+        falling["close"] = [120.0 - i for i in range(40)]
+        self.assertFalse(futures.asset_trend_confirmed(falling, asof))
+
     def test_cscv_pbo_builds_70_splits_and_a_weekly_return_matrix(self):
         dates = pd.date_range("2020-01-06", periods=80, freq="W-MON", tz="UTC")
         variants = {}
