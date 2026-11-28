@@ -1,7 +1,7 @@
 # CFSS Roadmap — V21.0
 
 **SOLE CONTROLLING AUTHORITY:** owner-accepted MASTER SOURCE V21.0 + V21.0 Execution Protocol Addendum. V19.0 and V18.2 are superseded historical archives.  
-**Status snapshot:** 2026-11-23  
+**Status snapshot:** 2026-11-28  
 **Production language:** C++  
 **Delivery:** Telegram only  
 **Execution:** manual only; private exchange accounts, trading keys and automated orders are forbidden.
@@ -13,8 +13,8 @@ This roadmap records the V21 reset. V18.2 implementation records remain historic
 | Stage | Scope | Current disposition | Evidence |
 |---|---|---|---|
 | 0 | Architecture and source authority | **PASS — OWNER ACCEPTED** | Architecture Design V1; Source Register update on V21 branch |
-| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **IN PROGRESS** | [V21 Stage 1 SLRP](evidence/v21-stage1-slrp-plan.md); CI/live evidence pending |
-| 2 | Provider independence, data freshness and fallback equivalence | NOT STARTED | Gated by Stage 1 |
+| 1 | C++ L1/L2/L3 foundation, contracts, safe no-signal reporting and Telegram | **TECHNICAL ACCEPTANCE PASS — OWNER SIGN-OFF PENDING** | [V21 Stage 1 SLRP](evidence/v21-stage1-slrp-plan.md) and [2026-11-28 live acceptance evidence](evidence/v21-stage1-acceptance-20261128.md) |
+| 2 | Provider independence, data freshness and fallback equivalence | NOT STARTED | Gated by owner acceptance of Stage 1 |
 | 3 | Market-regime classification and independent short-squeeze safety | NOT STARTED | Gated by Stage 2 |
 | 4 | Independent research hypotheses and falsification | NOT STARTED | Gated by Stage 3 |
 | 5 | Walk-forward and OOS validation | NOT STARTED | Gated by Stage 4 |
@@ -45,7 +45,7 @@ A stage may PASS only when its numerical criteria and L1/L2/L3 requirements are 
 
 1. **Rejected legacy workflows:** this branch applies job-level `if: false` to all identified LRT/NMT/VTM execution paths and adds a CI regression guard. These controls become effective on the default branch only after this PR is reviewed and merged.
 2. **Provider independence:** the current production collector has an implemented OKX futures adapter; Bybit/Binance were previously observed unavailable from the runner, and other adapters are not equivalence-tested. No fallback is assumed.
-4. **V21 Stage 1:** V18.2 evidence is historical. V21 manifest/contract migration and new live acceptance runs remain pending.
+4. **V21 Stage 1:** the two-run main-branch technical acceptance gate passed on 2026-11-28. Owner stage sign-off is pending; Stage 2 remains gated.
 5. **Cost semantics:** one-way versus round-trip interpretation is open and blocks strategy backtesting.
 
 ## Historical V18.2 records
