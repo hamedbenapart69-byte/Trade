@@ -39,6 +39,8 @@ VOLUME_LABEL = "base-asset futures volume"
 ATR_PERIOD = 14
 ATR_STOP_MULTIPLE = 2.0
 MAX_ACCOUNT_RISK_FRACTION = 0.02
+MAX_CONCURRENT_POSITIONS = 2
+PER_POSITION_RISK_FRACTION = MAX_ACCOUNT_RISK_FRACTION / MAX_CONCURRENT_POSITIONS
 
 
 @dataclass(frozen=True)
@@ -223,20 +225,23 @@ def atr14(candles: list[Candle]) -> float:
 
 
 def atr_risk_plan(entry_reference_price: float, atr_value: float,
-                  equity_quote: float = 1000.0) -> dict[str, float]:
+                  equity_quote: float = 1000.0,
+                  risk_fraction: float = PER_POSITION_RISK_FRACTION) -> dict[str, float]:
     """محاسبه اندازه موقعیت بر مبنای حداکثر ریسک ۲٪؛ بدون ارسال سفارش."""
-    values = (entry_reference_price, atr_value, equity_quote)
+    values = (entry_reference_price, atr_value, equity_quote, risk_fraction)
     if not all(math.isfinite(value) and value > 0 for value in values):
         raise ProviderError("ATR_RISK_INPUT_INVALID")
+    if risk_fraction > MAX_ACCOUNT_RISK_FRACTION:
+        raise ProviderError("ATR_RISK_FRACTION_EXCEEDS_ACCOUNT_LIMIT")
     stop_distance = ATR_STOP_MULTIPLE * atr_value
     stop_fraction = stop_distance / entry_reference_price
-    risk_budget = equity_quote * MAX_ACCOUNT_RISK_FRACTION
+    risk_budget = equity_quote * risk_fraction
     notional = risk_budget / stop_fraction
     return {
         "atr14": atr_value,
         "stop_distance": stop_distance,
         "stop_fraction": stop_fraction,
-        "max_risk_fraction": MAX_ACCOUNT_RISK_FRACTION,
+        "max_risk_fraction": risk_fraction,
         "risk_budget_per_1000_equity": risk_budget * (1000.0 / equity_quote),
         "notional_per_1000_equity": notional * (1000.0 / equity_quote),
     }
@@ -279,10 +284,12 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         },
         "risk_model": {
             "max_account_risk_fraction": MAX_ACCOUNT_RISK_FRACTION,
+            "max_concurrent_positions": MAX_CONCURRENT_POSITIONS,
+            "per_position_risk_fraction": PER_POSITION_RISK_FRACTION,
             "atr_period": ATR_PERIOD,
             "atr_stop_multiple": ATR_STOP_MULTIPLE,
             "stop_distance_formula": "2 * ATR14",
-            "position_notional_formula": "(equity * 0.02) / (stop_distance / entry_price)",
+            "position_notional_formula": "(equity * 0.01) / (stop_distance / entry_price)",
             "sizing_is_reference_only_until_monday_open": True,
         },
     }
@@ -342,7 +349,7 @@ def format_persian_message(signal: dict[str, Any]) -> str:
         "وضعیت بازار: BTC بالاتر از MA50 — انتخاب دو موقعیت لانگ",
         f"BTC: {signal['btc_close']:.6g} | MA50: {signal['btc_ma50']:.6g}",
         f"چرخه اجرا: ورود در بازشدن دوشنبه {signal['weekly_execution']['entry_date']}؛ خروج در بسته‌شدن جمعه {signal['weekly_execution']['exit_date']}",
-        "حداکثر ریسک هر موقعیت: ۲٪ سرمایه؛ حدضرر مبتنی بر ۲ برابر ATR14",
+        "حداکثر ریسک کل سبد: ۲٪ سرمایه؛ با دو موقعیت، حداکثر ۱٪ برای هر موقعیت؛ حدضرر مبتنی بر ۲ برابر ATR14",
         "اندازه موقعیت باید با قیمت واقعی بازشدن دوشنبه دوباره محاسبه شود؛ قیمت جمعه فقط مرجع برآورد است.",
         "",
         "دو دارایی برتر:",
