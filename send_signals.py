@@ -35,7 +35,7 @@ ALTCOINS = UNIVERSE[1:]
 PROVIDERS = ("OKX", "BYBIT", "BINANCE_FUTURES")
 TIMEOUT_SECONDS = 15
 CANDLE_LIMIT = 100
-QUOTE_VOLUME_LABEL = "USDT quote turnover/volume"
+VOLUME_LABEL = "base-asset futures volume"
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ class Candle:
     high: float
     low: float
     close: float
-    quote_volume: float
+    base_volume: float
 
 
 class ProviderError(RuntimeError):
@@ -72,14 +72,14 @@ def _utc_day(timestamp_ms: Any) -> date:
 
 def _valid_candle(day_value: date, o: Any, h: Any, l: Any, c: Any, qv: Any) -> Candle:
     values = [float(o), float(h), float(l), float(c), float(qv)]
-    op, high, low, close, quote_volume = values
+    op, high, low, close, base_volume = values
     if not all(math.isfinite(x) for x in values):
         raise ProviderError("NON_FINITE_CANDLE")
-    if min(op, high, low, close) <= 0 or quote_volume < 0:
+    if min(op, high, low, close) <= 0 or base_volume < 0:
         raise ProviderError("INVALID_OHLC_OR_VOLUME")
     if high < max(op, low, close) or low > min(op, high, close):
         raise ProviderError("INVALID_OHLC_ORDER")
-    return Candle(day_value, op, high, low, close, quote_volume)
+    return Candle(day_value, op, high, low, close, base_volume)
 
 
 def fetch_okx(symbol: str) -> list[Candle]:
@@ -94,7 +94,7 @@ def fetch_okx(symbol: str) -> list[Candle]:
     for item in payload["data"]:
         if len(item) < 9 or str(item[8]) != "1":
             continue
-        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[7]))
+        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[5]))
     return sorted(rows, key=lambda x: x.day)
 
 
@@ -124,7 +124,7 @@ def fetch_binance_futures(symbol: str) -> list[Candle]:
     for item in payload:
         if len(item) < 8:
             raise ProviderError("BINANCE_FUTURES_KLINE_SCHEMA_INVALID")
-        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[7]))
+        rows.append(_valid_candle(_utc_day(item[0]), item[1], item[2], item[3], item[4], item[5]))
     return sorted(rows, key=lambda x: x.day)
 
 
@@ -208,7 +208,7 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         "benchmark": "BTCUSDT",
         "btc_close": btc_close,
         "btc_ma50": btc_ma50,
-        "volume_measure": QUOTE_VOLUME_LABEL,
+        "volume_measure": VOLUME_LABEL,
         "universe_version": UNIVERSE_VERSION,
         "universe": list(UNIVERSE),
         "execution": "MANUAL_ONLY_NO_ORDERS",
@@ -223,7 +223,7 @@ def build_signal(provider: str, market: dict[str, list[Candle]], target_friday: 
         candles = [c for c in market[symbol] if c.day <= target_friday]
         if len(candles) < 20:
             raise ProviderError(f"ALT_HISTORY_INSUFFICIENT:{symbol}")
-        volumes = [c.quote_volume for c in candles[-20:]]
+        volumes = [c.base_volume for c in candles[-20:]]
         mean = sum(volumes) / 20.0
         variance = sum((v - mean) ** 2 for v in volumes) / 20.0
         sd = math.sqrt(variance)
@@ -275,7 +275,7 @@ def format_persian_message(signal: dict[str, Any]) -> str:
             f"RSI14: {item['rsi14']:.2f}"
         )
     lines.append("")
-    lines.append("حجم بر مبنای گردش مظنه USDT در بازار قرارداد دائمی محاسبه شده است.")
+    lines.append("Volume_Z20 بر اساس حجم دارایی پایه در قرارداد دائمی محاسبه شده است.")
     lines.append("این خروجی صرفاً تحلیل است؛ هیچ سفارشی اجرا نمی‌شود.")
     return "\n".join(lines)
 
