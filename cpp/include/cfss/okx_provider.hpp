@@ -1377,8 +1377,8 @@ inline json collect(int symbol_count, int years,
                       {"selected_count", selected.size()}, {"target_count", symbol_count},
                       {"liquidity_threshold_usd", 10000000.0},
                       {"selection_method", discovery_fallback_used
-                          ? "kucoin_fallback_top_turnover_usd_desc_with_btc_first"
-                          : "top_turnover_usd_desc_with_btc_first"},
+                          ? "owner_manifest_exact_nine_assets_with_kucoin_fallback"
+                          : "owner_manifest_exact_nine_assets_with_okx_primary"},
                       {"selection_timestamp_utc", acquired_text},
                       {"selected_instrument_ids", selected_ids}}},
         {"instruments", instruments}
