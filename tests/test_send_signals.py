@@ -22,7 +22,7 @@ def synthetic_market(target: date):
             close = (100.0 + i * 1.0 if symbol == "BTCUSDT" else
                      100.0 + i * (0.03 + index * 0.01) +
                      math.sin(i * (0.3 + index * 0.025)) * (index + 1) * 0.7)
-            volume = 1000.0 + (i % 7) * (index + 1) * 13.0
+            volume = 1000.0 + (i % 7) * 13.0 + math.sin(i * (0.2 + index * 0.04)) * (index + 1) * 9.0
             rows.append(bot.Candle(day, close * 0.99, close * 1.01, close * 0.98, close, volume))
         market[symbol] = rows
     return market
