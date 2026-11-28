@@ -1052,7 +1052,8 @@ inline json collect(int symbol_count, int years,
     const auto end_ms = (acquired_ms / 3'600'000LL) * 3'600'000LL;
     const auto start_ms = end_ms - static_cast<std::int64_t>(years * 365.25 * 24.0 * 3'600'000.0);
     const auto acquired_text = utc_iso(acquired_ms);
-    (void)cached_crypto_universe; // Legacy CoinPaprika cache is deliberately not used by V21.1 production.\n    const auto crypto_universe = load_crypto_universe(required_symbols);
+    (void)cached_crypto_universe; // Legacy CoinPaprika cache is deliberately not used by V21.1 production.
+    const auto crypto_universe = load_crypto_universe(required_symbols);
     std::size_t eligible_count = 0U, declared_count = 0U, excluded_non_crypto_count = 0U;
     const auto selected = discover(symbol_count, crypto_universe.symbols, required_symbols,
                                     &eligible_count, &declared_count, &excluded_non_crypto_count);
